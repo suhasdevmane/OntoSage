@@ -1,0 +1,110 @@
+source,source_id,title,source_state,disposition,v12_rows,reason
+FIX_TRACKER,BUG-134,"Questions about OntoSage itself were answered by the open-domain answerer, which invented the system",VERIFIED_LIVE+residual,cosmetic,,Residual is a stale source-type list in GraphDB's DEFAULT graph - a duplicate row in one list. The MECHANISM is not cosmetic and is V12-15; this instance is.
+FIX_TRACKER,BUG-135,The shared OCBV schema was duplicated per building and had drifted,VERIFIED_LIVE+residual,cosmetic,,"Residual is one stale non-deprecated label surviving in the DEFAULT graph from an older upload path. Same mechanism as BUG-134, same disposition."
+FIX_TRACKER,BUG-157,'Fix the temperature in here' reaches analytics instead of the control decline,FIXED+owed,scheduled,V12-02,
+FIX_TRACKER,BUG-183,"'yesterday' is flagged unparseable by the CQ-IR compiler, turning a valid question into a clarify",FIXED+owed,scheduled,V12-02,
+FIX_TRACKER,BUG-184,"plan_hash mixes the reasoning plan with live execution context, so it cannot anchor determinism",FIXED+residual,scheduled,V12-25,
+FIX_TRACKER,BUG-194,A GUI policy edit was shadowed by a stale copy in the default graph,FIXED+residual,scheduled,V12-15,
+FIX_TRACKER,BUG-218,One incidental shared word lets an unrelated document answer a question,PARTIALLY_FIXED,scheduled,V12-18,
+FIX_TRACKER,BUG-231,Graph-structure questions land in the document lane instead of the ontology,MEASURED_REMAINDER_SMALL,scheduled,V12-23,
+FIX_TRACKER,BUG-241,`uuids` is documented as a reserved bus key and nothing writes it,FIXED+owed,scheduled,V12-14,
+FIX_TRACKER,BUG-257,A reading's unit is in the graph but does not reach the answer,VERIFIED_LIVE+residual,scheduled,V12-02,
+FIX_TRACKER,BUG-337,An amenity question naming a floor gets the floor plan; without a floor it declines,VERIFIED_LIVE+residual,closed_residual,,The residual visible in the answer was fixed in the same row: the amenity ranking now reads the floor an amenity declares.
+FIX_TRACKER,BUG-354,A why-question that names the modality in plain terms is not diagnosable,FIXED+residual,scheduled,V12-23,
+FIX_TRACKER,BUG-360,bldg1 detects only 2 of its own 8 injected faults,FIXED+residual,scheduled,V12-31,
+FIX_TRACKER,BUG-395,"""any energy spikes"" no longer reaches the anomaly lane",FIXED+residual,scheduled,V12-23,
+FIX_TRACKER,BUG-443,Developer-facing narration reaches the user in place of an answer,VERIFIED_LIVE+residual,scheduled,V12-24,
+FIX_TRACKER,BUG-445,The referent-existence gate has one call site in the whole orchestrator and fails open,FIXED+owed,scheduled,V12-02,
+FIX_TRACKER,BUG-474,"The SQL prompt named every sensor in the building, so the model returned nothing and a data-free report went out",FIXED+owed,scheduled,V12-02,
+FIX_TRACKER,BUG-482,A concept-triggered rule watches one arbitrary point and reads as if it covers the building,OPEN,scheduled,V12-20,
+FIX_TRACKER,BUG-487,"A Python tuple decided which record classes could be named as ABSENT, so declared classes were unaskable",FIXED+owed,scheduled,V12-02,
+FIX_TRACKER,BUG-489,A held register matched by a generic shared word outranks an absent one matched by a specific phrase,OPEN,scheduled,V12-21,
+FIX_TRACKER,CAVEAT-006,Sensor-type breakdown lists nested subclass counts as if they were additive,VERIFIED_LIVE+residual,scheduled,V12-09,
+FIX_TRACKER,CAVEAT-039,GraphDB holds duplicate/null-context copies of sensor triples from a historical bulk load,FIXED+residual,closed_residual,,"Residual named in the row is TODO-223, fixed in the same session; both re-infection vectors verified."
+FIX_TRACKER,CAVEAT-185,A model that needs >120s per turn cannot serve this pipeline (WORKFLOW_TIMEOUT_S),RECOMMENDATION_GIVEN,scheduled,V12-27,
+FIX_TRACKER,CAVEAT-193,"Policy-bank traps that expect an answer the building/clock cannot give (P005, P007)",FIXED+residual,closed,,"Clock-dependent policy-bank traps, non-reproducible for reasons unrelated to privacy. The bank hygiene it implies is folded into V12-17."
+FIX_TRACKER,CAVEAT-233,"Only 7.4% of narrow-table streams are current, though 100% have history",FIXED+residual,user_decision_needed,,"Whether the publisher SHOULD feed every declared stream is a dev-data decision for the user, not a defect. 683 of 2,796 declared sensors report in the last 24h by design."
+FIX_TRACKER,CAVEAT-396,"""No sensor data available for anomaly detection"" hides WHY there is none",FIXED+residual,scheduled,V12-23,
+FIX_TRACKER,CAVEAT-404,Roughly 25M existing narrow rows remain stamped one hour ahead,ACCEPTED_BY_USER,user_decided,,25M narrow rows stamped +1h. USER DECISION 2026-09-03: keep them. The offset is uniform rather than discontinuous and the rows are dev-mode top-up.
+FIX_TRACKER,CAVEAT-415,"62 failures in six hours logged an empty message, hiding an 11% silent quality degradation",PARTIALLY_FIXED,scheduled,V12-19,
+FIX_TRACKER,CAVEAT-418,The heuristic grader marks computed answers as honest declines when they carry hedging language,FIXED+residual,scheduled_elsewhere,,Grader residual: has_counted_records promotes a general-knowledge answer containing any 'N word' pattern. 1 in 57 here. Belongs with V12-29's grading discipline - the measurement apparatus is wrong more often than the system.
+FIX_TRACKER,CAVEAT-419,The referent gate reads a descriptive phrase as a place name and declines,FIXED+residual,scheduled,V12-24,
+FIX_TRACKER,CAVEAT-467,"The floor-comparison question is slow, and once returned degenerate text",MITIGATED,scheduled,V12-28,
+FIX_TRACKER,FEAT-086,"Onboarded bldg3 (4 floors, 300 sensors, 625 points) — portability proven, zero core-code changes",VERIFIED_LIVE+residual,closed_residual,,bldg3's compare/forecast residual is analytics-agent behaviour on a topology proven by SPARQL 66/68 per floor. Re-measured by V12-30's onboarding leg rather than tracked separately.
+FIX_TRACKER,FIX-004,Declared vs populated sensor gap (metric was ALSO wrong for wide tables),VERIFIED_LIVE+residual,closed_residual,,Row states FULLY RESOLVED; the 'residual 628' was itself resolved by creating the two narrow companion tables.
+FIX_TRACKER,FIX-056,"Lower-priority building literals: registry fallback, contact email, default namespace",FIXED+residual,accepted,,Floor-plan registry falls back to 'any registered' config when the ACTIVE building has none. Reachable only on a building with no floor-plan config at all; the literal guard and agnosticism ratchet already run continuously.
+FIX_TRACKER,OPTIONAL-074,[OPTIONAL] Real time-series + non-MySQL backend,DEFERRED,scheduled,V12-13,
+FIX_TRACKER,ROADMAP-009,Migrate structured capability facts from capability.yaml to ontology triples,DONE+residual,closed_residual,,"Residual named in the row is TODO-081, which is VERIFIED_LIVE. Nothing owed."
+FIX_TRACKER,TODO-011,WS-5: measure capability-corpus no-regression before/after the routing flip,DONE+residual,closed_residual,,Residual (wifi at 0.248) is covered by the KB safety net and superseded by V12-18's document-relevance work.
+FIX_TRACKER,TODO-049,Ollama keep-alive: model unloads on idle -> ~16s reload on next question,FIXED+residual,accepted,,"One-time ~16s Ollama reload after 30 min idle. Accepted VRAM tradeoff, tunable by env only; the row states no code work remains."
+FIX_TRACKER,TODO-072,Cold GUI-only onboarding from an empty input/,FIXED_UNVERIFIED,scheduled,V12-30,
+FIX_TRACKER,TODO-082,Harden capability document selection IF real usage shows wrong-chunk retrieval,DEFERRED,scheduled,V12-18,
+FIX_TRACKER,TODO-339,bldg4 built as a wholly fictional building for GUI onboarding testing,READY,scheduled,V12-30,
+FIX_TRACKER,TODO-463,The routing rules do not yet consult the building lexicon,OPEN,scheduled,V12-21,
+FIX_TRACKER,TODO-490,AlarmEvent and AccessEvent lay terms miss the phrasings people actually use,FIXED+owed,scheduled,V12-02,
+FIX_TRACKER,TODO-494,79 settings the code reads are absent from .env.example,OPEN,scheduled,V12-27,
+META,META-CLAUDEMD-STALE-OPEN-LIST,CLAUDE.md's open-issues list names items that are closed in the fix tracker,finding,fixed_2026_09_09,,"The open-issues list named ten items closed in the fix tracker (BUG-192, TODO-181, CAVEAT-148/154/190/193, KNOWN-008, KNOWN-153, TODO-143, BUG-147). Fixed, and the file now says not to hand-maintain one again - `v12_coverage_audit.py --list` prints the derived list instead."
+META,META-CLAUDEMD-TWO-WORKSTREAMS,"CLAUDE.md declares two ACTIVE WORKSTREAMs at once (V11 in the snapshot, V5 under open issues)",finding,fixed_2026_09_09,,"CLAUDE.md declared two ACTIVE WORKSTREAMs at once (V11 in the snapshot, V5 under open issues). Fixed: the file now names exactly one, and the V5 bullet says so explicitly. `grep -c 'ACTIVE WORKSTREAM' CLAUDE.md` returns 1."
+META,META-TRACKER-DIVERGENCE,two copies of the V7 tracker disagree and the git-tracked one (docs/) is the stale copy,finding,fixed_2026_09_09,,Two copies of the V7 tracker disagreed and the git-tracked one (docs/) was the stale copy. Synced. Moot from 2026-09-09 in any case: V7 is out of V12 scope.
+REVIEW,REV-A01,"two matching sensors; the list function returns declared identifiers, never None silently",case,scheduled,V12-12,
+REVIEW,REV-A02,declared sensor with a working reference and rows is recognised as present,case,scheduled,V12-12,
+REVIEW,REV-A03,"remove the store reference: REFERENCE_MISSING, not physical absence",case,scheduled,V12-05,
+REVIEW,REV-A04,"unregistered store identifier: specific resolution failure, no substitute backend",case,scheduled,V12-05,
+REVIEW,REV-A05,"wrong series id, with and without an existence catalogue: no false certainty",case,scheduled,V12-05,
+REVIEW,REV-A06,"valid series, empty window: existence confirmed independently or left unknown",case,scheduled,V12-05,
+REVIEW,REV-A07,"frozen clock, yesterday and today seeded apart: the requested day appears throughout",case,scheduled,V12-08,
+REVIEW,REV-A08,midnight and DST: boundaries follow the configured zone policy,case,scheduled,V12-08,
+REVIEW,REV-A09,more records than the limit: the known total is independent of truncation,case,scheduled,V12-09,
+REVIEW,REV-A10,"max, min and average over the same data each use their intended operation",case,scheduled,V12-09,
+REVIEW,REV-A11,"convertible then incompatible units: approved conversion explicit, rest rejected",case,scheduled,V12-10,
+REVIEW,REV-A12,"duplicates, invalid values, out-of-order stamps: accepted and excluded counts recorded",case,scheduled,V12-09,
+REVIEW,REV-A13,"two rooms share a label: resolved or clarified, never silently cross-selected",case,scheduled,V12-11,
+REVIEW,REV-A14,follow-up changes room or building: incompatible inherited state is cleared,case,scheduled,V12-11,
+REVIEW,REV-A15,the same seeded data through each supported adapter returns equivalent results,case,scheduled,V12-13,
+REVIEW,REV-A16,mapping or graph revision changes mid-turn: the snapshot policy prevents a mixed result,case,scheduled,V12-13,
+REVIEW,REV-B01,two routing rules match: documented priority resolves it and the trace says why,case,scheduled,V12-21,
+REVIEW,REV-B02,a supported intent runs and its response adapter is removed: contract validation fails,case,scheduled,V12-07,
+REVIEW,REV-B03,"ECA positive and negative fixtures: the rule matches correctly, no actuation required",case,scheduled,V12-20,
+REVIEW,REV-B04,"forced numerical verification failure: claims withheld in text, chart and export",case,scheduled,V12-03,
+REVIEW,REV-B05,"numbers unchanged, rendered day/unit/room altered: the answer is blocked",case,scheduled,V12-03,
+REVIEW,REV-B06,"simulated candidate scores best, also transformed: excluded in operational mode",case,scheduled,V12-04,
+REVIEW,REV-B07,"remove a required criterion: eligibility applies, missing evidence is not rewarded",case,scheduled,V12-25,
+REVIEW,REV-B08,"weight changes and ties: declared policy holds, limitations stay visible",case,scheduled,V12-25,
+REVIEW,REV-B09,"future conditions with only observations: a limitation, not invented certainty",case,scheduled,V12-25,
+REVIEW,REV-B10,"clarification exhausted, ambiguity remains: narrow or abstain, never guess",case,scheduled,V12-25,
+REVIEW,REV-B11,unauthorised room or derived sensitive output: policy applies before disclosure,case,scheduled,V12-17,
+REVIEW,REV-B12,cache cannot bypass the current authorisation and provenance policy,case,scheduled,V12-16,
+REVIEW,REV-B13,irrelevant keyword-sharing document rejected; a contradicting one surfaces the conflict,case,scheduled,V12-18,
+REVIEW,REV-B14,"observations-plus-procedure: both subclaims sourced, or the unsupported part stated",case,scheduled,V12-06,
+REVIEW,REV-B15,"timeout, outage and delayed completion: explicit partial outcome, retry distinguishable",case,scheduled,V12-19,
+REVIEW,REV-B16,generated execution asked to do something disallowed: limits hold (conditional case),case,conditional_closed,,"Disallowed-execution injection. Settled by the Phase 0 inspection: 35 LLM call sites, three lanes generating executable artifacts, every one already guarded, and the Python sandbox verified LIVE to have no network egress at all. The review makes B16 explicitly conditional on that inventory. Re-open if an execution path is added."
+REVIEW,REV-T01,"establish baseline: capability matrix, revision snapshot, LLM inventory, intent manifest",ticket,scheduled,V12-26,
+REVIEW,REV-T02,lock in incidents: exact historical failure set and minimal fixtures,ticket,scheduled,V12-01,
+REVIEW,REV-T03,enforce publication: claim-level verification and authorised final-response policy,ticket,scheduled,V12-03,
+REVIEW,REV-T04,make data failures explicit: typed retrieval outcomes and reference validation,ticket,scheduled,V12-05,
+REVIEW,REV-T05,"preserve semantics: normalized request, time resolver, count and aggregation contracts",ticket,scheduled,V12-08,
+REVIEW,REV-T06,govern simulation: provenance labels and operational admissibility,ticket,scheduled,V12-04,
+REVIEW,REV-T07,"finish routing contracts: precedence, answer collection, bounded mixed-source behaviour",ticket,scheduled,V12-06,
+REVIEW,REV-T08,"prove ARBITER: criterion registry, eligibility/coverage rules, reproducible dossiers",ticket,scheduled,V12-25,
+REVIEW,REV-T09,"evaluate and release: held-out results, repeated runs, limitation register, Gate decision",ticket,scheduled,V12-29,
+REVIEW,REV-T10,test portability: second-building readiness and intervention log,ticket,scheduled,V12-30,
+V10,W2-1,BuildingLexicon: derive routing vocabulary from the active graph,todo,scheduled,V12-21,
+V10,W2-5,Generate the SPARQL few-shot from the live graph; inject ontosage: and hbco:,todo,scheduled,V12-22,
+V10,W3-2,Register scaffolder,todo,deferred,,Same item as V11-D1.
+V10,W3-3,Templates for the 24 TTLs with no template and no generator,todo,deferred,,Same item as V11-D2.
+V10,W3-5,"Deployment truth, then the cold start on bldg4",todo,scheduled,V12-27,
+V10,W4-4,"The seven W0 questions become permanent regression cases, plus a bldg3 leg",todo,scheduled,V12-01,
+V11,V11-1,"The seven W0 questions become permanent probe cases, with final-output assertions",superseded_by_v12,scheduled,V12-01,
+V11,V11-10,Deterministic aggregates for common analytics questions,superseded_by_v12,scheduled,V12-28,
+V11,V11-2,Publication enforcement — a failed verification must withhold the claim,superseded_by_v12,scheduled,V12-03,
+V11,V11-3,Simulation governance — simulated evidence must not win an operational answer,superseded_by_v12,scheduled,V12-04,
+V11,V11-4,Typed retrieval outcomes — four kinds of nothing stop collapsing into one,superseded_by_v12,scheduled,V12-05,
+V11,V11-4b,A request whose second half went unserved must say so (bounded composition),superseded_by_v12,scheduled,V12-06,
+V11,V11-5,Manifest-to-renderer contract test (no repair — the defect is already fixed),superseded_by_v12,scheduled,V12-07,
+V11,V11-6,"BuildingLexicon into routing, plus BUG-489 claim authority",superseded_by_v12,scheduled,V12-21,
+V11,V11-7,Generate the SPARQL few-shot from the live graph,superseded_by_v12,scheduled,V12-22,
+V11,V11-8,Resolve the requested interval once; forbid downstream re-derivation,superseded_by_v12,scheduled,V12-08,
+V11,V11-9,A held-out evaluation set that is not consulted while fixing anything,superseded_by_v12,scheduled,V12-29,
+V11,V11-D1,DEFERRED: register scaffolder (W3-2),superseded_by_v12,deferred,,Register scaffolder (W3-2). The review independently reaches the same conclusion: defer generalised scaffolding until V12-30's manual second onboarding shows which work actually repeats.
+V11,V11-D2,DEFERRED: templates for 24 TTL files (W3-3),superseded_by_v12,deferred,,Templates for the 24 TTLs with no template (W3-3). Same reason as V11-D1; V12-30 produces the evidence that would justify it.
+V11,V11-D3,DEFERRED: packaging and container naming (W3-5 remainder),superseded_by_v12,deferred,,"Packaging and container naming (W3-5 remainder). The .env.example and deployment-truth half IS scheduled, as V12-27; only the packaging half is deferred."

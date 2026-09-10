@@ -131,6 +131,9 @@ class BuildingMetricsSnapshot:
     total_sensors: Optional[int] = None
     zone_count: Optional[int] = None
     floor_count: Optional[int] = None
+    #: Which classes the floor count swept in, most specific first: [(local name, n), ...].
+    #: A count is only honest if it can say what it counted -- see `_floor_breakdown`.
+    floor_kinds: List[Tuple[str, int]] = field(default_factory=list)
     room_count: Optional[int] = None
     sensor_types: List[Tuple[str, int]] = field(default_factory=list)  # (class, count)
     total_area_m2: Optional[float] = None
@@ -194,9 +197,30 @@ class BuildingMetrics:
             f"?s a ?t . ?t rdfs:subClassOf* brick:Location . "
             f'FILTER(STRSTARTS(STR(?s), "{ns}")) }}'
         )
-        snap.floor_count = await self._count(
-            f"{_RDFS}{_BRICK}SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE {{ "
-            f'?s a brick:Floor . FILTER(STRSTARTS(STR(?s), "{ns}")) }}'
+        # THE COUNT AND WHAT IT SWEPT IN.
+        #
+        # This reported "Floors: 8" for a six-storey building, in the same answer as
+        # "6,129 m2 across 6 floors" -- two numbers, both correct, describing different
+        # things, presented as if they described one.
+        #
+        # The data was right and Brick was right. `brick:Rooftop` and `brick:Parking_Level`
+        # are subclasses of `brick:Floor`/`brick:Storey` in Brick 1.4, the building asserts
+        # exactly those specific types, and RDFS inference correctly makes both a
+        # brick:Floor. Retyping them -- the obvious fix -- would have made the model LESS
+        # accurate to satisfy a count.
+        #
+        # So the count says what it includes, which is the same remedy this codebase
+        # already applies to `Particulate_Matter_Sensor` sweeping in TVOC (CAVEAT-286).
+        # Nothing here names a class: the breakdown is read from the graph, so a building
+        # with a mezzanine or a basement gets its own vocabulary in the answer.
+        snap.floor_kinds = await self._floor_breakdown(ns)
+        snap.floor_count = (
+            sum(n for _k, n in snap.floor_kinds)
+            if snap.floor_kinds
+            else await self._count(
+                f"{_RDFS}{_BRICK}SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE {{ "
+                f'?s a brick:Floor . FILTER(STRSTARTS(STR(?s), "{ns}")) }}'
+            )
         )
         snap.room_count = await self._count(
             f"{_RDFS}{_BRICK}SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE {{ "
@@ -229,6 +253,56 @@ class BuildingMetrics:
         except Exception as e:
             logger.warning(f"[building_metrics] count query failed: {e}")
         return None
+
+    async def _floor_breakdown(self, ns: str) -> List[Tuple[str, int]]:
+        """Each thing counted as a floor, under the MOST SPECIFIC class it asserts.
+
+        Grouped by the asserted type rather than the inferred one, so a storey counts once
+        as a storey and a rooftop once as a rooftop. Returns [] when nothing can be read,
+        and the caller then falls back to the plain count -- an unexplained number beats no
+        number, and both beat a wrong one.
+        """
+        # Grouped by the type the BUILDING ASSERTS, read from the named graphs its own
+        # files were loaded into. Inferred triples live outside those, so this returns
+        # `Floor x6, Rooftop x1, Parking_Level x1` -- what the author wrote.
+        #
+        # The first version asked instead for the "most specific" class, via a
+        # FILTER NOT EXISTS over subclasses, and returned `Rooftop 1, Parking_Level 1` and
+        # NO STOREYS AT ALL. Brick 1.4 asserts `Floor rdfs:subClassOf Storey` AND
+        # `Storey rdfs:subClassOf Floor` -- they are mutually subclassed, so neither is
+        # ever the most specific and the filter eliminated both. "Most specific" is not a
+        # well-defined idea in a hierarchy with a cycle in it, and Brick has one here.
+        query = (
+            f"{_RDFS}{_BRICK}"
+            "SELECT ?t (COUNT(DISTINCT ?s) AS ?n) WHERE { "
+            "  GRAPH ?g { ?s a ?t } "
+            "  ?s a brick:Floor . "
+            "  ?t rdfs:subClassOf* brick:Floor . "
+            f'  FILTER(STRSTARTS(STR(?s), "{ns}")) '
+            "} GROUP BY ?t ORDER BY DESC(?n)"
+        )
+        try:
+            res = await self._exec(query)
+        except Exception as exc:
+            logger.warning(f"[building_metrics] floor breakdown failed: {exc}")
+            return []
+        out: List[Tuple[str, int]] = []
+        for b in _bindings(res):
+            local = str(b.get("t", {}).get("value", "")).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+            try:
+                n = int(b.get("n", {}).get("value", 0))
+            except (TypeError, ValueError):
+                continue
+            if local and n:
+                out.append((local, n))
+
+        # Floor and Storey are mutually subclassed in Brick, so a building asserting either
+        # means the same thing. Merged rather than listed twice.
+        storeys = sum(n for k, n in out if k in ("Floor", "Storey"))
+        merged = [(k, n) for k, n in out if k not in ("Floor", "Storey")]
+        if storeys:
+            merged.insert(0, ("Floor", storeys))
+        return merged
 
     async def _sensor_types(self, ns: str, top: int = 10) -> List[Tuple[str, int]]:
         """Best-effort breakdown by the sensor's declared Brick class (indicative)."""
@@ -494,14 +568,41 @@ def render_metrics_block(snap: BuildingMetricsSnapshot, building_name: str) -> s
         sensors_line = f"- Sensors declared in the building model: **{snap.total_sensors:,}**"
         lines.append(sensors_line)
         if snap.reporting_sensors is not None:
+            # SAYS WHAT IT COUNTS. This read "Sensors that reported data in the last 24 h:
+            # 2,763" directly beneath "Sensors declared in the building model: 2,720" --
+            # more instruments reporting than exist.
+            #
+            # Neither number was wrong; they count different UNITS. The declared figure
+            # counts SUBJECTS typed brick:Sensor. The reporting figure counts timeseries
+            # UUIDS, and a sensor may carry more than one reference: this building has
+            # 2,720 sensors against 2,780 uuids attached to them, and 2,841 uuids in the
+            # graph. A stream is not an instrument, and putting the two on adjacent lines
+            # with the same noun invited exactly the reading it got.
             lines.append(
-                f"- Sensors that reported data in the last {snap.reporting_window_h} h: "
-                f"**{snap.reporting_sensors:,}** (live check across the registered databases)"
+                f"- Data streams that reported in the last {snap.reporting_window_h} h: "
+                f"**{snap.reporting_sensors:,}** (live check across the registered "
+                f"databases — a sensor can carry more than one stream, so this is not "
+                f"comparable to the sensor count above)"
             )
     if snap.zone_count is not None:
         lines.append(f"- Zones / locations: **{snap.zone_count:,}**")
     if snap.floor_count is not None:
-        lines.append(f"- Floors: **{snap.floor_count}**")
+        # Named, when the count is not all storeys. "Floors: 8" beside "across 6 floors"
+        # in the same answer is not a rounding difference; it is two questions answered as
+        # though they were one.
+        extra = [(k, n) for k, n in snap.floor_kinds if k not in ("Floor", "Storey")]
+        if extra:
+            storeys = sum(n for k, n in snap.floor_kinds if k in ("Floor", "Storey"))
+            others = ", ".join(
+                f"{n} {k.replace('_', ' ').lower()}" + ("s" if n > 1 else "") for k, n in extra
+            )
+            lines.append(
+                f"- Floors: **{snap.floor_count}** — {storeys} storey"
+                f"{'s' if storeys != 1 else ''} plus {others} "
+                f"(Brick counts these as floors)"
+            )
+        else:
+            lines.append(f"- Floors: **{snap.floor_count}**")
     if snap.room_count is not None:
         lines.append(f"- Rooms: **{snap.room_count:,}**")
     if snap.total_area_m2 is not None:

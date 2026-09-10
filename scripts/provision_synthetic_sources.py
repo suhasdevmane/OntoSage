@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import random
+import re
 import sys
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -167,14 +168,28 @@ def discover(endpoint: str) -> Dict[str, object]:
     # EXCLUDE from answers: suppressing the building's accessibility information because
     # a synthetic generator called it broken. Location is the building-agnostic
     # discriminator here, and it needs no name matching.
+    #
+    # The amenity's OWN class comes back with it. A status file that names an asset it
+    # does not declare is only valid for as long as some other file keeps declaring that
+    # asset, and this building has already lost that bet: the committed amenity-state file
+    # carried statuses for thirteen IRIs that no file in the repo declares any more, so
+    # every one of those amenities answered "not recorded in this building's model".
+    # Carrying the class lets the generated file stand on its own.
     amenities = [
-        (b["s"]["value"], (b.get("l") or {}).get("value", ""))
+        (
+            b["s"]["value"],
+            (b.get("l") or {}).get("value", ""),
+            (b.get("tc") or {}).get("value", "") or f"{ONTOSAGE_NS}Amenity",
+        )
         for b in _sparql(
             "PREFIX ontosage: <http://ontosage.org/capabilities#> "
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#> "
-            "SELECT ?s (SAMPLE(?lab) AS ?l) WHERE { ?s a ontosage:Amenity . "
+            "SELECT ?s (SAMPLE(?lab) AS ?l) (SAMPLE(?t) AS ?tc) WHERE { ?s a ontosage:Amenity . "
             "{ ?s ontosage:locatedIn ?anywhere } UNION { ?s ontosage:locationText ?anytext } "
-            "OPTIONAL { ?s rdfs:label ?lab } } GROUP BY ?s LIMIT 500",
+            "OPTIONAL { ?s rdfs:label ?lab } "
+            "OPTIONAL { ?s a ?t . "
+            f'  FILTER(STRSTARTS(STR(?t), "{ONTOSAGE_NS}") && ?t != ontosage:Amenity) }} '
+            "} GROUP BY ?s LIMIT 500",
             endpoint,
         )
     ]
@@ -267,6 +282,19 @@ def gen_status(d: Dict, rnd: random.Random) -> str:
         state = "out_of_service" if i == 0 and len(lifts) > 1 else "operational"
         seen = now - timedelta(minutes=rnd.randint(2, 90))
         out.append(
+            # NOT re-asserted here, and the reason is worth stating because the first
+            # fix did re-assert it. Every subject in a generated file must declare
+            # ontosage:isSimulated -- that is what lets a reader tell a generated fact
+            # from an authored one, and a test enforces it. But a lift is the building's
+            # OWN asset and is not simulated; only this status record is. Writing the
+            # lift's type here would either relabel real fabric as a demo fixture or
+            # punch a hole in the provenance rule.
+            #
+            # So the asset is declared in the BUILDING's own TTL, and the check that it
+            # exists moved from this file to the building (see `undeclared_status_subjects`
+            # below). The failure being prevented is unchanged: fourteen statuses named
+            # IRIs with no triples, and every one answered "not recorded in this
+            # building's model".
             f"bldg:status_lift_{i} a ontosage:AssetStatus ;\n"
             f'    rdfs:label "Status of {label or _local(iri)}"@en ;\n'
             f"    ontosage:statusOf bldg:{_local(iri)} ;\n"
@@ -343,8 +371,20 @@ def gen_amenity_state(d: Dict, rnd: random.Random) -> str:
 
     now = datetime.now().replace(microsecond=0)
     reasons = ("awaiting parts", "reported fault", "scheduled servicing", "supply isolated")
+    # ONE ASSET, ONE STATUS RECORD. A lift is both an ontosage:Lift and, once it carries
+    # a location, an ontosage:Amenity -- so the status family and this family both wrote
+    # one, from two sources, with independently randomised states. Measured the moment the
+    # lift was declared: `status_lift_0 operational (lift_controller)` sitting alongside
+    # `amenity_status_28 out_of_service (estates_helpdesk)`. The reading lane groups by
+    # asset and SAMPLEs, so "Is the lift working?" became a coin toss.
+    #
+    # The status family owns lifts, because the lift controller is the more authoritative
+    # source; this family yields. The rule is by CLASS, so it holds for any building.
+    _owned_elsewhere = {iri for iri, _lab in list(d.get("lifts") or [])}
     n_broken = 0
-    for i, (iri, label) in enumerate(sorted(amenities)):
+    for i, (iri, label, cls) in enumerate(sorted(amenities)):
+        if iri in _owned_elsewhere:
+            continue
         local = _local(iri)
         # ~12% out of service. Deterministic per amenity so re-runs are byte-identical.
         broken = rnd.random() < 0.12
@@ -352,6 +392,8 @@ def gen_amenity_state(d: Dict, rnd: random.Random) -> str:
         n_broken += 1 if broken else 0
         seen = now - timedelta(minutes=rnd.randint(5, 600))
         out.append(
+            # Not re-asserted -- see the lift branch above. The amenity is declared in
+            # the building's own catalogue; this file declares its STATE.
             f"bldg:amenity_status_{i} a ontosage:AssetStatus ;\n"
             f"    ontosage:statusOf bldg:{local} ;\n"
             f'    ontosage:statusValue "{state}" ;\n'
@@ -377,10 +419,14 @@ def gen_amenity_state(d: Dict, rnd: random.Random) -> str:
     # Potability is authored by the building's owner, with a real authority and a real
     # date, or it is absent -- and absent renders as "nobody has assessed this outlet",
     # which the schema names as a legitimate answer.
+    # Identified by CLASS, not by name. This matched the words "water", "fountain",
+    # "tap" and "drink" against the label -- so a building labelling the same amenity
+    # "Trinkwasser", or naming a room "Waterloo Suite", got the count wrong in opposite
+    # directions. The ontology already says what a drinking-water point is.
     water = [
         (iri, lab)
-        for iri, lab in sorted(amenities)
-        if any(w in (lab or _local(iri)).lower() for w in ("water", "fountain", "tap", "drink"))
+        for iri, lab, cls in sorted(amenities)
+        if cls == f"{ONTOSAGE_NS}DrinkingWater"
     ]
     print(
         f"  amenity state: {len(amenities)} amenities ({n_broken} out of service), "
@@ -603,6 +649,67 @@ def ensure_timetable_feed(input_dir: Path, building_id: str, csv_name: str) -> s
     return f"declared feed '{TIMETABLE_FEED_ID}' in feeds.yaml"
 
 
+#: Every subject this script points a status, a location or a part-of at.
+#:
+#: WHY THIS EXISTS
+#: ---------------
+#: A status record is worthless unless the thing it describes is DECLARED. The lane that
+#: reads these opens `?asset a ontosage:<Class>`, so an untyped subject cannot match
+#: however many statuses name it -- and the failure is silent in the worst possible way:
+#: the building answers "no lifts recorded in this building's model" about a lift whose
+#: status record is sitting in the graph.
+#:
+#: Measured on the active building 2026-09-06: 14 of 64 asset statuses (22%) named an
+#: IRI with zero triples. Thirteen were amenities this file had statused under an older
+#: amenity set and never regenerated; one was the lift. Nothing anywhere noticed.
+#:
+#: The check is on the TTL ON DISK -- this file's output plus the building's other TTLs --
+#: and not on the graph. The graph is whatever was last uploaded, so checking it would pass
+#: on the day a source file changed and fail silently a boot later. The files are what the
+#: next boot will load.
+#:
+#: An earlier version of this checked only the generated text and had the generator
+#: re-assert each asset's type so the file would stand alone. That is stricter and it was
+#: wrong: every subject in a generated file must carry ontosage:isSimulated, so a reader can
+#: tell a generated fact from an authored one -- and a lift is the building's own fabric,
+#: not a demo fixture. Re-asserting it would either mislabel real assets as simulated or
+#: put a hole in the provenance rule. The asset belongs in the building's TTL; this file
+#: declares its state.
+_STATUS_OF_RE = re.compile(r"ontosage:statusOf\s+bldg:([A-Za-z0-9_.\-]+)")
+_DECLARED_RE = re.compile(r"^bldg:([A-Za-z0-9_.\-]+)\s+a\s+", re.M)
+
+
+def _strip_comments(text: str) -> str:
+    """Whole-line comments are prose, not triples.
+
+    Needed because the explanations in these files quote the very triples they are about,
+    and a checker that reads its own documentation reports defects that are sentences.
+    """
+    return chr(10).join(l for l in text.splitlines() if not l.lstrip().startswith("#"))
+
+
+def undeclared_status_subjects(ttl_text: str, building_dir: Optional[Path] = None) -> List[str]:
+    """Subjects a status points at that NOTHING in the building declares a type for.
+
+    `building_dir` widens the search to every TTL the building ships. Called without it the
+    check is per-file, which is useful in a test and too strict for real output: a status
+    file legitimately references assets the building's own catalogue declares.
+    """
+    text = _strip_comments(ttl_text)
+    declared = set(_DECLARED_RE.findall(text))
+    if building_dir is not None and building_dir.exists():
+        for p in sorted(building_dir.glob("*.ttl")):
+            try:
+                declared |= set(
+                    _DECLARED_RE.findall(
+                        _strip_comments(p.read_text(encoding="utf-8", errors="replace"))
+                    )
+                )
+            except OSError:
+                continue
+    return sorted({s for s in _STATUS_OF_RE.findall(text) if s not in declared})
+
+
 GENERATORS = {
     "hours": ("_synthetic_hours.ttl", gen_hours),
     "status": ("_synthetic_status.ttl", gen_status),
@@ -660,6 +767,19 @@ def main(argv: List[str]) -> int:
         suffix, fn = GENERATORS[fam]
         text = fn(d, rnd)
         path = out_dir / f"{building_id}{suffix}"
+        # REFUSE to write a status file that names an asset it does not declare. This is
+        # the check that would have caught the fourteen dangling statuses, and it fails
+        # the run rather than warning: a warning in a provisioning script scrolls past.
+        orphans = undeclared_status_subjects(text, out_dir)
+        if orphans:
+            print(
+                f"  ERROR: {path.name} would point a status at "
+                f"{len(orphans)} undeclared subject(s): {', '.join(orphans[:8])}"
+                f"{' ...' if len(orphans) > 8 else ''}\n"
+                f"         Every ontosage:statusOf subject must be declared by some TTL "
+                f"the building ships. Nothing was written."
+            )
+            return 3
         if args.dry_run:
             print(f"  [dry-run] would write {path.name}  ({len(text.splitlines())} lines)")
         else:

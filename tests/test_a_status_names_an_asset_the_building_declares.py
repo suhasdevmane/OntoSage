@@ -1,0 +1,181 @@
+# -*- coding: utf-8 -*-
+"""A status record about an asset nobody declared is a confident false negative (BUG-438).
+
+WHAT WENT WRONG
+---------------
+"Is the lift working?" answered:
+
+    "This building has no lifts recorded in its model, so I can't tell you its state."
+
+The graph held `bldg:status_lift_0 a ontosage:AssetStatus ; ontosage:statusOf bldg:Lift_Main`,
+and fifteen lines of surveyed detail about that lift under a capability topic. What it did not
+hold was a single triple saying what `bldg:Lift_Main` IS.
+
+`asset_state_service._status_query` opens `?asset a ontosage:<Class>`, so an untyped subject
+cannot match however many statuses point at it. The lane was correct; the data referenced
+something that did not exist.
+
+IT WAS NOT ONE LIFT. A `FILTER NOT EXISTS { ?asset a ?t }` sweep on 2026-09-06 returned
+**14 of the building's 64 asset statuses (22%)** -- the reception, the cafe, the makerspace,
+the prayer room, the nursing room, the showers, the bike store, the toilets. Thirteen were
+amenities the generator had statused under an older amenity set and never regenerated. Every
+one of them answered "not recorded in this building's model" about a thing the building has.
+
+THE INVARIANT THESE TESTS PIN
+-----------------------------
+1. Across a building's whole TTL set, no `ontosage:statusOf` object is undeclared. This is
+   checked against the FILES rather than the graph: the graph is whatever was last uploaded,
+   so a check there would pass on the day a source file changed and fail a boot later.
+
+   The first version of this made the rule per-FILE and had the generator re-assert each
+   asset's type so a status file would stand alone. Stricter, and wrong: every subject in a
+   generated file must carry `ontosage:isSimulated` so a reader can tell a generated fact
+   from an authored one, and a lift is the building's own fabric, not a demo fixture. The
+   re-assertion would have either mislabelled real assets as simulated or put a hole in the
+   provenance rule. The asset belongs in the building's TTL; the generated file declares
+   its state.
+
+2. One asset carries at most one status record. A lift is both an `ontosage:Lift` and, once
+   it has a location, an `ontosage:Amenity`, so two generator families wrote one each -- from
+   two sources, with independently randomised states. The reading lane groups by asset and
+   SAMPLEs, so the answer became a coin toss between "operational" and "out of service".
+
+None of this names a building, a room or an asset: the checks are over whatever TTL the tree
+contains, so they run in the parked state and on any building added later.
+"""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+from typing import Dict, List, Set, Tuple
+
+import pytest
+
+pytestmark = pytest.mark.unit
+
+REPO = Path(__file__).resolve().parent.parent
+
+_STATUS_OF = re.compile(r"ontosage:statusOf\s+(?:bldg:([\w.\-]+)|<([^>]+)>)")
+_DECL_PREFIXED = re.compile(r"^bldg:([\w.\-]+)\s+a\s+", re.M)
+_DECL_FULL = re.compile(r"^<([^>]+)>\s*\n?\s*a\s+", re.M)
+
+
+def _building_dirs() -> List[Path]:
+    """Every building's input folder, active or parked.
+
+    Identified by `building.yaml`, which is what makes a directory a BUILDING rather than a
+    directory that happens to contain TTL. `bldg2_source/` and `bldg3_source/` hold the
+    original vendor exports -- tens of thousands of triples the system never loads -- and a
+    glob on `bldg*` swept them in, reporting a dangling reference in a file no building
+    uses. A check that reports defects in data nobody loads is a check people learn to skip.
+    """
+    dirs = [
+        p
+        for p in REPO.glob("bldg*")
+        if p.is_dir() and (p / "building.yaml").exists() and any(p.glob("*.ttl"))
+    ]
+    active = REPO / "input"
+    if (active / "building.yaml").exists() and any(active.glob("*.ttl")):
+        dirs.append(active)
+    return dirs
+
+
+def _strip_comments(text: str) -> str:
+    """Drop whole-line comments before matching.
+
+    Not a nicety: this file's own explanatory header quotes a `statusOf` triple, and the
+    first run of these tests duly reported that comment as a second status record for the
+    asset the comment is about. A checker that reads prose is a checker that will be
+    switched off.
+    """
+    kept = [l for l in text.splitlines() if not l.lstrip().startswith("#")]
+    return chr(10).join(kept)
+
+
+def _subjects(text: str) -> Tuple[Set[str], Set[str]]:
+    """(local names a status points at, local names this text declares a type for)."""
+    text = _strip_comments(text)
+    pointed = {
+        (a or b).rsplit("#", 1)[-1].rsplit("/", 1)[-1] for a, b in _STATUS_OF.findall(text)
+    }
+    declared = set(_DECL_PREFIXED.findall(text))
+    declared |= {m.rsplit("#", 1)[-1].rsplit("/", 1)[-1] for m in _DECL_FULL.findall(text)}
+    return pointed, declared
+
+
+#: The marker every file this generator writes carries in its header.
+_GENERATED = "GENERATED by scripts/provision_synthetic_sources.py"
+
+
+def test_there_is_something_to_check():
+    """A glob that silently matches nothing passes every assertion below it."""
+    assert _building_dirs(), "no building folder with TTL found; the discovery is wrong"
+
+
+@pytest.mark.parametrize("bdir", _building_dirs(), ids=lambda p: p.name)
+def test_no_status_in_a_building_names_an_undeclared_asset(bdir: Path):
+    """Property 2 -- across the building's whole TTL set."""
+    pointed: Set[str] = set()
+    declared: Set[str] = set()
+    for p in bdir.glob("*.ttl"):
+        a, b = _subjects(p.read_text(encoding="utf-8", errors="replace"))
+        pointed |= a
+        declared |= b
+    orphans = sorted(pointed - declared)
+    assert not orphans, (
+        f"{bdir.name}: {len(orphans)} asset(s) carry a status and are declared nowhere: "
+        f"{orphans[:12]}"
+    )
+
+
+@pytest.mark.parametrize("bdir", _building_dirs(), ids=lambda p: p.name)
+def test_one_asset_carries_at_most_one_status(bdir: Path):
+    """Property 3 -- two sources disagreeing is worse than one source being wrong.
+
+    The reading lane GROUP BYs the asset and SAMPLEs the value, so a second status record
+    does not produce a conflict the reader can see; it produces an arbitrary answer.
+    """
+    counts: Dict[str, int] = {}
+    for p in bdir.glob("*.ttl"):
+        for a, b in _STATUS_OF.findall(
+            _strip_comments(p.read_text(encoding="utf-8", errors="replace"))
+        ):
+            local = (a or b).rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+            counts[local] = counts.get(local, 0) + 1
+    doubled = sorted(k for k, v in counts.items() if v > 1)
+    assert not doubled, (
+        f"{bdir.name}: {doubled} carry more than one status record. Whichever the SAMPLE "
+        f"picks is the answer, and the two sources were generated independently."
+    )
+
+
+def test_the_generator_refuses_to_write_an_undeclared_status():
+    """The guard must FAIL on a bad input, or it is decoration.
+
+    This was written against the tree as it stood on 2026-09-06, where it flagged 44
+    subjects in one file and 1 in another.
+    """
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "_prov", REPO / "scripts" / "provision_synthetic_sources.py"
+    )
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    bad = (
+        "bldg:status_x a ontosage:AssetStatus ;\n"
+        '    ontosage:statusOf bldg:SomethingUndeclared ;\n'
+        '    ontosage:statusValue "operational" .\n'
+    )
+    assert mod.undeclared_status_subjects(bad) == ["SomethingUndeclared"]
+
+    good = "bldg:SomethingUndeclared a ontosage:Lift .\n" + bad
+    assert mod.undeclared_status_subjects(good) == []
+
+    # A COMMENT quoting the triple is prose, not a declaration -- and not a defect either.
+    # The first run of these tests reported this file's own explanatory header as a second
+    # status record for the asset it explains.
+    commented = "# ontosage:statusOf bldg:MentionedInProse\n" + good
+    assert mod.undeclared_status_subjects(commented) == []

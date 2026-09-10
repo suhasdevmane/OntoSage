@@ -781,7 +781,11 @@ class Space(BaseModel):
     """
 
     id: str = Field(..., description="Global unique ID: <building_id>.<zone_id>")
-    zone_id: str = Field(..., description="Zone/room identifier, e.g. '3.01'")
+    # No example identifier: this is a shared model, and `3.01` is one building's room
+    # numbering. A schema description reaches API docs and LLM tool definitions alike.
+    zone_id: str = Field(
+        ..., description="Zone/room identifier, as the building's own model spells it"
+    )
     label: str = Field(..., description="Human-readable label extracted from the floor plan")
     aliases: List[str] = Field(default_factory=list)
     type: SpaceType = Field(default="unknown")

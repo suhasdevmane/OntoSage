@@ -1,8 +1,18 @@
 // src/components/TopNav.js
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { fetchBuildingIdentity, NEUTRAL_NAME } from '../api/buildingIdentity';
 
 export default function TopNav() {
+  // The building's own name, from the API. It was the literal "Abacws", so every
+  // deployment wore the name of the first building this system served.
+  const [buildingName, setBuildingName] = React.useState(NEUTRAL_NAME);
+  React.useEffect(() => {
+    let alive = true;
+    fetchBuildingIdentity().then((b) => { if (alive) setBuildingName(b.buildingName); });
+    return () => { alive = false; };
+  }, []);
+
   const currentUser = sessionStorage.getItem('currentUser');
   const handleLogout = async () => {
     try {
@@ -18,7 +28,7 @@ export default function TopNav() {
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <div className="container">
-        <Link className="navbar-brand" to="/">Abacws SmartBot</Link>
+        <Link className="navbar-brand" to="/">{buildingName} SmartBot</Link>
 
         <button
           className="navbar-toggler"

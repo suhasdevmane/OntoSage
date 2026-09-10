@@ -15,6 +15,10 @@ manifests so a different building advertises its own amenities with no code chan
 import pytest
 
 from orchestrator.agents.spatial_agent import SpatialAgent
+# `_answer` became ASYNC in V10 W0-7: when floor-plan adjacency finds nothing, the nearest
+# path now consults the building's amenity catalogue before declining, and that is a SPARQL
+# round trip. The tests below are unchanged in what they assert.
+
 
 pytestmark = pytest.mark.unit
 
@@ -36,29 +40,33 @@ def _agent():
 MANIFESTS = [_Manifest(["toilet", "lift", "staircase", "meeting_room", "office"])]
 
 
-def test_an_unknown_amenity_does_not_return_a_list_of_everything():
-    out = _agent()._answer("where's the nearest water refill station to Room 3.18?", MANIFESTS)
+@pytest.mark.asyncio
+async def test_an_unknown_amenity_does_not_return_a_list_of_everything():
+    out = await _agent()._answer("where's the nearest water refill station to Room 3.18?", MANIFESTS)
     assert "All spaces" not in out
     assert "not one of them" in out
 
 
-def test_it_names_what_it_can_actually_find():
-    out = _agent()._answer("where is the nearest water refill station?", MANIFESTS)
+@pytest.mark.asyncio
+async def test_it_names_what_it_can_actually_find():
+    out = await _agent()._answer("where is the nearest water refill station?", MANIFESTS)
     assert "toilet" in out and "meeting room" in out
 
 
-def test_the_amenity_list_comes_from_the_building_not_a_constant():
+@pytest.mark.asyncio
+async def test_the_amenity_list_comes_from_the_building_not_a_constant():
     """A different building must advertise ITS amenities with no code change."""
-    out = _agent()._answer(
+    out = await _agent()._answer(
         "where is the nearest water refill station?", [_Manifest(["prayer_room", "bike_store"])]
     )
     assert "prayer room" in out and "bike store" in out
     assert "toilet" not in out
 
 
-def test_it_does_not_claim_the_building_lacks_the_amenity():
+@pytest.mark.asyncio
+async def test_it_does_not_claim_the_building_lacks_the_amenity():
     """An unlabelled amenity is a gap in the plan, not a fact about the building."""
-    out = _agent()._answer("where is the nearest water refill station?", MANIFESTS)
+    out = await _agent()._answer("where is the nearest water refill station?", MANIFESTS)
     assert "gap in the plan" in out
 
 
@@ -70,14 +78,24 @@ def test_it_does_not_claim_the_building_lacks_the_amenity():
         "where is the nearest fire exit?",
     ],
 )
-def test_a_known_amenity_still_reaches_the_nearest_handler(question, monkeypatch):
+@pytest.mark.asyncio
+async def test_a_known_amenity_still_reaches_the_nearest_handler(question, monkeypatch):
     """The safety property: this must not swallow the questions that already worked."""
     agent = _agent()
-    monkeypatch.setattr(agent, "_answer_nearest", lambda *a, **k: "NEAREST", raising=False)
-    assert agent._answer(question, MANIFESTS) == "NEAREST"
+
+    # The stub is a COROUTINE, because `_answer_nearest` became async in V10 W0-7 -- it
+    # now consults the building's amenity catalogue before declining, which is a SPARQL
+    # round trip. A plain lambda here would make this test pass against a handler that can
+    # no longer be awaited.
+    async def _stub(*_a, **_k):
+        return "NEAREST"
+
+    monkeypatch.setattr(agent, "_answer_nearest", _stub, raising=False)
+    assert await agent._answer(question, MANIFESTS) == "NEAREST"
 
 
-def test_a_manifest_with_no_spaces_still_declines_cleanly():
-    out = _agent()._answer("where is the nearest water refill station?", [_Manifest([])])
+@pytest.mark.asyncio
+async def test_a_manifest_with_no_spaces_still_declines_cleanly():
+    out = await _agent()._answer("where is the nearest water refill station?", [_Manifest([])])
     assert "not one of them" in out
     assert "I can find the nearest:" not in out

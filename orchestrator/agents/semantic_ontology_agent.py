@@ -104,13 +104,13 @@ Extract the following (JSON format):
 
 Return ONLY valid JSON with these 5 keys. Be generous - extract anything that might help find relevant ontology data.
 
-Example output:
+Example output (the identifiers are placeholders — use the ones in the question):
 {{
-  "entities": ["CO2_Level_Sensor_5.01"],
+  "entities": ["<the entity name exactly as the question spells it>"],
   "properties": ["label", "definition"],
   "classes": ["CO2 sensor", "sensor"],
   "intent": "get label and definition of specific sensor",
-  "keywords": ["CO2", "level", "sensor", "5.01"]
+  "keywords": ["CO2", "level", "sensor", "<the identifier the user said>"]
 }}
 
 Your JSON:"""

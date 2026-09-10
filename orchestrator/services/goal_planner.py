@@ -64,6 +64,24 @@ def _find_config() -> Optional[Path]:
 
 
 def _find_building_overlay(building_id: str) -> Optional[Path]:
+    """Locate this building's goals.yaml overlay, in EITHER input layout.
+
+    The templates above name the nested form only, and the canonical layout is FLAT: under
+    swap-by-rename the active building's files sit directly in ``input/``. So the overlay
+    could never be found for any building this repo ships -- the loader ran, found nothing,
+    and the per-building overrides were silently absent, which reads in a log exactly like
+    a building that chose not to override anything.
+
+    Five other per-building loaders had the same shape: the same search logic written six
+    ways, five of the copies wrong (CAVEAT-448). ``shared/building_paths`` is the one
+    implementation; the templates remain as a fallback for a caller with neither layout
+    under a standard root.
+    """
+    from shared.building_paths import resolve_building_file
+
+    resolved = resolve_building_file(building_id, "goals.yaml")
+    if resolved is not None:
+        return resolved
     for template in _BUILDING_OVERLAY_PATHS:
         p = Path(template.format(building_id=building_id))
         if p.is_file():

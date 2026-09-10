@@ -119,7 +119,11 @@ export default function FloorPlanViewer({
     }
     const ctrl = new AbortController();
     setSearching(true);
-    const building = manifest?.building_id || "abacws";
+    // NO BUILDING FALLBACK. This was `|| "abacws"` -- not a default but a specific
+    // building, so a search issued before the manifest loaded quietly queried somewhere
+    // else and returned plausible results for the wrong place. An empty building lets the
+    // API apply the ACTIVE one, which is the only correct answer available here.
+    const building = manifest?.building_id || "";
     fetch(
       `${apiBase}/api/v1/floor-plans/search?q=${encodeURIComponent(searchQuery)}&building=${building}`,
       { signal: ctrl.signal }

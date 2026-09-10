@@ -67,7 +67,16 @@ class SPARQLValidator:
       Layer 2 — Redis query cache (successful results reused)
     """
 
-    # Known common prefix declarations to inject for rdflib parse
+    # Known common prefix declarations to inject for rdflib parse.
+    #
+    # `ontosage:` and `hbco:` were MISSING until 2026-09-06 (CAVEAT-447), and those are the
+    # project's OWN two vocabularies -- capabilities, records, asset state, measurand bands,
+    # and every lay-term concept the resolver maps. A generated query using either failed
+    # pre-flight unless the model happened to emit the PREFIX line itself. The prompt
+    # teaches both; the validator accepted neither.
+    #
+    # `s223:` sits beside `ashrae:` because the same namespace is spelled both ways across
+    # this project's TTL and prompts, and a query is not wrong for choosing the other one.
     _PREFIX_INJECT = (
         "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
@@ -75,6 +84,12 @@ class SPARQLValidator:
         "PREFIX brick: <https://brickschema.org/schema/Brick#>\n"
         "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
         "PREFIX ashrae: <http://data.ashrae.org/standard223#>\n"
+        "PREFIX s223: <http://data.ashrae.org/standard223#>\n"
+        "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+        "PREFIX hbco: <http://ontosage.org/hbco#>\n"
+        "PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n"
+        "PREFIX unit: <http://qudt.org/vocab/unit/>\n"
+        "PREFIX rec: <https://w3id.org/rec#>\n"
     )
 
     # Max results safety cap for SPARQL queries without explicit LIMIT

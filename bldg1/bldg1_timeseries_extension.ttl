@@ -129,7 +129,6 @@ bldg:Energy_Meter_Floor5 a owl:NamedIndividual ,
 
 bldg:Occupancy_Sensor_Floor0 a owl:NamedIndividual ,
         brick:Occupancy_Count_Sensor ,
-        brick:Occupancy_Sensor ,
         brick:Sensor ,
         brick:Point ;
     rdfs:label "Occupancy Count Sensor — Floor 0"@en ;
@@ -148,7 +147,6 @@ bldg:Occupancy_Sensor_Floor0 a owl:NamedIndividual ,
 
 bldg:Occupancy_Sensor_Floor1 a owl:NamedIndividual ,
         brick:Occupancy_Count_Sensor ,
-        brick:Occupancy_Sensor ,
         brick:Sensor ,
         brick:Point ;
     rdfs:label "Occupancy Count Sensor — Floor 1"@en ;
@@ -167,7 +165,6 @@ bldg:Occupancy_Sensor_Floor1 a owl:NamedIndividual ,
 
 bldg:Occupancy_Sensor_Floor2 a owl:NamedIndividual ,
         brick:Occupancy_Count_Sensor ,
-        brick:Occupancy_Sensor ,
         brick:Sensor ,
         brick:Point ;
     rdfs:label "Occupancy Count Sensor — Floor 2"@en ;
@@ -186,7 +183,6 @@ bldg:Occupancy_Sensor_Floor2 a owl:NamedIndividual ,
 
 bldg:Occupancy_Sensor_Floor3 a owl:NamedIndividual ,
         brick:Occupancy_Count_Sensor ,
-        brick:Occupancy_Sensor ,
         brick:Sensor ,
         brick:Point ;
     rdfs:label "Occupancy Count Sensor — Floor 3"@en ;
@@ -205,7 +201,6 @@ bldg:Occupancy_Sensor_Floor3 a owl:NamedIndividual ,
 
 bldg:Occupancy_Sensor_Floor4 a owl:NamedIndividual ,
         brick:Occupancy_Count_Sensor ,
-        brick:Occupancy_Sensor ,
         brick:Sensor ,
         brick:Point ;
     rdfs:label "Occupancy Count Sensor — Floor 4"@en ;
@@ -224,7 +219,6 @@ bldg:Occupancy_Sensor_Floor4 a owl:NamedIndividual ,
 
 bldg:Occupancy_Sensor_Floor5 a owl:NamedIndividual ,
         brick:Occupancy_Count_Sensor ,
-        brick:Occupancy_Sensor ,
         brick:Sensor ,
         brick:Point ;
     rdfs:label "Occupancy Count Sensor — Floor 5"@en ;

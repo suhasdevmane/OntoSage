@@ -723,6 +723,78 @@ sql series ─► preprocessor ─► model_selector ─► {ARIMA | exp-smoothi
 
 The selector picks the best model for the series' characteristics; `metrics.py` reports RMSE / R². Tests: `tests/test_forecast_pipeline.py`, `tests/test_forecast_routing.py` (live-stack suites).
 
+### 5.7 The deliberation lane — ARBITER (Improvement Plan V4)
+
+`orchestrator/services/deliberation/` answers **constraint-ranking** questions: *"which
+space has the best conditions for focused work this afternoon?"*. Routed via the
+`deliberate` intent (`DELIBERATE_RE` in the routing contract).
+
+Its design claim is narrow and worth stating exactly, because everything else follows
+from it:
+
+> **The LLM's only generative role is compiling words into symbols. Every number after
+> that comes from code.**
+
+```
+question
+   │
+   ▼  compiler.py — THE ONLY NEURAL STEP
+CQ-IR (cqir.py)          a typed, closed-vocabulary query: which KNOWN modality each
+   │                     phrase means, the preference direction, spatial qualifiers,
+   │                     the time anchor. Every field validated in code against what
+   │                     this building declares — an unknown term is rejected, never
+   │                     resolved to the nearest match.
+   ▼  capability_schema.validate — admission
+admit / clarify          clarify_policy.py: ONE question maximum. Proceeding instead
+   │                     REQUIRES every default to be declared as an assumption.
+   ▼  candidates.py
+candidate spaces         + a coverage ledger of what could not be assessed and why
+   │
+   ▼  fetch.py           per-uuid limits, per-store routing
+readings
+   │
+   ▼  scorer.py          deterministic ranking; every utility anchored to a CITED
+   │                     normalisation band (physical standards, not building facts)
+   ▼  dossier.py
+EvidenceDossier          the compiled interpretation, each declared assumption, the
+                         coverage ledger, a candidate × criterion evidence table
+                         (value, window, point count, sensor uuid, store), the
+                         scoring citations, the tie-break rule, and a numeric guard
+                         that fails the answer if the prose and the table disagree
+```
+
+**`plan_fingerprint` vs `plan_hash`.** Both are published, and they answer different
+questions. `plan_fingerprint` is the reasoning plan alone — **this is the determinism
+anchor to compare across runs, models or buildings**. `plan_hash` additionally folds in the
+execution context (candidate set, fetch window, time basis), so on a live building it MUST
+differ between runs by construction: the candidate set excludes currently-busy rooms.
+Comparing `plan_hash` for invariance is what made BUG-184 look like non-determinism when it
+was not.
+
+**`plan_trace`** (`workflow/_orchestrator.py::build_plan_trace`) reports the stages that
+actually ran, read from the dossier's `timings_ms`. A run that forecast says `forecast`; a
+plan parked at the admission gate reports only `compile_cqir`, `admission_gate`,
+`dossier_guard`. It used to return a constant six-element list for every deliberative
+answer (fixed in V10 W4-1).
+
+**SATURATE** (`saturation.py`) turns each `space × modality` the coverage audit marks
+`missing` or `unbacked` into a simulated sensor carrying **both halves** of the
+connect-data contract (#8) — the Brick point triples *and* a `ref:TimeseriesReference` with
+a deterministic uuid5 — so a gap is filled visibly rather than papered over.
+
+**Building-agnostic by test**, not by convention:
+`tests/test_coverage_audit.py::test_no_building_literals_in_deliberation_modules`.
+
+| env var | default | effect |
+|---|---|---|
+| `DELIBERATE_CLARIFY_OFF` | `false` | Ablation arm (V4-T29). Read at CALL time, so a run can toggle it without a restart. On: the lane never asks its one clarifying question and proceeds on declared assumptions. Leave off outside an experiment — an unasked question becomes an undeclared guess. |
+
+Tests: `tests/test_the_plan_trace_records_what_ran.py`,
+`tests/test_a_named_floor_is_not_asked_about.py`, `tests/test_coverage_audit.py`.
+Live: the `deliberate` group in `scripts/regression_probe.py`.
+
+---
+
 ---
 
 ## 6. Adding stuff (the YAML-only path)

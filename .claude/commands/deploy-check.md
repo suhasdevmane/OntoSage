@@ -37,7 +37,11 @@ docker exec redis redis-cli ping
 
 ```bash
 echo "=== GraphDB triple count ==="
-curl -s -X POST http://localhost:7200/repositories/ontosage/sparql \
+# The repository is `bldg` (shared/config.py GRAPHDB_REPOSITORY, and the live server).
+# This said `ontosage`, which exists on no deployment, so the step it gates could
+# only ever return an error -- and the gate below reads that as a failed build
+# rather than as a wrong URL (CAVEAT-449).
+curl -s -X POST http://localhost:7200/repositories/bldg/sparql \
   -H "Content-Type: application/sparql-query" \
   -H "Accept: application/sparql-results+json" \
   -d "SELECT (COUNT(*) as ?n) WHERE { ?s ?p ?o }" | python -m json.tool

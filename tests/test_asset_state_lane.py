@@ -534,3 +534,76 @@ def test_a_bare_mention_of_cleaning_is_not_a_schedule_question(question):
     taken by observability), and the rule this module already states in its own comment.
     """
     assert classify_asset_question(question) is None
+
+
+# ── conflicting records (BUG-451) ────────────────────────────────────────────
+@pytest.mark.asyncio
+async def test_two_sources_disagreeing_is_reported_not_sampled_away():
+    """The query GROUP BYs the asset and SAMPLEs the value, so a second record does not
+    produce a visible conflict — it produces an arbitrary answer with a fresh-looking date.
+
+    Measured 2026-09-06: declaring this building's lift made it both an ontosage:Lift and
+    a located ontosage:Amenity, so two generator families each wrote it a status —
+    "operational" from the lift controller and "out_of_service" from the estates helpdesk.
+    MAX(?t) took the newer date and SAMPLE(?v) took whichever value it liked, so the answer
+    was a coin toss and neither side of it mentioned that a second source disagreed.
+
+    An asset whose records do not agree is NOT confirmed working. For an accessibility
+    asset that distinction strands somebody.
+    """
+    svc = AssetStateService(
+        _exec(
+            [
+                {
+                    "asset": _NS + "Lift1",
+                    "label": "Lift 1",
+                    "value": "operational",
+                    "value_count": "2",
+                    "all_values": "operational / out_of_service",
+                    "observed": (_NOW - timedelta(hours=1)).isoformat(),
+                }
+            ]
+        ),
+        _NS,
+    )
+    out = await svc.answer("Are the lifts working?", now=_NOW)
+    assert out["success"] is True
+    assert out["operational"] == 0, "a disputed asset must not be counted as working"
+    body = out["formatted_response"].lower()
+    assert "disagree" in body or "unconfirmed" in body, (
+        f"the disagreement is not stated; the reader sees one of two conflicting values "
+        f"presented as the answer: {out['formatted_response']!r}"
+    )
+
+
+@pytest.mark.asyncio
+async def test_a_single_record_is_not_reported_as_disputed():
+    """The guard must not fire on the ordinary case."""
+    svc = AssetStateService(
+        _exec(
+            [
+                {
+                    "asset": _NS + "Lift1",
+                    "label": "Lift 1",
+                    "value": "operational",
+                    "value_count": "1",
+                    "all_values": "operational",
+                    "observed": (_NOW - timedelta(hours=1)).isoformat(),
+                }
+            ]
+        ),
+        _NS,
+    )
+    out = await svc.answer("Are the lifts working?", now=_NOW)
+    assert out["operational"] == 1
+    assert "disagree" not in out["formatted_response"].lower()
+
+
+def test_the_query_asks_for_the_disagreement():
+    """A renderer that can report a conflict is useless if the query never counts one."""
+    svc = AssetStateService(_exec([]), _NS)
+    q = svc._status_query("Lift")
+    assert "COUNT(DISTINCT ?v)" in q and "?value_count" in q, (
+        "the status query no longer counts distinct status values; conflicting records "
+        "will be collapsed by SAMPLE with nothing to signal it"
+    )

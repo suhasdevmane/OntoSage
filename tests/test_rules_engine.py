@@ -69,12 +69,20 @@ rules:
 
 
 def _engine_from_yaml(yaml_str: str, fetcher=None, notifier=None) -> RulesEngine:
-    """Build a RulesEngine with patched file loading and injected fetcher/notifier."""
-    engine = RulesEngine.__new__(RulesEngine)
-    engine._building_id = "bldg_test"
-    engine._rules = []
-    engine._value_fetcher = fetcher or AsyncMock(return_value=None)
-    engine._notifier = notifier or AsyncMock()
+    """Build a RulesEngine with patched file loading and injected fetcher/notifier.
+
+    Through the REAL constructor. These helpers used `RulesEngine.__new__` and set four
+    attributes by hand, which meant every new instance attribute broke them from the
+    outside — adding the uuid->storedAt map for BUG-485 failed four tests with
+    `AttributeError: no attribute '_storage_of'` in code the tests were not about.
+    `__init__` takes injected collaborators for exactly this purpose and touches no files,
+    so there was never anything to bypass.
+    """
+    engine = RulesEngine(
+        "bldg_test",
+        value_fetcher=fetcher or AsyncMock(return_value=None),
+        notifier=notifier or AsyncMock(),
+    )
 
     data = yaml.safe_load(yaml_str) or {}
     for entry in data.get("rules", []):
@@ -88,11 +96,12 @@ def _engine_from_yaml(yaml_str: str, fetcher=None, notifier=None) -> RulesEngine
 
 
 def _engine_with_rules(rules: list, fetcher=None, notifier=None) -> RulesEngine:
-    engine = RulesEngine.__new__(RulesEngine)
-    engine._building_id = "bldg_test"
+    engine = RulesEngine(
+        "bldg_test",
+        value_fetcher=fetcher or AsyncMock(return_value=None),
+        notifier=notifier or AsyncMock(),
+    )
     engine._rules = [EcaRule(**r) for r in rules]
-    engine._value_fetcher = fetcher or AsyncMock(return_value=None)
-    engine._notifier = notifier or AsyncMock()
     return engine
 
 
@@ -323,7 +332,12 @@ async def test_concept_trigger_resolves_via_hbco():
     mock_cr = MagicMock()
     mock_cr.resolve = AsyncMock(return_value=[mock_match])
     with patch("orchestrator.services.concept_resolver.concept_resolver", mock_cr), patch.object(
-        engine, "_uuid_for_class", AsyncMock(return_value="mock-humidity-uuid")
+        # `_uuids_for_class` (plural) since BUG-482: the engine now asks for CANDIDATES
+        # and keeps the first that actually reports a value, rather than taking whichever
+        # IRI sorted first — which had bound a rule to a sensor holding zero rows.
+        engine,
+        "_uuids_for_class",
+        AsyncMock(return_value=["mock-humidity-uuid"]),
     ), patch.object(engine, "_in_cooldown", AsyncMock(return_value=False)), patch.object(
         engine, "_mark_cooldown", AsyncMock()
     ), patch.object(

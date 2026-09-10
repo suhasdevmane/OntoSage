@@ -121,8 +121,29 @@ def resolve_building_context(building_id: Optional[str]) -> BuildingContext:
             or yaml_data.get("namespace")
             or settings.BUILDING_NAMESPACE
         ),
-        prefix=yaml_data.get("building_prefix") or settings.BUILDING_PREFIX,
-        timezone=yaml_data.get("building_timezone") or settings.BUILDING_TIMEZONE,
+        # BOTH SPELLINGS, because the readers and the writers were written apart.
+        #
+        # This read `building_prefix` and `building_timezone`. Every building.yaml in the
+        # repo that states a prefix writes `ontology_prefix`, and bldg1 writes NEITHER key
+        # and no timezone at all -- so every building silently ran on the env default, and a
+        # building whose prefix genuinely differed would have been misread with no error
+        # (CAVEAT-446). Note the shape: not a crash, not a warning, just a wrong value that
+        # happens to be right for the building the defaults were set from.
+        #
+        # `ontology_prefix` is listed first because it is what the buildings actually write
+        # and what onboard_building.py generates; the older name is honoured so an existing
+        # file keeps working. The swap validator now rejects a building.yaml that declares
+        # neither.
+        prefix=(
+            yaml_data.get("ontology_prefix")
+            or yaml_data.get("building_prefix")
+            or settings.BUILDING_PREFIX
+        ),
+        timezone=(
+            yaml_data.get("timezone")
+            or yaml_data.get("building_timezone")
+            or settings.BUILDING_TIMEZONE
+        ),
     )
 
 

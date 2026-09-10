@@ -134,6 +134,13 @@ hbco:too_humid rdf:type hbco:Concept ,
     hbco:layTerm "muggy air"^^xsd:string ;
     hbco:layTerm "moist air"^^xsd:string ;
     hbco:layTerm "damp feeling"^^xsd:string ;
+    # "damp" on its own. `input/rules.yaml` ships a rule triggering on this exact concept
+    # name and it could never bind: only the two-word "damp feeling" was here, so
+    # `concept_resolver.resolve("damp")` returned nothing and the rule was inert
+    # (TODO-483, found while fixing BUG-481). It is the ordinary English word for the
+    # condition a humidity sensor reports, so it belongs in the core mapping rather than
+    # a per-building overlay.
+    hbco:layTerm "damp"^^xsd:string ;
     hbco:layTerm "clammy"^^xsd:string ;
     hbco:layTerm "sticky air"^^xsd:string ;
     hbco:layTerm "high humidity"^^xsd:string ;

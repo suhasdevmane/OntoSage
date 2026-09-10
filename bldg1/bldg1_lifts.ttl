@@ -1,0 +1,41 @@
+# The building's passenger lift, declared as the asset it is.
+#
+# WHY THIS FILE EXISTS
+# --------------------
+# The graph held `bldg:status_lift_0 ontosage:statusOf bldg:Lift_Main` and a detailed
+# published description of the lift under `bldg:Cap_lift_accessibility_detail` -- and no
+# triple anywhere declaring what `bldg:Lift_Main` IS. `asset_state_service._status_query`
+# opens `?asset a ontosage:Lift`, so an untyped subject cannot match however many statuses
+# name it, and "Is the lift working?" answered:
+#
+#     "This building has no lifts recorded in its model."
+#
+# about a lift the building describes in fifteen lines of surveyed detail. A confident
+# false negative about data the building holds is what design contract 4 exists to
+# prevent (BUG-438).
+#
+# NOTHING HERE IS SIMULATED. Every fact below is transcribed from the same published
+# accessibility survey that `Cap_lift_accessibility_detail` cites, so the lift carries no
+# ontosage:isSimulated flag -- only its live STATUS record does, and that lives in the
+# generated status file. Declaring a real asset as simulated would relabel the building's
+# own fabric as a demo fixture.
+
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix brick:    <https://brickschema.org/schema/Brick#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+bldg:Lift_Main a ontosage:Lift , ontosage:Amenity ;
+    rdfs:label "Main passenger lift"@en ;
+    ontosage:capabilityCategory "Accessibility" ;
+    ontosage:layTerms "lift, elevator, main lift, passenger lift, left lift, is the lift working, lift status, is the elevator working" ;
+    ontosage:locationText "Main passenger lift, left from the front entrance, approximately 25 m from the entrance; serves floors G, 1, 2, 3, 4 and 5." ;
+    ontosage:answerText "The main passenger lift is located to the left of the front entrance, about 25 m in, and serves floors G, 1, 2, 3, 4 and 5. It has automatic double doors onto a lift lobby on every floor." ;
+    ontosage:note "cardiff_university_accessibility_page" .
+
+# The floors served are stated in the answer text above and NOT as ontosage:servesSpace
+# triples: that property's declared domain is ontosage:ServedZone, so asserting it here
+# would infer the lift into a class it does not belong to. An undefined or misapplied
+# predicate is how this project has previously acquired 56 mistyped instances -- the
+# triple must be right, not merely present.

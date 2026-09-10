@@ -7,6 +7,26 @@ from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from dotenv import load_dotenv
 
+
+# ── The ACTIVE building's namespace, read at import from the environment ──────
+#
+# This file hardcoded `http://abacwsbuilding.cardiff.ac.uk/abacws#` in THREE places: two
+# SPARQL prompt preambles and the namespace-to-prefix shortening map. So the RAG fallback
+# taught every building one building's namespace, and shortened only that building's IRIs
+# -- on any other building the prefix was wrong in the prompt and the labels came back as
+# full IRIs.
+#
+# `BUILDING_NAMESPACE` is set per building in `.env`, which is the same source the
+# orchestrator's own `shared/config.py` reads. The default is empty rather than a
+# placeholder: an empty prefix declaration is a visible error, while a placeholder
+# namespace resolves to nothing and returns zero rows with no error at all.
+BUILDING_NAMESPACE = (os.getenv("BUILDING_NAMESPACE", "") or "").strip()
+BUILDING_PREFIX = (os.getenv("BUILDING_PREFIX", "bldg") or "bldg").strip()
+
+_BLDG_PREFIX_LINE = (
+    f"PREFIX {BUILDING_PREFIX}: <{BUILDING_NAMESPACE}>" if BUILDING_NAMESPACE else ""
+)
+
 # Load environment variables
 load_dotenv()
 
@@ -31,7 +51,7 @@ except ImportError:
     sys.exit(1)
 
 # --- Helper Data ---
-PREFIXES_HEADER = """
+PREFIXES_HEADER = f"""
 PREFIX rec: <https://w3id.org/rec#>
 PREFIX sh: <http://www.w3.org/ns/shacl#>
 PREFIX bsh: <https://brickschema.org/schema/BrickShape#>
@@ -43,7 +63,7 @@ PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
 PREFIX tag: <https://brickschema.org/schema/BrickTag#>
 PREFIX xml: <http://www.w3.org/XML/1998/namespace>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
-PREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>
+{_BLDG_PREFIX_LINE}
 PREFIX qudt: <http://qudt.org/schema/qudt/>
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
@@ -58,7 +78,7 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 # Namespace prefix mappings
 NAMESPACE_PREFIXES = {
     'https://brickschema.org/schema/Brick#': 'brick:',
-    'http://abacwsbuilding.cardiff.ac.uk/abacws#': 'bldg:',
+    # The active building's namespace is added below, after this literal map.
     'https://w3id.org/rec#': 'rec:',
     'http://www.w3.org/2000/01/rdf-schema#': 'rdfs:',
     'http://www.w3.org/1999/02/22-rdf-syntax-ns#': 'rdf:',
@@ -78,6 +98,12 @@ NAMESPACE_PREFIXES = {
     'http://www.w3.org/ns/shacl#': 'sh:',
     'https://brickschema.org/schema/BrickShape#': 'bsh:',
 }
+# Added at import so a swap changes it without a code edit. Kept OUT of the literal above
+# so the shared vocabularies stay a constant and the building-specific entry is visibly
+# derived.
+if BUILDING_NAMESPACE:
+    NAMESPACE_PREFIXES[BUILDING_NAMESPACE] = f"{BUILDING_PREFIX}:"
+
 
 def uri_to_prefix(uri: str) -> str:
     """
@@ -201,7 +227,7 @@ async def get_entity_context(entities: list, verbose: bool = True) -> str:
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
 PREFIX brick: <https://brickschema.org/schema/Brick#>
-PREFIX bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#>
+{_BLDG_PREFIX_LINE}
 
 SELECT ?entity ?label ?type ?comment
 WHERE {{

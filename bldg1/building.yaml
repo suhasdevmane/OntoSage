@@ -18,6 +18,16 @@ building_name: Abacws Building
 # hardcoded default in shared/config.py — swapping BACK to bldg1 would fail.
 ontology_namespace: "http://abacwsbuilding.cardiff.ac.uk/abacws#"
 
+# The prefix label and the timezone, stated rather than inherited.
+#
+# Both were ABSENT here, and shared/building_context.py read them under two key names no
+# building.yaml in the repo writes -- so every building silently ran on the env defaults,
+# and a building whose prefix genuinely differed would have been misread with no error
+# (CAVEAT-446). The defaults happened to be correct for this building, which is exactly why
+# nobody noticed. bldg2, bldg3 and bldg4 already declare `ontology_prefix`.
+ontology_prefix: bldg
+timezone: "Europe/London"
+
 # ── Data provenance (building-level) ─────────────────────────────────────────
 # Describes the WHOLE building — its ontology, sensors AND readings — a broader
 # statement than `nature:` on a single connection in database_registry.yaml (that

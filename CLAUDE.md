@@ -7,92 +7,125 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 ## New session orientation (read this first)
 
-**Current branch:** `main` — all P0 + multi-building work committed and pushed (through
-`1f263a4`, 2026-07-29). **Never commit or push without the user's explicit approval.**
+**Current branch:** `development` — last commit `b80c3de`. **Never commit or push without
+the user's explicit approval.**
 
 **Three files every session must read** (in order):
 1. `CLAUDE.md` (this file) — navigation index, debugging, workflow rules
 2. `README.md` — architecture overview, stakeholder guide, data setup
 3. `ONTOSAGE.md` — complete technical reference (source layout, all phases, config)
 
-> **STALE BELOW — see [`tasks/V6_HANDOFF.md`](./tasks/V6_HANDOFF.md) first (2026-08-23).**
-> The snapshot in this section predates the V6 audit and Waves A+B. Current truth lives in
-> `tasks/V6_HANDOFF.md`, `tasks/V6_AUDIT_2026_08_23.md` and the two trackers. Headline: V6 is
-> 31 done / 28 todo, suite 2,655 pass, every evidence gate wired ADVISORY and live-verified,
-> 1,994 measured cadences loaded as TTL with zero code change, nothing committed.
+**Current state snapshot (2026-09-07):**
 
-**Current state snapshot (2026-08-22):**
-- Test suite: **2488 passing, 2 skipped** (`pytest -m unit -q`). Nothing since the last commit
-  is committed — the whole V4+V5+V6 body of work is uncommitted and awaiting the user's review.
-- **Sensor connectivity is now complete on bldg1** (TODO-224): every one of the 2,688 timeseries
-  UUIDs resolves to rows in a registered database (was 2,597/2,598), and the 90 points that were
-  described in the ontology but connected to nothing are linked. The 23 points still without a
-  UUID are the correct ones — cameras, setpoints, commands. Full audit, including how the
-  GraphDB deletion was verified:
-  [`scripts/outputs/SENSOR_CONNECTIVITY_AUDIT.md`](./scripts/outputs/SENSOR_CONNECTIVITY_AUDIT.md).
-- **CAVEAT-039 was a live wrong-answer defect, not the P2 it was labelled.** Blank-node
-  duplication from a pre-b4c7381 context-less POST had grown sensor reference fan-out to 68.9
-  (expected 1-2), and the class-listing query's `LIMIT 50` with no `DISTINCT` was exhausted by a
-  single subject: `brick:CO2_Sensor` returned **1 distinct sensor against a true 280**. Cleaned
-  (1,211,551 triples, backed up first, rescue gate 0) and the query rewritten to `GROUP BY` +
-  `SAMPLE`. Now returns 280 of 280. **Both fixes were needed; neither sufficed alone.**
-- **`--resume` on the capture harness was inert** (BUG-219): it counted quarantined rows as
-  captured, so the remedy its own output recommends did nothing. Fourth measurement-apparatus
-  bug in this project's history — see `tasks/lessons.md`.
-- **BUG-188's context-window fix never reached bldg1** (BUG-221): `.env` sat at
-  `OLLAMA_NUM_CTX=8192` while `.env2`/`.env3` had 16384, so the entire 1,580-question golden
-  baseline ran on the configuration BUG-188 identified as faulty. Now 16384, verified live.
-- Corpus coverage: **63.8%** (bldg1, 2026-06-18) / **70.4%** (bldg2, 2026-07-30) on the
-  240-question stratified replay — both above the ≥60% target. A 2026-08-18 replay on
-  bldg2 under the hosted model scored **78.8% combined / 25.0% data-backed** with zero
-  transport errors (`scripts/outputs/replay/cloud_240_r1.md`).
-- **Grading a run is only valid if the stack was healthy for all of it.** Two separate
-  incidents produced fictitious numbers: a mid-run container recreate (CAVEAT-173, and a
-  9.2%-coverage artifact, BUG-176) and an LLM outage whose fallback text reads like an
-  answer (BUG-177 — one such fallback was a 1000-row dump that would have graded as a
-  PASS). Both harnesses now quarantine those rows instead of scoring them; the API
-  declares `llm_degraded` per turn. Never publish a number from a run that reports
-  invalid rows.
-- **Three buildings, all tracked in git, swap-by-rename, ONE active at a time:**
-  the active building's files are `input/` + `.env` + `docker-compose.yml`; parked
-  buildings live as `bldgN/` + `.envN` (gitignored — identity delta tracked as
-  `<folder>/env.building`) + `docker-compose.bldgN.yml`. Per-building state:
-  `./volumes/<BUILDING_ID>/*` (guarded — compose refuses to start if `BUILDING_ID`
-  unset). **Committed state = NO building active** (Workflow rule 8): a fresh clone has
-  `input/`, `.env` and `docker-compose.yml` ABSENT. Activate one by rename before
-  `docker compose up -d` — see "Run building N" below. Tests and code must never
-  require an active building (`pytest -m unit -q` passes in the parked state).
-- **Swap procedure:** `docker compose down` the OLD building FIRST (its project name,
-  e.g. `docker compose -p ontosage_bldg2 down`), then rename `input/`↔`bldgN/`,
-  `.env`↔`.envN`, `docker-compose.yml`↔`docker-compose.bldgN.yml`, then `up -d`.
-  Cold boots self-heal: ontology init retries after TTL ingestion + a ~7-min
-  background backstop for slow GraphDB warm-up (BUG-100, fixed 2026-07-30).
-- Admin portal (`/admin`, 8 endpoints), narrow MySQL tables + adapter, TTL
-  extensions, RBAC (`require_permission()` on all data endpoints),
-  `STRICT_SECRETS` boot guard, P0 hardening rounds 1+2 — all **committed on main**.
+> This block said branch `main`, V6, and 2,488 tests for weeks after all three stopped being
+> true, and carried its own "STALE BELOW" warning pointing at a handoff doc that had also
+> aged. A snapshot nobody trusts is worse than none: it costs every session the time to
+> discover it is wrong. **If you change the branch, the plan or the suite size, change this
+> block in the same commit.**
 
-**To verify current state before starting work:**
-```bash
-pytest -m unit -q                                  # should show 1590 pass, 4 skip, 0 fail
-git status                                         # shows what's modified vs committed
-git diff --stat HEAD                               # shows scope of uncommitted changes
-docker-compose logs --tail=20 orchestrator         # live system health
-```
+- **Test suite: 5,521 collected — and the pass/skip split depends on whether a building is
+  active.** With bldg1 up: **5,476 pass / 45 skip**. In the **PARKED** state, which is what a
+  fresh clone and CI see and what Workflow rule 8 requires you to run before committing:
+  **5,402 pass / 119 skip** (measured 2026-09-10, 9m08s, exit 0). Same total; **74 tests skip
+  without an active building**. Quoting one number as "the" suite size is how a green run gets
+  mistaken for a regression. **Live regression probe: 57/59 FIRST-PASS**
+  (`python scripts/regression_probe.py`, **64.7 min** measured 2026-09-09, needs the stack up
+  and Ollama running). This line said `50/50, ~16 min` — both were true of a 50-case set
+  before V12-01 added the seven W0 cases and two building-agnostic ones. The two failures are
+  **BUG-497** (the lift denominator — the new case working as intended) and a **latency
+  timeout** on the timetable case that passed on three subsequent re-asks. It stays counted as
+  a failure: a first-pass failure that recovers is still a first-pass failure (CAVEAT-500).
+  **What would falsify this line:** adding or removing a probe case, or any change to a
+  routing rule. Re-run it, do not edit the number.
+  Nothing since `b80c3de` is committed.
+- **ACTIVE WORKSTREAM: V12 — the plan after the supervisor review.**
+  Built from four sources and no others: the review
+  (`docs/OntoSage_Architecture_Review_Corrected_v1.1.pdf`, 33 pp.), the V10 and V11
+  leftovers, and `tasks/FIX_TRACKER.csv` — the live defect log, which V11 read only for the
+  four rows marked `OPEN` and which also holds `PARTIALLY_FIXED`, `MITIGATED` and seven rows
+  closed with a written admission that the live re-ask never happened.
+  **Read in this order:** [`docs/V12_MASTER_PLAN.md`](./docs/V12_MASTER_PLAN.md) — scope,
+  order, and what is deliberately not being done — then
+  [`docs/V11_PHASE0_INVENTORY.md`](./docs/V11_PHASE0_INVENTORY.md), which is still the
+  code-verified status of the review's nine risks and is NOT superseded.
+  **Execution: [`tasks/V12_TRACKER.csv`](./tasks/V12_TRACKER.csv) — 31 rows, ONE file.**
+  Counted from the file on 2026-09-09, because the three numbers that used to sit here were
+  all wrong: `needs_gpu` is a column — `yes` (**7**) needs a live model throughout, `no`
+  (**11**) needs none, `partial` (**13**) builds and tests offline then verifies on live
+  turns. Total **42.0 days**, not the 44 this line and the master plan both claimed.
+  `gate_a`, `status`, `started`, `completed` and `evidence` are progress columns; **do not
+  add a second tracker file** — two disagreeing V7 trackers is how a fresh clone got the
+  stale one.
+  **V5, V6 and V7 are OUT OF SCOPE** (user decision, 2026-09-09): their substance shipped and
+  their trackers carry stale status, not open work — freshness/staleness,
+  `answer_provenance.py`, `enablement_hint` declines and the baseline harnesses are all in the
+  code. Two concepts from those plans had NO code when checked and are the only resurrection
+  candidates: `CONFLICTED` as a verification state, and purpose-bound permission. **File
+  either as a NEW `FIX_TRACKER` row** rather than reviving a status column.
+  **Completeness is proved, not asserted:** `python scripts/v12_coverage_audit.py` re-derives
+  the open set — including closed rows whose own text says work is owed — and fails if
+  anything is unclaimed, claimed twice, or claimed but already done. Run it at session start.
+  Currently 109 derived · 86 scheduled · 23 dispositioned · 0 uncovered.
+  **Reconciliation:** [`tasks/V12_LEDGER.csv`](./tasks/V12_LEDGER.csv) and
+  [`tasks/V12_WONTDO.csv`](./tasks/V12_WONTDO.csv) (23 items, a written reason each).
+  **Target unchanged: Gate A — a defensible demonstration of bldg1 with a written supported
+  scope.** Not a pilot, not portability.
+  **Order:** the verification debt is paid before the routing work. V12-01 leads; no routing
+  change lands without the probe green before AND after, one rule at a time.
+  **ACTIVE SUBSET: the 15 rows flagged `gate_a=yes`, in `order` 1-15 — 22.0 days.**
+  This line used to say the subset was **V12-01 → V12-08, about 12 days**, and that was
+  wrong: Gate A (review p. 22) additionally requires matching units and intervals (V12-09/10/11),
+  zero privacy failures in scope (V12-17), rankings from ARBITER's dossier (V12-25), and the
+  published cases and rubric (V12-29). Eight rows do not reach the gate they were said to reach.
+  **V12-26 moved from order 26 to order 3** on 2026-09-09: the review makes T01 (the supported
+  scope) a prerequisite for T03/T04/T05/T06, and writing it early can only shrink the 12 rows
+  behind it. Rows 16-31 (`gate_a=no`, 20.0 days) are the post-Gate-A backlog, not decoration.
+  Superseded but kept for their reasoning: `docs/V11_IMPLEMENTATION_PLAN.md`,
+  `tasks/V11_TRACKER.csv`, `tasks/V10_TRACKER.csv`, `tasks/V10_REMAINING_PLAN.md`.
+- **W0-2 is done: the capability short-circuit is INVERTED (2026-09-08).** The document-KB
+  probe no longer returns `intent=capability` before classification; it runs after the
+  classifier and the routing contract, over weak intents only, and the nineteen `and not`
+  escape clauses are thereby made unnecessary rather than deleted. Probe 50/50 including all
+  17 capability-bypass cases recorded for exactly this change, so it is not a silent trade.
+  **`metadata` and `discovery` are deliberately NOT overridable** even though the contract
+  calls them weak — BUG-440 was a structural question losing to a register.
+- **The report lane worked for the first time on 2026-09-07/08.** Six defects in one chain,
+  all found by asking one question and none by the suite, which passed throughout:
+  a workflow deadline SHORTER than one LLM call inside it (BUG-473); a SQL prompt naming all
+  704 wide-table columns, 45,573 chars against a 16k context (BUG-474); an empty result
+  narrated as "a critical monitoring gap … deploy a secondary CO2 device" for a room
+  recording 77,088 readings a day (BUG-475); `_standardize_results` with **no return
+  statement**, so every planned query silently lost its SPARQL results (BUG-476); the report
+  agent reading rows one level too shallow, so no report had ever seen its data (BUG-477);
+  and a report headed "Yesterday" describing today (BUG-478).
+- **The ECA rules engine was live and inert, and now is not.** `settings.ONTOLOGY_NAMESPACE`
+  never existed, and the AttributeError surfaced as "concept resolve failed" — blaming the
+  concept resolver for a fault two calls away (BUG-481). Fixing it removed the error and not
+  the failure: the query joined on `brick:hasExternalReference`, which exists twice in the
+  whole repository, instead of `ref:` which has 2,860. And the value fetcher named
+  `sensordb.sensor_data` outright, so every point in a narrow table was invisible to the
+  whole feature (BUG-485). Concept rules now bind to reporting points across both store
+  shapes.
+- **The literal guard now covers five trees and the compose files** and passes at 0 ERROR /
+  72 INFO. It scanned two directories and reported "clean" while 15 real literals sat outside
+  its scope.
+- **bldg1 is the active building.** Committed state = NO building active (Workflow rule 8).
+- **No P1 is open.** Remaining: TODO-463 (BuildingLexicon built at boot, routing does not
+  consume it), CAVEAT-467 (floor comparison slow), BUG-482 (a concept rule watches ONE point
+  of however many carry the class — now logged and chosen for being live, but still one),
+  TODO-484 (audit the other 49 probe cases for markers that decay with the calendar, as the
+  overdue-calibration count did: 194 → 201 → 206 while the system stayed correct).
 
 **Open issues / pending decisions:**
-- **ACTIVE WORKSTREAM (2026-08-15): Improvement Plan V5 — Universal Coverage.** V4 is
-  DELIVERED (36/36, see `tasks/V4_TRACKER.csv` + `scripts/outputs/V4_RESULTS.md`; nothing
-  committed). V5 design: [`tasks/IMPROVEMENT_PLAN_V5_UNIVERSAL_COVERAGE.md`](./tasks/IMPROVEMENT_PLAN_V5_UNIVERSAL_COVERAGE.md)
-  (v3: OCBV-2 + Event Framework + PREDICT + DETECT + PROTECT pillars). Execution:
-  [`tasks/V5_TRACKER.csv`](./tasks/V5_TRACKER.csv), 45 tasks, MVP-ordered. **Cold-start /
-  model-handoff pack: [`tasks/V5_HANDOFF.md`](./tasks/V5_HANDOFF.md) — read it FIRST when
-  resuming V5 work.** Session protocol: take the first `todo` row whose deps are done
-  (respecting the MVP order in the handoff doc), work it, flip status + notes with
-  evidence. User decisions already made are logged in the handoff doc — do not re-ask.
-  **Status 2026-08-19: 39/45 done, T02 skipped.** T33 (bldg2 pillar scorecard) and T43
-  (policy editor, live-probed 3/3) are DONE. Left: T34/T35 (bldg3/bldg1 legs — HELD, the
-  user asked to keep bldg2 live), T36 (certification ×3 + DELIVERED), T44 (multi-model
-  benchmark — needs the hosted quota window to reset), T45 (results tables).
+- **V5 is NOT the active workstream** — this bullet said it was, for three weeks after it
+  stopped being true, while the snapshot above named a different one. Two active workstreams
+  in one file is how a session spends its first hour on the wrong plan. V5, V6 and V7 are OUT OF V12 SCOPE
+  (2026-09-09): their substance shipped. The multi-model benchmark is the one live remnant
+  and it is BLOCKED on a paid plan, not on us — see docs/V12_MASTER_PLAN.md §6. V4 is DELIVERED (36/36, `tasks/V4_TRACKER.csv`). V5 design and
+  handoff are kept as the record of how the pillars were defined:
+  [`tasks/IMPROVEMENT_PLAN_V5_UNIVERSAL_COVERAGE.md`](./tasks/IMPROVEMENT_PLAN_V5_UNIVERSAL_COVERAGE.md),
+  [`tasks/V5_HANDOFF.md`](./tasks/V5_HANDOFF.md) — user decisions logged there are still
+  decisions; do not re-ask them.
 - **Certified bldg2 scorecard (2026-08-19):** COVERAGE 26.2% data-backed / **80.6%
   combined** (237 graded, +3 quarantined) · PROTECT **0.0% leak** over 37 applicable
   traps with the PDP **enforced** · DETECT **96.9% recall** (31/32) · PREDICT **CI95
@@ -128,11 +161,12 @@ docker-compose logs --tail=20 orchestrator         # live system health
   above were in graders/harnesses, and the same weak heuristic ("any digit means it
   answered") hid a fabrication one day and manufactured a perfect score the next. When a
   number looks perfect, read the rows behind it — see `tasks/lessons.md` #20-22.
-- Still OPEN and worth doing next: **BUG-192** (the model claims a sensor class is absent
-  reasoning from its RAG window rather than a graph COUNT), **CAVEAT-193** (trap P005
-  expects an answer the certified policy is designed to restrict), **CAVEAT-190** (two
-  answer-traps name spaces bldg2 lacks — now auto-marked N/A, but the bank should be fixed
-  for T34/T35), **TODO-181** (retype 56 legacy instances carrying undefined brick: classes).
+- **This bullet used to list BUG-192, CAVEAT-193, CAVEAT-190 and TODO-181 as open. All four
+  are closed** — as are BUG-147, TODO-143, KNOWN-008, KNOWN-153, CAVEAT-148 and CAVEAT-154,
+  which the P1 bullet below still named. Checked against `tasks/FIX_TRACKER.csv` on
+  2026-09-09. **Do not hand-maintain an open list here again** — it went stale within days
+  every time. `python scripts/v12_coverage_audit.py --list` prints the real one, derived from
+  the trackers, and `tasks/V12_LEDGER.csv` says where each item went.
 - **BUG-184 — root cause found, fix landed, re-measure owed.** `plan_hash` is
   `sha256(plan_fingerprint | sorted candidate IRIs | fetch_window | time basis)`, and the
   candidate set excludes *currently-busy rooms* — so on a live building it MUST differ
@@ -145,12 +179,13 @@ docker-compose logs --tail=20 orchestrator         # live system health
   `plan_hash`, and the benchmark compares it. **Compare `plan_fingerprint` across runs;
   `plan_hash` is provenance.** Residual: one query still compiles two ways — shrink via the
   deterministic folds or a compile cache.
-- Remaining P1s: **BUG-147** (`FIXED_UNVERIFIED` — code landed in V4-T13, the live
-  join-rate assertion is still owed), **TODO-143** (paper claims TimescaleDB + Cassandra
-  backends no shipped fixture supports — deferred by the user), **TODO-072** (GUI-only
-  onboarding). Lower: KNOWN-153, CAVEAT-148/154, hygiene (CAVEAT-094, TODO-081, TODO-181).
+- **Remaining P1-class work, verified 2026-09-09:** TODO-072 (`FIXED_UNVERIFIED` — the cold
+  GUI-only onboarding has 18 offline tests and no cold live run; verified by **G17**, not
+  separately), BUG-218 (`PARTIALLY_FIXED` at 70.4% document precision → **N17**), CAVEAT-415
+  (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
+  KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (17 parse-stage + 1 post-stage + 1 concept-stage ordered rules as of 2026-08-13, order
+  (36 parse-stage + 1 post-stage + 3 concept-stage ordered rules, counted 2026-09-08 — this line said 17+1+1 for weeks after it stopped being true; order
   pinned by `tests/test_routing_contract.py::test_precedence_order_is_pinned` — update that
   test in the SAME commit as any rule change). Add/change a routing rule THERE — never as a
   new inline override in `dialogue_agent`.

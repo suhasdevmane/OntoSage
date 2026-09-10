@@ -208,11 +208,19 @@ async def test_reporting_provider_failure_is_non_fatal():
 
 
 def test_render_block_distinguishes_declared_vs_reporting():
+    """The wording moved from "sensors reported" to "streams reported" (BUG-441).
+
+    The two figures count different UNITS -- subjects typed brick:Sensor against timeseries
+    uuids -- and a sensor may carry more than one reference. On the live building that read
+    "declared 2,720" above "reported 2,763": more instruments reporting than exist. Both
+    numbers were right; the shared noun was not.
+    """
     snap = BuildingMetricsSnapshot(total_sensors=1334, reporting_sensors=628, reporting_window_h=24)
     text = render_metrics_block(snap, "Any Building")
     assert "declared in the building model" in text
     assert "1,334" in text
-    assert "reported data in the last 24 h" in text
+    assert "reported in the last 24 h" in text
+    assert "stream" in text.lower()
     assert "628" in text
 
 

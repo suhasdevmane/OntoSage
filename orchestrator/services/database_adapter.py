@@ -19,7 +19,7 @@ sys.path.append("/app")
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
 
 class AdapterType(str, Enum):
@@ -59,13 +59,52 @@ class SchemaInfo:
     timestamp_column: Optional[str] = None
     adapter_type: AdapterType = AdapterType.MYSQL
 
-    def as_prompt_text(self) -> str:
-        """Format schema for use in LLM prompts."""
+    #: How many columns of one table are worth naming in a prompt.
+    #:
+    #: A WIDE time-series table has one column per sensor, so its schema grows with the
+    #: building. Naming all of them cost 45,573 characters on a 704-column table against a
+    #: 16,384-token context: the model returned an EMPTY COMPLETION, SQL generation failed,
+    #: and the report lane produced a report with no data in it rather than an error
+    #: (BUG-474). Nothing about that is specific to one building — the next building is
+    #: worse, and this one stops at 704 only because InnoDB stops at 1,017.
+    PROMPT_COLUMN_BUDGET = 60
+
+    def as_prompt_text(self, keep_columns: Optional[Set[str]] = None) -> str:
+        """Format schema for use in LLM prompts, naming only the columns that matter.
+
+        `keep_columns` is the set the caller actually intends to query. A table within
+        budget is listed in full, as before. A table over budget is reduced to those
+        columns plus the timestamp column, and the omission is STATED with a count — so
+        the model is never left to infer that a column it cannot see does not exist.
+        """
+        keep = {str(c) for c in (keep_columns or set())}
         lines = ["Database Schema:"]
         for table in self.tables:
+            cols = self.columns.get(table, [])
             lines.append(f"\nTable: {table}")
-            for col_name, col_type in self.columns.get(table, []):
-                lines.append(f"  - {col_name} ({col_type})")
+            if len(cols) <= self.PROMPT_COLUMN_BUDGET:
+                for col_name, col_type in cols:
+                    lines.append(f"  - {col_name} ({col_type})")
+                continue
+
+            shown: List[str] = []
+            omitted = 0
+            for col_name, col_type in cols:
+                wanted = col_name in keep or col_name == self.timestamp_column
+                # With no caller preference, keep a few anyway: a wide table is only
+                # usable if the model can see what its column names LOOK like.
+                sample = not keep and len(shown) < 8
+                if wanted or sample:
+                    shown.append(f"  - {col_name} ({col_type})")
+                else:
+                    omitted += 1
+            lines.extend(shown)
+            if omitted:
+                lines.append(
+                    f"  ... and {omitted} further columns of the same shape, not listed "
+                    "here. Their absence is a limit of this prompt, NOT evidence that "
+                    "the data is missing."
+                )
         if self.timestamp_column:
             lines.append(
                 f"\n⚠️  CRITICAL: The timestamp column is named '{self.timestamp_column}' "

@@ -353,6 +353,45 @@ _TRACE_STAGE_MARKERS = (
 )
 
 
+#: Deliberative stages, in execution order, with the timing key each records when it runs.
+#:
+#: `None` marks a stage that leaves no timing because it precedes the executor — those two
+#: always ran if a dossier exists at all, since the dossier is built from their output.
+_DELIBERATIVE_STAGES = (
+    ("compile_cqir", None),
+    ("admission_gate", None),
+    ("enumerate_candidates", "enumerate_ms"),
+    ("check_events", "events_ms"),
+    ("fetch_aggregate", "fetch_ms"),
+    ("forecast", "forecast_ms"),
+    ("score", "score_ms"),
+)
+
+
+def _deliberative_steps(dossier: Dict[str, Any]) -> List[str]:
+    """The stages that ACTUALLY ran, from the timings the executor recorded (V10 W4-1).
+
+    This was a hardcoded six-element list returned for every deliberative answer, which
+    made the plan trace a description of the code rather than a record of the request. Two
+    stages it always claimed are CONDITIONAL — the executor times `events_ms` only when
+    event checks apply and `forecast_ms` only when the top-K are forecast — and a plan
+    parked at the admission gate never reached the executor at all, yet still reported
+    "score" and "dossier_guard" as done.
+
+    A trace nobody can act on is worse than no trace: this one sits beside `plan_hash` and
+    `plan_fingerprint`, which ARE evidence, and lends them its own credibility.
+
+    The two pre-executor stages are unconditional because the dossier is built from their
+    output — no dossier exists without a compiled CQ-IR that passed admission. Everything
+    after is reported only if its timing is present. `dossier_guard` is appended last for
+    the same reason: this dict IS the dossier, so it was written.
+    """
+    timings = dossier.get("timings_ms") or {}
+    steps = [name for name, key in _DELIBERATIVE_STAGES if key is None or key in timings]
+    steps.append("dossier_guard")
+    return steps
+
+
 def build_plan_trace(
     results: Dict[str, Any], executed_stages: Optional[List[str]] = None
 ) -> Dict[str, Any]:
@@ -384,14 +423,7 @@ def build_plan_trace(
             # plan_fingerprint = the reasoning plan alone. THIS is the determinism
             # anchor to compare across runs, models or buildings (BUG-184).
             "plan_fingerprint": dossier.get("plan_fingerprint"),
-            "steps": [
-                "compile_cqir",
-                "admission_gate",
-                "enumerate_candidates",
-                "fetch_aggregate",
-                "score",
-                "dossier_guard",
-            ],
+            "steps": _deliberative_steps(dossier),
         }
     steps = list(executed_stages or []) or [
         name for name, key in _TRACE_STAGE_MARKERS if results.get(key) is not None
@@ -471,6 +503,9 @@ _PER_TURN_LANE_KEYS = (
     "observability_result",
     "readiness_result",
     "privacy_refusal_result",
+    # A refusal is as stale as an answer: the previous turn's "Room 9.99 does not
+    # exist" must not answer this turn's question about a room that does.
+    "referent_refusal_result",
     "report_intake_result",
     "control_result",
     "visualization_path",
@@ -658,6 +693,90 @@ def _unanswered_response(state, ctx) -> str:
         "is connected.",
     ]
     return "\n".join(lines)
+
+
+_PHYSICAL_BANDS = None
+
+
+async def exclude_impossible_readings(result: dict, state, sparql_exec) -> dict:
+    """Drop readings that are not measurements, and say which and why.
+
+    A value outside its quantity's declared `ontosage:physicalMin/physicalMax` band is
+    not a low reading or a high one -- almost always the stream is carrying a different
+    quantity's scale. Averaging it produces a figure that looks authoritative and is not
+    a measurement of anything.
+
+    THREE THINGS THIS DELIBERATELY DOES NOT DO:
+
+    * It does not use comfort or compliance limits. 5,000 ppm of CO2 is an evacuation
+      and it is still a reading; a guard tuned to comfort would suppress exactly the
+      readings a building most needs to report.
+    * It does not drop a reading whose sensor declares no band. Absence of a band is
+      not evidence of implausibility, and treating it as such would silence every
+      quantity the ontology has not reached yet.
+    * It does not remove rows silently. The caveat names the sensors and the band, so a
+      reader can tell a filtered answer from an unfiltered one -- an average over the
+      survivors, presented bare, is how "157 ppm" reached a user with a
+      capital-expenditure recommendation attached.
+
+    Failure is non-fatal and non-silent: if the bands cannot be loaded nothing is
+    excluded, and the reason is logged rather than swallowed.
+    """
+    try:
+        rows = ((result or {}).get("results") or {}).get("data") or []
+        if not rows or not result.get("success") or sparql_exec is None:
+            # No executor means the bands cannot be read. Excluding nothing is the correct
+            # behaviour: a gate that failed closed here would delete every reading whenever
+            # the graph was briefly unreachable.
+            return result
+
+        from orchestrator.services.physical_bands import PhysicalBands, caveat
+
+        global _PHYSICAL_BANDS
+        if _PHYSICAL_BANDS is None:
+            _PHYSICAL_BANDS = PhysicalBands(sparql_exec)
+
+        readings = []
+        for r in rows:
+            uuid = str(r.get("uuid") or r.get("UUID") or "")
+            if uuid:
+                readings.append((uuid, r.get("value")))
+        if not readings:
+            return result
+
+        meta = state.intermediate_results.get("sensor_metadata") or {}
+        labels = {u: str((meta.get(u) or {}).get("label", "")) for u in {x[0] for x in readings}}
+        _keep, bad = await _PHYSICAL_BANDS.check(readings, labels)
+        if not bad:
+            return result
+
+        impossible = {(i.uuid, i.value) for i in bad}
+        kept_rows = [
+            r
+            for r in rows
+            if (str(r.get("uuid") or r.get("UUID") or ""), r.get("value")) not in impossible
+        ]
+        logger.warning(
+            f"[sql] {len(rows) - len(kept_rows)} reading(s) excluded as physically "
+            f"impossible across {len({i.uuid for i in bad})} sensor(s)"
+        )
+        result = dict(result)
+        result["results"] = {**(result.get("results") or {}), "data": kept_rows}
+        result["excluded_impossible"] = [
+            {"uuid": i.uuid, "value": i.value, "band": i.band.describe()} for i in bad
+        ]
+        note = caveat(bad)
+        if note:
+            body = result.get("formatted_response") or ""
+            result["formatted_response"] = (body + chr(10) + chr(10) + "_" + note + "_").strip()
+        if not kept_rows:
+            # Every reading was impossible. "No data" would be a different and less
+            # useful truth than "this stream is not carrying this quantity".
+            result["success"] = False
+            result["analytics_required"] = False
+    except Exception as exc:
+        logger.warning(f"[sql] plausibility check skipped: {exc}")
+    return result
 
 
 class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
@@ -1612,8 +1731,84 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             except Exception as _mid_err:
                 logger.warning(f"[multi-intent] Detection failed (non-fatal): {_mid_err}")
 
+        # ── Referent existence gate, ONCE, for every lane (W1-4, BUG-445) ───────
+        #
+        # `apply_referent_gate` was written to be shared and had TWO callers across roughly
+        # eighteen lanes. Register, asset_state, observability, readiness, diagnosis,
+        # deliberate, capability, spatial, floor_plan and analytics all answered questions
+        # naming a room or a floor without ever checking the building has one. Measured on
+        # the events lane before it got its own call: "are there any vibration anomalies on
+        # floor 9" returned 500 episodes from floors 3, 4 and 5 (BUG-399), in a building
+        # with six storeys.
+        #
+        # HERE rather than in each lane, for the reason the helper's own docstring gives:
+        # "copying the block into each lane would have made the third copy the one that
+        # drifts". Every turn passes through this node, so a lane added next month is
+        # covered without being told the gate exists. Running once also means the check
+        # costs one SPARQL round trip per turn instead of one per lane.
+        #
+        # STILL FAILS OPEN on an infrastructure fault -- refusing a legitimate question
+        # because GraphDB blinked is a worse trade than letting one through, and the lanes'
+        # own guards still apply downstream.
+        await self._gate_referent_once(state)
+
         logger.info(f"Final intent for routing: {state.current_intent}")
         return state
+
+    async def _gate_referent_once(self, state: ConversationState) -> None:
+        """Refuse, before routing, a question naming something the building does not have.
+
+        Applies to intents that SCOPE an answer to a named referent -- the shared
+        GATED_INTENTS set -- plus the standalone lanes that answer about a place. A question
+        naming no referent resolves to NO_REFERENT and passes straight through, so the cost
+        for an unscoped question is one cheap resolver call.
+        """
+        try:
+            if not getattr(settings, "REFERENT_VALIDATION_ENABLED", True):
+                return
+            from orchestrator.services.referent_resolver import GATED_INTENTS
+
+            intent = str(state.current_intent or state.intermediate_results.get("intent") or "")
+            # The standalone lanes that name a place. Listed by INTENT rather than by node
+            # so the set reads as "questions about somewhere", and nothing here is specific
+            # to a building.
+            place_lanes = {
+                "register",
+                "asset_state",
+                "observability",
+                "readiness_check",
+                "diagnosis",
+                "deliberate",
+                "capability",
+                "spatial_query",
+                "floor_plan",
+                "events",
+                "alert",
+                "report",
+                "export",
+            }
+            if intent not in GATED_INTENTS and intent not in place_lanes:
+                return
+
+            question = state.messages[-1].content if state.messages else ""
+            if not question.strip():
+                return
+
+            if await apply_referent_gate(
+                state, question, self.sparql_agent._execute_query, lane=intent or "dialogue"
+            ):
+                reason = (state.intermediate_results.get("evidence") or {}).get(
+                    "not_assessable_reason"
+                ) or "that referent does not exist in this building"
+                state.intermediate_results["referent_refusal_result"] = {
+                    "success": True,
+                    "kind": "referent_not_found",
+                    "formatted_response": reason[:1].upper() + reason[1:] + ".",
+                }
+        except Exception as exc:
+            # Fails OPEN, and says so. A guard that fails open SILENTLY on a coding error
+            # is how a gate becomes decorative -- which this project has measured before.
+            logger.warning(f"[referent_gate] turn-level check did not run: {exc}")
 
     async def _sparql_node(self, state: ConversationState) -> ConversationState:
         """
@@ -2046,6 +2241,83 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
     async def _sparql_node_legacy(self, state: ConversationState) -> ConversationState:
         pass
 
+    async def _exclude_impossible_readings(self, result: dict, state) -> dict:
+        """Drop readings that are not measurements, and say which and why.
+
+        A value outside its quantity's declared `ontosage:physicalMin/physicalMax` band is
+        not a low reading or a high one -- almost always the stream is carrying a different
+        quantity's scale. Averaging it produces a figure that looks authoritative and is
+        not a measurement of anything.
+
+        THREE THINGS THIS DELIBERATELY DOES NOT DO:
+
+        * It does not use comfort or compliance limits. 5,000 ppm of CO2 is an evacuation
+          and it is still a reading; a guard tuned to comfort would suppress exactly the
+          readings a building most needs to report.
+        * It does not drop a reading whose sensor declares no band. Absence of a band is
+          not evidence of implausibility.
+        * It does not remove rows silently. The caveat names the sensors and the band, so
+          a reader can tell a filtered answer from an unfiltered one.
+
+        Failure is non-fatal and non-silent: if the bands cannot be loaded, nothing is
+        excluded and the reason is logged.
+        """
+        try:
+            rows = ((result or {}).get("results") or {}).get("data") or []
+            if not rows or not result.get("success"):
+                return result
+
+            from orchestrator.services.physical_bands import PhysicalBands, caveat
+
+            if getattr(self, "_physical_bands", None) is None:
+                self._physical_bands = PhysicalBands(self.sparql_agent._execute_query)
+
+            readings = []
+            for r in rows:
+                uuid = str(r.get("uuid") or r.get("UUID") or "")
+                if not uuid:
+                    continue
+                readings.append((uuid, r.get("value")))
+            if not readings:
+                return result
+
+            meta = state.intermediate_results.get("sensor_metadata") or {}
+            labels = {
+                u: str((meta.get(u) or {}).get("label", "")) for u in {x[0] for x in readings}
+            }
+            _keep, bad = await self._physical_bands.check(readings, labels)
+            if not bad:
+                return result
+
+            impossible = {(i.uuid, i.value) for i in bad}
+            kept_rows = [
+                r
+                for r in rows
+                if (str(r.get("uuid") or r.get("UUID") or ""), r.get("value")) not in impossible
+            ]
+            logger.warning(
+                f"[sql] {len(rows) - len(kept_rows)} reading(s) excluded as physically "
+                f"impossible across {len({i.uuid for i in bad})} sensor(s)"
+            )
+            result = dict(result)
+            result["results"] = {**(result.get("results") or {}), "data": kept_rows}
+            result["excluded_impossible"] = [
+                {"uuid": i.uuid, "value": i.value, "band": i.band.describe()} for i in bad
+            ]
+            note = caveat(bad)
+            if note:
+                result["formatted_response"] = (
+                    f"{result.get('formatted_response') or ''}\n\n_{note}_"
+                ).strip()
+            if not kept_rows:
+                # Every reading was impossible. Saying "no data" would be a different and
+                # less useful truth than saying the stream is not carrying this quantity.
+                result["success"] = False
+                result["analytics_required"] = False
+        except Exception as exc:
+            logger.warning(f"[sql] plausibility check skipped: {exc}")
+        return result
+
     async def _sql_node(self, state: ConversationState) -> ConversationState:
         """Execute SQL query generation and execution"""
         logger.info("Executing SQL node")
@@ -2444,6 +2716,29 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             # Fallback to standard SQL generation (text-to-SQL)
             logger.info("No UUIDs found or not analytics flow, using standard Text-to-SQL")
             result = await self.sql_agent.generate_and_execute(state, latest_message)
+
+        # ── is this a reading at all? (BUG-439, V10 W1-3) ────────────────────────────
+        #
+        # HERE, not in the SQL agent, because every numeric lane downstream -- analytics,
+        # compare, trend, visualization -- reads these same rows. One gate at the source
+        # covers all of them; a gate per lane is a gate the next lane forgets.
+        #
+        # What it prevents, measured: 174 CO2 sensors generating an air-quality index for
+        # seven weeks, a floor comparison answering "157 ppm vs 111 ppm" (outdoor air is
+        # 420), calling both compliant, and recommending an HVAC upgrade. Eighteen lanes
+        # could have noticed; the only plausibility bands in the system lived inside the
+        # deliberation scorer's Python.
+        #
+        # Excluded rows are NAMED, never silently dropped. An average over the survivors,
+        # presented bare, is exactly how the impossible figure reached a user.
+        result = await exclude_impossible_readings(
+            result,
+            state,
+            # Fetched defensively. A test stub that calls this node unbound has no
+            # sparql_agent, and requiring one would make every future stub a build break
+            # rather than a decision. With no executor the gate excludes nothing.
+            getattr(getattr(self, "sparql_agent", None), "_execute_query", None),
+        )
 
         state.intermediate_results["sql_result"] = result
 
@@ -4178,6 +4473,7 @@ SELECT ?l WHERE {
         _deliberate_result = state.intermediate_results.get("deliberate_result") or {}
         _events_result = state.intermediate_results.get("events_result") or {}
         _observability_result = state.intermediate_results.get("observability_result") or {}
+        _referent_refusal = state.intermediate_results.get("referent_refusal_result") or {}
         _readiness_result = state.intermediate_results.get("readiness_result") or {}
         _register_result = state.intermediate_results.get("register_result") or {}
         _asset_state_result = state.intermediate_results.get("asset_state_result") or {}
@@ -4186,8 +4482,11 @@ SELECT ?l WHERE {
         if _privacy_refusal.get("formatted_response"):
             # V5-T42: absolute — outranks even a dialogue_response draft
             final_response = _privacy_refusal["formatted_response"]
-        elif dialogue_response:
-            final_response = dialogue_response
+        elif _referent_refusal.get("formatted_response"):
+            # Also absolute, and for the same reason. The building does not contain the
+            # thing the question named, so there is nothing any lane could truthfully say
+            # about it -- and a lane's draft answer here would be about something else.
+            final_response = _referent_refusal["formatted_response"]
         elif _diagnosis_result.get("formatted_response"):
             # V5-T20: why-question diagnosis (evidence rows, correlation language)
             final_response = _diagnosis_result["formatted_response"]
@@ -4317,8 +4616,118 @@ SELECT ?l WHERE {
             final_response = sql_result["formatted_response"]
         elif sparql_result.get("formatted_response"):
             final_response = sparql_result["formatted_response"]
+        elif dialogue_response:
+            # ── the dialogue node's DRAFT, now last (V10 W2-6) ──────────────────
+            #
+            # A CLARIFICATION SITS HERE TOO, and the first version of this change put it
+            # at the top instead -- above every computed lane -- reasoning that asking a
+            # question back is a decision not to answer, so overriding it with a guess
+            # would be a substitution.
+            #
+            # The regression probe disagreed, and it was right. "Which space on Floor 3
+            # has the best conditions for focused work this afternoon?" -- a question that
+            # NAMES its floor, and which the deliberate lane ranks correctly -- came back
+            # as "Which floor did you mean? I know: Floor0, Floor1, ... Floor3". The
+            # clarification was spurious, the deliberation had the answer, and promoting
+            # the clarification hid it.
+            #
+            # The reasoning was wrong for a structural reason: the disambiguation path in
+            # `_dialogue_node` sets its message and RETURNS IMMEDIATELY, so no lane runs
+            # and there is never a computed answer for it to lose to. The only
+            # clarification that can compete with a lane result is one raised by a lane
+            # that ALSO produced a result -- and that is exactly the spurious case.
+            #
+            # So a clarification still reaches the user whenever nothing else answered,
+            # which is every case it was built for.
+            #
+            # This was checked SECOND, above every computed lane. Any node that wrote a
+            # draft pre-empted a richer result computed in the same turn: the dialogue
+            # node's generic reply, a greeting, a locked-capability notice -- each
+            # outranked the register, the asset state, the events lane, the deliberation
+            # and the SQL answer.
+            #
+            # It stayed second because three lanes have NO OTHER KEY: self_description,
+            # general_knowledge and locked_capability write their real answer here. Those
+            # are standalone intents that route straight to `response`, so no computed
+            # lane runs alongside them and this branch still delivers their answer -- it
+            # simply no longer outranks work that did happen.
+            #
+            # The one draft that must still win is a CLARIFICATION, handled far above:
+            # asking a question back is a decision not to answer, and overriding it with a
+            # guess is the failure the disambiguation step exists to prevent.
+            final_response = dialogue_response
         else:
             final_response = _unanswered_response(state, ctx)
+
+        # ── What was excluded must reach the reader, whichever lane narrates ──
+        #
+        # `exclude_impossible_readings` appends its caveat to the SQL lane's own prose. The
+        # compare and analytics lanes then RE-NARRATE from the rows and emit their own
+        # text, so the caveat was dropped and the exclusion became invisible.
+        #
+        # Measured live 2026-09-07: 1,000 readings from one sensor were correctly excluded
+        # -- the floor comparison went from a 190 ppm sensor dragging an average down to a
+        # clean 835 vs 790 -- and the answer said nothing about it. A silent filter is
+        # better than a wrong average and worse than a stated one: the reader cannot tell
+        # a complete answer from a filtered one, which is the distinction contract 4 is
+        # about.
+        #
+        # Appended HERE, after the whole dispatch, so it survives whichever lane produced
+        # the prose. Guarded against duplication for the lane that already carries it.
+        try:
+            _excluded = (sql_result or {}).get("excluded_impossible") or []
+            if _excluded and final_response and "physically impossible" not in final_response:
+                # Formatted from the RECORD, not round-tripped through a Band: the stored
+                # `band` field already holds a rendered description, and rebuilding a Band
+                # from it would print the description followed by "0..0".
+                _sensors = sorted({str(e.get("uuid", ""))[:8] for e in _excluded if e.get("uuid")})
+                _bands = sorted({str(e.get("band", "")) for e in _excluded if e.get("band")})
+                _shown = ", ".join(_sensors[:3]) + (
+                    f" and {len(_sensors) - 3} more" if len(_sensors) > 3 else ""
+                )
+                final_response = (
+                    f"{final_response}\n\n_**{len(_excluded)} reading(s) from "
+                    f"{len(_sensors)} sensor(s) were excluded as physically impossible** "
+                    f"and are not in the figures above ({_shown}"
+                    + (f"; expected {_bands[0]}" if _bands else "")
+                    + "). A value outside its quantity's possible range is usually a "
+                    "stream carrying a different quantity's scale, not a fault in the "
+                    "building._"
+                )
+        except Exception as exc:
+            logger.warning(f"[response] could not attach the exclusion note: {exc}")
+
+        # ── Meta-answer guard (BUG-443) ───────────────────────────────────────
+        #
+        # Prose ABOUT the pipeline is not an answer about the building. Measured live,
+        # "Which rooms are stuffy right now?" came back as "I don't have the live CO2 or
+        # temperature readings... What I can share is a quick snapshot of how many sensors
+        # are installed in each space", followed by a sensor-COUNT table and an offer to
+        # fetch the readings if the reader would like. The building has 589 air-quality
+        # sensors and a populated co2_data table; the generated SPARQL had returned counts,
+        # and the model narrated the shortfall.
+        #
+        # Placed AFTER the whole dispatch on purpose: any lane's prose can drift this way,
+        # and a guard inside one lane protects one lane. `_unanswered_response` names the
+        # intent, the lanes that ran and what to try instead -- everything the narration
+        # was gesturing at, said in terms the reader can act on.
+        #
+        # Deterministic declines are explicitly exempt (see _HONEST_DECLINE_RES): "I don't
+        # have a floor plan for Floor 7. Available floors: 0-5" is a true statement about
+        # the building and one of this system's best behaviours.
+        try:
+            from orchestrator.services.grounding_guard import meta_answer_reason
+
+            _meta = meta_answer_reason(final_response)
+            if _meta:
+                logger.warning(
+                    f"[response] meta-answer suppressed (marker: {_meta!r}); the lane "
+                    f"produced prose about the pipeline rather than about the building"
+                )
+                state.intermediate_results["meta_answer_suppressed"] = _meta
+                final_response = _unanswered_response(state, ctx)
+        except Exception as exc:  # never let the guard cost an answer
+            logger.warning(f"[response] meta-answer check skipped: {exc}")
 
         # ── Visualization honesty guard ───────────────────────────────────────
         # If the user explicitly asked for a chart but no image was produced,
@@ -5108,6 +5517,28 @@ SELECT ?l WHERE {
         record under state.intermediate_results["route_decision"] so we can
         audit routing correctness without guessing from interleaved logs.
         """
+        # ── The referent gate already refused this turn (W1-4) ──────────────────
+        #
+        # Routed to `response` so no lane runs at all. The gate is applied ONCE per turn,
+        # at the end of the dialogue node, rather than by each lane calling it:
+        # `apply_referent_gate` existed and was shared, and had exactly TWO callers out of
+        # roughly eighteen lanes. Register, asset_state, observability, readiness,
+        # diagnosis, deliberate, capability, spatial, floor_plan and analytics all answered
+        # about rooms and floors without ever checking that they exist.
+        #
+        # Its own docstring warned about this: "copying the block into each lane would have
+        # made the third copy the one that drifts". The answer is not a third copy but ONE
+        # call in the one place every turn passes through. A lane added next month is
+        # covered without being told about the gate.
+        if state.intermediate_results.get("referent_refusal_result"):
+            state.intermediate_results["route_decision"] = {
+                "intent_from_dialogue": state.current_intent,
+                "final_node": "response",
+                "decision_source": "override",
+                "overrides_applied": ["referent_not_found"],
+            }
+            return "response"
+
         # ── V4 deliberation resume: a parked clarify question owns the next turn.
         # Session state (not query shape), so it lives here rather than in the
         # routing contract; the deliberate node binds the reply and resumes.
@@ -5919,7 +6350,15 @@ SELECT ?l WHERE {
             if decision.pending is not None and pending is None:
                 user_ctx["deliberate_pending"] = decision.pending
                 state.intermediate_results["pending_clarification_type"] = decision.pending["type"]
-                logger.info(f"[deliberate] asking ONE question (slot={q.slot}); plan parked")
+                # The REASON carries the value that failed to resolve ("unknown floor
+                # '3rd floor'"); the slot alone does not. Without it a clarify loop can
+                # only be diagnosed by guessing what the compiler emitted -- which is what
+                # this line cost when "Which space on Floor 3..." started asking which
+                # floor the reader meant.
+                logger.info(
+                    f"[deliberate] asking ONE question (slot={q.slot}); plan parked "
+                    f"— {getattr(decision, 'reason', '') or 'no reason recorded'}"
+                )
             else:
                 logger.info(f"[deliberate] stateless ask (slot={q.slot}); nothing parked")
             state.intermediate_results["user_context"] = user_ctx
@@ -6172,9 +6611,7 @@ SELECT ?l WHERE {
 
         if not room:
             try:
-                sessions = await upcoming_sessions(
-                    namespace, _run, lead_minutes=max(lead, 240)
-                )
+                sessions = await upcoming_sessions(namespace, _run, lead_minutes=max(lead, 240))
             except Exception as exc:
                 logger.debug(f"[readiness] timetable lookup failed: {exc}")
                 sessions = []
@@ -6313,6 +6750,53 @@ SELECT ?l WHERE {
                     ),
                 )
                 text = reach.describe()
+            elif space is None and is_open_question(question):
+                # THE BUILDING IS A SPACE. Asking which one is asking for what was given.
+                #
+                # "What is measured in this building?", "What can you measure in this
+                # building?" and "What is monitored across the whole building?" all came
+                # back with "**Which space did you mean?**" — a clarify loop on the most
+                # natural opening question anyone asks. The scope was never missing; the
+                # resolver only recognised rooms and floors, so the outermost space in the
+                # building was the one space it could not name.
+                #
+                # An OPEN question wants the menu, which is exactly what this lane can
+                # produce without a room: the modalities the building declares. Narrow to
+                # open questions so a specific one about an unnamed room still clarifies —
+                # there the answer really does vary space by space, and asking is right.
+                _mods = sorted(
+                    str(getattr(m, "name", m))
+                    for m in (load_modalities(settings.BUILDING_ID) or [])
+                )
+                # The building's own name, resolved — never a literal, and never the id.
+                try:
+                    from orchestrator.services.building_context import (
+                        resolve_building_context,
+                    )
+
+                    _bname = (
+                        getattr(
+                            resolve_building_context(getattr(state, "building_id", None)),
+                            "name",
+                            "",
+                        )
+                        or "this building"
+                    )
+                except Exception:  # pragma: no cover - a generic label still reads correctly
+                    _bname = "this building"
+                if _mods:
+                    text = (
+                        f"**Across {_bname} I can measure:** "
+                        f"{', '.join(_mods)}.\n\n"
+                        "Ask for any of these — name a room, a floor or a zone and I will "
+                        "answer from live readings."
+                    )
+                else:
+                    text = (
+                        "**Nothing is currently readable in this building.** Either no "
+                        "sensor is declared in the ontology, or the points that are have "
+                        "no readings behind them."
+                    )
             elif space is None:
                 # No resolvable referent. The referent-existence gate owns "that room does not
                 # exist"; saying it twice in different words would be two answers to one

@@ -30,7 +30,20 @@ _PERSON = (
     r"(?:professor|lecturer|doctor|dr\.?|manager|boss|director|colleague|"
     r"co[- ]?worker|office[- ]?mate|officemate|neighbou?r|secretary|"
     r"receptionist|cleaner|janitor|caretaker|technician|the person|that person|"
-    r"someone specific|my (?:boss|manager|colleague|neighbou?r))"
+    r"someone specific|my (?:boss|manager|colleague|neighbou?r)"
+    # PRONOUNS. Found 2026-09-06 while narrowing the "and who" clause (BUG-442), and it
+    # predates that: "Is he at his desk?" and "…and is she in her office right now?" both
+    # passed every rule and reached the data lanes. A pronoun is the most natural way to
+    # ask where a named person is once the name has been said, so the leak sits exactly
+    # where a real conversation puts it.
+    #
+    # Only he/she/him/her, which always refer to a person. "they" and "it" are excluded on
+    # purpose: "are they in the room?" is how people ask about a delivery, a meeting or a
+    # set of sensors, and refusing those protects nobody.
+    #
+    # Safe here because every alternative using _PERSON also requires a PRESENCE PREDICATE
+    # nearby -- the pronoun alone never triggers a refusal.
+    r"|he|she|him|her)"
 )
 
 _PRESENCE_PRED = r"(?:in (?:his|her|their|the)? ?office|at (?:his|her|their) desk|in the (?:building|room|lab|office)|present|on site|at work)"
@@ -38,7 +51,28 @@ _PRESENCE_PRED = r"(?:in (?:his|her|their|the)? ?office|at (?:his|her|their) des
 INDIVIDUAL_PRESENCE_RE = re.compile(
     rf"\b(?:is|was|are)\s+(?:the\s+)?{_PERSON}\b.{{0,40}}\b{_PRESENCE_PRED}"
     rf"|\bwho(?:'s| is| was| were)\b.{{0,50}}\b(?:in|inside|occupying|present|using)\b"
-    rf"|\b(?:and|but)\s+who\b"
+    # "…and who?" -- the follow-up that turns a COUNT into an IDENTIFICATION, which is
+    # the case this clause exists for: "is anyone in the wellness room?" passes and
+    # "…and who?" must not.
+    #
+    # IT USED TO BE A BARE `\b(?:and|but)\s+who\b`, and that refused any compound
+    # question whose second clause began with those words. Measured 2026-09-06:
+    #
+    #     "What is this building and who runs it?"
+    #       -> privacy_refusal: "The system explains the building; it never tracks
+    #          individuals."
+    #
+    # The governance register that answers it holds 82 stakeholder groups and never ran.
+    # A refusal that fires on grammar rather than on meaning teaches people to stop
+    # asking, and it protects nobody: naming the organisation responsible for a building
+    # is not tracking a person.
+    #
+    # Two admissible shapes now, both requiring the question to be ABOUT identifying
+    # someone: a trailing "…and who?" (nothing follows, so the whole point is the
+    # identity), or "and who is/are/was/were" followed by a location word.
+    rf"|\b(?:and|but)\s+who\b\s*[?.!]?\s*$"
+    rf"|\b(?:and|but)\s+who\s+(?:exactly\s+)?(?:is|are|was|were)\b"
+    rf"\s*(?:\w+\s+){{0,3}}?\b(?:in|inside|there|here|present|occupying|using)\b"
     rf"|\bwhich (?:single|one|specific) (?:office|room|desk) (?:is|was) occupied\b"
     rf"|\bwho occupie[sd]\b"
     rf"|\b(?:everyone|everybody)(?:'s)? (?:presence|location|whereabouts)\b"
@@ -143,11 +177,51 @@ POLICY_OVERRIDE_RE = re.compile(
 )
 
 
+#: Asking WHO RUNS a building is a governance question, not a presence question.
+#:
+#: "Who manages this building?", "who is responsible for the lifts?", "who do I contact
+#: about a leak?" are answered from the stakeholder and department registers -- an
+#: ORGANISATION or a ROLE, never a named individual's location. They were being refused by
+#: the presence rule (BUG-442), which is the worst kind of false positive: the refusal text
+#: says the system never tracks individuals, which is true and has nothing to do with the
+#: question asked.
+#:
+#: Deliberately about ROLES and ORGANISATIONS. "who is in charge" is here; "who is in the
+#: building" is not, and the two are one letter apart, which is why the presence predicates
+#: below are required to be absent rather than merely outranked.
+_GOVERNANCE_RE = re.compile(
+    r"\bwho\s+(?:runs|manages|owns|operates|maintains|cleans|looks after|is responsible"
+    r"|are responsible|is in charge|do i (?:contact|call|tell|report|email|ask)"
+    r"|should i (?:contact|call|tell|report|email|ask))\b"
+    r"|\bwho(?:'s| is)\s+(?:the\s+)?(?:owner|operator|landlord|manager|contact|"
+    r"responsible party|facilities? (?:manager|team|provider))\b",
+    re.IGNORECASE,
+)
+
+#: A governance question that ALSO asks where somebody is stays refused. "Who manages this
+#: building and is she in her office?" is two questions and the second one is denied.
+_PRESENCE_ANYWHERE_RE = re.compile(
+    rf"{_PRESENCE_PRED}|\bright now\b|\bat the moment\b|\bcurrently\b",
+    re.IGNORECASE,
+)
+
+
+def is_governance_question(question: str) -> bool:
+    """True when the question asks WHO RUNS something rather than WHERE SOMEBODY IS."""
+    q = question or ""
+    return bool(_GOVERNANCE_RE.search(q)) and not _PRESENCE_ANYWHERE_RE.search(q)
+
+
 def classify_inference(question: str) -> Optional[str]:
     """The class this question would infer about individuals, or None."""
     q = question or ""
     if POLICY_OVERRIDE_RE.search(q):
         return "policy_override"
+    # Checked BEFORE the presence rule, and only when no presence predicate is anywhere in
+    # the question. An override placed after would never fire: the presence rule returns
+    # first, which is exactly how "and who runs it" came to be refused.
+    if is_governance_question(q):
+        return None
     if INDIVIDUAL_PRESENCE_RE.search(q):
         return "individual_presence"
     if INDIVIDUAL_PATTERN_RE.search(q):

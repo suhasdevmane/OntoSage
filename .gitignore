@@ -337,14 +337,41 @@ bldg*/.sensor_map.cache.json
 
 ##############################
 # Development working notes — local only, not part of the shipped repo.
-# Implementation plans, the fix/caveat tracker, audit reports and the
-# regression baselines are how the work was driven, not how it is run.
-# Untracked 2026-08-12; the files remain on disk.
-# NOTE: scripts/regression_harness.py reads tasks/regression_baselines/ —
-# a fresh clone therefore has no baseline to compare against and must
-# record its own with --record before compare mode is meaningful.
+# tasks/ — the EVIDENCE REGISTER is tracked; measurement OUTPUT is not.
+#
+# From 2026-08-12 to 2026-09-09 this was a bare `tasks/`, which put the whole
+# execution record outside version control: the active plan, the 498-row
+# FIX_TRACKER that CLAUDE.md calls "the single source of truth for what has
+# been fixed", the V12 ledger and won't-do files, and lessons.md — no history,
+# no diff, no backup beyond one disk. On a fresh clone CLAUDE.md's instruction
+# to run scripts/v12_coverage_audit.py at session start could not be followed,
+# because neither the script nor the trackers it reads existed. Logged as
+# CAVEAT-501.
+#
+# The workaround people reached for — hand-copying a tracker into docs/ so it
+# would be committed — is what made the two V7 trackers diverge: docs/ held the
+# tracked-but-stale copy while tasks/ held the current-but-ignored one. So the
+# directory is tracked now, and the *generated* artifacts are excluded by
+# pattern instead of the whole record by directory.
+#
+# NOTE: scripts/regression_harness.py reads tasks/regression_baselines/, which
+# stays untracked deliberately — a baseline is a measurement of one machine and
+# one model, so a fresh clone must record its own with --record before compare
+# mode means anything.
 ##############################
-tasks/
+tasks/backup/
+tasks/figures/
+tasks/regression_baselines/
+tasks/v6/
+tasks/*.pdf
+tasks/*.ipynb
+# Bulk measurement output — regenerable, and 8 MB of question corpus is not a
+# record of a decision.
+tasks/smart_building_questions.csv
+tasks/V8_QA_RESULTS.csv
+tasks/V6_baseline_*.csv
+tasks/V6_unanswered_worklist.csv
+tasks/architecture_unmapped_fragments.csv
 
 # Full CAD exports stashed by scripts/slim_floor_dxf.py --in-place. The repo
 # carries the slimmed, pipeline-equivalent DXFs; the untouched originals stay
@@ -354,3 +381,7 @@ dxf_originals/
 # Session scratch from live verification runs — .live_token holds an auth token
 .live_token
 _ask.sh
+
+# Credentials must never ride along in a commit (found untracked in docs/ on 2026-09-09)
+docs/node_credentials.json
+*_credentials.json

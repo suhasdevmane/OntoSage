@@ -220,6 +220,24 @@ class NotificationService:
     # ── Helpers ───────────────────────────────────────────────────────────────
 
     def _find_yaml(self) -> Optional[Path]:
+        """Locate this building's channels.yaml, in EITHER input layout.
+
+        The search paths below name the nested form only, and the canonical layout is
+        FLAT: under swap-by-rename the active building's files sit directly in ``input/``.
+        So this could never find channels.yaml for any building this repo ships. The loader ran,
+        found nothing, logged "no channels.yaml" and the feature was silently off -- which reads
+        in a log exactly like a building that chose not to configure it.
+
+        Five other per-building loaders had the same shape: the same search logic written
+        six ways, five of the copies wrong (CAVEAT-448). ``shared/building_paths`` is the
+        one implementation; the literal list is kept only as a fallback for a caller that
+        has neither layout under a standard root.
+        """
+        from shared.building_paths import resolve_building_file
+
+        resolved = resolve_building_file(self._building_id, "channels.yaml")
+        if resolved is not None:
+            return resolved
         for tmpl in _YAML_SEARCH_PATHS:
             p = Path(tmpl.format(building_id=self._building_id))
             if p.exists():

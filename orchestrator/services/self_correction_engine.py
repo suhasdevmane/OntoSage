@@ -250,8 +250,26 @@ SELECT DISTINCT ?sensor ?type ?label WHERE {{
 LIMIT 50"""
 
     async def apply(self, query: str, error: Optional[str], context: Dict) -> tuple[str, str]:
-        namespace = context.get("building_namespace", "http://example.com/building#")
-        prefix = context.get("building_prefix", "bldg")
+        # The ACTIVE building's namespace, never a placeholder.
+        #
+        # This defaulted to `http://example.com/building#` when the caller passed no
+        # context. That namespace matches nothing in any graph, so the "safe fallback"
+        # query returned ZERO ROWS AND NO ERROR -- the worst possible failure for a repair
+        # path, because it looks exactly like a building with no sensors. Every correction
+        # strategy having been exhausted, this is the last thing a user's question touches.
+        from shared.config import settings as _settings
+
+        namespace = context.get("building_namespace") or getattr(
+            _settings, "BUILDING_NAMESPACE", ""
+        )
+        prefix = context.get("building_prefix") or getattr(_settings, "BUILDING_PREFIX", "bldg")
+        if not namespace:
+            # Nothing to scope to. Declining is the honest outcome: a query with no
+            # namespace filter would sweep every building in a shared repository.
+            return "", (
+                "All correction strategies exhausted, and this building's namespace could "
+                "not be resolved, so I cannot build a safe fallback query."
+            )
         fallback = self.FALLBACK_TEMPLATE.format(namespace=namespace, prefix=prefix)
         return fallback, (
             "All correction strategies exhausted — falling back to safe sensor discovery query. "

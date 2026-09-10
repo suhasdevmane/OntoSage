@@ -213,31 +213,34 @@ class FloorPlanService:
         return any(kw in q_lower for kw in keywords) or bool(_FLOOR_RE.search(query))
 
     def get_zones_for_floor(self, floor: int) -> List[str]:
-        """
-        Return a sorted list of zone identifiers known to be on *floor*.
+        """Zone identifiers READ from this floor's plan text. Empty when none can be read.
 
-        Zone IDs in the Abacws ontology follow the pattern ``<floor>.<nn>``
-        (e.g. zones on floor 5 are ``5.01``, ``5.02`` … ``5.28``).
+        IT USED TO INVENT THEM (BUG-444). When PDF text extraction returned nothing, this
+        fell back to generating ``f"{floor}.{n:02d}"`` for n in 1..14 and offered the
+        result to the user as *"Known zones on Floor N"*. Fourteen rooms that may not
+        exist, presented as known.
 
-        This method derives zone numbers purely from the floor number
-        (no live SPARQL needed) by checking which well-known zone IDs
-        are consistent with the floor.  If Qdrant has indexed floor plan
-        text, we also mine it for room/zone numbers.
+        That broke two design contracts at once. Contract 4, because the identifiers are
+        fabricated -- and a fabricated ROOM NUMBER is among the worst kinds, since a reader
+        will walk to it. And contract 3, because it fabricates in ONE BUILDING'S GRAMMAR:
+        a building numbering rooms ``RM-204`` or naming them ``Atrium`` would have been
+        told about rooms called "3.07".
+
+        An empty list is a true statement and the caller already handles it -- it asks
+        which room the user means instead of listing invented ones.
+
+        RESIDUAL, tracked as V10 W2-1: the pattern below still assumes an ``N.NN`` room
+        grammar, so a building using any other naming reads zero zones from a plan whose
+        text extracts perfectly. Mining the plan is the wrong source anyway -- the graph
+        knows which rooms are on a floor, for every grammar -- and that is where this
+        should end up.
         """
-        # Derive from indexed text first (if available)
-        zones: List[str] = []
         text = self.get_pdf_text(floor)
-        if text:
-            # Match patterns like 5.01, 5.12, 5.28 in the PDF text
-            zone_pattern = re.compile(rf"\b{floor}\.(\d{{2}})\b")
-            found = set(zone_pattern.findall(text))
-            zones = sorted(f"{floor}.{n}" for n in found)
-
-        # Fallback: return a safe generic set (zones typically go up to ~28 per floor)
-        if not zones:
-            zones = [f"{floor}.{n:02d}" for n in range(1, 15)]
-
-        return zones
+        if not text:
+            return []
+        zone_pattern = re.compile(rf"\b{floor}\.(\d{{2}})\b")
+        found = set(zone_pattern.findall(text))
+        return sorted(f"{floor}.{n}" for n in found)
 
     def build_disambiguation_prompt(self, floor: int, zones: Optional[List[str]] = None) -> str:
         """
@@ -265,8 +268,11 @@ class FloorPlanService:
             lines += [
                 f"**Known zones on Floor {floor}:** {zone_list}",
                 "",
+                # The example is drawn from the zones just listed, so it is always a
+                # zone THIS building has, in this building's own naming. It said
+                # `"zone 5.12"` -- one building's grammar, offered to every building.
                 "\U0001f4ac Which zone or room would you like sensor data for?  "
-                '(e.g. *"zone 5.12"* or just *"5.12"*)',
+                + (f'(e.g. *"{zones[0]}"*)' if zones else ""),
             ]
         else:
             lines.append(

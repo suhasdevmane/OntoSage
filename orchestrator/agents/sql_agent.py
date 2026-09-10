@@ -9,7 +9,7 @@ sys.path.append("/app")
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 from zoneinfo import ZoneInfo
 
 from orchestrator.llm_manager import TaskType, llm_manager
@@ -88,8 +88,15 @@ class SQLAgent:
                     "formatted_response": "The time-series database is currently unavailable.",
                 }
 
-            # Step 1: Get database schema
-            schema = await self._get_schema()
+            # Step 1: Get database schema, naming the sensors this turn is about.
+            #
+            # This is the FALLBACK path — it reaches the LLM without a resolved UUID
+            # group — but the turn usually still knows which sensors it resolved, on the
+            # bus. Naming them keeps the wide table's schema proportional to the QUESTION;
+            # without them `as_prompt_text` falls back to a sample of the shape, which is
+            # still bounded. Listing all 704 columns is what produced an empty completion
+            # from a 45,573-character prompt and a data-free report (BUG-474).
+            schema = await self._get_schema(self._turn_uuids(state))
 
             # Step 2: Generate SQL query
             sql_query = await self._generate_sql(user_query, schema)
@@ -409,6 +416,13 @@ class SQLAgent:
                     grouped_uuids[key] = grouped_uuids[key][:_UUID_CAP]
 
             all_data = []
+            #: Rows per storage group. Named rather than repeated inline so the cap and the
+            #: check that detects hitting it cannot drift apart — that drift is how a
+            #: truncated set came to be reported as a count (BUG-479).
+            _row_limit = 1000
+            #: Did any group come back exactly full? Then `all_data` is a TRUNCATED sample
+            #: and its length is not a count of what exists.
+            rows_capped = False
 
             # V6-T40: a recurring-window question ("overnight", "at the weekend", "around
             # lunchtime") filters by HOUR, not by date range. Detected once, applied twice:
@@ -436,7 +450,9 @@ class SQLAgent:
 
                 # Phase 2.5: Pick the right adapter for this storage location
                 adapter = adapter_registry.get(storage_key)
-                schema_text = adapter_registry.get_schema_text(storage_key)
+                schema_text = adapter_registry.get_schema_text(
+                    storage_key, keep_columns=set(group_uuids)
+                )
                 ts_col = adapter_registry.get_timestamp_column(storage_key)
                 dialect_hints = adapter.get_dialect_hints() if adapter else ""
 
@@ -452,7 +468,7 @@ class SQLAgent:
                         ts_col=ts_col,
                         start_date=start_date,
                         end_date=end_date,
-                        limit=1000,
+                        limit=_row_limit,
                     )
                     if adapter
                     else None
@@ -464,7 +480,7 @@ class SQLAgent:
                     ts_col=ts_col,
                     start_date=start_date,
                     end_date=end_date,
-                    limit=1000,
+                    limit=_row_limit,
                     hour_predicate=(_hour_mask.sql_predicate(ts_col) if _hour_mask else ""),
                 )
 
@@ -596,6 +612,23 @@ Return ONLY the SQL query, no markdown, no explanations.
                     logger.info(f"✅ Query returned {len(results)} rows")
                     if results:
                         logger.info(f"📊 Sample row: {results[0]}")
+                    # A QUERY THAT RETURNED EXACTLY ITS LIMIT WAS CUT SHORT.
+                    #
+                    # Every timeseries query carries LIMIT 1000. Hitting it is not an
+                    # error and nothing downstream could tell: a report said "Room 5.01
+                    # recorded 1,000 CO2 sensor readings yesterday" when 2,770 were
+                    # recorded and 1,000 was the cap (BUG-479). The statistics over those
+                    # 1,000 rows were right; the sentence was a false claim about the
+                    # building. "A cap on an exhaustive query does not fail, it
+                    # under-reports" — and in prose it stops looking like a cap at all.
+                    if len(results) >= _row_limit:
+                        rows_capped = True
+                        logger.info(
+                            "[sql] group %s returned exactly its %s-row limit — the set is "
+                            "TRUNCATED and its size is not a count of what exists",
+                            storage_key,
+                            _row_limit,
+                        )
                     all_data.extend(results)
                 else:
                     logger.warning(f"⚠️  No results returned from query")
@@ -712,6 +745,13 @@ Return ONLY the SQL query, no markdown, no explanations.
                 # Which points were not read, and why — carried so the evidence record can
                 # state the omission rather than leaving it only in the prose.
                 "points_omitted": dict(skipped_reasons),
+                # Was any group cut off at the row limit? Then len(data) is the SIZE OF A
+                # SAMPLE, never a count of what the period holds. A report said "Room 5.01
+                # recorded 1,000 CO2 sensor readings yesterday" against a true 2,770
+                # (BUG-479); the statistics were right and the sentence was false. Whoever
+                # states a count must be able to see that it is capped.
+                "rows_capped": rows_capped,
+                "row_limit": _row_limit,
                 # The clamp that shaped these rows, "" when none did — so the evidence
                 # record can state the resolution actually served rather than inferring
                 # it from timestamps that now describe buckets.
@@ -801,9 +841,26 @@ Return ONLY the SQL query, no markdown, no explanations.
             logger.error(f"Failed to get DB columns via adapter: {e}")
             return set()
 
-    async def _get_schema(self) -> str:
-        """Get schema text from the default adapter."""
-        return adapter_registry.get_schema_text()
+    @staticmethod
+    def _turn_uuids(state: Any) -> Set[str]:
+        """The timeseries ids this turn has resolved so far, if any.
+
+        Best-effort and never fatal: this runs on the fallback path, where the point is
+        to keep the prompt proportional to the question rather than to guarantee a hit.
+        Uses `contributing_uuids` rather than reading a key directly — `uuids` is
+        documented as a bus key and nothing writes it, which is how every per-sensor
+        source came out empty once already.
+        """
+        try:
+            from orchestrator.services.evidence.assemble import contributing_uuids
+
+            return set(contributing_uuids(getattr(state, "intermediate_results", {}) or {}))
+        except Exception:  # pragma: no cover - the sampled shape is a fine fallback
+            return set()
+
+    async def _get_schema(self, keep_columns: Optional[Set[str]] = None) -> str:
+        """Get schema text from the default adapter, naming the columns wanted."""
+        return adapter_registry.get_schema_text(keep_columns=keep_columns)
 
     async def _repair_sql(
         self,

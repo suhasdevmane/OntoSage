@@ -8,7 +8,8 @@
     ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "departments",
@@ -18,7 +19,8 @@
     ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "departments",
@@ -30,7 +32,8 @@
     "forbid": [
       "documents do not answer",
       "029 2087 4444"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "workspace",
@@ -43,7 +46,8 @@
       "1.06",
       "ws-",
       "computer lab"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "workspace",
@@ -56,7 +60,8 @@
       "ws-28",
       "5.17",
       "5.18"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "assets",
@@ -67,7 +72,8 @@
     ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "assets",
@@ -79,7 +85,8 @@
       "aep-017",
       "exhaust fan",
       "parking level"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "assets",
@@ -91,17 +98,24 @@
       "chilled water pump 1",
       "aep-009",
       "li-p-02"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "assets",
     "question": "Is each asset linked to the correct parent, engineering system and served area?",
-    "expect": [
-      "24"
-    ],
     "forbid": [
-      "documents do not answer"
-    ]
+      "data you've provided",
+      "documents do not answer",
+      "the data you supplied"
+    ],
+    "expect_any": [
+      "24",
+      "could not put an answer together",
+      "returned nothing to report"
+    ],
+    "note": "Was expect:['24'] and passing. The 24 sat inside 'the data you supplied only contains electricity-meter readings for ...' -- a meta-answer, credited because the marker was a fact and nothing checked whether the sentence around it was about the building. Until the underlying lane answers properly, the honest decline is the correct outcome and the forbid list is the real assertion.",
+    "building": "bldg1"
   },
   {
     "group": "safety",
@@ -112,7 +126,8 @@
     "expect_any": [
       "inc-2026-007",
       "fire service access"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "safety",
@@ -123,7 +138,8 @@
     "expect_any": [
       "fsa-027",
       "dry riser"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "safety",
@@ -135,7 +151,8 @@
       "fc-301",
       "hz-003",
       "fume cupboard"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "safety",
@@ -145,7 +162,8 @@
     ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "safety",
@@ -156,7 +174,8 @@
     "expect_any": [
       "level 3 north stair",
       "ev-003"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "operations",
@@ -166,7 +185,8 @@
     ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "operations",
@@ -176,7 +196,8 @@
     ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "timetable",
@@ -186,7 +207,8 @@
     ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "metrology",
@@ -198,7 +220,8 @@
       "2025-11-17",
       "november 17, 2025",
       "17 november 2025"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "metrology",
@@ -208,17 +231,20 @@
     ],
     "forbid": [
       "30 second"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "metrology",
     "question": "How many sensors are overdue for calibration?",
-    "expect": [
-      "194"
-    ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "note": "The expectation is COMPUTED, not written down. This case was pinned at 201, itself a re-baseline from 194, and failed on 2026-09-08 because the true answer had become 206: calibrationDueOn dates pass as real time advances, so five more sensors fell overdue and the system reported them correctly. A frozen number for a quantity that moves with the calendar is a scheduled false alarm — it decays quietly and fires on a day nobody chose. Weakening it to 'contains a number' would kill the noise and the point together; the point is to catch a WRONG figure.",
+    "expect_sparql": [
+      "PREFIX ontosage: <http://ontosage.org/capabilities#> PREFIX xsd: <http://www.w3.org/2001/XMLSchema#> SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE { ?s ontosage:calibrationDueOn ?due . FILTER(xsd:date(?due) < xsd:date(NOW())) }"
+    ],
+    "building": "bldg1"
   },
   {
     "group": "counts",
@@ -228,7 +254,8 @@
     ],
     "forbid": [
       "8 unique"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "counts",
@@ -238,7 +265,8 @@
       "272",
       "275",
       "sensor"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "stakeholders",
@@ -249,7 +277,8 @@
     "forbid": [
       "documents do not answer"
     ],
-    "note": "By department CODE, which the register holds. Asking by department NAME needs a join from the department directory that no single-register handover can make \u2014 tracked as CAVEAT-432, not hidden by rewording."
+    "note": "By department CODE, which the register holds. Asking by department NAME needs a join from the department directory that no single-register handover can make — tracked as CAVEAT-432, not hidden by rewording.",
+    "building": "bldg1"
   },
   {
     "group": "honesty",
@@ -259,16 +288,25 @@
     ],
     "forbid": [
       "degrees",
-      "\u00b0c"
-    ]
+      "°c"
+    ],
+    "building": "bldg1"
   },
   {
     "group": "honesty",
     "question": "How warm is the swimming pool?",
-    "expect": [
-      "couldn't find"
+    "forbid": [
+      "degrees",
+      "°c"
     ],
-    "forbid": []
+    "expect_any": [
+      "does not exist in this building",
+      "couldn't find",
+      "could not find",
+      "no swimming pool"
+    ],
+    "note": "A refusal, however worded. The forbid list is what matters: a temperature for a pool this building does not have would be a fabrication.",
+    "building": "bldg1"
   },
   {
     "group": "circulation",
@@ -282,7 +320,8 @@
       "step-free",
       "walking"
     ],
-    "note": "Travel only. Asking for travel AND setup together spans the circulation and workspace registers, which the single-register handover cannot join \u2014 CAVEAT-432."
+    "note": "Travel only. Asking for travel AND setup together spans the circulation and workspace registers, which the single-register handover cannot join — CAVEAT-432.",
+    "building": "bldg1"
   },
   {
     "group": "circulation",
@@ -294,7 +333,8 @@
       "9",
       "nine"
     ],
-    "note": "Nine floor-CHANGING pairs. The register first claimed 15 by counting same-floor pairs, where there are no stairs to be slower than; the system answered 9 and was right."
+    "note": "Nine floor-CHANGING pairs. The register first claimed 15 by counting same-floor pairs, where there are no stairs to be slower than; the system answered 9 and was right.",
+    "building": "bldg1"
   },
   {
     "group": "workspace",
@@ -304,7 +344,8 @@
     ],
     "forbid": [
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "deliberate",
@@ -314,7 +355,8 @@
       "narrow it to a floor"
     ],
     "forbid": [],
-    "note": "Over budget by design. The decline must SAY WHY and name the narrowing that works."
+    "note": "Over budget by design. The decline must SAY WHY and name the narrowing that works.",
+    "building": "bldg1"
   },
   {
     "group": "deliberate",
@@ -326,7 +368,8 @@
     "forbid": [
       "couldn't rank any spaces"
     ],
-    "note": "The narrowed form the decline recommends. If this fails, the advice is wrong."
+    "note": "The narrowed form the decline recommends. If this fails, the advice is wrong.",
+    "building": "bldg1"
   },
   {
     "group": "workspace",
@@ -339,7 +382,8 @@
     "forbid": [
       "couldn't rank any spaces",
       "documents do not answer"
-    ]
+    ],
+    "building": "bldg1"
   },
   {
     "group": "readiness",
@@ -350,7 +394,8 @@
     "forbid": [
       "documents do not answer"
     ],
-    "note": "Must name the untested hearing loop as a blocker AND date the components."
+    "note": "Must name the untested hearing loop as a blocker AND date the components.",
+    "building": "bldg1"
   },
   {
     "group": "readiness",
@@ -362,6 +407,278 @@
     "forbid": [
       "documents do not answer"
     ],
-    "note": "A room with no AV record must SAY so \u2014 silence would read as working AV."
+    "note": "A room with no AV record must SAY so — silence would read as working AV.",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "What is the CO2 level in room 5.01 right now?",
+    "forbid_intent": "capability",
+    "note": "A live reading. Answered from prose it becomes a claim about instrumentation.",
+    "expect_intent": "sensor_data",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "The toilet on floor 2 is leaking.",
+    "forbid_intent": "capability",
+    "note": "A fault REPORT, not a question. Must reach report intake, never a document.",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Open the windows on floor 3.",
+    "forbid_intent": "capability",
+    "note": "An actuation request must reach the control lane and be declined there, with a reason.",
+    "expect_intent": "control",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Show me the floor 3 layout.",
+    "forbid_intent": "capability",
+    "note": "BUG-231 family: a floor-areas document outscored the drawing.",
+    "expect_intent": "floor_plan",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "What is the total area of floor 3?",
+    "forbid_intent": "capability",
+    "note": "Geometry, computed from the plan -- not a sentence about floor areas.",
+    "expect_intent": "spatial_query",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "How do I get to the seminar room from reception?",
+    "forbid_intent": "capability",
+    "note": "BUG-231: answered from a document in 250ms before the LLM classified anything.",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Take me to the nearest fire exit.",
+    "forbid_intent": "capability",
+    "note": "BUG-231, second phrasing. Neither is_floor_plan_query nor is_spatial_query matches it.",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "How many work orders are open?",
+    "forbid_intent": "capability",
+    "note": "V6-T24: matched the building-hours document on the word 'open' and was answered from prose. Asserts the ANSWER and forbids the capability lane; the downstream lane is deliberately NOT pinned -- it moved from events to the register lane when work orders became a Record class, and the answer improved.",
+    "expect_any": [
+      "wo-008",
+      "wo-013",
+      "wo-015",
+      "3 open work orders"
+    ],
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Is the supply fan running on floor 5?",
+    "forbid_intent": "capability",
+    "note": "V6-T26: returned a maintenance-log excerpt. An equipment id matches no sensor/room pattern, so is_data_query cannot catch it.",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "What is the filter differential pressure on AHU_F5?",
+    "forbid_intent": "capability",
+    "note": "V6-T26, second phrasing: returned the building-statistics block.",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "How much energy did the building use last week?",
+    "forbid_intent": "capability",
+    "note": "V6-T27: answered 'I don't have that on record' while six floor meters held the data.",
+    "timeout_s": 420,
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "How much electricity does the lab on floor 5 use?",
+    "forbid_intent": "capability",
+    "note": "V6-T27, second phrasing: returned the room-bookings document.",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Can you measure noise in this building?",
+    "forbid_intent": "capability",
+    "note": "V6-T10: a question about the system's own reach. From prose it becomes BUG-192's shape -- a sensor class denied from a retrieval window.",
+    "expect_intent": "observability",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Why is room 5.01 stuffy?",
+    "forbid_intent": "capability",
+    "note": "V6-T26: answered in 1.3s with 'I don't have that specific information on record', for a room whose CO2, AHU fan state and VAV damper position are all readable.",
+    "expect_intent": "diagnosis",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "When was the fire alarm last tested?",
+    "forbid_intent": "capability",
+    "note": "V5-T26: matches the fire-safety topic by lay term, but asks for a DATE -- the register holds one and the topic prose admits it does not.",
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Give me a report on the CO2 in room 5.01 yesterday.",
+    "forbid_intent": "capability",
+    "note": "CAVEAT-201: a document ABOUT measured data. The amenity prose answered a question about readings, with no readings in it. NARROWED to one sensor and one day: `report_request_about_data` matches this identically (verified), and the building-wide week form does not merely run slowly -- the LLM itself times out generating it and the harness quarantines the turn as LLM-DEGRADED. That is a real defect in the report lane and is tracked separately; a case that cannot complete cannot gate anything.",
+    "timeout_s": 420,
+    "building": "bldg1"
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Is the professor in her office?",
+    "forbid_intent": "capability",
+    "note": "V5-T42: an individual-tracking shape must reach the privacy rule, never a topic document about 'security'.",
+    "expect_intent": "privacy_refusal",
+    "building": "bldg1"
+  },
+  {
+    "group": "w0",
+    "building": "bldg1",
+    "question": "Is the lift working?",
+    "expect": [
+      "Main passenger lift"
+    ],
+    "expect_any": [
+      "not operational",
+      "out of service"
+    ],
+    "forbid": [
+      "no lifts recorded",
+      "no lifts in its model"
+    ],
+    "timeout_s": 180,
+    "why": "Protects against a declared asset reported as absent - the pre-W0 answer was 'This building has no lifts recorded in its model' about a lift the building describes in a published accessibility survey (BUG-438). CORRECTED 2026-09-10: this case briefly also forbade 'of 1 lift', on the reading that '1 of 1 lift(s)' was a denominator over the retrieved set. That was wrong. asset_state_service._status_query asks '?asset a ontosage:Lift' and exactly one subject carries that type, so the count is correct for what the lane asks. The real defect is that three brick:Elevator are declared elsewhere and the lane never sees them (BUG-497) - which no marker over this answer can currently detect, because the honest answer does not exist yet. When it does, assert that the count DISCLOSES its basis."
+  },
+  {
+    "group": "w0",
+    "building": "bldg1",
+    "question": "How many sensors are there in total?",
+    "expect": [
+      "rooftop",
+      "not comparable"
+    ],
+    "expect_any": [
+      "6 storeys",
+      "six storeys"
+    ],
+    "timeout_s": 180,
+    "why": "Two failures, neither assertable as a bare number. (a) 'Floors: 8' stated flat in a six-storey building - the figure is right and the reading is wrong, so the marker is the EXPLANATION. (b) reporting streams and declared sensors as one quantity. NO BARE DIGITS anywhere: _matches is a substring test, so '8' is satisfied by '2,841'. That is BUG-191, where a grader read the '2' inside 'bldg2' as a sensor reading."
+  },
+  {
+    "group": "w0",
+    "building": "bldg1",
+    "question": "What is this building and who runs it?",
+    "expect": [
+      "Cardiff University Estates"
+    ],
+    "forbid_intent": "privacy_refusal",
+    "forbid": [
+      "never tracks individuals"
+    ],
+    "timeout_s": 180,
+    "why": "Protects against a structural question refused as if it concerned a person. The forbid_intent is the real assertion; the operator name is the corroboration."
+  },
+  {
+    "group": "w0",
+    "building": "bldg1",
+    "question": "What is the nearest accessible toilet to room 3.10?",
+    "expect": [
+      "Accessible WC"
+    ],
+    "expect_any": [
+      "1 floor up",
+      "one floor up"
+    ],
+    "forbid": [
+      "6 floors down",
+      "no toilet is reachable",
+      "adjacency is incomplete"
+    ],
+    "timeout_s": 180,
+    "why": "Protects against '3.10' parsed as floor TEN. The pre-fix answer said '6 floors down' and was internally consistent with the wrong floor, so only the DISTANCE marker catches it - the room name and amenity name both looked correct."
+  },
+  {
+    "group": "w0",
+    "building": "bldg1",
+    "question": "Which rooms are stuffy right now?",
+    "forbid": [
+      "what i can do is",
+      "rooms with active sensors",
+      "just let me know"
+    ],
+    "timeout_s": 180,
+    "why": "The lane cannot supply live CO2 per room; the honest outcome is a decline. What must never return is the pivot into a sensor-COUNT table, which reads like an answer to a question about readings and is not one. Measured 4/4 clean on 2026-09-09 after the cache was flushed; the one dishonest answer seen that day came from the response cache at 0.9s, which is BUG-498, not a failure of this guard."
+  },
+  {
+    "group": "w0",
+    "building": "bldg1",
+    "question": "Compare the average CO2 on floor 1 versus floor 3",
+    "expect": [
+      "excluded as physically impossible"
+    ],
+    "forbid": [
+      "157 ppm",
+      "111 ppm"
+    ],
+    "timeout_s": 420,
+    "why": "Protects against physically impossible readings folded into an average - 157 ppm and 111 ppm are below outdoor air and were both published with an HVAC recommendation attached. The figures move continuously and are deliberately NOT asserted; what is asserted is that the exclusion happened and was DISCLOSED, the half V10 left 'verified offline, not yet live'. 420s allowance: observed 63s, 94s, 182s, and twice past a 121s client timeout, fetching ~1.8M rows across ten tables."
+  },
+  {
+    "group": "w0",
+    "building": "bldg1",
+    "question": "Show me floor 3",
+    "expect": [
+      "Floor 3"
+    ],
+    "expect_any": [
+      "3.01",
+      "3.05",
+      "3.08"
+    ],
+    "forbid": [
+      "no spaces",
+      "not recorded"
+    ],
+    "timeout_s": 180,
+    "why": "Protects against invented room numbers. Asserts that spaces the graph actually holds are the ones named."
+  },
+  {
+    "group": "portability",
+    "question": "What is the radiation level in the atrium?",
+    "expect_any": [
+      "not measured",
+      "no point of that kind",
+      "would be invented"
+    ],
+    "forbid": [
+      "µSv",
+      "microsievert",
+      "millisievert",
+      "becquerel"
+    ],
+    "timeout_s": 180,
+    "why": "Building-agnostic. A quantity no building here measures: the contract is refusal WITH the reason and the remedy, not a plausible number and not a bare 'no data' that leaves the asker unable to tell absence from failure."
+  },
+  {
+    "group": "portability",
+    "question": "How many floors does this building have?",
+    "expect_sparql": [
+      "PREFIX brick: <https://brickschema.org/schema/Brick#> SELECT (COUNT(DISTINCT ?f) AS ?n) WHERE { ?f a brick:Floor }"
+    ],
+    "timeout_s": 180,
+    "why": "Building-agnostic. The figure is computed from whichever graph is live, so the case is true of any building and rots for none. A literal here would make it bldg1-only and would decay the first time a floor was added - the failure TODO-484 records, where a pinned overdue-calibration count went 194 -> 201 -> 206 while the system stayed right."
   }
 ]
