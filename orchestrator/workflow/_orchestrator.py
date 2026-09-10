@@ -344,10 +344,26 @@ def _live_data_need_from_hint(hint: Optional[Any], query: str) -> Optional[Tuple
 
 #: reflex pipeline stages, in execution order, keyed by the intermediate_results
 #: key each stage writes (the shared-state contract in CLAUDE.md)
+#:
+#: THREE OF THESE FIVE NAMED KEYS THAT DO NOT EXIST until 2026-09-10 (BUG-510):
+#: ``sparql_results``, ``sql_data`` and ``analytics_output``. The real keys are
+#: ``sparql_result``, ``sql_result`` and ``analytics_result``. This list feeds the
+#: ``plan_trace`` step fallback below, so whenever that fallback ran, the three principal
+#: data stages could never appear in the trace — only ``forecast`` and ``visualization``
+#: could — and a turn that ran the whole data pipeline recorded itself as having run
+#: almost none of it.
+#:
+#: ``.claude/rules/agent-patterns.md`` already records this exact pair of strings as
+#: "names that appear nowhere in the pipeline", and says ``assemble.py`` was written from
+#: the wrong list so "the two most important data lanes could never be identified".
+#: That documentation was corrected on 2026-08-22 and ``assemble.py`` was fixed. THIS
+#: CONSUMER WAS NOT — the same wrong names sat here for another three weeks, because
+#: nothing derives this tuple from anything and nothing checked it.
+#: ``tests/test_reserved_keys_have_writers.py`` is what checks it now.
 _TRACE_STAGE_MARKERS = (
-    ("sparql", "sparql_results"),
-    ("sql", "sql_data"),
-    ("analytics", "analytics_output"),
+    ("sparql", "sparql_result"),
+    ("sql", "sql_result"),
+    ("analytics", "analytics_result"),
     ("forecast", "forecast_result"),
     ("visualization", "visualization_path"),
 )
@@ -509,6 +525,21 @@ _PER_TURN_LANE_KEYS = (
     "report_intake_result",
     "control_result",
     "visualization_path",
+    # Read by the V12-03 publication gate, which withholds an export whose figures did
+    # not verify. A stale one would make this turn withhold a spreadsheet the previous
+    # turn produced — or, worse, leave last turn's export downloadable beside an answer
+    # that never generated one. Reading a key on the response path obliges clearing it,
+    # which is what the completeness test below enforces.
+    "export_result",
+    # The gate's own decision. Left behind, it would report this turn as withheld when
+    # the previous one was.
+    "publication_decision",
+    # BUG-509 — the planner now publishes its own results onto the bus, so they are as
+    # stale next turn as any other lane's. Before this they never reached the bus at all,
+    # which is why they were never on this list.
+    "report_result",
+    "anomaly_result",
+    "planner_result",
     "goal_plan",
     "error",
     "route_decision",
@@ -5016,6 +5047,62 @@ SELECT ?l WHERE {
                 state.intermediate_results["unmodelled_correction"] = _unmodelled
         except Exception as _ag_err:
             logger.debug(f"absence guard skipped: {_ag_err}")
+
+        # V12-03 / review R1 — PUBLICATION ENFORCEMENT.
+        #
+        # Until now `verification["grounded"]` was read in exactly one place, further down
+        # this method, and decided only which agent-memory bucket the turn was filed under.
+        # It gated publication NOT AT ALL. That is how BUG-475's report -- "no CO2 sensor,
+        # install one", about a room recording 77,088 readings a day -- reached a user
+        # carrying `grounded=False, confidence=0.20`. The check ran, failed, and changed
+        # nothing anyone saw.
+        #
+        # This must sit AFTER the absence and unmodelled guards, because those REWRITE
+        # `final_response`, and a gate that inspected the pre-rewrite text would be judging
+        # a string the user never receives.
+        #
+        # It withholds three surfaces, not one: a chart of a withheld figure is the same
+        # claim with better typography, and an export outlives the caveat that sat beside
+        # it on screen (review case B04).
+        try:
+            from orchestrator.services.publication_gate import evaluate as _pub_evaluate
+
+            _viz_path = state.intermediate_results.get("visualization_path")
+            _export_payload = state.intermediate_results.get("export_result")
+            _decision = _pub_evaluate(
+                intent=state.current_intent,
+                final_response=final_response,
+                verification=state.intermediate_results.get("verification"),
+                has_chart=bool(_viz_path),
+                has_export=bool(_export_payload),
+            )
+            if _decision.withheld:
+                final_response = _decision.text
+                if _decision.withhold_chart:
+                    state.intermediate_results["visualization_path"] = None
+                    media_payload = None
+                if _decision.withhold_export:
+                    state.intermediate_results["export_result"] = None
+                state.intermediate_results["publication_decision"] = {
+                    "published": _decision.publish,
+                    "reason": _decision.reason,
+                    "checks_failed": _decision.checks_failed,
+                    "withheld_chart": _decision.withhold_chart,
+                    "withheld_export": _decision.withhold_export,
+                }
+                # WARNING, not debug: a withheld answer is the single most important thing
+                # that can happen to a turn, and the incident this exists to prevent was
+                # invisible precisely because the failing signal was never surfaced.
+                logger.warning(
+                    f"[publication_gate] WITHHELD intent={state.current_intent} "
+                    f"reason={_decision.reason} "
+                    f"chart={_decision.withhold_chart} export={_decision.withhold_export}"
+                )
+        except Exception as _pg_err:
+            # Fails OPEN, deliberately. A gate that blocked answers because it could not
+            # read its own inputs would turn a verifier outage into a total outage, taking
+            # every honest answer down with the unverified ones.
+            logger.warning(f"[publication_gate] skipped: {_pg_err}", exc_info=True)
 
         # Add to messages
         state.messages.append(

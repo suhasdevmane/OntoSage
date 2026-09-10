@@ -330,6 +330,56 @@ Rules:
     # Plan execution
     # ------------------------------------------------------------------
 
+    #: Keys the planner produces that are RESERVED BUS NAMES elsewhere in the pipeline.
+    #:
+    #: `uuids` and `storage_map` are deliberately absent: they are planner-internal
+    #: locals, and `.claude/rules/agent-patterns.md` records that `uuids` was wrongly
+    #: documented as a bus key -- three readers believed it, and `_sources_from` created
+    #: no per-sensor sources at all as a result.
+    _BUS_KEYS_THE_PLANNER_PRODUCES = (
+        "sparql_result",
+        "sql_result",
+        "analytics_result",
+        "anomaly_result",
+        "report_result",
+        "export_result",
+        "capability_result",
+        "floor_plan_result",
+        "spatial_result",
+    )
+
+    def _publish_context_to_bus(
+        self, state: ConversationState, context: Dict[str, Any]
+    ) -> None:
+        """Put the planner's results where the rest of the pipeline can see them (BUG-509).
+
+        Every result this agent produced was written into a LOCAL `context` dict and
+        thrown away; `_planner_node` published only `planner_result`. So for any turn
+        routed through the planner -- the whole `report` intent among them -- the
+        verifier, the evidence record and V12-03's publication gate all read an EMPTY bus.
+
+        Measured live 2026-09-10: a report built from real rows verified as
+        ``sensors=0, sql_rows=0, report_rows=0`` while the adapter logs for the same turn
+        showed dozens of successful queries. The verifier was not reading stale data. It
+        was reading nothing, and reporting that absence as a grounding failure.
+
+        WRITES ONLY WHAT IS NOT ALREADY THERE. The reserved-key contract is that a lane
+        does not overwrite another lane's key; on a planner turn the data nodes have not
+        run so those slots are empty, but if one ever did run, its result is the
+        authoritative one and this must not clobber it.
+        """
+        published: List[str] = []
+        for key in self._BUS_KEYS_THE_PLANNER_PRODUCES:
+            value = context.get(key)
+            if not value:
+                continue
+            if state.intermediate_results.get(key):
+                continue  # a real node produced it; that one wins
+            state.intermediate_results[key] = value
+            published.append(key)
+        if published:
+            logger.info(f"[planner] published to bus: {', '.join(published)}")
+
     async def _execute_plan(self, state: ConversationState, plan: ExecutionPlan) -> Dict[str, Any]:
         """Execute plan steps, running standalone agents in parallel."""
         import asyncio
@@ -354,6 +404,8 @@ Rules:
                 logger.warning(f"  Step {step.index} failed: {e}")
                 provenance.append(f"Step {step.index} [{step.agent}]: failed — {e}")
 
+        # BUG-509 — before returning, make what we produced visible to the pipeline.
+        self._publish_context_to_bus(state, context)
         return self._assemble_result(plan, context, provenance)
 
     async def _execute_multi_intent(
@@ -479,6 +531,12 @@ Rules:
                 status = "done" if s.success else f"failed — {s.error}"
                 provenance.append(f"Step {s.index} [{s.agent}]: {status}")
 
+        # BUG-509 — publish on BOTH multi-intent exits, not just the fallthrough. A
+        # compound question ("which rooms were stuffy, and generate a report") takes the
+        # `section_results` branch, and that is exactly the shape whose evidence a reader
+        # most needs, so patching only the second return would have left the harder case
+        # invisible while looking fixed.
+        self._publish_context_to_bus(state, context)
         if section_results:
             return self._assemble_multi_intent(plan, section_results, provenance)
         return self._assemble_result(plan, context, provenance)

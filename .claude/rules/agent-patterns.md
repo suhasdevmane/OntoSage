@@ -65,7 +65,20 @@ Reserved keys (do not overwrite):
 > from this list rather than from the code, so the two most important data lanes could
 > never be identified and their answers were recorded as having no evidence at all.
 > When adding a key here, grep for it in `orchestrator/` first.
-- `analytics_output` — set by analytics node
+>
+> **And it happened again, in the same three names.** Fixing this file on 2026-08-22 fixed
+> `assemble.py` and nothing else: `_TRACE_STAGE_MARKERS` in `_orchestrator.py` still carried
+> `sparql_results`, `sql_data` **and** `analytics_output` until 2026-09-10 (BUG-510). That
+> tuple builds `plan_trace["steps"]`, so whenever the fallback ran, the three principal data
+> stages could never appear in a trace — a turn that ran the whole data pipeline recorded
+> itself as having run almost none of it.
+>
+> **Correcting prose does not correct its readers.** `tests/test_reserved_keys_have_writers.py`
+> now derives the answer by parsing the source and fails when a documented key has no
+> writer. It found `analytics_output` on its first run.
+- `analytics_result` — set by the analytics node. **Not `analytics_output`**, which this
+  file claimed for months and which nothing has ever written to the bus; it is a local
+  variable name inside `document_agent` and `main`.
 - `visualization_path` — set by visualization node
 - `error` — set by _safe_node on failure
 

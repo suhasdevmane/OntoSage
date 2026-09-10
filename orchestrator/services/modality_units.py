@@ -115,9 +115,45 @@ _QUDT_LOCAL: Dict[str, str] = {
 }
 
 
+def _unit_local(token: Optional[str]) -> str:
+    """The local name of a unit IRI, WITHOUT dismembering a bare literal (BUG-512).
+
+    This used ``_class_local``, which splits on ``/`` unconditionally because that is the
+    right thing for a class IRI. For a unit it is catastrophic, and this function's own
+    docstring says a bare literal is expected input -- buildings write
+    ``brick:hasUnit "Pa"`` as often as they write the IRI. Every COMPOUND unit was reduced
+    to its denominator:
+
+        "L/s"   -> "s"      a flow rate became a time
+        "m3/h"  -> "h"
+        "mg/m3" -> "m3"     a concentration became a volume
+        "L/min" -> "min"
+
+    Thirteen live Flow_Sensor points on bldg1 declare ``"L/s"``, so this was not
+    hypothetical: the estate's supply-air flow sensors reported their unit as seconds.
+
+    A separator only delimits a local name when the token is actually an IRI or a CURIE.
+    """
+    s = (token or "").strip()
+    if not s:
+        return ""
+    if "#" in s:
+        return s.rsplit("#", 1)[-1]
+    if "://" in s:
+        return s.rsplit("/", 1)[-1]
+    # A CURIE like `unit:PA` — but never something like `L/s`, where the colon is absent
+    # and the slash is division rather than a path.
+    if ":" in s and "/" not in s:
+        return s.rsplit(":", 1)[-1]
+    return s
+
+
 def qudt_unit_display(iri: Optional[str]) -> str:
-    """The printable form of a QUDT unit IRI ('.../unit/PA' -> 'Pa')."""
-    local = _class_local(iri)
+    """The printable form of a QUDT unit IRI ('.../unit/PA' -> 'Pa').
+
+    Also accepts a bare literal, which is why `_unit_local` and not `_class_local`.
+    """
+    local = _unit_local(iri)
     if not local:
         return ""
     return _QUDT_LOCAL.get(local.lower(), local)
