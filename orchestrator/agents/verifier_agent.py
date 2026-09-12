@@ -62,25 +62,27 @@ _ASSESSABLE_INTENTS = frozenset(
         "anomaly",
         "compliance",
         "capability",
+        # RESTORED 2026-09-11, after BUG-509 was fixed and verified live.
+        #
+        # These were removed on 2026-09-10 and the reason is worth keeping: both route via
+        # `planner`, which wrote every result it produced -- sparql_result, sql_result,
+        # report_result -- into a LOCAL dict that never reached the bus. Only
+        # `planner_result` was published. A report built from real rows therefore verified
+        # as `sensors=0, sql_rows=0, report_rows=0`, and claiming to assess it made the
+        # publication gate withhold a GOOD answer, because "no evidence visible" was being
+        # read as "no evidence exists".
+        #
+        # `PlannerAgent._publish_context_to_bus` now publishes at both exit paths, so the
+        # evidence is there to assess. Re-adding them is what closes R1 for the report
+        # lane -- the lane BUG-475 happened in.
+        #
+        # IF A REPORT IS EVER WITHHELD WRONGLY AGAIN, check that publish call before
+        # touching this set: an empty bus reads exactly like an ungrounded answer, and
+        # removing the intent hides the symptom rather than the cause.
+        "report",
+        "export",
     }
 )
-
-#: `report` and `export` are DELIBERATELY ABSENT, and it costs us something to leave them
-#: out, so the reason is written down rather than implied.
-#:
-#: Both route via `planner`, and `PlannerAgent._execute_step` writes every result it
-#: produces -- `sparql_result`, `sql_result`, `analytics_result`, `report_result`,
-#: `export_result` -- into a LOCAL `context` dict that is never merged into
-#: `state.intermediate_results`. Only `planner_result` reaches the bus. Measured live on
-#: 2026-09-10: a report built from real rows verified as
-#: `sensors=0, sql_rows=0, report_rows=0` -- the verifier was not looking at a stale bus,
-#: it was looking at an empty one (BUG-509).
-#:
-#: Claiming to assess them anyway is what broke reports: the gate withheld a good answer
-#: because "no evidence visible" was reported as "no evidence exists". Until the planner's
-#: context reaches the bus, the honest statement is that this verifier cannot assess a
-#: planner-routed turn -- which means **R1 remains open for the report lane, which is
-#: exactly where BUG-475 happened**. That gap is real and is tracked, not hidden.
 
 
 def _extract_sensor_ids(sparql_result: Dict[str, Any]) -> List[str]:

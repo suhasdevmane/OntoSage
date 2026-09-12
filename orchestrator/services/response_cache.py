@@ -56,6 +56,26 @@ logger = logging.getLogger(__name__)
 
 CACHE_ENABLED = os.environ.get("RESPONSE_CACHE_ENABLED", "true").lower() == "true"
 CACHE_TTL = int(os.environ.get("RESPONSE_CACHE_TTL", "3600"))
+
+#: The revision an answer was produced under. Part of every cache partition, so a
+#: deployment cannot serve answers the current code would not produce (BUG-498).
+#:
+#: BUILD_SHA when the image carries one. It does NOT here — `docker exec` reports
+#: `BUILD_SHA=unknown` — and in this deployment `/app/orchestrator` is BIND-MOUNTED, so a
+#: `docker compose restart` is itself a deployment: new source, same image. Process boot
+#: time is therefore the honest revision proxy in development, and it is the case that
+#: actually bit us: a guard was fixed, the orchestrator restarted, and the pre-fix answer
+#: was still served from cache.
+#:
+#: COST, stated rather than discovered: with no BUILD_SHA every restart starts from a cold
+#: cache. With one, restarts of the same image keep their entries and only a new build
+#: invalidates. A cold cache is cheap; an answer from code that no longer exists is not.
+_BUILD_SHA = (os.environ.get("BUILD_SHA") or "").strip().lower()
+REVISION = (
+    _BUILD_SHA[:12]
+    if _BUILD_SHA and _BUILD_SHA != "unknown"
+    else f"boot{int(time.time())}"
+)
 FUZZY_ENABLED = os.environ.get("RESPONSE_CACHE_FUZZY", "false").lower() == "true"
 MIN_SIMILARITY = float(os.environ.get("RESPONSE_CACHE_MIN_SIMILARITY", "0.85"))
 
@@ -228,7 +248,9 @@ class ResponseCacheService:
     _PER_USER_ROLES = frozenset({"occupant", "readonly", "guest", ""})
 
     @classmethod
-    def _partition(cls, building_id: str, role: str, user_id: str) -> str:
+    def _partition(
+        cls, building_id: str, role: str, user_id: str, revision: str = None
+    ) -> str:
         """The cache partition a requester may read from and write to.
 
         A cached answer is only reusable by someone the access policy would have given
@@ -246,10 +268,25 @@ class ResponseCacheService:
 
         The cost is a lower hit rate on questions that are genuinely public. That is the
         right trade: a wrong-privilege answer is not a cheaper answer, it is a disclosure.
+
+        WHO is asking was only half of it (BUG-498, V12-16). An answer is also only
+        reusable while the CODE and the POLICY that produced it are still the ones in
+        force, and neither was in the key. Measured 2026-09-10: a dishonest answer was
+        served at 0.9 s — a cache hit — from a revision whose guard had since been fixed
+        and redeployed. The running code would not have produced it; the cache did.
+
+        `revision` closes that. `policy_admin.invalidate_policy_caches` already flushes
+        on a policy edit, but a flush is best-effort — it is wrapped in try/except and
+        logs a warning if the cache object is missing — so it fails OPEN, leaving stale
+        answers servable. A key component fails CLOSED: a changed signature is a miss,
+        with nothing to remember to do.
         """
         role = (role or "").strip().lower()
         scope = f"{role}:{user_id}" if role in cls._PER_USER_ROLES else role
-        return f"{building_id}|{scope}"
+        rev = (revision if revision is not None else REVISION) or "dev"
+        # Revision LAST so `invalidate`'s `{building_id}|*` pattern still matches every
+        # partition — partition-blind invalidation is deliberate and must keep working.
+        return f"{building_id}|{scope}|r{rev}"
 
     def __init__(
         self,

@@ -312,6 +312,35 @@ async def _event_availability(
     return checks, notes
 
 
+def _evidence_policy(building_id: str) -> str:
+    """How this building wants evidence origin to affect an answer.
+
+    Declared in `building.yaml` under `provenance.evidence_policy`:
+
+        all_connected_readings  every attached reading is authoritative; an answer does
+                                not distinguish simulated from measured (DEFAULT)
+        measured_only           a simulated candidate is excluded before ranking
+
+    Defaults to `all_connected_readings` on purpose. A building whose synthetic points
+    stand in for instruments not yet connected is answering correctly when it reports
+    them; refusing would say "I cannot tell you about that floor" about a floor whose
+    data is present. A deployment where someone ACTS on the answer sets `measured_only`,
+    and the machinery is already there.
+
+    Unreadable config yields the default rather than an exception — a malformed YAML key
+    must not decide a ranking.
+    """
+    try:
+        from orchestrator.services.building_context import _load_building_yaml
+
+        cfg = _load_building_yaml(building_id) or {}
+        block = cfg.get("provenance") or {}
+        value = str(block.get("evidence_policy") or "").strip().lower()
+        return value if value in ("all_connected_readings", "measured_only") else "all_connected_readings"
+    except Exception:  # pragma: no cover - config is best-effort by design
+        return "all_connected_readings"
+
+
 async def execute(
     cqir: CQIR,
     admission: AdmissionResult,
@@ -517,8 +546,60 @@ async def execute(
         candidates = [c for c in candidates if c.space_iri in shortlist] or candidates
         timings["forecast_ms"] = int((time.time() - t0) * 1000)
 
+    # ── V12-04: what each candidate's evidence actually is ──────────────────
+    #
+    # Built here rather than inside the scorer so the scorer stays a pure function of
+    # (candidates, values, verdicts) and can be tested without a graph.
+    #
+    # The verdict is per POINT. A store may also declare a `measured_through` boundary,
+    # in which case `observation_provenance` judges a reading by its timestamp — that
+    # stays supported for an estate whose store genuinely changed character on a date.
+    # Where no boundary is declared, every reading from a point inherits the point's own
+    # origin, which is the ordinary case.
+    #
+    # What this catches is what R4 is actually about: SATURATE-provisioned points, which
+    # have no physical instrument at all and must not win a recommendation about a real
+    # building. An UNDECLARED origin still ranks — excluding it would empty most rankings
+    # in any estate that has not finished labelling — but is not counted as measured
+    # coverage, so nothing claims it is a measurement.
+    #
+    # The BUILDING decides whether origin may affect an answer, via
+    # `provenance.evidence_policy` in its building.yaml.
+    #
+    #   all_connected_readings (default) — every attached reading is authoritative and an
+    #       answer does not distinguish simulated from measured. Right for an estate whose
+    #       synthetic points STAND IN for instruments not yet connected: refusing them
+    #       would answer "I cannot tell you about that floor" about a floor whose data is
+    #       present and correct for what it represents.
+    #
+    #   measured_only — the R4 protection. A candidate whose evidence declares
+    #       `isSimulated true` is excluded before ranking, with the exclusion stated. This
+    #       is what a supervised pilot, or any deployment where someone ACTS on the answer,
+    #       should set: there the distinction stops being a development detail.
+    _policy = _evidence_policy(schema.building_id)
+    _provenance: Dict[str, Dict[str, Any]] = {}
+    if _policy == "measured_only":
+        try:
+            from orchestrator.services.observation_provenance import observation_origin
+
+            for cand in candidates:
+                per_modality: Dict[str, Any] = {}
+                for modality, handle in (cand.sensors or {}).items():
+                    raw = str((handle or {}).get("simulated", "")).strip().lower()
+                    declared = True if raw == "true" else (False if raw == "false" else None)
+                    per_modality[modality] = observation_origin(point_simulated=declared)
+                if per_modality:
+                    _provenance[cand.space_iri] = per_modality
+        except Exception as _prov_err:  # pragma: no cover - live wiring
+            # Fails OPEN. A provenance outage must not empty every ranking in the system;
+            # an empty dict means the scorer excludes nothing, which is the old behaviour.
+            logger.warning(f"[executor] provenance not resolved: {_prov_err}")
+            _provenance = {}
+
     t0 = time.time()
-    score = score_candidates(cqir, candidates, values, anchors=_anchors)
+    score = score_candidates(
+        cqir, candidates, values, anchors=_anchors, provenance=_provenance or None
+    )
     timings["score_ms"] = int((time.time() - t0) * 1000)
 
     plan_hash = hashlib.sha256(
