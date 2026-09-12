@@ -356,7 +356,9 @@
     ],
     "forbid": [],
     "note": "Over budget by design. The decline must SAY WHY and name the narrowing that works.",
-    "building": "bldg1"
+    "building": "bldg1",
+    "timeout_s": 300,
+    "why": "The deliberation lane compiles a CQ-IR, enumerates candidate spaces, fetches every modality for each and scores them. Measured solo on 2026-09-11: 37.7 s for the over-budget decline and 22.9 s for the Floor 3 ranking — but BOTH exceeded the probe's 120 s default during a full run, while the same run finished 59 cases in 21.9 min. The lane is legitimately slow and gets slower under load. 300 s is a stated per-case allowance, which is the probe's own sanctioned pattern: raising the DEFAULT would hide a genuine hang, so the allowance sits on the case that needs it. This does not weaken the assertion — a wrong answer still fails; it stops a known-slow lane failing for being slow. See CAVEAT-500."
   },
   {
     "group": "deliberate",
@@ -369,7 +371,9 @@
       "couldn't rank any spaces"
     ],
     "note": "The narrowed form the decline recommends. If this fails, the advice is wrong.",
-    "building": "bldg1"
+    "building": "bldg1",
+    "timeout_s": 300,
+    "why": "The deliberation lane compiles a CQ-IR, enumerates candidate spaces, fetches every modality for each and scores them. Measured solo on 2026-09-11: 37.7 s for the over-budget decline and 22.9 s for the Floor 3 ranking — but BOTH exceeded the probe's 120 s default during a full run, while the same run finished 59 cases in 21.9 min. The lane is legitimately slow and gets slower under load. 300 s is a stated per-case allowance, which is the probe's own sanctioned pattern: raising the DEFAULT would hide a genuine hang, so the allowance sits on the case that needs it. This does not weaken the assertion — a wrong answer still fails; it stops a known-slow lane failing for being slow. See CAVEAT-500."
   },
   {
     "group": "workspace",

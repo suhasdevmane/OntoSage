@@ -110,7 +110,15 @@ def enumerate_candidates(
             continue
         seen.add(s.space_iri)
         sensors = {
-            m: {"uuid": e["uuid"], "stored_at": e["stored_at"]}
+            m: {
+                "uuid": e["uuid"],
+                "stored_at": e["stored_at"],
+                # V12-04. Carried so the ranker can refuse evidence that was never
+                # measured. "" means the point declares nothing, which resolves to
+                # UNKNOWN rather than to measured — the default that let a simulated
+                # candidate win an operational ranking.
+                "simulated": e.get("simulated", ""),
+            }
             for m, e in s.modalities.items()
             if e.get("status") == STATUS_PRESENT
         }

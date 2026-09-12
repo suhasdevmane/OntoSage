@@ -398,10 +398,43 @@ class ReportAgent:
         It says what happened and stops. It does not say the sensor is missing, that the
         data is not collected, or that anything is wrong with the building — none of which
         a row count can establish.
+
+        V12-05: it now also NAMES which nothing this is, where the lane genuinely knows.
+        Refusing to explain was the safe fix; refusing to distinguish is a separate loss.
+        Two facts are already in hand — whether any sensor was identified, and that no rows
+        came back — and they separate the two states that matter most here:
+
+          * no sensor identified  -> NOT_DECLARED. The building's model has nothing of
+            that kind, and saying so is a fact about the model, not a fault.
+          * sensors identified, no rows -> SERIES_UNRESOLVED. This is BUG-475's case, and
+            the honest statement is that absence was not established — the store cannot
+            distinguish a wrong identifier from a quiet period without a series catalogue
+            (review C08).
+
+        Still no LLM call, and still no claim the sensor is missing or the building is at
+        fault, because neither follows from a row count.
         """
+        from orchestrator.services.retrieval_outcome import (
+            SeriesResolution,
+            classify,
+            describe,
+        )
+
         sensor_count = int(sections.get("overview", {}).get("sensor_count") or 0)
+        subject = "the sensors for this request" if sensor_count else "a sensor of that kind"
+        outcome = classify(
+            declared=bool(sensor_count),
+            # The report lane has no series catalogue, so resolution is genuinely UNKNOWN
+            # and must not be inferred from the empty result.
+            series=SeriesResolution.UNKNOWN,
+            rows=0,
+            subject=subject,
+        )
+
         lines = [
             "**No data was retrieved for this request, so there is no report to give.**",
+            "",
+            describe(outcome),
             "",
             "That is a statement about this query, not about the building. It does not "
             "mean the sensor is missing, that the readings are not collected, or that "

@@ -93,7 +93,21 @@ TEST_CREDENTIAL = re.compile(r"(?i)\b(replaytest|testuser|dummy|fixture|sample|e
 
 
 def _run(args: List[str]) -> str:
-    return subprocess.run(args, capture_output=True, text=True, cwd=REPO).stdout
+    """git output as text, decoded as UTF-8 whatever the console codepage says.
+
+    `text=True` alone uses the LOCALE encoding — cp1252 on Windows — and a repository file
+    containing one byte outside it raises UnicodeDecodeError mid-scan. Observed
+    2026-09-12 on a staged file at byte 848,151: the traceback printed and the scan then
+    reported "no live credential in 24 file(s)". A guard that skips a file it could not
+    read and still reports clean is the exact failure its own `return 2` path exists to
+    prevent, and it was in the guard itself.
+
+    `errors="replace"` rather than `ignore`: a replacement character is visible in the
+    output, whereas silently dropping bytes could split a credential and hide it.
+    """
+    return subprocess.run(
+        args, capture_output=True, cwd=REPO, encoding="utf-8", errors="replace"
+    ).stdout
 
 
 def _env_secrets() -> Dict[str, str]:

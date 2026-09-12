@@ -41,6 +41,7 @@ _PREFIXES = (
     "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
     "PREFIX brick: <https://brickschema.org/schema/Brick#>\n"
     "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
+    "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
 )
 
 # Coverage statuses
@@ -237,7 +238,7 @@ class CoverageAuditor:
         ORDER BY makes OFFSET paging deterministic.
         """
         body = (
-            "SELECT DISTINCT ?sensor ?cls ?space ?label ?uuid ?stored WHERE {\n"
+            "SELECT DISTINCT ?sensor ?cls ?space ?label ?uuid ?stored ?simulated WHERE {\n"
             "  ?sensor a ?cls .\n"
             "  { ?sensor brick:hasLocation ?space }\n"
             "  UNION { ?sensor brick:isPointOf ?eq . ?eq brick:hasLocation ?space }\n"
@@ -267,6 +268,10 @@ class CoverageAuditor:
             "    ?r ref:hasTimeseriesId ?uuid .\n"
             "    OPTIONAL { ?r ref:storedAt ?stored }\n"
             "  }\n"
+            # V12-04: origin travels with the POINT, so the ranker can refuse to rank on
+            # evidence that was never measured. OPTIONAL because an undeclared point is
+            # UNKNOWN, not measured — treating silence as measurement was the defect.
+            "  OPTIONAL { ?sensor ontosage:isSimulated ?simulated }\n"
             f'  FILTER(STRSTARTS(STR(?sensor), "{namespace}"))\n'
             "} ORDER BY ?sensor ?cls ?space"
         )
@@ -298,6 +303,9 @@ class CoverageAuditor:
                 "text": " ".join(x for x in (_val(b, "label"), _local(_val(b, "sensor"))) if x),
                 "uuid": _val(b, "uuid"),
                 "stored_at": _local(_val(b, "stored")),
+                # "" when undeclared. Kept as the raw literal so the consumer
+                # decides what silence means rather than this layer guessing.
+                "simulated": _val(b, "simulated"),
             }
             for b in rows
             if _val(b, "sensor") and _val(b, "space")
@@ -329,6 +337,7 @@ class CoverageAuditor:
                     "sensor": "",
                     "uuid": "",
                     "stored_at": "",
+                    "simulated": "",
                 }
                 # BUG-255: take the FRESH one when a room has more than one sensor of a
                 # modality. This used to `break` on the first backed point the GRAPH happened
@@ -364,6 +373,7 @@ class CoverageAuditor:
                             "sensor": p["sensor"],
                             "uuid": p["uuid"],
                             "stored_at": p["stored_at"],
+                            "simulated": p.get("simulated", ""),
                         }
                 if _backed:
                     chosen = next(
@@ -375,6 +385,7 @@ class CoverageAuditor:
                         "sensor": chosen["sensor"],
                         "uuid": chosen["uuid"],
                         "stored_at": chosen["stored_at"],
+                        "simulated": chosen.get("simulated", ""),
                         # Recorded so a lane can SAY the only sensor it has is stale, rather
                         # than reporting "no readings" as though the room were uninstrumented.
                         # Those are different facts and they need different remedies.

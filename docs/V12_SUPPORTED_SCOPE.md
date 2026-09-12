@@ -64,7 +64,7 @@ Status vocabulary, chosen so "works" and "evidenced" cannot be confused:
 | Live readings for a named room | **Supported with a stated limitation** | TTL + `ref:hasTimeseriesId` + `ref:storedAt` + rows | probe `capability-bypass` | Only where both halves of the join exist; a missing `storedAt` reads as absence |
 | Comparison across floors | **Supported with a stated limitation** | as above, both floors | probe `w0` | Physically impossible readings are excluded **and disclosed**; 63–182 s, has exceeded a 121 s client timeout (**CAVEAT-467**, **CAVEAT-500**) |
 | Asset status (lifts, plant) | **Supported with a stated limitation** | asset TTL + status records | probe `assets`, `w0` | **Counts describe the retrieved set, not the declared set** — "1 of 1 lift(s)" where the graph declares three (**BUG-497**) |
-| Deliberation / ranking (ARBITER) | **Implemented, not evaluated** | TTL + readings across candidates | probe `deliberate` (2 cases, output only) | **Simulated evidence can win a ranking** — `scorer.py` has no notion of provenance (**R4**, V12-04). See §5. |
+| Deliberation / ranking (ARBITER) | **Supported with a stated limitation** | TTL + readings across candidates | probe `deliberate` (2 cases, output only) | The ranker now resolves evidence origin and can exclude simulated candidates before ranking (V12-04). This building declares `evidence_policy: all_connected_readings`, so it does **not** — a ranking on floors 0–4 rests on placeholder readings and is **not evidence about the physical building**. Floor 5 (37 rooms, real instruments) is where a ranking rests on measurements. See §5. |
 | Reports | **Implemented, not evaluated** | as live readings | none asserting content | The lane's six-defect chain was fixed 2026-09-07/08; nothing pins it |
 | Document / manual answers | **Supported with a stated limitation** | `input/documents/` | probe `capability-bypass` | One incidental shared word can let an unrelated document answer (**BUG-218**, `PARTIALLY_FIXED`, 70.4% precision) |
 | Forecasting | **Implemented, not evaluated** | history in a registered store | none | A request about future hours must say it uses current conditions only |
@@ -130,12 +130,30 @@ The review's rule (p. 17): *"For a demo, restrict or disable capabilities whose 
 remain unresolved. That is preferable to either hiding limitations or delaying every supported
 feature."*
 
-1. **Ranking answers as operational recommendations.** `scorer.py` contains **zero** occurrences of
-   `simulated` / `provenance` / `admissible` / `eligible`. In the live graph **3,004 points declare
-   simulated, 0 declare measured, and 1,342 declare nothing** — and silence reads as measured.
-   Provenance is resolved per *store*, not per observation, and is displayed in a dossier table that
-   is never acted on. Until **V12-04** lands, a ranking may be reported as an *illustration*, never
-   as an operational recommendation.
+1. **Ranking answers as operational recommendations — RESOLVED BY DECISION, 2026-09-12.**
+
+   V12-04 landed. `scorer.py` now takes a provenance verdict per candidate and excludes
+   simulated-origin evidence *before* ranking, stating the exclusion; 685 points declare measured
+   (`isSimulated false`), 1,409 declare simulated, and silence no longer reads as measurement.
+   Wiring it in immediately caught the live instance the review predicted: a floor-3 ranking
+   headed *"Best match: Room 3.27"* whose noise, illuminance and occupancy all came from
+   SATURATE placeholders (**BUG-515**).
+
+   **The owner then decided the protection should not be applied to this building.**
+   `input/building.yaml` declares `provenance.evidence_policy: all_connected_readings`: every
+   attached reading is authoritative and an answer does not distinguish simulated from measured.
+   The reasoning is that floors 0–4 are placeholders **standing in for** instruments to be
+   connected later, so refusing them would answer *"I cannot tell you about floor 3"* about a
+   floor whose data is present and correct for what it represents. The origin is documented once,
+   in `README.md`.
+
+   **State this accurately rather than as a closure.** R4 is **accepted**, not resolved: the
+   control exists, is tested, and is switched off here on purpose. A ranking on floors 0–4 rests
+   on placeholder readings and is not evidence about the physical building. Floor 5, with 37 rooms
+   of real instruments, is where a ranking rests on measurements.
+
+   **What reopens it:** a supervised pilot, or any deployment where someone acts on an answer. Set
+   `evidence_policy: measured_only` and the enforcement is already there.
 2. **Any claim whose verification failed.** `grounded` is read in exactly one place and only chooses
    a memory bucket; it gates publication **not at all**. Until **V12-03**, a failed verifier changes
    nothing the user sees. This is **R1**, and it is why a fabricated "install a CO₂ sensor" report

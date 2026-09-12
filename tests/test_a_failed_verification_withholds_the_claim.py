@@ -236,32 +236,35 @@ def test_the_verifier_declares_which_lanes_it_can_assess():
         )
 
 
-def test_planner_routed_lanes_are_not_claimed_as_assessable(tmp_path):
-    """report and export must stay OUT until BUG-509 is fixed.
+def test_planner_routed_lanes_are_assessable_only_because_the_bus_is_published():
+    """report and export are IN the set — but only because BUG-509 was fixed.
 
-    This test asserted the opposite when it was written, on the assumption that the
-    verifier could see a report's rows. Measurement refuted it: PlannerAgent._execute_step
-    writes sparql_result, sql_result and report_result into a LOCAL context that is never
-    merged into state.intermediate_results, so a report turn verifies as
-    `sensors=0, sql_rows=0, report_rows=0` beside adapter logs showing dozens of successful
-    queries.
+    They were removed on 2026-09-10 and restored on 2026-09-11. The removal was correct at
+    the time: `PlannerAgent._execute_step` wrote sparql_result, sql_result and
+    report_result into a LOCAL context that never reached the bus, so a report built from
+    real rows verified as `sensors=0, sql_rows=0, report_rows=0` and the publication gate
+    withheld a GOOD answer — "no evidence visible" read as "no evidence exists".
 
-    Putting them back without fixing the merge re-breaks every report -- the gate withholds
-    a good answer because "no evidence visible" is read as "no evidence exists". So the
-    assertion carries its own reason, and the fix that lets it be reversed is named.
+    So this test asserts BOTH halves together. Claiming a lane is assessable while its
+    evidence cannot reach the verifier is the combination that broke reports, and either
+    half alone would pass while the pair is broken.
     """
-    from orchestrator.agents.verifier_agent import _ASSESSABLE_INTENTS
-
-    for planner_routed in ("report", "export"):
-        assert planner_routed not in _ASSESSABLE_INTENTS, (
-            f"{planner_routed} routes via the planner, whose results never reach the bus "
-            "(BUG-509). Re-add it only once _planner_node merges the planner's context "
-            "into state.intermediate_results -- that is V12-14."
-        )
-
-    # And the reason must be documented where the next reader will find it.
     from pathlib import Path
 
-    src = Path(__file__).resolve().parent.parent / "orchestrator" / "agents" / "verifier_agent.py"
-    body = src.read_text(encoding="utf-8")
-    assert "BUG-509" in body, "the exclusion must say why, or it reads as an oversight"
+    from orchestrator.agents.verifier_agent import _ASSESSABLE_INTENTS
+    from orchestrator.agents.planner_agent import PlannerAgent
+
+    for planner_routed in ("report", "export"):
+        assert planner_routed in _ASSESSABLE_INTENTS
+
+    # ...and the publish that makes that claim true must still exist, at BOTH exits.
+    src = (
+        Path(__file__).resolve().parent.parent
+        / "orchestrator" / "agents" / "planner_agent.py"
+    ).read_text(encoding="utf-8")
+    assert src.count("_publish_context_to_bus(state, context)") >= 2, (
+        "report/export are claimed assessable but the planner no longer publishes its "
+        "results to the bus — that combination withholds every good report (BUG-509)"
+    )
+    for key in ("report_result", "sql_result", "sparql_result"):
+        assert key in PlannerAgent._BUS_KEYS_THE_PLANNER_PRODUCES

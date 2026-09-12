@@ -24,7 +24,7 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 | PASS | safety | Which refuge points are defective, and who owns them? |  |
 | PASS | operations | Which HVAC systems run outside normal hours, and is each exception app |  |
 | PASS | operations | Which permits are open? |  |
-| **FAIL** | timetable | Which teaching sessions are scheduled in Room 1.06? | transport TIMEOUT |
+| PASS | timetable | Which teaching sessions are scheduled in Room 1.06? |  |
 | PASS | metrology | When was the CO2 sensor in Room 5.01 last calibrated? |  |
 | PASS | metrology | How often does a CO2 sensor report? |  |
 | PASS | metrology | How many sensors are overdue for calibration? |  |
@@ -36,8 +36,8 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 | PASS | circulation | How long does it take to get from Level 1 to Level 5? |  |
 | PASS | circulation | On which floor pairs is the step-free route slower than the stairs? |  |
 | PASS | workspace | How long do the Level 1 computer laboratories take to recover after a  |  |
-| PASS | deliberate | Which space has the best conditions for focused work this afternoon? |  |
-| PASS | deliberate | Which space on Floor 3 has the best conditions for focused work this a |  |
+| **FAIL** | deliberate | Which space has the best conditions for focused work this afternoon? | transport TIMEOUT |
+| **FAIL** | deliberate | Which space on Floor 3 has the best conditions for focused work this a | transport TIMEOUT |
 | PASS | workspace | I have an online interview next week. Which bookable room and time giv |  |
 | PASS | readiness | Is Room 1.06 ready for my class? |  |
 | PASS | readiness | Is Room 3.13 ready for my seminar? |  |
@@ -58,7 +58,7 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 | PASS | capability-bypass | When was the fire alarm last tested? |  |
 | PASS | capability-bypass | Give me a report on the CO2 in room 5.01 yesterday. |  |
 | PASS | capability-bypass | Is the professor in her office? |  |
-| **FAIL** | w0 | Is the lift working? | forbidden present ['of 1 lift'] |
+| PASS | w0 | Is the lift working? |  |
 | PASS | w0 | How many sensors are there in total? |  |
 | PASS | w0 | What is this building and who runs it? |  |
 | PASS | w0 | What is the nearest accessible toilet to room 3.10? |  |
@@ -70,7 +70,7 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 
 ## What came back instead
 
-### Which teaching sessions are scheduled in Room 1.06?
+### Which space has the best conditions for focused work this afternoon?
 
 - **why:** transport TIMEOUT · **intent:** ``
 
@@ -78,11 +78,11 @@ Each case asserts a FACT the registers hold — a figure, a record id, a departm
 
 ```
 
-### Is the lift working?
+### Which space on Floor 3 has the best conditions for focused work this afternoon?
 
-- **why:** forbidden present ['of 1 lift'] · **intent:** `asset_state`
+- **why:** transport TIMEOUT · **intent:** ``
 
 ```
-**1 of 1 lift(s) are not operational**: Main passenger lift (controller fault) (out of service since 16 days ago). Report or chase it with: Estates helpdesk, ext 1234. *Source: simulated service feed.*
+
 ```
 

@@ -21,7 +21,7 @@ standards, not building facts — and every exclusion or data gap is explicit:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from orchestrator.services.deliberation.candidates import Candidate
 from orchestrator.services.deliberation.cqir import (
@@ -123,6 +123,17 @@ class ScoreResult:
     excluded: List[ScoredCandidate]
     top1_stable_under_weight_perturbation: Optional[bool] = None
     tie_break_rule: str = "equal totals break alphabetically by label"
+    #: Which evidence this ranking was allowed to use (V12-04). "operational" admits only
+    #: measured readings; "scenario" admits simulated ones and says so.
+    evidence_mode: str = "operational"
+    #: Candidates dropped specifically for provenance, kept apart from those that failed a
+    #: hard constraint. Conflating them would let "excluded" look like a data-quality
+    #: problem when it is an admissibility decision.
+    excluded_for_provenance: int = 0
+    #: Candidates whose evidence was MEASURED. The acceptance requires that measured
+    #: coverage is not inflated by simulated points, so it is counted separately rather
+    #: than inferred from len(ranked).
+    measured_candidates: int = 0
 
 
 def load_anchors(building_id: Optional[str] = None) -> Dict[str, ScoreAnchor]:
@@ -214,8 +225,25 @@ def score_candidates(
     values: Dict[str, Dict[str, float]],  # space_iri -> {modality: aggregated value}
     anchors: Optional[Dict[str, ScoreAnchor]] = None,
     proximity_weight: float = 1.0,
+    provenance: Optional[Dict[str, Dict[str, Any]]] = None,
+    evidence_mode: str = "operational",
 ) -> ScoreResult:
-    """Deterministic rank. `values` comes from the executor's aggregation — code, not LLM."""
+    """Deterministic rank. `values` comes from the executor's aggregation — code, not LLM.
+
+    `provenance` maps space_iri -> {modality: ProvenanceVerdict} and is what makes V12-04
+    possible: until it existed this function had ZERO occurrences of `simulated`,
+    `provenance`, `admissible` or `eligible` across 392 lines, so an attractive simulated
+    candidate could win an operational ranking and be merely *labelled* underneath, which
+    is review case B06 verbatim.
+
+    `evidence_mode` is the switch the review asks for (p. 11): "operational" admits only
+    measured readings; "scenario" admits simulated ones and the dossier says so. It
+    defaults to operational because the safe reading must be the one you get by not
+    thinking about it.
+
+    Omitting `provenance` changes nothing — this must not become a guard that silently
+    excludes every candidate the moment a caller forgets an argument.
+    """
     anchors = {**DEFAULT_ANCHORS, **(anchors or {})}
     hard = [c for c in cqir.constraints if c.hardness == Hardness.HARD]
     soft = [c for c in cqir.constraints if c.hardness == Hardness.SOFT]
@@ -224,6 +252,8 @@ def score_candidates(
 
     scored: List[ScoredCandidate] = []
     excluded: List[ScoredCandidate] = []
+    provenance_excluded = 0
+    measured_count = 0
     for cand in candidates:
         vals = values.get(cand.space_iri, {})
         sc = ScoredCandidate(
@@ -232,6 +262,53 @@ def score_candidates(
             floor=cand.floor,
             proximity_m=cand.distance_to_anchor_m,
         )
+        # ── V12-04 part 3: admissibility BEFORE ranking ─────────────────────
+        #
+        # The acceptance is specific that exclusion happens BEFORE the ranking, not as a
+        # label afterwards. A simulated candidate that is scored and then annotated has
+        # still won; the reader has to notice a table to learn otherwise, and BUG-475
+        # showed what happens when a caveat depends on being read.
+        #
+        # Stated, not silent: the reason names the modality and what its origin turned out
+        # to be, so the dossier can show a reader why a room they expected is missing.
+        if evidence_mode == "operational" and provenance:
+            verdicts = provenance.get(cand.space_iri) or {}
+            needed = {c.modality for c in hard + soft} & set(verdicts)
+            # EXCLUDE ON A POSITIVE SIMULATED VERDICT, not on the absence of a measured
+            # one. The first version of this excluded anything not MEASURED, which is the
+            # stricter reading of `admissible_for_operational_claim` and emptied every
+            # ranking whose points had not yet declared an origin — measured live as
+            # "ranked 0, excluded 2 (2 for provenance)".
+            #
+            # That is the wrong trade. R4's concern is that an attractive SIMULATED
+            # candidate wins a recommendation about the real building; it is not that an
+            # undeclared one must be erased. Excluding unknowns would delete most rankings
+            # in any building that has not finished labelling its points, which trains
+            # people to turn the check off.
+            #
+            # Unknowns are still not counted as measured coverage below, so nothing here
+            # claims they are measurements.
+            bad = sorted(
+                m for m in needed
+                if getattr(getattr(verdicts[m], "origin", None), "value", "") == "simulated"
+            )
+            if bad:
+                detail = ", ".join(
+                    f"{m} ({getattr(verdicts[m], 'origin', '?')})" for m in bad[:3]
+                )
+                sc.excluded_reason = (
+                    f"evidence not admissible for an operational claim: {detail}"
+                    + ("" if len(bad) <= 3 else f", and {len(bad) - 3} more")
+                )
+                excluded.append(sc)
+                provenance_excluded += 1
+                continue
+            if needed and all(
+                getattr(verdicts[m], "admissible_for_operational_claim", False)
+                for m in needed
+            ):
+                measured_count += 1
+
         # hard constraints: no value or failing value -> excluded, with the reason
         failed = None
         for c in hard:
@@ -320,13 +397,23 @@ def score_candidates(
     for i, s in enumerate(scored, 1):
         s.rank = i
 
-    result = ScoreResult(ranked=scored, excluded=excluded)
+    result = ScoreResult(
+        ranked=scored,
+        excluded=excluded,
+        evidence_mode=evidence_mode,
+        excluded_for_provenance=provenance_excluded,
+        measured_candidates=measured_count,
+    )
     if len(scored) >= 2:
         result.top1_stable_under_weight_perturbation = _top1_stable(
             cqir, candidates, values, anchors, proximity_weight, scored[0].space_iri
         )
     logger.info(
-        f"[scorer] ranked {len(scored)}, excluded {len(excluded)}"
+        f"[scorer] mode={evidence_mode} ranked {len(scored)}, excluded {len(excluded)}"
+        + (
+            f" ({provenance_excluded} for provenance)" if provenance_excluded else ""
+        )
+        + (f", measured {measured_count}" if measured_count else "")
         + (
             f", top1 stable: {result.top1_stable_under_weight_perturbation}"
             if len(scored) >= 2

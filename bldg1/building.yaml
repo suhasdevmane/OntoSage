@@ -41,6 +41,33 @@ provenance:
   nature: mixed
   note: "Real building (Cardiff University Abacws). The ontology describes real equipment and database1 holds the original measured dataset; the demo tables marked nature: synthetic in database_registry.yaml are generated."
 
+  # ── How answers treat evidence origin ──────────────────────────────────────
+  #
+  # OWNER DECISION, 2026-09-12. Every reading connected to this building is treated
+  # as authoritative, and an answer does NOT distinguish simulated from measured.
+  #
+  # WHY: the synthetic points are PLACEHOLDERS for instruments that will be connected
+  # later. Ask about floor 3 and you should get floor 3's readings — the demonstration
+  # is that the system answers correctly from whatever data is attached, not that it
+  # can litigate where each number came from. The origin of this building's development
+  # data is documented once, in README.md, rather than repeated in every answer.
+  #
+  # WHAT THIS SETTING CONTROLS: whether the deliberation ranker refuses evidence whose
+  # point declares `ontosage:isSimulated true`. Under `all_connected_readings` it does
+  # not, so rankings work on every floor. Under `measured_only` a simulated candidate
+  # is excluded before ranking, with the exclusion stated.
+  #
+  # WHEN TO CHANGE IT: a supervised pilot or any deployment where someone acts on the
+  # answer. At that point the distinction stops being a development detail and becomes
+  # a safety property — set `measured_only` and the machinery is already there.
+  #
+  # HONEST NOTE FOR THE RECORD: this is an ACCEPTED risk, not a closed one. The
+  # architecture review's R4 asks that simulated evidence not influence operational
+  # claims. That protection is built and tested; this building declines to apply it,
+  # deliberately, because its synthetic data stands in for real data rather than
+  # competing with it. See BUG-515 and docs/V12_SUPPORTED_SCOPE.md.
+  evidence_policy: all_connected_readings   # all_connected_readings | measured_only
+
 # ── Capability semantic routing thresholds ────────────────────────────────────
 #
 # Calibrated 2026-05-22 against LOCAL sentence-transformers/all-MiniLM-L6-v2

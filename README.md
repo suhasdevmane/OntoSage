@@ -40,6 +40,39 @@ size and sensor mix scored **above** the first with no code changes — only its
 
 ---
 
+## Where bldg1's readings come from
+
+**Read this once; the system does not repeat it in every answer.**
+
+Abacws is a real building and its model describes real equipment. Its instrumentation is
+**concentrated on floor 5**: 37 rooms carry 20 physical sensors each — temperature, humidity,
+CO₂, illuminance, particulate and air quality — and those readings are measurements, stored in
+the wide `sensor_data` table.
+
+**Floors 0–4 are synthetic.** Their points are placeholders generated to fill coverage gaps so
+the system can be developed and demonstrated across the whole building. Ask about floor 3 and you
+get floor 3's readings; they are correct for what they represent, and they stand in for
+instruments that will be connected later.
+
+| | sensors | spaces |
+|---|---:|---:|
+| Declared measured (`ontosage:isSimulated false`) | 685 | 37 — all floor 5 |
+| Declared simulated (SATURATE placeholders) | 1,409 | 241 |
+
+**An answer does not distinguish the two.** That is a deliberate decision, declared in
+`input/building.yaml` as `provenance.evidence_policy: all_connected_readings`: the demonstration
+is that the system answers correctly from whatever data is attached, not that it can litigate
+where each number came from. The origin is documented here rather than repeated in prose the
+reader would learn to skip.
+
+The machinery to enforce the distinction exists and is tested. Setting
+`provenance.evidence_policy: measured_only` makes the deliberation ranker exclude
+simulated-origin candidates before ranking, and say so. **That is what a supervised pilot or any
+deployment where someone acts on an answer should set** — at that point the distinction stops
+being a development detail. See `docs/V12_SUPPORTED_SCOPE.md`.
+
+---
+
 ## Design principles
 
 OntoSage is **an agentic conversational layer over one smart building's own data** — *connect a
