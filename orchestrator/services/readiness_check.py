@@ -229,14 +229,23 @@ async def compose(
     now: Optional[datetime] = None,
 ) -> ReadinessCheck:
     """Everything the building knows about this room's readiness, with provenance."""
+    _given_now = now is not None
     now = now or datetime.now()
+    # Shown to a person, so on the building's clock (WB-06): the container clock is UTC and
+    # the footer read "Compiled 2026-09-15T02:32" at 03:32 in the building.
+    if _given_now:
+        _shown = now
+    else:
+        from orchestrator.services.requested_interval import building_local_now
+
+        _shown = building_local_now()
     check = ReadinessCheck(
         room=room,
         module=module,
         starts_at=starts_at,
         session_ref=session_ref,
         lead_minutes=lead_minutes,
-        generated_at=now.isoformat(timespec="minutes"),
+        generated_at=_shown.strftime("%Y-%m-%d %H:%M"),
     )
 
     # ── AV and teaching technology ──────────────────────────────────────────────────

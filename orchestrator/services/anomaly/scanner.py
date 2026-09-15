@@ -356,7 +356,13 @@ class AnomalyScanner:
         now = now or datetime.utcnow()
         spaces = await self._spaces()
         candidates, series_by_uuid = await self._fetch(spaces, window_hours)
-        findings = self._detect(candidates, series_by_uuid)
+        # WB-19: detection is pure CPU over ~2,000 series and ran ON the event loop, so every
+        # chat request stalled for the length of a sweep (~5 min, hourly and 3 min after boot):
+        # "which floor is the warmest right now?" timed out at 150 s inside one. A worker thread
+        # keeps the loop serving while the detectors run; _detect reads only its arguments.
+        import asyncio
+
+        findings = await asyncio.to_thread(self._detect, candidates, series_by_uuid)
         inserted, extended = await self.persist(findings, now)
         # V5-T23 — standing "alert me if…" subscriptions fire on NEW episodes
         # only (persist() reports how many were inserted this sweep).

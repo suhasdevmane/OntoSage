@@ -2928,13 +2928,11 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             if row_count > 0:
                 _prov.record_sql_stores(state, storage_map)
 
-            # Phase 3.1: Notify SmartCacheManager about new data for staleness tracking
-            if self.smart_cache and uuids and row_count > 0:
-                try:
-                    for uid in uuids:
-                        await self.smart_cache.on_new_readings(uid, row_count)
-                except Exception as _sc_err:
-                    logger.debug(f"SmartCache staleness update skipped: {_sc_err}")
+            # WB-18: NO staleness notification from a READ. `on_new_readings` is the ingestion
+            # hook ("called by the ingestion pipeline when new sensor readings arrive"); this
+            # node called it for every sensor it had merely read, with the TOTAL row count, so
+            # each question invalidated caches sensor by sensor — ~100 ms × 274 sensors on
+            # "which floor is the warmest right now?", one of the causes of its 150 s timeout.
         else:
             state.query_results = {"data": []}  # Empty but valid structure
             logger.error(f"SQL failed: {result.get('error', 'Unknown error')}")

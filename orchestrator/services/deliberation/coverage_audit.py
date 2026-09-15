@@ -98,6 +98,8 @@ class SpaceCoverage:
     label: str = ""
     floor: str = ""
     modalities: Dict[str, Dict[str, str]] = field(default_factory=dict)
+    #: Brick room classes this space carries (WB-17), e.g. {"Office", "Room"}.
+    kinds: Set[str] = field(default_factory=set)
 
 
 def _local(iri: str) -> str:
@@ -117,8 +119,18 @@ def load_modalities(
     Overlay entries replace same-named base entries; new names are appended.
     """
     base_path = config_path or _DEFAULT_CONFIG
+    # WB-15: cached on the config files' modification times. The unit lookup calls this once
+    # per sensor, so a building-wide question re-read and re-parsed the YAML 287 times; an
+    # edited file still takes effect on the next call because its mtime changes the key.
+    _candidates = list(_config_candidates(base_path, building_id))
+    _key = (str(base_path), building_id) + tuple(
+        (str(p), p.stat().st_mtime if p.exists() else 0.0) for p in _candidates
+    )
+    _hit = _MODALITY_CACHE.get(_key)
+    if _hit is not None:
+        return list(_hit)
     merged: Dict[str, Dict[str, Any]] = {}
-    for path in _config_candidates(base_path, building_id):
+    for path in _candidates:
         try:
             raw = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
         except Exception as exc:  # unreadable overlay must not kill the audit
@@ -138,7 +150,12 @@ def load_modalities(
     ]
     specs = [s for s in specs if s.brick_classes]
     logger.info(f"[coverage_audit] Loaded {len(specs)} required modalities")
+    _MODALITY_CACHE.clear()  # one entry is enough; keeps the cache from growing
+    _MODALITY_CACHE[_key] = list(specs)
     return specs
+
+
+_MODALITY_CACHE: Dict[tuple, List["ModalitySpec"]] = {}
 
 
 def load_modality_raw(
@@ -198,7 +215,7 @@ class CoverageAuditor:
 
         def _space_query(typing_clause: str) -> str:
             return _PREFIXES + (
-                "SELECT DISTINCT ?space ?label ?floor WHERE {\n"
+                "SELECT DISTINCT ?space ?label ?floor ?cls WHERE {\n"
                 f"  {typing_clause}\n"
                 "  OPTIONAL { ?space rdfs:label ?label }\n"
                 "  OPTIONAL { ?space brick:isPartOf ?floor . ?floor a brick:Floor }\n"
@@ -215,7 +232,9 @@ class CoverageAuditor:
                 "[coverage_audit] subclass-closure space query returned 0 — "
                 "falling back to direct `a brick:Room` typing"
             )
-            rows = _bindings(await self._exec(_space_query("?space a brick:Room .")))
+            rows = _bindings(
+                await self._exec(_space_query("?space a brick:Room . BIND(brick:Room AS ?cls)"))
+            )
         spaces: Dict[str, SpaceCoverage] = {}
         for b in rows:
             iri = _val(b, "space")
@@ -224,6 +243,8 @@ class CoverageAuditor:
             sc = spaces.setdefault(iri, SpaceCoverage(space_iri=iri))
             sc.label = sc.label or _val(b, "label") or _local(iri)
             sc.floor = sc.floor or _local(_val(b, "floor"))
+            if _val(b, "cls"):
+                sc.kinds.add(_local(_val(b, "cls")))
         logger.info(f"[coverage_audit] Discovered {len(spaces)} spaces in {namespace}")
         return list(spaces.values())
 

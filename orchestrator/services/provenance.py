@@ -68,6 +68,35 @@ def record_sql_stores(state: Any, storage_map: Dict[str, str]) -> None:
         record(state, "live_sensors")
 
 
+def _tag_from_database_key(key: str) -> Optional[ProvenanceTag]:
+    """A tag from the DATABASE REGISTRY entry named ``key``, by its declared ``nature`` (WB-07).
+
+    A storage key can name a database rather than a datasource table — the wide store is
+    ``database1``, declared ``nature: real`` — and every answer from it carried an
+    "Unknown Source" chip. Only an explicit declaration is trusted: no entry, or no
+    ``nature``, still falls through to Unknown (BUG-145's rule stands).
+    """
+    try:
+        from orchestrator.services.adapters.registry import adapter_registry
+
+        config = adapter_registry._load_yaml_config() or {}
+        entry = (config.get("databases") or config).get(key) or {}
+        nature = str(entry.get("nature") or "").strip().lower()
+    except Exception:
+        return None
+    if nature == "real":
+        return BUILTIN_PROVENANCE["live_sensors"]
+    if nature in ("synthetic", "simulated"):
+        return ProvenanceTag(
+            source_id=f"db:{key}",
+            label=str(entry.get("label") or "Simulated sensor data"),
+            color="#9CA3AF",
+            synthetic=True,
+            store=str(entry.get("type") or ""),
+        )
+    return None
+
+
 def build_tags(store_keys: List[str], registry: Optional[Any]) -> List[ProvenanceTag]:
     """Map recorded store keys to ProvenanceTags (deduped by source_id)."""
     tags: List[ProvenanceTag] = []
@@ -81,6 +110,8 @@ def build_tags(store_keys: List[str], registry: Optional[Any]) -> List[Provenanc
             tag = None
             if registry is not None:
                 tag = registry.provenance_for_table(table)
+            if tag is None:
+                tag = _tag_from_database_key(table)
             if tag is None:
                 tag = UNKNOWN_PROVENANCE
         if tag is not None and tag.source_id not in seen:

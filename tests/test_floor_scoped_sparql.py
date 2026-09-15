@@ -69,7 +69,9 @@ def test_prefers_indoor_over_outside_class_target():
     )
     assert q is not None
     assert "brick:Temperature_Sensor" in q
-    assert "Outside_Air_Temperature_Sensor" not in q
+    # The SELECTOR must not be the outside class. (WB-14's plant-side exclusion names it inside
+    # FILTER NOT EXISTS, to keep it OUT of floor measurements — the opposite of selecting it.)
+    assert "subClassOf* brick:Outside_Air_Temperature_Sensor" not in q
     assert '"3"' in q
 
 

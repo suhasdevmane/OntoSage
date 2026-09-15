@@ -7,6 +7,7 @@ import sys
 sys.path.append("/app")
 
 import json
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
@@ -66,7 +67,30 @@ logger = get_logger(__name__)
 #: comfortably while stopping a whole-building sweep, and deliberately larger than the
 #: deliberation lane's space budget because this counts SENSORS, several of which sit in
 #: each space.
-MAX_FETCH_UUIDS = 200
+MAX_FETCH_UUIDS = 600
+
+#: WB-04 — the real limit, in ROWS. 200 sensors × 1,000 rows was the old implicit budget; a
+#: "right now" question needs the last readings only, so a building-wide one (288 temperature
+#: sensors × 60 rows) is cheaper than a floor-wide week. Declines when sensors × rows-per-sensor
+#: exceeds this, and names the narrowing as before.
+MAX_FETCH_ROWS = 200_000
+NOW_ROWS_PER_UUID = 60
+DEFAULT_ROWS_PER_UUID = 1000
+
+_NOW_RE = re.compile(
+    r"\b(?:right now|now|currently|current|at the moment|latest|live|at present)\b", re.IGNORECASE
+)
+_PERIOD_RE = re.compile(
+    r"\b(?:yesterday|today|last|past|this (?:week|month|morning|afternoon)|since|between|"
+    r"over the|trend|history|average over|daily|weekly|monthly|overnight|weekend)\b",
+    re.IGNORECASE,
+)
+
+
+def rows_per_uuid_for(query: str) -> int:
+    """How many recent rows per sensor a question needs: few for 'now', the default otherwise."""
+    q = query or ""
+    return NOW_ROWS_PER_UUID if _NOW_RE.search(q) and not _PERIOD_RE.search(q) else DEFAULT_ROWS_PER_UUID
 
 
 class SQLAgent:
@@ -306,7 +330,8 @@ class SQLAgent:
             #
             # Declining names the narrowing. Truncating would answer over an unnamed subset
             # of the building, which is the failure this project guards hardest against.
-            if len(uuids) > MAX_FETCH_UUIDS:
+            _rows_per_uuid = rows_per_uuid_for(user_query)
+            if len(uuids) > MAX_FETCH_UUIDS or len(uuids) * _rows_per_uuid > MAX_FETCH_ROWS:
                 msg = (
                     f"That question reaches **{len(uuids)} sensors** — more than I can read "
                     "and summarise in one request without either timing out or quietly "
@@ -436,7 +461,9 @@ class SQLAgent:
             #
             # When it still binds, the kept set is SORTED (stable across runs, not dependent on
             # result order) and the omission is recorded and said.
-            _UUID_CAP = 120
+            # WB-04: raised with the row budget above — the building, not a floor, is the unit
+            # a "right now" question may cover. Still sorted, recorded and stated when it binds.
+            _UUID_CAP = 600
             points_capped: Dict[str, Tuple[int, int]] = {}
             for key in grouped_uuids:
                 total = len(grouped_uuids[key])
@@ -454,7 +481,7 @@ class SQLAgent:
             #: Rows per storage group. Named rather than repeated inline so the cap and the
             #: check that detects hitting it cannot drift apart — that drift is how a
             #: truncated set came to be reported as a count (BUG-479).
-            _row_limit = 1000
+            _row_limit = _rows_per_uuid
             #: Did any group come back exactly full? Then `all_data` is a TRUNCATED sample
             #: and its length is not a count of what exists.
             rows_capped = False

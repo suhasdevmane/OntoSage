@@ -35,6 +35,13 @@ logger = get_logger(__name__)
 SUPPORTED_FORMATS = {"json", "csv", "html", "markdown", "md", "pdf", "docx"}
 
 
+def _local_stamp() -> str:
+    """Export timestamps on the building's clock (WB-06)."""
+    from orchestrator.services.requested_interval import local_stamp
+
+    return local_stamp()
+
+
 class DataExportAgent:
     """
     Phase 4.3: Converts arbitrary tabular data into exportable formats.
@@ -206,7 +213,7 @@ class DataExportAgent:
 </head>
 <body>
   <h1>{safe_title}</h1>
-  <p class="meta">Exported: {datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")} &mdash; {len(rows)} records</p>
+  <p class="meta">Exported: {_local_stamp()} &mdash; {len(rows)} records</p>
   <table>
     <thead><tr>{header}</tr></thead>
     <tbody>{body_rows}</tbody>
@@ -223,4 +230,4 @@ class DataExportAgent:
         data_rows = "\n".join(
             "| " + " | ".join(str(row.get(k, "")) for k in keys) + " |" for row in rows
         )
-        return f"# {title}\n\n*{len(rows)} records — {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}*\n\n{header_row}\n{sep_row}\n{data_rows}\n"
+        return f"# {title}\n\n*{len(rows)} records — {_local_stamp()}*\n\n{header_row}\n{sep_row}\n{data_rows}\n"

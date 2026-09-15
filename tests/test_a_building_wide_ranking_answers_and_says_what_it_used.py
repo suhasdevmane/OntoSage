@@ -1,0 +1,86 @@
+# -*- coding: utf-8 -*-
+"""WB-05: a ranking on simulated-only evidence answers, and says so in its first lines."""
+
+import inspect
+
+import pytest
+
+from orchestrator.services.deliberation import dossier as ds
+from orchestrator.services.deliberation import plan_executor as px
+
+pytestmark = pytest.mark.unit
+
+
+def test_scenario_mode_is_a_fallback_only_when_provenance_emptied_the_ranking():
+    src = inspect.getsource(px.execute)
+    i = src.index('evidence_mode="scenario"')
+    guard = src[src.rindex("if not score.ranked", 0, i) : i]
+    assert "score.excluded_for_provenance" in guard
+    assert "**Simulated readings.**" in src
+
+
+def test_a_successful_ranking_prints_its_guidance_notes():
+    src = inspect.getsource(ds)
+    best = src.index("**Best match:")
+    assert "dossier.guidance_notes" in src[best : best + 600]
+
+
+@pytest.mark.parametrize("anchor", ["None", "Room", "the building", ""])
+def test_a_whole_building_anchor_is_not_a_space_to_find(anchor):
+    """WB-11: 'coolest place in the building' asked the user which room they meant."""
+    from orchestrator.services.deliberation import capability_schema as cs
+
+    assert anchor.strip().lower() in cs._WHOLE_BUILDING_ANCHORS
+    src = inspect.getsource(cs)
+    assert "not in _WHOLE_BUILDING_ANCHORS" in src
+
+
+def test_equal_totals_break_on_the_raw_value_in_the_direction_asked():
+    """WB-13: 'highest PM2.5' listed clamped rooms alphabetically, not by reading."""
+    from orchestrator.services.deliberation import scorer as sc
+
+    src = inspect.getsource(sc.score_candidates)
+    assert "_raw_key(s)" in src and "Direction.MAXIMIZE" in src
+
+
+def test_air_quality_ranks_on_co2_and_pm25():
+    """WB-16: the unit-mixed air_quality modality could not be scored at all."""
+    from orchestrator.services.deliberation import compiler as cp
+    from orchestrator.services.deliberation.cqir import Constraint, Direction, Hardness
+
+    c = Constraint(modality="air_quality", direction=Direction.MAXIMIZE, hardness=Hardness.SOFT)
+    folded = cp._fold_air_quality([c])
+    assert {x.modality for x in folded} == {"co2", "pm25"}
+    assert all(x.direction == Direction.MINIMIZE for x in folded)
+
+
+def test_a_place_to_work_excludes_restrooms_and_plant():
+    """WB-17: 'coolest place to work in the building' ranked a male restroom first."""
+    from types import SimpleNamespace
+
+    from orchestrator.services.deliberation.candidates import enumerate_candidates
+    from orchestrator.services.deliberation.coverage_audit import SpaceCoverage
+
+    temp = {"temperature": {"status": "present", "uuid": "u", "stored_at": "t"}}
+    wc = SpaceCoverage("x#WC", "Restroom", "Floor5", dict(temp), {"Restroom", "Room"})
+    office = SpaceCoverage("x#Office", "Office", "Floor5", dict(temp), {"Office", "Room"})
+    schema = SimpleNamespace(spaces=[wc, office], amenities=[])
+    admission = SimpleNamespace(floor_anchor=None, space_anchor=None, amenity_anchor=None)
+    cqir = SimpleNamespace(constraints=[], raw_query="Where's the coolest place to work?")
+    cands, ledger = enumerate_candidates(cqir, admission, schema)
+    assert [c.label for c in cands] == ["Office"]
+    assert any("not a place to work" in e.reason for e in ledger.excluded)
+    cqir.raw_query = "Which room has the highest temperature?"
+    cands, _ = enumerate_candidates(cqir, admission, schema)
+    assert {c.label for c in cands} == {"Office", "Restroom"}  # not a person-place question
+
+
+def test_a_count_of_readings_is_not_an_implausible_reading():
+    """WB-22: '1,020 readings' was flagged as an impossible humidity value."""
+    from orchestrator.services.plausibility import implausibility_note
+
+    draft = ("Floor 0 has the lowest humidity, a mean of 50.5 % across 17 sensors and 1,020 "
+             "readings. This falls comfortably within the recommended band.")
+    assert implausibility_note("Which floor has the lowest humidity?", draft) is None
+    bad = "The humidity is 1020, which is high."
+    assert implausibility_note("what is the humidity?", bad) is not None

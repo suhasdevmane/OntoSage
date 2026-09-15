@@ -201,6 +201,36 @@ class AnalyticsAgent:
                 for uuid, meta in sensor_metadata.items():
                     logger.info(f"   - {uuid[:20]}... → {meta.get('label', 'N/A')}")
 
+            # WB-14: a PER-FLOOR comparison is already computed deterministically from the rows
+            # (series_summary.summarise_groups). Generating and sandbox-running Python over
+            # 17,160 rows to recompute it took ~95 s and pushed "Which floor is the warmest
+            # right now?" past the 150 s pipeline timeout. When the rows span floors and
+            # aggregate cleanly, narrate from those figures and skip code generation.
+            try:
+                from orchestrator.services.series_summary import summarise_groups
+
+                _floor_summary = summarise_groups(
+                    data.get("data", []), sensor_metadata or {}, key="floor"
+                )
+            except Exception as _fs_err:  # never cost the answer
+                logger.debug(f"[analytics] per-floor shortcut skipped: {_fs_err}")
+                _floor_summary = None
+            if _floor_summary and not _floor_summary.startswith("Per-floor aggregates were NOT"):
+                logger.info("[analytics] per-floor figures computed in code — no code generation")
+                result = {"success": True, "code": None, "output": _floor_summary, "error": None}
+                formatted, media = await self._format_analysis(
+                    result, user_query, sensor_metadata, rows=data.get("data", [])
+                )
+                return {
+                    "success": True,
+                    "code": None,
+                    "output": _floor_summary,
+                    "error": None,
+                    "formatted_response": formatted,
+                    "media": media,
+                    "method": "per_floor_summary",
+                }
+
             # Step 1: Generate Python code
             logger.info("\n🤖 Step 1: Generating Python analytics code...")
             code = await self._generate_code(

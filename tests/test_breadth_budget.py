@@ -34,7 +34,7 @@ def test_the_budget_sits_above_a_floor_and_below_a_building():
 def test_the_check_runs_before_the_fetch():
     """Declining after paying for the fetch would save nothing at all."""
     source = inspect.getsource(px.execute)
-    cap = source.index("MAX_FETCH_CANDIDATES")
+    cap = source.index("MAX_FETCH_ROWS")  # WB-04: the budget is in rows now
     fetch = source.index("await fetch_series(")
     assert cap < fetch, "the budget check must precede fetch_series"
 
@@ -42,7 +42,7 @@ def test_the_check_runs_before_the_fetch():
 def test_it_declines_rather_than_truncating():
     """No slicing of the candidate list — the whole point is not to answer partially."""
     source = inspect.getsource(px.execute)
-    window = source[source.index("MAX_FETCH_CANDIDATES") : source.index("await fetch_series(")]
+    window = source[source.index("MAX_FETCH_ROWS") : source.index("await fetch_series(")]
     assert "candidates[:" not in window, "truncating would answer over an unnamed subset"
     assert "return ExecutionOutcome(" in window
 
@@ -116,3 +116,39 @@ def test_a_deliberate_decline_is_not_re_explained_as_missing_data():
     generic = source.index('"no_data_available"')
     assert passthrough < generic, "the too_broad passthrough must come first"
     assert '"error": "question_too_broad"' in source
+
+
+# ── WB-04: the budget is in rows, and "right now" reads only recent rows ─────────────
+
+
+def test_a_building_wide_right_now_ranking_fits_the_row_budget():
+    """234 spaces x 4 modalities was declined by the space cap while every floor was live."""
+    hours, limit, rows = px.fetch_plan(px.TimeBasis.NOW, None, 234, 4)
+    assert hours <= 3.0 and limit <= 90 and rows <= px.MAX_FETCH_ROWS
+
+
+def test_a_building_wide_multi_day_window_still_declines():
+    _h, _l, rows = px.fetch_plan(px.TimeBasis.WINDOW, 72.0, 800, 6)
+    assert rows > px.MAX_FETCH_ROWS  # a larger building over many criteria still declines
+
+
+def test_the_fetch_uses_the_plan_the_budget_checked():
+    source = inspect.getsource(px.execute)
+    assert "per_uuid_limit=_plan_limit" in source and "fetch_window = _plan_hours" in source
+
+
+def test_the_sql_lane_budget_is_in_rows_and_right_now_is_cheap():
+    from orchestrator.agents import sql_agent
+
+    assert sql_agent.rows_per_uuid_for("what is the temperature on each floor right now?") == 60
+    assert sql_agent.rows_per_uuid_for("average temperature on each floor last week") == 1000
+    # 288 temperature sensors building-wide, right now: inside the budget
+    assert 288 * sql_agent.rows_per_uuid_for("temperature right now") <= sql_agent.MAX_FETCH_ROWS
+    # the same sensors over a week: declined
+    assert 288 * sql_agent.rows_per_uuid_for("temperature over the last week") > sql_agent.MAX_FETCH_ROWS
+
+
+def test_a_building_wide_afternoon_window_is_read_whole():
+    """WB-12: never shrink the sample to fit — the latest-n fetch would relabel a window mean."""
+    hours, limit, rows = px.fetch_plan(px.TimeBasis.WINDOW, 6.0, 234, 4)
+    assert limit == 360 and rows <= px.MAX_FETCH_ROWS

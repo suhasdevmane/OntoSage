@@ -393,7 +393,21 @@ def score_candidates(
         sc.total = round(weighted_sum / weights_total, 4)
         scored.append(sc)
 
-    scored.sort(key=lambda s: (-(s.total or 0.0), s.label))
+    # Equal totals break on the RAW value of the first criterion, in the direction asked, and
+    # only then by label (WB-13). Utilities clamp at the band edge, so "highest PM2.5" scored
+    # every room above 15 µg/m³ at exactly 1 and listed them alphabetically — Room 0.01 first
+    # at 21.6 while other rooms read higher.
+    _first = (hard + soft)[0] if (hard + soft) else None
+
+    def _raw_key(s: ScoredCandidate) -> float:
+        if _first is None:
+            return 0.0
+        v = next((c.value for c in (s.criteria or []) if c.modality == _first.modality), None)
+        if v is None:
+            return float("inf")
+        return -float(v) if _first.direction in (Direction.MAXIMIZE, Direction.ABOVE) else float(v)
+
+    scored.sort(key=lambda s: (-(s.total or 0.0), _raw_key(s), s.label))
     for i, s in enumerate(scored, 1):
         s.rank = i
 

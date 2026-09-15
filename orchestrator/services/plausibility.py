@@ -104,6 +104,14 @@ _CLOCK_CONTEXT_RE = re.compile(r"[:/]\s*$|^\s*[:/]")
 #: "logged as REP-571188" became "the recorded sound value (571188) is outside the range".
 _IDENTIFIER_PREFIX_RE = re.compile(r"(?:[A-Za-z]-|#|\bno\.\s*|\bref\s*)$")
 
+#: WB-22: a number followed by a noun that counts things.
+_COUNT_NOUN_RE = re.compile(
+    r"^\s*(?:readings?|sensors?|samples?|rooms?|spaces?|points?|records?|rows?|series|"
+    r"floors?|meters?|devices?|values?|measurements?|people|persons?|times|occurrences?|"
+    r"episodes?|findings?|reports?|days?|hours?|minutes?|seconds?|weeks?)\b",
+    re.IGNORECASE,
+)
+
 
 def _is_reading(raw: str, before: str, after: str) -> bool:
     """False for a number that is plainly part of a date, a clock time or an identifier."""
@@ -113,6 +121,10 @@ def _is_reading(raw: str, before: str, after: str) -> bool:
     # produces a warning about a value nothing measured, attached to an answer that was
     # correct — which teaches readers to skip the caveat exactly when it is real.
     if _IDENTIFIER_PREFIX_RE.search(before):
+        return False
+    # A COUNT is not a reading (WB-22): "across 17 sensors and 1,020 readings" produced
+    # "the recorded humidity value (1020) is outside the range this quantity can take".
+    if _COUNT_NOUN_RE.match(after):
         return False
     try:
         val = float(raw.replace(",", ""))
@@ -151,7 +163,7 @@ def implausible_values(text: str, measurand: Optional[str] = None) -> list:
     for m in _NUMBER_RE.finditer(body):
         raw = m.group(1)
         if not _is_reading(
-            raw, body[max(0, m.start() - 2) : m.start()], body[m.end() : m.end() + 2]
+            raw, body[max(0, m.start() - 2) : m.start()], body[m.end() : m.end() + 24]
         ):
             continue
         val = float(raw.replace(",", ""))

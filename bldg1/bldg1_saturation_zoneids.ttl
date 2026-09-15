@@ -23,6 +23,7 @@
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32> ontosage:zoneId "0.32" .
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33> ontosage:zoneId "0.33" .
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34> ontosage:zoneId "0.34" .
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.04> ontosage:zoneId "1.04" .
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06> ontosage:zoneId "1.06" .
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07> ontosage:zoneId "1.07" .
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08> ontosage:zoneId "1.08" .

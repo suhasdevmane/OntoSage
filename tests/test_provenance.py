@@ -84,7 +84,15 @@ def test_build_tags_unknown_table_falls_back_to_unknown_source(tmp_path: Path):
 
 
 def test_build_tags_no_registry():
-    tags = prov.build_tags(["ontology", "store:occupancy_data"], None)
+    # Hermetic: WB-07 consults the ACTIVE building's database registry by key, so with a
+    # building active this test would read that building's declarations.
+    from unittest.mock import patch
+
+    with patch(
+        "orchestrator.services.adapters.registry.adapter_registry._load_yaml_config",
+        return_value={},
+    ):
+        tags = prov.build_tags(["ontology", "store:occupancy_data"], None)
     ids = {t.source_id for t in tags}
     assert ids == {"ontology", "unknown_source"}
 

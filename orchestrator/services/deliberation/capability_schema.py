@@ -40,6 +40,15 @@ CLARIFY = "clarify"
 DECLINE = "decline"
 
 
+#: WB-11: anchors that scope a question to the WHOLE building rather than naming a space.
+#: Generic English only — no building's name.
+_WHOLE_BUILDING_ANCHORS = frozenset(
+    {"", "none", "null", "n/a", "room", "rooms", "space", "spaces", "building", "the building",
+     "whole building", "entire building", "anywhere", "everywhere", "all", "all rooms",
+     "any room", "place", "places", "area", "areas", "workspace", "workspaces"}
+)
+
+
 @dataclass
 class AmenityInstance:
     iri: str
@@ -342,7 +351,13 @@ def validate(cqir: CQIR, schema: BuildingCapabilitySchema) -> AdmissionResult:
                     ),
                     coverage=coverage,
                 )
-        elif q.relation in (SpatialRelation.IN_SPACE, SpatialRelation.ADJACENT_TO):
+        elif q.relation in (SpatialRelation.IN_SPACE, SpatialRelation.ADJACENT_TO) and (
+            (q.anchor or "").strip().lower() not in _WHOLE_BUILDING_ANCHORS
+        ):
+            # WB-11: "in the building" is the whole building, not a space to find. The compiler
+            # emitted anchor 'None' and anchor 'Room' for "coolest place to work in the building"
+            # and "which room in the building has the best air", and admission asked the user
+            # which room they meant.
             token = q.anchor.strip().lower()
             matches = [
                 s.space_iri
