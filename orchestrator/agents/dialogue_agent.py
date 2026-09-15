@@ -73,62 +73,17 @@ _RELATIVE_DT_SCALE = {
 }
 
 
-#: Words that name a WHOLE CALENDAR DAY, and how many days back it starts.
-#:
-#: Only terms whose day boundaries are not in dispute. "last night" spans two dates,
-#: "this morning" is a part-day, "the weekend" is two days and which two depends on where
-#: you are — none of those belong here, and guessing at them would trade one wrong window
-#: for another.
-_CALENDAR_DAYS = {
-    "yesterday": 1,
-    "today": 0,
-}
-
-
-def calendar_day_bounds(
-    text: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
-) -> Optional[Tuple[str, str]]:
-    """Local midnight-to-midnight bounds when a question names a calendar day (BUG-480).
-
-    "Give me a report on the CO2 in room 5.01 yesterday" compiled to a bound of `now-24h`,
-    which the resolver dutifully turned into a stamp 24 hours old. The query then covered
-    17:16 on the 6th to 17:16 on the 7th — a rolling day, HALF OF IT TODAY — under a report
-    headed "Yesterday". Every figure in it was real, which is what made it hard to see.
-
-    "Yesterday" in plain English is a date, not a duration. A reader comparing two days
-    cannot use a window that slides with the clock, and a report about it that silently
-    includes this afternoon is wrong in a way no amount of correct arithmetic fixes.
-
-    Returns None when no calendar day is named, leaving the compiled range alone: this
-    narrows a specific, checkable case rather than taking over time parsing.
-
-    Bounds are LOCAL to the building. A day is a local thing — the occupants' Tuesday, not
-    UTC's — and the stores hold local stamps.
-    """
-    low = (text or "").lower()
-    days_back = None
-    for word, back in _CALENDAR_DAYS.items():
-        if re.search(rf"\b{re.escape(word)}\b", low):
-            days_back = back
-            break
-    if days_back is None:
-        return None
-
-    if now is None:
-        try:
-            from zoneinfo import ZoneInfo
-
-            now = datetime.now(ZoneInfo(tz_name)) if tz_name else datetime.now()
-        except Exception:  # pragma: no cover - an unknown zone must not break the turn
-            now = datetime.now()
-
-    day = (now - timedelta(days=days_back)).date()
-    start = datetime(day.year, day.month, day.day, 0, 0, 0)
-    # INCLUSIVE END, because the SQL builders emit `<=`. Using the next midnight would
-    # pull in the first instant of the following day, which for "yesterday" means a
-    # reading from today appearing in a report about a day that has ended.
-    end = datetime(day.year, day.month, day.day, 23, 59, 59)
-    return start.strftime("%Y-%m-%d %H:%M:%S"), end.strftime("%Y-%m-%d %H:%M:%S")
+# A NAMED CALENDAR DAY IS RESOLVED IN ONE PLACE (V12-08).
+#
+# `calendar_day_bounds` lived HERE, and the fix it carries (BUG-480) was therefore a fix
+# to this lane only: sql_agent and the ARBITER compiler each kept their own answer to
+# "when is yesterday", and both were the rolling-24-hours answer this function exists to
+# replace. Re-exported so every caller keeps working, and owned by the service so that
+# "resolve once" is an import rather than a convention.
+from orchestrator.services.requested_interval import (  # noqa: E402,F401
+    _CALENDAR_DAYS,
+    calendar_day_bounds,
+)
 
 
 def _resolve_relative_dt(value: Optional[str]) -> Optional[str]:
@@ -689,6 +644,26 @@ class DialogueAgent:
         if not rewritten or len(rewritten) > 500:
             return None
         if rewritten.lower() == latest.lower():
+            return None
+
+        # A REWRITE MAY ADD A REFERENT. IT MAY NOT CHANGE ONE (V12-11, review A14).
+        #
+        # Everything downstream — classification, entity extraction, SPARQL and the
+        # referent EXISTENCE GATE itself — sees the rewrite, not what the user typed. So a
+        # swapped room is not caught later; it is laundered. "What about room 3.27?" coming
+        # back as a question about 5.01 would then pass every check, because 5.01 exists.
+        #
+        # This only fires when the user named a place themselves. A follow-up that names
+        # none is the case the rewrite exists for.
+        from orchestrator.services.context_switch import rewrite_is_safe
+
+        if not rewrite_is_safe(latest, rewritten):
+            logger.warning(
+                "[coref] rewrite REJECTED — it changed the referent the user named: "
+                "%r -> %r",
+                latest,
+                rewritten,
+            )
             return None
         return rewritten
 

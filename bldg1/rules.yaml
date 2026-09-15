@@ -45,6 +45,18 @@ rules:
       op: ">"
       threshold: 65.0
       duration_min: 30
+      # REQUIRED on a concept rule (V12-20, BUG-482). A concept resolves to a Brick CLASS,
+      # and a class has many points; without this the engine bound to whichever one
+      # happened to be reporting and evaluated only that, while the rule read as though it
+      # covered the class.
+      #
+      # `first_reporting` and not `all`, deliberately: this rule is named for FLOOR 3 and
+      # the trigger has no way to say so — there is no spatial qualifier on a concept
+      # trigger (TODO-528). `all` would notify about humidity on every floor under a rule
+      # whose name promises one, which is a worse lie than the one being fixed. So it
+      # watches a single point, and now SAYS it watches a single point; the engine logs
+      # which. Change to `all` once a floor qualifier exists.
+      scope: first_reporting
     action:
       type: notify
       message: "Humidity is {value:.0f}% on floor 3 (above {threshold:.0f}% for {duration_min} min). Investigate for damp or ventilation issues."

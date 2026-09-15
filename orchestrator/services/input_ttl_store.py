@@ -335,8 +335,27 @@ def _write_capabilities(path: Path, g: Graph, building_id: str) -> None:
 async def upsert_amenity(
     building_id: str, subject_uri: str, ttl_block: str, *, client: Optional[Any] = None
 ) -> dict:
-    """Add/replace one amenity in the building's capability file, then re-sync its graph."""
+    """Add/replace one amenity in the building's capability file, then re-sync its graph.
+
+    PURGE FIRST, for the reason `upsert_policy` documents at length (BUG-194, V12-15).
+    `_sync_file_to_graph` PUTs the file into ITS named graph, which replaces only that
+    graph — a copy of the same subject in any other graph survives, and every reader
+    queries the union. BUG-194's own row closed with "upsert_amenity uses the same pattern"
+    as an unresolved note; this is that note.
+
+    Measured 2026-09-12: the schema subjects were live in TWO graphs at once
+    (`urn:ontosage:schema` and `urn:ontosage:ttl:ontosage_schema.ttl`, 1,325 triples
+    apart), which is the same mechanism reaching capability data.
+    """
     path = capabilities_path(building_id)
+    from orchestrator.services.ontology_manager import delete_subject
+
+    purge = await delete_subject(subject_uri, client=client)
+    if not purge.get("ok"):
+        logger.warning(
+            f"[input_ttl_store] could not purge {subject_uri} before upsert "
+            f"({purge.get('error')}) — a stale copy may shadow the new value"
+        )
     with _file_write_lock():
         g = Graph()
         if path.exists():

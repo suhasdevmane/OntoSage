@@ -26,6 +26,8 @@ from typing import Any, Dict, List, Optional
 from zoneinfo import ZoneInfo
 
 from orchestrator.llm_manager import llm_manager
+from orchestrator.services import reading_quality
+from orchestrator.services.units import aggregation_decision
 from shared.config import settings
 from shared.constants import COMFORT_RANGES as _SHARED_COMFORT_RANGES
 from shared.models import ConversationState
@@ -174,6 +176,12 @@ class ReportAgent:
                 sensor_data or {},
                 metadata or {},
                 building_id=getattr(state, "building_id", None),
+                # The uuid -> {label, unit} map the SQL lane already built. Without it a
+                # narrow-table report cannot name its sensors OR know their units, and the
+                # summary falls back to one nameless `value` bucket (V12-09).
+                sensor_metadata=(getattr(state, "intermediate_results", None) or {}).get(
+                    "sensor_metadata"
+                ),
             )
 
             # What the narration will be given, so a figure in the prose can be checked
@@ -272,10 +280,12 @@ class ReportAgent:
         sensor_data: Dict,
         metadata: Dict,
         building_id: Optional[str] = None,
+        sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
     ) -> Dict[str, Any]:
         """Extract structured sections from raw data."""
         records = _records_from(sensor_data)
         sensors = _sensors_from(metadata)
+        sensor_metadata = sensor_metadata or {}
 
         # Phase 10 — per-request building context: name and timezone come
         # from this conversation's building, not the process-global setting.
@@ -308,7 +318,7 @@ class ReportAgent:
             )
 
         # Section 2: Sensor readings summary (min/max/avg per sensor type)
-        readings_summary = self._summarize_readings(records)
+        readings_summary = self._summarize_readings(records, sensor_metadata, capped)
 
         # Section 3: Anomalies / out-of-range
         anomalies = self._detect_anomalies(records)
@@ -323,27 +333,115 @@ class ReportAgent:
             "highlights": highlights,
         }
 
-    def _summarize_readings(self, records: List[Dict]) -> Dict[str, Dict]:
-        """Compute min/max/avg per detected column."""
+    def _summarize_readings(
+        self,
+        records: List[Dict],
+        sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
+        truncated: bool = False,
+    ) -> Dict[str, Dict]:
+        """min/max/avg per SENSOR, each by its own operation (V12-09, review A10/A12).
+
+        Three defects measured here on 2026-09-12, all of which printed real-looking
+        numbers:
+
+          `latest` was `vals[-1]`, the last element in ROW order. This lane orders
+          `timestamp DESC`, so a fixture of 1000 / 900 / 400 reported **400 as the latest**.
+
+          A narrow-table result carries every modality in one column named `value`, and
+          summarising by column therefore averaged 900 ppm of CO2 with 21.5 °C into
+          `avg=590.5, min=21.5, max=900.0`. Not a wrong quantity — not a quantity.
+
+          Rows failing the numeric test vanished, so "1,000 readings" could not be told
+          apart from "1,000 of 1,340 readings".
+
+        The narrow shape is now grouped BY UUID and labelled from `sensor_metadata`, and a
+        cross-sensor aggregate is only produced when the unit contract permits one.
+        """
         summary: Dict[str, Dict] = {}
-        numeric_fields = set()
+        if not records:
+            return summary
 
-        for row in records[:500]:  # cap for performance
-            for k, v in row.items():
-                if isinstance(v, (int, float)):
-                    numeric_fields.add(k)
+        meta = sensor_metadata or {}
 
-        for field in numeric_fields:
-            vals = [r[field] for r in records if isinstance(r.get(field), (int, float))]
-            if vals:
-                summary[field] = {
-                    "count": len(vals),
-                    "min": round(min(vals), 3),
-                    "max": round(max(vals), 3),
-                    "avg": round(sum(vals) / len(vals), 3),
-                    "latest": vals[-1],
-                }
+        # NARROW: one row per (uuid, timestamp, value). Grouping by column here is what
+        # produced the 590.5.
+        if any(isinstance(r, dict) and "uuid" in r and "value" in r for r in records[:50]):
+            by_uuid: Dict[str, List[Dict]] = {}
+            for row in records:
+                if isinstance(row, dict) and row.get("uuid") is not None:
+                    by_uuid.setdefault(str(row["uuid"]), []).append(row)
+            for uuid, rows in by_uuid.items():
+                info = meta.get(uuid) or {}
+                agg = reading_quality.aggregate(
+                    rows, "value", unit=str(info.get("unit") or ""), truncated=truncated
+                )
+                if agg:
+                    summary[str(info.get("label") or uuid)] = agg.as_dict()
+            _note = self._cross_sensor_note(by_uuid, meta)
+            if _note:
+                summary["_aggregate_across_sensors"] = _note
+            return summary
+
+        # WIDE: one column per sensor, so the column name IS the sensor and each column
+        # carries one unit. Field detection scans every row — a column that is null for
+        # the first 500 was invisible when this capped at `records[:500]`.
+        numeric_fields = {
+            k
+            for row in records
+            if isinstance(row, dict)
+            for k, v in row.items()
+            if isinstance(v, (int, float)) and not isinstance(v, bool)
+        }
+        for field in sorted(numeric_fields):
+            agg = reading_quality.aggregate(
+                records, field, unit=self._unit_for_column(field, meta), truncated=truncated
+            )
+            if agg:
+                summary[field] = agg.as_dict()
         return summary
+
+    @staticmethod
+    def _unit_for_column(column: str, meta: Dict[str, Dict[str, str]]) -> str:
+        """The declared unit for a wide column, matched on its label. "" when unknown.
+
+        Unknown stays "" rather than being inferred from the column name. A unit guessed
+        from the string "CO2" is the system asserting a fact about an instrument it did
+        not read, which is the failure mode this whole row guards.
+        """
+        for info in (meta or {}).values():
+            if str((info or {}).get("label") or "").strip() == column:
+                return str((info or {}).get("unit") or "")
+        return ""
+
+    @staticmethod
+    def _cross_sensor_note(
+        by_uuid: Dict[str, List[Dict]], meta: Dict[str, Dict[str, str]]
+    ) -> Optional[Dict[str, Any]]:
+        """Whether one aggregate across these sensors would mean anything (V12-10 wired).
+
+        `units.aggregation_decision` refuses a set whose members measure different
+        quantities, and the live graph makes that urgent rather than theoretical:
+        `Occupancy_Count_Sensor` carries both NUM and PERCENT, `Air_Quality_Sensor` carries
+        ppm, ppb and µg/m³ (CAVEAT-513). The refusal is RECORDED rather than acted on
+        silently, so a reader who expected a single figure is told why there isn't one.
+        """
+        if len(by_uuid) < 2:
+            return None
+        units = [str((meta.get(u) or {}).get("unit") or "") for u in by_uuid]
+        decision = aggregation_decision(units)
+        if decision.ok:
+            return {
+                "permitted": True,
+                "target_unit": decision.target,
+                "basis": decision.note,
+                "sensors": len(by_uuid),
+            }
+        return {
+            "permitted": False,
+            "reason": decision.reason,
+            "sensors": len(by_uuid),
+            "units": list(decision.units),
+        }
 
     def _detect_anomalies(self, records: List[Dict]) -> List[Dict]:
         """Flag readings outside comfort ranges."""
@@ -378,8 +476,29 @@ class ReportAgent:
         """Bullet-point key findings."""
         highlights = []
         for field, stats in readings.items():
+            # The cross-sensor verdict is not a sensor. Skipping it silently would drop a
+            # refusal the reader is owed, so it is rendered as its own line below (V12-09).
+            if field == "_aggregate_across_sensors":
+                continue
+            if not isinstance(stats, dict) or "avg" not in stats:
+                continue
+            unit = f" {stats['unit']}" if stats.get("unit") else ""
+            line = (
+                f"• {field}: avg={stats['avg']}{unit}, min={stats['min']}{unit}, "
+                f"max={stats['max']}{unit} ({stats['count']} readings"
+            )
+            # A count that is a slice of the period must never be printed as the period's
+            # total — BUG-479 said "recorded 1,000 readings" against a true 2,770.
+            line += " read" if stats.get("count_is_of_rows_read") else ""
+            if stats.get("rows_excluded"):
+                line += f", {stats['rows_excluded']} rows not counted"
+            highlights.append(line + ")")
+
+        verdict = readings.get("_aggregate_across_sensors")
+        if isinstance(verdict, dict) and verdict.get("permitted") is False:
             highlights.append(
-                f"• {field}: avg={stats['avg']}, min={stats['min']}, max={stats['max']} ({stats['count']} readings)"
+                f"• These {verdict.get('sensors')} sensors are NOT summarised together: "
+                f"{verdict.get('reason')}"
             )
         if anomalies:
             high = sum(1 for a in anomalies if a["severity"] == "high")

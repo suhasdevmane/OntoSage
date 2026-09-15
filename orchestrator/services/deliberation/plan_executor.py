@@ -24,7 +24,7 @@ from __future__ import annotations
 import hashlib
 import time
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, Dict, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 from orchestrator.services.deliberation.candidates import (
     Candidate,
@@ -43,6 +43,7 @@ from orchestrator.services.deliberation.scorer import (
     load_anchors,
     score_candidates,
 )
+from orchestrator.services.requested_interval import store_now
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -249,7 +250,11 @@ async def _event_availability(
         for c in candidates
     }
     iri_by_subject = {v: k for k, v in subject_by_iri.items()}
-    now = datetime.utcnow()
+    # The STORES' clock (UTC). Bookings are generated from utcnow() and read on a +00:00
+    # session. From 2026-09-12 to 2026-09-15 this used building-local time on the false
+    # premise that bookings were local (BUG-518, withdrawn), which displaced the overlap
+    # window by the zone's offset — the exact error it claimed to fix.
+    now = store_now()
 
     async def _overlaps(start, end):
         sql = builder(
@@ -432,19 +437,30 @@ async def execute(
     # window selection by time basis: NOW ranks on the last hour's mean but
     # fetches more so short outages don't blank the field; FORECAST needs a
     # longer history for a meaningful trend.
+    # V12-08 — when the question named a calendar day the interval was ALREADY RESOLVED,
+    # once, at compile time. It is passed through verbatim; nothing here re-derives it.
+    fetch_start = fetch_end = None
     if cqir.time.basis == TimeBasis.FORECAST:
         fetch_window = 72.0
         agg_window_note = "forecast"
     elif cqir.time.basis == TimeBasis.WINDOW:
         fetch_window = float(cqir.time.window_hours or 24.0)
         agg_window_note = "window mean"
+        if cqir.time.is_resolved_interval:
+            fetch_start, fetch_end = cqir.time.resolved_start, cqir.time.resolved_end
+            agg_window_note = f"mean over {fetch_start[:10]}"
     else:
         fetch_window = 24.0
         agg_window_note = "recent mean (last hour, else latest window)"
 
     t0 = time.time()
     series_by_uuid = await fetch_series(
-        candidates, modalities, window_hours=fetch_window, adapter_getter=adapter_getter
+        candidates,
+        modalities,
+        window_hours=fetch_window,
+        adapter_getter=adapter_getter,
+        start=fetch_start,
+        end=fetch_end,
     )
     timings["fetch_ms"] = int((time.time() - t0) * 1000)
 

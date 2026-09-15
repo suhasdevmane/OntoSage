@@ -89,11 +89,29 @@ class TimeSpec(BaseModel):
     basis: TimeBasis = TimeBasis.NOW
     horizon_hours: Optional[float] = Field(None, description="For FORECAST: hours ahead")
     window_hours: Optional[float] = Field(None, description="For WINDOW: hours of history")
+    # V12-08 — a DURATION and an INTERVAL are different requests, and this spec used to be
+    # able to express only the first. "yesterday" and "today" both compiled to
+    # window_hours=24.0, so the two commonest time words in the corpus named the same
+    # interval, and `fetch.py` turned either into `utcnow() - 24h` with no upper bound: a
+    # rolling day ending NOW, half of it today, in the wrong zone. When the question names
+    # a calendar day these carry its absolute local bounds, resolved ONCE by
+    # services/requested_interval.py, and every consumer uses them verbatim.
+    resolved_start: Optional[str] = Field(
+        None, description="Absolute local start 'YYYY-MM-DD HH:MM:SS' when a day was named"
+    )
+    resolved_end: Optional[str] = Field(
+        None, description="Absolute local end, INCLUSIVE — the builders emit `<=`"
+    )
     unparseable: bool = Field(
         False,
         description="True when the phrase had a time anchor we could not parse — a clarify signal, never a silent default",
     )
     source_phrase: str = ""
+
+    @property
+    def is_resolved_interval(self) -> bool:
+        """True when this spec names an absolute interval rather than a duration."""
+        return bool(self.resolved_start and self.resolved_end)
 
 
 class AmbiguitySignal(BaseModel):
@@ -165,7 +183,18 @@ class CQIR(BaseModel):
                 for c in self.constraints
             ),
             "spatial": sorted((q.relation.value, q.anchor) for q in self.spatial),
-            "time": (self.time.basis.value, self.time.horizon_hours, self.time.window_hours),
+            # The resolved interval belongs in the fingerprint: two questions that named
+            # different days reasoned over different evidence, and a fingerprint that
+            # cannot tell them apart would certify them identical. It is stable across
+            # repeats of the same question on the same day, which is what the invariance
+            # benchmark compares.
+            "time": (
+                self.time.basis.value,
+                self.time.horizon_hours,
+                self.time.window_hours,
+                self.time.resolved_start,
+                self.time.resolved_end,
+            ),
             "events": sorted((e.kind, e.hours) for e in self.event_criteria),
         }
         canon = json.dumps(core, sort_keys=True, default=str)

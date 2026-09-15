@@ -2332,9 +2332,16 @@ ontosage:Warranty ontosage:layTerms "warranty", "warranties", "guarantee", "guar
 # exceptions require a call-out in this shift handover" reached the project register. Each
 # class now declares the qualified phrase its own domain uses, which is the ontology saying
 # what a thing is called rather than the router guessing.
+# "handover" and "handovers" were live in GraphDB and MISSING from this file (V12-15).
+# They existed only in the stale `urn:ontosage:schema` graph, a leftover of an older load
+# that `ttl_uploader` no longer maintains. So the shortest and most likely phrasings of
+# this question were answered by a graph nothing writes to any more, and dropping that
+# graph — which every other measurement said was pure duplication — would have silently
+# removed them. Proving the loss is zero BEFORE a drop is what caught it.
 ontosage:HandoverRecord ontosage:layTerms "project handover", "handover record",
-    "handover records", "o&m manual", "o and m manual", "operating manual", "as-built",
-    "as built", "commissioning certificate", "project record" .
+    "handover records", "handover", "handovers", "o&m manual", "o and m manual",
+    "operating manual", "as-built", "as built", "commissioning certificate",
+    "project record" .
 
 ontosage:ConditionSurvey ontosage:layTerms "condition survey", "condition", "asset condition",
     "expected life", "remaining life", "beyond life", "life expired", "end of life",

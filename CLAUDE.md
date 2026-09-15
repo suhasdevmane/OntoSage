@@ -23,12 +23,18 @@ the user's explicit approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **Test suite: 5,521 collected — and the pass/skip split depends on whether a building is
-  active.** With bldg1 up: **5,476 pass / 45 skip**. In the **PARKED** state, which is what a
-  fresh clone and CI see and what Workflow rule 8 requires you to run before committing:
-  **5,402 pass / 119 skip** (measured 2026-09-10, 9m08s, exit 0). Same total; **74 tests skip
-  without an active building**. Quoting one number as "the" suite size is how a green run gets
-  mistaken for a regression. **Live regression probe: 57/59 FIRST-PASS**
+- **Test suite: 5,898 collected — and the pass/skip split depends on whether a building is
+  active.** With bldg1 up: **5,852 pass / 46 skip** (measured 2026-09-12, 10m07s,
+  `PYTEST_EXIT=0`). The 46th skip is the sqlite adapter where `aiosqlite` is absent — an
+  honest skip, not a regression.
+  In the **PARKED** state, which is what a fresh clone and CI see and what Workflow rule 8
+  requires you to run before committing, expect **~74 more skips** on the same total — that
+  figure was 5,402/119 at 5,521 collected on 2026-09-10 and has not been re-measured since.
+  Quoting one number as "the" suite size is how a green run gets mistaken for a regression.
+  **Two rules learned the hard way on 2026-09-12 (lessons.md #101):** a long run PINS the
+  tree — editing any `.py` while it is in flight makes every `inspect.getsource` test read
+  the wrong lines and invents failures across unrelated subsystems; and
+  `pytest … | tail -40` reports **tail's** exit code, so redirect to a file and echo `$?`. **Live regression probe: 57/59 FIRST-PASS**
   (`python scripts/regression_probe.py`, **64.7 min** measured 2026-09-09, needs the stack up
   and Ollama running). This line said `50/50, ~16 min` — both were true of a 50-case set
   before V12-01 added the seven W0 cases and two building-agnostic ones. The two failures are
@@ -48,11 +54,12 @@ the user's explicit approval.**
   order, and what is deliberately not being done — then
   [`docs/V11_PHASE0_INVENTORY.md`](./docs/V11_PHASE0_INVENTORY.md), which is still the
   code-verified status of the review's nine risks and is NOT superseded.
-  **Execution: [`tasks/V12_TRACKER.csv`](./tasks/V12_TRACKER.csv) — 31 rows, ONE file.**
-  Counted from the file on 2026-09-09, because the three numbers that used to sit here were
-  all wrong: `needs_gpu` is a column — `yes` (**7**) needs a live model throughout, `no`
-  (**11**) needs none, `partial` (**13**) builds and tests offline then verifies on live
-  turns. Total **42.0 days**, not the 44 this line and the master plan both claimed.
+  **Execution: [`tasks/V12_TRACKER.csv`](./tasks/V12_TRACKER.csv) — 34 rows, ONE file.**
+  Counted from the file on 2026-09-12: `needs_gpu` is a column — `yes` (**8**) needs a live
+  model throughout, `no` (**11**) needs none, `partial` (**14**) builds and tests offline then
+  verifies on live turns. Total **43.5 days**. It was 31 rows / 42.0 days until 2026-09-12,
+  when V12-32 and V12-33 were added for work the coverage audit refused to let go unclaimed —
+  which is the audit doing its job, not scope creep.
   `gate_a`, `status`, `started`, `completed` and `evidence` are progress columns; **do not
   add a second tracker file** — two disagreeing V7 trackers is how a fresh clone got the
   stale one.
@@ -65,21 +72,30 @@ the user's explicit approval.**
   **Completeness is proved, not asserted:** `python scripts/v12_coverage_audit.py` re-derives
   the open set — including closed rows whose own text says work is owed — and fails if
   anything is unclaimed, claimed twice, or claimed but already done. Run it at session start.
-  Currently 109 derived · 86 scheduled · 23 dispositioned · 0 uncovered.
+  Currently **133 derived · 110 scheduled · 23 dispositioned · 0 uncovered** (2026-09-12).
+  It went from 109 to 128 in one session because nine new defects were logged and each one
+  had to find an owner before the audit would pass again.
   **Reconciliation:** [`tasks/V12_LEDGER.csv`](./tasks/V12_LEDGER.csv) and
   [`tasks/V12_WONTDO.csv`](./tasks/V12_WONTDO.csv) (23 items, a written reason each).
   **Target unchanged: Gate A — a defensible demonstration of bldg1 with a written supported
   scope.** Not a pilot, not portability.
   **Order:** the verification debt is paid before the routing work. V12-01 leads; no routing
   change lands without the probe green before AND after, one rule at a time.
-  **ACTIVE SUBSET: the 15 rows flagged `gate_a=yes`, in `order` 1-15 — 22.0 days.**
+  **ACTIVE SUBSET: the 17 rows flagged `gate_a=yes`, of which 12 are DONE and 8.5 days
+  remain (2026-09-12).** Remaining, and **every one now needs a live model or live turns —
+  no offline row is left**: **V12-05** (finish the series-catalogue probe), **V12-34** (one
+  sensor, one authoritative timeseries reference — BUG-531), **V12-32** (re-ask the ELEVEN
+  live checks now owed, before V12-29, because a sealed run over unverified fixes measures
+  the fixes), **V12-25** (ARBITER end to end) and **V12-29 LAST** (the sealed set, run once,
+  Gate A decided).
   This line used to say the subset was **V12-01 → V12-08, about 12 days**, and that was
   wrong: Gate A (review p. 22) additionally requires matching units and intervals (V12-09/10/11),
   zero privacy failures in scope (V12-17), rankings from ARBITER's dossier (V12-25), and the
   published cases and rubric (V12-29). Eight rows do not reach the gate they were said to reach.
   **V12-26 moved from order 26 to order 3** on 2026-09-09: the review makes T01 (the supported
   scope) a prerequisite for T03/T04/T05/T06, and writing it early can only shrink the 12 rows
-  behind it. Rows 16-31 (`gate_a=no`, 20.0 days) are the post-Gate-A backlog, not decoration.
+  behind it. The 17 rows flagged `gate_a=no` (21.0 days) are the post-Gate-A backlog, not
+  decoration.
   Superseded but kept for their reasoning: `docs/V11_IMPLEMENTATION_PLAN.md`,
   `tasks/V11_TRACKER.csv`, `tasks/V10_TRACKER.csv`, `tasks/V10_REMAINING_PLAN.md`.
 - **W0-2 is done: the capability short-circuit is INVERTED (2026-09-08).** The document-KB
@@ -110,7 +126,47 @@ the user's explicit approval.**
   72 INFO. It scanned two directories and reported "clean" while 15 real literals sat outside
   its scope.
 - **bldg1 is the active building.** Committed state = NO building active (Workflow rule 8).
-- **No P1 is open.** Remaining: TODO-463 (BuildingLexicon built at boot, routing does not
+- **V12-08/09/10/11/17 landed 2026-09-12, and every one found the SAME shape of defect:** two
+  parts of the system holding their own answer to a question only one of them should own.
+  `yesterday` had three answers, two of them the rolling-24-hours answer BUG-480 was fixed to
+  stop giving — and in ARBITER `yesterday` and `today` were the SAME 24.0 hours, fetched from
+  `utcnow()` with no upper bound (**BUG-517, P1**). A narrow-table report averaged 900 ppm of
+  CO2 with 21.5 °C into `avg=590.5` because it grouped by column and the narrow column is
+  called `value` (**BUG-521, P1**), while `units.aggregation_decision()` — built for exactly
+  that in V12-04 — had never been imported by anything. Every report named its OLDEST reading
+  the latest (**BUG-520**). A co-reference rewrite could swap the room the user named, and
+  because the rewrite replaces the query everywhere downstream the existence gate could not
+  catch it (**BUG-524**). **Nine of these fixes are FIXED-but-unverified-live; V12-32 owns
+  that queue and is sequenced BEFORE V12-29**, because a sealed run over unverified fixes
+  measures the fixes, not the system.
+- **CLOCKS, corrected 2026-09-15: every store is UTC, and every reader must compare in UTC.**
+  Adapters pin MySQL sessions to `+00:00` (BUG-403). `sensor_data.Datetime` is a TIMESTAMP that
+  MySQL converts to the SESSION zone on read, so a hand measurement through a default (BST)
+  connection makes it look local — that artefact produced three wrong "fixes" on 2026-09-12
+  (BUG-518/519 and the ARBITER fetch fallback, all reverted, both bugs WITHDRAWN) and a withdrawn
+  P1 on 2026-09-15 (BUG-538). Use `requested_interval.store_now()` against stored rows; choose the
+  LOCAL day a word names, then convert its bounds with `to_store`; convert only for display with
+  `to_local` (BUG-540, open). When measuring MySQL by hand, set `time_zone='+00:00'`. lessons.md #103.
+- **Demo Friday 2026-09-18 14:00 via Open WebUI** (which uses `/v1/chat/completions`, not the
+  `/chat` endpoint the probe uses). Schedule and autonomous-run todos: `tasks/V12_TRACKER.csv`
+  `planned_day` column, rows DEMO-01..07 and RUN-01..14.
+- **V12-13/15/19/20/27 landed 2026-09-12 — the five rows needing NO GPU are done.** The
+  three that found the most: `Settings` reads 122 settings and `.env.example` named 69, two
+  of the missing being values `STRICT_SECRETS` **refuses to boot on** (V12-27); `_safe_node`
+  recorded every failure as `str(e)`, which on a message-less exception is the EMPTY STRING —
+  now five typed outcomes, and CAVEAT-415 closed at the LOGGER so all 871 bare `{e}` sites
+  are covered at once (V12-19); and adapter parity proved **against real servers**, identical
+  statistics AND identical evidence through a Timescale hypertable and a Cassandra
+  partitioned table (V12-13).
+  **Two findings worth reading before trusting a measurement here.** The naive
+  graph-shadowing sweep reports **11,145** subjects and every one is inference
+  (explicit-only: zero — CAVEAT-530); and **BUG-531 (P1)**, 77 sensors carry two timeseries
+  references, a synthetic store and a real one, and the SQL lane merges both into one
+  answer's statistics — while the project's documented fan-out metric reads **1.00
+  throughout**, because each reference has its own uuid. V12-34 owns the fix.
+  **The owed-live-check queue now stands at eleven** and is owned by V12-32, sequenced
+  BEFORE V12-29.
+- **No P1 is open** except BUG-531, logged 2026-09-12 and owned by V12-34. Remaining: TODO-463 (BuildingLexicon built at boot, routing does not
   consume it), CAVEAT-467 (floor comparison slow), BUG-482 (a concept rule watches ONE point
   of however many carry the class — now logged and chosen for being live, but still one),
   TODO-484 (audit the other 49 probe cases for markers that decay with the calendar, as the

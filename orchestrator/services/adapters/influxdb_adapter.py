@@ -184,6 +184,12 @@ class InfluxDBAdapter(DatabaseAdapter):
 
     def validate_query(self, flux: str) -> bool:
         """Reject obviously dangerous Flux expressions."""
+        if not flux or not isinstance(flux, str):
+            raise ValueError(
+                "No query was built. build_timeseries_query() returns None when it cannot "
+                "build one — most often because get_columns() has not run, so no uuid is "
+                "yet known to be valid."
+            )
         forbidden = ["to(", "experimental.to(", "delete(", "buckets.delete("]
         for kw in forbidden:
             if kw in flux:

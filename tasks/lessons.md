@@ -1342,3 +1342,88 @@ The one building this module exists to support was the one it stopped supporting
 The fix distinguishes a type word standing as its OWN WORD (`Floor 4`) from a glued prefix
 (`RM-204`). Both cases are now fixtures, because each was found only by running the other.
 
+
+## 101. Editing the code while measuring it invents fifteen failures (2026-09-12)
+
+A full unit run came back **15 failed, 5691 passed**. Every one of them was a source-shape
+test asserting on `inspect.getsource(SomeClass.some_method)` — and the source it got back
+was a DIFFERENT method:
+
+    assert "await self._gate_referent_once(state)" in src
+    E  assert ... in '    async def _generate_title_bg(self, state) -> None:\n ...'
+
+`inspect.getsource` locates a method by LINE NUMBER in the file on disk. The suite had
+imported `_orchestrator.py` at collection; I then added ~40 lines to it while the run was in
+flight. From that moment every method object in memory pointed at line offsets that no
+longer meant anything, and the tests read whatever now sat there.
+
+Nothing was broken. All 61 of those tests passed when run against a stable tree seconds
+later. But for several minutes the honest-looking conclusion available to me was "my change
+broke the referent gate, the document probe and the capability menu" — three unrelated
+subsystems at once, which was the tell: **a change that appears to break three unrelated
+things has usually broken the measurement, not the things.** (#20-22, again.)
+
+Two rules from it:
+
+* A long test run pins the tree. Do documentation, tracker and CSV work while it runs — not
+  edits to anything under `orchestrator/`, `shared/` or `tests/`.
+* `python -m pytest ... | tail -40` reports **tail's** exit code, not pytest's. Two runs this
+  session were recorded as "exit code 0" while failing. Redirect to a file and echo `$?`
+  separately, or read the summary line — never trust the pipeline's status.
+
+## 102. A source-text guard that matches its own rationale (2026-09-12)
+
+Three times in one session a guard asserting something about the source failed on PROSE
+rather than code, and every time the prose was the comment explaining why the guard exists:
+
+* `assert "str(e)" not in src` — caught `_safe_node`'s own comment saying *why* `str(e)`
+  was wrong.
+* `assert "prerequisite" in readme` — PASSED, on an unrelated feature table at line 1030,
+  while the README had no prerequisites section at all. A guard passing for the wrong reason
+  is worse than one failing for the wrong reason: nothing brings you back to look.
+* `assert "retry" not in block` — caught the drift check's own comment, *"it reports and
+  never retries"*.
+
+The shape is specific and recurring: **the more carefully a piece of code explains itself,
+the more likely a substring guard over its source will match the explanation.** Good
+comments make these guards worse.
+
+Three rules, in order of preference:
+
+1. **Assert on structure, not text.** `ast.parse` and walk for a Call node. This is what
+   the V12-08 formatter guard and the V12-15 shadowing audit ended up doing, and neither
+   has a prose problem.
+2. **Strip comments first** when a full parse is not available — the block being checked is
+   often a fragment, not a statement.
+3. **Assert the ASSIGNMENT, not the word**: `= str(e)` and `"error": str(e)` are code;
+   `str(e)` is also English.
+
+And the corollary that catches the second bullet: when a source guard PASSES, check it can
+fail. A guard written against a tree that already satisfies it has never been observed doing
+anything.
+
+## 103. A session's timezone changed what the data "was" — and three fixes were built on it (2026-09-12 → 15)
+
+On 2026-09-12 I moved three comparisons against stored rows from `utcnow()` to building-local
+time, on the stated premise "the stores hold local stamps". On 2026-09-15 I measured again,
+found the wide table "local" and the narrow tables "UTC", and logged a P1 about two clocks
+in one database. **Both conclusions were wrong, for one reason.**
+
+`sensor_data.Datetime` is a MySQL `TIMESTAMP`. MySQL stores it as UTC and **converts it into
+the reading session's `time_zone` on the way out**. My measuring connection used the server's
+SYSTEM zone (BST), so the wide table looked local. The orchestrator's adapters pin every
+session to `+00:00` (BUG-403, fixed weeks earlier, with a comment saying exactly this). Read
+that way, every table was UTC to within a minute.
+
+What made it expensive: the first wrong premise produced three "fixes" and a test file that
+asserted the wrong behaviour; the second produced a user decision (option a) about a problem
+that did not exist. The code comment explaining BUG-403 was sitting in the publisher the whole
+time.
+
+Rules:
+* **Measure a store the way the system reads it** — same driver, same session settings. For
+  MySQL here that means `init_command="SET time_zone='+00:00'"`, not a bare connection.
+* Before changing a clock, **grep for the prior decision** (`time_zone`, `utc`, `BUG-403`).
+  A convention with a written reason is evidence, not an assumption to overwrite.
+* A "fix" that contradicts an earlier documented fix needs its measurement repeated from a
+  second angle before it lands.
