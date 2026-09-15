@@ -35,28 +35,26 @@
 # WORSE air quality, the usual air-quality-index convention. lo is therefore the
 # clean end and hi the stuffy end, matching how ScoreAnchor is defined.
 
+# ── SUPERSEDED 2026-09-15 (WB-21) ────────────────────────────────────────────
+#
+# The split above no longer describes the data. Measured through the orchestrator's
+# UTC-pinned connection, the hardware population now reads a CONCENTRATION: sensor
+# CO2_Level_Sensor_2.01 in sensor_data_floors04 held daily ranges of 685-948 (mean
+# 790-847) on every day from 2026-09-06 to 2026-09-15; the index scale (0-150, mean ~74)
+# is gone from the recent data. Excluding "installed-node" from `co2` therefore removed
+# every floor 0-4 CO2 sensor from CO2 rankings: "which room has the best air quality?"
+# ranked on 73 of 234 rooms and put floor-5 rooms at ~950 ppm above floors averaging 820.
+#
+# So `co2` takes both populations, and `co2_index` (which would score ppm values on a
+# 0-150 band) is removed. Readings still on the old scale are caught by the physical
+# band check (CarbonDioxide 350..40000 ppm), which excludes them and says so.
+
 modalities:
   co2:
     brick_classes:
       - CO2_Level_Sensor
       - CO2_Sensor
-    # Excludes the hardware population by its label. Exclusion is checked before
-    # inclusion, so a sensor named by both lists is left out rather than
-    # silently mixed in.
-    label_excludes:
-      - "installed-node"
     sat:
       brick_class: CO2_Level_Sensor
       table: co2_data
       unit: ppm
-
-  co2_index:
-    brick_classes:
-      - CO2_Level_Sensor
-      - CO2_Sensor
-    label_contains:
-      - "installed-node"
-    anchors:
-      lo: 0
-      hi: 150
-      citation: "on-site air-quality index 0-150 (higher = worse); range confirmed from 3.2M readings"

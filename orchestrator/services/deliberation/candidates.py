@@ -32,6 +32,23 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
+import re  # noqa: E402
+
+#: WB-17: Brick room classes nobody is sent to work, study or meet in.
+NON_OCCUPIABLE_KINDS = frozenset(
+    {"Restroom", "Toilet", "Mechanical_Room", "Electrical_Room", "Telecom_Room", "Server_Room",
+     "Storage_Room", "Janitor_Room", "Plumbing_Room", "Shaft", "Elevator_Shaft", "Stairwell",
+     "Utility_Room", "Equipment_Room", "Data_Center", "Loading_Dock", "Parking_Space",
+     "Waste_Room", "Riser"}
+)
+
+#: A question asking for somewhere a PERSON goes.
+_FOR_PEOPLE_RE = re.compile(
+    r"\b(?:work|working|study|studying|sit|seat|meet|meeting|focus|focused|desk|concentrat\w*|"
+    r"place to|spot to|somewhere to|where can i|where should i|call|viva|revise|read)\b",
+    re.IGNORECASE,
+)
+
 #: metres charged for changing floors when measuring "near X" across floors —
 #: a documented convention (stairs/lift detour), not a claim about the building
 FLOOR_CHANGE_PENALTY_M = 30.0
@@ -105,6 +122,7 @@ def enumerate_candidates(
     soft = [c.modality for c in cqir.constraints if c.hardness == Hardness.SOFT]
 
     candidates: List[Candidate] = []
+    _for_people = bool(_FOR_PEOPLE_RE.search(getattr(cqir, "raw_query", "") or ""))
     for s in sorted(scoped, key=lambda x: x.space_iri):
         if s.space_iri in seen:
             continue
@@ -122,6 +140,19 @@ def enumerate_candidates(
             for m, e in s.modalities.items()
             if e.get("status") == STATUS_PRESENT
         }
+        # WB-17: a place for PEOPLE is never a restroom, plant or server room. "Where's the
+        # coolest place to work in the building?" ranked a male restroom first. Decided by the
+        # space's own Brick class, so it holds in any building that types its rooms.
+        _kinds = set(getattr(s, "kinds", ()) or ())
+        if _for_people and _kinds & NON_OCCUPIABLE_KINDS:
+            ledger.excluded.append(
+                LedgerEntry(
+                    s.space_iri,
+                    s.label or _local(s.space_iri),
+                    f"not a place to work or sit ({', '.join(sorted(_kinds & NON_OCCUPIABLE_KINDS))})",
+                )
+            )
+            continue
         # hard constraints exclude un-instrumented spaces — WITH a ledger entry
         missing_hard = [m for m in hard if m not in sensors]
         if missing_hard:

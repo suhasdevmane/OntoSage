@@ -84,3 +84,17 @@ def test_the_narration_uses_the_group_summary_and_gets_the_rows():
     src = inspect.getsource(AnalyticsAgent._format_analysis)
     assert "summarise_groups(" in src and 'key="floor"' in src
     assert "rows=data.get(\"data\", [])" in inspect.getsource(AnalyticsAgent.analyze)
+
+
+def test_plant_side_sensors_never_enter_a_floor_measurement():
+    """WB-14: AHU supply/return temperatures were averaged into per-floor room temperature."""
+    q = _agent()._floor_scoped_sparql("Which floor is the warmest right now?", None)
+    assert "FILTER NOT EXISTS" in q and "brick:Return_Air_Temperature_Sensor" in q
+
+
+def test_a_per_floor_comparison_skips_code_generation():
+    from orchestrator.agents.analytics_agent import AnalyticsAgent
+
+    src = inspect.getsource(AnalyticsAgent.analyze)
+    assert src.index("summarise_groups(") < src.index("await self._generate_code(")
+    assert '"method": "per_floor_summary"' in src

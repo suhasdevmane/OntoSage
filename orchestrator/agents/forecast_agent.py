@@ -377,7 +377,9 @@ class ForecastAgent:
         prep_info: dict,
     ) -> str:
         """Render the forecast as markdown with confidence intervals table."""
-        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        from orchestrator.services.requested_interval import local_stamp
+
+        now_str = local_stamp()  # WB-06: shown to a person, so the building's clock
         m = result.metrics
 
         # ── Header ────────────────────────────────────────────────────────────

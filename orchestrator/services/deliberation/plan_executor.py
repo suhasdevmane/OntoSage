@@ -71,6 +71,44 @@ FORECAST_TOP_K = 5
 #: read inside a request.
 MAX_FETCH_CANDIDATES = 120
 
+#: The budget in the unit the fetch actually pays: ROWS (WB-04, 2026-09-15).
+#:
+#: A space count cannot tell a "right now" question — which needs the last few readings of
+#: each series — from a three-day trend over the same spaces. Measured on the demo building:
+#: every floor instrumented and live, yet "where's the coolest place to work in the
+#: building?" declined at 234 spaces because the lane fetched 24 h × 500 rows per series to
+#: use the newest sixth of it. Sized by rows, a NOW ranking over 234 spaces × 4 modalities ×
+#: 90 rows is 84k rows and answers; a multi-day building-wide window still declines.
+#: Raised to 750k (WB-12/20) so a building-wide part-of-day ranking over six criteria
+#: (234 spaces × 6 × 500 rows ≈ 702k) is read. Windows longer than 500 rows per series are
+#: still TRUNCATED to their newest rows by the per-series limit — CAVEAT-578, open.
+MAX_FETCH_ROWS = 750_000
+
+#: Hard ceiling regardless of rows, so a pathological graph cannot fan a request out without
+#: bound. Well above any single building's room count seen here.
+MAX_FETCH_SPACES_ABSOLUTE = 800
+
+#: "Right now" needs recent readings only: 3 h covers short outages; 90 rows per series is
+#: 1.5 h at one-minute cadence, and the scorer uses the newest sixth of whatever returns.
+NOW_WINDOW_HOURS = 3.0
+NOW_PER_UUID_LIMIT = 90
+DEFAULT_PER_UUID_LIMIT = 500
+
+
+def fetch_plan(basis: Any, window_hours: Optional[float], n_candidates: int, n_modalities: int):
+    """(window_hours, per_uuid_limit, estimated_rows) for a deliberation fetch."""
+    if basis == TimeBasis.NOW:
+        hours, limit = NOW_WINDOW_HOURS, NOW_PER_UUID_LIMIT
+    elif basis == TimeBasis.FORECAST:
+        hours, limit = 72.0, DEFAULT_PER_UUID_LIMIT
+    else:
+        hours = float(window_hours or 24.0)
+        # one-minute cadence at most; a short window never asks for more than it can hold
+        limit = int(min(DEFAULT_PER_UUID_LIMIT, max(60, hours * 60)))
+        # NOT shrunk to fit: the adapter keeps the LATEST n rows per series, so a smaller n
+        # would turn a window mean into a last-hour mean under the same label (WB-12).
+    return hours, limit, n_candidates * max(1, n_modalities) * limit
+
 Forecaster = Callable[[Series, float], Awaitable[Tuple[float, str]]]
 
 
@@ -373,7 +411,10 @@ async def execute(
     # an arbitrary slice of the candidates is wrong in a way that looks right, and the
     # reader has no way to tell — so the question is handed back with the narrowing that
     # would make it answerable, which the user can act on immediately.
-    if len(candidates) > MAX_FETCH_CANDIDATES:
+    _plan_hours, _plan_limit, _plan_rows = fetch_plan(
+        cqir.time.basis, cqir.time.window_hours, len(candidates), len(modalities)
+    )
+    if len(candidates) > MAX_FETCH_SPACES_ABSOLUTE or _plan_rows > MAX_FETCH_ROWS:
         from orchestrator.services.deliberation.candidates import LedgerEntry
 
         floors = ", ".join(schema.floors[:8]) or "the building's floors"
@@ -382,14 +423,14 @@ async def execute(
                 space_iri="*",
                 label="all in scope",
                 reason=(
-                    f"question spans {len(candidates)} spaces, above the "
-                    f"{MAX_FETCH_CANDIDATES}-space fetch budget"
+                    f"question spans {len(candidates)} spaces (~{_plan_rows:,} rows to read), "
+                    f"above the {MAX_FETCH_ROWS:,}-row fetch budget"
                 ),
             )
         )
         logger.info(
-            f"[deliberate] declining as too broad: {len(candidates)} candidates "
-            f"> {MAX_FETCH_CANDIDATES}"
+            f"[deliberate] declining as too broad: {len(candidates)} candidates, "
+            f"~{_plan_rows} rows > {MAX_FETCH_ROWS}"
         )
         return ExecutionOutcome(
             score=ScoreResult(ranked=[], excluded=[]),
@@ -440,18 +481,18 @@ async def execute(
     # V12-08 — when the question named a calendar day the interval was ALREADY RESOLVED,
     # once, at compile time. It is passed through verbatim; nothing here re-derives it.
     fetch_start = fetch_end = None
+    # WB-04: the window and per-series limit come from the same plan the budget was checked
+    # against, so what is fetched is what was estimated.
+    fetch_window = _plan_hours
     if cqir.time.basis == TimeBasis.FORECAST:
-        fetch_window = 72.0
         agg_window_note = "forecast"
     elif cqir.time.basis == TimeBasis.WINDOW:
-        fetch_window = float(cqir.time.window_hours or 24.0)
         agg_window_note = "window mean"
         if cqir.time.is_resolved_interval:
             fetch_start, fetch_end = cqir.time.resolved_start, cqir.time.resolved_end
             agg_window_note = f"mean over {fetch_start[:10]}"
     else:
-        fetch_window = 24.0
-        agg_window_note = "recent mean (last hour, else latest window)"
+        agg_window_note = "recent mean (last readings)"
 
     t0 = time.time()
     series_by_uuid = await fetch_series(
@@ -461,6 +502,7 @@ async def execute(
         adapter_getter=adapter_getter,
         start=fetch_start,
         end=fetch_end,
+        per_uuid_limit=_plan_limit,
     )
     timings["fetch_ms"] = int((time.time() - t0) * 1000)
 
@@ -616,6 +658,29 @@ async def execute(
     score = score_candidates(
         cqir, candidates, values, anchors=_anchors, provenance=_provenance or None
     )
+    # WB-05: SCENARIO FALLBACK, SAID OUT LOUD. When the operational ranking is empty only
+    # because every candidate's evidence is simulated, rank on the simulated readings and put
+    # that in the answer's first line. Where measured evidence exists this never runs, so a
+    # simulated point still cannot beat a measured one (V12-04). Measured 2026-09-15: noise,
+    # illuminance and occupancy are simulated in every room of the demo building, so "which
+    # is the quietest room?" could never be answered at all.
+    if not score.ranked and score.excluded_for_provenance and candidates:
+        score = score_candidates(
+            cqir,
+            candidates,
+            values,
+            anchors=_anchors,
+            provenance=_provenance or None,
+            evidence_mode="scenario",
+        )
+        if score.ranked:
+            _sim = ", ".join(sorted({c.modality for c in cqir.constraints}))
+            event_notes = [
+                f"**Simulated readings.** No room in scope has measured {_sim}, so this ranking "
+                "uses the building's simulated sensors — treat it as a scenario, not as a "
+                "reading of the building today."
+            ] + list(event_notes)
+            logger.info(f"[executor] operational ranking empty on provenance — scenario mode for {_sim}")
     timings["score_ms"] = int((time.time() - t0) * 1000)
 
     plan_hash = hashlib.sha256(

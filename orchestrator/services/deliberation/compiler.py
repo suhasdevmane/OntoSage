@@ -236,6 +236,7 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
         )
 
     _fold_unbounded_threshold_direction(constraints, decision)
+    constraints = _fold_air_quality(constraints)
 
     _whole_building = re.compile(
         r"^(?:(?:in\s+)?the\s+)?(?:whole|entire|full)?\s*building(?:\s*-?\s*wide)?$"
@@ -509,6 +510,34 @@ _UNBOUNDED_EQUIVALENT = {
     Direction.ABOVE: Direction.MAXIMIZE,
     Direction.BELOW: Direction.MINIMIZE,
 }
+
+
+def _fold_air_quality(constraints: list) -> list:
+    """'Air quality' ranks on CO2 and PM2.5, never on the unit-mixed air_quality modality (WB-16).
+
+    `air_quality` gathers every Air_Quality_Sensor — CO2 in ppm next to index-scale devices —
+    so no single cited band can score it, and "which room has the best air quality right now?"
+    declined building-wide with "no scorable data". CO2 (ASHRAE 62.1) and PM2.5 (WHO 2021) each
+    carry a standard; better air is LOWER of both. An explicit co2/pm25 constraint is kept.
+    """
+    if not any(c.modality == "air_quality" for c in constraints):
+        return constraints
+    kept = [c for c in constraints if c.modality != "air_quality"]
+    template = next(c for c in constraints if c.modality == "air_quality")
+    present = {c.modality for c in kept}
+    for modality in ("co2", "pm25"):
+        if modality not in present:
+            kept.append(
+                Constraint(
+                    modality=modality,
+                    direction=Direction.MINIMIZE,
+                    hardness=template.hardness,
+                    threshold=None,
+                    threshold_source=ThresholdSource.RECIPE,
+                    source_phrase=template.source_phrase,
+                )
+            )
+    return kept
 
 
 def _fold_unbounded_threshold_direction(

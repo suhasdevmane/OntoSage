@@ -147,6 +147,11 @@ def building_tz(building_id: Optional[str] = None) -> Optional[str]:
         return None
 
 
+def local_stamp(fmt: str = "%Y-%m-%d %H:%M", building_id: Optional[str] = None) -> str:
+    """'Now' as a person reads it on site: building-local, labelled (WB-06)."""
+    return f"{building_local_now(building_id).strftime(fmt)} (building time)"
+
+
 def building_local_now(building_id: Optional[str] = None) -> datetime:
     """`local_now` for the active building, resolving its zone for you. Display use only."""
     return local_now(building_tz(building_id))

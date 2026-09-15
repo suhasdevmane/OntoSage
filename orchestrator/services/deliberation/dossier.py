@@ -264,6 +264,10 @@ def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
     top = dossier.ranked[: max(1, top_k)]
     best = top[0]
     lines.append(f"**Best match: {best.space}** (floor {best.floor}, score {best.total:g}).")
+    # WB-05: a note about the EVIDENCE (e.g. "Simulated readings.") belongs above the list it
+    # qualifies. Guidance notes reached declines only, so a scenario ranking read as measured.
+    for note in dossier.guidance_notes[:2]:
+        lines.append(str(note))
     for s in top:
         crits = ", ".join(f"{m}: {v:g}" for m, v in sorted(s.criteria.items()) if v is not None)
         prox = (

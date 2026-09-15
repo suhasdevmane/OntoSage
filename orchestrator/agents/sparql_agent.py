@@ -182,6 +182,9 @@ _CLASS_LISTING_LIMIT = 500
 #: against a fallback adapter (BUG-236). Pinned by
 #: tests/test_sparql_projection_contract.py.
 
+#: Words that say WHAT KIND of place an identifier names, not which one (WB-10).
+_LOCATION_HEAD_WORDS = frozenset({"room", "rooms", "zone", "zones", "space", "node", "area", "rm"})
+
 #: A question that compares FLOORS without naming one (BUG-556).
 _ACROSS_FLOORS_RE = re.compile(
     r"\b(?:which|what)\s+(?:\w+\s+)?(?:floor|level)s?\b"
@@ -1787,6 +1790,12 @@ SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage WHERE {{
   ?floor a brick:Floor .
   BIND(REPLACE(STR(?floor), "^.*[Ff]loor", "") AS ?floorNum)
   {floor_filter}
+  FILTER NOT EXISTS {{ ?sensor a ?plantSide .
+    VALUES ?plantSide {{ brick:Supply_Air_Temperature_Sensor brick:Return_Air_Temperature_Sensor
+      brick:Mixed_Air_Temperature_Sensor brick:Discharge_Air_Temperature_Sensor
+      brick:Outside_Air_Temperature_Sensor brick:Leaving_Water_Temperature_Sensor
+      brick:Entering_Water_Temperature_Sensor brick:Supply_Air_Humidity_Sensor
+      brick:Return_Air_Humidity_Sensor brick:Outside_Air_Humidity_Sensor }} }}
   ?sensor ref:hasExternalReference ?ref .
   ?ref ref:hasTimeseriesId ?uuid .
   OPTIONAL {{ ?ref ref:storedAt ?storage }}
@@ -2853,11 +2862,21 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_
         ts_bearing = ts_bearing if ts_bearing is not None else set()
 
         for name in names:
+            # A dotted identifier stays WHOLE and digits are never dropped (WB-10). Splitting
+            # "Room_2.01" on non-alphanumerics gave room/2/01, the length filter discarded "2",
+            # and CONTAINS("room") && CONTAINS("01") resolved room 2.01 to Room5.01's sensor —
+            # a reading from another floor presented for the room asked about.
             tokens = [
                 t
-                for t in re.split(r"[^A-Za-z0-9]+", str(name).lower())
-                if len(t) > 1 and t not in self._LABEL_STOPWORDS
+                for t in re.findall(r"\d+(?:\.\d+)+|[a-z]+|\d+", str(name).lower())
+                if (len(t) > 1 or t.isdigit()) and t not in self._LABEL_STOPWORDS
             ]
+            # With an identifier present, "room"/"zone"/"space" are not required: points are
+            # named "CO2 Level Sensor installed-node 2.01", so requiring "room" found only the
+            # simulated Room2.01_* points and no CO2 sensor at all. Narrowing by the question's
+            # own words still picks the measurement asked for.
+            if any(re.fullmatch(r"\d+(?:\.\d+)+", t) for t in tokens):
+                tokens = [t for t in tokens if t not in _LOCATION_HEAD_WORDS] or tokens
             if not tokens:
                 continue
             # Escape for safe embedding in a SPARQL string literal.

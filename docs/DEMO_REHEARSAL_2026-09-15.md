@@ -46,9 +46,30 @@ pass; it is not an automated grade.
   holds an answer for 1 h and its key includes the boot revision, so warm AFTER the last restart.
 * **Occasional 60–97 s outliers** came from GPU contention with background title generation;
   they are not lane-specific.
-* **Do not ask building-wide rankings** ("best room in the building") — they decline above the
-  120-space fetch budget (RUN-09, deferred). Floor-scoped ones answer.
-* **Known cosmetic issues:** answers citing the wide real-data table show a `Unknown Source`
-  chip; the readiness footer prints its compile time in UTC.
+* ~~Do not ask building-wide rankings~~ — **superseded the same day**: building-wide rankings and
+  per-floor readings now answer (row budgets, WB-04..22); see the whole-building table below.
+* ~~Known cosmetic issues (`Unknown Source` chip, UTC readiness footer)~~ — fixed (BUG-572).
 * **Honest declines are part of the demo:** privacy, control and absent-sensor answers show the
   boundaries working; they are the strongest evidence for the design contract.
+
+## Whole building (added 2026-09-15, after WB-01..22)
+
+Same path and login, cache flushed per ask, 10 questions × 3 = 30 asks.
+Raw: `scripts/outputs/wholebuilding_rehearsal_2026-09-15.md(.jsonl)`. **10/10 questions 3/3.**
+
+| question | runs ok | median s | max s | answer (run 1) |
+|---|---|---:|---:|---|
+| Where's the coolest place to work in the building right now? | 3/3 | 20 | 49 | Room 5.60 — Research Laboratory (restrooms/plant excluded) |
+| Which room in the building is the quietest right now? | 3/3 | 19 | 23 | Room 5.14 — Academic Office |
+| Which room in the building has the best air quality right now? | 3/3 | 28 | 73 | Room 0.31 (CO2 + PM2.5, 234/234 rooms) |
+| Which rooms in the building are the stuffiest right now? | 3/3 | 46 | 78 | Floor-5 offices, ~1,070 ppm |
+| Which floor is the warmest right now? | 3/3 | 64 | 77 | Floors 0/2/3 ≈ 23.2 °C (live values move) |
+| What is the average CO2 on each floor right now? | 3/3 | 31 | 66 | Floor 5 ≈ 1,019 ppm, floors 0-4 ≈ 820 |
+| Which floor has the lowest humidity right now? | 3/3 | 66 | 67 | Floor 0 ≈ 50.8 % |
+| Which rooms in the building have the highest PM2.5 right now? | 3/3 | 24 | 49 | ranked by reading (PM2.5 on floors 0-4 is simulated) |
+| What is the CO2 level in room 2.01 right now? | 3/3 | 17 | 21 | 894 ppm from CO2 Level Sensor installed-node 2.01 |
+| Which space in the building has the best conditions for focused work this afternoon? | 3/3 | 41 | 57 | Room 5.14 — Academic Office |
+
+**Stage notes for these:** the answers name their evidence (coverage line, "Simulated readings" where
+applicable, source chips). Do not restart the orchestrator in the hour before the demo: the anomaly
+sweep runs ~3 min after boot (detection now off the event loop, row decoding still on it).

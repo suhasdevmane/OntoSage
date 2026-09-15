@@ -48,12 +48,26 @@
   "uuid": "01084a54-01f6-5141-9c88-13e000f8b662",
   "value_col": "occupancy"
  },
+ "014e23f2-4f01-574a-a4eb-c32415d7a170": {
+  "label": "Room 5.36 \u2014 Restroom (Female) pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.36_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "014e23f2-4f01-574a-a4eb-c32415d7a170",
+  "value_col": "pm25"
+ },
  "01682c44-26c0-561b-95a6-3c936de9d171": {
   "label": "Room 2.14 \u2014 Meeting Room window_contact (simulated)",
   "sensor": "Room2.14_sat_window_contact",
   "table": "contact_data",
   "uuid": "01682c44-26c0-561b-95a6-3c936de9d171",
   "value_col": "contact"
+ },
+ "019c7e23-ba0e-5333-9ac7-7c51b47d2fbf": {
+  "label": "Room 3.10 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.10_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "019c7e23-ba0e-5333-9ac7-7c51b47d2fbf",
+  "value_col": "pm25"
  },
  "01b7af0d-9239-5f1a-8430-82c8a0fbe84a": {
   "label": "Room 4.56 \u2014 Research Laboratory noise (simulated) [dB]",
@@ -258,6 +272,13 @@
   "uuid": "05303cde-2596-529b-8c8a-43d561e730ad",
   "value_col": "contact"
  },
+ "05d4a446-154c-563a-ba29-624a6c567ab5": {
+  "label": "Room 2.65 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.65_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "05d4a446-154c-563a-ba29-624a6c567ab5",
+  "value_col": "pm25"
+ },
  "05e26601-f9d7-5c5f-ad2e-8df5e7355b23": {
   "label": "Room 0.04 \u2014 Mechanical Plant Room door_contact (simulated)",
   "sensor": "Room0.04_sat_door_contact",
@@ -293,6 +314,13 @@
   "uuid": "0690e7c5-360d-56a8-9bc0-d70d79c62d87",
   "value_col": "contact"
  },
+ "06a2a47c-27bb-50ce-863c-975a172ae42e": {
+  "label": "Room 4.35 \u2014 Restroom (Male) pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.35_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "06a2a47c-27bb-50ce-863c-975a172ae42e",
+  "value_col": "pm25"
+ },
  "071122db-3042-5955-b216-c53e0fe85576": {
   "label": "Room 4.71 \u2014 Storage Room illuminance (simulated) [lux]",
   "sensor": "Room4.71_sat_illuminance",
@@ -314,6 +342,13 @@
   "uuid": "0739a948-1602-5651-b4cc-c5ccb3097a5e",
   "value_col": "lux"
  },
+ "078f7bef-8931-5263-846d-bf874bff5cad": {
+  "label": "Room 3.48 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.48_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "078f7bef-8931-5263-846d-bf874bff5cad",
+  "value_col": "pm25"
+ },
  "07bd32bf-8f31-550d-b567-8a5e14d90531": {
   "label": "Room 4.23 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room4.23_sat_noise",
@@ -327,6 +362,13 @@
   "table": "co2_data",
   "uuid": "07ce97c1-bc1d-5f48-910c-d161eccea55d",
   "value_col": "co2_ppm"
+ },
+ "07f3fbb4-b0ae-5329-b97e-40889d0de74b": {
+  "label": "Room 1.08 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.08_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "07f3fbb4-b0ae-5329-b97e-40889d0de74b",
+  "value_col": "pm25"
  },
  "08235201-04f5-5049-b3ff-2cbdbf3e1370": {
   "label": "Room 5.62 \u2014 Academic Office humidity (simulated) [percent]",
@@ -348,6 +390,13 @@
   "table": "contact_data",
   "uuid": "086ab88e-f88e-503d-a563-c70c3dbd73d0",
   "value_col": "contact"
+ },
+ "087eb93e-7ec6-569c-bdfe-4c663fdbcaa1": {
+  "label": "Room 5.35 \u2014 Restroom (Male) pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.35_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "087eb93e-7ec6-569c-bdfe-4c663fdbcaa1",
+  "value_col": "pm25"
  },
  "08925180-46bc-5894-aa01-e45f5fd09b86": {
   "label": "Room 1.41 \u2014 Academic Office window_contact (simulated)",
@@ -432,6 +481,13 @@
   "table": "equipment_data",
   "uuid": "0a2961a8-dd90-512c-8551-b9dec0ad908d",
   "value_col": "vib_mm_s"
+ },
+ "0a2d210f-57e5-50d8-8cdd-bb114635df53": {
+  "label": "Room 2.26 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.26_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "0a2d210f-57e5-50d8-8cdd-bb114635df53",
+  "value_col": "pm25"
  },
  "0a426298-f4a4-5f66-837a-1a9b70bdfab4": {
   "label": "Room 3.36 \u2014 Restroom (Male) occupancy (simulated) [persons]",
@@ -552,6 +608,13 @@
   "uuid": "0d719006-47f1-5d3d-a54d-c214ba6ac920",
   "value_col": "occupancy"
  },
+ "0db28827-d530-5810-bf59-12d3553269c2": {
+  "label": "Room 4.50 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.50_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "0db28827-d530-5810-bf59-12d3553269c2",
+  "value_col": "pm25"
+ },
  "0e01b83a-1165-571d-8290-98d265f9d02a": {
   "label": "Room 3.09 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room3.09_sat_door_contact",
@@ -572,6 +635,13 @@
   "table": "noise_data",
   "uuid": "0e486d1d-b8b3-5be4-837a-24e0c151e03b",
   "value_col": "noise_db"
+ },
+ "0e52b32d-4940-5313-a6b8-08371d6d1c26": {
+  "label": "Room 2.06 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.06_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "0e52b32d-4940-5313-a6b8-08371d6d1c26",
+  "value_col": "pm25"
  },
  "0e972e37-965a-57b5-b283-759d05eb4b71": {
   "label": "Room 2.54 \u2014 Research Laboratory occupancy (simulated) [persons]",
@@ -671,6 +741,13 @@
   "uuid": "0fcb2666-09ed-597c-9f6a-3f7632528e0d",
   "value_col": "vib_mm_s"
  },
+ "0fd31719-2d1f-54fb-b317-41be6507a9ac": {
+  "label": "Room 0.10 \u2014 Building Management Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.10_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "0fd31719-2d1f-54fb-b317-41be6507a9ac",
+  "value_col": "pm25"
+ },
  "0fdf5b0a-95f2-58be-b7c3-36fe75bcaf7e": {
   "label": "Room 2.47 \u2014 Academic Office occupancy (simulated) [persons]",
   "sensor": "Room2.47_sat_occupancy",
@@ -719,6 +796,13 @@
   "table": "noise_data",
   "uuid": "108e01c5-a02b-59af-b617-eca5b5eb430e",
   "value_col": "noise_db"
+ },
+ "10a2b55f-393f-5df9-90b3-1d1db8d184d2": {
+  "label": "Telecommunications Room \u2014 Floor 2 (Room 2.34) pm25 (simulated) [ug/m3]",
+  "sensor": "Telecom_Room_F2_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "10a2b55f-393f-5df9-90b3-1d1db8d184d2",
+  "value_col": "pm25"
  },
  "10aa6a89-589b-5e4d-9591-0cde318be87b": {
   "label": "Room 2.48 \u2014 Academic Office occupancy (simulated) [persons]",
@@ -776,6 +860,13 @@
   "uuid": "11551a2b-76b7-5660-8d10-59efc675e4e4",
   "value_col": "contact"
  },
+ "1167dfd4-5ee0-565b-835a-d3fb22266b42": {
+  "label": "Room 4.47 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.47_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "1167dfd4-5ee0-565b-835a-d3fb22266b42",
+  "value_col": "pm25"
+ },
  "117c7946-f7ff-5729-8adc-61646978ab40": {
   "label": "Room 4.66 \u2014 Academic Office window_contact (simulated)",
   "sensor": "Room4.66_sat_window_contact",
@@ -818,6 +909,13 @@
   "uuid": "122db694-3079-5913-9895-f5398958bb5f",
   "value_col": "lux"
  },
+ "12327361-5db6-5587-87b7-d4a150cda881": {
+  "label": "Room 4.70 \u2014 Staff Break Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.70_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "12327361-5db6-5587-87b7-d4a150cda881",
+  "value_col": "pm25"
+ },
  "123c1a76-0c05-5ad6-946a-d4b7c0d62357": {
   "label": "Room 5.12 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room5.12_sat_noise",
@@ -859,6 +957,13 @@
   "table": "contact_data",
   "uuid": "12b55028-7e03-5c25-a4ce-c33d790d605a",
   "value_col": "contact"
+ },
+ "12df1a95-00ff-549c-ad8d-a620bddca089": {
+  "label": "Room 3.13 \u2014 Seminar Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.13_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "12df1a95-00ff-549c-ad8d-a620bddca089",
+  "value_col": "pm25"
  },
  "12e7b788-bfc8-5d2d-99ee-1f18aae4fbb5": {
   "label": "Room 5.44 \u2014 Server Room noise (simulated) [dB]",
@@ -951,6 +1056,13 @@
   "uuid": "150effa0-d918-5801-a5df-718b2d0c5b52",
   "value_col": "rh_pct"
  },
+ "15512042-0a34-5497-a611-7eb67af588f7": {
+  "label": "Room 0.29 \u2014 Storage Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.29_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "15512042-0a34-5497-a611-7eb67af588f7",
+  "value_col": "pm25"
+ },
  "155f1721-0c49-565d-8723-0a036c21e4a2": {
   "label": "Room 2.26 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room2.26_sat_noise",
@@ -992,6 +1104,13 @@
   "table": "co2_data",
   "uuid": "165ff77a-1f7c-5c86-b0de-f80f7989fb2e",
   "value_col": "co2_ppm"
+ },
+ "166457b7-8a89-5a82-a208-02c637ce05ee": {
+  "label": "Room 2.05 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.05_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "166457b7-8a89-5a82-a208-02c637ce05ee",
+  "value_col": "pm25"
  },
  "16842166-709d-5cdf-b612-40bd7fef9132": {
   "label": "Room 0.33 \u2014 Mechanical/Service Room window_contact (simulated)",
@@ -1119,6 +1238,13 @@
   "uuid": "18cef00e-cb74-516d-8dd7-1c8318113441",
   "value_col": "contact"
  },
+ "19538e9c-6bad-5fd6-bfbb-44d368bfd43a": {
+  "label": "Room 3.14 \u2014 Seminar Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.14_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "19538e9c-6bad-5fd6-bfbb-44d368bfd43a",
+  "value_col": "pm25"
+ },
  "195b77b7-12d7-5d0a-8c4b-f283bfc7aff8": {
   "label": "Room 5.49 \u2014 Academic Office temperature (simulated) [degC]",
   "sensor": "Room5.49_sat_temperature",
@@ -1231,6 +1357,20 @@
   "uuid": "1bb6e9c7-48ff-59ea-9485-03e7399dbbef",
   "value_col": "noise_db"
  },
+ "1bcac935-210c-5e26-bef7-19d3e67bf9af": {
+  "label": "Room 4.07 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.07_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "1bcac935-210c-5e26-bef7-19d3e67bf9af",
+  "value_col": "pm25"
+ },
+ "1bd089c3-67dc-553b-a53e-da60f2467392": {
+  "label": "Room 4.16 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.16_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "1bd089c3-67dc-553b-a53e-da60f2467392",
+  "value_col": "pm25"
+ },
  "1bdd5003-5df3-535c-ad3f-5f4242e7b70d": {
   "label": "Room 5.63 \u2014 Academic Office window_contact (simulated)",
   "sensor": "Room5.63_sat_window_contact",
@@ -1294,6 +1434,13 @@
   "uuid": "1d46f619-6793-54db-967f-0f0d48d39a7f",
   "value_col": "contact"
  },
+ "1d8d2f1b-a0d1-5a60-b170-5a5cb1500ae2": {
+  "label": "Room 3.65 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.65_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "1d8d2f1b-a0d1-5a60-b170-5a5cb1500ae2",
+  "value_col": "pm25"
+ },
  "1d903d6b-6d9b-57ad-afef-3c8a5fffb603": {
   "label": "Room 3.68 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room3.68_sat_door_contact",
@@ -1321,6 +1468,13 @@
   "table": "light_data",
   "uuid": "1dcffc76-ba66-56e8-b97d-b2135976e3d1",
   "value_col": "lux"
+ },
+ "1dfd7b97-9595-5fcb-8eeb-b45e97eb37c7": {
+  "label": "Room 5.58 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.58_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "1dfd7b97-9595-5fcb-8eeb-b45e97eb37c7",
+  "value_col": "pm25"
  },
  "1e1c1b5b-f4b1-5413-b4f7-9dd05fc91e9d": {
   "label": "Room 4.24 \u2014 Academic Office occupancy (simulated) [persons]",
@@ -1364,6 +1518,13 @@
   "uuid": "1eafa67f-0fbe-5115-b080-b392eb8a2ee3",
   "value_col": "contact"
  },
+ "1eb06bd3-03a8-505f-beb3-6f0afee51a12": {
+  "label": "Room 0.20 \u2014 Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.20_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "1eb06bd3-03a8-505f-beb3-6f0afee51a12",
+  "value_col": "pm25"
+ },
  "1eb580d7-242a-5a3b-a5f1-4ddfca9ec6e8": {
   "label": "Electrical Energy Meter \u2014 Floor 5",
   "sensor": "Energy_Meter_Floor5",
@@ -1398,6 +1559,13 @@
   "table": "noise_data",
   "uuid": "1f08bdf9-68e1-5baf-bbba-9fd117754d2f",
   "value_col": "noise_db"
+ },
+ "1f0af0f3-9d91-5f88-81d8-5db8c7884f9e": {
+  "label": "Room 4.11 \u2014 Meeting Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.11_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "1f0af0f3-9d91-5f88-81d8-5db8c7884f9e",
+  "value_col": "pm25"
  },
  "1f501ab5-31ea-5466-9c4f-34093c12aecb": {
   "label": "Room 1.34 \u2014 Telecommunications Room door_contact (simulated)",
@@ -1455,12 +1623,26 @@
   "uuid": "20cb0876-9c89-5ff7-b7a6-080705d9bcfb",
   "value_col": "lux"
  },
+ "214d0215-230d-52b7-a114-3a41536d259f": {
+  "label": "Room 5.59 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.59_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "214d0215-230d-52b7-a114-3a41536d259f",
+  "value_col": "pm25"
+ },
  "2151cd5c-b22d-554b-80fa-4d27d41f8e7a": {
   "label": "Room 2.48 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room2.48_sat_noise",
   "table": "noise_data",
   "uuid": "2151cd5c-b22d-554b-80fa-4d27d41f8e7a",
   "value_col": "noise_db"
+ },
+ "21549a5e-2c15-52b6-af1f-837e267708c1": {
+  "label": "Room 3.63 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.63_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "21549a5e-2c15-52b6-af1f-837e267708c1",
+  "value_col": "pm25"
  },
  "2155a894-b7a6-52de-a5c4-4b025f7ed881": {
   "label": "Room 2.60 \u2014 Academic Office door_contact (simulated)",
@@ -1531,6 +1713,13 @@
   "table": "contact_data",
   "uuid": "22cba6e4-ed32-5f4e-b49f-81e2fa126a26",
   "value_col": "contact"
+ },
+ "22dd57e3-19bb-58bd-b83b-fc6c5cb12049": {
+  "label": "Room 3.54 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.54_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "22dd57e3-19bb-58bd-b83b-fc6c5cb12049",
+  "value_col": "pm25"
  },
  "22e677ff-de4a-55db-a0c3-aa85a3e4b088": {
   "label": "Room 3.52 \u2014 Research Laboratory illuminance (simulated) [lux]",
@@ -1637,6 +1826,13 @@
   "uuid": "25955689-44b9-5a11-9e55-18a9aebeb055",
   "value_col": "occupancy"
  },
+ "25af883c-5ad8-5b21-aedf-fe95f1ec172a": {
+  "label": "Room 5.44 \u2014 Server Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.44_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "25af883c-5ad8-5b21-aedf-fe95f1ec172a",
+  "value_col": "pm25"
+ },
  "25b8030c-17f5-546a-a7cc-8d1f15b75a33": {
   "label": "Room 1.37 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room1.37_sat_door_contact",
@@ -1657,6 +1853,13 @@
   "table": "occupancy_data",
   "uuid": "261af1f8-1724-5516-92b6-0f0adc873b59",
   "value_col": "occupancy"
+ },
+ "26355b74-9d28-50a8-9ef8-f61c7675cfbd": {
+  "label": "Room 2.12 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.12_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "26355b74-9d28-50a8-9ef8-f61c7675cfbd",
+  "value_col": "pm25"
  },
  "265a6abf-cc2a-54d2-8c1a-cb39c90d4f9d": {
   "label": "Room 4.49 \u2014 Academic Office occupancy (simulated) [persons]",
@@ -1707,6 +1910,13 @@
   "uuid": "27a84761-da04-5eb0-bade-184516196ed6",
   "value_col": "noise_db"
  },
+ "2844e2dd-1a74-5551-863d-b776685f699a": {
+  "label": "Room 3.03 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.03_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "2844e2dd-1a74-5551-863d-b776685f699a",
+  "value_col": "pm25"
+ },
  "287273ae-ee55-505c-932f-e72c1750d048": {
   "label": "Room 5.71 \u2014 Storage Room door_contact (simulated)",
   "sensor": "Room5.71_sat_door_contact",
@@ -1742,6 +1952,13 @@
   "uuid": "296b8362-5092-56f2-8827-3196e48531ae",
   "value_col": "contact"
  },
+ "29b461a0-6a54-5de8-a7af-bb7ed4034fb1": {
+  "label": "Room 3.50 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.50_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "29b461a0-6a54-5de8-a7af-bb7ed4034fb1",
+  "value_col": "pm25"
+ },
  "29cbbb5c-4cc5-5259-b76d-b1c4211c76fe": {
   "label": "Room 4.59 \u2014 Research Laboratory noise (simulated) [dB]",
   "sensor": "Room4.59_sat_noise",
@@ -1770,12 +1987,26 @@
   "uuid": "29f9539b-b6ad-51a0-8621-13162a4416a1",
   "value_col": "noise_db"
  },
+ "2a0a639e-f12f-54c2-bdd9-3db25d0c511d": {
+  "label": "Room 3.67 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.67_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "2a0a639e-f12f-54c2-bdd9-3db25d0c511d",
+  "value_col": "pm25"
+ },
  "2a850682-d98f-5fc0-ba94-966b727726c4": {
   "label": "Room 3.01 \u2014 Research Laboratory window_contact (simulated)",
   "sensor": "Room3.01_sat_window_contact",
   "table": "contact_data",
   "uuid": "2a850682-d98f-5fc0-ba94-966b727726c4",
   "value_col": "contact"
+ },
+ "2a9f22ee-9ea0-59de-9d3f-3494bd37bcd4": {
+  "label": "Room 1.37 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.37_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "2a9f22ee-9ea0-59de-9d3f-3494bd37bcd4",
+  "value_col": "pm25"
  },
  "2b292cc5-2a56-55e9-9702-199077a011c0": {
   "label": "Entry Count Sensor - Floor 3",
@@ -1790,6 +2021,13 @@
   "table": "contact_data",
   "uuid": "2b3ff33d-cda1-552b-80b5-ba05dcec3ee5",
   "value_col": "contact"
+ },
+ "2b97237c-1516-52d7-a3ad-90142ee8efbc": {
+  "label": "Room 5.56 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.56_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "2b97237c-1516-52d7-a3ad-90142ee8efbc",
+  "value_col": "pm25"
  },
  "2c4b8e71-72ff-54d7-9610-ad250fb40615": {
   "label": "Room 4.44 \u2014 Server Room noise (simulated) [dB]",
@@ -1847,6 +2085,13 @@
   "uuid": "2d9e452d-f673-509f-bd9c-9327777e1cf0",
   "value_col": "noise_db"
  },
+ "2dc0bbbb-517c-58fd-97c3-942bb0ed5ef5": {
+  "label": "Room 2.58 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.58_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "2dc0bbbb-517c-58fd-97c3-942bb0ed5ef5",
+  "value_col": "pm25"
+ },
  "2de1c13b-b384-5a78-9494-52029d3cde05": {
   "label": "Room 3.01 \u2014 Research Laboratory illuminance (simulated) [lux]",
   "sensor": "Room3.01_sat_illuminance",
@@ -1860,6 +2105,13 @@
   "table": "light_data",
   "uuid": "2de97d63-cf67-582e-985e-b66836d1b126",
   "value_col": "lux"
+ },
+ "2e77c060-09ee-5306-b50f-d85da93032ee": {
+  "label": "Room 4.57 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.57_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "2e77c060-09ee-5306-b50f-d85da93032ee",
+  "value_col": "pm25"
  },
  "2e90f9f9-bde2-5df1-a8c9-af69695cb975": {
   "label": "Room 3.50 \u2014 Research Laboratory door_contact (simulated)",
@@ -1902,6 +2154,13 @@
   "table": "noise_data",
   "uuid": "2f253480-171b-5518-85fd-04f679898b6f",
   "value_col": "noise_db"
+ },
+ "2f568b2d-4f93-520c-bbf1-98548e8fb1eb": {
+  "label": "Room 3.15 \u2014 Meeting Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.15_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "2f568b2d-4f93-520c-bbf1-98548e8fb1eb",
+  "value_col": "pm25"
  },
  "2f581fd4-d2f4-5b99-8e3c-e5d43456813b": {
   "label": "Room 5.52 \u2014 Research Laboratory window_contact (simulated)",
@@ -2085,6 +2344,13 @@
   "uuid": "32a5324a-e9f7-56cd-a1a5-c5dfe9e32daa",
   "value_col": "contact"
  },
+ "32acae08-1061-5623-a44f-e902db5241cf": {
+  "label": "Room 2.03 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.03_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "32acae08-1061-5623-a44f-e902db5241cf",
+  "value_col": "pm25"
+ },
  "32c9b059-ffe4-5407-a8dc-9b1d62af213f": {
   "label": "Room 5.09 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room5.09_sat_door_contact",
@@ -2140,6 +2406,13 @@
   "table": "noise_data",
   "uuid": "33b71f58-3fce-5dd2-9c55-28e4f2defb64",
   "value_col": "noise_db"
+ },
+ "33d23dad-cc74-5824-a5bb-54ae49361b11": {
+  "label": "Room 3.07 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.07_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "33d23dad-cc74-5824-a5bb-54ae49361b11",
+  "value_col": "pm25"
  },
  "33e94f86-1526-5919-baee-15c21b31e34c": {
   "label": "Room 5.51 \u2014 Research Laboratory door_contact (simulated)",
@@ -2239,6 +2512,13 @@
   "uuid": "36a4e63b-c3cf-546d-9f64-644bb774f796",
   "value_col": "lux"
  },
+ "36acad1b-f9d4-582a-87d7-2b675a80a1f0": {
+  "label": "Room 3.53 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.53_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "36acad1b-f9d4-582a-87d7-2b675a80a1f0",
+  "value_col": "pm25"
+ },
  "36b15cf0-8a2e-5a0b-ab80-b87b2e8e9772": {
   "label": "Room 5.22 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room5.22_sat_door_contact",
@@ -2288,12 +2568,26 @@
   "uuid": "371dcfb1-5243-512d-8a4e-18003c709f6f",
   "value_col": "co2_ppm"
  },
+ "372e1000-1171-5721-85e0-e55a4eb774a6": {
+  "label": "Room 2.34 \u2014 Telecommunications Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.34_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "372e1000-1171-5721-85e0-e55a4eb774a6",
+  "value_col": "pm25"
+ },
  "375dfc87-1c4b-5d3d-b8d1-4ac8ceb879e0": {
   "label": "Room 4.71 \u2014 Storage Room window_contact (simulated)",
   "sensor": "Room4.71_sat_window_contact",
   "table": "contact_data",
   "uuid": "375dfc87-1c4b-5d3d-b8d1-4ac8ceb879e0",
   "value_col": "contact"
+ },
+ "37828e17-a9c4-5ef2-aeb5-9a0c2890783c": {
+  "label": "Room 2.01 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.01_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "37828e17-a9c4-5ef2-aeb5-9a0c2890783c",
+  "value_col": "pm25"
  },
  "37880fa1-8a10-5cbe-9f8c-1fa51233732a": {
   "label": "Room 2.08 \u2014 Computer Laboratory occupancy (simulated) [persons]",
@@ -2315,6 +2609,13 @@
   "table": "contact_data",
   "uuid": "379ecf3a-9034-5cf1-be70-9b846fd8d8a0",
   "value_col": "contact"
+ },
+ "3813ca81-445b-5a4a-9a0d-f310d1034618": {
+  "label": "Room 3.38 \u2014 Telecommunications Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.38_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "3813ca81-445b-5a4a-9a0d-f310d1034618",
+  "value_col": "pm25"
  },
  "382737cb-632c-5830-97e3-40f72c1e7d64": {
   "label": "Air Handling Unit \u2014 Floor 2 filter differential pressure",
@@ -2350,6 +2651,13 @@
   "table": "contact_data",
   "uuid": "38de04a3-cde6-5300-943d-1670aadcf4f2",
   "value_col": "contact"
+ },
+ "38e0a4e6-4832-5cce-8a47-54aa53a72cd2": {
+  "label": "Room 4.06 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.06_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "38e0a4e6-4832-5cce-8a47-54aa53a72cd2",
+  "value_col": "pm25"
  },
  "38f0bb2f-574b-5e3b-9b11-c87fd6cb2c36": {
   "label": "Room 2.19 \u2014 Research Laboratory door_contact (simulated)",
@@ -2533,12 +2841,26 @@
   "uuid": "3c9e2fd2-4ce3-59cf-b4c8-a76b89d4e85b",
   "value_col": "contact"
  },
+ "3ccbb49a-9520-5554-89e8-26b9c4815989": {
+  "label": "Room 4.52 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.52_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "3ccbb49a-9520-5554-89e8-26b9c4815989",
+  "value_col": "pm25"
+ },
  "3ce8cfbe-830b-5b8c-91a9-6a10b728c311": {
   "label": "Room 5.54 \u2014 Research Laboratory temperature (simulated) [degC]",
   "sensor": "Room5.54_sat_temperature",
   "table": "temperature_data",
   "uuid": "3ce8cfbe-830b-5b8c-91a9-6a10b728c311",
   "value_col": "temp_c"
+ },
+ "3ced52ec-0ee9-5401-aceb-79e9f7a5407c": {
+  "label": "Room 3.60 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.60_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "3ced52ec-0ee9-5401-aceb-79e9f7a5407c",
+  "value_col": "pm25"
  },
  "3d2fda1a-648f-5e51-87df-8a20eaaedf87": {
   "label": "Room 4.23 \u2014 Academic Office door_contact (simulated)",
@@ -2560,6 +2882,20 @@
   "table": "contact_data",
   "uuid": "3da77a5c-a0ec-5feb-a5a4-b2773f652538",
   "value_col": "contact"
+ },
+ "3db5602f-ffa6-53da-8b56-4a811e7e071c": {
+  "label": "Room 4.13 \u2014 Seminar Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.13_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "3db5602f-ffa6-53da-8b56-4a811e7e071c",
+  "value_col": "pm25"
+ },
+ "3df0e158-8cc9-54dc-8b63-2c4f31827138": {
+  "label": "Room 3.58 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.58_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "3df0e158-8cc9-54dc-8b63-2c4f31827138",
+  "value_col": "pm25"
  },
  "3e5542f8-f13b-524a-9367-f1cb6087e82a": {
   "label": "Room 5.44 \u2014 Server Room occupancy (simulated) [persons]",
@@ -2595,6 +2931,13 @@
   "table": "light_data",
   "uuid": "3eddb69c-ecfb-5cba-88c5-bd6496e53d3d",
   "value_col": "lux"
+ },
+ "3f37a326-f59b-5604-bcb3-6af162c5da9d": {
+  "label": "Room 5.61 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.61_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "3f37a326-f59b-5604-bcb3-6af162c5da9d",
+  "value_col": "pm25"
  },
  "3f584748-3602-529c-ab51-f01a32cc40d0": {
   "label": "Occupancy Count Sensor - Meeting Room 3.13",
@@ -2701,6 +3044,20 @@
   "uuid": "41b33a1f-fab7-5e57-b7c6-c672da0345f3",
   "value_col": "contact"
  },
+ "41c4f124-076f-5c06-a6af-fbb53b800bb5": {
+  "label": "Room 2.15 \u2014 Seminar Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.15_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "41c4f124-076f-5c06-a6af-fbb53b800bb5",
+  "value_col": "pm25"
+ },
+ "41e5a6ef-4483-552d-a5a6-f3b5ef34d3f6": {
+  "label": "Room 5.65 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.65_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "41e5a6ef-4483-552d-a5a6-f3b5ef34d3f6",
+  "value_col": "pm25"
+ },
  "41eb8867-52af-5ad7-881b-d142a572cf81": {
   "label": "Room 5.60 \u2014 Research Laboratory humidity (simulated) [percent]",
   "sensor": "Room5.60_sat_humidity",
@@ -2714,6 +3071,13 @@
   "table": "noise_data",
   "uuid": "41f9839a-b2cd-5e08-b4e3-d154ce49ca1b",
   "value_col": "noise_db"
+ },
+ "42293d0a-45f9-57d5-8fb0-67109facb879": {
+  "label": "Room 4.10 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.10_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "42293d0a-45f9-57d5-8fb0-67109facb879",
+  "value_col": "pm25"
  },
  "4243471c-7780-57dd-860d-ba35c3268020": {
   "label": "Room 5.06 \u2014 Research Laboratory occupancy (simulated) [persons]",
@@ -2763,6 +3127,13 @@
   "table": "co2_data",
   "uuid": "439654e7-abec-53fd-8f73-495da52c83ca",
   "value_col": "co2_ppm"
+ },
+ "439d5056-28df-5ac1-abbc-b92dda4fdf16": {
+  "label": "Room 2.53 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.53_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "439d5056-28df-5ac1-abbc-b92dda4fdf16",
+  "value_col": "pm25"
  },
  "43c5bc00-b805-5bd3-8f3c-cbe478700873": {
   "label": "Room 4.62 \u2014 Academic Office occupancy (simulated) [persons]",
@@ -2827,6 +3198,13 @@
   "uuid": "44ddcc7c-93d5-54b6-a369-a8c92d72e259",
   "value_col": "lux"
  },
+ "4501c6e0-7faf-5cdd-8042-0d253024f908": {
+  "label": "Room 1.39 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.39_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "4501c6e0-7faf-5cdd-8042-0d253024f908",
+  "value_col": "pm25"
+ },
  "450d0b33-608d-5748-ba4a-25950319ce05": {
   "label": "Room 2.04 \u2014 Research Laboratory window_contact (simulated)",
   "sensor": "Room2.04_sat_window_contact",
@@ -2890,6 +3268,13 @@
   "uuid": "4637610e-c6cb-5dc4-b5e5-6bc86e49c7ed",
   "value_col": "lux"
  },
+ "4640b96a-3c3b-5b1c-abc7-662af075885c": {
+  "label": "Room 4.03 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.03_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "4640b96a-3c3b-5b1c-abc7-662af075885c",
+  "value_col": "pm25"
+ },
  "46416830-d89a-57c2-bd08-11eaa8a74e41": {
   "label": "Room 2.60 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room2.60_sat_noise",
@@ -2938,6 +3323,20 @@
   "table": "contact_data",
   "uuid": "46c545a6-7229-5637-9f94-75885290b554",
   "value_col": "contact"
+ },
+ "46fe154d-e01a-5036-8d4c-1d12a1464163": {
+  "label": "Room 2.44 \u2014 Server Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.44_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "46fe154d-e01a-5036-8d4c-1d12a1464163",
+  "value_col": "pm25"
+ },
+ "4712fb85-4a93-5f7f-ae77-97048ace2dc3": {
+  "label": "Room 3.71 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.71_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "4712fb85-4a93-5f7f-ae77-97048ace2dc3",
+  "value_col": "pm25"
  },
  "47344599-d434-502d-b953-2d2752d5d101": {
   "label": "Room 4.52 \u2014 Academic Office door_contact (simulated)",
@@ -3001,6 +3400,13 @@
   "table": "contact_data",
   "uuid": "48306030-ca7d-531c-96dd-1e890cbd0282",
   "value_col": "contact"
+ },
+ "487a4bbc-d499-538c-bb49-efa6b69b0ee5": {
+  "label": "Room 3.64 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.64_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "487a4bbc-d499-538c-bb49-efa6b69b0ee5",
+  "value_col": "pm25"
  },
  "48a2ff1e-deb0-530d-9185-e3cdc0a15e65": {
   "label": "CO2 \u2014 Floor 3",
@@ -3184,6 +3590,27 @@
   "uuid": "4ce00a3c-1521-5cab-8be5-a9544049eaf3",
   "value_col": "occupancy"
  },
+ "4d46c2c8-4f71-5e11-a9e9-bedc2603f250": {
+  "label": "Room 3.02 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.02_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "4d46c2c8-4f71-5e11-a9e9-bedc2603f250",
+  "value_col": "pm25"
+ },
+ "4dad56ff-6eee-532e-8a48-32dce2b2412b": {
+  "label": "Room 4.44 \u2014 Server Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.44_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "4dad56ff-6eee-532e-8a48-32dce2b2412b",
+  "value_col": "pm25"
+ },
+ "4dc5de08-e9da-5c2d-845f-6af5aa1cfbb2": {
+  "label": "Room 4.15 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.15_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "4dc5de08-e9da-5c2d-845f-6af5aa1cfbb2",
+  "value_col": "pm25"
+ },
  "4df381fc-b1f4-5461-a359-7f2a9847b51d": {
   "label": "Room 5.54 \u2014 Research Laboratory occupancy (simulated) [persons]",
   "sensor": "Room5.54_sat_occupancy",
@@ -3226,6 +3653,13 @@
   "uuid": "4ec949ac-e7a0-5aa9-88a1-f9296f916f60",
   "value_col": "occupancy"
  },
+ "4ee6387f-fc94-51dd-846f-361ad539d60a": {
+  "label": "Room 3.06 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.06_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "4ee6387f-fc94-51dd-846f-361ad539d60a",
+  "value_col": "pm25"
+ },
  "4ee6ff98-af24-5a9c-a9cd-914df4bb03d1": {
   "label": "Room 3.04 \u2014 Research Laboratory door_contact (simulated)",
   "sensor": "Room3.04_sat_door_contact",
@@ -3253,6 +3687,13 @@
   "table": "occupancy_data",
   "uuid": "4fca1612-9b3e-5221-98fc-bfa51656ab8d",
   "value_col": "occupancy"
+ },
+ "4fecab1f-a2e9-589c-9d57-600c52bc242b": {
+  "label": "Room 4.58 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.58_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "4fecab1f-a2e9-589c-9d57-600c52bc242b",
+  "value_col": "pm25"
  },
  "5016e69e-4b74-5452-a50e-d60a3e7553fc": {
   "label": "Room 4.50 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -3422,6 +3863,13 @@
   "uuid": "54006537-18d8-5862-a85a-a65af44db43d",
   "value_col": "occupancy"
  },
+ "54049723-a18e-57fc-a29b-c3f70090aee1": {
+  "label": "Room 5.50 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.50_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "54049723-a18e-57fc-a29b-c3f70090aee1",
+  "value_col": "pm25"
+ },
  "543f7045-1bfe-578c-8a6d-5c392cecab2c": {
   "label": "Telecommunications Room \u2014 Floor 2 (Room 2.34) door_contact (simulated)",
   "sensor": "Telecom_Room_F2_sat_door_contact",
@@ -3576,6 +4024,13 @@
   "uuid": "5849f836-8ad2-5385-b536-2f0b85ad37c7",
   "value_col": "lux"
  },
+ "588a1ba5-5182-5d07-9440-093672826509": {
+  "label": "Room 5.48 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.48_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "588a1ba5-5182-5d07-9440-093672826509",
+  "value_col": "pm25"
+ },
  "58b761bc-769c-5376-b92e-b3ce7592d68c": {
   "label": "Room 3.65 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room3.65_sat_door_contact",
@@ -3611,6 +4066,13 @@
   "uuid": "5905b196-71ed-598e-8e53-c79f68adbd98",
   "value_col": "lux"
  },
+ "5925e4e0-0367-582a-a651-b6ccb2c8e1f4": {
+  "label": "Room 2.47 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.47_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "5925e4e0-0367-582a-a651-b6ccb2c8e1f4",
+  "value_col": "pm25"
+ },
  "596873a8-7121-56f3-ba1d-fd3d1f21bc61": {
   "label": "Room 4.12 \u2014 Meeting Room window_contact (simulated)",
   "sensor": "Room4.12_sat_window_contact",
@@ -3645,6 +4107,13 @@
   "table": "contact_data",
   "uuid": "5aa1a2b9-52e9-5a1b-b5e3-86fb335a4b3d",
   "value_col": "contact"
+ },
+ "5aad0e80-cf3b-5fbe-92a7-bfdf613d7bf5": {
+  "label": "Room 3.20 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.20_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "5aad0e80-cf3b-5fbe-92a7-bfdf613d7bf5",
+  "value_col": "pm25"
  },
  "5abea566-babd-5d47-abf5-d33cb5991e05": {
   "label": "Room 4.68 \u2014 Academic Office door_contact (simulated)",
@@ -3709,6 +4178,13 @@
   "uuid": "5b6388e8-32da-58e6-aa7d-69d5f47a43dd",
   "value_col": "noise_db"
  },
+ "5b705227-c0e3-5f05-afb7-a628d2a6c243": {
+  "label": "Telecommunications Room \u2014 Floor 0 (Room 0.34) pm25 (simulated) [ug/m3]",
+  "sensor": "Telecom_Room_F0_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "5b705227-c0e3-5f05-afb7-a628d2a6c243",
+  "value_col": "pm25"
+ },
  "5b901a7f-7ae4-5204-b695-3a5e5e6e104e": {
   "label": "Room 1.07 \u2014 Computer Laboratory occupancy (simulated) [persons]",
   "sensor": "Room1.07_sat_occupancy",
@@ -3736,6 +4212,20 @@
   "table": "contact_data",
   "uuid": "5c0e50c0-5166-540a-81e1-67fd565a08f6",
   "value_col": "contact"
+ },
+ "5c1a96a2-b669-5c4d-91ff-8d5d93d88397": {
+  "label": "Room 4.36 \u2014 Restroom (Female) pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.36_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "5c1a96a2-b669-5c4d-91ff-8d5d93d88397",
+  "value_col": "pm25"
+ },
+ "5c247bf5-016d-5486-bd23-4269dec99c79": {
+  "label": "Room 4.68 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.68_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "5c247bf5-016d-5486-bd23-4269dec99c79",
+  "value_col": "pm25"
  },
  "5c25d428-2933-56f4-901d-070f41ad99cd": {
   "label": "Room 5.14 \u2014 Academic Office temperature (simulated) [degC]",
@@ -3842,6 +4332,13 @@
   "uuid": "5daed02a-b4b3-56b5-85f7-0082f285bb32",
   "value_col": "lux"
  },
+ "5dcd9dd6-d1d3-5226-88be-4dcb737adf71": {
+  "label": "Room 0.04 \u2014 Mechanical Plant Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.04_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "5dcd9dd6-d1d3-5226-88be-4dcb737adf71",
+  "value_col": "pm25"
+ },
  "5dede140-e1a3-529c-a150-0c5a89350cdb": {
   "label": "Room 0.31 \u2014 Mechanical/Service Room occupancy (simulated) [persons]",
   "sensor": "Room0.31_sat_occupancy",
@@ -3862,6 +4359,13 @@
   "table": "noise_data",
   "uuid": "5e3c0cf7-128c-5211-bdbf-fc24605be633",
   "value_col": "noise_db"
+ },
+ "5e4b9dae-3bc9-58f7-9fb4-86a909f3b4aa": {
+  "label": "Room 2.62 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.62_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "5e4b9dae-3bc9-58f7-9fb4-86a909f3b4aa",
+  "value_col": "pm25"
  },
  "5ed552b1-a8b5-515a-872c-a8aefc382afa": {
   "label": "Room 4.53 \u2014 Academic Office noise (simulated) [dB]",
@@ -3940,6 +4444,13 @@
   "uuid": "6053026a-30cb-5b2a-b367-89866a7ec6e0",
   "value_col": "noise_db"
  },
+ "605cc7ae-8836-5d13-a9b4-4440d3fd7682": {
+  "label": "Room 2.02 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.02_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "605cc7ae-8836-5d13-a9b4-4440d3fd7682",
+  "value_col": "pm25"
+ },
  "609adf09-a951-5030-b7e2-2698f343d454": {
   "label": "Room 4.64 \u2014 Academic Office window_contact (simulated)",
   "sensor": "Room4.64_sat_window_contact",
@@ -3960,6 +4471,13 @@
   "table": "light_data",
   "uuid": "60e9809e-1fc2-573f-97cf-af50944da855",
   "value_col": "lux"
+ },
+ "611b1d7a-f6d3-58a7-9379-a9de8befae1c": {
+  "label": "Room 2.66 \u2014 Staff Break Room / Kitchen pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.66_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "611b1d7a-f6d3-58a7-9379-a9de8befae1c",
+  "value_col": "pm25"
  },
  "616b29c8-3d5b-5f86-9cf0-1b932d50b08c": {
   "label": "Room 4.05 \u2014 Computer Laboratory door_contact (simulated)",
@@ -3989,6 +4507,13 @@
   "uuid": "61a8c7ca-cf3c-5cc5-b640-d03b4d98c0c1",
   "value_col": "noise_db"
  },
+ "61bbad27-b68b-5832-adba-c144c8113201": {
+  "label": "Room 3.18 \u2014 Kitchen pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.18_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "61bbad27-b68b-5832-adba-c144c8113201",
+  "value_col": "pm25"
+ },
  "61e84c32-0170-50d1-931a-3afe4dd28358": {
   "label": "Room 4.67 \u2014 Academic Office illuminance (simulated) [lux]",
   "sensor": "Room4.67_sat_illuminance",
@@ -4002,6 +4527,13 @@
   "table": "contact_data",
   "uuid": "62065ed4-aa7b-5bff-807d-72037d203165",
   "value_col": "contact"
+ },
+ "620b56bb-534a-527c-b54c-29f930a326b0": {
+  "label": "Room 1.04 \u2014 Common Area / Atrium pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.04_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "620b56bb-534a-527c-b54c-29f930a326b0",
+  "value_col": "pm25"
  },
  "6225c781-b346-5361-b2e5-69bbba911322": {
   "label": "Room 3.63 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -4030,6 +4562,13 @@
   "table": "contact_data",
   "uuid": "6251e22b-9d48-579c-8a03-6c021b9284a5",
   "value_col": "contact"
+ },
+ "62c3e95d-014a-5630-b1bf-652e4c936674": {
+  "label": "Room 0.01 \u2014 Main Reception pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.01_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "62c3e95d-014a-5630-b1bf-652e4c936674",
+  "value_col": "pm25"
  },
  "62ccd1ce-8b05-5629-b15a-b87f633f2e8b": {
   "label": "Telecommunications Room \u2014 Floor 1 (Room 1.34) temperature (simulated) [degC]",
@@ -4080,6 +4619,13 @@
   "uuid": "63f2354a-fb93-5e07-86f7-4944edbcab6d",
   "value_col": "lux"
  },
+ "6459ae2b-12da-5377-818a-6974161419b4": {
+  "label": "Room 4.09 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.09_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6459ae2b-12da-5377-818a-6974161419b4",
+  "value_col": "pm25"
+ },
  "6481239e-1590-5393-8746-01ee185b5cc2": {
   "label": "Server Room \u2014 Floor 4 (Room 4.44) illuminance (simulated) [lux]",
   "sensor": "Server_Room_F4_sat_illuminance",
@@ -4107,6 +4653,13 @@
   "table": "contact_data",
   "uuid": "64ad228f-d6ae-58a3-8b52-04497345f9df",
   "value_col": "contact"
+ },
+ "653b7ba3-3e9d-598c-b312-f613e5a1da1f": {
+  "label": "Room 2.21 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.21_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "653b7ba3-3e9d-598c-b312-f613e5a1da1f",
+  "value_col": "pm25"
  },
  "658511ef-2438-512c-b54d-93ad4b047c4a": {
   "label": "Room 3.38 \u2014 Telecommunications Room noise (simulated) [dB]",
@@ -4171,12 +4724,40 @@
   "uuid": "66aca829-156c-5f3f-95e7-97368a4bc9d1",
   "value_col": "contact"
  },
+ "66f090d2-6be0-593d-affa-b5e1397d1fa5": {
+  "label": "Room 2.54 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.54_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "66f090d2-6be0-593d-affa-b5e1397d1fa5",
+  "value_col": "pm25"
+ },
+ "67202344-23a6-5bba-abac-a0a4c3883914": {
+  "label": "Room 3.12 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.12_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "67202344-23a6-5bba-abac-a0a4c3883914",
+  "value_col": "pm25"
+ },
+ "67312e13-6a4d-58d4-be17-0c3187e59c01": {
+  "label": "Room 3.26 \u2014 Meeting Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.26_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "67312e13-6a4d-58d4-be17-0c3187e59c01",
+  "value_col": "pm25"
+ },
  "67452c17-b6d5-5bce-9334-021cab06f93a": {
   "label": "Room 0.06 \u2014 Loading and Goods Storage door_contact (simulated)",
   "sensor": "Room0.06_sat_door_contact",
   "table": "contact_data",
   "uuid": "67452c17-b6d5-5bce-9334-021cab06f93a",
   "value_col": "contact"
+ },
+ "6791aeda-94e4-5f36-b743-59d44fb12f7f": {
+  "label": "Room 3.27 \u2014 Meeting Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.27_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6791aeda-94e4-5f36-b743-59d44fb12f7f",
+  "value_col": "pm25"
  },
  "6796d270-0cc7-592e-a0b3-615900710ba0": {
   "label": "Telecommunications Room \u2014 Floor 1 (Room 1.34) window_contact (simulated)",
@@ -4233,6 +4814,20 @@
   "table": "occupancy_data",
   "uuid": "67f22175-7e91-5b8a-ab99-129b62d6bbe5",
   "value_col": "occupancy"
+ },
+ "67f95457-8248-5aa1-b35e-6abbb09f5d0b": {
+  "label": "Room 2.04 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.04_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "67f95457-8248-5aa1-b35e-6abbb09f5d0b",
+  "value_col": "pm25"
+ },
+ "67feffb3-abb8-55a7-a04d-1a67e8cd16c3": {
+  "label": "Room 3.04 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.04_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "67feffb3-abb8-55a7-a04d-1a67e8cd16c3",
+  "value_col": "pm25"
  },
  "680ce090-f659-512c-9434-61507ba2b7a1": {
   "label": "Room 5.10 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -4339,6 +4934,13 @@
   "uuid": "69879aea-177f-504c-96cc-708def088c59",
   "value_col": "occupancy"
  },
+ "69960469-2dea-5066-8d47-4243d6ef262a": {
+  "label": "Room 5.70 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.70_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "69960469-2dea-5066-8d47-4243d6ef262a",
+  "value_col": "pm25"
+ },
  "6a3c010a-c9f5-5ac1-821a-c240fb7270b4": {
   "label": "Room 5.70 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room5.70_sat_noise",
@@ -4353,6 +4955,13 @@
   "uuid": "6a62050e-a493-5697-b020-fdd9d68befb6",
   "value_col": "co2_ppm"
  },
+ "6a71a240-3734-5763-89ed-9470fd599d07": {
+  "label": "Room 3.08 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.08_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6a71a240-3734-5763-89ed-9470fd599d07",
+  "value_col": "pm25"
+ },
  "6a9beafc-67cb-5a3d-817d-9fabb734e0d0": {
   "label": "Room 4.20 \u2014 Research Laboratory noise (simulated) [dB]",
   "sensor": "Room4.20_sat_noise",
@@ -4366,6 +4975,13 @@
   "table": "contact_data",
   "uuid": "6aaf7935-cbb1-58c8-ba21-957116c891c7",
   "value_col": "contact"
+ },
+ "6ab267d6-1f33-5b4b-a883-da2c5d0c2e39": {
+  "label": "Room 5.67 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.67_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6ab267d6-1f33-5b4b-a883-da2c5d0c2e39",
+  "value_col": "pm25"
  },
  "6acac333-8f47-5f4c-a61f-8fd8813bfe09": {
   "label": "Room 2.64 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -4429,6 +5045,13 @@
   "table": "plant_data",
   "uuid": "6b5a4cf6-1093-5ef4-90a0-d3270527dda4",
   "value_col": "runtime_h"
+ },
+ "6b621694-6328-508c-9753-8dd9016ee64b": {
+  "label": "Room 2.52 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.52_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6b621694-6328-508c-9753-8dd9016ee64b",
+  "value_col": "pm25"
  },
  "6b7d5368-cf68-59ef-827f-6f4c4290fe41": {
   "label": "Room 4.69 \u2014 Academic Office humidity (simulated) [percent]",
@@ -4521,12 +5144,40 @@
   "uuid": "6d430672-afd3-5fbf-a219-83ca73dbff3b",
   "value_col": "noise_db"
  },
+ "6d750b83-ccf0-5ace-8e1f-e66faacc4ed2": {
+  "label": "Room 5.49 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.49_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6d750b83-ccf0-5ace-8e1f-e66faacc4ed2",
+  "value_col": "pm25"
+ },
+ "6d80ea5b-1f4e-51f6-84d1-4eb02d2a628d": {
+  "label": "Room 2.63 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.63_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6d80ea5b-1f4e-51f6-84d1-4eb02d2a628d",
+  "value_col": "pm25"
+ },
+ "6db37884-c581-516e-9891-29f7d41fad75": {
+  "label": "Room 4.65 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.65_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6db37884-c581-516e-9891-29f7d41fad75",
+  "value_col": "pm25"
+ },
  "6e0e0052-96ad-5bd1-aa15-e3e550b99221": {
   "label": "Room 2.03 \u2014 Research Laboratory noise (simulated) [dB]",
   "sensor": "Room2.03_sat_noise",
   "table": "noise_data",
   "uuid": "6e0e0052-96ad-5bd1-aa15-e3e550b99221",
   "value_col": "noise_db"
+ },
+ "6e21a26c-1935-54e0-bea1-9c4c843ce1cf": {
+  "label": "Room 0.34 \u2014 Building Telecommunications Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.34_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6e21a26c-1935-54e0-bea1-9c4c843ce1cf",
+  "value_col": "pm25"
  },
  "6e5637ba-842a-5d49-b81e-49a26b585f50": {
   "label": "Room 3.20 \u2014 Academic Office occupancy (simulated) [persons]",
@@ -4583,6 +5234,13 @@
   "table": "noise_data",
   "uuid": "6f4f3145-5fdb-5bb7-86da-04ca8ee795e6",
   "value_col": "noise_db"
+ },
+ "6f570a56-ebba-5510-987a-fd10db51ac1a": {
+  "label": "Room 4.60 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.60_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "6f570a56-ebba-5510-987a-fd10db51ac1a",
+  "value_col": "pm25"
  },
  "6f5febbf-cacf-5783-89cb-3555a565e927": {
   "label": "Room 3.14 \u2014 Seminar Room door_contact (simulated)",
@@ -4731,6 +5389,13 @@
   "uuid": "72333aef-13c9-57f2-809a-6a433b859ab6",
   "value_col": "contact"
  },
+ "7282e45c-1b4f-5d0d-aae4-42e3fe39a457": {
+  "label": "Room 0.05 \u2014 Mechanical Plant Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.05_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "7282e45c-1b4f-5d0d-aae4-42e3fe39a457",
+  "value_col": "pm25"
+ },
  "729c8161-8a19-548f-a4c1-00b140e98c6b": {
   "label": "Room 5.17 \u2014 Meeting Room humidity (simulated) [percent]",
   "sensor": "Room5.17_sat_humidity",
@@ -4773,12 +5438,26 @@
   "uuid": "7355f93e-1cde-5c61-a7b0-1bb9acce7bee",
   "value_col": "contact"
  },
+ "73b486d5-5b9e-5b05-92ee-964598ed862f": {
+  "label": "Telecommunications Room \u2014 Floor 4 (Room 4.34) pm25 (simulated) [ug/m3]",
+  "sensor": "Telecom_Room_F4_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "73b486d5-5b9e-5b05-92ee-964598ed862f",
+  "value_col": "pm25"
+ },
  "73c322a1-e663-568b-9ec6-d285a3dfe5d1": {
   "label": "Room 3.20 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room3.20_sat_noise",
   "table": "noise_data",
   "uuid": "73c322a1-e663-568b-9ec6-d285a3dfe5d1",
   "value_col": "noise_db"
+ },
+ "73cdcfb5-8f82-5a85-9b51-e2822de6b6f7": {
+  "label": "Room 5.71 \u2014 Storage Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.71_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "73cdcfb5-8f82-5a85-9b51-e2822de6b6f7",
+  "value_col": "pm25"
  },
  "743db0ab-596b-5541-b2dc-e8f2d5747064": {
   "label": "Room 0.29 \u2014 Storage Room window_contact (simulated)",
@@ -4793,6 +5472,13 @@
   "table": "light_data",
   "uuid": "744e35b4-c386-5288-8a4f-4c7e4d1a6f81",
   "value_col": "lux"
+ },
+ "744f4163-e005-530c-a78f-93b2d157ca3c": {
+  "label": "Room 2.50 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.50_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "744f4163-e005-530c-a78f-93b2d157ca3c",
+  "value_col": "pm25"
  },
  "746ac61c-ed8c-5b2f-a39d-cb1a0faf4518": {
   "label": "Room 5.45 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -4941,6 +5627,13 @@
   "uuid": "77c1b36d-fa56-53fb-a94e-6fb720686aa6",
   "value_col": "lux"
  },
+ "77c98c20-d2d6-5a99-98c2-b0e554c6270d": {
+  "label": "Room 2.14 \u2014 Meeting Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.14_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "77c98c20-d2d6-5a99-98c2-b0e554c6270d",
+  "value_col": "pm25"
+ },
  "77ea2e4a-0172-584e-9bf5-504a88115717": {
   "label": "Room 4.60 \u2014 Research Laboratory occupancy (simulated) [persons]",
   "sensor": "Room4.60_sat_occupancy",
@@ -5003,6 +5696,13 @@
   "table": "humidity_data",
   "uuid": "791f6274-87e5-5510-9436-26f88491562a",
   "value_col": "rh_pct"
+ },
+ "79288a17-b4b3-5229-afb2-61f6c795934f": {
+  "label": "Server Room \u2014 Floor 2 (Room 2.44) pm25 (simulated) [ug/m3]",
+  "sensor": "Server_Room_F2_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "79288a17-b4b3-5229-afb2-61f6c795934f",
+  "value_col": "pm25"
  },
  "7973e853-1e7b-5f5e-b3a6-a6501234dbb9": {
   "label": "Room 0.19 \u2014 Office door_contact (simulated)",
@@ -5235,6 +5935,13 @@
   "uuid": "7e600096-761e-5d8d-8d92-214eeef05b97",
   "value_col": "lux"
  },
+ "7e9046fd-3550-5a1a-a896-2251feeabec0": {
+  "label": "Room 4.18 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.18_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "7e9046fd-3550-5a1a-a896-2251feeabec0",
+  "value_col": "pm25"
+ },
  "7eb9bfcf-9e19-5fa7-93e6-584002b5eb7d": {
   "label": "Server Room \u2014 Floor 4 (Room 4.44) occupancy (simulated) [persons]",
   "sensor": "Server_Room_F4_sat_occupancy",
@@ -5277,12 +5984,26 @@
   "uuid": "7f748a2d-b906-5ad8-9359-2bbf59ec185d",
   "value_col": "contact"
  },
+ "7fa03fbd-5bc6-5f51-ba5a-c2676d0bee57": {
+  "label": "Room 3.05 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.05_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "7fa03fbd-5bc6-5f51-ba5a-c2676d0bee57",
+  "value_col": "pm25"
+ },
  "7fa4fa04-b11a-5e1a-9da3-85e9592c4b46": {
   "label": "Room 2.06 \u2014 Research Laboratory door_contact (simulated)",
   "sensor": "Room2.06_sat_door_contact",
   "table": "contact_data",
   "uuid": "7fa4fa04-b11a-5e1a-9da3-85e9592c4b46",
   "value_col": "contact"
+ },
+ "7fcaf311-8a0b-5a10-a56e-671984295b40": {
+  "label": "Room 3.11 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.11_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "7fcaf311-8a0b-5a10-a56e-671984295b40",
+  "value_col": "pm25"
  },
  "7fe361ed-ed03-5f2d-a972-b9c8adc631f7": {
   "label": "Room 3.20 \u2014 Academic Office door_contact (simulated)",
@@ -5403,6 +6124,13 @@
   "uuid": "823586dc-995d-5d7b-947c-c03d4969330a",
   "value_col": "contact"
  },
+ "8283031b-2fa5-54e6-b3ec-95b37aeccfae": {
+  "label": "Room 2.24 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.24_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8283031b-2fa5-54e6-b3ec-95b37aeccfae",
+  "value_col": "pm25"
+ },
  "828b35e4-cb92-5101-93b7-12f362c5ffd8": {
   "label": "Room 3.63 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room3.63_sat_door_contact",
@@ -5417,6 +6145,13 @@
   "uuid": "82bc2874-edfe-5fa5-b1bc-795c501fbfe9",
   "value_col": "contact"
  },
+ "82e96bf9-e714-5ba6-82a2-792b6df0b983": {
+  "label": "Room 4.38 \u2014 Mechanical/Service Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.38_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "82e96bf9-e714-5ba6-82a2-792b6df0b983",
+  "value_col": "pm25"
+ },
  "82ff582b-4f98-5247-b4e6-82512ccf29f0": {
   "label": "Room 2.36 \u2014 Restroom (Female) door_contact (simulated)",
   "sensor": "Room2.36_sat_door_contact",
@@ -5430,6 +6165,13 @@
   "table": "contact_data",
   "uuid": "8300f653-f62c-5a9e-956d-9cc849ddcadc",
   "value_col": "contact"
+ },
+ "830374ec-994e-5110-b022-c9654c131b4d": {
+  "label": "Room 4.19 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.19_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "830374ec-994e-5110-b022-c9654c131b4d",
+  "value_col": "pm25"
  },
  "832d9459-8fa6-5c58-ae43-191f1eedfaa1": {
   "label": "Room 4.66 \u2014 Academic Office temperature (simulated) [degC]",
@@ -5472,6 +6214,13 @@
   "table": "noise_data",
   "uuid": "84ecac3e-df8d-564b-b041-34c8be294922",
   "value_col": "noise_db"
+ },
+ "8502f51f-fa88-53c7-8a1e-631ede8ad5df": {
+  "label": "Room 2.07 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.07_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8502f51f-fa88-53c7-8a1e-631ede8ad5df",
+  "value_col": "pm25"
  },
  "85138c01-f113-5c4e-bf55-e06a3119a9d8": {
   "label": "Room 4.12 \u2014 Meeting Room illuminance (simulated) [lux]",
@@ -5620,6 +6369,27 @@
   "uuid": "882616db-e9aa-539e-8ef9-27467d9880b4",
   "value_col": "contact"
  },
+ "8831fb0d-a9e7-54f2-a9f3-1444cfbb79b1": {
+  "label": "Room 3.09 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.09_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8831fb0d-a9e7-54f2-a9f3-1444cfbb79b1",
+  "value_col": "pm25"
+ },
+ "8835799b-a83c-5294-83e9-d142a0a9a0b0": {
+  "label": "Room 4.20 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.20_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8835799b-a83c-5294-83e9-d142a0a9a0b0",
+  "value_col": "pm25"
+ },
+ "88387bcd-7ba8-578d-84b8-ccae82d49d76": {
+  "label": "Room 5.52 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.52_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "88387bcd-7ba8-578d-84b8-ccae82d49d76",
+  "value_col": "pm25"
+ },
  "8847b891-213c-585a-996c-2f40ddc3cb82": {
   "label": "Room 4.61 \u2014 Academic Office illuminance (simulated) [lux]",
   "sensor": "Room4.61_sat_illuminance",
@@ -5683,6 +6453,13 @@
   "uuid": "8994c953-3ed4-5200-93a6-f72dd95d0a25",
   "value_col": "contact"
  },
+ "89987b51-8175-5ebb-a001-5c246633ede5": {
+  "label": "Room 2.55 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.55_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "89987b51-8175-5ebb-a001-5c246633ede5",
+  "value_col": "pm25"
+ },
  "89a4fa1f-c9d0-5f80-a1a3-198c6657609d": {
   "label": "Room 2.62 \u2014 Academic Office illuminance (simulated) [lux]",
   "sensor": "Room2.62_sat_illuminance",
@@ -5696,6 +6473,13 @@
   "table": "noise_data",
   "uuid": "8a59ce6c-79cb-5780-b805-8808a6345abe",
   "value_col": "noise_db"
+ },
+ "8a72a2ec-d141-5ab0-aa04-2f61af79bb6f": {
+  "label": "Room 4.62 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.62_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8a72a2ec-d141-5ab0-aa04-2f61af79bb6f",
+  "value_col": "pm25"
  },
  "8a844535-1a3f-509c-9ff0-601815d084a2": {
   "label": "Server Room \u2014 Floor 4 (Room 4.44) temperature (simulated) [degC]",
@@ -5816,6 +6600,13 @@
   "uuid": "8cbb9a45-f346-5e70-9184-de03c26263b5",
   "value_col": "rh_pct"
  },
+ "8ccbe889-8940-5277-8457-68458a171494": {
+  "label": "Room 5.68 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.68_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8ccbe889-8940-5277-8457-68458a171494",
+  "value_col": "pm25"
+ },
  "8ceeaa8f-45ef-5e19-8b62-8534ac792bae": {
   "label": "Room 5.71 \u2014 Storage Room humidity (simulated) [percent]",
   "sensor": "Room5.71_sat_humidity",
@@ -5836,6 +6627,13 @@
   "table": "noise_data",
   "uuid": "8d250f4f-2619-5e1b-9558-f2ea23bcd51d",
   "value_col": "noise_db"
+ },
+ "8d262e65-8720-5ce5-bf4d-907c2312d228": {
+  "label": "Room 3.01 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.01_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8d262e65-8720-5ce5-bf4d-907c2312d228",
+  "value_col": "pm25"
  },
  "8d5c457f-302a-56c9-907a-929770e0f629": {
   "label": "Air Handling Unit \u2014 Floor 0 return air temperature",
@@ -5872,12 +6670,26 @@
   "uuid": "8d910e48-a359-5dc9-80fb-a6121ea775fb",
   "value_col": "noise_db"
  },
+ "8d9c4008-5ac3-53c1-94fb-61d4857af9fa": {
+  "label": "Room 3.70 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.70_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8d9c4008-5ac3-53c1-94fb-61d4857af9fa",
+  "value_col": "pm25"
+ },
  "8db064fe-243f-5237-a2b8-5e111b0d6006": {
   "label": "Telecommunications Room \u2014 Floor 5 (Room 5.34) noise (simulated) [dB]",
   "sensor": "Telecom_Room_F5_sat_noise",
   "table": "noise_data",
   "uuid": "8db064fe-243f-5237-a2b8-5e111b0d6006",
   "value_col": "noise_db"
+ },
+ "8de569f7-e0d3-53a3-845e-4bb6f46a74eb": {
+  "label": "Room 3.66 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.66_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "8de569f7-e0d3-53a3-845e-4bb6f46a74eb",
+  "value_col": "pm25"
  },
  "8dff8840-2de6-599c-aba0-9faa439092e9": {
   "label": "Room 4.01 \u2014 Research Laboratory window_contact (simulated)",
@@ -5991,6 +6803,13 @@
   "uuid": "9000cf9b-e68f-54a1-b456-2c570cdd7dce",
   "value_col": "lux"
  },
+ "901f0e84-d3cf-5e86-902e-e46d42b7f362": {
+  "label": "Room 3.22 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.22_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "901f0e84-d3cf-5e86-902e-e46d42b7f362",
+  "value_col": "pm25"
+ },
  "9035c39f-866a-56ba-93fa-a92ba4c48a5f": {
   "label": "Room 5.68 \u2014 Academic Office temperature (simulated) [degC]",
   "sensor": "Room5.68_sat_temperature",
@@ -6046,6 +6865,13 @@
   "table": "noise_data",
   "uuid": "90ff34d0-2c33-5e1a-9f5f-ceae8d4bba1f",
   "value_col": "noise_db"
+ },
+ "9113482a-f9e3-5a01-8255-12f28b0d0127": {
+  "label": "Room 2.48 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.48_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "9113482a-f9e3-5a01-8255-12f28b0d0127",
+  "value_col": "pm25"
  },
  "91281429-9212-5151-a67c-12ecaf3317a6": {
   "label": "Room 3.70 \u2014 Academic Office window_contact (simulated)",
@@ -6123,6 +6949,34 @@
   "table": "temperature_data",
   "uuid": "937c7ab5-665c-56b5-bdda-bd4f93a2812a",
   "value_col": "temp_c"
+ },
+ "93d91887-f5c0-5569-bde1-7f1837582c40": {
+  "label": "Room 2.36 \u2014 Restroom (Female) pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.36_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "93d91887-f5c0-5569-bde1-7f1837582c40",
+  "value_col": "pm25"
+ },
+ "93d9f1ee-17e5-5276-b889-fd49d1bdfda8": {
+  "label": "Room 2.08 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.08_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "93d9f1ee-17e5-5276-b889-fd49d1bdfda8",
+  "value_col": "pm25"
+ },
+ "93dd4ad7-6ad5-5e93-81ae-63d55f2e1614": {
+  "label": "Room 5.66 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.66_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "93dd4ad7-6ad5-5e93-81ae-63d55f2e1614",
+  "value_col": "pm25"
+ },
+ "940901cf-b1bd-59e5-83b3-1e41165cd7d0": {
+  "label": "Room 4.55 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.55_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "940901cf-b1bd-59e5-83b3-1e41165cd7d0",
+  "value_col": "pm25"
  },
  "94375efe-0391-57c1-abf2-b6654cbe74e2": {
   "label": "Room 2.06 \u2014 Research Laboratory window_contact (simulated)",
@@ -6257,6 +7111,13 @@
   "uuid": "97d0ee47-5426-55bf-b67b-f91eb93c80bd",
   "value_col": "runtime_h"
  },
+ "97d52e1a-a6ac-58fe-b4d5-4759ea9274b1": {
+  "label": "Room 1.41 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.41_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "97d52e1a-a6ac-58fe-b4d5-4759ea9274b1",
+  "value_col": "pm25"
+ },
  "98063dd1-374c-5dd1-8b41-dfc4b10062c4": {
   "label": "Room 5.48 \u2014 Academic Office occupancy (simulated) [persons]",
   "sensor": "Room5.48_sat_occupancy",
@@ -6305,6 +7166,13 @@
   "table": "occupancy_data",
   "uuid": "99e61a95-d879-5589-8d33-246d98906df5",
   "value_col": "occupancy"
+ },
+ "99e95651-145f-53c4-a921-40c2c5876abc": {
+  "label": "Room 4.24 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.24_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "99e95651-145f-53c4-a921-40c2c5876abc",
+  "value_col": "pm25"
  },
  "9a6396df-0b15-502e-adca-4daaeec9ff4b": {
   "label": "Room 4.01 \u2014 Research Laboratory door_contact (simulated)",
@@ -6396,6 +7264,13 @@
   "table": "contact_data",
   "uuid": "9b547c74-cc05-512a-ac7e-ac755801a569",
   "value_col": "contact"
+ },
+ "9b593660-524e-5d22-9376-2d24bf5bda23": {
+  "label": "Room 1.38 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.38_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "9b593660-524e-5d22-9376-2d24bf5bda23",
+  "value_col": "pm25"
  },
  "9b61ca2a-cfc8-584d-acd5-625af926304d": {
   "label": "Room 4.66 \u2014 Academic Office door_contact (simulated)",
@@ -6558,6 +7433,13 @@
   "uuid": "9ed113a9-fa71-5917-9699-3241eaeb8e4e",
   "value_col": "lux"
  },
+ "9f028ef4-a16c-5627-815f-8058823f2384": {
+  "label": "Room 2.59 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.59_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "9f028ef4-a16c-5627-815f-8058823f2384",
+  "value_col": "pm25"
+ },
  "9f154ba6-24f7-5a0c-b1d7-fcc853ad42e4": {
   "label": "Room 2.50 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room2.50_sat_door_contact",
@@ -6606,6 +7488,13 @@
   "table": "occupancy_data",
   "uuid": "a018db65-b88e-5a8a-9c0e-f3038544d4fc",
   "value_col": "occupancy"
+ },
+ "a0397f0e-63cd-5f8a-9937-8bcd1e358eb8": {
+  "label": "Room 5.62 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.62_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "a0397f0e-63cd-5f8a-9937-8bcd1e358eb8",
+  "value_col": "pm25"
  },
  "a0401d91-f184-5300-8e1f-170b70e10d4a": {
   "label": "Room 5.17 \u2014 Meeting Room temperature (simulated) [degC]",
@@ -6698,6 +7587,13 @@
   "uuid": "a38ef877-0b7d-5271-9f97-8d159a2478c9",
   "value_col": "occupancy"
  },
+ "a3eb9716-b9ff-5afe-bba3-0fd97f0556c8": {
+  "label": "Room 4.05 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.05_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "a3eb9716-b9ff-5afe-bba3-0fd97f0556c8",
+  "value_col": "pm25"
+ },
  "a422db73-b397-5af2-9bba-07b9216a2de0": {
   "label": "Room 5.50 \u2014 Research Laboratory door_contact (simulated)",
   "sensor": "Room5.50_sat_door_contact",
@@ -6754,12 +7650,26 @@
   "uuid": "a5d15ea7-1a5f-5952-b574-cd5b9677a4da",
   "value_col": "contact"
  },
+ "a5e8a2ab-8881-597a-878e-d1bead899caf": {
+  "label": "Room 4.34 \u2014 Telecommunications Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.34_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "a5e8a2ab-8881-597a-878e-d1bead899caf",
+  "value_col": "pm25"
+ },
  "a5f9b5a4-e6fc-5e0f-b092-7d17e5d43fea": {
   "label": "Room 5.09 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room5.09_sat_noise",
   "table": "noise_data",
   "uuid": "a5f9b5a4-e6fc-5e0f-b092-7d17e5d43fea",
   "value_col": "noise_db"
+ },
+ "a61513f4-a635-5bac-b887-76836908bd90": {
+  "label": "Telecommunications Room \u2014 Floor 1 (Room 1.34) pm25 (simulated) [ug/m3]",
+  "sensor": "Telecom_Room_F1_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "a61513f4-a635-5bac-b887-76836908bd90",
+  "value_col": "pm25"
  },
  "a61c9189-5399-5add-899d-c1b9cba40c2e": {
   "label": "Room 3.36 \u2014 Restroom (Male) door_contact (simulated)",
@@ -6774,6 +7684,13 @@
   "table": "humidity_data",
   "uuid": "a62bb31f-e481-5b86-bc35-f94098611d2e",
   "value_col": "rh_pct"
+ },
+ "a686be67-071f-50a3-90f3-5b2a5345044e": {
+  "label": "Room 4.49 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.49_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "a686be67-071f-50a3-90f3-5b2a5345044e",
+  "value_col": "pm25"
  },
  "a6930cf6-e5fa-5e52-8ae9-a0f3b82f3f6b": {
   "label": "Room 5.65 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -6802,6 +7719,13 @@
   "table": "occupancy_data",
   "uuid": "a6f827c2-a062-52d9-aa1f-7c2453dfd41c",
   "value_col": "occupancy"
+ },
+ "a719b5ed-4a1b-5b1b-a73d-dd9beba19b1d": {
+  "label": "Server Room \u2014 Floor 5 (Room 5.44) pm25 (simulated) [ug/m3]",
+  "sensor": "Server_Room_F5_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "a719b5ed-4a1b-5b1b-a73d-dd9beba19b1d",
+  "value_col": "pm25"
  },
  "a738f21a-bf95-560b-9004-50b0be03e1fe": {
   "label": "Room 2.03 \u2014 Research Laboratory window_contact (simulated)",
@@ -6851,6 +7775,13 @@
   "table": "noise_data",
   "uuid": "a7fcd6ec-3151-5cfe-bf54-e1869f38c6ab",
   "value_col": "noise_db"
+ },
+ "a82f461e-9fb6-5497-9e6f-ebc1d4090215": {
+  "label": "Room 4.53 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.53_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "a82f461e-9fb6-5497-9e6f-ebc1d4090215",
+  "value_col": "pm25"
  },
  "a84c19d7-648d-5f59-913b-eee5fdad90f5": {
   "label": "Room 5.23 \u2014 Academic Office humidity (simulated) [percent]",
@@ -6985,6 +7916,13 @@
   "uuid": "aa4c300a-2505-5f05-b997-88fab6300cff",
   "value_col": "noise_db"
  },
+ "ab0bbf21-246b-5f2a-8d0c-98d5a7815d7b": {
+  "label": "Room 4.21 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.21_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ab0bbf21-246b-5f2a-8d0c-98d5a7815d7b",
+  "value_col": "pm25"
+ },
  "ab39f15d-ae80-5b50-b776-d66ff2873487": {
   "label": "Intruder Detector \u2014 Floor 5",
   "sensor": "IntrusionDetector_Floor5",
@@ -7006,12 +7944,26 @@
   "uuid": "ab6643a0-02af-522a-977c-ec61f9e0e78c",
   "value_col": "contact"
  },
+ "ab81a7f2-f880-591e-8f4e-41650ed12a63": {
+  "label": "Room 3.69 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.69_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ab81a7f2-f880-591e-8f4e-41650ed12a63",
+  "value_col": "pm25"
+ },
  "ab8cecc3-127b-5665-b21a-cac018409642": {
   "label": "Room 3.69 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room3.69_sat_door_contact",
   "table": "contact_data",
   "uuid": "ab8cecc3-127b-5665-b21a-cac018409642",
   "value_col": "contact"
+ },
+ "ab8df0ef-a4b4-5e65-abb9-aebb3e57fe6f": {
+  "label": "Room 4.12 \u2014 Meeting Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.12_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ab8df0ef-a4b4-5e65-abb9-aebb3e57fe6f",
+  "value_col": "pm25"
  },
  "aba1eff7-278e-5e95-9150-71337ea64a92": {
   "label": "Room 5.61 \u2014 Research Laboratory illuminance (simulated) [lux]",
@@ -7027,12 +7979,26 @@
   "uuid": "abae797f-70f8-5b6e-9c4b-f27303bb30e4",
   "value_col": "co2_ppm"
  },
+ "abb4595a-65a6-5063-bfc4-ce5d6445e955": {
+  "label": "Room 3.68 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.68_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "abb4595a-65a6-5063-bfc4-ce5d6445e955",
+  "value_col": "pm25"
+ },
  "abd25839-5267-59d9-ba53-ce66a06c475e": {
   "label": "Room 5.44 \u2014 Server Room temperature (simulated) [degC]",
   "sensor": "Room5.44_sat_temperature",
   "table": "temperature_data",
   "uuid": "abd25839-5267-59d9-ba53-ce66a06c475e",
   "value_col": "temp_c"
+ },
+ "abdca077-a863-58f9-a4fd-770758c0b029": {
+  "label": "Room 4.14 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.14_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "abdca077-a863-58f9-a4fd-770758c0b029",
+  "value_col": "pm25"
  },
  "ac1df45e-6632-59c4-991a-5621625b8415": {
   "label": "Air Handling Unit \u2014 Floor 1 return air temperature",
@@ -7131,6 +8097,13 @@
   "table": "energy_data",
   "uuid": "adf865b6-7ef5-5b9b-8675-f43583484dba",
   "value_col": "kwh"
+ },
+ "ae1afeb4-5486-5be9-8b73-8c510f7f4760": {
+  "label": "Room 3.56 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.56_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ae1afeb4-5486-5be9-8b73-8c510f7f4760",
+  "value_col": "pm25"
  },
  "ae38bb70-c21d-51fd-827b-6a02005e1c76": {
   "label": "Room 5.17 \u2014 Meeting Room co2 (simulated) [ppm]",
@@ -7335,6 +8308,13 @@
   "uuid": "b1c23cba-bf8b-54dd-bdeb-6bc97841dd5b",
   "value_col": "noise_db"
  },
+ "b1cd3071-b294-5b91-bc92-c8478f581aea": {
+  "label": "Telecommunications Room \u2014 Floor 3 (Room 3.38) pm25 (simulated) [ug/m3]",
+  "sensor": "Telecom_Room_F3_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "b1cd3071-b294-5b91-bc92-c8478f581aea",
+  "value_col": "pm25"
+ },
  "b29dad27-e2d0-5db5-ba74-d78b01d252f7": {
   "label": "Room 5.60 \u2014 Research Laboratory occupancy (simulated) [persons]",
   "sensor": "Room5.60_sat_occupancy",
@@ -7383,6 +8363,13 @@
   "table": "contact_data",
   "uuid": "b396a5eb-bc3a-5ad5-aa73-48340c7f0b0e",
   "value_col": "contact"
+ },
+ "b3e24d19-c4de-5947-875c-d373716e4f28": {
+  "label": "Room 4.56 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.56_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "b3e24d19-c4de-5947-875c-d373716e4f28",
+  "value_col": "pm25"
  },
  "b4190d44-bbb9-509f-b95d-fdc39e66ae13": {
   "label": "Room 3.13 \u2014 Seminar Room noise (simulated) [dB]",
@@ -7439,6 +8426,27 @@
   "table": "light_data",
   "uuid": "b4bd5921-a873-5809-9cb9-50afe44ad30d",
   "value_col": "lux"
+ },
+ "b53fa888-d420-59a6-afa0-45a5d3d64b5d": {
+  "label": "Room 0.17 \u2014 Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.17_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "b53fa888-d420-59a6-afa0-45a5d3d64b5d",
+  "value_col": "pm25"
+ },
+ "b6007003-82f7-5257-b3eb-4e6cb6077360": {
+  "label": "Room 1.40 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.40_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "b6007003-82f7-5257-b3eb-4e6cb6077360",
+  "value_col": "pm25"
+ },
+ "b626496c-5d75-53f4-ab74-ba5a803ff46e": {
+  "label": "Room 5.45 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.45_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "b626496c-5d75-53f4-ab74-ba5a803ff46e",
+  "value_col": "pm25"
  },
  "b659d948-3d33-557a-be5b-ffd2022bd1f8": {
   "label": "Room 5.58 \u2014 Research Laboratory window_contact (simulated)",
@@ -7580,6 +8588,13 @@
   "uuid": "b9b93198-3f7f-59cc-ab1d-63b528ab4297",
   "value_col": "occupancy"
  },
+ "b9c0bbbb-0c2b-5c94-a8e6-87c92d28a1a2": {
+  "label": "Room 4.71 \u2014 Storage Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.71_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "b9c0bbbb-0c2b-5c94-a8e6-87c92d28a1a2",
+  "value_col": "pm25"
+ },
  "b9e339fd-4b29-541e-b0ef-9ef5f9efb9cc": {
   "label": "Room 5.57 \u2014 Research Laboratory illuminance (simulated) [lux]",
   "sensor": "Room5.57_sat_illuminance",
@@ -7594,6 +8609,20 @@
   "uuid": "ba6fab97-ea89-518c-89a2-80d3f4915b4e",
   "value_col": "contact"
  },
+ "ba98d1fb-a65b-5c68-97bf-3912a59c96c9": {
+  "label": "Room 1.34 \u2014 Telecommunications Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.34_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ba98d1fb-a65b-5c68-97bf-3912a59c96c9",
+  "value_col": "pm25"
+ },
+ "ba9ce843-9a6c-5763-a16e-50e0645c6d1f": {
+  "label": "Room 4.02 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.02_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ba9ce843-9a6c-5763-a16e-50e0645c6d1f",
+  "value_col": "pm25"
+ },
  "bab1da3d-1109-55c4-853d-ae420bf46f64": {
   "label": "Room 1.39 \u2014 Academic Office door_contact (simulated)",
   "sensor": "Room1.39_sat_door_contact",
@@ -7607,6 +8636,20 @@
   "table": "contact_data",
   "uuid": "bad36bca-a852-593e-af32-ad0475a309c3",
   "value_col": "contact"
+ },
+ "bb137e61-037a-5b86-bf30-5b59dd5f374f": {
+  "label": "Room 2.56 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.56_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "bb137e61-037a-5b86-bf30-5b59dd5f374f",
+  "value_col": "pm25"
+ },
+ "bb242af0-9724-5e4f-9e74-801bdc091051": {
+  "label": "Room 2.13 \u2014 Meeting Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.13_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "bb242af0-9724-5e4f-9e74-801bdc091051",
+  "value_col": "pm25"
  },
  "bbb1497e-cabd-5359-ad3d-ca546f575fd8": {
   "label": "Room 4.22 \u2014 Research Laboratory illuminance (simulated) [lux]",
@@ -7642,6 +8685,20 @@
   "table": "co2_data",
   "uuid": "bbecc86d-d8e9-5a23-aaf6-367129a23fd6",
   "value_col": "co2_ppm"
+ },
+ "bbf29bec-b282-55fe-8bea-888ac5b2f555": {
+  "label": "Room 2.17 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.17_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "bbf29bec-b282-55fe-8bea-888ac5b2f555",
+  "value_col": "pm25"
+ },
+ "bc05e5cf-ed1f-5d6a-a585-dcddb1fccbd7": {
+  "label": "Room 4.22 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.22_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "bc05e5cf-ed1f-5d6a-a585-dcddb1fccbd7",
+  "value_col": "pm25"
  },
  "bc1e0932-fdc8-5a56-863c-3eb0661e19b8": {
   "label": "Room 4.10 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -7804,12 +8861,26 @@
   "uuid": "be5b2a2d-25df-54ef-82c9-8ac7c37bee43",
   "value_col": "lux"
  },
+ "be6933b4-e937-57a6-883f-b9820df55c63": {
+  "label": "Room 1.25 \u2014 Conference/Seminar Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.25_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "be6933b4-e937-57a6-883f-b9820df55c63",
+  "value_col": "pm25"
+ },
  "beb5bf94-e16d-5733-a290-7cdbfff63216": {
   "label": "Electrical Energy Meter \u2014 Floor 5",
   "sensor": "Energy_Meter_Floor5",
   "table": "energy_data",
   "uuid": "beb5bf94-e16d-5733-a290-7cdbfff63216",
   "value_col": "kwh"
+ },
+ "bece2c4a-374e-5c97-aad3-9f2752784db7": {
+  "label": "Room 1.06 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.06_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "bece2c4a-374e-5c97-aad3-9f2752784db7",
+  "value_col": "pm25"
  },
  "bee85d01-14dd-5697-906f-4f2e09364cdd": {
   "label": "Room 3.48 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -7866,6 +8937,13 @@
   "table": "occupancy_data",
   "uuid": "bff8e951-b39b-52c2-91e6-f6fba5f30637",
   "value_col": "occupancy"
+ },
+ "c0113648-6c18-58b8-a97b-b54b35a607f0": {
+  "label": "Room 4.63 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.63_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c0113648-6c18-58b8-a97b-b54b35a607f0",
+  "value_col": "pm25"
  },
  "c03509f2-47f3-5a41-bd4e-625bd5b4422c": {
   "label": "Room 0.31 \u2014 Mechanical/Service Room window_contact (simulated)",
@@ -7993,6 +9071,13 @@
   "uuid": "c27e1d2d-ac26-5377-bce4-0c594d732e37",
   "value_col": "flow_lpm"
  },
+ "c2a84255-8b89-5f8a-a31e-fb9fca66e39a": {
+  "label": "Room 0.08 \u2014 Service Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.08_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c2a84255-8b89-5f8a-a31e-fb9fca66e39a",
+  "value_col": "pm25"
+ },
  "c2b18ee1-cc2a-506b-87f7-0943f4e81c18": {
   "label": "Room 4.22 \u2014 Research Laboratory window_contact (simulated)",
   "sensor": "Room4.22_sat_window_contact",
@@ -8112,6 +9197,13 @@
   "uuid": "c4e1ec11-b963-5dc1-a6c8-446a584ba73d",
   "value_col": "kwh"
  },
+ "c4e97456-9bcf-5f88-8a56-1b807276f51f": {
+  "label": "Room 0.07 \u2014 Service Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.07_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c4e97456-9bcf-5f88-8a56-1b807276f51f",
+  "value_col": "pm25"
+ },
  "c5214bff-94d0-5960-a2f2-cc092e6a4b09": {
   "label": "Electrical Energy Meter \u2014 Floor 0",
   "sensor": "Energy_Meter_Floor0",
@@ -8154,12 +9246,26 @@
   "uuid": "c59ba3e9-d9c7-5228-9027-61828eecc91f",
   "value_col": "lux"
  },
+ "c5a6b541-1525-514b-a63c-d5c6ec9636da": {
+  "label": "Room 3.37 \u2014 Restroom (Female) pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.37_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c5a6b541-1525-514b-a63c-d5c6ec9636da",
+  "value_col": "pm25"
+ },
  "c5cdd61a-357b-53ef-884d-3d462ae12110": {
   "label": "Room 5.49 \u2014 Academic Office co2 (simulated) [ppm]",
   "sensor": "Room5.49_sat_co2",
   "table": "co2_data",
   "uuid": "c5cdd61a-357b-53ef-884d-3d462ae12110",
   "value_col": "co2_ppm"
+ },
+ "c5e0ad3d-3551-53ff-815f-cdc1713bc1d1": {
+  "label": "Room 3.16 \u2014 Meeting Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.16_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c5e0ad3d-3551-53ff-815f-cdc1713bc1d1",
+  "value_col": "pm25"
  },
  "c5f82c6b-8d98-5cec-ad25-d90308083c96": {
   "label": "Room 4.11 \u2014 Meeting Room door_contact (simulated)",
@@ -8203,6 +9309,13 @@
   "uuid": "c6dac7da-266b-53a9-867e-b8212be26fd9",
   "value_col": "contact"
  },
+ "c6ff5e7c-a22f-55b3-8b1c-98e6e5e3ef7a": {
+  "label": "Room 5.51 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.51_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c6ff5e7c-a22f-55b3-8b1c-98e6e5e3ef7a",
+  "value_col": "pm25"
+ },
  "c7079245-2523-57d4-bf78-944e50d0a6d6": {
   "label": "Room 1.37 \u2014 Academic Office window_contact (simulated)",
   "sensor": "Room1.37_sat_window_contact",
@@ -8216,6 +9329,27 @@
   "table": "contact_data",
   "uuid": "c719b03b-45b1-5da5-92a9-96bbf1af8970",
   "value_col": "contact"
+ },
+ "c75341fa-762d-53db-bf6f-e2e919832692": {
+  "label": "Room 5.64 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.64_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c75341fa-762d-53db-bf6f-e2e919832692",
+  "value_col": "pm25"
+ },
+ "c76117e7-72f9-5d31-85f3-70028a49c97a": {
+  "label": "Room 3.59 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.59_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c76117e7-72f9-5d31-85f3-70028a49c97a",
+  "value_col": "pm25"
+ },
+ "c76cbff8-5253-51c6-a3a2-0df8f00aa384": {
+  "label": "Room 0.31 \u2014 Mechanical/Service Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.31_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c76cbff8-5253-51c6-a3a2-0df8f00aa384",
+  "value_col": "pm25"
  },
  "c80427f1-88e2-566c-9786-49f62807b0f0": {
   "label": "Server Room \u2014 Floor 4 (Room 4.44) window_contact (simulated)",
@@ -8258,6 +9392,13 @@
   "table": "plant_data",
   "uuid": "c880fc0c-c31d-57c4-a32a-a523004d856a",
   "value_col": "runtime_h"
+ },
+ "c8991c06-3a16-5b89-855b-197d358ea3fd": {
+  "label": "Room 2.09 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.09_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "c8991c06-3a16-5b89-855b-197d358ea3fd",
+  "value_col": "pm25"
  },
  "c89b2a4a-9bfc-5133-bb5d-f30e351a804c": {
   "label": "Room 5.11 \u2014 Academic Office humidity (simulated) [percent]",
@@ -8385,6 +9526,13 @@
   "uuid": "cb6f3fc4-a61c-5dee-9093-fed370112633",
   "value_col": "noise_db"
  },
+ "cb924258-e0b9-53df-a7a1-45acd1979fb5": {
+  "label": "Room 0.18 \u2014 Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.18_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "cb924258-e0b9-53df-a7a1-45acd1979fb5",
+  "value_col": "pm25"
+ },
  "cbc08c0a-f70b-5d66-9b47-5f7f1ddb390c": {
   "label": "Room 3.58 \u2014 Research Laboratory illuminance (simulated) [lux]",
   "sensor": "Room3.58_sat_illuminance",
@@ -8469,6 +9617,13 @@
   "uuid": "cce46f85-c0f6-5610-ab07-b317f89d480e",
   "value_col": "contact"
  },
+ "ccef755b-2098-549f-817d-31e76ef92e3f": {
+  "label": "Room 4.51 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.51_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ccef755b-2098-549f-817d-31e76ef92e3f",
+  "value_col": "pm25"
+ },
  "cd0fdaf7-09ba-5529-845d-9e6c9732fcae": {
   "label": "Room 4.21 \u2014 Research Laboratory noise (simulated) [dB]",
   "sensor": "Room4.21_sat_noise",
@@ -8482,6 +9637,13 @@
   "table": "equipment_data",
   "uuid": "cd1414e9-e68c-5204-817d-bf89ddf28d7a",
   "value_col": "vib_mm_s"
+ },
+ "cd391cf2-3362-57d8-9bc0-fa879b088060": {
+  "label": "Room 2.18 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.18_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "cd391cf2-3362-57d8-9bc0-fa879b088060",
+  "value_col": "pm25"
  },
  "cd5fd60f-24d1-5a0a-89b2-33e3159cbaf5": {
   "label": "Room 5.20 \u2014 Academic Office occupancy (simulated) [persons]",
@@ -8587,6 +9749,13 @@
   "table": "light_data",
   "uuid": "ce9548e3-f44a-51bc-a169-992ba4c116d8",
   "value_col": "lux"
+ },
+ "cea40025-b688-59c0-99c9-2c4333adf1f2": {
+  "label": "Room 3.57 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.57_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "cea40025-b688-59c0-99c9-2c4333adf1f2",
+  "value_col": "pm25"
  },
  "cefb108f-d7e5-5de8-a162-fe0c508dd96f": {
   "label": "Room 3.54 \u2014 Research Laboratory door_contact (simulated)",
@@ -8755,6 +9924,27 @@
   "table": "occupancy_data",
   "uuid": "d2529843-0675-5bac-bb1e-9fd5a7bc034b",
   "value_col": "occupancy"
+ },
+ "d272aeb0-f0ed-511b-a9dd-24f1a26c7924": {
+  "label": "Room 3.46 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.46_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "d272aeb0-f0ed-511b-a9dd-24f1a26c7924",
+  "value_col": "pm25"
+ },
+ "d27c65ef-8471-544c-a032-599f340666a7": {
+  "label": "Telecommunications Room \u2014 Floor 5 (Room 5.34) pm25 (simulated) [ug/m3]",
+  "sensor": "Telecom_Room_F5_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "d27c65ef-8471-544c-a032-599f340666a7",
+  "value_col": "pm25"
+ },
+ "d290487c-322d-5cf6-a002-9b2bab1247f4": {
+  "label": "Room 4.69 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.69_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "d290487c-322d-5cf6-a002-9b2bab1247f4",
+  "value_col": "pm25"
  },
  "d2b4ffc5-966b-521f-9492-729a66d4e2df": {
   "label": "Server Room \u2014 Floor 2 (Room 2.44) co2 (simulated) [ppm]",
@@ -8994,6 +10184,13 @@
   "uuid": "d71bff4f-2fdc-55f0-89ea-97f48d1469cf",
   "value_col": "occupancy"
  },
+ "d722c30d-3589-5995-bca3-2e811f504ef5": {
+  "label": "Server Room \u2014 Floor 4 (Room 4.44) pm25 (simulated) [ug/m3]",
+  "sensor": "Server_Room_F4_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "d722c30d-3589-5995-bca3-2e811f504ef5",
+  "value_col": "pm25"
+ },
  "d74837b5-c291-531b-989b-6e322936d48b": {
   "label": "NO2/Exhaust Gas Sensor - Parking Level",
   "sensor": "NO2_Sensor_Parking",
@@ -9028,6 +10225,13 @@
   "table": "contact_data",
   "uuid": "d877b9bd-a0c1-5d13-92a8-7b42e743b77d",
   "value_col": "contact"
+ },
+ "d8944b94-ffe6-5882-a170-258df7429b4f": {
+  "label": "Room 4.61 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.61_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "d8944b94-ffe6-5882-a170-258df7429b4f",
+  "value_col": "pm25"
  },
  "d8b7a873-8971-5349-90fc-37aa6b803a83": {
   "label": "Room 2.06 \u2014 Research Laboratory noise (simulated) [dB]",
@@ -9120,12 +10324,26 @@
   "uuid": "dac96026-22ee-548c-8921-5d6717c5d1bf",
   "value_col": "rh_pct"
  },
+ "db015e8e-e143-53f3-968f-bc03c02195e9": {
+  "label": "Room 4.67 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.67_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "db015e8e-e143-53f3-968f-bc03c02195e9",
+  "value_col": "pm25"
+ },
  "dbe1938d-3010-5524-829c-a197a2538417": {
   "label": "Room 3.27 \u2014 Meeting Room noise (simulated) [dB]",
   "sensor": "Room3.27_sat_noise",
   "table": "noise_data",
   "uuid": "dbe1938d-3010-5524-829c-a197a2538417",
   "value_col": "noise_db"
+ },
+ "dc05bef2-2f64-52ca-a3d6-ead939fea635": {
+  "label": "Room 3.52 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.52_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "dc05bef2-2f64-52ca-a3d6-ead939fea635",
+  "value_col": "pm25"
  },
  "dc52835c-0b13-5f77-b857-cbf58c2bfd70": {
   "label": "Room 5.48 \u2014 Academic Office humidity (simulated) [percent]",
@@ -9197,12 +10415,26 @@
   "uuid": "dd4218dc-48c8-51c5-b879-a4198d3dd492",
   "value_col": "contact"
  },
+ "dd53f35d-28c5-591c-98d8-6be681dff733": {
+  "label": "Room 5.54 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.54_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "dd53f35d-28c5-591c-98d8-6be681dff733",
+  "value_col": "pm25"
+ },
  "dd6c8f73-04cf-5d88-917f-34c722ae7d23": {
   "label": "Room 5.70 \u2014 Academic Office occupancy (simulated) [persons]",
   "sensor": "Room5.70_sat_occupancy",
   "table": "occupancy_data",
   "uuid": "dd6c8f73-04cf-5d88-917f-34c722ae7d23",
   "value_col": "occupancy"
+ },
+ "dd6fb225-abdf-55e1-b257-11eddd42c60f": {
+  "label": "Room 5.60 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.60_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "dd6fb225-abdf-55e1-b257-11eddd42c60f",
+  "value_col": "pm25"
  },
  "dd8ce30a-1e07-5009-bb43-b24e357aff65": {
   "label": "VAV Box Floor 5 East Wing damper position",
@@ -9224,6 +10456,13 @@
   "table": "contact_data",
   "uuid": "ddb546fc-87cd-5f6d-a08b-17b22e3215df",
   "value_col": "contact"
+ },
+ "ddc4d60a-56b2-50c6-8107-62a14b05a386": {
+  "label": "Room 2.61 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.61_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ddc4d60a-56b2-50c6-8107-62a14b05a386",
+  "value_col": "pm25"
  },
  "ddd345ff-b998-57cf-8681-578c70d5c1ed": {
   "label": "Room 5.53 \u2014 Research Laboratory noise (simulated) [dB]",
@@ -9267,12 +10506,26 @@
   "uuid": "dec134d8-991f-5c1c-9dbf-f0ed8fa62b9b",
   "value_col": "noise_db"
  },
+ "df127bee-c57a-5c08-a185-2bd36864445d": {
+  "label": "Room 2.22 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.22_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "df127bee-c57a-5c08-a185-2bd36864445d",
+  "value_col": "pm25"
+ },
  "df87f89f-dd06-5345-8d35-081ce2601b5d": {
   "label": "Room 2.13 \u2014 Meeting Room door_contact (simulated)",
   "sensor": "Room2.13_sat_door_contact",
   "table": "contact_data",
   "uuid": "df87f89f-dd06-5345-8d35-081ce2601b5d",
   "value_col": "contact"
+ },
+ "df9f95cc-311b-5a7f-a480-1f6a49f7a510": {
+  "label": "Room 1.07 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.07_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "df9f95cc-311b-5a7f-a480-1f6a49f7a510",
+  "value_col": "pm25"
  },
  "dfc9862e-7751-5671-ad73-07a0edb5179b": {
   "label": "Room 5.15 \u2014 Seminar / Conference Room noise (simulated) [dB]",
@@ -9329,6 +10582,13 @@
   "table": "contact_data",
   "uuid": "e0b0f397-f0e9-5d4a-8ec5-3e35afb063fc",
   "value_col": "contact"
+ },
+ "e0deaa93-f418-57a7-bfa2-1365c6926b82": {
+  "label": "Room 2.64 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.64_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "e0deaa93-f418-57a7-bfa2-1365c6926b82",
+  "value_col": "pm25"
  },
  "e0e8b40d-a019-5598-977f-2ce4783f0d37": {
   "label": "Booking Status - Seminar Room 5.16",
@@ -9421,6 +10681,13 @@
   "uuid": "e213a9f6-1172-516c-9727-2348b169ae98",
   "value_col": "noise_db"
  },
+ "e23a3214-a76a-5533-8982-26c195ff5e7f": {
+  "label": "Room 3.62 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.62_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "e23a3214-a76a-5533-8982-26c195ff5e7f",
+  "value_col": "pm25"
+ },
  "e26a25e3-4076-526c-964c-a09b55868dbc": {
   "label": "Room 4.55 \u2014 Research Laboratory noise (simulated) [dB]",
   "sensor": "Room4.55_sat_noise",
@@ -9456,6 +10723,13 @@
   "uuid": "e2f7142b-a3c3-5c75-b343-e1be9501a569",
   "value_col": "contact"
  },
+ "e3032170-5621-5ea7-ac4d-107fd07e2a69": {
+  "label": "Room 4.23 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.23_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "e3032170-5621-5ea7-ac4d-107fd07e2a69",
+  "value_col": "pm25"
+ },
  "e3386c09-7f48-5078-afab-77dd6efac867": {
   "label": "Room 3.20 \u2014 Academic Office window_contact (simulated)",
   "sensor": "Room3.20_sat_window_contact",
@@ -9469,6 +10743,13 @@
   "table": "light_data",
   "uuid": "e34c48d8-c2cc-5d47-a06f-b61400ff32a5",
   "value_col": "lux"
+ },
+ "e3be7684-e39f-5293-9940-308983a22c84": {
+  "label": "Room 5.57 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.57_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "e3be7684-e39f-5293-9940-308983a22c84",
+  "value_col": "pm25"
  },
  "e3c8099a-ec58-52d9-8ce9-0a960d7e1d03": {
   "label": "Room 4.57 \u2014 Research Laboratory illuminance (simulated) [lux]",
@@ -9553,6 +10834,13 @@
   "table": "noise_data",
   "uuid": "e5a8b025-c2ad-5ab0-855b-aeb8d7ef47ce",
   "value_col": "noise_db"
+ },
+ "e5d1c516-0e0a-5a53-a549-1658c9da70de": {
+  "label": "Room 3.61 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.61_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "e5d1c516-0e0a-5a53-a549-1658c9da70de",
+  "value_col": "pm25"
  },
  "e61765d6-bf52-5ce2-97be-0ce8b2873a96": {
   "label": "Room 5.63 \u2014 Academic Office occupancy (simulated) [persons]",
@@ -9680,6 +10968,13 @@
   "uuid": "e83102ba-42a2-58e6-95ec-8c389ab1f3b6",
   "value_col": "lux"
  },
+ "e8467eb9-7ede-5d13-96d7-31f0662e3b4c": {
+  "label": "Room 2.35 \u2014 Restroom (Male) pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.35_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "e8467eb9-7ede-5d13-96d7-31f0662e3b4c",
+  "value_col": "pm25"
+ },
  "e8994482-5601-5137-929e-3c6ba9a03085": {
   "label": "Room 5.18 \u2014 Meeting Room door_contact (simulated)",
   "sensor": "Room5.18_sat_door_contact",
@@ -9729,6 +11024,13 @@
   "uuid": "e9416d7e-2cd9-5f35-8896-81dfd238e348",
   "value_col": "lux"
  },
+ "e95353a9-3aef-5daf-9e35-c74515d80d47": {
+  "label": "Room 5.63 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.63_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "e95353a9-3aef-5daf-9e35-c74515d80d47",
+  "value_col": "pm25"
+ },
  "e9ad26f9-6f0a-587b-8ad1-6a02d4031f43": {
   "label": "Room 4.64 \u2014 Academic Office occupancy (simulated) [persons]",
   "sensor": "Room4.64_sat_occupancy",
@@ -9764,12 +11066,26 @@
   "uuid": "ea0645a2-818a-5af6-b7fe-b44548d79a9d",
   "value_col": "lux"
  },
+ "ea1e5913-90fd-5359-bc86-49bc52331eac": {
+  "label": "Room 1.26 \u2014 Conference/Seminar Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.26_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ea1e5913-90fd-5359-bc86-49bc52331eac",
+  "value_col": "pm25"
+ },
  "ea2f5e0c-1a61-5fe6-bb03-4f7657801dd4": {
   "label": "Room 0.20 \u2014 Office occupancy (simulated) [persons]",
   "sensor": "Room0.20_sat_occupancy",
   "table": "occupancy_data",
   "uuid": "ea2f5e0c-1a61-5fe6-bb03-4f7657801dd4",
   "value_col": "occupancy"
+ },
+ "ea707ed2-75e3-5704-b387-d47be7f5e5c3": {
+  "label": "Room 3.36 \u2014 Restroom (Male) pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.36_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ea707ed2-75e3-5704-b387-d47be7f5e5c3",
+  "value_col": "pm25"
  },
  "eabcbb7f-10e6-5184-ba0e-78cedf932a32": {
   "label": "Room 2.56 \u2014 Research Laboratory illuminance (simulated) [lux]",
@@ -9805,6 +11121,13 @@
   "table": "humidity_data",
   "uuid": "eb5e9f0e-2e19-5a18-81cf-c9c22c430064",
   "value_col": "rh_pct"
+ },
+ "ebaed883-d4ac-530f-8c7a-afc1e582da9b": {
+  "label": "Room 5.69 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.69_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ebaed883-d4ac-530f-8c7a-afc1e582da9b",
+  "value_col": "pm25"
  },
  "ebb7aeb1-ffff-5b5d-8d66-18c59d78ca9c": {
   "label": "Room 2.01 \u2014 Research Laboratory noise (simulated) [dB]",
@@ -9854,6 +11177,13 @@
   "table": "contact_data",
   "uuid": "ed0e2519-9d72-5843-a07d-6efdd085e3e3",
   "value_col": "contact"
+ },
+ "ed2507ae-a1b0-5005-bbdf-3b9cff065436": {
+  "label": "Room 2.20 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.20_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ed2507ae-a1b0-5005-bbdf-3b9cff065436",
+  "value_col": "pm25"
  },
  "ed4d5573-e30d-5a98-a21f-4365e21741fc": {
   "label": "Room 5.13 \u2014 Academic Office door_contact (simulated)",
@@ -9917,6 +11247,13 @@
   "table": "light_data",
   "uuid": "ee10cef4-8348-5f18-aa67-432291a24755",
   "value_col": "lux"
+ },
+ "ee18b18c-4f09-57e8-b5e4-65af2e1867de": {
+  "label": "Room 2.10 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.10_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "ee18b18c-4f09-57e8-b5e4-65af2e1867de",
+  "value_col": "pm25"
  },
  "ee21e97b-5c94-58e8-bc16-fc3e77019550": {
   "label": "Room 4.58 \u2014 Research Laboratory door_contact (simulated)",
@@ -10065,6 +11402,13 @@
   "uuid": "f1f07cd7-cd03-5465-905f-9da91c448eb2",
   "value_col": "occupancy"
  },
+ "f21d268e-4f2c-52e3-a7d2-452efd662083": {
+  "label": "Room 0.33 \u2014 Mechanical/Service Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.33_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f21d268e-4f2c-52e3-a7d2-452efd662083",
+  "value_col": "pm25"
+ },
  "f22e2b4f-762a-5752-8981-ed0fe444f07a": {
   "label": "Room 4.65 \u2014 Academic Office noise (simulated) [dB]",
   "sensor": "Room4.65_sat_noise",
@@ -10085,6 +11429,13 @@
   "table": "occupancy_data",
   "uuid": "f259f022-b9dc-575d-87f1-fb4ef1e6176e",
   "value_col": "occupancy"
+ },
+ "f25c8c74-5c9c-5474-8914-93d65303c426": {
+  "label": "Room 0.19 \u2014 Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.19_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f25c8c74-5c9c-5474-8914-93d65303c426",
+  "value_col": "pm25"
  },
  "f2be26cd-f296-5d32-8afe-602f1964a25a": {
   "label": "Room 2.54 \u2014 Research Laboratory window_contact (simulated)",
@@ -10162,6 +11513,13 @@
   "table": "noise_data",
   "uuid": "f477de54-63f7-5b0e-b91d-3144efecc51f",
   "value_col": "noise_db"
+ },
+ "f49706dc-fe9d-5d6b-834c-852633b9393c": {
+  "label": "Room 1.09 \u2014 Computer Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room1.09_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f49706dc-fe9d-5d6b-834c-852633b9393c",
+  "value_col": "pm25"
  },
  "f50a4d70-3f2f-5397-ba74-5eb0965d285b": {
   "label": "Air Handling Unit \u2014 Floor 2 supply air flow",
@@ -10254,6 +11612,13 @@
   "uuid": "f6e61ad4-3bbe-599d-b0be-381fdacc6e40",
   "value_col": "noise_db"
  },
+ "f6e963b9-0fef-51cf-a914-f772aff44960": {
+  "label": "Room 4.01 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.01_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f6e963b9-0fef-51cf-a914-f772aff44960",
+  "value_col": "pm25"
+ },
  "f705c4c8-119b-5acc-933e-67b845092e1d": {
   "label": "Room 4.62 \u2014 Academic Office illuminance (simulated) [lux]",
   "sensor": "Room4.62_sat_illuminance",
@@ -10296,6 +11661,13 @@
   "uuid": "f7621f01-c080-5430-8c57-898439951ff3",
   "value_col": "occupancy"
  },
+ "f7882adb-d66c-512a-9408-f4594dd2fb5b": {
+  "label": "Room 4.08 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.08_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f7882adb-d66c-512a-9408-f4594dd2fb5b",
+  "value_col": "pm25"
+ },
  "f78f4c64-b993-52f1-bb83-025cf88a7490": {
   "label": "Room 5.45 \u2014 Academic Office temperature (simulated) [degC]",
   "sensor": "Room5.45_sat_temperature",
@@ -10303,12 +11675,26 @@
   "uuid": "f78f4c64-b993-52f1-bb83-025cf88a7490",
   "value_col": "temp_c"
  },
+ "f798faff-039a-55ba-a3bc-0719314fd700": {
+  "label": "Room 5.53 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room5.53_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f798faff-039a-55ba-a3bc-0719314fd700",
+  "value_col": "pm25"
+ },
  "f7cbea84-5bd2-5ce5-b814-351136f2e843": {
   "label": "Room 5.50 \u2014 Research Laboratory illuminance (simulated) [lux]",
   "sensor": "Room5.50_sat_illuminance",
   "table": "light_data",
   "uuid": "f7cbea84-5bd2-5ce5-b814-351136f2e843",
   "value_col": "lux"
+ },
+ "f7d31b02-5294-516b-8603-759b9eaf1be3": {
+  "label": "Room 2.67 \u2014 Storage Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.67_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f7d31b02-5294-516b-8603-759b9eaf1be3",
+  "value_col": "pm25"
  },
  "f7e6fb49-ee7f-5db2-8883-8137b0456b0d": {
   "label": "Room 2.61 \u2014 Academic Office window_contact (simulated)",
@@ -10351,6 +11737,13 @@
   "table": "contact_data",
   "uuid": "f8ccc61b-25c9-5187-ada1-c7017df106bf",
   "value_col": "contact"
+ },
+ "f8ee27fe-a8a6-58aa-98ce-f09fea86b914": {
+  "label": "Room 0.32 \u2014 Mechanical/Service Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.32_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f8ee27fe-a8a6-58aa-98ce-f09fea86b914",
+  "value_col": "pm25"
  },
  "f8f39c06-bdcc-5fc5-a6de-4ceaff38bb84": {
   "label": "Room 5.52 \u2014 Research Laboratory door_contact (simulated)",
@@ -10422,6 +11815,13 @@
   "uuid": "f9c2719a-165c-5d6b-878f-852917905ac3",
   "value_col": "occupancy"
  },
+ "f9cf6d52-1d19-515e-bef0-cdef733005eb": {
+  "label": "Room 2.60 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.60_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "f9cf6d52-1d19-515e-bef0-cdef733005eb",
+  "value_col": "pm25"
+ },
  "f9ddb69e-11fb-57a7-8d4a-9e4dfd059b17": {
   "label": "Room 4.07 \u2014 Academic Office window_contact (simulated)",
   "sensor": "Room4.07_sat_window_contact",
@@ -10456,6 +11856,13 @@
   "table": "light_data",
   "uuid": "fa57acc0-209b-58a3-9013-72f9531d0093",
   "value_col": "lux"
+ },
+ "fa7b0ed7-3498-5756-a98c-183393b5be98": {
+  "label": "Room 4.64 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.64_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fa7b0ed7-3498-5756-a98c-183393b5be98",
+  "value_col": "pm25"
  },
  "fac6b3ee-2337-53c5-b3fe-23a9e38eb580": {
   "label": "Room 1.34 \u2014 Telecommunications Room window_contact (simulated)",
@@ -10505,6 +11912,13 @@
   "table": "contact_data",
   "uuid": "fba5fdbc-59c3-5941-a5c5-11b6cbd9f262",
   "value_col": "contact"
+ },
+ "fbc45a3a-66d1-55d4-8168-25310abae316": {
+  "label": "Room 4.66 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.66_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fbc45a3a-66d1-55d4-8168-25310abae316",
+  "value_col": "pm25"
  },
  "fbe508a1-513f-5560-835a-0d6c5e5b5117": {
   "label": "Room 5.69 \u2014 Academic Office door_contact (simulated)",
@@ -10562,6 +11976,13 @@
   "uuid": "fccdff3e-c7e4-5c4f-afb9-1abf9ec140e5",
   "value_col": "lux"
  },
+ "fd1b82b2-6f39-5394-9551-8d5b37a862c3": {
+  "label": "Room 2.11 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.11_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fd1b82b2-6f39-5394-9551-8d5b37a862c3",
+  "value_col": "pm25"
+ },
  "fd272e71-ae57-57dd-a5b1-38cc0ba98514": {
   "label": "Room 5.54 \u2014 Research Laboratory illuminance (simulated) [lux]",
   "sensor": "Room5.54_sat_illuminance",
@@ -10575,6 +11996,13 @@
   "table": "light_data",
   "uuid": "fd3bf3c1-8cff-552c-a904-f4238ad3db96",
   "value_col": "lux"
+ },
+ "fd3f8678-5cd7-572e-acf8-cef753949dd1": {
+  "label": "Room 2.57 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.57_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fd3f8678-5cd7-572e-acf8-cef753949dd1",
+  "value_col": "pm25"
  },
  "fd454296-f8fe-5e7b-859f-5ec202b8e4d6": {
   "label": "Room 4.13 \u2014 Seminar Room door_contact (simulated)",
@@ -10597,12 +12025,26 @@
   "uuid": "fd63d9b7-49e7-5c92-bb41-552f7a6ab390",
   "value_col": "contact"
  },
+ "fd7537ca-8457-54f2-956a-37281bbf1355": {
+  "label": "Room 2.19 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.19_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fd7537ca-8457-54f2-956a-37281bbf1355",
+  "value_col": "pm25"
+ },
  "fd7ec43c-fb38-5c71-a75d-f3f91e275a0c": {
   "label": "Room 5.52 \u2014 Research Laboratory humidity (simulated) [percent]",
   "sensor": "Room5.52_sat_humidity",
   "table": "humidity_data",
   "uuid": "fd7ec43c-fb38-5c71-a75d-f3f91e275a0c",
   "value_col": "rh_pct"
+ },
+ "fd81116d-584b-5328-b7d2-f53d377098b1": {
+  "label": "Room 3.51 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.51_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fd81116d-584b-5328-b7d2-f53d377098b1",
+  "value_col": "pm25"
  },
  "fd98954c-0164-5b62-adb7-88d1f427bf78": {
   "label": "Room 3.67 \u2014 Academic Office illuminance (simulated) [lux]",
@@ -10611,6 +12053,13 @@
   "uuid": "fd98954c-0164-5b62-adb7-88d1f427bf78",
   "value_col": "lux"
  },
+ "fdabf5f5-72ac-5823-9b0d-999e98f1ccc9": {
+  "label": "Room 2.49 \u2014 Academic Office pm25 (simulated) [ug/m3]",
+  "sensor": "Room2.49_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fdabf5f5-72ac-5823-9b0d-999e98f1ccc9",
+  "value_col": "pm25"
+ },
  "fdc45948-b3ad-5812-8f93-4eb94deff6ba": {
   "label": "Noise Level Sensor \u2014 Floor 5",
   "sensor": "Noise_Sensor_Floor5",
@@ -10618,12 +12067,26 @@
   "uuid": "fdc45948-b3ad-5812-8f93-4eb94deff6ba",
   "value_col": "noise_db"
  },
+ "fddbedf3-b2fb-54a4-a449-0ffc16f06178": {
+  "label": "Room 4.59 \u2014 Research Laboratory pm25 (simulated) [ug/m3]",
+  "sensor": "Room4.59_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fddbedf3-b2fb-54a4-a449-0ffc16f06178",
+  "value_col": "pm25"
+ },
  "fe3d99ba-db14-5d76-b015-c0b849d01296": {
   "label": "Room 3.56 \u2014 Research Laboratory door_contact (simulated)",
   "sensor": "Room3.56_sat_door_contact",
   "table": "contact_data",
   "uuid": "fe3d99ba-db14-5d76-b015-c0b849d01296",
   "value_col": "contact"
+ },
+ "fe64eb81-9e5a-56c6-a067-9be7f21f25e2": {
+  "label": "Room 3.17 \u2014 Staff Common Room pm25 (simulated) [ug/m3]",
+  "sensor": "Room3.17_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fe64eb81-9e5a-56c6-a067-9be7f21f25e2",
+  "value_col": "pm25"
  },
  "fe948b38-133f-5527-9270-0a8cb9263ef3": {
   "label": "Room 3.36 \u2014 Restroom (Male) illuminance (simulated) [lux]",
@@ -10694,5 +12157,12 @@
   "table": "contact_data",
   "uuid": "ffd72fb0-a659-5a7e-958d-cf053e61fc75",
   "value_col": "contact"
+ },
+ "fffd0b4f-c824-58eb-8169-70ca31853c64": {
+  "label": "Room 0.06 \u2014 Loading and Goods Storage pm25 (simulated) [ug/m3]",
+  "sensor": "Room0.06_sat_pm25",
+  "table": "pm25_data",
+  "uuid": "fffd0b4f-c824-58eb-8169-70ca31853c64",
+  "value_col": "pm25"
  }
 }
