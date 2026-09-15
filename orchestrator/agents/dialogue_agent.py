@@ -25,6 +25,16 @@ from shared.utils import describe_exception, generate_hash, get_logger
 
 logger = get_logger(__name__)
 
+#: BUG-557: conditions a SENSOR measures (thermal and air), as opposed to attributes a
+#: register records. Noise, light and daylight are deliberately absent: the workspace
+#: register records noise profile and daylight aspect.
+_MEASURED_CONDITION_RE = re.compile(
+    r"\b(?:cool|cooler|coolest|cold|colder|coldest|chilly|warm|warmer|warmest|hot|hotter|"
+    r"hottest|overheat\w*|temperature|temp|stuffy|stuffier|stuffiest|fresh(?:est)? air|"
+    r"air quality|co2|ventilat\w*|humid\w*|muggy|draughty|drafty)\b",
+    re.IGNORECASE,
+)
+
 
 # "now", "now-1d", "now-24h", "now-2w" — the relative forms the intent prompt
 # invites the LLM to produce for a time bound.
@@ -837,12 +847,39 @@ class DialogueAgent:
         # knows nothing about the network or the session. This override fires before
         # the routing contract, so the contract's readiness rule never gets a turn
         # unless the question is let through here first.
+        from orchestrator.services.privacy.inference_classes import classify_inference
         from orchestrator.services.routing_contract import _READINESS_RE
 
+        # A PRIVACY question is not a register question either (BUG-553). This short-circuit
+        # runs before the routing contract, so the contract's privacy rule — which the
+        # contract deliberately runs FIRST — never saw "Can my manager see when I badge in
+        # and out?": AccessPermission matched, the register lane answered "Yes", and a
+        # statement about who can watch a person's movements went out as a fact.
+        # A ranking by a MEASURED condition belongs to deliberation, not to a register
+        # (BUG-557). "I'm pregnant and overheating - where's the coolest place to work
+        # today?" matched WorkspaceProfile ("place to work"); the register holds daylight
+        # aspect and noise profile, not temperature, so the narration said there was no
+        # temperature data for a building with 288 temperature sensors. Only thermal and
+        # air-quality words hand over: power, Wi-Fi, noise profile and daylight are
+        # attributes the register records, and those questions stay with it.
+        from orchestrator.services.routing_contract import DELIBERATE_RE, WAYFIND_RE
+
+        # A ROUTE request is not a register question either (BUG-559): "How do I get to the
+        # seminar room from reception?" matched PublicEvent on "seminar" and was answered
+        # "these records do not contain any information about how to get from reception to
+        # the seminar room" — a regression of a regression-probe case, found in the demo pass.
+        _asks_for_a_route = bool(WAYFIND_RE.search(user_query or ""))
+        _ranks_by_measurement = bool(
+            DELIBERATE_RE.search(user_query or "")
+            and _MEASURED_CONDITION_RE.search(user_query or "")
+        )
         if (
             _held_record
             and not _SR.is_report_intake_query(user_query)
             and not _READINESS_RE.search(user_query or "")
+            and not classify_inference(user_query or "")
+            and not _ranks_by_measurement
+            and not _asks_for_a_route
         ):
             # The building holds this class as DATA, so the question is answerable by
             # SPARQL and must not be handed to a lane that can only quote prose. A

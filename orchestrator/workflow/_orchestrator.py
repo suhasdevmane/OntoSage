@@ -1270,6 +1270,31 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             except Exception as _coref_err:
                 logger.debug(f"[coref] resolution skipped: {_coref_err}")
 
+        # A REFERENCE TO SOMETHING I NEVER SAID (BUG-555). "You mentioned a sensor fault
+        # earlier — has it been fixed yet?" in a conversation with no earlier reply was
+        # routed to live readings and answered "the earlier fault has been resolved": the
+        # false premise accepted, and a resolution invented for a fault nobody reported.
+        # With no previous assistant turn there is nothing to refer to, and saying so is the
+        # only answer that is true.
+        from orchestrator.services.semantic_router import SemanticRouter as _SRref
+
+        _latest = state.messages[-1].content if state.messages else ""
+        _earlier_replies = [
+            m for m in (state.messages or [])[:-1] if getattr(m, "role", "") == "assistant"
+        ]
+        if not _earlier_replies and _SRref.refers_to_earlier_reply(_latest):
+            logger.info("[dialogue] refers to an earlier reply that does not exist — saying so")
+            state.current_intent = "clarification"
+            state.needs_clarification = True
+            state.intermediate_results["intent"] = "clarification"
+            state.intermediate_results["dialogue_response"] = (
+                "I haven't said anything earlier in this conversation — this is its first "
+                "message to me — so I have nothing to follow up on. If you tell me which "
+                "sensor, room or fault you mean, I can check its current state or look for "
+                "reports about it."
+            )
+            return state
+
         # NEW: Get LLM-based intent detection result
         intent_result = await self.dialogue_agent.detect_intent(state)
 
@@ -2954,12 +2979,15 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # prompts never fired).
         recommendation_domain = state.intermediate_results.get("recommendation_domain") or "general"
 
-        # Build a compact data summary (last 5 rows max)
+        # One line per SERIES, not the last five rows (BUG-554): those were all one meter of six,
+        # and the answer said the building "only shows values for the sensor on Floor 4".
+        from orchestrator.services.requested_interval import building_tz
+        from orchestrator.services.series_summary import summarise_series
+
         rows = (data.get("data", []) if isinstance(data, dict) else data) or []
-        data_summary = ""
-        if rows:
-            sample = rows[-5:] if len(rows) >= 5 else rows
-            data_summary = "\n".join(f"  {r}" for r in sample)
+        data_summary, _series_are_energy = summarise_series(
+            rows, sensor_metadata, building_tz(getattr(state, "building_id", None))
+        )
         sparql_summary = sparql_result.get("formatted_response", "")
 
         ontology_summary = ""
@@ -2982,10 +3010,16 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             "co2e",
         }
         _is_energy_focused = any(kw in _q_lower for kw in _energy_keywords)
-        _has_energy_data = rows and any(
-            any(kw in str(k).lower() for kw in ("power", "energy", "watt", "kwh"))
-            for r in rows
-            for k in r.keys()
+        # What the series ARE, from their metadata — narrow rows are `timestamp, uuid, value`,
+        # so the column names never said "energy" and this was always False (BUG-554).
+        _has_energy_data = bool(rows) and (
+            _series_are_energy
+            or any(
+                any(kw in str(k).lower() for kw in ("power", "energy", "watt", "kwh"))
+                for r in rows[:50]
+                if isinstance(r, dict)
+                for k in r.keys()
+            )
         )
 
         # Context note for an energy question whose retrieved data holds no energy readings.
@@ -3017,7 +3051,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 Based on the building data below, provide clear, ACTIONABLE recommendations.
 Focus on domain: {recommendation_domain or "general (HVAC, energy, air quality, comfort)"}.{_sensor_context}
 
-=== SENSOR DATA (latest readings) ===
+=== SENSOR DATA (one line per series: the readings fetched, summarised) ===
 {data_summary if data_summary else "No real-time data available — provide general best-practice recommendations based on building type and available sensor types."}
 
 === BUILDING CONTEXT ===
@@ -3029,6 +3063,9 @@ Instructions:
 - Use plain English — avoid jargon for general users
 - If no energy meters are available, infer energy efficiency opportunities from temperature/CO₂/humidity readings
 - If relevant, mention target setpoints, timings, or energy-saving percentages
+- Compare the series with each other (which is highest, which stays high at night) — every
+  series above was read; never say only one was available when several are listed
+- Refer to sensors by their names, never by identifiers or UUIDs
 - End with a brief priority summary: "Most important action first: ..."
 """
         try:
@@ -3571,6 +3608,20 @@ Instructions:
                 data = state.query_results
             except Exception as _viz_fetch_err:
                 logger.warning(f"[viz_node] data fetch for visualization failed: {_viz_fetch_err}")
+
+        if not _has_series(data):
+            # Nothing to chart is a finding, not a chart. Handing the agent no data made it
+            # write plotting code over nothing: an empty bar chart went out narrated as
+            # "no bars appear, indicating that either all groups have an owner or the data is
+            # missing" (BUG-543). Recording the skip WITHOUT media lets the response dispatch
+            # fall through to whatever the other lanes actually found.
+            logger.info("[viz_node] still no data after the fetch — not drawing an empty chart")
+            state.intermediate_results["viz_result"] = {
+                "success": False,
+                "skipped": "no_data",
+                "error": "visualization: no data to chart",
+            }
+            return state
 
         result = await self.viz_agent.create_visualization(state, latest_message, data)
         state.intermediate_results["viz_result"] = result
@@ -4453,7 +4504,11 @@ SELECT ?l WHERE {
             ) or str(getattr(rec, "modality", "") or "conditions")
 
             advice = advise(modality, evidence_time, chosen=chosen, runner_up=runner_up)
-            return advice.describe(now=store_now())
+            from orchestrator.services.requested_interval import building_tz
+
+            return advice.describe(
+                now=store_now(), tz_name=building_tz(getattr(state, "building_id", None))
+            )
         except Exception as exc:  # pragma: no cover - advice must never cost the answer
             logger.warning(f"[recheck] skipped: {exc}")
             return ""
@@ -4873,10 +4928,37 @@ SELECT ?l WHERE {
         # have a floor plan for Floor 7. Available floors: 0-5" is a true statement about
         # the building and one of this system's best behaviours.
         try:
-            from orchestrator.services.grounding_guard import meta_answer_reason
+            from orchestrator.services.grounding_guard import (
+                meta_answer_reason,
+                reword_handover_phrasing,
+            )
 
             _meta = meta_answer_reason(final_response)
-            if _meta:
+            # A WHOLE-REGISTER handover is exempt (BUG-564). Its narration is instructed
+            # (BUG-546) to say what the records do not hold and then what they DO record —
+            # which the pivot marker reads as "what I can tell you is…". The guard exists for
+            # substitutes the lane labelled as not the thing asked; register rows ARE the
+            # building's records. Measured: "How many open work orders…" suppressed 1 run in 3.
+            _sr = state.intermediate_results.get("sparql_result") or {}
+            if _meta and isinstance(_sr, dict) and _sr.get("method") == "whole_register":
+                logger.info(f"[response] meta marker {_meta!r} ignored on a whole-register answer")
+                _meta = None
+            _verified = state.intermediate_results.get("verification") or {}
+            _reworded = (
+                reword_handover_phrasing(final_response)
+                if _meta and _verified.get("grounded") is True
+                else None
+            )
+            if _reworded:
+                # Grounded, and only the PHRASING was about the exchange (BUG-550): reword
+                # "the data you shared" instead of discarding a verified answer.
+                logger.info(
+                    f"[response] meta phrasing reworded (marker: {_meta!r}) on a grounded "
+                    f"answer — kept rather than suppressed"
+                )
+                state.intermediate_results["meta_phrasing_reworded"] = _meta
+                final_response = _reworded
+            elif _meta:
                 logger.warning(
                     f"[response] meta-answer suppressed (marker: {_meta!r}); the lane "
                     f"produced prose about the pipeline rather than about the building"
@@ -6193,7 +6275,8 @@ SELECT ?l WHERE {
             "visualizing",
             "visualising",
             "draw",
-            "drawing",
+            # not "drawing": in a building it is "drawing more power" or "the design
+            # drawings" (16 + 8 corpus questions), never a request for a chart (BUG-543)
             "render",
             "rendered",
             "display",
@@ -6513,7 +6596,19 @@ SELECT ?l WHERE {
         for neg in cls._VIZ_NEGATIONS:
             if neg in msg:
                 return False
-        return any(kw in msg for kw in cls._VIZ_KEYWORDS)
+        # WHOLE WORDS. `kw in msg` matched inside words, so "mapped opening" asked for a map,
+        # "drawing more power" for a drawing, "reconfigure" for a figure and "solar panels"
+        # for a panel: 70 of the 4,060 stakeholder questions were sent to a chart nobody
+        # asked for, and one was answered with an empty bar chart narrated as a finding
+        # (BUG-543). Plural and past forms are listed explicitly above, so nothing is lost.
+        pattern = cls.__dict__.get("_VIZ_KEYWORD_RE")
+        if pattern is None:
+            alternation = "|".join(
+                re.escape(k) for k in sorted(cls._VIZ_KEYWORDS, key=len, reverse=True)
+            )
+            pattern = re.compile(rf"(?<![a-z0-9])(?:{alternation})(?![a-z0-9])")
+            cls._VIZ_KEYWORD_RE = pattern
+        return bool(pattern.search(msg))
 
     # Phase 17B (2026-05-29) — `_route_from_data_node`, `_route_from_analytics_node`,
     # `_route_from_sql`, and `_route_from_report` were extracted to
@@ -7339,7 +7434,11 @@ SELECT ?l WHERE {
                     logger.debug(f"[events] point map skipped: {pm_err}")
             from orchestrator.services.numeric_guard import guard_payload
 
-            service = EventQueryService(building_id, adapter, rooms, point_map=point_map)
+            from orchestrator.services.requested_interval import building_tz
+
+            service = EventQueryService(
+                building_id, adapter, rooms, point_map=point_map, tz_name=building_tz(building_id)
+            )
             result = await service.answer(question)
             state.intermediate_results["events_result"] = guard_payload(result, "events")
         except Exception as exc:
@@ -7667,9 +7766,14 @@ SELECT ?l WHERE {
             unit_val = None
             qunit_val = None
             type_val = None
+            floor_val = None
 
             for var in binding:
-                if "uuid" in var.lower() or "id" in var.lower() or "timeseries" in var.lower():
+                if var.lower() in ("floornum", "floor_num", "floornumber"):
+                    # BUG-537: the floor-scoped template binds it; carrying it is what lets a
+                    # per-floor comparison be computed instead of left to the narration.
+                    floor_val = binding[var]["value"]
+                elif "uuid" in var.lower() or "id" in var.lower() or "timeseries" in var.lower():
                     uuid_val = binding[var]["value"]
                 elif "label" in var.lower():
                     label_val = binding[var]["value"]
@@ -7717,6 +7821,8 @@ SELECT ?l WHERE {
                     "kind": kind or "",
                     "unit": unit or "",
                 }
+                if floor_val not in (None, ""):
+                    sensor_metadata[uuid_val]["floor"] = str(floor_val)
 
         return sensor_metadata
 
@@ -7945,6 +8051,28 @@ SELECT ?l WHERE {
             service = get_report_intake_service(self.postgres_manager)
             category = service.category_for_intent(intent)
             action = service.classify_action(user_message or "")
+
+            # A QUESTION IS NOT A REPORT (BUG-548). `classify_action` defaults to "create",
+            # so every question classified into an intake intent WROTE a record: "Which
+            # drains have needed jetting more than twice this year?" was filed as
+            # maintenance request REP-452756 — the classifier had even explained it was "a
+            # maintenance history query". Answer it from the building's records instead.
+            from orchestrator.services.semantic_router import SemanticRouter as _SRq
+
+            if (
+                action == "create"
+                and _SRq.is_information_question(user_message or "")
+                and not _SRq.is_report_intake_query(user_message or "")
+            ):
+                logger.info(
+                    "[report_intake] the message ASKS rather than reports — answering from the "
+                    "building's records, not filing a report"
+                )
+                state.current_intent = "metadata"
+                state.intermediate_results["intent"] = "metadata"
+                state.intermediate_results["report_intake_skipped"] = "information_question"
+                await self._sparql_node(state)
+                return state
             reporter_id = (
                 getattr(state, "user_id", None)
                 or state.intermediate_results.get("user_id")
@@ -8315,6 +8443,30 @@ SELECT ?l WHERE {
                     "message": f"Alert condition triggered: {trigger.get('concept')} {op} {threshold}",
                     "severity": "warning",
                 }
+
+                # A MEASUREMENT AND A VALUE, OR NO ALERT (BUG-552). With no number this
+                # created `threshold 0.0`, and with no recognised measurement the concept
+                # "sensor": the active building held seven such rules ("crowded > 0.0", "sensor > 0.0" x3,
+                # "lift_status > 0.0" x2) that fired every cycle and filed 621 "[RULE ALERT]"
+                # reports into user_reports between 2026-09-07 and 2026-09-15.
+                _missing = [
+                    part
+                    for part, absent in (
+                        ("what to measure (for example CO2, temperature or humidity)",
+                         trigger.get("concept") == "sensor"),
+                        ("the value that should trigger it (for example 'above 1000')",
+                         thresh_match is None),
+                    )
+                    if absent
+                ]
+                if _missing:
+                    state.intermediate_results["dialogue_response"] = (
+                        "I haven't created an alert yet. I need "
+                        + " and ".join(_missing)
+                        + ". For example: *alert me when CO2 in room 5.01 goes above 1000 "
+                        "for 10 minutes*."
+                    )
+                    return state
 
                 rule_id = await store.create_alert(user_id, building_id, trigger, action)
                 response = (

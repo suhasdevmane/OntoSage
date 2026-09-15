@@ -752,6 +752,27 @@ def meta_answer_reason(text: str) -> Optional[str]:
     return None
 
 
+def reword_handover_phrasing(text: str) -> Optional[str]:
+    """The text with only 'the data you shared'-style PHRASING reworded, if that clears it.
+
+    Returns None when rewording the first two markers — the data as an object handed over
+    in conversation — does not make the prose clean, i.e. when a SUBSTANCE marker (asking
+    the reader to run a query, narrating missing inputs, the pivot) is present.
+
+    BUG-550. "Can you provide energy saving suggestions?" produced recommendations the
+    verifier scored grounded (0.88, 6,000 rows from 12 energy sensors); the model wrote
+    "based on the data you shared", and the whole answer was replaced with "I understood
+    the question but could not put an answer together for it". Suppressing a grounded
+    answer for three words costs the reader the answer the guard was meant to protect.
+    """
+    body = normalise_typography(text)
+    reworded = _META_ANSWER_RES[1].sub("Based on the building's data", body)
+    reworded = _META_ANSWER_RES[0].sub("the building's data", reworded)
+    if reworded == body or meta_answer_reason(reworded):
+        return None
+    return reworded
+
+
 def is_meta_answer(text: str) -> bool:
     """True when the prose describes the pipeline rather than the building."""
     return meta_answer_reason(text) is not None

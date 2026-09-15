@@ -35,7 +35,10 @@ def _make_state(
             "user_query": query,
             "entities": entities
             or [
-                {"type": "device", "value": "room 5.01 setpoint"},
+                # A point the mocked driver actually lists. This fixture used to name
+                # "room 5.01 setpoint", which matches no point, and passed only because the
+                # agent queued against the FIRST writable point when nothing matched (BUG-548).
+                {"type": "device", "value": "VAV-501 setpoint"},
                 {"type": "action", "value": "set"},
                 {"type": "target_value", "value": "22"},
             ],
@@ -82,7 +85,7 @@ class TestControlWithDriver:
         state = _make_state(role="facility_manager")
 
         mock_driver = AsyncMock()
-        mock_driver.capabilities = AsyncMock(return_value=["urn:bldg1:LIGHTING-3F-SP"])
+        mock_driver.capabilities = AsyncMock(return_value=["urn:bldg1:LIGHTING-3F-SP", "urn:bldg1:VAV-501-SP"])
 
         mock_registry = MagicMock()
         mock_registry.driver_for = MagicMock(return_value=mock_driver)
@@ -347,7 +350,13 @@ class TestStringEntityShapes:
 
     @pytest.mark.asyncio
     async def test_approval_path_with_string_entities(self):
-        """Approval queueing must work when entities are plain strings."""
+        """Plain-string entities must not crash — and must not queue a command either.
+
+        Untyped strings identify neither a point nor a value. This test asserted
+        `pending_approval`, which held only because the agent queued against the FIRST
+        writable point with the value "as specified" (BUG-548). Tolerating the shape now
+        means asking for the missing detail, never guessing a target.
+        """
         agent = ControlAgent()
         state = _make_state(role="admin", entities=["room 5.01", "22"])
 
@@ -367,7 +376,57 @@ class TestStringEntityShapes:
         ):
             result = await agent.execute_command(state)
 
+        assert result["status"] == "needs_detail"
+        mock_approval_store.create_pending.assert_not_called()
+        assert "Nothing has been queued" in result["message"] and "VAV-501-SP" in result["message"]
+
+
+class TestNothingIsQueuedWithoutATargetAndAValue:
+    """BUG-548: a question reached the control node and queued an AHU setpoint change."""
+
+    async def _run(self, entities, caps=("urn:bldg1:AHU-F5-SP", "urn:bldg1:VAV-501-SP")):
+        agent = ControlAgent()
+        state = _make_state(role="admin", entities=entities,
+                            query="Which shutters or doors fail open versus fail locked?")
+        mock_driver = AsyncMock()
+        mock_driver.capabilities = AsyncMock(return_value=list(caps))
+        mock_registry = MagicMock()
+        mock_registry.driver_for = MagicMock(return_value=mock_driver)
+        store = AsyncMock()
+        store.create_pending = AsyncMock(return_value="ff00ff00")
+        with patch(
+            "orchestrator.agents.control_agent.get_actuation_registry", return_value=mock_registry
+        ), patch("orchestrator.agents.control_agent.get_approval_store", return_value=store):
+            return await agent.execute_command(state), store
+
+    @pytest.mark.asyncio
+    async def test_no_entities_queues_nothing(self):
+        result, store = await self._run([{"type": "action", "value": "list"}])
+        assert result["status"] == "needs_detail"
+        store.create_pending.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_a_point_without_a_value_queues_nothing(self):
+        result, store = await self._run([{"type": "device", "value": "VAV-501"}])
+        assert result["status"] == "needs_detail" and "the value to set" in result["message"]
+        store.create_pending.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_a_generic_device_word_identifies_no_point(self):
+        result, store = await self._run(
+            [{"type": "device", "value": "room setpoint"}, {"type": "target_value", "value": "21"}]
+        )
+        assert result["status"] == "needs_detail" and "can't control" in result["message"]
+        store.create_pending.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_a_named_point_and_a_value_are_queued_against_that_point(self):
+        result, store = await self._run(
+            [{"type": "device", "value": "VAV-501"}, {"type": "target_value", "value": "21"}]
+        )
         assert result["status"] == "pending_approval"
+        assert store.create_pending.call_args.kwargs["point_uri"] == "urn:bldg1:VAV-501-SP"
+        assert store.create_pending.call_args.kwargs["value"] == "21"
 
     @pytest.mark.asyncio
     async def test_maintenance_agent_with_string_entities(self):

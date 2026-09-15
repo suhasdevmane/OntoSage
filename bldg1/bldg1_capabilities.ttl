@@ -122,7 +122,7 @@ bldg:Cap_emergency_contacts a ontosage:InformationTopic, ontosage:KnowledgeTopic
 bldg:Cap_bookings_reservations a ontosage:Procedure, ontosage:KnowledgeTopic ;
     rdfs:label "Bookings Reservations"@en ;
     ontosage:capabilityCategory "PROCEDURE" ;
-    ontosage:layTerms "book, booking, reserve, reservation, schedule, timetable, meeting room, room booking, lab booking, how to book, who can book" ;
+    ontosage:layTerms "book, booking, reserve, reservation, booking schedule, room schedule, timetable, meeting room, room booking, lab booking, how to book, who can book" ;
     ontosage:answerText "Room and space bookings: (1) Meeting rooms: staff book via the Staff Intranet room booking system or through Microsoft Outlook/Teams; (2) Teaching spaces: allocated by Timetabling; (3) Labs: booked through academic supervisors; (4) External event hire: contact Cardiff University Conference Services; (5) Informal spaces (atrium, pods) are first-come-first-served and cannot be reserved. Check Cardiff University's online room booking portal for availability.\n" ;
     ontosage:note "timetabling_and_facilities" ;
     ontosage:documentRef "room_bookings.md" .

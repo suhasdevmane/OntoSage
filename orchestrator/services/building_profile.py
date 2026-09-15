@@ -115,7 +115,10 @@ _WHOLE_PROFILE = re.compile(
     r"|\bdescribe (?:this|the) building\b"
     r"|\babout (?:this|the) building\b"
     r"|\bbuilding (?:profile|details|information|info)\b"
-    r"|\bwhat (?:do you know|can you tell me) about (?:this|the) building\b",
+    r"|\bwhat (?:do you know|can you tell me) about (?:this|the) building\b"
+    # BUG-560: "What is this building and who runs it?" asks for more than the operator;
+    # it was answered with one line. "what is this building" (not "... for") is the profile.
+    r"|\bwhat(?:'s| is) (?:this|the) building\b(?!\s+(?:for|used|called))",
     re.IGNORECASE,
 )
 
@@ -295,7 +298,9 @@ def render(
         except (TypeError, ValueError):
             pass
         return answer
-    return f"**{label}** for **{building_name}**: {value}"
+    # A sentence, whatever the label's grammar: "**Operated by** for **<building>**: <value>"
+    # was the old shape, which does not read as English (BUG-560).
+    return f"**{building_name}** — {label.lower()}: **{value}**."
 
 
 def enablement_hint(building_name: str) -> str:

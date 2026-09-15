@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Dict, List, Optional, Tuple
 
@@ -115,6 +115,16 @@ SELECT ?cls (SAMPLE(?lbl) AS ?label) (COUNT(DISTINCT ?i) AS ?n)
 } GROUP BY ?cls
 """
 
+#: The words the TBox marks as QUALIFIERS for a class (BUG-545), read separately so a class
+#: with none still appears above.
+_QUALIFIER_QUERY = """
+PREFIX o: <http://ontosage.org/capabilities#>
+SELECT ?cls (GROUP_CONCAT(DISTINCT ?q; SEPARATOR="|") AS ?quals) WHERE {
+  VALUES ?cls { %s }
+  ?cls o:qualifierTerms ?q .
+} GROUP BY ?cls
+"""
+
 #: Lay terms for classes the building does NOT hold, so an absent system can still be
 #: named. Read once from the TBox rather than from any building's data.
 _LAY_QUERY = """
@@ -134,6 +144,10 @@ class RecordClass:
     label: str
     instances: int
     terms: Tuple[str, ...]
+    #: Terms that name this class only when USED OF IT, not when they describe something
+    #: else: "is the route approved?" is an approval question, "the approved schedule" is a
+    #: schedule question. Declared in the TBox as ontosage:qualifierTerms (BUG-545).
+    qualifiers: Tuple[str, ...] = ()
 
 
 def _terms_for(
@@ -227,6 +241,18 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
             label = str(row.get("label") or "") or local
             lays = str(row.get("lays") or "")
             found.append(RecordClass(local, label, count, _terms_for(local, label, lays)))
+        if found:
+            quals = await run_sparql_select(_QUALIFIER_QUERY % values, limit=len(known) + 1)
+            by_class = {
+                str(r.get("cls") or "").rsplit("#", 1)[-1]: tuple(
+                    sorted({q.strip().lower() for q in str(r.get("quals") or "").split("|") if q.strip()})
+                )
+                for r in (quals.get("rows") or [] if quals.get("ok") else [])
+            }
+            found = [
+                replace(r, qualifiers=by_class[r.local_name]) if by_class.get(r.local_name) else r
+                for r in found
+            ]
     except Exception as exc:
         logger.debug(f"[record_registry] could not read record classes: {exc}")
         # An unreachable graph must not make every register question route as if the
@@ -264,6 +290,37 @@ def _term_score(term: str, low: str) -> float:
         if before == "-" or after == "-":
             weight *= _COMPOUND_WEIGHT
         best = max(best, weight)
+    return best
+
+
+#: English function words. A qualifier followed by one of these (or by nothing) is used
+#: predicatively or as a verb — "is it approved?", "approved by whom", "who approved the
+#: budget" — and still names its class. Followed by any other word it is describing that
+#: word: "approved schedule", "confirmed fire-warden coverage", "verified alternative".
+#: Grammar, not building vocabulary, so it holds for every building.
+_FUNCTION_WORDS = frozenset(
+    "the a an this that these those it its their his her my our your any all each every some "
+    "no not by for to of in on at under with since before after until from against within as "
+    "and or but so if when yet now today already still recently".split()
+)
+
+
+def _qualifier_score(term: str, low: str) -> float:
+    """`_term_score` for a declared qualifier: nothing when it describes another noun (BUG-545).
+
+    Measured on the 4,060-question stakeholder corpus: ApprovalRecord declared "approved",
+    "confirmed", "verified", "authorised" and "evidenced" as lay terms, so it was the top
+    register for questions that merely used them as adjectives — "which systems started late
+    against today's APPROVED schedule" was answered from approvals as "APR-010 started 1 day
+    late", and "which zones lack CONFIRMED fire-warden coverage" as "none of the occupied zones
+    have coverage", an absence in the wrong register stated as a fact about fire safety.
+    """
+    best = 0.0
+    for m in re.finditer(rf"\b{re.escape(term)}\b", low):
+        following = re.match(r"[\s\"'(]*([a-z][a-z0-9]*)", low[m.end():])
+        if following and following.group(1) not in _FUNCTION_WORDS:
+            continue  # attributive: it describes the next word, not this class
+        best = max(best, _term_score(term, low[m.start() - 1 : m.end() + 1]))
     return best
 
 
@@ -307,7 +364,11 @@ def rank_record_classes(query: str, classes: List[RecordClass]) -> List[Tuple[fl
     low = f" {(query or '').lower()} "
     scored: List[Tuple[float, RecordClass]] = []
     for record in classes:
-        total = sum(_term_score(term, low) for term in record.terms)
+        quals = set(getattr(record, "qualifiers", ()) or ())
+        total = sum(
+            _qualifier_score(term, low) if term in quals else _term_score(term, low)
+            for term in record.terms
+        )
         if total > 0:
             scored.append((total, record))
     return sorted(scored, key=lambda pair: (-pair[0], pair[1].local_name))

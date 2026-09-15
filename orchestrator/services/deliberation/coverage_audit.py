@@ -238,15 +238,17 @@ class CoverageAuditor:
         ORDER BY makes OFFSET paging deterministic.
         """
         body = (
-            "SELECT DISTINCT ?sensor ?cls ?space ?label ?uuid ?stored ?simulated WHERE {\n"
+            "SELECT DISTINCT ?sensor ?cls ?space ?label ?uuid ?stored ?simulated ?via WHERE {\n"
             "  ?sensor a ?cls .\n"
-            "  { ?sensor brick:hasLocation ?space }\n"
-            "  UNION { ?sensor brick:isPointOf ?eq . ?eq brick:hasLocation ?space }\n"
-            "  UNION { ?sensor brick:isPointOf ?eq . ?eq brick:feeds ?space }\n"
+            # ?via says HOW the point reaches the space (BUG-562): a point in the room, a
+            # point on equipment in the room, or a point on equipment that merely FEEDS it.
+            '  { ?sensor brick:hasLocation ?space BIND("direct" AS ?via) }\n'
+            '  UNION { ?sensor brick:isPointOf ?eq . ?eq brick:hasLocation ?space BIND("equipment" AS ?via) }\n'
+            '  UNION { ?sensor brick:isPointOf ?eq . ?eq brick:feeds ?space BIND("feeds" AS ?via) }\n'
             # a sensor located in (or feeding) a ZONE covers the room(s) the zone
             # hasPart — but a floor's hasPart must never grant floor-wide coverage
             "  UNION { ?sensor brick:hasLocation ?zone . ?zone brick:hasPart ?space .\n"
-            "          FILTER NOT EXISTS { ?zone a brick:Floor } }\n"
+            '          FILTER NOT EXISTS { ?zone a brick:Floor } BIND("direct" AS ?via) }\n'
             # ...and the INVERSE nesting. The hop above models a zone that CONTAINS rooms (an
             # HVAC zone spanning several offices). The opposite shape is equally valid and just
             # as common: a per-room zone nested INSIDE the room, `?zone brick:isPartOf ?room`.
@@ -258,10 +260,10 @@ class CoverageAuditor:
             # room's sensor never grants floor-wide coverage.
             "  UNION { ?sensor brick:hasLocation ?zone3 . ?zone3 brick:isPartOf ?space .\n"
             "          FILTER NOT EXISTS { ?zone3 a brick:Floor }\n"
-            "          FILTER NOT EXISTS { ?space a brick:Floor } }\n"
+            '          FILTER NOT EXISTS { ?space a brick:Floor } BIND("direct" AS ?via) }\n'
             "  UNION { ?sensor brick:isPointOf ?eq2 . ?eq2 brick:feeds ?zone2 .\n"
             "          ?zone2 brick:hasPart ?space .\n"
-            "          FILTER NOT EXISTS { ?zone2 a brick:Floor } }\n"
+            '          FILTER NOT EXISTS { ?zone2 a brick:Floor } BIND("feeds" AS ?via) }\n'
             "  OPTIONAL { ?sensor rdfs:label ?label }\n"
             "  OPTIONAL {\n"
             "    ?sensor ref:hasExternalReference ?r .\n"
@@ -306,6 +308,7 @@ class CoverageAuditor:
                 # "" when undeclared. Kept as the raw literal so the consumer
                 # decides what silence means rather than this layer guessing.
                 "simulated": _val(b, "simulated"),
+                "via": _val(b, "via") or "direct",
             }
             for b in rows
             if _val(b, "sensor") and _val(b, "space")
@@ -352,8 +355,18 @@ class CoverageAuditor:
                 # as "nothing is fresh": on None this falls straight back to first-match, so a
                 # building with no adapters behaves exactly as before.
                 _backed: List[Dict[str, str]] = []
-                for p in by_space.get(sc.space_iri, []):
+                # BUG-562: nearest evidence first. A point IN the room outranks one on
+                # equipment in the room, which outranks one on equipment that only FEEDS it —
+                # and a feeding unit's point counts at all only when its class measures the
+                # ZONE. Without this, "coolest place on floor 5" ranked 51 rooms on one AHU
+                # series from plant_data (value 0.416, "temperature"), all tied at score 1.
+                _order = {"direct": 0, "equipment": 1, "feeds": 2}
+                for p in sorted(
+                    by_space.get(sc.space_iri, []), key=lambda x: _order.get(x.get("via"), 0)
+                ):
                     if not spec.matches(p["class_local"], p["text"]):
+                        continue
+                    if p.get("via") == "feeds" and "zone" not in p["class_local"].lower():
                         continue
                     if p["uuid"] and p["stored_at"]:
                         # Dedupe by sensor IRI. Reasoning returns one sensor once per matched

@@ -730,6 +730,16 @@ def _r_constraint_recommendation(c: _Ctx) -> Optional[str]:
 # footfall. Combined comfort+availability phrasings ("QUIET room free at 3")
 # must stay deliberate, so this rule sits BELOW the deliberate rules and its
 # regex targets pure event vocabulary.
+#: BUG-549: "free" meaning NO COST. "Is tap water free somewhere, or do I have to buy
+#: bottles?" matched "is <subject> free" and went to the bookings lane, which answered "I
+#: couldn't match that room name" to an occupant asking where to get water. The cost sense
+#: always travels with money words, so their presence (and no booking vocabulary) decides it.
+COST_SENSE_OF_FREE_RE = re.compile(
+    r"\b(?:buy|buying|bought|pay|paying|paid|cost|costs|charge|charged|charges|price|priced|"
+    r"fee|fees|purchase|free of charge|for free|free to use|complimentary)\b",
+    re.IGNORECASE,
+)
+
 EVENTS_RE = re.compile(
     # "is <subject> free/booked" — single-subject availability; the subject
     # token keeps inventory questions ("what sensor types are available") out.
@@ -818,6 +828,10 @@ def _r_event_store_query(c: _Ctx) -> Optional[str]:
         return None  # statement shapes stay with intake
     if DELIBERATE_RE.search(c.query):
         return None  # comfort-constrained phrasing keeps the deliberative lane
+    if COST_SENSE_OF_FREE_RE.search(c.query or "") and not re.search(
+        r"\b(?:bookings?|reservations?|booked|reserved)\b", c.query or "", re.IGNORECASE
+    ):
+        return None  # "is tap water free, or do I have to buy bottles?" is about cost (BUG-549)
     return "events" if EVENTS_RE.search(c.query) else None
 
 

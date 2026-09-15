@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from orchestrator.services.datasource_registry import derive_point_uuid
+from orchestrator.services.requested_interval import to_local, to_store
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -234,7 +235,12 @@ def classify_event_question(question: str) -> Optional[str]:
     for kind, pat in _KIND_RES:
         if pat.search(q):
             return kind
-    # specific-room availability ("is RM101 free at 3pm?")
+    # specific-room availability ("is RM101 free at 3pm?") — but not "free" meaning no cost
+    # ("is tap water free, or do I have to buy bottles?", BUG-549)
+    from orchestrator.services.routing_contract import COST_SENSE_OF_FREE_RE
+
+    if COST_SENSE_OF_FREE_RE.search(q) and not re.search(r"\bbooked\b", q, re.IGNORECASE):
+        return None
     if re.search(r"\b((?<!-)free|available|booked|in use)\b", q, re.IGNORECASE):
         return "availability_check"
     return None
@@ -289,10 +295,32 @@ def _part_of_day(q: str):
     return None
 
 
+_NUMBER_WORDS = {
+    "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
+    "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
+    "couple of": 2, "few": 3,
+}
+
+
 def parse_window(question: str, now: datetime) -> Tuple[datetime, datetime, str]:
     """(start, end, label). Default: today so far -> end of day."""
     q = (question or "").lower()
     day0 = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    # "free for the next two hours" is a window starting NOW (BUG-539). It fell through to
+    # the whole day, so a room booked from 08:20 was reported "booked today" at 01:20 when
+    # the two hours asked about were free.
+    n = re.search(
+        r"\b(?:next|coming)\s+(?:(\d{1,3}|an?|one|two|three|four|five|six|seven|eight|nine|"
+        r"ten|eleven|twelve|couple of|few)\s+)?(hours?|hrs?|minutes?|mins?)\b",
+        q,
+    )
+    if n:
+        word = n.group(1) or ""
+        amount = int(word) if word.isdigit() else _NUMBER_WORDS.get(word, 1)
+        hours = n.group(2).startswith("h")
+        unit = "hour" if hours else "minute"
+        label = f"for the next {amount} {unit}" + ("s" if amount != 1 else "")
+        return now, now + timedelta(minutes=amount * (60 if hours else 1)), label
     m = re.search(r"\bat\s+(\d{1,2})(?::(\d{2}))?\s*(am|pm)?\b", q)
     if m:
         h = int(m.group(1)) % 12 + (12 if (m.group(3) or "").lower() == "pm" else 0)
@@ -353,8 +381,12 @@ class EventQueryService:
         adapter,
         room_locals: List[str],
         point_map: Optional[Dict[str, Tuple[str, str]]] = None,
+        tz_name: Optional[str] = None,
     ):
         self._bid = building_id
+        # The events store is UTC (BUG-403). People ask and read in the building's time —
+        # "at 3pm", "today", "08:20" — so the zone converts at exactly those two edges.
+        self._tz = tz_name
         self._adapter = adapter  # MySQLEventsAdapter or None (source absent)
         self._rooms = room_locals
         # V5-T21: sensor uuid -> (room_local, modality), for anomaly episodes
@@ -393,7 +425,10 @@ class EventQueryService:
         # question such a building most needs answered.
         if self._adapter is None and kind != "recurrence":
             return self._decline(kind)
-        start, end, label = parse_window(question, now)
+        # Parse on the building's clock, query on the store's (BUG-539/540). `now` stays the
+        # store clock for the comparisons handlers make ("open for more than 7 days").
+        local_start, local_end, label = parse_window(question, to_local(now, self._tz))
+        start, end = to_store(local_start, self._tz), to_store(local_end, self._tz)
         handler = {
             "availability_check": self._availability_check,
             "availability_list": self._availability_list,
@@ -427,9 +462,14 @@ class EventQueryService:
             return row.get(name)
         return row[idx]
 
-    @staticmethod
-    def _fmt_dt(v: Any) -> str:
-        return v.strftime("%H:%M") if isinstance(v, datetime) else str(v)[11:16]
+    def _fmt_dt(self, v: Any) -> str:
+        """A stored (UTC) time as the building's wall clock shows it (BUG-540)."""
+        if not isinstance(v, datetime):
+            try:
+                v = datetime.strptime(str(v)[:19], "%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                return str(v)[11:16]
+        return to_local(v, self._tz).strftime("%H:%M")
 
     async def _availability_check(self, question, start, end, label, now):
         room = self.resolve_room(question)

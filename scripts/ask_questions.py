@@ -203,6 +203,11 @@ def main(argv: List[str]) -> int:
                 {"q": q, "run": i, "secs": secs, "status": status, "answer": answer,
                  "flushed": flushed}
             )
+            if args.out:  # a long bank run must not lose every answer to one crash
+                import json
+
+                with open(f"{args.out}.jsonl", "a", encoding="utf-8") as fh:
+                    fh.write(json.dumps(rows[-1], ensure_ascii=False) + "\n")
             print(f"\n[{i}/{args.repeat}] {secs:6.1f}s  {status}  {q}")
             print("   " + answer[: args.show].replace("\n", "\n   "))
 

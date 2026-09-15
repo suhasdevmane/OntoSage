@@ -2843,25 +2843,39 @@ async def resolve_forwarded_user(request: Request) -> Tuple[str, str]:
     if not ident or postgres_manager is None:
         return fallback
 
-    # Match on username first, then email — Open WebUI forwards an email, while
-    # OntoSage accounts are keyed by username (often the email's local part).
-    candidates = [ident]
+    # Match the exact username, then the account's registered email, then the email's local
+    # part. Open WebUI forwards an email while OntoSage accounts are keyed by username.
+    # This comment promised an email match for months and the code never made one, so an
+    # account whose username was not the email's local part (the building owner's own
+    # login, "Suhas" vs "suhasdevmanemech@gmail.com") silently chatted as readonly
+    # (BUG-542). The registered email is the stricter match, so it outranks the local part.
+    async def _by_username(name: str) -> List[Dict[str, Any]]:
+        row = await postgres_manager.get_user(name)
+        return [row] if row else []
+
+    async def _by_email(email: str) -> List[Dict[str, Any]]:
+        lookup = getattr(postgres_manager, "get_users_by_email", None)
+        return list(await lookup(email) or []) if lookup else []
+
+    lookups = [(_by_username, ident)]
     if "@" in ident:
-        candidates.append(ident.split("@", 1)[0])
-    for name in candidates:
+        lookups += [(_by_email, ident), (_by_username, ident.split("@", 1)[0])]
+    rows: List[Dict[str, Any]] = []
+    for lookup, name in lookups:
         try:
-            row = await postgres_manager.get_user(name)
+            rows = await lookup(name)
         except Exception as e:  # never let identity lookup break a chat turn
             logger.warning(f"[forwarded-user] lookup failed for {name!r}: {e}")
             return fallback
-        if not row or not row.get("username"):
-            continue
         # Chatting through /v1 auto-creates a placeholder row so conversations have a
         # valid owner. It is a foreign-key stub, not an identity decision — and it is
         # always readonly. Treating one as an account would let a stub created before
         # the admin provisioned someone permanently shadow their real (higher) role.
-        if _is_placeholder_account(row):
-            logger.debug(f"[forwarded-user] skipping placeholder row {row['username']!r}")
+        row = next((r for r in rows if r.get("username") and not _is_placeholder_account(r)),
+                   None)
+        if row is None:
+            if rows:
+                logger.debug(f"[forwarded-user] skipping placeholder row for {name!r}")
             continue
         role = row.get("role") or "readonly"
         logger.info(f"[forwarded-user] {ident!r} → {row['username']!r} (role={role})")

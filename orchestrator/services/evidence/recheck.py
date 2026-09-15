@@ -57,8 +57,16 @@ class RecheckAdvice:
         """All three parts present. The acceptance criterion, expressed as a property."""
         return bool(self.evidence_time and self.recheck_at and self.switch_condition)
 
-    def describe(self, now: Optional[datetime] = None) -> str:
-        """The line a recommendation must carry."""
+    def describe(self, now: Optional[datetime] = None, tz_name: Optional[str] = None) -> str:
+        """The line a recommendation must carry.
+
+        `now`, `evidence_time` and `recheck_at` are all store (UTC) times, so the AGE is
+        computed on one clock. The two clock times a person reads are shown on the building's
+        clock when `tz_name` is given (BUG-540) — "measured at 00:20" read in London under BST
+        is an hour wrong.
+        """
+        from orchestrator.services.requested_interval import to_local
+
         parts = []
 
         if self.evidence_time is None:
@@ -72,7 +80,8 @@ class RecheckAdvice:
                 minutes = (now - self.evidence_time).total_seconds() / 60.0
                 if minutes >= 0:
                     age = f", {_human_minutes(minutes)} ago"
-            parts.append(f"**As measured at {self.evidence_time:%H:%M on %d %b}{age}.**")
+            shown = to_local(self.evidence_time, tz_name)
+            parts.append(f"**As measured at {shown:%H:%M on %d %b}{age}.**")
 
         if self.recheck_at is None:
             parts.append(
@@ -82,7 +91,7 @@ class RecheckAdvice:
             )
         else:
             parts.append(
-                f"Recheck by **{self.recheck_at:%H:%M}** "
+                f"Recheck by **{to_local(self.recheck_at, tz_name):%H:%M}** "
                 f"({_human_minutes(self.horizon_minutes or 0)} of useful life)."
             )
 
