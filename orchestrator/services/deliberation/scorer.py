@@ -407,7 +407,13 @@ def score_candidates(
             return float("inf")
         return -float(v) if _first.direction in (Direction.MAXIMIZE, Direction.ABOVE) else float(v)
 
-    scored.sort(key=lambda s: (-(s.total or 0.0), _raw_key(s), s.label))
+    # BUG-599: EVIDENCE FIRST. Renormalising over the criteria a room happens to have let a
+    # partially measured room win: "best conditions for focused work this afternoon" ranked an
+    # atrium first on CO2 and temperature alone ("no data: noise, occupancy, illuminance") above
+    # rooms measured on all five. A room is ranked against the rooms that answer the same
+    # question; those with an unmeasured criterion follow, still ordered by score among
+    # themselves, and each row keeps its "no data" note.
+    scored.sort(key=lambda s: (len(s.data_gaps), -(s.total or 0.0), _raw_key(s), s.label))
     for i, s in enumerate(scored, 1):
         s.rank = i
 

@@ -158,6 +158,15 @@ def summarise_series(
                 f"; from {first:%d %b %H:%M} to {last:%d %b %H:%M} (building time); latest "
                 f"{_fmt(last_v)}"
             )
+            # WHEN the extremes happened (BUG-592): without it a narration shown only the newest
+            # rows placed the day's minimum in the last hour ("lowest 842 ppm at 17:23" against a
+            # stored 704 ppm at 04:08).
+            lo_t, lo_v = min(timed, key=lambda p: p[1])
+            hi_t, hi_v = max(timed, key=lambda p: p[1])
+            line += (
+                f"; minimum {_fmt(lo_v)} at {to_local(lo_t, tz_name):%d %b %H:%M}, maximum "
+                f"{_fmt(hi_v)} at {to_local(hi_t, tz_name):%d %b %H:%M}"
+            )
             night = [v for t, v in timed if to_local(t, tz_name).hour < 6]
             day = [v for t, v in timed if 8 <= to_local(t, tz_name).hour < 18]
             if night and day:

@@ -4977,10 +4977,24 @@ SELECT ?l WHERE {
             # substitutes the lane labelled as not the thing asked; register rows ARE the
             # building's records. Measured: "How many open work orders…" suppressed 1 run in 3.
             _sr = state.intermediate_results.get("sparql_result") or {}
-            if _meta and isinstance(_sr, dict) and _sr.get("method") == "whole_register":
-                logger.info(f"[response] meta marker {_meta!r} ignored on a whole-register answer")
+            if isinstance(_sr, dict) and _sr.get("method") == "whole_register":
+                if _meta:
+                    logger.info(
+                        f"[response] meta marker {_meta!r} ignored on a whole-register answer"
+                    )
                 _meta = None
             _verified = state.intermediate_results.get("verification") or {}
+            _reworded = (
+                reword_handover_phrasing(final_response)
+                if _verified.get("grounded") is True
+                and isinstance(_sr, dict)
+                and _sr.get("method") == "whole_register"
+                else None
+            )
+            if _reworded:
+                # BUG-598: exempt from suppression, not from rewording — "no mismatch in the
+                # data you supplied" about the building's own register. Grounded answers only.
+                final_response = _reworded
             _reworded = (
                 reword_handover_phrasing(final_response)
                 if _meta and _verified.get("grounded") is True

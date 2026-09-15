@@ -675,7 +675,7 @@ class DialogueAgent:
                 rewritten,
             )
             return None
-        return rewritten
+        return keep_the_asked_action(latest, rewritten, msgs)
 
     async def _retrieve_ontology_context(
         self, query: str, top_k: int = 5, max_context_items: int = 30
@@ -1777,3 +1777,25 @@ Rewritten response:"""
             logger.warning(f"Persona formatting failed (returning raw): {e}")
 
         return response
+
+
+#: BUG-592: an elliptical follow-up ("what about room 2.01?") inherits the ACTION of the turn it
+#: continues. The rewrite kept the room and the period and dropped "plot", so a chart request
+#: came back as a text reading.
+_ELLIPTICAL_RE = re.compile(r"^\s*(?:and\s+)?(?:what|how)\s+about\b|^\s*and\s+(?:for|in|on)\b", re.I)
+_CHART_RE = re.compile(r"\b(plot|chart|graph|visuali[sz]e|draw)\b", re.I)
+
+
+def keep_the_asked_action(latest: str, rewritten: str, msgs: List[Any]) -> str:
+    """Prefix 'Plot' when an elliptical follow-up continues a chart request the rewrite dropped."""
+    if not _ELLIPTICAL_RE.search(latest or "") or _CHART_RE.search(rewritten or ""):
+        return rewritten
+    prior_user = [
+        (getattr(m, "content", "") or "")
+        for m in (msgs or [])[:-1]
+        if getattr(m, "role", "") == "user"
+    ]
+    if prior_user and _CHART_RE.search(prior_user[-1]):
+        body = re.sub(r"^\s*(?:what|how)\s+is\s+(?:the\s+)?", "", rewritten, flags=re.I)
+        return "Plot the " + body.rstrip(" ?") + "." if body else rewritten
+    return rewritten

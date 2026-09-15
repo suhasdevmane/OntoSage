@@ -127,6 +127,41 @@ def register_facts(rows: List[Dict], question: str, today: Optional[date] = None
     return "\n".join(lines)
 
 
+def passed_due_not_marked(rows: List[Dict], question: str, today: Optional[date]) -> List[str]:
+    """Records past a ``…Due`` date whose recorded status is not 'overdue', for an overdue question.
+
+    BUG-589: with these listed in the facts, the narration still reported only the two
+    records MARKED overdue in 4 of 4 runs. The answer's own completeness is not left to it.
+    """
+    if today is None or not rows or not _OVERDUE_RE.search(question or ""):
+        return []
+    columns = sorted({k for r in rows for k in r.keys()})
+    out: List[str] = []
+    for col in (c for c in columns if _DUE_COLUMN_RE.search(c)):
+        for r in rows:
+            status = _value(r, STATUS).lower()
+            if status in _CLOSED_STATUSES or "overdue" in status:
+                continue
+            raw = _value(r, col)[:10]
+            try:
+                if date.fromisoformat(raw) < today:
+                    out.append(f"{_ident(r)} ({col} {raw}, recorded {status or 'no status'})")
+            except ValueError:
+                continue
+    return sorted(set(out))
+
+
+def completeness_line(narration: str, missing: List[str]) -> str:
+    """A system-written line naming past-due records the narration did not mention, or ""."""
+    unmentioned = [m for m in missing if m.split(" (")[0] not in (narration or "")]
+    if not unmentioned:
+        return ""
+    return (
+        "\n\n**Also past their due date, though not recorded as overdue** (stated by the "
+        "system from the register): " + "; ".join(unmentioned[:MAX_IDS_LISTED]) + "."
+    )
+
+
 _CODE_ONLY_LINE = re.compile(r"^\s*\**\s*[A-Z]{1,8}-\d[\w.-]*(\s*,\s*[\w.-]+)*\s*\**\s*$")
 
 

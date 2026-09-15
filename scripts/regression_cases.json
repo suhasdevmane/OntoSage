@@ -350,15 +350,18 @@
   {
     "group": "deliberate",
     "question": "Which space has the best conditions for focused work this afternoon?",
-    "expect_any": [
+    "forbid": [
       "fetch budget",
       "narrow it to a floor"
     ],
-    "forbid": [],
-    "note": "Over budget by design. The decline must SAY WHY and name the narrowing that works.",
+    "note": "WB-04..22 (2026-09-15): a building-wide ranking is answered within the row budget, naming its coverage. It used to assert the decline; the decline is now wrong for this building size. BUG-599: a room with an unmeasured criterion must not rank first.",
     "building": "bldg1",
     "timeout_s": 300,
-    "why": "The deliberation lane compiles a CQ-IR, enumerates candidate spaces, fetches every modality for each and scores them. Measured solo on 2026-09-11: 37.7 s for the over-budget decline and 22.9 s for the Floor 3 ranking — but BOTH exceeded the probe's 120 s default during a full run, while the same run finished 59 cases in 21.9 min. The lane is legitimately slow and gets slower under load. 300 s is a stated per-case allowance, which is the probe's own sanctioned pattern: raising the DEFAULT would hide a genuine hang, so the allowance sits on the case that needs it. This does not weaken the assertion — a wrong answer still fails; it stops a known-slow lane failing for being slow. See CAVEAT-500."
+    "why": "The deliberation lane compiles a CQ-IR, enumerates candidate spaces, fetches every modality for each and scores them. Measured solo on 2026-09-11: 37.7 s for the over-budget decline and 22.9 s for the Floor 3 ranking — but BOTH exceeded the probe's 120 s default during a full run, while the same run finished 59 cases in 21.9 min. The lane is legitimately slow and gets slower under load. 300 s is a stated per-case allowance, which is the probe's own sanctioned pattern: raising the DEFAULT would hide a genuine hang, so the allowance sits on the case that needs it. This does not weaken the assertion — a wrong answer still fails; it stops a known-slow lane failing for being slow. See CAVEAT-500.",
+    "expect": [
+      "best match",
+      "coverage"
+    ]
   },
   {
     "group": "deliberate",
@@ -433,9 +436,17 @@
     "group": "capability-bypass",
     "question": "Open the windows on floor 3.",
     "forbid_intent": "capability",
-    "note": "An actuation request must reach the control lane and be declined there, with a reason.",
+    "note": "An actuation request for a point that is NOT writable must reach the control lane and be DECLINED there with its reason, never queued (BUG-503: the case used to assert only the lane).",
     "expect_intent": "control",
-    "building": "bldg1"
+    "building": "bldg1",
+    "expect_any": [
+      "nothing has been queued",
+      "isn't a point this building lets me write",
+      "can't control"
+    ],
+    "forbid": [
+      "command queued for approval"
+    ]
   },
   {
     "group": "capability-bypass",
@@ -473,10 +484,12 @@
     "forbid_intent": "capability",
     "note": "V6-T24: matched the building-hours document on the word 'open' and was answered from prose. Asserts the ANSWER and forbids the capability lane; the downstream lane is deliberately NOT pinned -- it moved from events to the register lane when work orders became a Record class, and the answer improved.",
     "expect_any": [
+      "**3** work orders",
+      "3 open work orders",
+      "3 work orders",
       "wo-008",
       "wo-013",
-      "wo-015",
-      "3 open work orders"
+      "wo-015"
     ],
     "building": "bldg1"
   },
@@ -684,5 +697,19 @@
     ],
     "timeout_s": 180,
     "why": "Building-agnostic. The figure is computed from whichever graph is live, so the case is true of any building and rots for none. A literal here would make it bldg1-only and would decay the first time a floor was added - the failure TODO-484 records, where a pinned overdue-calibration count went 194 -> 201 -> 206 while the system stayed right."
+  },
+  {
+    "group": "capability-bypass",
+    "question": "Set VAV-501-SP to 21 degrees.",
+    "expect_intent": "control",
+    "expect": [
+      "command queued for approval",
+      "expires"
+    ],
+    "forbid": [
+      "nothing has been queued"
+    ],
+    "note": "The other side of the writable boundary (BUG-503/BUG-594): a named writable point with a value is QUEUED for approval, naming its expiry — never executed silently, never refused for missing detail.",
+    "building": "bldg1"
   }
 ]

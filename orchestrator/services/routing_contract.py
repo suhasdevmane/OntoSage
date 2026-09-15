@@ -713,6 +713,13 @@ DELIBERATE_RE = re.compile(
     # should-I verb, so "which policy should I read" and "which room is 2.14" stay out.
     r"|\bwhich\s+(?:\w+\s+){0,2}(?:room|zone|space|area|desk|seat|spot|floor)s?\s+"
     r"should\s+i\s+(?:take|book|use|choose|pick|sit|work)\b"
+    # CAVEAT-563: the FILTER shape of the same question. "Which rooms on floor 5 are stuffy
+    # right now?" reached the single-sensor lane, which saw one room's rows and said "no
+    # other floor-5 rooms have recent data" of a floor with 46 instrumented rooms. Plural
+    # space noun + a condition adjective is a question over every room, which is ARBITER's.
+    r"|\bwhich\s+(?:\w+\s+){0,2}(?:rooms|zones|spaces|areas)\b.{0,40}\b(?:are|feel|seem|look)\s+"
+    r"(?:too\s+|very\s+|quite\s+)?(?:stuffy|noisy|loud|humid|damp|dry|dark|bright|cold|chilly|"
+    r"warm|hot|cool|quiet|crowded|busy)\b"
     r"|\brank\s+(?:the\s+)?\w*\s*(?:rooms|zones|spaces|areas)\b"
     r"|\b(?:zone|room|space|area)s?\s+with\s+(?:the\s+)?(?:minimum|maximum|least|most|lowest|highest)\b)",
     re.IGNORECASE,
@@ -965,6 +972,13 @@ WAYFIND_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: BUG-597: routes COMPARED with each other — recorded circulation data, not a way to go.
+ROUTE_COMPARISON_RE = re.compile(
+    r"\b(?:slower|faster|quicker|longer|shorter)\s+than\b|\bfloor\s+pairs?\b"
+    r"|\bcompare\s+(?:the\s+)?(?:routes?|travel\s+times?)\b",
+    re.IGNORECASE,
+)
+
 
 #: Equipment classes whose points a plant question names. These are BRICK vocabulary, not
 #: building literals -- every Brick building that has an air handler types it brick:AHU -- so
@@ -1156,6 +1170,11 @@ def _r_wayfinding_spatial(c: _Ctx) -> Optional[str]:
     if c.intent not in _WEAK_INTENTS + ("floor_plan",):
         return None
     if c.sr.is_control_command(c.query):
+        return None
+    # BUG-597: "On which floor pairs is the step-free route slower than the stairs?" compares
+    # RECORDED travel times; "step-free route" matched and the route finder answered "No
+    # staircase spaces found." A comparison between routes asks for data, not directions.
+    if ROUTE_COMPARISON_RE.search(c.query):
         return None
     return "spatial_query" if WAYFIND_RE.search(c.query) else None
 

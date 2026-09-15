@@ -75,7 +75,13 @@ def test_A10_latest_is_the_newest_reading_not_the_last_row():
     happen to be ascending, and this lane's are descending by design."""
     got = AGENT._summarize_readings(DESCENDING)["Room5.01_CO2"]
     assert got["latest"] == TRUE_LATEST, "the OLDEST reading was reported as the latest"
-    assert got["latest_at"] == "2026-09-11 23:00:00"
+    # BUG-591: shown on the building's clock; the NEWEST row's stamp is the one converted.
+    from datetime import datetime
+
+    from orchestrator.services.requested_interval import building_tz, to_local
+
+    expected = to_local(datetime(2026, 9, 11, 23, 0, 0), building_tz()).strftime("%Y-%m-%d %H:%M:%S")
+    assert got["latest_at"].startswith(expected)
 
 
 def test_A10_row_order_does_not_change_any_statistic():

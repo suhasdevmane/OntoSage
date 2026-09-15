@@ -44,6 +44,28 @@ def _entity_value(entities: Any, etype: str, default: str = "") -> str:
     return default
 
 
+def _squash(text: str) -> str:
+    return re.sub(r"[^a-z0-9]", "", (text or "").lower())
+
+
+def point_and_value_from_text(question: str, writable_caps: Any) -> tuple:
+    """(point local name, value) read from the question, or ("", "") for what is absent (BUG-594).
+
+    A point counts only when its FULL local name appears in the question (separators ignored),
+    so "set the temperature" never matches every setpoint. The value is the number following
+    "to", "at" or "=" — a sentence's other numbers (a room, a floor) are not a setpoint.
+    """
+    squashed = _squash(question)
+    point = ""
+    for cap in writable_caps or []:
+        local = str(cap).rsplit(":", 1)[-1].rsplit("#", 1)[-1]
+        if len(_squash(local)) >= 4 and _squash(local) in squashed and len(local) > len(point):
+            point = local
+    m = re.search(r"\b(?:to|at)\s+(-?\d+(?:\.\d+)?)|=\s*(-?\d+(?:\.\d+)?)", question or "", re.IGNORECASE)
+    value = (m.group(1) or m.group(2)) if m else ""
+    return point, value
+
+
 try:
     from orchestrator.services.actuation.approval_store import get_approval_store
     from orchestrator.services.actuation.registry import get_actuation_registry
@@ -164,6 +186,16 @@ class ControlAgent:
         entities = state.intermediate_results.get("entities", [])
         device = _entity_value(entities, "device")
         target_value = _entity_value(entities, "target_value")
+
+        # FROM THE WORDS, WHEN THE CLASSIFIER GAVE NOTHING (BUG-594). "Set VAV-501-SP to 21
+        # degrees." names a writable point and a value, and was answered "I need which writable
+        # point and the value to set" because a contract-routed turn carries no entities. The
+        # point is matched against the building's OWN writable names, never guessed.
+        question = state.messages[-1].content if state.messages else ""
+        if not device or not str(target_value or "").strip():
+            named_point, named_value = point_and_value_from_text(question, writable_caps)
+            device = device or named_point
+            target_value = target_value if str(target_value or "").strip() else named_value
 
         # A NAMED POINT AND A VALUE, OR NOTHING IS QUEUED (BUG-548).
         #

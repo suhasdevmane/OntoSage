@@ -482,6 +482,25 @@ class SQLAgent:
             #: check that detects hitting it cannot drift apart — that drift is how a
             #: truncated set came to be reported as a count (BUG-479).
             _row_limit = _rows_per_uuid
+            # BUG-591: a BOUNDED interval ("yesterday") is read whole where the budget allows.
+            # The fixed 1,000 cut a one-room day report to its newest ~8 h (disclosed as "a
+            # slice", and once turned into a recommendation to "increase the row limit",
+            # BUG-506). 120 rows/h covers a 30-second cadence; the row budget still bounds it.
+            if start_date and end_date and _row_limit >= DEFAULT_ROWS_PER_UUID:
+                try:
+                    from orchestrator.services.requested_interval import interval_hours
+
+                    _hours = interval_hours(start_date, end_date) or 0.0
+                    if _hours > 0:
+                        _row_limit = int(
+                            min(
+                                max(_row_limit, _hours * 120),
+                                MAX_FETCH_ROWS // max(1, len(uuids)),
+                            )
+                        )
+                        _row_limit = max(_row_limit, _rows_per_uuid)
+                except Exception as _ri_err:  # the default read still answers
+                    logger.debug(f"[sql] interval row plan skipped: {_ri_err}")
             #: Did any group come back exactly full? Then `all_data` is a TRUNCATED sample
             #: and its length is not a count of what exists.
             rows_capped = False
@@ -1330,11 +1349,32 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
 
         sensor_context = self._sensor_context(sensor_metadata)
 
+        # STATISTICS OVER EVERY ROW, computed here (BUG-592). The prompt lists only the newest
+        # ten rows, and a period question was answered from them: "over the past 24 hours ...
+        # lowest 842 ppm at 17:23" while the store held 704 ppm at 04:08.
+        all_rows_summary = ""
+        if len(results) > 10:
+            try:
+                from orchestrator.services.series_summary import summarise_series
+
+                all_rows_summary, _ = summarise_series(results, sensor_metadata or {}, _tz)
+            except Exception as _ss_err:  # the rows still answer, less completely
+                logger.debug(f"[sql_agent] series summary skipped: {_ss_err}")
+        stats_block = (
+            "\nStatistics over ALL "
+            + str(len(results))
+            + " records (computed by the system; the listed records are only the newest):\n"
+            + all_rows_summary
+            + "\n"
+            if all_rows_summary
+            else ""
+        )
+
         # Generate natural language summary
         summary_prompt = f"""Convert these SQL query results into a natural language response.
 
 User Query: {user_query}
-{sensor_context}
+{sensor_context}{stats_block}
 Results:
 {result_text}
 
@@ -1348,6 +1388,9 @@ Generate a concise, natural response that:
    there, say the unit is not recorded - never invent one.
 6. States times exactly as given above, which are already the building's local time -
    never convert them and never label them UTC.
+7. When statistics over all records are given above, every average, minimum, maximum,
+   range and period comes from them, and the period is the one they state (from - to),
+   not the question's wording.
 
 Response:"""
 
