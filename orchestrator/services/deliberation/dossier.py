@@ -402,6 +402,11 @@ def _allowed_numbers(dossier: EvidenceDossier) -> set:
         + [r.floor for r in dossier.ranked]
         + [r.space for r in dossier.ranked]
         + [e.space for e in dossier.evidence]
+        # BUG-588: the basis label ("mean over 2026-09-14") and the latest-reading stamp are
+        # dossier content too; quoting the date tripped the guard on "2026" and the whole
+        # ranking was replaced by a recheck template.
+        + [str(getattr(e, "basis", "") or "") for e in dossier.evidence]
+        + [str(getattr(e, "latest", "") or "") for e in dossier.evidence]
         + [x.space for x in dossier.coverage_excluded]
         + [x.reason for x in dossier.coverage_excluded]
         + [ec.detail for ec in dossier.event_checks]

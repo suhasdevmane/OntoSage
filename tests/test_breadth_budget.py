@@ -152,3 +152,31 @@ def test_a_building_wide_afternoon_window_is_read_whole():
     """WB-12: never shrink the sample to fit — the latest-n fetch would relabel a window mean."""
     hours, limit, rows = px.fetch_plan(px.TimeBasis.WINDOW, 6.0, 234, 4)
     assert limit == 360 and rows <= px.MAX_FETCH_ROWS
+
+
+# ── CAVEAT-578: a window mean covers its window, or says what it covered ─────────
+
+
+def test_a_floor_scoped_day_is_read_whole():
+    hours, limit, rows = px.fetch_plan(px.TimeBasis.WINDOW, 24.0, 40, 2)
+    assert limit == 1440 and rows <= px.MAX_FETCH_ROWS  # was 500: the newest ~8.3 h
+
+
+def test_a_day_too_wide_to_read_whole_falls_back_to_the_bounded_read():
+    _h, limit, rows = px.fetch_plan(px.TimeBasis.WINDOW, 24.0, 234, 4)
+    assert limit == px.DEFAULT_PER_UUID_LIMIT and rows <= px.MAX_FETCH_ROWS
+
+
+def test_a_cut_series_is_disclosed_and_a_whole_one_is_not():
+    whole = [(f"2026-09-14 {h:02}:00:00", 1.0) for h in range(24)]
+    cut = [(f"2026-09-14 {h:02}:00:00", 1.0) for h in range(16, 24)]
+    assert px.window_coverage_note({"a": whole}, 24, "2026-09-14 00:00:00", 24.0) is None
+    note = px.window_coverage_note({"a": whole, "b": cut}, 8, "2026-09-14 00:00:00", 24.0)
+    assert note and "1 of 2" in note and "newest 8 readings" in note
+    # a short series that simply has few readings was not cut by the read
+    assert px.window_coverage_note({"b": cut}, 500, "2026-09-14 00:00:00", 24.0) is None
+
+
+def test_the_executor_attaches_the_coverage_note():
+    source = inspect.getsource(px.execute)
+    assert "window_coverage_note(" in source and "_coverage_note" in source

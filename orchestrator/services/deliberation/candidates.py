@@ -49,6 +49,32 @@ _FOR_PEOPLE_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: F-02: a question that NAMES a space people do not occupy is asking about exactly those
+#: spaces ("is the server room too hot?", "which plant room is warmest?"), so the default
+#: exclusion below must not remove them. Words derived from the kinds plus common synonyms.
+_NAMES_NON_OCCUPIABLE_RE = re.compile(
+    r"\b(?:rest\s*rooms?|toilets?|wcs?|bathrooms?|washrooms?|mechanical|plant\s*rooms?|plant|"
+    r"electrical\s*rooms?|switch\s*rooms?|telecoms?|telecommunications?|comms\s*rooms?|servers?|"
+    r"server\s*rooms?|data\s*cent(?:er|re)s?|storage|store\s*rooms?|stores|janitor\w*|cleaners?|"
+    r"plumbing|shafts?|lifts?|elevators?|stair\w*|utility|equipment\s*rooms?|loading\s*docks?|"
+    r"parking|car\s*park|waste|bin\s*stores?|risers?)\b",
+    re.IGNORECASE,
+)
+
+
+def purpose_is_occupant(query: str) -> bool:
+    """True unless the question itself names a space people do not occupy (F-02).
+
+    WB-17 excluded restrooms, plant and server rooms only when the question said "work",
+    "sit" or similar, so "which room has the best air quality?" ranked a server room third
+    and "which rooms are the stuffiest?" a telecoms room second — comfort words describe
+    places for people whether or not the question says so. The exclusion is recorded in
+    the ledger and shown with the answer, so a reader who did mean every space can see
+    what was left out and ask about it by name.
+    """
+    return not _NAMES_NON_OCCUPIABLE_RE.search(query or "")
+
+
 #: metres charged for changing floors when measuring "near X" across floors —
 #: a documented convention (stairs/lift detour), not a claim about the building
 FLOOR_CHANGE_PENALTY_M = 30.0
@@ -122,7 +148,9 @@ def enumerate_candidates(
     soft = [c.modality for c in cqir.constraints if c.hardness == Hardness.SOFT]
 
     candidates: List[Candidate] = []
-    _for_people = bool(_FOR_PEOPLE_RE.search(getattr(cqir, "raw_query", "") or ""))
+    _raw_query = getattr(cqir, "raw_query", "") or ""
+    _for_work = bool(_FOR_PEOPLE_RE.search(_raw_query))
+    _for_people = _for_work or purpose_is_occupant(_raw_query)
     for s in sorted(scoped, key=lambda x: x.space_iri):
         if s.space_iri in seen:
             continue
@@ -149,7 +177,12 @@ def enumerate_candidates(
                 LedgerEntry(
                     s.space_iri,
                     s.label or _local(s.space_iri),
-                    f"not a place to work or sit ({', '.join(sorted(_kinds & NON_OCCUPIABLE_KINDS))})",
+                    (
+                        "not a place to work or sit"
+                        if _for_work
+                        else "not an occupied space — name it to include it"
+                    )
+                    + f" ({', '.join(sorted(_kinds & NON_OCCUPIABLE_KINDS))})",
                 )
             )
             continue

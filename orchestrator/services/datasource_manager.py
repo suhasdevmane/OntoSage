@@ -195,6 +195,55 @@ class DataSourceManager:
             if owns:
                 await client.aclose()
 
+    async def _already_referenced(self, spec: DataSourceSpec) -> set:
+        """Point locals that some OTHER graph already gives a timeseries reference (V12-34).
+
+        A toggle adds a series to a sensor that has none; it must not give a declared sensor a
+        second one. BUG-531: six floor-level sensors carried a reference from the building's
+        own TTL AND one from their data source's graph, two uuids in the same table, and the
+        SQL lane merged both series into one answer. The file-declared reference wins, because
+        the ontology is the source of truth; every ``urn:ontosage:ds:`` graph is excluded from
+        the check, so two sources can never each defer to the other and leave a sensor bare.
+
+        Returns an empty set when the graph cannot be asked — every point is then registered,
+        which is the behaviour before this check, logged so the gap is visible.
+        """
+        if _httpx is None or not spec.points:
+            return set()
+        ns = self._bldg_ns or ""
+        values = " ".join(f"<{ns}{p.local}>" for p in spec.points)
+        query = (
+            "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
+            f"SELECT DISTINCT ?s WHERE {{ VALUES ?s {{ {values} }} "
+            "GRAPH ?g { ?s ref:hasExternalReference ?r } ?r ref:hasTimeseriesId ?u . "
+            'FILTER(!STRSTARTS(STR(?g), "urn:ontosage:ds:")) }'
+        )
+        base = (self._graphdb_url or "").rstrip("/")
+        owns = self._client is None
+        client = self._client or _httpx.AsyncClient(timeout=60.0)
+        try:
+            resp = await client.post(
+                f"{base}/repositories/{self._repository}",
+                content=query.encode("utf-8"),
+                headers={
+                    "Content-Type": "application/sparql-query",
+                    "Accept": "application/sparql-results+json",
+                },
+            )
+            if resp.status_code != 200:
+                raise RuntimeError(f"HTTP {resp.status_code}")
+            bindings = resp.json().get("results", {}).get("bindings", [])
+            return {b["s"]["value"][len(ns) :] for b in bindings if "s" in b}
+        except Exception as e:
+            logger.warning(
+                f"[datasources] could not check existing references for '{spec.id}' "
+                f"({type(e).__name__}: {e}); registering every point"
+            )
+            return set()
+        finally:
+            if owns:
+                await client.aclose()
+
     async def _clear_graph(self, graph_uri: str) -> bool:
         if _httpx is None:
             logger.warning("[datasources] httpx not installed — cannot reach GraphDB")
@@ -229,12 +278,22 @@ class DataSourceManager:
 
         self._resolve_settings()
         graph = spec.graph_uri()
-        ttl = self.build_point_ttl(spec)
         # A source with no points (e.g. text_reports) still toggles on; there is
         # simply nothing to register in the graph.
         ok = True
-        if spec.points:
-            ok = await self._put_graph(graph, ttl)
+        deferred = sorted(await self._already_referenced(spec))
+        if deferred:
+            logger.info(
+                f"[datasources] '{source_id}': {len(deferred)} point(s) already have a "
+                f"timeseries reference elsewhere and are not given a second: {deferred}"
+            )
+        own = [p for p in spec.points if p.local not in set(deferred)]
+        if own:
+            ok = await self._put_graph(graph, self.build_point_ttl(spec.model_copy(update={"points": own})))
+        elif spec.points:
+            # Every point is declared elsewhere: the graph must hold nothing, including
+            # references an earlier enable wrote before this check existed.
+            ok = await self._clear_graph(graph)
 
         if ok:
             self._state[source_id] = {

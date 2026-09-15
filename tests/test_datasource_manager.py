@@ -211,3 +211,53 @@ def test_regenerate_updates_state(tmp_path: Path):
     assert res["ok"] and res["rows"] == 96
     st = {s["id"]: s for s in mgr.status()}
     assert st["occupancy"]["last_generated_at"] is not None
+
+
+# ── V12-34: a toggle never gives a declared sensor a second series ─────────────
+
+
+class _GraphWithReference(_FakeClient):
+    """A GraphDB where some point already carries a timeseries reference in another graph."""
+
+    def __init__(self, referenced, **kw):
+        super().__init__(**kw)
+        self.referenced = referenced
+        self.queries = []
+
+    async def post(self, url, content=None, headers=None):
+        self.queries.append(content.decode("utf-8"))
+        ns = "http://abacwsbuilding.cardiff.ac.uk/abacws#"
+        body = {"results": {"bindings": [{"s": {"value": ns + r}} for r in self.referenced]}}
+        resp = _FakeResp(200)
+        resp.json = lambda: body
+        return resp
+
+
+@pytest.mark.asyncio
+async def test_a_point_the_ontology_already_references_is_not_given_a_second_series(tmp_path):
+    client = _GraphWithReference(["Occupancy_Sensor_Floor5"])
+    mgr = _manager(tmp_path, client)
+    res = await mgr.enable("occupancy")
+    assert res["ok"] and mgr.is_enabled("occupancy")
+    # the only point is declared elsewhere: the source graph is CLEARED, not filled
+    assert client.puts == []
+    assert len(client.deletes) == 1 and "urn%3Aontosage%3Ads%3Aoccupancy" in client.deletes[0]["url"]
+    # and the check ignored every data-source graph, so two sources cannot defer to each other
+    assert 'FILTER(!STRSTARTS(STR(?g), "urn:ontosage:ds:"))' in client.queries[0]
+
+
+@pytest.mark.asyncio
+async def test_an_unreferenced_point_is_still_registered(tmp_path):
+    client = _GraphWithReference([])
+    mgr = _manager(tmp_path, client)
+    await mgr.enable("occupancy")
+    assert len(client.puts) == 1
+    assert b"Occupancy_Sensor_Floor5" in client.puts[0]["content"]
+
+
+@pytest.mark.asyncio
+async def test_an_unreachable_graph_registers_every_point_as_before(tmp_path):
+    client = _FakeClient()  # no post(): the check fails and must not block the toggle
+    mgr = _manager(tmp_path, client)
+    res = await mgr.enable("occupancy")
+    assert res["ok"] and len(client.puts) == 1

@@ -103,11 +103,60 @@ def fetch_plan(basis: Any, window_hours: Optional[float], n_candidates: int, n_m
         hours, limit = 72.0, DEFAULT_PER_UUID_LIMIT
     else:
         hours = float(window_hours or 24.0)
-        # one-minute cadence at most; a short window never asks for more than it can hold
-        limit = int(min(DEFAULT_PER_UUID_LIMIT, max(60, hours * 60)))
-        # NOT shrunk to fit: the adapter keeps the LATEST n rows per series, so a smaller n
-        # would turn a window mean into a last-hour mean under the same label (WB-12).
+        # CAVEAT-578: the WHOLE window at one-minute cadence, where the row budget allows. The
+        # limit used to be min(500, hours*60), so a 24 h or "yesterday" mean was the newest
+        # ~8.3 h of it under a "mean over" label. A short window never asks for more than it
+        # can hold.
+        limit = int(min(MAX_WINDOW_PER_UUID, max(60, hours * 60)))
+        if n_candidates * max(1, n_modalities) * limit > MAX_FETCH_ROWS:
+            # Too wide to read whole: fall back to the old per-series read. The adapter keeps
+            # the LATEST n rows, so the answer discloses what each mean covered
+            # (window_coverage_note) rather than presenting it as the whole window (WB-12).
+            limit = min(limit, DEFAULT_PER_UUID_LIMIT)
     return hours, limit, n_candidates * max(1, n_modalities) * limit
+
+
+#: Three days at one-minute cadence — the longest window read whole per series.
+MAX_WINDOW_PER_UUID = 4320
+
+
+def window_coverage_note(
+    series_by_uuid: Dict[str, Series], limit: int, window_start: str, window_hours: float,
+    tz_name: Optional[str] = None,
+) -> Optional[str]:
+    """Say so when a window mean was computed from only the newest part of the window.
+
+    A series that returned exactly ``limit`` rows AND whose first reading is well after the
+    window opened was cut by the per-series read, not by the data. None when every series
+    covers its window.
+    """
+    from datetime import datetime, timedelta
+
+    from orchestrator.services.requested_interval import to_local
+
+    try:
+        opened = datetime.fromisoformat(str(window_start)[:19])
+    except ValueError:
+        return None
+    slack = timedelta(hours=max(0.5, window_hours * 0.1))
+    cut: List[datetime] = []
+    for series in series_by_uuid.values():
+        if len(series) < limit or not series:
+            continue
+        try:
+            first = datetime.fromisoformat(str(series[0][0])[:19])
+        except ValueError:
+            continue
+        if first > opened + slack:
+            cut.append(first)
+    if not cut:
+        return None
+    earliest = to_local(min(cut), tz_name).strftime("%H:%M")
+    return (
+        f"**Partial window.** {len(cut)} of {len(series_by_uuid)} sensor series hold more "
+        f"readings than one request reads, so their means use the newest {limit} readings "
+        f"(from about {earliest} building time), not the whole {window_hours:g} h asked for."
+    )
 
 Forecaster = Callable[[Series, float], Awaitable[Tuple[float, str]]]
 
@@ -490,7 +539,18 @@ async def execute(
         agg_window_note = "window mean"
         if cqir.time.is_resolved_interval:
             fetch_start, fetch_end = cqir.time.resolved_start, cqir.time.resolved_end
-            agg_window_note = f"mean over {fetch_start[:10]}"
+            # BUG-588: the interval is in store time (UTC); the day it names is the building's.
+            # A BST "yesterday" starts at 23:00 UTC the day before, so fetch_start[:10] labelled
+            # 14 September's mean "mean over 2026-09-13".
+            try:
+                from datetime import datetime as _dt
+
+                from orchestrator.services.requested_interval import building_tz, to_local
+
+                _day = to_local(_dt.fromisoformat(str(fetch_start)[:19]), building_tz()).date()
+                agg_window_note = f"mean over {_day.isoformat()}"
+            except Exception:
+                agg_window_note = f"mean over {fetch_start[:10]}"
     else:
         agg_window_note = "recent mean (last readings)"
 
@@ -505,6 +565,19 @@ async def execute(
         per_uuid_limit=_plan_limit,
     )
     timings["fetch_ms"] = int((time.time() - t0) * 1000)
+    _coverage_note: Optional[str] = None
+    if cqir.time.basis == TimeBasis.WINDOW:
+        try:
+            from datetime import timedelta
+
+            from orchestrator.services.requested_interval import STAMP, building_tz
+
+            _opened = fetch_start or (store_now() - timedelta(hours=fetch_window)).strftime(STAMP)
+            _coverage_note = window_coverage_note(
+                series_by_uuid, _plan_limit, _opened, float(fetch_window), building_tz()
+            )
+        except Exception as exc:  # the disclosure must never cost the answer
+            logger.debug(f"[executor] window coverage check skipped: {exc}")
 
     values: Dict[str, Dict[str, float]] = {}
     evidence: List[EvidenceCell] = []
@@ -682,6 +755,8 @@ async def execute(
             ] + list(event_notes)
             logger.info(f"[executor] operational ranking empty on provenance — scenario mode for {_sim}")
     timings["score_ms"] = int((time.time() - t0) * 1000)
+    if _coverage_note and score.ranked:
+        event_notes = [_coverage_note] + list(event_notes)
 
     plan_hash = hashlib.sha256(
         (

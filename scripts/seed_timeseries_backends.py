@@ -246,37 +246,79 @@ def register(which: List[str]) -> List[str]:
     path = resolve_building_file(_env().get("BUILDING_ID", ""), "database_registry.yaml")
     if path is None:
         path = REPO / "input" / "database_registry.yaml"
-    data = yaml.safe_load(Path(path).read_text(encoding="utf-8")) or {}
-    dbs = data.setdefault("databases", {})
-    added = []
-    env = _env()
-    if "timescale" in which and "timescaledb" not in dbs:
-        dbs["timescaledb"] = {
-            "type": "timescaledb",
-            "host": "timescaledb",
-            "port": 5432,
-            "database": env.get("TIMESCALE_DB", "sensordb"),
-            "user": env.get("TIMESCALE_USER", "ontosage"),
-            "password": env.get("TIMESCALE_PASSWORD", "ontosage_ts_secret"),
-            "table": TS_TABLE,
-            "nature": "synthetic",
-            "description": "TimescaleDB hypertable (uuid, time, value) — TODO-143 fixture",
-        }
-        added.append("timescaledb")
-    if "cassandra" in which and "cassandra" not in dbs:
-        dbs["cassandra"] = {
-            "type": "cassandra",
-            "host": "cassandra",
-            "port": 9042,
-            "keyspace": CQL_KEYSPACE,
-            "table": CQL_TABLE,
-            "nature": "synthetic",
-            "description": "Cassandra CQL table (uuid, timestamp, value) — TODO-143 fixture",
-        }
-        added.append("cassandra")
-    if added:
-        Path(path).write_text(yaml.safe_dump(data, sort_keys=False), encoding="utf-8")
-    return added
+    text = Path(path).read_text(encoding="utf-8")
+    dbs = (yaml.safe_load(text) or {}).get("databases") or {}
+    blocks = registry_blocks(which, existing=set(dbs))
+    if blocks:
+        append_registry_blocks(Path(path), text, blocks)
+    return [name for name, _ in blocks]
+
+
+#: BUG-541. The registry is a hand-documented file: comments explain nature, provenance and
+#: placeholder syntax, and credentials are ${VAR:-default} placeholders resolved at load
+#: time. Loading it and re-dumping with yaml.safe_dump deleted 786 comment lines and wrote
+#: `password: ontosage_ts_secret` as a literal. Entries are therefore APPENDED AS TEXT, with
+#: placeholders — the file is never re-serialised.
+_REGISTRY_TEMPLATES = {
+    "timescaledb": (
+        "timescale",
+        """
+  # ── TimescaleDB fixture (TODO-143) — appended by seed_timeseries_backends.py ──
+  timescaledb:
+    type: timescaledb
+    host: "${{TIMESCALE_HOST:-timescaledb}}"
+    port: "${{TIMESCALE_PORT:-5432}}"
+    database: "${{TIMESCALE_DB:-sensordb}}"
+    user: "${{TIMESCALE_USER:-ontosage}}"
+    password: "${{TIMESCALE_PASSWORD}}"
+    table: {table}
+    nature: synthetic
+    description: "TimescaleDB hypertable (uuid, time, value) — TODO-143 fixture"
+""",
+    ),
+    "cassandra": (
+        "cassandra",
+        """
+  # ── Cassandra fixture (TODO-143) — appended by seed_timeseries_backends.py ──
+  cassandra:
+    type: cassandra
+    host: "${{CASSANDRA_HOST:-cassandra}}"
+    port: "${{CASSANDRA_PORT:-9042}}"
+    keyspace: {keyspace}
+    table: {table}
+    nature: synthetic
+    description: "Cassandra CQL table (uuid, timestamp, value) — TODO-143 fixture"
+""",
+    ),
+}
+
+
+def registry_blocks(which: List[str], existing: set) -> List[Tuple[str, str]]:
+    """(name, text) for each requested backend not already registered."""
+    out = []
+    for name, (flag, template) in _REGISTRY_TEMPLATES.items():
+        if flag in which and name not in existing:
+            out.append((name, template.format(table=TS_TABLE if name == "timescaledb" else CQL_TABLE,
+                                              keyspace=CQL_KEYSPACE)))
+    return out
+
+
+def append_registry_blocks(path: Path, original: str, blocks: List[Tuple[str, str]]) -> None:
+    """Append entry text under `databases:` without touching a byte of what is there.
+
+    Requires `databases:` to be the file's LAST top-level key (true of every registry here),
+    so indented text appended at the end belongs to it. Refuses otherwise rather than guess.
+    """
+    import re as _re
+
+    tops = [m.group(1) for m in _re.finditer(r"^([A-Za-z_][\w-]*):", original, _re.MULTILINE)]
+    if not tops or tops[-1] != "databases":
+        raise SystemExit(
+            f"[seed] {path}: 'databases' is not the last top-level key ({tops}); add the entry "
+            "by hand rather than let this script restructure a documented file"
+        )
+    suffix = "" if original.endswith("\n") else "\n"
+    path.write_text(original + suffix + "".join(text for _, text in blocks), encoding="utf-8")
 
 
 def main(argv: List[str]) -> int:

@@ -1,0 +1,9 @@
+# V12-32 owed live re-asks, first pass only (2026-09-15). One question per line.
+# BUG-517: an ARBITER question naming yesterday; read the generated window from the log and check it against local midnight
+Which room on floor 5 was the warmest yesterday?
+# BUG-183: the same question WITHOUT 'yesterday' (must not clarify, must not reuse yesterday's window)
+Which room on floor 5 was the warmest?
+# BUG-521: a narrow-table report over two modalities; no cross-modality average may appear
+Give me a report on the temperature and CO2 on floor 2 yesterday.
+# BUG-529: lay terms that lived only in the stale schema graph
+How many handovers are recorded?

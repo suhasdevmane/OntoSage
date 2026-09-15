@@ -1464,3 +1464,20 @@ bypass sent "where's the coolest place to work?" to a register that records no t
 * Unsafe defaults on side-effecting lanes are the same class of defect: a command with no
   target, an alert with no threshold and a report from a question each wrote something
   (BUG-548, BUG-552). A write path needs its inputs present, not defaulted.
+
+## 106. 108 of 108 "OK" held two misrepresentations — the status code grades delivery, not truth (2026-09-15)
+
+The 36-question demo script ran 3x through /v1 with no failure, timeout or decline marker. Reading
+the answers against the source registers found: a work-order count that changed every run and once
+declared all 9 "overdue" from a register holding no due date (BUG-581); an evacuation chair listed as
+a defective refuge point; a "WHO threshold" and three different "standard comfort ranges" for one
+question (BUG-582). The rows handed to the model were right every time.
+
+**Rules.**
+* A rehearsal result is graded by reading each answer against the store, and by comparing the
+  runs with each other: the same question giving different facts is a failure even if every run
+  "looks right".
+* Counting, filtering by kind and date judgements over handed-over rows belong in code; the prompt
+  gets the computed facts. An instruction ("never re-derive status from dates") is not enforcement.
+* A narration prompt that asks "is this compliant with standards?" without supplying any standard
+  asks the model to invent one.

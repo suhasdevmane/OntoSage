@@ -1,0 +1,3 @@
+# BUG-524/525: two-turn room switch; turn 2 must be about room 2.01 with no chart carried from 5.01
+Plot the CO2 in room 5.01 over the last 24 hours.
+What about room 2.01?

@@ -385,3 +385,6 @@ _ask.sh
 # Credentials must never ride along in a commit (found untracked in docs/ on 2026-09-09)
 docs/node_credentials.json
 *_credentials.json
+
+# V12-29: the sealed Gate A set stays out of history until its single run (hash is committed)
+tasks/gate_a/sealed_set.jsonl

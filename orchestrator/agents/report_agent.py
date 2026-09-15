@@ -305,7 +305,11 @@ class ReportAgent:
         overview = {
             "building": bctx.name,
             "report_type": rtype.value,
-            "generated_at": datetime.now(ZoneInfo(bctx.timezone)).isoformat(),
+            # BUG-586: an ISO offset ("+01:00") was narrated as "CET" for a building on BST.
+            # The zone's own abbreviation is stated so there is nothing to guess.
+            "generated_at": datetime.now(ZoneInfo(bctx.timezone)).strftime(
+                "%Y-%m-%d %H:%M %Z (building local time)"
+            ),
             "sensor_count": len(sensors),
             "data_points": len(records),
             "data_points_are_complete": not capped,
