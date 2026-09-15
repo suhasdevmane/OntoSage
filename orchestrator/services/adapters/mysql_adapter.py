@@ -222,6 +222,12 @@ class MySQLAdapter(DatabaseAdapter):
 
     def validate_query(self, sql: str) -> bool:
         """Ensure query is SELECT-only and contains no dangerous keywords."""
+        if not sql or not isinstance(sql, str):
+            raise ValueError(
+                "No query was built. build_timeseries_query() returns None when it cannot "
+                "build one — most often because get_columns() has not run, so no uuid is "
+                "yet known to be valid."
+            )
         sql_stripped = sql.strip()
         # A parenthesized leading subquery — e.g. "(SELECT ...) UNION ALL (SELECT ...)",
         # the shape generated for multi-UUID wide-table fetches — is valid read-only SQL.

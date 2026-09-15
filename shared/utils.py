@@ -6,6 +6,7 @@ import hashlib
 import json
 import logging
 import os
+import re
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -38,9 +39,61 @@ for _h in logging.getLogger().handlers:
     _h.addFilter(_trace_filter)
 
 
+class _NoSilentFailureFilter(logging.Filter):
+    """Refuse to emit a warning or error that says nothing (V12-19, CAVEAT-415).
+
+    62 WARNING lines in six hours ended in a colon and told you nothing. 52 were the
+    capability lane abandoning the ontology on a SPARQL timeout — roughly 11% of capability
+    answers leaving the TTL-first path with no record of why, invisible precisely because
+    the line was empty.
+
+    `describe_exception()` fixes a call site. This fixes the OTHER 871, and every one not
+    yet written: an f-string interpolating a message-less exception (`httpx.ReadTimeout`,
+    `asyncio.TimeoutError`, a bare `Exception()`) produces a line ending in `: ` or `:`,
+    and a filter can see that after formatting where no reviewer can see it before.
+
+    It cannot recover the exception class — that information is gone by the time the string
+    exists — but it makes the emptiness VISIBLE, which is the whole difference between a
+    log nobody can act on and a log that says where to look. Only WARNING and above: an
+    empty debug line costs nothing and filtering every record would not be free.
+    """
+
+    #: A formatted message that is nothing but punctuation and whitespace after its last
+    #: colon. `"GraphDB retrieval failed:"` and `"amenity fetch failed, deferring to KB: "`
+    #: are the measured shapes.
+    _TRAILING = re.compile(r":\s*$")
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if record.levelno < logging.WARNING:
+            return True
+        try:
+            msg = record.getMessage()
+        except Exception:  # pragma: no cover - a broken %-format is another bug
+            return True
+        if msg.strip() and not self._TRAILING.search(msg):
+            return True
+        record.msg = (
+            (msg.rstrip() or "(a warning was logged with no message at all)")
+            + " <NO DETAIL — the exception carried no message. Wrap it in"
+            " shared.utils.describe_exception() to record its class.>"
+        )
+        record.args = ()
+        return True
+
+
+_NO_SILENT_FAILURE = _NoSilentFailureFilter()
+
+
 def get_logger(name: str) -> logging.Logger:
-    """Get a logger instance"""
-    return logging.getLogger(name)
+    """Get a logger instance.
+
+    Every logger from here carries the empty-message filter, so a failure cannot be
+    reported as silence no matter which of the 871 bare `{e}` interpolations produced it.
+    """
+    logger = logging.getLogger(name)
+    if not any(isinstance(f, _NoSilentFailureFilter) for f in logger.filters):
+        logger.addFilter(_NO_SILENT_FAILURE)
+    return logger
 
 
 def generate_conversation_id() -> str:

@@ -144,6 +144,12 @@ class SQLiteAdapter(DatabaseAdapter):
 
     def validate_query(self, sql: str) -> bool:
         """SELECT-only safety check."""
+        if not sql or not isinstance(sql, str):
+            raise ValueError(
+                "No query was built. build_timeseries_query() returns None when it cannot "
+                "build one — most often because get_columns() has not run, so no uuid is "
+                "yet known to be valid."
+            )
         sql_upper = sql.upper().strip()
         if not (
             sql_upper.startswith("SELECT")

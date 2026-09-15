@@ -24,6 +24,31 @@ Ask a follow-up — *"and what about humidity there?"* — and it remembers you 
 
 ---
 
+## Prerequisites
+
+> **`docker-compose up -d` is the design goal, and it is not yet the whole truth.** Where a
+> host dependency exists, it belongs here rather than in a newcomer's afternoon.
+
+| What | Why | How to check |
+|---|---|---|
+| **Docker Desktop / Engine + Compose v2** | Every service except MySQL runs in compose | `docker compose version` |
+| **MySQL on the HOST, port 3306, database `sensordb`** | The compose MySQL service is **commented out**; the orchestrator reaches the host via `host.docker.internal:3306`. Without it every time-series answer returns no rows while the graph answers normally — which reads as a data gap rather than a missing prerequisite | `mysql -h 127.0.0.1 -P 3306 -e "SHOW DATABASES"` |
+| **Ollama on the host, port 11434** | Only when `MODEL_PROVIDER=local` (the default). `gpt-oss:20b` is the primary model | `curl -s http://127.0.0.1:11434/api/tags` |
+| **~16 GB GPU VRAM** | For `gpt-oss:20b` to sit 100% on the GPU. CPU inference works and is roughly 6× slower | `nvidia-smi` |
+| **`.env`** | Copy `.env.example` and set the four values `STRICT_SECRETS` refuses to boot on: `MYSQL_PASSWORD`, `POSTGRES_USER_PASSWORD`, `GRAPHDB_PASSWORD`, `SECRET_KEY` | the orchestrator refuses to start and names the offender |
+
+**On timeouts.** `WORKFLOW_TIMEOUT_S` is *derived* from `LLM_TIMEOUT_S` — a model slower than
+the workflow deadline cannot serve this pipeline, and when that was silent it produced eight
+empty plan hashes at exactly 120.0 s during a benchmark (CAVEAT-185). `shared/config.py`
+warns at boot when the deadline cannot outlast one full-length LLM call. Set `LLM_TIMEOUT_S`
+and let the deadline follow it.
+
+**Optional backends.** TimescaleDB and Cassandra are exercised by
+`docker-compose.timeseries-backends.yml` and seeded by `scripts/seed_timeseries_backends.py`.
+They are off by default and nothing needs them.
+
+---
+
 ## Measured coverage
 
 ```

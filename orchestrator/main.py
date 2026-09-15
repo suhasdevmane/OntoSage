@@ -3689,6 +3689,34 @@ async def openai_chat_completions(
         except Exception as _ce:
             logger.debug(f"[/v1/chat/completions] carry-forward skipped: {_ce}")
 
+        # A CARRIED RESULT IS ABOUT A PLACE, AND THE PLACE CAN CHANGE (V12-11, review A14).
+        #
+        # This was an unconditional `update`. Ask about room 5.01, then "what about room
+        # 3.27? plot it" — and the plot is built from 5.01's analytics under a question
+        # naming 3.27. Every figure in it real, attributed to the wrong room.
+        #
+        # Only place-bound keys are dropped, and only when BOTH questions name a place and
+        # the places differ. "Now plot that" names none, which is the case carry-forward
+        # exists for and must keep working.
+        if carry_forward:
+            try:
+                from orchestrator.services.context_switch import prune_inherited
+
+                _prev_user = next(
+                    (m.content for m in reversed(prior_messages or []) if m.role == "user"),
+                    "",
+                )
+                carry_forward, _dropped = prune_inherited(
+                    carry_forward, _prev_user or "", user_message or ""
+                )
+                if _dropped:
+                    logger.info(
+                        "[/v1/chat/completions] context switch — dropped inherited %s",
+                        _dropped,
+                    )
+            except Exception as _pe:  # pragma: no cover - pruning must never sink a turn
+                logger.debug(f"[/v1/chat/completions] carry-forward prune skipped: {_pe}")
+
         if carry_forward:
             state.intermediate_results.update(carry_forward)
 

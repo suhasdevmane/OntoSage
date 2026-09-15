@@ -18,7 +18,7 @@ vocabulary, so the same lookup works everywhere: a building that calls its rooms
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import httpx
 
@@ -316,12 +316,137 @@ def collapse_synonyms(rows: List[Tuple[str, int, str, str]]) -> List[Tuple[str, 
     return sorted(((name, key[0]) for key, name in best.items()), key=lambda r: -r[1])
 
 
-def render_census(rows: List[Tuple[str, int]], building_name: str) -> Optional[str]:
+#: Off until the overlap is computed from the TBox rather than by a live ABox self-join
+#: (BUG-535). A module constant, not a setting: turning it back on is a code decision that
+#: needs the measurement above, not a line in .env.
+OVERLAP_PROBE_ENABLED = False
+
+
+async def overlap_notes(
+    rows: List[Tuple[str, int]], namespace: str, endpoint: str
+) -> List[str]:
+    """Which census rows are SUBSETS of other census rows (V12-09, CAVEAT-006 residual).
+
+    A census reads as a partition. "Air Quality Sensor 523, CO2 Sensor 214, CO2 Level
+    Sensor 208" invites the reader to add up to 945 devices in a building that has 523,
+    because `collapse_synonyms` only merges classes spanning the IDENTICAL instance set —
+    and a subclass spans a strict SUBSET, which is a different relation.
+
+    Measured, not assumed. Whether two Brick classes overlap in THIS building is a fact
+    about its ABox, and a building with 139 supply-air and 140 zone-air temperature sensors
+    sharing nothing must not be told its categories overlap. So this asks.
+
+    One query for every pair at once. Returns [] on any failure — a missing caveat is worse
+    than none only if it is silently missing, and the caller keeps the census either way.
+    """
+    # Filtered ONCE. A class name carrying a double quote cannot go into the IN-list, and
+    # building the list twice inline would let the two halves disagree about which names
+    # survived — the same two-sources-of-truth shape this whole session has been unpicking.
+    # DISABLED 2026-09-15 (BUG-535). This probe took GraphDB down for ~14 minutes during the
+    # full regression run: 7 consecutive probe cases timed out at exactly 120 s each, starting
+    # two seconds after its own ReadTimeout on "How many CO2 sensors are there?". A client-side
+    # timeout does NOT cancel the query in GraphDB, and this one applied REPLACE() to every
+    # type pair in the repository, so each census question left another runaway query behind
+    # and every later graph call queued behind them. An index-driven rewrite still took 3.1 s
+    # for 6 classes, and its answer is almost entirely inferred subclass nesting, which the
+    # static Brick hierarchy can give without touching the ABox. Until that exists the census
+    # renders exactly as it did before V12-09 — no overlap note, and no load.
+    if not OVERLAP_PROBE_ENABLED:
+        return []
+    names = [local for local, _ in rows if '"' not in local]
+    if len(names) < 2:
+        return []
+    counts = dict(rows)
+    in_list = ", ".join(f'"{n}"' for n in names)
+    # Bounded: at most `limit` classes reach here (25 by default), so at most limit*(limit-1)
+    # ordered pairs. The LIMIT is a backstop against a graph whose class names collide after
+    # the local-name reduction, not an expected truncation.
+    sparql = f"""
+SELECT ?an ?bn (COUNT(DISTINCT ?s) AS ?n) WHERE {{
+  ?s a ?a, ?b .
+  FILTER(STRSTARTS(STR(?s), '{namespace}'))
+  BIND(REPLACE(STR(?a), "^.*[#/]", "") AS ?an)
+  BIND(REPLACE(STR(?b), "^.*[#/]", "") AS ?bn)
+  FILTER(?an != ?bn)
+  FILTER(?an IN ({in_list}))
+  FILTER(?bn IN ({in_list}))
+}} GROUP BY ?an ?bn LIMIT {max(2, len(names)) * max(1, len(names) - 1)}"""
+    try:
+        async with httpx.AsyncClient(timeout=25.0) as client:
+            auth = (
+                (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD)
+                if settings.GRAPHDB_USER
+                else None
+            )
+            resp = await client.post(
+                endpoint,
+                auth=auth,
+                data={"query": sparql},
+                headers={"Accept": "application/sparql-results+json"},
+            )
+            resp.raise_for_status()
+            bindings = resp.json().get("results", {}).get("bindings", [])
+    except Exception as e:
+        logger.warning(f"[inventory] overlap probe failed: {describe_exception(e)}")
+        return []
+
+    return overlap_sentences(
+        [
+            (
+                b.get("an", {}).get("value", ""),
+                b.get("bn", {}).get("value", ""),
+                int(b.get("n", {}).get("value", "0") or 0),
+            )
+            for b in bindings
+        ],
+        counts,
+    )
+
+
+def overlap_sentences(
+    pairs: List[Tuple[str, str, int]], counts: Dict[str, int]
+) -> List[str]:
+    """Turn measured pair overlaps into the sentences a reader needs. Pure, so it is
+    testable without a graph.
+
+    Only STRICT CONTAINMENT is reported — every instance of B also being an A. A partial
+    overlap is real but saying "some of these are also those" without a number is a caveat
+    nobody can act on, and this file's whole lesson is that a caveat which cannot be read
+    is not a caveat.
+    """
+    contained: Dict[str, List[str]] = {}
+    for a, b, shared in pairs:
+        n_b = counts.get(b)
+        n_a = counts.get(a)
+        if not n_a or not n_b or shared != n_b or n_b >= n_a:
+            continue
+        contained.setdefault(a, []).append(b)
+
+    def _pretty(name: str) -> str:
+        return f"{name.replace('_', ' ')} ({counts[name]})"
+
+    out = []
+    for parent in sorted(contained):
+        kids = sorted(set(contained[parent]))
+        listed = ", ".join(_pretty(k) for k in kids)
+        verb = "is" if len(kids) == 1 else "are"
+        out.append(
+            f"**These counts overlap — do not add them.** {listed} {verb} counted again "
+            f"inside {_pretty(parent)}: every one of those devices also carries that class."
+        )
+    return out
+
+
+def render_census(
+    rows: List[Tuple[str, int]],
+    building_name: str,
+    overlaps: Optional[List[str]] = None,
+) -> Optional[str]:
     """Render a census as prose, or None when there is nothing to report."""
     if not rows:
         return None
     lines = [f"Here is what **{building_name}** has, counted live from its ontology:\n"]
-    notes: List[str] = []
+    notes: List[str] = list(overlaps or [])
     for local, n in rows:
         lines.append(f"- **{local.replace('_', ' ')}** — {n}")
         # A count rolled up Brick's hierarchy can sweep in a DIFFERENT quantity.

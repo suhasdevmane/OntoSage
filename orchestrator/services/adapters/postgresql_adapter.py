@@ -269,7 +269,22 @@ class PostgreSQLAdapter(DatabaseAdapter):
         return cols
 
     def validate_query(self, sql: str) -> bool:
-        """SELECT-only safety check."""
+        """SELECT-only safety check.
+
+        An EMPTY or None query is refused as a ValueError rather than raising
+        AttributeError on `.upper()` (V12-13). `build_timeseries_query` returns None when
+        it cannot build — an unvalidated uuid, an empty list — and the caller then handed
+        that None straight to `execute_query`, where the SAFETY CHECK ITSELF crashed. A
+        guard that fails by raising inside its own first line reports a validation bug as
+        an unrelated type error, and the lane above sees a defect where it should see a
+        refusal.
+        """
+        if not sql or not isinstance(sql, str):
+            raise ValueError(
+                "No query was built. build_timeseries_query() returns None when it cannot "
+                "build one — most often because get_columns() has not run, so no uuid is "
+                "yet known to be valid."
+            )
         sql_upper = sql.upper().strip()
         if not (
             sql_upper.startswith("SELECT")

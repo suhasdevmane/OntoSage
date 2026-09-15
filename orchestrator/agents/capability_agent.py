@@ -594,6 +594,7 @@ class CapabilityAgent:
             from orchestrator.services.ontology_inventory import (
                 class_census,
                 is_inventory_question,
+                overlap_notes,
                 render_census,
             )
 
@@ -606,7 +607,15 @@ class CapabilityAgent:
                 _rows = await class_census(
                     state.user_message or "", _active_namespace(), GRAPHDB_QUERY_ENDPOINT
                 )
-                _block = render_census(_rows, building_name)
+                # A census reads as a partition, and Brick's classes are not disjoint:
+                # "Air Quality Sensor 523, CO2 Sensor 214, CO2 Level Sensor 208" invites a
+                # reader to add up to 945 devices in a building that has 523 (CAVEAT-006).
+                # Measured per building rather than assumed, because two classes CAN be
+                # genuinely disjoint here (V12-09).
+                _overlaps = await overlap_notes(
+                    _rows, _active_namespace(), GRAPHDB_QUERY_ENDPOINT
+                )
+                _block = render_census(_rows, building_name, overlaps=_overlaps)
                 if _block:
                     state.intermediate_results["capability_result"] = {
                         "success": True,

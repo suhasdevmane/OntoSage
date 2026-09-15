@@ -15,9 +15,25 @@ from zoneinfo import ZoneInfo
 from orchestrator.llm_manager import TaskType, llm_manager
 from orchestrator.services.adapters.registry import adapter_registry
 from orchestrator.services.prompt_builder import get_prompt_builder
+from orchestrator.services.requested_interval import calendar_day_bounds
 from shared.config import settings
 from shared.models import ConversationState
 from shared.utils import get_logger
+
+
+def _day_bounds(day_word: str, now: Optional[datetime] = None) -> Optional[Tuple[str, str]]:
+    """Local bounds for a named calendar day, from the ONE resolver (V12-08).
+
+    This agent must not own a second answer to "when is yesterday". It delegates to the
+    resolver that produced the interval upstream, so the prompt hint and the compiled
+    window cannot disagree about what a day IS.
+
+    Guarded because a time HINT failing must never sink a turn that would otherwise answer.
+    """
+    try:
+        return calendar_day_bounds(day_word, settings.BUILDING_TIMEZONE, now=now)
+    except Exception:  # pragma: no cover - a hint is never worth an exception
+        return None
 
 
 def _parse_window_start(value: Optional[str]) -> Optional[datetime]:
@@ -405,15 +421,34 @@ class SQLAgent:
             else:
                 grouped_uuids["default"] = list(uuids)
 
-            # Cap UUIDs per group — deterministic SQL handles many UUIDs correctly,
-            # so we can allow up to 30 sensors per query for broad "all zones" requests.
-            _UUID_CAP = 30
+            # A SENSOR CAP THAT IS STATED, SIZED FOR A FLOOR, AND DETERMINISTIC (BUG-534).
+            #
+            # This was 30, applied as `grouped_uuids[key][:30]`, with one log line and nothing
+            # in the answer. Measured 2026-09-15 on "Compare the average CO2 on floor 1 versus
+            # floor 3": 61 sensors in one store, and the slice kept 5 of floor 1's 13 and 25 of
+            # floor 3's 48 — so a floor-1 average over 5 of 13 sensors was stated as the floor
+            # average. Which ones survived was whatever order SPARQL returned.
+            #
+            # 30 was sized for an LLM prompt. It no longer needs to be: `_format_results` shows
+            # the model at most 10 rows, the statistics are computed in code, and the per-uuid
+            # row limit keeps each sensor's fetch bounded. 120 matches the deliberation lane's
+            # MAX_FETCH_CANDIDATES — above any floor here, below the whole building.
+            #
+            # When it still binds, the kept set is SORTED (stable across runs, not dependent on
+            # result order) and the omission is recorded and said.
+            _UUID_CAP = 120
+            points_capped: Dict[str, Tuple[int, int]] = {}
             for key in grouped_uuids:
-                if len(grouped_uuids[key]) > _UUID_CAP:
+                total = len(grouped_uuids[key])
+                if total > _UUID_CAP:
+                    grouped_uuids[key] = sorted(grouped_uuids[key])[:_UUID_CAP]
+                    points_capped[key] = (_UUID_CAP, total)
                     logger.warning(
-                        f"⚠️  Too many UUIDs ({len(grouped_uuids[key])}). Limiting to {_UUID_CAP}."
+                        "[sql] store %s: %d sensors match, reading %d — the answer will say so",
+                        key,
+                        total,
+                        _UUID_CAP,
                     )
-                    grouped_uuids[key] = grouped_uuids[key][:_UUID_CAP]
 
             all_data = []
             #: Rows per storage group. Named rather than repeated inline so the cap and the
@@ -736,6 +771,18 @@ Return ONLY the SQL query, no markdown, no explanations.
                 if _note:
                     formatted = f"{formatted}\n\n_{_note}_"
 
+            # The cap, said (BUG-534). A figure over part of a set is only honest if the part
+            # is named with its size — "averaged over 120 of 214 sensors" is an answer; the
+            # same number without it is a claim about all 214.
+            if points_capped:
+                kept = sum(k for k, _ in points_capped.values())
+                total = sum(t for _, t in points_capped.values())
+                formatted = (
+                    f"{formatted}\n\n_These figures are computed over {kept} of the {total} "
+                    f"matching sensors: a single question reads at most {_UUID_CAP} per data "
+                    f"store. Narrowing it to a floor or a room reads all of them._"
+                )
+
             return {
                 "success": True,
                 "query": "Multiple Queries (Storage Aware)",
@@ -745,6 +792,8 @@ Return ONLY the SQL query, no markdown, no explanations.
                 # Which points were not read, and why — carried so the evidence record can
                 # state the omission rather than leaving it only in the prose.
                 "points_omitted": dict(skipped_reasons),
+                # {store: (read, matched)} for any store where the sensor cap bound (BUG-534).
+                "points_capped": {k: list(v) for k, v in points_capped.items()},
                 # Was any group cut off at the row limit? Then len(data) is the SIZE OF A
                 # SAMPLE, never a count of what the period holds. A report said "Room 5.01
                 # recorded 1,000 CO2 sensor readings yesterday" against a true 2,770
@@ -976,13 +1025,29 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
 
         time_info = "Current time: " + now.strftime("%Y-%m-%d %H:%M:%S %Z") + "\n"
 
-        if "today" in query_lower:
-            start = now.replace(hour=0, minute=0, second=0)
-            time_info += f"Today starts at: {start.strftime('%Y-%m-%d %H:%M:%S')}\n"
-
-        if "yesterday" in query_lower:
-            yesterday = now - timedelta(days=1)
-            time_info += f"Yesterday: {yesterday.strftime('%Y-%m-%d')}\n"
+        # V12-08 — a named calendar day is resolved by ONE function, the same one the
+        # dialogue agent uses, so this fallback cannot disagree with the resolved interval
+        # IN KIND.
+        #
+        # "yesterday" here used to read `now - timedelta(days=1)`, which is a DURATION.
+        # Asked at 16:00 that names yesterday at 16:00, not yesterday's midnight boundary —
+        # BUG-478's exact error, where a report headed "Yesterday" described a rolling
+        # window half of which was today. This path only runs when no interval was resolved
+        # upstream (see `_generate_sql`: `if not time_context`), so it never overrode a good
+        # answer; but a fallback that is wrong in a DIFFERENT way from the primary is how
+        # two sources of truth start disagreeing.
+        #
+        # The day word is passed literally rather than the whole question: a question naming
+        # both days would otherwise resolve one of them twice, and dict ordering is not a
+        # contract.
+        for _word, _caption in (("today", "Today"), ("yesterday", "Yesterday")):
+            if _word not in query_lower:
+                continue
+            _bounds = _day_bounds(_word, now)
+            if _bounds:
+                time_info += (
+                    f"{_caption} runs {_bounds[0]} to {_bounds[1]} inclusive, in stored (UTC) time\n"
+                )
 
         if "last week" in query_lower:
             week_ago = now - timedelta(days=7)

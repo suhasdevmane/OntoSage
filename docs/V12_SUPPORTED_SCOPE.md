@@ -204,6 +204,31 @@ mentioned. Until **V12-06**, the unserved half must be stated by the person demo
 
 ## 7 · Open items that bound this scope
 
+### 7.1 · Nine fixes from 2026-09-12 are NOT yet verified live
+
+This section leads with them because they are the newest and the least proven, and because
+the previous version of this document had no equivalent — which is how an owed queue grows.
+Each is FIXED in code with offline tests and carries `LIVE RE-ASK OWED`; **V12-32 discharges
+them, and it is sequenced before V12-29**, since a sealed evaluation run over unverified
+fixes measures the fixes rather than the system.
+
+| Row | What it claims to have fixed | Why it is not yet scope |
+|---|---|---|
+| BUG-517 | ARBITER resolved "yesterday" and "today" to the SAME rolling 24h window, in UTC | P1. The deliberation lane's window is repaired offline; no live turn has been read back |
+| BUG-518 | A room booked in the next hour could be reported free (booking window built from `utcnow()`) | An availability answer has not been re-asked |
+| BUG-519 | Freshness advice reported every reading an hour younger than it was | The recheck line's stated age has not been checked against the store |
+| BUG-521 | A narrow-table report averaged CO₂ ppm with temperature °C into one number | P1. No live narrow-table report has been generated since |
+| BUG-524 | A co-reference rewrite could swap the room the user named | No live two-turn switch |
+| BUG-525 | Carried-forward analytics were injected into a turn about a different room | No live two-turn switch |
+| BUG-183 | "yesterday" turning a valid question into a clarification | Its own row was REFUTED on live re-ask once already. The deterministic half is rebuilt; the 279.5 s timeout that accompanied the refutation is untouched |
+
+Two remain OPEN by choice rather than by omission: **CAVEAT-523** (the census overlap probe
+costs one extra SPARQL round trip — accepted, latency unmeasured) and **BUG-526** (a room
+label that prefixes several real ids resolves to "exists" with no record of the ambiguity —
+P3, owned by V12-33 with the shape of the fix written down).
+
+### 7.2 · Longer-standing items
+
 Fifteen rows are not closed. Four are P1-class: **BUG-218** (document precision 70.4%),
 **CAVEAT-415** (62 failures logged an empty message, hiding an 11% silent quality gap),
 **CAVEAT-501** (the register was outside version control), **TODO-072** (cold GUI-only onboarding

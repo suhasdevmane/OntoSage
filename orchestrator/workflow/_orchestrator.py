@@ -47,11 +47,13 @@ from orchestrator.services.persona_adapter import get_persona_adapter
 
 # CAP-07: Multi-hop reasoning engine
 from orchestrator.services.reasoning_engine import get_reasoning_engine
+from orchestrator.services.requested_interval import store_now
 
 # CAP-04: Compliance standards engine
 from orchestrator.services.standards_engine import get_standards_engine
 from shared.config import settings
 from shared.models import ConversationState, Message
+from orchestrator.services.turn_outcome import Outcome as _Outcome
 from shared.utils import describe_exception, get_logger
 
 # WIRE-A: i18n service (translate query in, response out)
@@ -534,6 +536,20 @@ _PER_TURN_LANE_KEYS = (
     # The gate's own decision. Left behind, it would report this turn as withheld when
     # the previous one was.
     "publication_decision",
+    # Same, for the disclosure gate (V12-17). A stale one would attribute this turn's
+    # answer to a policy refusal that governed the previous question and a different
+    # identity — which is a worse claim than the one it describes.
+    "disclosure_decision",
+    # V12-19. Carried over, last turn's timeout would be reported as this turn's, and
+    # `first_pass` would read False for a lane running for the first time.
+    "lane_outcomes",
+    "turn_outcome",
+    # V12-13. The mapping this turn pinned, and whether it moved. Stale, the drift check
+    # would compare THIS turn's mapping against the PREVIOUS question's and report a move
+    # that never happened to anyone.
+    "_graph_snapshot",
+    "graph_drift",
+    "evidence_dossier",
     # BUG-509 — the planner now publishes its own results onto the bus, so they are as
     # stale next turn as any other lane's. Before this they never reached the bus at all,
     # which is why they were never on this list.
@@ -547,6 +563,42 @@ _PER_TURN_LANE_KEYS = (
     "evidence_record",
     "plan_trace",
 )
+
+
+def _classify_failure(exc: BaseException) -> "_Outcome":
+    """Which KIND of failure this is — timeout, unreachable backend, or a real defect."""
+    from orchestrator.services.turn_outcome import classify
+
+    return classify(exc)
+
+
+def _record_lane_outcome(
+    state, lane: str, outcome: "_Outcome", detail: str, duration_ms: int
+) -> None:
+    """Append this lane's typed outcome to the bus (V12-19).
+
+    `first_pass` is decided HERE, by whether this lane already has an entry for this turn —
+    not reconstructed later by whoever publishes a number. Every place that has had to
+    re-derive it has eventually folded a recovered retry into a success total, which is the
+    one thing the review is explicit about.
+
+    Never raises: an outcome record that could sink a turn would make the observability
+    worse than the gap it closes.
+    """
+    try:
+        entries = state.intermediate_results.setdefault("lane_outcomes", [])
+        first = not any(isinstance(e, dict) and e.get("lane") == lane for e in entries)
+        entries.append(
+            {
+                "lane": lane,
+                "outcome": getattr(outcome, "value", str(outcome)),
+                "detail": detail,
+                "first_pass": first,
+                "duration_ms": duration_ms,
+            }
+        )
+    except Exception as exc:  # pragma: no cover - recording must never cost the turn
+        logger.debug("[turn_outcome] could not record %s: %s", lane, describe_exception(exc))
 
 
 async def apply_referent_gate(state, question: str, sparql_exec, *, lane: str) -> bool:
@@ -903,29 +955,55 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         """
 
         async def wrapper(state: ConversationState) -> ConversationState:
+            _t0 = time.time()
             try:
-                return await node_fn(state)
+                out = await node_fn(state)
+                # A lane that RAN is recorded too, not only one that failed. Without the
+                # successes there is no denominator, and "3 lanes timed out" cannot be told
+                # apart from "3 of 3" and "3 of 40" (V12-19).
+                _record_lane_outcome(
+                    state, node_name, _Outcome.OK, "", int((time.time() - _t0) * 1000)
+                )
+                return out
             except Exception as e:
-                logger.error(f"Node '{node_name}' failed: {e}", exc_info=True)
+                # TYPED, not stringified (V12-19, review B15). A timeout, an unreachable
+                # store and a raised defect are three different facts and were one:
+                # `str(e)` on a message-less exception is the EMPTY STRING, so the record
+                # was not merely untyped but blank (CAVEAT-415).
+                _kind = _classify_failure(e)
+                _record_lane_outcome(
+                    state,
+                    node_name,
+                    _kind,
+                    describe_exception(e),
+                    int((time.time() - _t0) * 1000),
+                )
+                logger.error(
+                    "Node '%s' %s: %s",
+                    node_name,
+                    _kind.value,
+                    describe_exception(e),
+                    exc_info=True,
+                )
                 friendly = self._user_friendly_error(e)
-                state.intermediate_results[f"{node_name}_error"] = str(e)
+                state.intermediate_results[f"{node_name}_error"] = describe_exception(e)
                 # For data nodes, ensure downstream nodes see empty-but-valid data
                 if node_name == "sparql":
                     state.intermediate_results["sparql_result"] = {
                         "success": False,
-                        "error": str(e),
+                        "error": describe_exception(e),
                     }
                     state.query_results = {}
                 elif node_name == "sql":
                     state.intermediate_results["sql_result"] = {
                         "success": False,
-                        "error": str(e),
+                        "error": describe_exception(e),
                     }
                     state.query_results = {"data": []}
                 elif node_name == "analytics":
                     state.intermediate_results["analytics_result"] = {
                         "success": False,
-                        "error": str(e),
+                        "error": describe_exception(e),
                     }
                 # Store the friendly error for the response node to pick up
                 state.intermediate_results.setdefault("degraded_services", []).append(
@@ -1540,6 +1618,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 try:
                     from orchestrator.services.ontology_inventory import (
                         is_inventory_question,
+                        overlap_notes,
                         render_census,
                     )
 
@@ -1551,7 +1630,21 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                         _bname = resolve_building_context(
                             state.building_id or settings.BUILDING_ID
                         ).name
-                        _generic = render_census(_census, _bname)
+                        # Same overlap caveat the capability path gets — the two census
+                        # answers must not disagree about whether their own categories
+                        # can be added together (V12-09, CAVEAT-006).
+                        from orchestrator.agents.sparql_agent import (
+                            GRAPHDB_QUERY_ENDPOINT as _EP,
+                        )
+                        from orchestrator.agents.sparql_agent import (
+                            _active_namespace as _ns,
+                        )
+
+                        _generic = render_census(
+                            _census,
+                            _bname,
+                            overlaps=await overlap_notes(_census, _ns(), _EP),
+                        )
                         if not _generic:
                             # The building genuinely holds nothing of that kind. Say
                             # so — falling through to the sensor lister answered
@@ -2426,7 +2519,28 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             except Exception as e:
                 logger.warning(f"Failed to extract UUIDs from SPARQL result: {e}")
 
+        # PIN THE MAPPING THIS TURN RESOLVED (V12-13, review A16).
+        #
+        # The uuid -> store mapping is read here, at discovery, and the rows are fetched
+        # from those stores seconds later. A TTL re-upload, an admin edit or a
+        # `delete_subject` in between can move a sensor to a different store — and nothing
+        # recorded WHICH graph state produced the answer, so a mixed result (rows from the
+        # old store, metadata from the new) was not merely possible but unexplainable
+        # afterwards. "Unexplained" is the review's word and it is the right one: the
+        # failure was that nothing could say so.
         if uuids:
+            try:
+                from orchestrator.services.graph_snapshot import (
+                    mapping_snapshot,
+                    repository_fingerprint,
+                )
+
+                state.intermediate_results["_graph_snapshot"] = mapping_snapshot(
+                    storage_map, await repository_fingerprint()
+                )
+            except Exception as _gs:  # pragma: no cover - a snapshot never costs a turn
+                logger.debug(f"[graph_snapshot] not taken: {describe_exception(_gs)}")
+
             logger.info("=" * 80)
             logger.info(f"🔍 Found {len(uuids)} UUIDs from SPARQL results, fetching data...")
             logger.info("UUID → Storage Mapping:")
@@ -2455,12 +2569,20 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 # which a person's movements can be read in real time — was the one case
                 # no tier was ever applied to. Passing None here made the finest tier
                 # unreachable.
+                #
+                # The clock is the BUILDING's, not UTC (V12-08). `start_date` is a local
+                # stamp, so subtracting it from `utcnow()` understated the age by the
+                # zone's offset — an hour under BST, which silently moved a window into a
+                # finer resolution tier than the one it belongs to.
                 _age_min = 0.0
                 if start_date:
                     try:
                         _age_min = max(
                             0.0,
-                            (_dt.utcnow() - _dt.fromisoformat(str(start_date)[:19])).total_seconds()
+                            (
+                                store_now()
+                                - _dt.fromisoformat(str(start_date)[:19])
+                            ).total_seconds()
                             / 60.0,
                         )
                     except ValueError:
@@ -2926,7 +3048,7 @@ Instructions:
                     "Please try again or rephrase your question."
                 ),
                 "success": False,
-                "error": str(e),
+                "error": describe_exception(e),
             }
 
         return state
@@ -3595,7 +3717,7 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             logger.error(f"[viz_node] Code executor call failed: {e}", exc_info=True)
             return {
                 "success": False,
-                "error": str(e),
+                "error": describe_exception(e),
                 "formatted_response": "Could not render the forecast chart — code executor unavailable.",
             }
 
@@ -4249,8 +4371,6 @@ SELECT ?l WHERE {
         resting on four sensors is only as current as its stalest input, and reporting the
         freshest would overstate exactly the thing this line exists to bound.
         """
-        from datetime import datetime as _dt0
-
         results = state.intermediate_results or {}
         if not (results.get("deliberate_result") or state.current_intent == "recommend"):
             return ""
@@ -4276,7 +4396,15 @@ SELECT ?l WHERE {
                     contributing_uuids,
                 )
 
-                observed = _observations_by_source(results, _dt0.utcnow()) or {}
+                # The building's clock: the observation stamps are local, and against
+                # `utcnow()` every reading reported itself an hour fresher than it was
+                # under BST — in the freshness advice, that is the unsafe direction.
+                observed = (
+                    _observations_by_source(
+                        results, store_now()
+                    )
+                    or {}
+                )
                 mine = set(contributing_uuids(results) or [])
                 seen = [t for k, t in observed.items() if not mine or k in mine]
                 if seen:
@@ -4324,10 +4452,8 @@ SELECT ?l WHERE {
                 (_ev[0] or {}).get("modality", "") if _ev and isinstance(_ev[0], dict) else ""
             ) or str(getattr(rec, "modality", "") or "conditions")
 
-            from datetime import datetime as _dt
-
             advice = advise(modality, evidence_time, chosen=chosen, runner_up=runner_up)
-            return advice.describe(now=_dt.utcnow())
+            return advice.describe(now=store_now())
         except Exception as exc:  # pragma: no cover - advice must never cost the answer
             logger.warning(f"[recheck] skipped: {exc}")
             return ""
@@ -5048,6 +5174,29 @@ SELECT ?l WHERE {
         except Exception as _ag_err:
             logger.debug(f"absence guard skipped: {_ag_err}")
 
+        # V12-06 / review T07, case B14 — SAY WHEN ONLY HALF THE REQUEST WAS SERVED.
+        #
+        # `_promote_to_capability_from_documents` consults uploaded prose only where the
+        # intent came out weak, which is the right fix for BUG-440 and has a cost the
+        # review names: "which rooms were stuffy yesterday, and what does the manual say
+        # to do about it?" classifies as data, gets the observations, and the procedure
+        # half is never attempted and never mentioned. The reader cannot tell "the manual
+        # is silent" from "nobody looked".
+        #
+        # A small bounded rule, not a planner — it decomposes nothing and re-routes
+        # nothing. It notices two halves, sees which the answering lane could serve, and
+        # names the other. Runs BEFORE the publication gate so a withheld answer does not
+        # also carry a note about a half that no longer matters.
+        try:
+            from orchestrator.services.unserved_half import unserved_note
+
+            _half_note = unserved_note(state.user_message or "", state.current_intent)
+            if _half_note and final_response:
+                final_response = f"{final_response}\n\n{_half_note}"
+                state.intermediate_results["unserved_half"] = True
+        except Exception as _uh_err:
+            logger.debug(f"unserved-half note skipped: {_uh_err}")
+
         # V12-03 / review R1 — PUBLICATION ENFORCEMENT.
         #
         # Until now `verification["grounded"]` was read in exactly one place, further down
@@ -5064,6 +5213,101 @@ SELECT ?l WHERE {
         # It withholds three surfaces, not one: a chart of a withheld figure is the same
         # claim with better typography, and an export outlives the caveat that sat beside
         # it on screen (review case B04).
+        # DID THE MAPPING MOVE WHILE WE WERE ANSWERING? (V12-13, review A16.)
+        #
+        # Re-resolve the mapping and compare it to the one this turn pinned at discovery.
+        # It reports and never retries: a retry would answer from the NEW mapping and say
+        # nothing about the old one, which is the same silent substitution one layer up.
+        try:
+            _snap = state.intermediate_results.get("_graph_snapshot")
+            if _snap is not None:
+                from orchestrator.services.graph_snapshot import (
+                    compare as _snap_compare,
+                )
+                from orchestrator.services.graph_snapshot import (
+                    mapping_snapshot as _snap_of,
+                )
+                from orchestrator.services.graph_snapshot import (
+                    repository_fingerprint as _snap_fp,
+                )
+
+                _now = _snap_of(
+                    state.intermediate_results.get("storage_map") or _snap.mapping,
+                    await _snap_fp(),
+                )
+                _drift = _snap_compare(_snap, _now)
+                if _drift.mapping_changed or _drift.statements_changed:
+                    state.intermediate_results["graph_drift"] = {
+                        "mapping_changed": _drift.mapping_changed,
+                        "statements_changed": _drift.statements_changed,
+                        "moved": {k: list(v) for k, v in _drift.moved.items()},
+                        "lost": list(_drift.lost),
+                    }
+                    _note = _drift.note()
+                    if _drift.mapping_changed and _note:
+                        final_response = (final_response or "") + "\n\n" + _note
+                        logger.warning("[graph_snapshot] %s", _drift.note())
+        except Exception as _gd:  # pragma: no cover - never costs an answer
+            logger.debug(f"[graph_snapshot] drift check skipped: {describe_exception(_gd)}")
+
+        # A LANE THAT TIMED OUT AND A LANE THAT BROKE ARE DIFFERENT FACTS (V12-19, B15).
+        #
+        # Both used to reach the user as the same vague degradation notice, or as nothing
+        # at all when the exception carried no message. A timeout on this system is
+        # frequently LATENCY rather than a defect — the same question measured 10.7 s,
+        # 61.1 s and 13.3 s on three consecutive asks (CAVEAT-500) — so telling a user
+        # "that failed" when the honest answer is "ask again" costs them the answer.
+        try:
+            from orchestrator.services.turn_outcome import Outcome as _TO
+            from orchestrator.services.turn_outcome import from_state as _turn_from_state
+
+            _turn = _turn_from_state(state.intermediate_results)
+            state.intermediate_results["turn_outcome"] = _turn.as_dict()
+            if _turn.outcome is not _TO.OK:
+                final_response = (final_response or "") + "\n\n_" + _turn.note() + "_"
+                logger.warning(
+                    "[turn_outcome] %s first_pass_ok=%s retried=%s",
+                    _turn.outcome.value,
+                    _turn.first_pass_ok,
+                    _turn.retried,
+                )
+        except Exception as _to_err:  # pragma: no cover - never costs an answer
+            logger.debug(f"[turn_outcome] skipped: {describe_exception(_to_err)}")
+
+        # A POLICY REFUSAL GOVERNS EVERY CHANNEL (V12-17, review B11).
+        #
+        # This runs BEFORE the publication gate and is a different kind of check, with the
+        # opposite failure direction: the verification gate fails OPEN so a verifier outage
+        # cannot take every honest answer down with it, and a disclosure gate fails CLOSED
+        # because publishing is the irreversible outcome. Two defaults, two modules.
+        #
+        # It does not decide anything — the PDP already did, at its own chokepoint. It
+        # propagates that decision to the surfaces built FROM the refused lane, because a
+        # policy applied to the text and not to the chart, the export or the dossier has
+        # not been applied.
+        try:
+            from orchestrator.services import disclosure_gate as _disclose
+
+            _d = _disclose.evaluate(state.intermediate_results)
+            if _d.any_withheld:
+                for _k in _d.withhold:
+                    state.intermediate_results[_k] = None
+                if "visualization_path" in _d.withhold:
+                    media_payload = None
+                final_response = (final_response or "") + _disclose.note(_d)
+                state.intermediate_results["disclosure_decision"] = {
+                    "refused": _d.refused,
+                    "policy_iri": _d.policy_iri,
+                    "lane": _d.lane,
+                    "withheld": list(_d.withhold),
+                    "reason": _d.reason,
+                }
+                logger.warning(
+                    "[disclosure_gate] WITHHELD %s — %s", _d.withhold, _d.reason
+                )
+        except Exception as _dg_err:  # pragma: no cover - the gate itself fails closed
+            logger.error(f"[disclosure_gate] failed: {_dg_err}", exc_info=True)
+
         try:
             from orchestrator.services.publication_gate import evaluate as _pub_evaluate
 
@@ -7554,7 +7798,7 @@ SELECT ?l WHERE {
 
         except Exception as e:
             logger.error(f"[floor_plan] Unexpected error: {e}", exc_info=True)
-            state.intermediate_results["error"] = f"floor_plan: {str(e)}"
+            state.intermediate_results["error"] = f"floor_plan: {describe_exception(e)}"
             state.intermediate_results["floor_plan_result"] = (
                 "I encountered an error loading the floor plan. Please try again."
             )
@@ -7590,7 +7834,7 @@ SELECT ?l WHERE {
             state.intermediate_results["spatial_result"] = markdown
         except Exception as e:
             logger.error(f"[spatial_query] Unexpected error: {e}", exc_info=True)
-            state.intermediate_results["error"] = f"spatial_query: {str(e)}"
+            state.intermediate_results["error"] = f"spatial_query: {describe_exception(e)}"
             state.intermediate_results["spatial_result"] = (
                 "I encountered an error analysing the spatial data. Please try again."
             )
@@ -8632,4 +8876,4 @@ SELECT ?l WHERE {
 
         except Exception as e:
             logger.error(f"Streaming workflow error: {e}", exc_info=True)
-            yield {"error": str(e), "state": state}
+            yield {"error": describe_exception(e), "state": state}

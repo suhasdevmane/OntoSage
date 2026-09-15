@@ -147,6 +147,12 @@ class RedisTimeSeriesAdapter(DatabaseAdapter):
 
     def validate_query(self, query: str) -> bool:
         """Accept only TS.RANGE / TS.MRANGE commands (via JSON wrapper)."""
+        if not query or not isinstance(query, str):
+            raise ValueError(
+                "No query was built. build_timeseries_query() returns None when it cannot "
+                "build one — most often because get_columns() has not run, so no uuid is "
+                "yet known to be valid."
+            )
         try:
             if query.strip().startswith("{"):
                 params = json.loads(query)

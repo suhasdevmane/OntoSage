@@ -71,6 +71,25 @@ _ALIASES = (
 _GRAPH = "urn:ontosage:derived:timeseries_link_normalisation"
 
 
+#: Promote an alias link ONLY for a sensor that has no canonical link at all (BUG-531).
+#:
+#: This read `FILTER NOT EXISTS { ?s ref:hasExternalReference ?r }` — checked per REFERENCE,
+#: not per sensor. So a sensor whose building file already linked it to its real narrow
+#: table with `ref:`, and which ALSO carried a SATURATE-era `s223:` link to a synthetic
+#: series, got the synthetic one promoted as a second canonical reference. Measured on bldg1
+#: 2026-09-15: 89 of the 126 promoted links landed on sensors that were already linked, and
+#: 70 sensors then had populated series in BOTH stores — which the SQL lane fetched and
+#: merged into one answer's statistics.
+#:
+#: This script exists to normalise a VOCABULARY. Adding a second series to a sensor is not a
+#: vocabulary change; it is a data change nobody asked for. The canonical link a building
+#: file asserts is the author's explicit statement, so an alias only ever fills an absence.
+#:
+#: Existing duplicates are NOT removed by re-running: once the derived graph exists every
+#: affected sensor already has a canonical link. Drop the derived graph first, then re-run.
+_ONLY_UNLINKED = f"  FILTER NOT EXISTS {{ ?s <{_REF}> ?anyRef }}\n"
+
+
 def _post(query: str, endpoint: str, accept: str = "text/csv") -> str:
     r = requests.post(
         endpoint,
@@ -97,7 +116,7 @@ def _count_missing(endpoint: str) -> int:
         f"SELECT (COUNT(*) AS ?n) WHERE {{\n"
         f"  VALUES ?p {{ {alt} }}\n"
         f"  ?s ?p ?r .\n"
-        f"  FILTER NOT EXISTS {{ ?s <{_REF}> ?r }}\n"
+        f"{_ONLY_UNLINKED}"
         f"}}"
     )
     body = _post(q, endpoint)
@@ -135,7 +154,7 @@ def main(argv: List[str]) -> int:
         f"WHERE {{\n"
         f"  VALUES ?p {{ {alt} }}\n"
         f"  ?s ?p ?r .\n"
-        f"  FILTER NOT EXISTS {{ ?s <{_REF}> ?r }}\n"
+        f"{_ONLY_UNLINKED}"
         f"}}"
     )
     try:

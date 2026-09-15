@@ -295,8 +295,16 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
         source_phrase=str(t.get("phrase", "")) or unclear,
     )
     _fold_deterministic_horizon(time_spec, query)
-    resolved_past = _fold_deterministic_past_window(time_spec, query, unclear)
-    if unclear and not resolved_past:
+    # The calendar day runs FIRST and unconditionally; the hours table only sees phrases
+    # that are genuinely durations. Either one resolving the anchor clears the clarify
+    # signal — BUG-183 was a facility manager told "yesterday" could not be mapped.
+    resolved_day = _fold_named_calendar_day(time_spec, query)
+    # Only ONE fold may own a phrase. Without this the hours table could still overwrite a
+    # resolved interval's derived span with its own number, leaving a spec whose two halves
+    # described different lengths of time — the same two-sources-of-truth failure, inside a
+    # single object.
+    resolved_past = resolved_day or _fold_deterministic_past_window(time_spec, query, unclear)
+    if unclear and not (resolved_day or resolved_past):
         signals.append(AmbiguitySignal(kind="unparseable_time", phrase=unclear))
     for u in data.get("unmapped", []) or []:
         if str(u).strip():
@@ -444,19 +452,29 @@ def _num(value) -> Optional[float]:
 # Phrases here are resolved in CODE and their signal dropped. Genuinely vague
 # anchors ("recently", "a while back", "lately") are deliberately absent: those
 # SHOULD clarify rather than be guessed into a window.
+#
+# "yesterday" and "today" USED TO BE HERE, both mapped to 24.0 hours (V12-08). Two
+# different days resolved to the same duration, and `fetch.py` turned that duration into
+# `utcnow() - 24h` with no upper bound — so an ARBITER answer about yesterday was computed
+# over a rolling window ending now, half of it today, in UTC rather than the building's
+# zone. That is BUG-480 exactly, in the lane where it was never fixed.
+#
+# A named calendar day is not a duration and cannot be expressed in this table at all. It
+# is resolved to ABSOLUTE BOUNDS by `_fold_named_calendar_day` below, from the one resolver
+# in services/requested_interval.py.
 _PAST_WINDOW_HOURS = (
-    (r"\byesterday\b", 24.0),
     (r"\blast\s+night\b", 12.0),
     (r"\b(?:this|the)\s+morning\b", 12.0),
     (r"\b(?:this|the)\s+afternoon\b", 12.0),
-    (r"\btoday\b", 24.0),
     (r"\b(?:last|past|previous)\s+hour\b", 1.0),
     (r"\b(?:last|past|previous)\s+(\d+)\s*hours?\b", None),  # captured number
     (r"\b(?:last|past|previous)\s+(\d+)\s*days?\b", None),
     (r"\b(?:last|past|previous|this)\s+week\b", 168.0),
     (r"\b(?:last|past|previous|this)\s+month\b", 720.0),
     (r"\bovernight\b", 12.0),
-    (r"\bso\s+far\s+today\b", 24.0),
+    # "so far today" left with the other named days (V12-08): as 24.0 it meant "24 hours
+    # ending now", which reaches back into yesterday. It resolves to today's bounds, and a
+    # store holding no future rows returns exactly the part of the day that has happened.
 )
 _PAST_WINDOW_RES = [
     (re.compile(pattern, re.IGNORECASE), hours) for pattern, hours in _PAST_WINDOW_HOURS
@@ -560,6 +578,63 @@ def _infer_direction(modality: str, decision: DecisionKind, threshold) -> Option
     ):
         return None
     return DEFAULT_PREFERENCE.get(modality)
+
+
+def _fold_named_calendar_day(
+    time_spec, query: str, tz_name: Optional[str] = None, now=None
+) -> bool:
+    """Resolve a named calendar day to ABSOLUTE local bounds (V12-08). True when it fired.
+
+    Runs unconditionally and OVERRIDES whatever the compiler LLM produced, for the reason
+    the dialogue agent gives for the same override: the question is the authoritative
+    source and the compile is one reading of it. Here that matters more, because the thing
+    being overridden was not merely imprecise — `yesterday` and `today` both compiled to
+    "24 hours", so ARBITER could not tell two different days apart at all.
+
+    FORECAST is left alone. "How will it be today" asks about hours that have not happened,
+    and resolving it to a past interval would answer a question nobody asked.
+
+    The zone comes from the building context, never a literal: a day is the occupants'
+    Tuesday, not UTC's.
+    """
+    from orchestrator.services.deliberation.cqir import TimeBasis as _TB
+    from orchestrator.services.requested_interval import calendar_day_bounds, interval_hours
+
+    if time_spec.basis == _TB.FORECAST:
+        return False
+    if tz_name is None and now is None:
+        try:
+            from orchestrator.services.building_context import resolve_building_context
+
+            _bctx = resolve_building_context(None)
+            tz_name = getattr(_bctx, "timezone", None) if _bctx else None
+        except Exception:  # pragma: no cover - local time is a sane fallback
+            tz_name = None
+
+    bounds = calendar_day_bounds(query, tz_name, now=now)
+    if not bounds:
+        return False
+
+    start, end = bounds
+    if (time_spec.resolved_start, time_spec.resolved_end) != (start, end):
+        logger.info(
+            "[cqir] calendar day named in the question — interval set to %s .. %s "
+            "(compiled basis=%s window_hours=%s)",
+            start,
+            end,
+            time_spec.basis.value,
+            time_spec.window_hours,
+        )
+    time_spec.basis = _TB.WINDOW
+    time_spec.resolved_start, time_spec.resolved_end = start, end
+    # Kept in step rather than left stale: `EvidenceCell.window_hours` and the dossier both
+    # report a span, and a span that disagrees with the interval beside it is the same
+    # two-sources-of-truth failure one layer down. DERIVED from the bounds, never asserted.
+    time_spec.window_hours = interval_hours(start, end)
+    time_spec.unparseable = False
+    if not time_spec.source_phrase:
+        time_spec.source_phrase = query
+    return True
 
 
 def _fold_deterministic_past_window(time_spec, query: str, unclear: str) -> bool:

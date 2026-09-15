@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from orchestrator.services.deliberation.candidates import Candidate
+from orchestrator.services.requested_interval import STAMP, store_now
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -31,12 +32,24 @@ async def fetch_series(
     window_hours: float = 24.0,
     per_uuid_limit: int = 500,
     adapter_getter: Optional[Callable[[str], Any]] = None,
+    *,
+    start: Optional[str] = None,
+    end: Optional[str] = None,
+    now: Optional[datetime] = None,
 ) -> Dict[str, Series]:
     """{uuid: series} for every requested modality of every candidate.
 
     One query per storage table (all uuids in one IN-list, per-uuid limited);
     a failed table logs and yields no rows for its uuids — the scorer records
     those candidates as insufficient-data rather than this layer inventing rows.
+
+    `start`/`end` are an ALREADY-RESOLVED interval and are used verbatim (V12-08). This
+    function used to derive its own window from `datetime.utcnow()` and pass no upper
+    bound at all, so a question about a named day was answered over "the last N hours
+    ending now" — and the caller that had resolved the day correctly had no way to say so.
+    Falling back to a duration is kept for the phrases that genuinely are durations, on the
+    STORES' clock (UTC — see requested_interval). From 2026-09-12 to 2026-09-15 this read
+    the building's local clock on a false premise and started every window an hour late.
     """
     if adapter_getter is None:  # pragma: no cover - live wiring
         from orchestrator.services.adapters.registry import adapter_registry
@@ -50,7 +63,10 @@ async def fetch_series(
             if handle and handle.get("uuid") and handle.get("stored_at"):
                 by_table.setdefault(handle["stored_at"], []).append(handle["uuid"])
 
-    start = (datetime.utcnow() - timedelta(hours=window_hours)).strftime("%Y-%m-%d %H:%M:%S")
+    if not start:
+        base = now or store_now()
+        start = (base - timedelta(hours=window_hours)).strftime(STAMP)
+        end = None
     out: Dict[str, Series] = {}
     for table, uuids in sorted(by_table.items()):
         adapter = adapter_getter(table)
@@ -63,7 +79,7 @@ async def fetch_series(
         if builder is None:
             logger.warning(f"[fetch] adapter for '{table}' has no timeseries builder — skipped")
             continue
-        sql = builder(sorted(set(uuids)), "datetime", start, None, limit=per_uuid_limit)
+        sql = builder(sorted(set(uuids)), "datetime", start, end, limit=per_uuid_limit)
         if not sql:
             continue
         result = await adapter.execute_query(sql)
@@ -85,6 +101,6 @@ async def fetch_series(
         series.sort(key=lambda p: p[0])
     logger.info(
         f"[fetch] {len(out)} series from {len(by_table)} tables "
-        f"(window={window_hours}h, per-uuid limit={per_uuid_limit})"
+        f"(interval={start} .. {end or 'now'}, per-uuid limit={per_uuid_limit})"
     )
     return out

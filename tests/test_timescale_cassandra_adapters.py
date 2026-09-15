@@ -168,12 +168,24 @@ def _cs_adapter():
 
 
 async def _roundtrip(adapter, ts_col):
+    """Query a uuid the store ACTUALLY holds, read back from the store.
+
+    This used to build for the module constant `UUID_A`, a uuid captured from one seed run.
+    `seed_timeseries_backends.py` chooses its sensors from the LIVE graph, so the moment the
+    graph changed the constant stopped matching and both live tests below failed against
+    perfectly healthy, correctly seeded servers (measured 2026-09-12, V12-13). A test
+    pinned to seed data it does not control passes exactly once.
+
+    `get_columns()` also has to run before the build: it populates the validated-uuid set,
+    and `build_timeseries_query` returns None for a uuid it has not seen.
+    """
     await adapter.connect()
     try:
         cols = await adapter.get_columns()
-        query = adapter.build_timeseries_query([UUID_A], ts_col, None, None, 5)
+        uuid = sorted(cols)[0] if cols else UUID_A
+        query = adapter.build_timeseries_query([uuid], ts_col, None, None, 5)
         result = await adapter.execute_query(query)
-        return cols, result
+        return cols, uuid, result
     finally:
         await adapter.close()
 
@@ -182,11 +194,11 @@ async def _roundtrip(adapter, ts_col):
 @timescale_up
 class TestTimescaleLive:
     def test_a_real_hypertable_answers_a_real_uuid(self):
-        cols, result = asyncio.run(_roundtrip(_ts_adapter(), "time"))
-        assert UUID_A in cols, "the seeded sensor is not visible for UUID validation"
+        cols, uuid, result = asyncio.run(_roundtrip(_ts_adapter(), "time"))
+        assert cols, "no seeded sensor is visible for UUID validation"
         assert result.success and result.data, "no rows came back from the hypertable"
         row = result.data[0]
-        assert row["uuid"] == UUID_A
+        assert row["uuid"] == uuid
         assert isinstance(row["value"], (int, float))
 
     def test_the_table_really_is_a_hypertable(self):
@@ -210,15 +222,15 @@ class TestTimescaleLive:
 @cassandra_up
 class TestCassandraLive:
     def test_a_real_cql_table_answers_a_real_uuid(self):
-        cols, result = asyncio.run(_roundtrip(_cs_adapter(), "timestamp"))
-        assert UUID_A in cols, "the seeded sensor is not visible for UUID validation"
+        cols, uuid, result = asyncio.run(_roundtrip(_cs_adapter(), "timestamp"))
+        assert cols, "no seeded sensor is visible for UUID validation"
         assert result.success and result.data, "no rows came back from Cassandra"
         row = result.data[0]
-        assert row["uuid"] == UUID_A
+        assert row["uuid"] == uuid
         assert isinstance(row["value"], (int, float))
 
     def test_rows_come_back_newest_first(self):
-        _, result = asyncio.run(_roundtrip(_cs_adapter(), "timestamp"))
+        _, _, result = asyncio.run(_roundtrip(_cs_adapter(), "timestamp"))
         stamps = [r["timestamp"] for r in result.data]
         assert stamps == sorted(stamps, reverse=True)
 

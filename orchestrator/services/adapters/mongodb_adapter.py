@@ -178,6 +178,12 @@ class MongoDBAdapter(DatabaseAdapter):
         Safety check: forbid server-side JS and write operations.
         query is expected to be a JSON string.
         """
+        if not query or not isinstance(query, str):
+            raise ValueError(
+                "No query was built. build_timeseries_query() returns None when it cannot "
+                "build one — most often because get_columns() has not run, so no uuid is "
+                "yet known to be valid."
+            )
         for op in _FORBIDDEN_OPS:
             if op in query:
                 raise ValueError(f"Forbidden MongoDB operator: {op}")

@@ -208,7 +208,18 @@ class CassandraAdapter(DatabaseAdapter):
         return cols
 
     def validate_query(self, cql: str) -> bool:
-        """SELECT-only safety check for CQL."""
+        """SELECT-only safety check for CQL.
+
+        Same None guard as the SQL adapters (V12-13): `build_timeseries_query` returns None
+        when it cannot build one, and a safety check that crashes on its own first line
+        reports a validation bug as an unrelated AttributeError.
+        """
+        if not cql or not isinstance(cql, str):
+            raise ValueError(
+                "No query was built. build_timeseries_query() returns None when it cannot "
+                "build one — most often because get_columns() has not run, so no uuid is "
+                "yet known to be valid."
+            )
         cql_upper = cql.upper().strip()
         if not (cql_upper.startswith("SELECT") or cql_upper.startswith("WITH")):
             raise ValueError("Only SELECT queries are allowed.")

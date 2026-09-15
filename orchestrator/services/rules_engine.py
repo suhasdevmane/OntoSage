@@ -61,12 +61,32 @@ _OPS = {
 _COOLDOWN_TTL_S = 1800  # 30-minute re-fire suppression
 
 
+#: What a concept rule watches. NO DEFAULT, on purpose (V12-20, BUG-482).
+#:
+#: A concept resolves to a Brick class, and a class has many points — 288 for
+#: `Temperature_Sensor` on this building. The engine used to bind to the first point that
+#: was reporting and evaluate only that one, while the rule *read* as if it covered the
+#: class. A rule named `humidity_damp_floor3` watching one arbitrary humidity sensor is not
+#: slightly imprecise; it is a different rule from the one written down.
+#:
+#: So a concept rule must SAY which it means. An undeclared one is loaded DISABLED rather
+#: than given a default, because either default would silently pick a meaning for a rule
+#: whose author did not: `all` changes when existing rules fire, `first_reporting` keeps the
+#: behaviour that made this a defect.
+SCOPE_ALL = "all"
+SCOPE_FIRST = "first_reporting"
+_SCOPES = (SCOPE_ALL, SCOPE_FIRST)
+
+
 class RuleTrigger(BaseModel):
     sensor_uuid: Optional[str] = None
     concept: Optional[str] = None
     op: str = Field(default=">", pattern=r"^(>|<|>=|<=|==|!=)$")
     threshold: float = 0.0
     duration_min: int = Field(default=0, ge=0)
+    #: Required on a CONCEPT rule; meaningless on a direct-uuid rule, which watches exactly
+    #: the point it names.
+    scope: Optional[str] = Field(default=None, pattern=r"^(all|first_reporting)$")
 
 
 class RuleAction(BaseModel):
@@ -132,15 +152,45 @@ class RulesEngine:
             except Exception as e:
                 logger.warning(f"[rules_engine] invalid rule spec {entry.get('id', '?')}: {e}")
                 continue
-            if rule.enabled:
-                self._rules.append(rule)
-                loaded += 1
+            if not rule.enabled:
+                continue
+            if not self._scope_is_declared(rule):
+                continue
+            self._rules.append(rule)
+            loaded += 1
 
         logger.info(
             f"[rules_engine] building='{self._building_id}' loaded {loaded} rule(s) "
             f"from {yaml_path}"
         )
         return loaded
+
+    @staticmethod
+    def _scope_is_declared(rule: EcaRule) -> bool:
+        """A concept rule must say what it watches, or it does not load (V12-20, BUG-482).
+
+        Refused rather than defaulted. A concept names a CLASS and a class has many points,
+        so `all` and `first_reporting` are different rules — and picking one on the author's
+        behalf is how `humidity_damp_floor3` came to watch a single arbitrary humidity
+        sensor while reading as though it covered a floor.
+
+        A direct-uuid rule needs no scope: it watches exactly the point it names.
+        """
+        if not rule.trigger.concept or rule.trigger.sensor_uuid:
+            return True
+        if rule.trigger.scope in _SCOPES:
+            return True
+        logger.warning(
+            "[rules_engine] rule=%s is DISABLED: it triggers on concept %r, which matches "
+            "a whole Brick class, and declares no scope. Add `scope: %s` to evaluate every "
+            "matching point, or `scope: %s` to watch one reporting point and accept that "
+            "the rule covers only that point.",
+            rule.id,
+            rule.trigger.concept,
+            SCOPE_ALL,
+            SCOPE_FIRST,
+        )
+        return False
 
     @property
     def rules(self) -> List[EcaRule]:
@@ -193,12 +243,33 @@ class RulesEngine:
         return fired
 
     async def _evaluate_rule(self, rule: EcaRule) -> bool:
-        """Return True if rule fires (breach sustained + cooldown passed)."""
-        uuid = await self._resolve_uuid(rule)
-        if not uuid:
+        """Return True if the rule fired for at least one point it watches.
+
+        `scope: all` evaluates EVERY matching point rather than one (V12-20, BUG-482).
+        Breach duration and cooldown are already keyed by `(rule_id, uuid)`, so per-point
+        evaluation needed no new state — the machinery was there and only one point was
+        ever put through it.
+        """
+        uuids = await self._resolve_uuids(rule)
+        if not uuids:
             logger.debug(f"[rules_engine] rule {rule.id}: could not resolve UUID — skip")
             return False
+        if len(uuids) > 1:
+            logger.info(
+                "[rules_engine] rule=%s scope=%s — evaluating %d point(s)",
+                rule.id,
+                rule.trigger.scope,
+                len(uuids),
+            )
 
+        fired = False
+        for uuid in uuids:
+            if await self._evaluate_point(rule, uuid):
+                fired = True
+        return fired
+
+    async def _evaluate_point(self, rule: EcaRule, uuid: str) -> bool:
+        """Return True if the rule fires for THIS point (breach sustained + cooldown passed)."""
         value = await self._value_fetcher(uuid)
         if value is None:
             logger.debug(f"[rules_engine] rule {rule.id}: no value for {uuid[:16]}... — skip")
@@ -234,6 +305,52 @@ class RulesEngine:
             f"value={value} op={rule.trigger.op} threshold={rule.trigger.threshold}"
         )
         return True
+
+    async def _resolve_uuids(self, rule: EcaRule) -> List[str]:
+        """Every point this rule watches, per its declared scope (V12-20).
+
+        `all` returns every point of the concept's classes that is reporting a value.
+        Non-reporting points are excluded rather than counted as non-breaching: "no value"
+        is not "within threshold", and treating it as one would report a silent instrument
+        as a healthy one.
+        """
+        if rule.trigger.scope != SCOPE_ALL or not rule.trigger.concept:
+            one = await self._resolve_uuid(rule)
+            return [one] if one else []
+
+        try:
+            from orchestrator.services.concept_resolver import concept_resolver
+
+            matches = await concept_resolver.resolve(rule.trigger.concept)
+        except Exception as e:
+            logger.warning(
+                "[rules_engine] rule=%s could not resolve a sensor for concept %r: %s: %s",
+                rule.id,
+                rule.trigger.concept,
+                type(e).__name__,
+                e,
+            )
+            return []
+        if not matches:
+            return []
+
+        out: List[str] = []
+        seen = set()
+        for cls in matches[0].brick_classes or []:
+            for uuid in await self._uuids_for_class(cls):
+                if uuid in seen:
+                    continue
+                seen.add(uuid)
+                if await self._value_fetcher(uuid) is not None:
+                    out.append(uuid)
+        if not out:
+            logger.warning(
+                "[rules_engine] rule=%s concept %r: no point of its class(es) is reporting "
+                "a value — this rule cannot fire",
+                rule.id,
+                rule.trigger.concept,
+            )
+        return out
 
     async def _resolve_uuid(self, rule: EcaRule) -> Optional[str]:
         """Return the sensor UUID for a rule trigger (direct UUID or concept resolution)."""
