@@ -68,7 +68,9 @@ class VisualizationAgent:
             result = await self._execute_viz_code(code)
 
             # Step 4: Generate description
-            description = await self._generate_description(user_query, chart_type, data)
+            description = await self._generate_description(
+                user_query, chart_type, data, state=state
+            )
 
             # Extract base64 from stdout, save to /app/outputs/, return HTTP URL
             import base64 as _b64
@@ -355,19 +357,47 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
         return _patch_plot_to_base64(code)
 
     async def _generate_description(
-        self, user_query: str, chart_type: str, data: Optional[Dict[str, Any]]
+        self,
+        user_query: str,
+        chart_type: str,
+        data: Optional[Dict[str, Any]],
+        state: Optional[ConversationState] = None,
     ) -> str:
         """Generate natural language description of visualization"""
+
+        # BUG-595: the caption was written from the first 200 characters of raw data, so its
+        # "patterns" were guesses: "a steady baseline of ~400-500 ppm" for a room whose stored
+        # minimum that day was 704 ppm. It now gets the series statistics computed from every row.
+        data_summary = "Not specified"
+        rows = (data.get("data") if isinstance(data, dict) else data) or []
+        if isinstance(rows, list) and rows:
+            try:
+                from orchestrator.services.requested_interval import building_tz
+                from orchestrator.services.series_summary import summarise_series
+
+                meta = (getattr(state, "intermediate_results", None) or {}).get(
+                    "sensor_metadata"
+                ) or {}
+                data_summary, _ = summarise_series(
+                    rows, meta, building_tz(getattr(state, "building_id", None))
+                )
+            except Exception as exc:  # the caption still describes the chart, without figures
+                logger.debug(f"[visualization_agent] series summary skipped: {exc}")
+                data_summary = "Not available"
 
         desc_prompt = f"""Generate a brief description of a visualization.
 
 User Query: {user_query}
 Chart Type: {chart_type}
-Data Summary: {str(data)[:200] if data else "Not specified"}
+Statistics over every plotted reading (computed by the system):
+{data_summary}
 
 Generate 1-2 sentences describing:
 1. What the visualization shows
 2. Key insights or patterns
+
+Every number you give (level, peak, low, time) must appear in the statistics above. If the
+statistics are not available, describe the chart without figures.
 
 Description:"""
 

@@ -1,0 +1,5 @@
+What is the temperature in room 99.99?
+Have there been any alarms this week?
+Who accessed the server room?
+Which rooms on floor 5 are stuffy right now?
+Fix the temperature in here

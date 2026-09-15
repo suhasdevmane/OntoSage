@@ -113,6 +113,30 @@ _COUNT_NOUN_RE = re.compile(
 )
 
 
+#: BUG-590: the unit written after a number says which quantity it is. A two-measurand report
+#: ("temperature and CO2 on floor 2") opened with "the recorded temperature value (669, 943)
+#: is outside the range" — CO2 ppm judged against the first measurand in the question.
+_UNIT_KINDS = (
+    (re.compile(r"^\s*(?:ppm|parts per million)\b", re.IGNORECASE), "co2"),
+    (re.compile(r"^\s*(?:%|percent\b|pct\b)", re.IGNORECASE), "humidity"),
+    (re.compile(r"^\s*(?:°\s*[cf]\b|deg(?:rees)?\s*[cf]?\b|℃|℉)", re.IGNORECASE), "temperature"),
+    (re.compile(r"^\s*(?:lux|lx)\b", re.IGNORECASE), "illuminance"),
+    (re.compile(r"^\s*(?:db\s*a?|decibels?)\b", re.IGNORECASE), "sound"),
+    (re.compile(r"^\s*(?:k?pa|hpa|bar|mbar)\b", re.IGNORECASE), "pressure"),
+    (re.compile(r"^\s*(?:m/s|km/h|kph|mph|knots?)\b", re.IGNORECASE), "wind"),
+    (re.compile(r"^\s*(?:k?wh|mwh|kw|mw)\b", re.IGNORECASE), "energy"),
+    (re.compile(r"^\s*(?:µg|μg|ug)\s*/\s*m", re.IGNORECASE), "pm25"),
+)
+
+
+def _unit_kind(after: str) -> Optional[str]:
+    """The quantity named by the unit that follows a number, or None when there is none."""
+    for pattern, kind in _UNIT_KINDS:
+        if pattern.match(after or ""):
+            return kind
+    return None
+
+
 def _is_reading(raw: str, before: str, after: str) -> bool:
     """False for a number that is plainly part of a date, a clock time or an identifier."""
     if _CLOCK_CONTEXT_RE.search(before) or _CLOCK_CONTEXT_RE.match(after):
@@ -166,6 +190,9 @@ def implausible_values(text: str, measurand: Optional[str] = None) -> list:
             raw, body[max(0, m.start() - 2) : m.start()], body[m.end() : m.end() + 24]
         ):
             continue
+        _named = _unit_kind(body[m.end() : m.end() + 24])
+        if _named and _named != kind:
+            continue  # written as another quantity's figure (BUG-590)
         val = float(raw.replace(",", ""))
         if val < low or val > high:
             out.append(val)

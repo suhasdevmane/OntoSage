@@ -164,7 +164,7 @@ def test_the_rewrite_guard_is_actually_called():
 
     src = inspect.getsource(DialogueAgent.rewrite_to_standalone)
     assert "rewrite_is_safe" in src
-    assert src.index("rewrite_is_safe") < src.rindex("return rewritten")
+    assert src.index("rewrite_is_safe") < src.rindex("return keep_the_asked_action(latest, rewritten")
 
 
 def test_the_carry_forward_prune_is_actually_called():

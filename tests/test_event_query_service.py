@@ -233,3 +233,33 @@ def test_anomaly_summary_survives_numeric_guard():
     )
     r = asyncio.run(svc.answer("anomalies today?", now=NOW))
     assert guard_payload(r, "events")["formatted_response"] != SUPPRESSION_TEXT
+
+
+# ── BUG-504/505: no bookings fallback; a "who" access question is about individuals ──
+
+
+def _bare_svc():
+    from orchestrator.services.event_query_service import EventQueryService
+
+    svc = EventQueryService.__new__(EventQueryService)
+    svc._adapter = object()  # present, and must never be queried by these answers
+    return svc
+
+
+@pytest.mark.parametrize(
+    "q", ["Who accessed the server room?", "Who entered the lab last night?", "who badged into room 2.01"]
+)
+def test_a_who_access_question_is_refused_not_answered_with_bookings(q):
+    import asyncio
+
+    res = asyncio.run(_bare_svc().answer(q))
+    assert res["kind"] == "person_access_refused"
+    assert "booking" not in res["formatted_response"].split("\n")[0].lower()
+
+
+def test_an_unrecognised_events_question_is_not_a_booking_list():
+    import asyncio
+
+    res = asyncio.run(_bare_svc().answer("Have there been any alarms this week?"))
+    assert res["kind"] == "unrecognised"
+    assert "doesn't record that" in res["formatted_response"]

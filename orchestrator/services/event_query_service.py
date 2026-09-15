@@ -33,6 +33,13 @@ EVENTS_STORE_KEY = "bldg:events_data"
 
 # ── question-kind classification (deterministic) ─────────────────────────────
 
+#: BUG-505: a question about which PERSON entered, used or accessed something.
+_PERSON_ACCESS_RE = re.compile(
+    r"\bwho(?:'s| has| had| was| were)?\b.{0,30}\b(access(?:ed|es)?|enter(?:ed|s)?|went (?:in|into)|"
+    r"badg(?:e|ed)|swip(?:e|ed)|came (?:in|into)|was in|been in|used)\b",
+    re.IGNORECASE,
+)
+
 _KIND_RES: List[Tuple[str, re.Pattern]] = [
     # V5-T21 — FIRST: "any anomalies this week?" must never read as tickets
     (
@@ -405,6 +412,31 @@ class EventQueryService:
                         best = (len(probe), local)
         return best[1] if best else None
 
+    def _person_access_refusal(self) -> Dict[str, Any]:
+        return {
+            "success": True,
+            "kind": "person_access_refused",
+            "formatted_response": (
+                "**I can't say who entered or used a space.** The system explains the building; "
+                "it never tracks individuals, so no record of a person's access is held or "
+                "disclosed.\n\nYou can instead ask for aggregate counts, for example how many "
+                "people arrived through the entrance today, or whether a room is booked."
+            ),
+        }
+
+    def _not_an_event_kind_held(self, question: str) -> Dict[str, Any]:
+        return {
+            "success": True,
+            "kind": "unrecognised",
+            "formatted_response": (
+                "**The building's events store doesn't record that.** It holds room bookings, "
+                "work orders, aggregate entrance counts and detected anomaly episodes, and your "
+                "question matches none of them, so any list I gave would be about something "
+                "else.\n\nTry, for example: \"any anomalies this week?\", \"how many open work "
+                "orders are there?\" or \"is that room booked this afternoon?\"."
+            ),
+        }
+
     def _decline(self, kind: str) -> Dict[str, Any]:
         return {
             "success": False,
@@ -418,7 +450,16 @@ class EventQueryService:
 
     async def answer(self, question: str, now: Optional[datetime] = None) -> Dict[str, Any]:
         now = now or datetime.utcnow()
-        kind = classify_event_question(question) or "bookings_list"
+        # A "who" question about entering or using a space asks about INDIVIDUALS (BUG-505):
+        # "Who accessed the server room?" was answered with 193 unfiltered building bookings.
+        if _PERSON_ACCESS_RE.search(question or ""):
+            return self._person_access_refusal()
+        kind = classify_event_question(question)
+        if kind is None:
+            # NO BOOKINGS FALLBACK (BUG-504/505). An unrecognised question used to become
+            # "bookings_list": "Have there been any alarms this week?" returned 945 bookings.
+            # The honest answer names what this store holds.
+            return self._not_an_event_kind_held(question)
         # Recurrence is answered from the report intake store, not the events adapter, so
         # it must not be gated on one. A building with no events source can still have
         # people reporting faults, and "what keeps going wrong here" is exactly the

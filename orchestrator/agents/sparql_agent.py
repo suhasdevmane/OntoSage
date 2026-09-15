@@ -997,8 +997,29 @@ Your Answer:"""
         try:
             raw = await self._execute_query(query)
         except Exception as exc:
-            logger.warning(f"[sparql] whole-register fetch failed, falling back: {exc}")
-            return None
+            # A HELD REGISTER THAT COULD NOT BE READ IS NOT A REASON TO IMPROVISE (BUG-596).
+            # This fell back to a generated query, which answered "Where can I work for three
+            # hours with power, good Wi-Fi and a low risk of noise?" with "Wi-Fi coverage is
+            # generally strong throughout the building" and "the ground floor tends to be the
+            # quietest" — none of it in any record — after the workspace register read timed out.
+            # Size-based fallbacks stay above; a failed READ says so.
+            logger.warning(f"[sparql] whole-register fetch failed — answering honestly: {exc}")
+            label = record.label or record.local_name
+            return {
+                # success=True: this IS the answer. False lets later lanes generate one.
+                "success": True,
+                "query": query,
+                "results": {"results": {"bindings": []}},
+                "error": f"register read failed: {type(exc).__name__}",
+                "formatted_response": (
+                    f"I couldn't read the building's **{label}** records just now, so I can't "
+                    "answer this from them. Please ask again in a moment — I won't guess."
+                ),
+                "context": [],
+                "analytics_required": False,
+                "llm_reasoning": "Whole-register read failed; declined rather than generated",
+                "method": "whole_register_unavailable",
+            }
         bindings = (raw or {}).get("results", {}).get("bindings", [])
         if not bindings:
             return None  # nothing to hand over — let the normal path try
@@ -1079,6 +1100,9 @@ Your Answer:"""
         # At most one extra, and only when the budget still fits. Two registers is a
         # question spanning two things; handing over the building's whole record layer is
         # the prompt-size failure that already cost an empty completion (BUG-433).
+        # BUG-589: the counted facts describe the register the question named, so they are
+        # taken from its rows BEFORE a second register is merged in.
+        _primary_rows = list(results["results"]["bindings"])
         second_label = ""
         try:
             from orchestrator.services.record_registry import (
@@ -1174,26 +1198,29 @@ Your Answer:"""
                 f"(These are all {record.instances} {record.label} records this building "
                 "holds. ontosage:recordStatus is the owner's RECORDED state — use it as "
                 "given and never re-derive it from the dates; 'void' is not 'expired'. "
+                "Where the RECORDED FACTS below list due dates that have already passed, "
+                "report those as well, as dates passed, alongside the recorded status. "
                 f"Answer only from these records.{grounding})"
             )
-            # BUG-581: the counting is done in code, not left to the narration.
-            try:
-                from orchestrator.services.register_facts import register_facts
+        # BUG-581: the counting is done in code, not left to the narration.
+        try:
+            from orchestrator.services.register_facts import register_facts
 
-                _facts = register_facts(
-                    results["results"]["bindings"],
-                    user_query,
-                    building_local_now(getattr(state, "building_id", None)).date(),
+            _facts = register_facts(
+                _primary_rows,
+                user_query,
+                building_local_now(getattr(state, "building_id", None)).date(),
+            )
+            logger.info(f"[sparql] register facts for {record.local_name}: {_facts!r}"[:900])
+            if _facts:
+                guidance += (
+                    "\n\nRECORDED FACTS — counted by the system from every row above. Every "
+                    "count, list and status you state must agree with these; never recount, "
+                    "and never move a record into a kind or status it does not have:\n"
+                    + _facts
                 )
-                if _facts:
-                    guidance += (
-                        "\n\nRECORDED FACTS — counted by the system from every row above. Every "
-                        "count, list and status you state must agree with these; never recount, "
-                        "and never move a record into a kind or status it does not have:\n"
-                        + _facts
-                    )
-            except Exception as exc:  # pragma: no cover - the rows still answer without it
-                logger.debug(f"[sparql] register facts skipped: {exc}")
+        except Exception as exc:  # pragma: no cover - the rows still answer without it
+            logger.warning(f"[sparql] register facts skipped: {type(exc).__name__}: {exc}")
         # Provenance for the evidence record. A record LIFTED from a document is
         # `document_derived`, which outranks a sensor reading and loses to authored TTL
         # (V7-T19) — the answer is only as current as the transcription. Where the graph
@@ -1238,18 +1265,35 @@ Your Answer:"""
         except Exception:  # provenance is best-effort and must never cost the answer
             pass
 
-        from orchestrator.services.register_facts import strip_leaked_code_line
+        from orchestrator.services.register_facts import (
+            completeness_line,
+            passed_due_not_marked,
+            strip_leaked_code_line,
+        )
+
+        _narration = strip_leaked_code_line(
+            await self._format_results(
+                results, guidance, query, True, row_limit=self.MAX_RECORD_ROWS * 2
+            )
+        )
+        try:  # BUG-589: completeness of an overdue answer is not left to the narration
+            from orchestrator.services.requested_interval import building_local_now as _bln
+
+            _narration += completeness_line(
+                _narration,
+                passed_due_not_marked(
+                    _primary_rows, user_query, _bln(getattr(state, "building_id", None)).date()
+                ),
+            )
+        except Exception as exc:  # pragma: no cover - the narration still answers
+            logger.warning(f"[sparql] completeness line skipped: {type(exc).__name__}: {exc}")
 
         return {
             "success": True,
             "query": query,
             "results": results,
             "error": None,
-            "formatted_response": strip_leaked_code_line(
-                await self._format_results(
-                    results, guidance, query, True, row_limit=self.MAX_RECORD_ROWS * 2
-                )
-            ),
+            "formatted_response": _narration,
             "standardized": self._standardize_results(results, user_query, query),
             "context": [],
             "analytics_required": False,
@@ -3703,6 +3747,12 @@ Example 3 (Equipment List):
 - Be conversational and helpful
 - Don't show raw URIs unless specifically asked
 - If results contain UUIDs, mention they're available for data queries
+- A COUNT OF SENSORS describes how a space is instrumented, nothing else (BUG-602). Never use it
+  as evidence of occupancy, demand, emptiness, busyness, fragility, importance or any other
+  property of how a space is used. If the question asks for such a property and the results
+  hold only counts or lists, say the results do not record it and stop
+- Never describe the results as data the user "provided", "supplied" or "pulled back": they
+  are the building's records
 
 Generate your response now:"""
 

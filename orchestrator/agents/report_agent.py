@@ -127,6 +127,24 @@ def _detect_report_type(query: str) -> ReportType:
     return ReportType.SUMMARY
 
 
+def _local_latest(summary: Dict[str, Any]) -> Dict[str, Any]:
+    """Show a summary's latest-reading time on the building's clock (BUG-591).
+
+    Stores are UTC; a report printed "22:59:41 UTC" for a building on BST.
+    """
+    raw = summary.get("latest_at")
+    if not raw:
+        return summary
+    try:
+        from orchestrator.services.requested_interval import building_tz, to_local
+
+        stamp = to_local(datetime.fromisoformat(str(raw)[:19]), building_tz())
+        summary["latest_at"] = stamp.strftime("%Y-%m-%d %H:%M:%S") + " (building local time)"
+    except Exception:
+        pass
+    return summary
+
+
 class ReportAgent:
     """
     Phase 4.2 + 4.6: Structured building report generator.
@@ -380,7 +398,7 @@ class ReportAgent:
                     rows, "value", unit=str(info.get("unit") or ""), truncated=truncated
                 )
                 if agg:
-                    summary[str(info.get("label") or uuid)] = agg.as_dict()
+                    summary[str(info.get("label") or uuid)] = _local_latest(agg.as_dict())
             _note = self._cross_sensor_note(by_uuid, meta)
             if _note:
                 summary["_aggregate_across_sensors"] = _note
@@ -401,7 +419,7 @@ class ReportAgent:
                 records, field, unit=self._unit_for_column(field, meta), truncated=truncated
             )
             if agg:
-                summary[field] = agg.as_dict()
+                summary[field] = _local_latest(agg.as_dict())
         return summary
 
     @staticmethod
@@ -610,6 +628,12 @@ Write a professional, structured report with:
 Rules about the numbers:
 {counts_rule}- Every figure must come from the findings above. Do not estimate or round to a
   friendlier number, and do not introduce a figure that is not there.
+- Report averages to at most one decimal place (ppm, kWh and lux as whole numbers).
+- A limit of THIS SYSTEM (a row limit, a slice, a query setting) is context for reading the
+  numbers, never a recommendation: recommendations are actions in the building (BUG-506).
+- Name sensors by their labels, never by identifiers, and give times in building local time
+  as written in the findings; never convert a time to UTC or name another time zone.
+- Do not name any standard, guideline, organisation or threshold that is not in the findings.
 
 Use factual language. Be concise and specific."""
         try:

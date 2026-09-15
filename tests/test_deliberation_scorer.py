@@ -131,3 +131,16 @@ def test_no_scorable_data_excluded_not_zeroed():
     res = score_candidates(ir, cands, {f"{NS}Ghost": {}})
     assert res.ranked == []
     assert res.excluded[0].excluded_reason == "no scorable data on any criterion"
+
+
+def test_a_room_measured_on_every_criterion_ranks_ahead_of_one_with_a_gap():
+    """BUG-599: renormalised scores stay as they are, but a gap cannot win the ranking."""
+    ir = _ir(
+        Constraint(modality="noise", direction=Direction.MINIMIZE),
+        Constraint(modality="co2", direction=Direction.MINIMIZE),
+    )
+    cands = [_cand("Full"), _cand("NoCO2")]
+    values = {f"{NS}Full": {"noise": 40.0, "co2": 800.0}, f"{NS}NoCO2": {"noise": 40.0}}
+    res = score_candidates(ir, cands, values)
+    assert [s.label for s in res.ranked] == ["Full", "NoCO2"]
+    assert res.ranked[1].total > res.ranked[0].total  # the score itself is not altered

@@ -107,3 +107,18 @@ def test_a_passed_due_date_on_a_record_not_marked_overdue_is_stated_separately()
     facts = register_facts(rows, "Which fire safety assets are overdue?", date(2026, 9, 15))
     assert "STATE BOTH: 1 record(s) have the recorded status 'overdue'; 1 more" in facts
     assert "FSA-010 (2026-09-14)" in facts and "FSA-020" not in facts.split("STATE BOTH")[1]
+
+
+def test_past_due_records_the_narration_left_out_are_stated_by_the_system():
+    from orchestrator.services.register_facts import completeness_line, passed_due_not_marked
+
+    rows = [
+        _row(recordId="FSA-001", recordStatus="overdue", nextTestDue="2026-09-02"),
+        _row(recordId="FSA-010", recordStatus="active", nextTestDue="2026-09-14"),
+        _row(recordId="FSA-011", recordStatus="completed", nextTestDue="2026-09-01"),
+    ]
+    missing = passed_due_not_marked(rows, "Which assets are overdue?", date(2026, 9, 15))
+    assert missing == ["FSA-010 (nextTestDue 2026-09-14, recorded active)"]
+    assert "FSA-010" in completeness_line("Only FSA-001 is overdue.", missing)
+    assert completeness_line("FSA-001 and FSA-010 ...", missing) == ""
+    assert passed_due_not_marked(rows, "Which assets are active?", date(2026, 9, 15)) == []

@@ -1,0 +1,6 @@
+Which fire safety assets are overdue or cannot be evidenced?
+Have there been any alarms this week?
+Who accessed the server room?
+Which rooms on floor 5 are stuffy right now?
+Give me a report on the temperature and CO2 on floor 2 yesterday.
+Give me a report on the CO2 in room 5.01 yesterday.

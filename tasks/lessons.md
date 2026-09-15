@@ -1481,3 +1481,19 @@ question (BUG-582). The rows handed to the model were right every time.
   gets the computed facts. An instruction ("never re-derive status from dates") is not enforcement.
 * A narration prompt that asks "is this compliant with standards?" without supplying any standard
   asks the model to invent one.
+
+## 107. Two scripted edits broke code the tests then had to catch (2026-09-15)
+
+(1) Python source written through a Bash heredoc lost its escapes: `\n` inside string literals
+became real newlines (a SyntaxError) and `\b` in a regex became a BACKSPACE character, so the
+pattern silently matched nothing. (2) A module-level helper spliced in by string index landed
+INSIDE `DialogueAgent`, after `rewrite_to_standalone`: every later method became unreachable
+code nested in the helper, and `detect_intent` vanished from the class. The running container was
+unaffected only because it had been restarted before the edit.
+
+**Rules.**
+* Write Python source with the Edit/Write tools, never via heredoc string literals; when a
+  script must write code, build backslashes with `chr(92)` and scan for `chr(8)` afterwards.
+* After any structural splice, import the module and assert the class still has its public
+  methods, then run the WHOLE unit suite — a subset chosen by filename did not include the
+  contract tests that noticed.
