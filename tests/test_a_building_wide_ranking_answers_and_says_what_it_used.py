@@ -70,9 +70,32 @@ def test_a_place_to_work_excludes_restrooms_and_plant():
     cands, ledger = enumerate_candidates(cqir, admission, schema)
     assert [c.label for c in cands] == ["Office"]
     assert any("not a place to work" in e.reason for e in ledger.excluded)
-    cqir.raw_query = "Which room has the highest temperature?"
+    # F-02: purpose-scoped in general — a comfort ranking is about places for people even
+    # when the question does not say "work", and the exclusion says how to undo it
+    cqir.raw_query = "Which room has the best air quality right now?"
+    cands, ledger = enumerate_candidates(cqir, admission, schema)
+    assert [c.label for c in cands] == ["Office"]
+    assert any("name it to include it" in e.reason for e in ledger.excluded)
+    # naming the kind asks about exactly those spaces
+    cqir.raw_query = "Which restroom has the highest temperature?"
     cands, _ = enumerate_candidates(cqir, admission, schema)
-    assert {c.label for c in cands} == {"Office", "Restroom"}  # not a person-place question
+    assert {c.label for c in cands} == {"Office", "Restroom"}
+
+
+@pytest.mark.parametrize(
+    "q,occupant",
+    [
+        ("Which rooms in the building are the stuffiest right now?", True),
+        ("Where is the quietest room?", True),
+        ("Is the server room too hot?", False),
+        ("Which plant room is the warmest?", False),
+        ("Which toilets have the highest humidity?", False),
+    ],
+)
+def test_the_purpose_is_occupant_unless_a_non_occupied_space_is_named(q, occupant):
+    from orchestrator.services.deliberation.candidates import purpose_is_occupant
+
+    assert purpose_is_occupant(q) is occupant
 
 
 def test_a_count_of_readings_is_not_an_implausible_reading():

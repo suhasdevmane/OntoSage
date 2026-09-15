@@ -79,3 +79,34 @@ def test_level_synonym_and_multi_floor():
     q = _agent._floor_scoped_sparql("compare CO2 on level 2 and level 4", None)
     assert q is not None
     assert '"2"' in q and '"4"' in q
+
+
+# ── BUG-586: two joined measurands resolve two classes ──────────────────────────
+
+
+def _bare_agent():
+    from orchestrator.agents.sparql_agent import SPARQLAgent
+
+    agent = SPARQLAgent.__new__(SPARQLAgent)
+    agent._get_extended_class_map = lambda: {
+        "air temperature": "brick:Air_Temperature_Sensor",
+        "temperature": "brick:Temperature_Sensor",
+        "co2": "brick:CO2_Sensor",
+        "humidity": "brick:Humidity_Sensor",
+    }
+    agent._infer_plant_class = lambda uq: None
+    return agent
+
+
+def test_a_question_joining_two_measurands_resolves_both():
+    agent = _bare_agent()
+    assert agent._infer_classes("report on the temperature and co2 on floor 2 yesterday") == [
+        "brick:Temperature_Sensor",
+        "brick:CO2_Sensor",
+    ]
+
+
+def test_one_measurand_stays_one_class_even_with_and():
+    agent = _bare_agent()
+    assert agent._infer_classes("temperature on floor 2 and floor 3") == ["brick:Temperature_Sensor"]
+    assert agent._infer_classes("air temperature and nothing else") == ["brick:Air_Temperature_Sensor"]

@@ -1176,6 +1176,24 @@ Your Answer:"""
                 "given and never re-derive it from the dates; 'void' is not 'expired'. "
                 f"Answer only from these records.{grounding})"
             )
+            # BUG-581: the counting is done in code, not left to the narration.
+            try:
+                from orchestrator.services.register_facts import register_facts
+
+                _facts = register_facts(
+                    results["results"]["bindings"],
+                    user_query,
+                    building_local_now(getattr(state, "building_id", None)).date(),
+                )
+                if _facts:
+                    guidance += (
+                        "\n\nRECORDED FACTS — counted by the system from every row above. Every "
+                        "count, list and status you state must agree with these; never recount, "
+                        "and never move a record into a kind or status it does not have:\n"
+                        + _facts
+                    )
+            except Exception as exc:  # pragma: no cover - the rows still answer without it
+                logger.debug(f"[sparql] register facts skipped: {exc}")
         # Provenance for the evidence record. A record LIFTED from a document is
         # `document_derived`, which outranks a sensor reading and loses to authored TTL
         # (V7-T19) — the answer is only as current as the transcription. Where the graph
@@ -1220,13 +1238,17 @@ Your Answer:"""
         except Exception:  # provenance is best-effort and must never cost the answer
             pass
 
+        from orchestrator.services.register_facts import strip_leaked_code_line
+
         return {
             "success": True,
             "query": query,
             "results": results,
             "error": None,
-            "formatted_response": await self._format_results(
-                results, guidance, query, True, row_limit=self.MAX_RECORD_ROWS * 2
+            "formatted_response": strip_leaked_code_line(
+                await self._format_results(
+                    results, guidance, query, True, row_limit=self.MAX_RECORD_ROWS * 2
+                )
             ),
             "standardized": self._standardize_results(results, user_query, query),
             "context": [],
@@ -1758,7 +1780,19 @@ Return ONLY the corrected SPARQL query."""
         #     as the point is labelled (every point carries rdfs:label).
         # Either way resolution keys off class/label/location, never the URI string.
         cls = self._infer_class(user_query.lower()) or class_target
-        if cls:
+        # BUG-586: "a report on the temperature AND CO2 on floor 2" resolved one class, so the
+        # report said "CO2 measurements were not included in the supplied dataset". A question
+        # that joins two measurands gets both.
+        _classes = self._infer_classes(user_query.lower()) if cls else []
+        if len(_classes) > 1:
+            type_clause = (
+                "VALUES ?metricCls { " + " ".join(_classes) + " }\n"
+                "  ?sensor rdf:type/rdfs:subClassOf* ?metricCls ."
+            )
+            label_clause = ""
+            row_limit = row_limit * len(_classes)
+            logger.info(f"[sparql] floor-scoped resolve: classes={_classes} floors={floors}")
+        elif cls:
             # TBOX rollup, not exact type: sensors are typed as SUBCLASSES of the
             # inferred class (bldg1 -> Air_Temperature_Sensor, bldg2 -> Zone_Air/
             # Water_Temperature_Sensor, …). An exact `?sensor a Temperature_Sensor`
@@ -2676,6 +2710,35 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
             if k in uq:
                 return v
         return None
+
+    _JOINED_RE = re.compile(r"\band\b|,|&|\bplus\b|\bas well as\b", re.IGNORECASE)
+
+    def _infer_classes(self, uq: str) -> List[str]:
+        """Every measurand class a question JOINS ("temperature and CO2"), in question order.
+
+        One class unless the question joins terms, so a single-measurand question is
+        resolved exactly as `_infer_class` resolves it. Plant classes stay single.
+        """
+        first = self._infer_class(uq)
+        if not first or self._infer_plant_class(uq) or not self._JOINED_RE.search(uq):
+            return [first] if first else []
+        spans: List[Tuple[int, int, str]] = []
+        for k, v in self._get_extended_class_map().items():
+            m = re.search(rf"(?<![a-z0-9]){re.escape(k)}(?![a-z0-9])", uq)
+            if m:
+                spans.append((m.start(), m.end(), v))
+        # "air temperature" also contains "temperature": a term inside a longer matched term
+        # is the same measurand, not a second one.
+        hits = [
+            (s, v)
+            for s, e, v in spans
+            if not any(s2 <= s and e <= e2 and (e2 - s2) > (e - s) for s2, e2, _ in spans)
+        ]
+        ordered: List[str] = []
+        for _, v in sorted(hits):
+            if v not in ordered:
+                ordered.append(v)
+        return ordered or [first]
 
     @staticmethod
     def _most_specific_class(candidates: List[str]) -> str:

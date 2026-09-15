@@ -213,6 +213,46 @@ def _graph_is_not_duplicated() -> Tuple[bool, str]:
     return True, f"reference fan-out {fanout:.2f} copies/UUID ({uuids} UUIDs)"
 
 
+#: V12-34 / BUG-531. Fan-out above cannot see a sensor with two series: each reference carries
+#: its OWN uuid, so refs/uuids stays 1.00 while one answer merges two stores. This counts the
+#: thing itself — subjects with more than one distinct timeseries id.
+_DUAL_REFERENCE_QUERY = (
+    "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
+    "SELECT ?s (COUNT(DISTINCT ?u) AS ?n) WHERE { "
+    "?s ref:hasExternalReference ?r . ?r ref:hasTimeseriesId ?u } "
+    "GROUP BY ?s HAVING (COUNT(DISTINCT ?u) > 1) LIMIT 50"
+)
+
+
+def sensors_with_two_series(graphdb_url: str = "", repo: str = "") -> Optional[List[str]]:
+    """Sensors resolving to more than one timeseries id, or None when the graph is unreachable."""
+    url = f"{graphdb_url or GRAPHDB_URL}/repositories/{repo or GRAPHDB_REPO}"
+    try:
+        req = urllib.request.Request(
+            url,
+            data=_DUAL_REFERENCE_QUERY.encode(),
+            headers={"Content-Type": "application/sparql-query", "Accept": "text/csv"},
+        )
+        with urllib.request.urlopen(req, timeout=60) as r:  # nosec B310 - fixed local URL
+            rows = r.read().decode("utf-8", "replace").strip().splitlines()
+    except Exception:
+        return None
+    return [row.split(",")[0] for row in rows[1:] if row.strip()]
+
+
+def _one_series_per_sensor() -> Tuple[bool, str]:
+    duals = sensors_with_two_series()
+    if duals is None:
+        return True, "timeseries references per sensor unknown (graph unreachable)"
+    if duals:
+        names = ", ".join(d.rsplit("#", 1)[-1] for d in duals[:6])
+        return False, (
+            f"{len(duals)} sensor(s) resolve to two or more timeseries ids ({names}) -- one "
+            f"answer would merge their stores (BUG-531)"
+        )
+    return True, "every sensor resolves to one timeseries id"
+
+
 def preflight(expect: Optional[str]) -> Tuple[bool, List[str], Dict[str, Any]]:
     checks: List[str] = []
     ok = True
@@ -239,6 +279,10 @@ def preflight(expect: Optional[str]) -> Tuple[bool, List[str], Dict[str, Any]]:
     graph_ok, graph_why = _graph_is_not_duplicated()
     checks.append(f"{'PASS' if graph_ok else 'FAIL'}  {graph_why}")
     ok &= graph_ok
+
+    series_ok, series_why = _one_series_per_sensor()
+    checks.append(f"{'PASS' if series_ok else 'FAIL'}  {series_why}")
+    ok &= series_ok
 
     snap = _container_snapshot()
     unhealthy = [n for n, s in snap.items() if "unhealthy" in s.lower()]

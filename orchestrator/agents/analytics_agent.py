@@ -1125,6 +1125,26 @@ When findings violate a standard, clearly state which standard and by how much.
 Use ✅ for compliant, ⚠️ for borderline, ❌ for non-compliant.
 """
 
+        # BUG-582: with no reference values supplied, items 2-3 invited the model to supply its
+        # own. Rehearsed 3x, "average CO2 on each floor" cited "WHO's recommended indoor
+        # threshold of 1,000 ppm" (WHO publishes no such figure), "which floor is warmest" gave
+        # a different "standard comfort range" each run (21-25, 22-25, 20-24 °C), and an energy
+        # answer invented "a typical threshold of 300 kWh per floor". A number with no source is
+        # a fabrication however plausible. Standards may be named only when they are supplied.
+        if compliance_hint:
+            context_rules = (
+                "2. Provides context against the reference values listed above ONLY — name the "
+                "standard a value is compared with, and never cite one that is not listed\n"
+                "3. Uses ✅/⚠️/❌ status icons only for a comparison against those listed values"
+            )
+        else:
+            context_rules = (
+                "2. Provides context by comparing the figures with EACH OTHER (highest, lowest, "
+                "spread). No reference values were supplied: do NOT name any standard, guideline, "
+                "organisation, comfort range or threshold, and do NOT call a value compliant, "
+                "normal or typical\n"
+                "3. Uses no ✅/⚠️/❌ compliance icons"
+            )
         summary_prompt = f"""You are an expert building analytics assistant. Convert this sensor data analysis into a professional, actionable response.
 
 User Query: {user_query}
@@ -1136,9 +1156,8 @@ Analysis Output:
 Visualization status: {viz_note}
 
 Generate a response that:
-1. Opens with the key finding (the single most important number or status) — bold it
-2. Provides context: is this reading normal, concerning, or compliant with standards?
-3. Uses ✅/⚠️/❌ status icons where relevant
+1. Opens with the key finding (the single most important number or status) — bold it. If two or more items share the top value at the precision you report, say they are TIED and name all of them
+{context_rules}
 4. Includes specific numbers with units
 5. Ends with ONE concrete actionable recommendation if relevant
 6. Uses human-readable sensor names (from Sensor Information above), NOT UUIDs

@@ -699,6 +699,16 @@ def _quantity_asked_about(text: str) -> str:
     return named_quantity(text or "")
 
 
+def normalise_query_text(text: str) -> str:
+    """Fold typographic forms to plain ones (BUG-587): CO₂ → CO2, narrow/no-break spaces → space."""
+    import unicodedata
+
+    if not text:
+        return text
+    folded = unicodedata.normalize("NFKC", text)
+    return re.sub(r"[ \t]{2,}", " ", folded) if folded != text else text
+
+
 def _clear_stale_lane_results(state) -> None:
     """Drop the previous turn's lane results before a new turn runs.
 
@@ -1216,6 +1226,24 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             # Clear the pending type regardless — don't keep re-asking
             state.intermediate_results.pop("pending_clarification_type", None)
 
+        # ── Typography is not meaning (BUG-587) ───────────────────────────────
+        # "CO₂" (subscript two) and "room 2.01" (narrow no-break space) are how a
+        # model — and a phone keyboard — writes "CO2" and "room 2.01". Every matcher here is
+        # ASCII: the CO2 word went unrecognised, the question lost its data words, and a
+        # co-reference rewrite of "What about room 2.01?" was answered from the "Working
+        # Hours" capability instead of plotting CO2. NFKC folds both to their plain forms.
+        if state.messages and getattr(state.messages[-1], "role", "") == "user":
+            _plain = normalise_query_text(state.messages[-1].content)
+            if _plain != state.messages[-1].content:
+                state.messages[-1] = Message(
+                    role="user",
+                    content=_plain,
+                    metadata={
+                        **dict(state.messages[-1].metadata or {}),
+                        "typed_query": state.messages[-1].content,
+                    },
+                )
+
         # ── Affirmation-to-chart follow-up ────────────────────────────────────
         # If the previous assistant turn OFFERED a chart ("I can create a graph
         # for you" / the honesty-guard note) and the user simply affirms ("yes
@@ -1254,6 +1282,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             try:
                 _standalone = await self.dialogue_agent.rewrite_to_standalone(state)
                 if _standalone:
+                    _standalone = normalise_query_text(_standalone)
                     _orig = state.messages[-1].content
                     _meta = dict(state.messages[-1].metadata or {})
                     _meta["original_query"] = _orig
@@ -4423,6 +4452,16 @@ SELECT ?l WHERE {
         results = state.intermediate_results or {}
         if not (results.get("deliberate_result") or state.current_intent == "recommend"):
             return ""
+        # BUG-588: a ranking over a PAST window ("warmest yesterday") is a historical figure.
+        # It got "As measured at 23:58 on 14 Sep, 16 hours ago. Recheck by 00:13 (15 minutes
+        # of useful life)" — a shelf life for a day that is already over.
+        _bases = [
+            str(r.get("basis") or "")
+            for r in ((results.get("evidence_dossier") or {}).get("evidence") or [])
+            if isinstance(r, dict)
+        ]
+        if _bases and all(b.startswith("mean over") or b == "window mean" for b in _bases):
+            return ""
         try:
             from orchestrator.services.evidence.assemble import _oldest_contributing
             from orchestrator.services.evidence.recheck import advise
@@ -5158,6 +5197,11 @@ SELECT ?l WHERE {
 
         # Phase 7.2: Append proactive follow-up suggestions based on intent
         suggestions = self._get_follow_up_suggestions(state.current_intent)
+        # CAVEAT-584: a register answer is about records, not sensors — "Show current
+        # readings for these sensors?" under a list of work orders offers nothing.
+        _sr_method = (state.intermediate_results.get("sparql_result") or {})
+        if isinstance(_sr_method, dict) and _sr_method.get("method") == "whole_register":
+            suggestions = self._FOLLOW_UP_MAP.get("register_records", "")
         if suggestions:
             final_response += f"\n\n---\n**You might also ask:** {suggestions}"
 
@@ -8792,6 +8836,64 @@ SELECT ?l WHERE {
         state.intermediate_results["dialogue_response"] = response
         return state
 
+    async def _serve_from_cache(self, state: ConversationState) -> bool:
+        """Answer from the response cache when it holds this question; True if it did.
+
+        Shared by execute() and stream_execute() (BUG-585): the streamed path never looked.
+        """
+        # B.2: Check response cache before running the full pipeline
+        if self.response_cache:
+            user_query = state.messages[-1].content if state.messages else ""
+            cached = await self.response_cache.get(
+                question=user_query,
+                building_id=state.building_id,
+                user_id=state.user_id,
+                # The cache is partitioned by who is asking. Without the role an
+                # occupant was served a facility manager's room-level reading — the
+                # exact figure the PDP had refused them moments earlier.
+                role=state.intermediate_results.get("user_role") or "",
+            )
+            if cached:
+                logger.info(
+                    f"Response cache HIT — skipping pipeline (type={cached.get('cache_type')})"
+                )
+                state.messages.append(
+                    Message(
+                        role="assistant",
+                        content=cached["response"],
+                        metadata={
+                            "cache_hit": True,
+                            "cache_type": cached.get("cache_type"),
+                        },
+                    )
+                )
+                state.current_intent = cached.get("intent", "general")
+                state.intermediate_results["cache_hit"] = True
+                # BUG-235: restore the evidence record alongside the answer it describes.
+                # Its `retrieved_at` is deliberately NOT refreshed -- that field says when
+                # the evidence was gathered, and for a cached answer it genuinely was
+                # gathered then. Moving it to now would manufacture currency the answer
+                # does not have, which is precisely what the freshness gate exists to
+                # catch. `served_from_cache` carries the rest of the story.
+                _cached_rec = (cached.get("metadata") or {}).get("evidence_record")
+                if isinstance(_cached_rec, dict):
+                    state.intermediate_results["evidence_record"] = {
+                        **_cached_rec,
+                        "served_from_cache": True,
+                    }
+                # V4-T33: cache hits skip the graph but still carry a trace
+                state.intermediate_results["plan_trace"] = {
+                    "kind": "reflex",
+                    "intent": state.current_intent,
+                    "final_node": "response_cache",
+                    "decision_source": "cache",
+                    "overrides_applied": [],
+                    "steps": ["cache"],
+                }
+                return True
+
+        return False
+
     async def execute(self, state: ConversationState) -> ConversationState:
         """
         Execute workflow for given state
@@ -8807,56 +8909,8 @@ SELECT ?l WHERE {
 
             _clear_stale_lane_results(state)
 
-            # B.2: Check response cache before running the full pipeline
-            if self.response_cache:
-                user_query = state.messages[-1].content if state.messages else ""
-                cached = await self.response_cache.get(
-                    question=user_query,
-                    building_id=state.building_id,
-                    user_id=state.user_id,
-                    # The cache is partitioned by who is asking. Without the role an
-                    # occupant was served a facility manager's room-level reading — the
-                    # exact figure the PDP had refused them moments earlier.
-                    role=state.intermediate_results.get("user_role") or "",
-                )
-                if cached:
-                    logger.info(
-                        f"Response cache HIT — skipping pipeline (type={cached.get('cache_type')})"
-                    )
-                    state.messages.append(
-                        Message(
-                            role="assistant",
-                            content=cached["response"],
-                            metadata={
-                                "cache_hit": True,
-                                "cache_type": cached.get("cache_type"),
-                            },
-                        )
-                    )
-                    state.current_intent = cached.get("intent", "general")
-                    state.intermediate_results["cache_hit"] = True
-                    # BUG-235: restore the evidence record alongside the answer it describes.
-                    # Its `retrieved_at` is deliberately NOT refreshed -- that field says when
-                    # the evidence was gathered, and for a cached answer it genuinely was
-                    # gathered then. Moving it to now would manufacture currency the answer
-                    # does not have, which is precisely what the freshness gate exists to
-                    # catch. `served_from_cache` carries the rest of the story.
-                    _cached_rec = (cached.get("metadata") or {}).get("evidence_record")
-                    if isinstance(_cached_rec, dict):
-                        state.intermediate_results["evidence_record"] = {
-                            **_cached_rec,
-                            "served_from_cache": True,
-                        }
-                    # V4-T33: cache hits skip the graph but still carry a trace
-                    state.intermediate_results["plan_trace"] = {
-                        "kind": "reflex",
-                        "intent": state.current_intent,
-                        "final_node": "response_cache",
-                        "decision_source": "cache",
-                        "overrides_applied": [],
-                        "steps": ["cache"],
-                    }
-                    return state
+            if await self._serve_from_cache(state):
+                return state
 
             # Run the graph with timeout
             timeout_s = getattr(settings, "WORKFLOW_TIMEOUT_S", 120)
@@ -8932,6 +8986,7 @@ SELECT ?l WHERE {
         "trend": "Detect anomalies in this trend? | Compare with another sensor? | Export as CSV?",
         "anomaly": "Show the full anomaly report? | Check compliance? | View historical trend?",
         "metadata": "Show current readings for these sensors? | Compare zones? | Generate a report?",
+        "register_records": "Who owns these records? | Which of these are on floor 3? | Show the full register?",
         "compare": "Plot the comparison? | Export results? | Check for anomalies?",
         "report": "Export this report as PDF? | Compare with last month? | View raw data?",
         "discovery": "Show live data for these sensors? | Generate a summary report?",
@@ -9021,7 +9076,47 @@ SELECT ?l WHERE {
         try:
             logger.info(f"Starting streaming workflow for conversation {state.conversation_id}")
 
-            async for step in self.graph.astream(state):
+            # BUG-585: Open WebUI streams by default, and this path used to go straight to the
+            # graph — no stale-lane clearing, no response cache, no deadline. It now runs the
+            # same prelude as execute().
+            _clear_stale_lane_results(state)
+            if await self._serve_from_cache(state):
+                yield {"response_cache": state}
+                return
+
+            timeout_s = float(getattr(settings, "WORKFLOW_TIMEOUT_S", 120))
+            loop = asyncio.get_running_loop()
+            deadline = loop.time() + timeout_s
+            steps = self.graph.astream(state).__aiter__()
+            while True:
+                remaining = deadline - loop.time()
+                try:
+                    if remaining <= 0:
+                        raise asyncio.TimeoutError
+                    step = await asyncio.wait_for(steps.__anext__(), timeout=remaining)
+                except StopAsyncIteration:
+                    break
+                except asyncio.TimeoutError:
+                    logger.error(
+                        f"Streaming workflow timed out after {timeout_s:g}s for {state.conversation_id}"
+                    )
+                    from orchestrator.llm_manager import record_llm_failure
+
+                    record_llm_failure(
+                        TimeoutError(f"workflow timed out after {timeout_s:g}s"), "workflow"
+                    )
+                    try:
+                        await steps.aclose()
+                    except Exception:
+                        pass
+                    state.messages.append(
+                        Message(
+                            role="assistant",
+                            content="Your request took too long to process. Please try a simpler question or try again later.",
+                        )
+                    )
+                    yield {"timeout": state}
+                    return
                 yield step
 
         except Exception as e:

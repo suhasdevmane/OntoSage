@@ -808,6 +808,14 @@ Rules:
     ) -> Dict:
         from orchestrator.agents.report_agent import ReportAgent
 
+        # BUG-586: the planner's report never put the uuid -> label map on the bus, so a floor
+        # report listed "22.884 °C (sensor 00b54ae6-…)" for 49 sensors. The SPARQL step already
+        # holds the labels; hand them to the report the way the main lane does.
+        ir = getattr(state, "intermediate_results", None)
+        if isinstance(ir, dict) and not ir.get("sensor_metadata"):
+            _meta = self._extract_sensor_metadata(ctx.get("sparql_result", {}))
+            if _meta:
+                ir["sensor_metadata"] = _meta
         return await ReportAgent().generate(
             state,
             query,

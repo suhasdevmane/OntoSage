@@ -73,3 +73,21 @@ Raw: `scripts/outputs/wholebuilding_rehearsal_2026-09-15.md(.jsonl)`. **10/10 qu
 **Stage notes for these:** the answers name their evidence (coverage line, "Simulated readings" where
 applicable, source chips). Do not restart the orchestrator in the hour before the demo: the anomaly
 sweep runs ~3 min after boot (detection now off the event loop, row decoding still on it).
+
+## Rehearsal 2 — full 36-question script, 3x (R-01, 2026-09-15 afternoon)
+
+Raw: `scripts/outputs/demo_rehearsal2_2026-09-15.md(.jsonl)`. **108/108 asks returned OK at the
+harness — and reading the answers found two misrepresentations the status codes cannot see.**
+
+| finding | runs | what was wrong | fix |
+|---|---|---|---|
+| Work orders | 1/3 right | "all 9 overdue" (no due date is recorded); another run counted 3 of 9 | BUG-581: counts computed in code |
+| Refuge points | 2/3 right | an evacuation chair listed as a defective refuge point; bare code line "EV-003, 3" leaked | BUG-581 |
+| CO2 per floor / warmest floor / energy | numbers right | invented "WHO threshold", three different comfort ranges, "typical 300 kWh"; a tie reported as a single winner | BUG-582 |
+| Best air quality / stuffiest | ranking right | a server room and a telecoms room ranked for a comfort question | TODO-583 (purpose scope) |
+
+Everything else was consistent across runs. Medians: most answers 5–25 s; per-floor comparisons 34–60 s;
+energy/report 38–49 s; one 111 s outlier (energy per floor, run 2). Re-ask after the fixes: WB-09.
+
+**Grading rule this taught:** "OK" means the pipeline returned text. A demo answer is right only when
+its content is checked against the store and it gives the same facts every time it is asked.

@@ -89,6 +89,56 @@ def _pipeline_key() -> str:
     return ""
 
 
+def _ask_v1_stream(messages: List[Dict], base_url: str, key: str, chat_id: str, email: str,
+                   timeout: int) -> Dict:
+    """One turn with ``stream: true`` — the request Open WebUI actually sends by default.
+
+    The streamed body carries a collapsible "Pipeline steps" panel before the answer; it is
+    removed so the answer compares with a non-streamed one. ``first_byte`` records how long the
+    UI showed nothing at all.
+    """
+    import json as _json
+    import re as _re
+
+    import requests
+
+    headers = {"Authorization": f"Bearer {key}", "Content-Type": "application/json",
+               "X-Chat-Id": chat_id}
+    if email:
+        headers["X-OpenWebUI-User-Email"] = email
+    body = {"model": "ontosage", "messages": messages, "stream": True}
+    t0 = time.time()
+    first_byte = None
+    parts: List[str] = []
+    try:
+        with requests.post(f"{base_url.rstrip('/')}/v1/chat/completions", json=body,
+                           headers=headers, timeout=timeout, stream=True) as resp:
+            if resp.status_code != 200:
+                return {"answer": resp.text[:300], "status": f"HTTP {resp.status_code}"}
+            for raw in resp.iter_lines(decode_unicode=True):
+                if first_byte is None:
+                    first_byte = time.time() - t0
+                if not raw or not raw.startswith("data: "):
+                    continue
+                data = raw[6:]
+                if data == "[DONE]":
+                    break
+                try:
+                    delta = _json.loads(data)["choices"][0].get("delta") or {}
+                except Exception:
+                    continue
+                if delta.get("content"):
+                    parts.append(delta["content"])
+    except requests.exceptions.Timeout:
+        return {"answer": "".join(parts), "status": "TIMEOUT", "first_byte": first_byte}
+    except Exception as exc:
+        return {"answer": "".join(parts), "status": f"ERROR {type(exc).__name__}"}
+    text = _re.sub(r"<details>\s*<summary>Pipeline steps</summary>.*?</details>\s*", "",
+                   "".join(parts), count=1, flags=_re.S)
+    return {"answer": text, "status": "OK" if text.strip() else "EMPTY",
+            "first_byte": first_byte}
+
+
 def _ask_v1(messages: List[Dict], base_url: str, key: str, chat_id: str, email: str,
             timeout: int) -> Dict:
     """One turn through /v1/chat/completions, exactly as Open WebUI sends it.
@@ -131,6 +181,8 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--email", default="", help="forwarded Open WebUI user (role comes from it)")
     ap.add_argument("--conversation", action="store_true",
                     help="with --v1: ask every question as a follow-up in ONE chat")
+    ap.add_argument("--stream", action="store_true",
+                    help="with --v1: stream:true, exactly as Open WebUI sends by default")
     ap.add_argument("--repeat", type=int, default=1)
     ap.add_argument("--base-url", default="http://127.0.0.1:8000")
     ap.add_argument("--timeout", type=int, default=300, help="per-ask client timeout, seconds")
@@ -189,7 +241,8 @@ def main(argv: List[str]) -> int:
                         msgs, chat_id = [{"role": "user", "content": q}], (
                             f"rehearsal-{_uuid.uuid4().hex[:8]}"
                         )
-                    res = _ask_v1(msgs, args.base_url, key, chat_id, args.email, args.timeout)
+                    asker = _ask_v1_stream if args.stream else _ask_v1
+                    res = asker(msgs, args.base_url, key, chat_id, args.email, args.timeout)
                     if args.conversation and res.get("answer"):
                         history = msgs + [{"role": "assistant", "content": res["answer"]}]
                 else:
@@ -201,7 +254,7 @@ def main(argv: List[str]) -> int:
             secs = time.time() - t0
             rows.append(
                 {"q": q, "run": i, "secs": secs, "status": status, "answer": answer,
-                 "flushed": flushed}
+                 "flushed": flushed, "first_byte": res.get("first_byte") if args.v1 else None}
             )
             if args.out:  # a long bank run must not lose every answer to one crash
                 import json

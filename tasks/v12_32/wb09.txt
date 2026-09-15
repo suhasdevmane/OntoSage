@@ -1,0 +1,8 @@
+How many open work orders are there, and which are overdue?
+Which refuge points are defective, and who owns them?
+What is the average CO2 on each floor right now?
+Which floor is the warmest right now?
+Which room in the building has the best air quality right now?
+Which rooms in the building are the stuffiest right now?
+Which floor used the most energy yesterday?
+Which fire safety assets are overdue or cannot be evidenced?
