@@ -718,6 +718,41 @@ _AUTOMATION_CAPABILITY_Q_RE = _re.compile(
 # quality?" asks for a recommendation (analytics + recipe guidance, e.g. the T14
 # window_opening_guidance recipe) — it is not a command to actuate anything
 # (guard 2026-06-12, QA case WF04).
+#: BUG-555: the user citing the assistant's own earlier words.
+_REFERS_TO_EARLIER_REPLY_RE = _re.compile(
+    r"\b(?:you (?:mentioned|said|told me|reported|flagged|noted|recommended|suggested|showed me)"
+    r"|as you (?:said|mentioned|suggested)|you were (?:saying|telling me)"
+    r"|(?:earlier|before|last time|previously),? you\b"
+    r"|the \w+(?: \w+){0,2} you (?:mentioned|flagged|reported|recommended|suggested))\b",
+    _re.IGNORECASE,
+)
+
+
+def normalise_quotes(text: str) -> str:
+    """Model- or keyboard-typographic quotes and dashes as ASCII, for pattern matching."""
+    return (text or "").translate(
+        str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"', "—": "-"})
+    )
+
+
+#: BUG-548: a failure MODE ("fails open", "fail locked", "fail-safe") describes a device.
+_FAIL_MODE_RE = _re.compile(
+    r"\bfail(?:s|ed|ing)?[\s-]+(?:open|closed?|shut|locked|unlocked|lock|unlock|safe|secure)\b",
+    _re.IGNORECASE,
+)
+
+#: BUG-548: a question asking FOR information — who/what/which/where/when/why/how, or a
+#: yes/no status question — is answered, never executed.
+_INFORMATION_QUESTION_RE = _re.compile(
+    # A wh-word opens a question outright. An auxiliary does only when a SUBJECT follows:
+    # "Do something about the temperature" and "Do not open the door" are imperatives.
+    # "you" is excluded so "do you think you could switch it off" stays a request.
+    r"^\W*(?:(?:which|what|where|when|why|who|whose|how)\b|"
+    r"(?:is|are|was|were|does|do|did|has|have|had)\s+"
+    r"(?:i|we|they|it|he|she|the|this|that|these|those|there|any|all|my|our|their|its|a|an)\b)",
+    _re.IGNORECASE,
+)
+
 _ADVICE_QUESTION_RE = _re.compile(
     r"\b(should (i|we)|is it (worth|a good idea|better)|would it (help|be better)|"
     r"do you (recommend|suggest|advise)|what do you recommend)\b",
@@ -924,6 +959,19 @@ class SemanticRouter:
         return SemanticRouter.report_intake_intent(query) is not None
 
     @staticmethod
+    def refers_to_earlier_reply(query: str) -> bool:
+        """True when the message cites something the ASSISTANT said before (BUG-555)."""
+        return bool(query and _REFERS_TO_EARLIER_REPLY_RE.search(normalise_quotes(query)))
+
+    @staticmethod
+    def is_information_question(query: str) -> bool:
+        """True when the text ASKS for information (wh-word, or auxiliary + subject) (BUG-548).
+
+        Used to keep a question from being executed as a command or filed as a report.
+        """
+        return bool(query and _INFORMATION_QUESTION_RE.search(_FAIL_MODE_RE.sub(" ", query)))
+
+    @staticmethod
     def is_control_command(query: str) -> bool:
         """True when the query is a physical actuation command (-> control).
 
@@ -942,9 +990,21 @@ class SemanticRouter:
             return False
         if _ADVICE_QUESTION_RE.search(query):
             return False
-        if any(p in query.lower() for p in _CONTROL_COMMAND_PHRASES):
+        if _CONTROL_ENSURE_RE.search(query):
             return True
-        if _CONTROL_VERB_TARGET_RE.search(query) or _CONTROL_ENSURE_RE.search(query):
+        # An information question is not a command, whatever verbs it contains (BUG-548).
+        # "Which shutters or doors fail OPEN versus fail LOCKED on POWER loss?" matched the
+        # verb-target rule, was routed to control over a correct `metadata` classification,
+        # and queued an AHU setpoint change. Requests phrased as questions ("can you open
+        # the door?") are caught by the ensure rule above, so this costs no real command;
+        # "what happens if we turn off the AHU at 6pm?" is a what-if, not an instruction.
+        # "fail open / fail locked / fail safe" is a device PROPERTY, never an instruction.
+        probe = _FAIL_MODE_RE.sub(" ", query)
+        if _INFORMATION_QUESTION_RE.search(probe):
+            return False
+        if any(p in probe.lower() for p in _CONTROL_COMMAND_PHRASES):
+            return True
+        if _CONTROL_VERB_TARGET_RE.search(probe):
             return True
         # BUG-157: comfort-quantity fix requests ("fix the temperature in here"),
         # excluding the question shapes that merely contain a fix verb.

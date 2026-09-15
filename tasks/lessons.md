@@ -1427,3 +1427,40 @@ Rules:
   A convention with a written reason is evidence, not an assumption to overwrite.
 * A "fix" that contradicts an earlier documented fix needs its measurement repeated from a
   second angle before it lands.
+
+## 104. An edit made during a live run reached the running container half-way (2026-09-15)
+
+**What happened.** While the stakeholder re-ask ran against a restarted orchestrator, I added
+a constant to `routing_contract.py` and an import of it to `event_query_service.py`. `/app` is
+bind-mounted and the events service is imported LAZILY, on its first events turn. That turn
+came after the edit, so the container loaded the NEW `event_query_service.py` against the
+`routing_contract` it had imported at boot — without the constant. Every events question
+answered "I couldn't read the events store just now", and the re-ask recorded two failures
+that no deployed version of the code has.
+
+**Rules.**
+* uvicorn without `--reload` does not mean edits are invisible: **any module imported lazily
+  after the edit is the new version**, alongside eagerly imported old ones. Lesson #101 (the
+  pytest tree) applies to the live container too.
+* Either edit nothing under `orchestrator/` or `shared/` while a live run measures the stack,
+  or restart before the run and discard any turn that ran across an edit.
+* When a live answer is "couldn't read … try again", read the traceback before counting it:
+  `ImportError: cannot import name` against a file you just changed is this, not a bug.
+
+## 105. A short-circuit placed before a contract skips the contract's first rules too (2026-09-15)
+
+**What happened.** `dialogue_agent` claims a question for a held record class BEFORE the
+LLM call and BEFORE the routing contract, to stop registers being swallowed by prose. The
+contract deliberately runs its privacy rule FIRST. So "Can my manager see when I badge in and
+out?" never reached the privacy rule: the access-permission register answered "Yes". The same
+bypass sent "where's the coolest place to work?" to a register that records no temperature
+(BUG-557); readiness questions had already needed their own exception (V12).
+
+**Rules.**
+* Every early exit in front of a rule set must re-apply that rule set's **precedence-critical**
+  rules (privacy, control/safety, deliberation of measured conditions) — or be moved after it.
+* When adding an exception to a short-circuit, look for the others it is missing: three of
+  them were found by one stakeholder run, none by the suite.
+* Unsafe defaults on side-effecting lanes are the same class of defect: a command with no
+  target, an alert with no threshold and a report from a question each wrote something
+  (BUG-548, BUG-552). A write path needs its inputs present, not defaulted.

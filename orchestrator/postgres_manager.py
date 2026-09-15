@@ -216,6 +216,21 @@ class PostgresManager:
             logger.error(f"Error getting user: {e}")
             return None
 
+    async def get_users_by_email(self, email: str) -> List[Dict[str, Any]]:
+        """Accounts whose email column equals ``email`` (case-insensitive)."""
+        if not self.pool or not email:
+            return []
+        try:
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch(
+                    "SELECT * FROM users WHERE lower(email) = lower($1) ORDER BY username",
+                    email,
+                )
+                return [dict(r) for r in rows]
+        except Exception as e:
+            logger.error(f"Error getting user by email: {e}")
+            return []
+
     async def update_last_login(self, username: str):
         if not self.pool:
             return

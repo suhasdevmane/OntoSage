@@ -1262,14 +1262,39 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         if not results:
             return "No data found for your query."
 
-        # Convert results to readable format
-        result_text = f"Found {len(results)} record(s):\n\n"
+        # Convert results to readable format.
+        #
+        # TIMES IN THE BUILDING'S CLOCK (BUG-558). Stored readings are UTC (BUG-403) and went
+        # into this prompt as UTC strings, so a demo answer read "509 ppm as of 02:20 UTC"
+        # in a building where it was 03:20. Honest, and wrong for everyone reading it on
+        # site. Converted here, deterministically, and labelled — never left to the model.
+        import re
+
+        from orchestrator.services.requested_interval import building_tz, to_local
+
+        _tz = building_tz(getattr(settings, "BUILDING_ID", None))
+        result_text = f"Found {len(results)} record(s)" + (
+            f" (times are building local time, {_tz}):\n\n" if _tz else ":\n\n"
+        )
+
+        def _local(value: Any) -> Any:
+            stamp = value if isinstance(value, datetime) else None
+            if stamp is None and isinstance(value, str) and re.match(r"^\d{4}-\d\d-\d\d[T ]\d\d:\d\d", value):
+                try:
+                    stamp = datetime.strptime(value.replace("T", " ")[:19], "%Y-%m-%d %H:%M:%S")
+                except ValueError:
+                    stamp = None
+            if stamp is None:
+                return value
+            return to_local(stamp.replace(tzinfo=None), _tz).strftime("%Y-%m-%d %H:%M:%S")
 
         for i, row in enumerate(results[:10], 1):  # Limit to 10 rows
             result_text += f"{i}. "
             for key, value in row.items():
-                if isinstance(value, datetime):
-                    value = value.strftime("%Y-%m-%d %H:%M:%S")
+                if isinstance(value, datetime) or str(key).lower() in (
+                    "timestamp", "datetime", "time", "latest", "latest_at"
+                ):
+                    value = _local(value)
                 result_text += f"{key}: {value} | "
             result_text = result_text.rstrip(" | ") + "\n"
 
@@ -1294,6 +1319,8 @@ Generate a concise, natural response that:
 5. States the UNIT with every figure when the sensor information above gives one,
    and uses the sensor's readable name rather than its uuid. If no unit is given
    there, say the unit is not recorded - never invent one.
+6. States times exactly as given above, which are already the building's local time -
+   never convert them and never label them UTC.
 
 Response:"""
 

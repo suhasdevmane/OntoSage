@@ -182,6 +182,15 @@ _CLASS_LISTING_LIMIT = 500
 #: against a fallback adapter (BUG-236). Pinned by
 #: tests/test_sparql_projection_contract.py.
 
+#: A question that compares FLOORS without naming one (BUG-556).
+_ACROSS_FLOORS_RE = re.compile(
+    r"\b(?:which|what)\s+(?:\w+\s+)?(?:floor|level)s?\b"
+    r"|\b(?:each|every|per|by)\s+(?:floor|level)\b"
+    r"|\b(?:all|across|between)\s+(?:the\s+)?(?:floors|levels)\b"
+    r"|\bfloor[- ]by[- ]floor\b",
+    re.IGNORECASE,
+)
+
 
 class SPARQLAgent:
     """Generates and executes SPARQL queries with RAG support"""
@@ -593,6 +602,19 @@ Your Answer:"""
     #: excluded, so the budget continues to separate the two.
     MAX_RECORD_CELLS = 1300
 
+    #: The same limit in the unit the model actually pays: characters of the rows as
+    #: `_render_rows` prints them into the prompt (BUG-546). Cells cannot see value length —
+    #: 1,267 cells of workspace + circulation rendered 40.6k and answered three times, while
+    #: 1,300 cells of routes + workspace rendered 42.8k and returned an empty completion
+    #: three times (the whole prompt 58,848 chars; every empty completion logged on this
+    #: stack was 56k or more at a 16,384-token context). 34k sits 20% under the failure,
+    #: and hoisting the values a register's rows share brings most handovers well below it.
+    MAX_RECORD_CHARS = 34000
+
+    def _rendered_chars(self, results: Dict[str, Any]) -> int:
+        """How many characters these rows cost the narration prompt."""
+        return len(self._render_rows(results.get("results", {}).get("bindings", []), hoist=True))
+
     @staticmethod
     def _pivot_by_subject(bindings: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[str]]:
         """Turn ?record/?p/?v triples into one binding row per record.
@@ -1002,7 +1024,10 @@ Your Answer:"""
         # estimate in one unit against a measurement in another is the same mistake the
         # budget itself was introduced to fix, made one line further down.
         _cells = len(results["results"]["bindings"]) * max(len(columns), 1)
-        if _cells > self.MAX_RECORD_CELLS and not oversized and tokens:
+        _too_big = lambda: (  # noqa: E731 - re-evaluated after the scoped re-fetch
+            _cells > self.MAX_RECORD_CELLS or self._rendered_chars(results) > self.MAX_RECORD_CHARS
+        )
+        if _too_big() and not oversized and tokens:
             # Too wide to hand over whole, and the question DOES name something. Re-fetch
             # scoped rather than declining a register that can answer once narrowed.
             logger.info(
@@ -1021,11 +1046,12 @@ Your Answer:"""
             results, columns = self._pivot_by_subject(bindings)
             _cells = len(results["results"]["bindings"]) * max(len(columns), 1)
 
-        if _cells > self.MAX_RECORD_CELLS:
+        if _too_big():
             logger.info(
-                f"[sparql] {record.local_name} still holds {_cells} cells after scoping, over "
-                f"the {self.MAX_RECORD_CELLS} budget — falling back to a generated query "
-                f"rather than risking an empty completion"
+                f"[sparql] {record.local_name} still holds {_cells} cells / "
+                f"{self._rendered_chars(results)} chars after scoping, over the "
+                f"{self.MAX_RECORD_CELLS}-cell / {self.MAX_RECORD_CHARS}-char budget — falling "
+                f"back to a generated query rather than risking an empty completion"
             )
             return None
 
@@ -1064,8 +1090,9 @@ Your Answer:"""
                 if s_bindings:
                     s_results, s_columns = self._pivot_by_subject(s_bindings)
                     s_cells = len(s_results["results"]["bindings"]) * max(len(s_columns), 1)
+                    merged = None
                     if _cells + s_cells <= self.MAX_RECORD_CELLS:
-                        results, columns = self._merge_registers(
+                        merged = self._merge_registers(
                             results,
                             columns,
                             record.label or record.local_name,
@@ -1073,11 +1100,15 @@ Your Answer:"""
                             s_columns,
                             _second.label or _second.local_name,
                         )
+                        if self._rendered_chars(merged[0]) > self.MAX_RECORD_CHARS:
+                            merged = None
+                    if merged is not None:
+                        results, columns = merged
                         second_label = _second.label or _second.local_name
                         logger.info(
                             f"[sparql] second register {_second.local_name} added "
-                            f"({s_cells} cells, {_cells + s_cells} total) — the question "
-                            f"names both"
+                            f"({s_cells} cells, {_cells + s_cells} total, "
+                            f"{self._rendered_chars(results)} chars) — the question names both"
                         )
                     else:
                         logger.info(
@@ -1090,14 +1121,40 @@ Your Answer:"""
         # Formatted by the SAME helpers as a generated query, so a register answer reads
         # like every other answer and inherits whatever formatting the rest of the
         # pipeline gains. Only the QUERY is deterministic here, never the wording.
+        # WHAT THE RECORDS DO NOT SAY, AND WHAT DAY IT IS (BUG-546). Stakeholder run #1 through
+        # Open WebUI found the narration inventing the link between a question and whatever
+        # register it was handed: approval dates read as plant start times ("1 day late"),
+        # approval statuses read as room no-shows, an approvals register used to declare that
+        # compliance records "are retained for the correct period, in the authorised system",
+        # and "events due today (2026-09-05)" on 15 September, the date taken from a
+        # retrieval stamp because nothing told the model the date.
+        try:
+            from orchestrator.services.requested_interval import building_local_now
+
+            _today = building_local_now(getattr(state, "building_id", None)).strftime(
+                "%A %d %B %Y, %H:%M"
+            )
+        except Exception:  # pragma: no cover - the rules still apply without a date
+            _today = ""
+        grounding = (
+            (f" Today is {_today} in the building's local time." if _today else "")
+            + " If these records do not record what the question asks, say so plainly in the "
+            "first sentence, name what they DO record, and stop there: never map a field onto a "
+            "different concept (an approval, effective or review date is not an operating, start, "
+            "attendance or occupancy time; an approval status is not a usage record). Never "
+            "certify, approve or guarantee safety, compliance, accessibility, confidentiality or "
+            "adequacy, and never call a record 'yours' — report what the records state. When a "
+            "word in the question could cover more than one recorded status (\"open\" can mean "
+            "open or in progress), give the count for EACH status rather than choosing one."
+        )
         if second_label:
             # SAY THAT THERE ARE TWO. The rows are interleaved in one table, and a model
             # told nothing would read a setup time as a travel time — a half-answer turned
             # into a wrong one, which is a worse trade than the gap it was fixing.
             guidance = (
                 f"{user_query}\n\n"
-                f"(These records come from TWO registers, and the `register` column says "
-                f"which: **{record.label}** and **{second_label}**. They describe different "
+                f"(These records come from TWO registers, grouped under a header naming each: "
+                f"**{record.label}** and **{second_label}**. They describe different "
                 f"things and their columns are NOT interchangeable — read each value against "
                 f"the register its row names, and say which register each figure came from. "
                 f"EVERY NUMBER YOU GIVE MUST APPEAR VERBATIM IN A ROW ABOVE. Do not estimate, "
@@ -1106,7 +1163,7 @@ Your Answer:"""
                 f"the rows do not contain a figure the question needs, say that instead of "
                 f"supplying one. ontosage:recordStatus is the owner's RECORDED state; use it "
                 f"as given and never re-derive it from the dates. Answer only from these "
-                f"records.)"
+                f"records.{grounding})"
             )
         else:
             guidance = (
@@ -1114,7 +1171,7 @@ Your Answer:"""
                 f"(These are all {record.instances} {record.label} records this building "
                 "holds. ontosage:recordStatus is the owner's RECORDED state — use it as "
                 "given and never re-derive it from the dates; 'void' is not 'expired'. "
-                "Answer only from these records.)"
+                f"Answer only from these records.{grounding})"
             )
         # Provenance for the evidence record. A record LIFTED from a document is
         # `document_derived`, which outranks a sensor reading and loses to authored TTL
@@ -1657,8 +1714,20 @@ Return ONLY the corrected SPARQL query."""
         """
         floors = re.findall(r"\b(?:floor|level)\s*(\d+)\b", user_query, re.IGNORECASE)
         floors = sorted(set(floors), key=int)
+        # EVERY FLOOR, when the question compares floors without naming one (BUG-556).
+        # "Which floor used the most energy yesterday?" named no number, so this returned
+        # None, the generic 'list the floors' template answered with eight floor labels and
+        # no sensors, and the compare lane replied that comparison "requires sensors with
+        # linked time-series data" — for a building with a meter on every floor. Only with a
+        # resolved metric CLASS: a label match across the whole building is too loose.
+        across_floors = False
         if not floors:
-            return None
+            if not (
+                (self._infer_class(user_query.lower()) or class_target)
+                and _ACROSS_FLOORS_RE.search(user_query)
+            ):
+                return None
+            across_floors = True
 
         # This resolver answers questions about the SENSORS on a floor. A
         # question about the floor's spaces ("how many rooms are on floor 2")
@@ -1676,6 +1745,9 @@ Return ONLY the corrected SPARQL query."""
         if _asks_about_spaces and not _asks_for_readings:
             return None
         floor_in = ", ".join(f'"{f}"' for f in floors)
+        floor_filter = "" if across_floors else f"FILTER(?floorNum IN ({floor_in}))"
+        # Every floor's sensors, ordered by floor — so the row limit must reach the top floor.
+        row_limit = 500 if across_floors else 100
         # Build the point SELECTOR with two naming-agnostic tiers:
         #  1) Brick class (preferred) — from the keyword map or the HBCO concept.
         #  2) rdfs:label text-match on the salient query terms — works for ANY URI
@@ -1714,11 +1786,11 @@ SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage WHERE {{
   ?loc (brick:isPartOf|^brick:hasPart)* ?floor .
   ?floor a brick:Floor .
   BIND(REPLACE(STR(?floor), "^.*[Ff]loor", "") AS ?floorNum)
-  FILTER(?floorNum IN ({floor_in}))
+  {floor_filter}
   ?sensor ref:hasExternalReference ?ref .
   ?ref ref:hasTimeseriesId ?uuid .
   OPTIONAL {{ ?ref ref:storedAt ?storage }}
-}} ORDER BY ?floorNum ?label LIMIT 100"""
+}} ORDER BY ?floorNum ?label LIMIT {row_limit}"""
         )
 
     # Stopwords stripped before label text-matching (keep domain nouns).
@@ -3232,15 +3304,24 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
                     return results
 
                 except Exception as e:
-                    logger.warning(f"GraphDB query failed: {e}, trying Fuseki fallback")
-
-                    # Fallback to Fuseki if GraphDB fails
-                    response = await client.post(
-                        FUSEKI_QUERY_ENDPOINT,
-                        data={"query": sparql},
-                        headers={"Accept": "application/sparql-results+json"},
+                    logger.warning(
+                        f"GraphDB query failed: {type(e).__name__}: {e}, trying Fuseki fallback"
                     )
-                    response.raise_for_status()
+
+                    # Fallback to Fuseki if GraphDB fails. When Fuseki is not deployed (the
+                    # compose service is commented out) its DNS error REPLACED GraphDB's, so a
+                    # 30 s GraphDB timeout was reported as "Name or service not known" and
+                    # the cause was invisible (BUG-544). The GraphDB error is the one to keep.
+                    try:
+                        response = await client.post(
+                            FUSEKI_QUERY_ENDPOINT,
+                            data={"query": sparql},
+                            headers={"Accept": "application/sparql-results+json"},
+                        )
+                        response.raise_for_status()
+                    except httpx.HTTPError as fuseki_err:
+                        logger.debug(f"Fuseki fallback unavailable: {fuseki_err}")
+                        raise e
 
                     results = response.json()
                     logger.info(
@@ -3258,8 +3339,9 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
                     return results
 
         except httpx.HTTPError as e:
-            logger.error(f"SPARQL query error: {e}")
-            raise Exception(f"Failed to execute SPARQL query: {str(e)}")
+            # The type, because a timeout's message is the EMPTY string (CAVEAT-415).
+            logger.error(f"SPARQL query error: {type(e).__name__}: {e}")
+            raise Exception(f"Failed to execute SPARQL query: {type(e).__name__}: {e}")
 
     async def _fallback_pattern_search(
         self, sparql: str, client: httpx.AsyncClient, auth: Optional[tuple] = None
@@ -3473,11 +3555,12 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
         # protection this cap provides is done there, in the right unit, before the query.
         limit = row_limit if row_limit is not None else (100 if show_all else 10)
 
-        for i, binding in enumerate(bindings[:limit], 1):
-            result_text += f"{i}. "
-            for var, value in binding.items():
-                result_text += f"{var}: {value.get('value', 'N/A')} | "
-            result_text = result_text.rstrip(" | ") + "\n"
+        # The register handover hoists values every row of a register shares (BUG-546), and
+        # is sized by `_render_rows` too — so the budget and the prompt measure one text.
+        result_text += self._render_rows(bindings[:limit], hoist=row_limit is not None)
+        count_note = self._count_meaning(sparql_query)
+        if count_note:
+            result_text = count_note + "\n\n" + result_text
 
         if len(bindings) > limit:
             result_text += f"\n... and {len(bindings) - limit} more results (truncated for brevity)"
@@ -3548,6 +3631,12 @@ Generate your response now:"""
                 return summary.strip()
             except Exception as e:
                 logger.warning(f"LLM formatting failed, using structured fallback: {e}")
+                if row_limit is not None:
+                    # A register handover the model could not summarise. The raw rows were
+                    # returned here — "Found 44 result(s): 1. register: Accessible route |
+                    # record: route/RTE-001 | comment: …" — which is unreadable and answers
+                    # nothing (BUG-546). Name what was found and say it was not summarised.
+                    return self._register_fallback(bindings)
                 # Fallback: Clean up URIs in the result text
                 return self._clean_uri_output(result_text)
 
@@ -3689,6 +3778,120 @@ Generate your response now:"""
         # **PRIORITY 3: Ambiguous cases** - Conservative default
         # If no clear pattern, assume metadata (safer default)
         return False
+
+    _COUNT_RE = re.compile(
+        r"\(\s*COUNT\s*\(\s*(?:DISTINCT\s+)?(\?\w+|\*)\s*\)\s+AS\s+(\?\w+)\s*\)", re.IGNORECASE
+    )
+    _COUNTED_CLASS_RE = re.compile(r"\b(?:a|rdf:type)(?:/rdfs:subClassOf\*)?\s+([A-Za-z0-9]+:[A-Za-z_][\w-]*)")
+
+    @classmethod
+    def _count_meaning(cls, sparql_query: str) -> str:
+        """What a COUNT result is a count OF, stated for the narration (BUG-547).
+
+        "What's the daylight hour count in the deepest workstation this December?" generated
+        `SELECT (COUNT(DISTINCT ?sensor) AS ?count) WHERE { ?sensor a brick:Illuminance_Sensor }`
+        and was answered "the deepest workstation recorded **269 daylight hours**". The number
+        was real, so the numeric guard passed it; its MEANING was invented. A count of graph
+        entities is never a reading, a duration or an amount, and the prompt now says so.
+        """
+        counts = cls._COUNT_RE.findall(sparql_query or "")
+        if not counts:
+            return ""
+        what = cls._COUNTED_CLASS_RE.search(sparql_query or "")
+        kind = f" of type {what.group(1)}" if what else ""
+        grouped = " for that row's group" if re.search(r"\bGROUP\s+BY\b", sparql_query, re.I) else ""
+        pairs = ", ".join(
+            f"{alias} = how many {var if var != '*' else 'matches'}{kind} the building model "
+            f"holds{grouped}"
+            for var, alias in counts
+        )
+        return (
+            f"NOTE ON THESE FIGURES: {pairs}. A count of things in the model is NOT a reading, a "
+            "measurement, a duration, an amount or a total over time. If the question asks for "
+            "any of those, say plainly that the building model does not hold it, and mention "
+            "the count only as what it is — never present it as the quantity asked for."
+        )
+
+    #: Columns never hoisted into a group header, because they are what a reader counts,
+    #: filters and names records by — even when every row happens to share one value.
+    _NEVER_HOISTED = frozenset({"record", "label", "recordId", "recordStatus"})
+
+    @classmethod
+    def _render_rows(cls, bindings: List[Dict[str, Any]], hoist: bool = False) -> str:
+        """Rows as the narration prompt shows them: ``N. field: value | field: value``.
+
+        With ``hoist``, a value that EVERY row of a register shares is printed once in a
+        header for that register instead of on every row (BUG-546). Lifted records repeat
+        their document, mapping, version, authority and retrieval stamp on every row; a
+        16-route plus 28-workspace handover measured 42.8k characters, the model returned
+        an empty completion three times, and the user got a raw dump. Nothing is dropped —
+        the header states each shared value — so no fact leaves the prompt.
+        """
+
+        def _v(binding: Dict[str, Any], key: str) -> str:
+            return str((binding.get(key) or {}).get("value", "N/A"))
+
+        def _line(n: int, binding: Dict[str, Any], skip: set) -> str:
+            cells = " | ".join(f"{k}: {_v(binding, k)}" for k in binding if k not in skip)
+            return f"{n}. {cells}\n"
+
+        if not hoist or len(bindings) < 2:
+            return "".join(_line(i, b, set()) for i, b in enumerate(bindings, 1))
+
+        groups: Dict[str, List[Dict[str, Any]]] = {}
+        for binding in bindings:
+            groups.setdefault(_v(binding, "register") if "register" in binding else "", []).append(
+                binding
+            )
+        out: List[str] = []
+        n = 0
+        for register, rows in groups.items():
+            shared: set = set()
+            if len(rows) > 1:
+                common = set(rows[0]).intersection(*(set(r) for r in rows[1:]))
+                shared = {
+                    k
+                    for k in common
+                    if k not in cls._NEVER_HOISTED and len({_v(r, k) for r in rows}) == 1
+                }
+            if shared:
+                scope = f" of register {register}" if register else ""
+                filled = [k for k in rows[0] if k in shared and _v(rows[0], k) not in ("", "N/A")]
+                empty = [k for k in rows[0] if k in shared and k not in filled]
+                header = " | ".join(f"{k}: {_v(rows[0], k)}" for k in filled)
+                if header:
+                    out.append(f"All {len(rows)} records{scope} share: {header}\n")
+                if empty:
+                    # A merged handover pads each row with the other register's columns. A gap
+                    # still reads as a gap, once, rather than as a column of blanks per row.
+                    out.append(f"No record{scope} has a value for: {', '.join(empty)}\n")
+            for row in rows:
+                n += 1
+                out.append(_line(n, row, shared))
+        return "".join(out)
+
+    @staticmethod
+    def _register_fallback(bindings: List[Dict[str, Any]]) -> str:
+        """What a register handover says when the model could not summarise it (BUG-546)."""
+
+        def _v(binding: Dict[str, Any], key: str) -> str:
+            return str((binding.get(key) or {}).get("value", "") or "")
+
+        shown = []
+        for binding in bindings[:15]:
+            name = _v(binding, "label") or _v(binding, "recordId") or _v(binding, "record")
+            name = name.rsplit("#", 1)[-1].rsplit("/", 1)[-1] if "://" in name else name
+            status = _v(binding, "recordStatus")
+            source = _v(binding, "register")
+            detail = ", ".join(x for x in (source, status) if x)
+            shown.append(f"- {name}" + (f" ({detail})" if detail else ""))
+        more = f"\n- …and {len(bindings) - 15} more" if len(bindings) > 15 else ""
+        return (
+            f"I found **{len(bindings)} records** that bear on this, but I couldn't summarise "
+            "them against your question just now, so I haven't drawn a conclusion from them. "
+            "The records are:\n" + "\n".join(shown) + more + "\n\nAsk about one of them, or "
+            "narrow the question, and I can answer from its detail."
+        )
 
     def _clean_uri_output(self, result_text: str) -> str:
         """

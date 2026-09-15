@@ -25,6 +25,13 @@ _CONTROL_ROLES = {"admin", "facility_manager", "operator"}
 # Tolerate co-reference rewriting: "approve 606ba770" gets expanded by the
 # rewriter to "approve the command with ID 606ba770 ..." — allow up to 40
 # chars between the verb and the hex id (fix 2026-06-12).
+#: Words that describe a KIND of point rather than identify one. A device named only by
+#: these matches every setpoint the driver lists, which is the same as naming none.
+_GENERIC_DEVICE_WORDS = frozenset(
+    {"the", "set", "setpoint", "point", "room", "floor", "level", "zone", "temperature",
+     "temp", "value", "sensor", "system", "building", "please"}
+)
+
 _APPROVE_RE = re.compile(r"\bapprove\b.{0,40}?\b([a-f0-9]{6,8})\b", re.IGNORECASE | re.DOTALL)
 
 
@@ -158,22 +165,70 @@ class ControlAgent:
         device = _entity_value(entities, "device")
         target_value = _entity_value(entities, "target_value")
 
-        # Best-effort point URI matching: pick the first writable point whose URI
-        # contains any token from the device entity.  Fall back to first point.
-        point_uri = writable_caps[0]
+        # A NAMED POINT AND A VALUE, OR NOTHING IS QUEUED (BUG-548).
+        #
+        # This fell back to the FIRST writable point and to the value "as specified". So any
+        # turn that reached here queued a command on whatever point the driver listed first:
+        # "Which shutters or doors fail open versus fail locked on power loss?" — a question
+        # — was answered "Command queued for approval. Target: <the first writable AHU setpoint> → ``",
+        # one `approve` away from writing an AHU setpoint nobody asked about. A command with
+        # no identified target or value is not a command; ask for both instead.
+        point_uri = None
         if device:
-            tokens = device.lower().split()
+            tokens = [
+                t
+                for t in re.split(r"[\s_,;:]+", device.lower())
+                if len(t) > 2 and t not in _GENERIC_DEVICE_WORDS
+            ]
             for cap in writable_caps:
-                if any(t in cap.lower() for t in tokens if len(t) > 2):
+                if any(t in cap.lower() for t in tokens):
                     point_uri = cap
                     break
+        if point_uri is None or not str(target_value or "").strip():
+            names = ", ".join(f"`{c.rsplit(':', 1)[-1].rsplit('#', 1)[-1]}`" for c in writable_caps)
+            missing = " and ".join(
+                part
+                for part, absent in (
+                    ("which writable point", point_uri is None),
+                    ("the value to set", not str(target_value or "").strip()),
+                )
+                if absent
+            )
+            if device and point_uri is None:
+                # A named thing that is not writable ("open the windows on floor 3"). Say so,
+                # and never suggest a command for a DIFFERENT point: the demo pass showed this
+                # answering a window request with "for example: set AHU-F5-SP to 21".
+                message = (
+                    f"I can't control **{device}** — it isn't a point this building lets me "
+                    f"write, so nothing has been queued. The only writable points are: {names}."
+                )
+            else:
+                message = (
+                    f"Nothing has been queued. To request a change I need {missing}. "
+                    f"The points this building lets me write are: {names}."
+                )
+            return {
+                "status": "needs_detail",
+                "message": message,
+                "log_entry": {
+                    "building_id": building_id,
+                    "device": device,
+                    "action": "set_point",
+                    "target_value": str(target_value or ""),
+                    "status": "not_queued",
+                    "user_id": user_id,
+                    "user_role": state.intermediate_results.get("user_role", ""),
+                    "session_id": state.conversation_id,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                },
+            }
 
         approval_store = get_approval_store()
         approval_id = await approval_store.create_pending(
             building_id=building_id,
             user_id=user_id,
             point_uri=point_uri,
-            value=target_value or "as specified",
+            value=target_value,
             reason=(
                 "User request: "
                 + (

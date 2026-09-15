@@ -228,7 +228,9 @@ class AnalyticsAgent:
 
             # Step 3: Format results
             logger.info("\n📝 Step 3: Formatting results...")
-            formatted, media = await self._format_analysis(result, user_query, sensor_metadata)
+            formatted, media = await self._format_analysis(
+                result, user_query, sensor_metadata, rows=data.get("data", [])
+            )
             logger.info(f"✅ Formatted response generated")
             logger.info("=" * 80)
 
@@ -942,6 +944,7 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         result: Dict[str, Any],
         user_query: str,
         sensor_metadata: Dict[str, Dict[str, str]] = None,
+        rows: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
         """Format analysis results into natural language"""
 
@@ -1022,9 +1025,24 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
                 }
             )
 
+        # PER-FLOOR FIGURES COMPUTED IN CODE when the series span floors (BUG-537). The
+        # narrator then gets two lines instead of one per sensor, and quotes them instead of
+        # averaging 64 lines itself; the per-sensor block and the sandbox output are cut to a
+        # size that no longer dominates the prompt.
+        group_summary = None
+        try:
+            from orchestrator.services.series_summary import summarise_groups
+
+            group_summary = summarise_groups(rows or [], sensor_metadata or {}, key="floor")
+        except Exception as _gs_err:  # never cost the answer
+            logger.debug(f"[analytics] per-floor summary skipped: {_gs_err}")
+
         # Build sensor context for natural language generation
         sensor_context = ""
-        if sensor_metadata:
+        if group_summary:
+            sensor_context = "\n\n" + group_summary + "\n"
+            output = str(output or "")[:1500]
+        elif sensor_metadata:
             sensor_context = "\n\nSensor Information:\n"
             for uuid, meta in sensor_metadata.items():
                 unit = meta.get("unit", "")

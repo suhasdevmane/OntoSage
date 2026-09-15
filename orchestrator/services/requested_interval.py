@@ -137,16 +137,19 @@ def local_now(tz_name: Optional[str] = None) -> datetime:
     return datetime.now()
 
 
-def building_local_now(building_id: Optional[str] = None) -> datetime:
-    """`local_now` for the active building, resolving its zone for you. Display use only."""
-    tz_name = None
+def building_tz(building_id: Optional[str] = None) -> Optional[str]:
+    """The active building's IANA zone name, or None when it declares none."""
     try:
         from orchestrator.services.building_context import resolve_building_context
 
-        tz_name = getattr(resolve_building_context(building_id), "timezone", None)
-    except Exception:  # pragma: no cover - local time is a sane fallback
-        tz_name = None
-    return local_now(tz_name)
+        return getattr(resolve_building_context(building_id), "timezone", None) or None
+    except Exception:  # pragma: no cover - no zone is a sane fallback
+        return None
+
+
+def building_local_now(building_id: Optional[str] = None) -> datetime:
+    """`local_now` for the active building, resolving its zone for you. Display use only."""
+    return local_now(building_tz(building_id))
 
 
 def calendar_day_bounds(

@@ -655,17 +655,29 @@ class ReferentResolver:
     async def _exists(self, token: str, namespace: str) -> bool:
         """True if any subject in ``namespace`` has ``token`` in its URI or rdfs:label."""
         t = token.lower()
-        q = (
-            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
-            "SELECT ?s WHERE {\n"
-            "  ?s ?p ?o .\n"
-            f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n'
-            f'  FILTER( CONTAINS(LCASE(STR(?s)), "{t}")\n'
-            f'          || EXISTS {{ ?s rdfs:label ?l . FILTER(CONTAINS(LCASE(STR(?l)), "{t}")) }} )\n'
+        # Two narrow lookups, never one scan of every triple (BUG-544). The single query
+        # this replaced walked `?s ?p ?o` with an EXISTS per subject: a word that IS in the
+        # graph hit LIMIT 1 in under a second, but a word that is NOT ("room MOVES") scanned
+        # the whole graph — 27.6 s measured on the active building — and under load crossed the 30 s client
+        # timeout, so the turn declined with "the existence check didn't complete in time".
+        # Labels answer most referents; typed subjects cover an IRI with no label. Measured
+        # on 5.01 / atrium / kitchen / chiller: every hit the old query found, ~2.5 s a miss.
+        prefix = "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+        by_label = (
+            prefix + "SELECT ?s WHERE {\n"
+            "  ?s rdfs:label ?l .\n"
+            f'  FILTER(STRSTARTS(STR(?s), "{namespace}") && CONTAINS(LCASE(STR(?l)), "{t}"))\n'
             "} LIMIT 1"
         )
-        data = await self._exec(q)
-        return len(_bindings(data)) > 0
+        if _bindings(await self._exec(by_label)):
+            return True
+        by_iri = (
+            prefix + "SELECT ?s WHERE {\n"
+            "  ?s a ?type .\n"
+            f'  FILTER(STRSTARTS(STR(?s), "{namespace}") && CONTAINS(LCASE(STR(?s)), "{t}"))\n'
+            "} LIMIT 1"
+        )
+        return len(_bindings(await self._exec(by_iri))) > 0
 
     async def _suggest(self, token: str, namespace: str) -> List[str]:
         """Return up to 5 real dotted-id locations closest to ``token``."""

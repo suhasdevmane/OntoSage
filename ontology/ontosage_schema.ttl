@@ -226,6 +226,12 @@ ontosage:layTerms a owl:DatatypeProperty ;
     rdfs:domain ontosage:Capability ; rdfs:range xsd:string ;
     skos:example "\"prayer room, quiet room, where can i pray, faith room\"" .
 
+ontosage:qualifierTerms a owl:DatatypeProperty ;
+    rdfs:label "qualifier terms"@en ;
+    rdfs:comment "The subset of a record class's layTerms that name the class only when used OF it, not when describing something else. 'Is this route approved?' is about approval; 'the approved schedule' is about a schedule. A qualifier followed directly by a content word is read as describing that word and does not count as evidence for the class. Declare a term here when its adjective use is common and names a property of other things."@en ;
+    rdfs:range xsd:string ;
+    skos:example "ontosage:ApprovalRecord ontosage:qualifierTerms \"approved\", \"verified\" ." .
+
 ontosage:locationText a owl:DatatypeProperty ;
     rdfs:label "human-readable location"@en ;
     rdfs:comment "Free-text location for an amenity, as a person would describe it."@en ;
@@ -2277,15 +2283,20 @@ ontosage:AVReadiness ontosage:layTerms "av", "audio visual", "audiovisual",
     "audio path", "teaching room ready", "room ready for teaching", "av evidence",
     "av check", "is the room ready" .
 
+# No bare "activity"/"activities" (BUG-545): in a building those are usually work, safety or
+# continuity activities, and 43 of the 4,060 corpus questions reached the event agenda on that
+# one word — two of them answered with a raw 56-row dump of an open-day programme.
 ontosage:EventActivity ontosage:layTerms "agenda", "programme", "schedule of the day",
-    "activity", "activities", "session", "sessions", "talk", "tour", "workshop",
+    "event activity", "event activities", "session", "sessions", "talk", "tour", "workshop",
     "how much time", "how long will", "what should we prioritise", "itinerary" .
 
 ontosage:ApprovalRecord ontosage:layTerms "approved", "approval", "approvals",
     "authorised", "authorized", "authorisation", "who approved", "signed off",
     "sign-off", "evidence", "evidenced", "verified", "confirmed", "proof",
     "accountable", "who is accountable", "who owns", "owner", "governance",
-    "review due", "certificate", "assurance", "is this allowed", "permitted" .
+    "review due", "certificate", "assurance", "is this allowed", "permitted" ;
+    ontosage:qualifierTerms "approved", "authorised", "authorized", "evidenced", "verified",
+    "confirmed", "permitted" .
 
 ontosage:CostLine ontosage:layTerms "cost", "costs", "budget", "budgets", "spend",
     "spending", "actuals", "commitment", "commitments", "accrual", "accruals",
@@ -2849,6 +2860,8 @@ ontosage:seasonalChangeover a owl:DatatypeProperty ;
     rdfs:label "seasonal changeover"@en .
 
 ontosage:OperatingRegime ontosage:layTerms "setpoint", "setpoints", "operating regime",
+    "plant schedule", "hvac schedule", "heating schedule", "ventilation schedule",
+    "started late", "stopped late", "start late", "stop late", "ran late", "ran early",
     "operating window", "operating windows", "occupied hours", "unoccupied",
     "how is it supposed to run", "control strategy", "seasonal changeover",
     "approved exception", "approved exceptions", "heating season", "cooling season",

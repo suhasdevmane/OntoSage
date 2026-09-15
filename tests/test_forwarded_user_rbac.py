@@ -135,3 +135,62 @@ async def test_placeholder_marker_survives_json_string_metadata():
     assert m._is_placeholder_account({"metadata": {"source": "open_webui"}}) is True
     assert m._is_placeholder_account({"metadata": {}}) is False
     assert m._is_placeholder_account({"metadata": None}) is False
+
+
+@pytest.mark.asyncio
+async def test_registered_email_matches_when_the_username_is_not_its_local_part():
+    """BUG-542: the owner's own login ("Suhas" / owner@gmail.com) chatted as readonly,
+    because the resolver promised an email match and only ever looked up usernames."""
+    import orchestrator.main as m
+
+    async def _get_user(name):
+        return None
+
+    async def _by_email(email):
+        return [{"username": "Owner", "role": "admin", "email": "owner@example.com",
+                 "metadata": {}}] if email.lower() == "owner@example.com" else []
+
+    pg = SimpleNamespace(get_user=_get_user, get_users_by_email=_by_email)
+    with patch.object(m.settings, "TRUST_FORWARDED_USER", True), patch.object(
+        m, "postgres_manager", pg
+    ):
+        got = await m.resolve_forwarded_user(_request({"X-OpenWebUI-User-Email": "Owner@example.com"}))
+    assert got == ("Owner", "admin")
+
+
+@pytest.mark.asyncio
+async def test_registered_email_outranks_a_local_part_collision():
+    """bob@a.com must not become the unrelated account 'bob' when another account
+    registered bob@a.com: the stored email is the stricter evidence."""
+    import orchestrator.main as m
+
+    async def _get_user(name):
+        return {"username": "bob", "role": "admin", "metadata": {}} if name == "bob" else None
+
+    async def _by_email(email):
+        return [{"username": "robert", "role": "occupant", "metadata": {}}]
+
+    pg = SimpleNamespace(get_user=_get_user, get_users_by_email=_by_email)
+    with patch.object(m.settings, "TRUST_FORWARDED_USER", True), patch.object(
+        m, "postgres_manager", pg
+    ):
+        got = await m.resolve_forwarded_user(_request({"X-OpenWebUI-User-Email": "bob@a.com"}))
+    assert got == ("robert", "occupant")
+
+
+@pytest.mark.asyncio
+async def test_a_placeholder_found_by_email_is_still_not_an_account():
+    import orchestrator.main as m
+
+    async def _get_user(name):
+        return None
+
+    async def _by_email(email):
+        return [{"username": email, "role": "readonly", "metadata": {"source": "open_webui"}}]
+
+    pg = SimpleNamespace(get_user=_get_user, get_users_by_email=_by_email)
+    with patch.object(m.settings, "TRUST_FORWARDED_USER", True), patch.object(
+        m, "postgres_manager", pg
+    ):
+        got = await m.resolve_forwarded_user(_request({"X-OpenWebUI-User-Email": "x@y.com"}))
+    assert got == ("x@y.com", "readonly")

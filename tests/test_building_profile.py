@@ -201,3 +201,16 @@ def test_no_fact_value_is_hardcoded():
     code = re.sub(r"https?://\S+", "", code)
     years = re.findall(r"\b(1[89]\d{2}|20[0-2]\d)\b", code)
     assert not years, f"a hardcoded year would be wrong for another building: {years}"
+
+
+def test_what_is_this_building_asks_for_the_whole_profile():
+    """BUG-560: 'What is this building and who runs it?' was answered with the operator alone."""
+    assert bp.detect_facet("What is this building and who runs it?") == "__all__"
+    assert bp.detect_facet("What is this building used for?") != "__all__"
+
+
+def test_a_single_facet_reads_as_a_sentence():
+    profile = bp.BuildingProfile(facts={"Operated by": "Estates"}, facets={"operator": "Estates"},
+                                 resolved=True)
+    out = bp.render(profile, "operator", "Test Hall")
+    assert out == "**Test Hall** — operated by: **Estates**."

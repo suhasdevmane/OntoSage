@@ -85,6 +85,18 @@ INDIVIDUAL_PATTERN_RE = re.compile(
     rf"\btrack\b.{{0,50}}\b(?:{_PERSON}|person|someone|anyone|individual)\b"
     rf"|\bhow often\b.{{0,40}}\b(?:{_PERSON}|is at their desk|at the desk)\b"
     rf"|\bbadge (?:history|records?|swipes?|data)\b"
+    # BUG-553. Access-control TRACKING of a person, phrased the way people actually ask:
+    # "Can my manager see when I badge in and out?" was answered "Yes — line managers can
+    # view the badge-in/out logs", asserted from access-permission-group records, and "who
+    # badged into room 2.01 last night?" matched nothing here at all.
+    rf"|\bwho\b.{{0,30}}\b(?:badged|swiped|tapped in|scanned in|clocked in|signed in)\b"
+    rf"|\bwhen (?:(?:did|does|do|will)\s+)?(?:i|he|she|they|someone|people|staff|my \w+)\s+"
+    rf"(?:badge|swipe|tap|clock|sign)(?:s|ed)?\s+(?:in|out|into|on|off)\b"
+    rf"|\b(?:my|his|her|their|someone'?s|a person'?s|staff)\s+(?:access|entry|door|badge|swipe|"
+    rf"card)(?:\s+(?:access|entry|swipe|card))?\s+(?:history|logs?|records?|times?|data|events?)\b"
+    rf"|\b(?:see|view|access|monitor|check)\b.{{0,30}}\b(?:badge|swipe|access|entry)[- ]?"
+    rf"(?:in|out)?\s*(?:logs?|history|records?|times)\b.{{0,40}}\b(?:my|me|i|staff|employees?|"
+    rf"{_PERSON})\b"
     rf"|\bwhen did\b.{{0,50}}\b(?:leave|arrive|last leave|come in)\b.{{0,30}}\b(?:office|building|work)?\b"
     rf"|\b{_PERSON}(?:'s)?\b.{{0,30}}\b(?:movements?|comings and goings|schedule|attendance)\b"
     rf"|\bper[- ]minute\b.{{0,60}}\b(?:single|one)[- ]occupant\b"
