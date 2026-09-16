@@ -105,7 +105,21 @@ def test_the_particulate_class_is_known_to_sweep_in_tvoc():
 
 def test_a_class_with_no_foreign_descendants_reports_none():
     assert foreign_descendants("CO2_Level_Sensor") == ()
-    assert foreign_descendants("Temperature_Sensor") == ()
+
+
+def test_temperature_sweeps_in_the_water_classes_which_measure_something_else():
+    """BUG-609: a Leaving_Water_Temperature_Sensor IS a Temperature_Sensor, and Temperature_Sensor
+    declares the AIR band (-30..70 degC). An ordinary 72 degC heating flow was announced to the
+    reader as physically impossible. The water classes now declare their own quantity kind, so
+    this subtree is deliberately no longer homogeneous — and a reader of the roll-up must know
+    it, which is what this test records."""
+    assert set(foreign_descendants("Temperature_Sensor")) == {
+        "Water_Temperature_Sensor",
+        "Leaving_Water_Temperature_Sensor",
+        "Entering_Water_Temperature_Sensor",
+        "Hot_Water_Supply_Temperature_Sensor",
+        "Chilled_Water_Supply_Temperature_Sensor",
+    }
 
 
 def test_the_rollup_map_is_derived_not_hand_written():
@@ -144,8 +158,15 @@ def test_the_note_names_the_classes_not_just_the_quantity():
 
 def test_a_clean_class_gets_no_note():
     assert rollup_note("CO2_Level_Sensor") is None
-    assert rollup_note("Temperature_Sensor") is None
     assert rollup_note("") is None
+
+
+def test_temperature_now_carries_a_note_because_water_sits_under_it():
+    """BUG-609. A count of Temperature_Sensor sweeps in the water classes, which measure a
+    different quantity against a different band — so the census says so rather than letting a
+    reader take the number for air temperature alone."""
+    note = rollup_note("Temperature_Sensor")
+    assert note and "Water_Temperature_Sensor" in note
 
 
 def test_the_census_carries_the_note():
@@ -159,7 +180,7 @@ def test_the_census_carries_the_note():
 def test_the_census_of_a_clean_class_is_unchanged():
     from orchestrator.services.ontology_inventory import render_census
 
-    out = render_census([("Temperature_Sensor", 120)], "Test Building")
+    out = render_census([("CO2_Level_Sensor", 120)], "Test Building")
     assert "TVOC" not in out and "_Note" not in out
 
 

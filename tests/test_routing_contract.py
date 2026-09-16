@@ -320,6 +320,9 @@ def test_precedence_order_is_pinned():
         # as a route request. Neither pattern matches the other's shapes today, so the order
         # is a guard rather than a live tie-break.
         "plant_point_query",
+        # BUG-614: a comparison of RECORDED route times belongs to the register that holds
+        # them. It precedes the wayfinding rule, which only declines to claim these.
+        "route_comparison_is_recorded_data",
         "wayfinding_spatial",
         # Sits beside wayfinding_spatial: both take a question the classifier
         # read as capability and hand it to the agent that actually holds the

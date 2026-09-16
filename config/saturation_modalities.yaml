@@ -411,6 +411,29 @@ modalities:
       table: plant_data
       unit: binary
       scope: equipment
+  leaving_water_temperature:
+    # The flow side of a generator's circuit. With entering_water_temperature below it makes
+    # the delta-T across a heating or chilled circuit answerable — the question a plant
+    # engineer asks first, and the one this estate could not answer at all (CAVEAT-603).
+    lay_terms: [flow temperature, leaving water temperature, circuit flow, heating flow]
+    brick_classes:
+      - Leaving_Water_Temperature_Sensor
+    sat:
+      brick_class: Leaving_Water_Temperature_Sensor
+      table: plant_data
+      unit: degC
+      scope: equipment
+
+  entering_water_temperature:
+    lay_terms: [return temperature, entering water temperature, circuit return, heating return]
+    brick_classes:
+      - Entering_Water_Temperature_Sensor
+    sat:
+      brick_class: Entering_Water_Temperature_Sensor
+      table: plant_data
+      unit: degC
+      scope: equipment
+
   damper_position:
     brick_classes:
       - Damper_Position_Sensor

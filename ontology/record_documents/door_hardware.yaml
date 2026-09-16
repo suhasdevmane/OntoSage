@@ -1,0 +1,78 @@
+# Door and shutter hardware register -> ontosage:DoorHardware
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# "Which shutters or doors fail open versus fail locked on power loss?" was answered from the
+# building's ENERGY METERS (stakeholder run #3, CAVEAT-603). The graph models access-control
+# readers and fire doors as equipment; nothing recorded how an opening BEHAVES when power or
+# the fire alarm changes state. Three roles ask exactly that — fire officer, security officer,
+# evacuation planner — and each of them needs the opposite answer for openings that sit on the
+# same circuit.
+#
+# THE FAIL STATE IS RECORDED, NEVER DERIVED FROM THE KIND. A fire shutter drops closed and an
+# escape door releases open, both on loss of power, both correct. Inferring either from the
+# opening kind would produce a confident answer in precisely the case where being wrong puts
+# somebody behind a locked door.
+record_type: door_hardware
+class: ontosage:DoorHardware
+iri_template: "opening/{opening}"
+label_column: name
+
+columns:
+  opening:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  kind:
+    predicate: ontosage:openingKind
+    datatype: xsd:string
+    required: true
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  floor:
+    predicate: ontosage:onFloor
+    datatype: xsd:string
+  power_loss_state:
+    predicate: ontosage:failStateOnPowerLoss
+    datatype: xsd:string
+    required: true
+  hold_open:
+    predicate: ontosage:holdOpenDevice
+    datatype: xsd:string
+  release:
+    predicate: ontosage:releaseMechanism
+    datatype: xsd:string
+  commanded_by:
+    predicate: ontosage:commandedBySystem
+    datatype: xsd:string
+  last_tested:
+    predicate: ontosage:lastTestedOn
+    datatype: xsd:date
+  next_due:
+    predicate: ontosage:nextTestDue
+    datatype: xsd:date
+  evidence_ref:
+    predicate: ontosage:evidenceReference
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "In service", "Operational"]
+      defective: ["Defective", "Faulty", "Out of service"]
+      overdue: ["Overdue", "Test overdue"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

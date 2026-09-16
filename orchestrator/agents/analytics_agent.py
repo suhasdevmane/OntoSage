@@ -1163,6 +1163,13 @@ Generate a response that:
 6. Uses human-readable sensor names (from Sensor Information above), NOT UUIDs
 7. Is concise — 3–6 sentences for simple queries, up to 10 for complex ones
 8. Does NOT include caveats like "I cannot provide" or "data not shown" — if data was analysed, report it
+9. Reports ONLY the property that was measured. A value of one property is not evidence about
+   another: a commissioned or design duty is not an operating schedule, a runtime is not a
+   setpoint, a flow is not a temperature, and a count of anything is not a measurement of it.
+   If the question asks about a property these figures do not carry, say which property they
+   do carry and stop (BUG-606)
+10. Is internally consistent: the item you name as highest or lowest must be the highest or
+   lowest figure you list, and every comparison you state must hold for the numbers you give
 
 Response:"""
 

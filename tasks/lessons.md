@@ -1497,3 +1497,44 @@ unaffected only because it had been restarted before the edit.
 * After any structural splice, import the module and assert the class still has its public
   methods, then run the WHOLE unit suite — a subset chosen by filename did not include the
   contract tests that noticed.
+
+## 108. Three "wrong lane" answers were missing DATA, not broken routing (2026-09-16)
+
+Stakeholder run #3 logged "answered from the wrong register" three times. Two of them had no
+right register to reach: nothing recorded what a door does when power is lost, and the estate
+carried zero water temperatures, so "which doors fail open?" and "what is the delta-T across
+the heating circuit?" had nowhere correct to land. The lane the answer came from was the
+symptom; the building's model was the cause. Adding the records and the points — one ontology
+class with its lifting rules, one register document, eight generated points on plant the graph
+already held — turned both into correct answers, and only then did a routing guard matter.
+
+**And a subclass inherits a band that may be wrong for it.** A Leaving_Water_Temperature_Sensor
+is a Temperature_Sensor, which declares the AIR band of -30..70 degC, so the first delta-T
+answer announced 1,035 readings of an ordinary 72 degC heating flow as "physically impossible".
+The loader had been SAMPLEing whichever declaring class the store returned first.
+
+**Rules.**
+* Before blaming routing for a wrong source, ask what the right source WOULD be and check the
+  building holds it. If it does not, the fix is data, and the honest answer until then is "not
+  recorded" — never a different register's rows.
+* Where a property is declared up a class hierarchy, resolve it from the MOST SPECIFIC class
+  that declares it, and never by sampling one of the matches.
+* A generated pair that a question compares (flow and return, in and out) must come from one
+  seed, or the difference between them is noise with a plausible shape.
+
+## 109. A stray line truncated the defect log, because `open(path, "w")` runs before the failure (2026-09-16)
+
+A tracker-writing script carried a leftover line — `csv.DictWriter(open(p, "w", ...)).writerows([])`
+— which raised TypeError for a missing argument. The exception was irrelevant: `open(p, "w")`
+had already emptied `tasks/FIX_TRACKER.csv`, 603 rows of defect history, before the call
+failed. Recovery cost nothing only because the file is tracked and the last commit was an hour
+old; the night's nine uncommitted rows had to be re-applied from the script that wrote them.
+
+**Rules.**
+* Never write a data file in place. Write a temporary file in the same directory and
+  `os.replace()` it — the swap is atomic, and a failure anywhere before it leaves the original
+  intact.
+* Make re-application idempotent (add a row only when its id is absent), so recovery is a
+  re-run rather than a reconstruction.
+* Verify after writing: row count, no duplicate ids, and the audit. The truncation announced
+  itself as "0 rows" only because the next command counted them.

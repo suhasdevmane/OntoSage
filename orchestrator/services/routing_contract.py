@@ -973,6 +973,18 @@ WAYFIND_RE = re.compile(
 )
 
 #: BUG-597: routes COMPARED with each other — recorded circulation data, not a way to go.
+#: A reading ACROSS a plant circuit: delta-T, flow vs return, approach temperature. The
+#: measurand plus the circuit word is what separates "what is the delta-T across the
+#: heating circuit" from "which checkpoints are on the north circuit".
+PLANT_READING_RE = re.compile(
+    r"\bdelta[- ]?t\b"
+    r"|\b(flow|return|supply|leaving|entering)\s+(water|air)\s+temperature\b"
+    r"|\b(heating|chilled|cooling|hot[- ]water|primary)\s+(circuit|loop)\b.{0,40}\b(temperature|delta|reading|performance)\b"
+    r"|\bapproach\s+temperature\b",
+    re.IGNORECASE,
+)
+
+
 ROUTE_COMPARISON_RE = re.compile(
     r"\b(?:slower|faster|quicker|longer|shorter)\s+than\b|\bfloor\s+pairs?\b"
     r"|\bcompare\s+(?:the\s+)?(?:routes?|travel\s+times?)\b",
@@ -1157,6 +1169,20 @@ def _r_plant_point_query(c: _Ctx) -> Optional[str]:
     if c.sr.is_control_command(c.query):
         return None
     return "sensor_data" if plant_point_question(c.query) else None
+
+
+def _r_route_comparison_is_data(c: _Ctx) -> Optional[str]:
+    """"Is the step-free route slower than the stairs?" → metadata (the register holds it).
+
+    BUG-597 stopped the route finder claiming these ("No staircase spaces found"). The
+    classifier then read the comparison as `compare`, whose canned template asked for zone ids
+    and offered to compare CO2 — while the circulation register holds a walking time and a
+    step-free time for every floor pair. A comparison of RECORDED times is a data question
+    about records, not a measurement.
+    """
+    if c.intent not in _WEAK_INTENTS + ("compare", "trend", "analytics", "sensor_data"):
+        return None
+    return "metadata" if ROUTE_COMPARISON_RE.search(c.query) else None
 
 
 def _r_wayfinding_spatial(c: _Ctx) -> Optional[str]:
@@ -1802,6 +1828,12 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "plant_point_query",
         "BMS / plant point questions → sensor_data, not a document (V6-T26)",
         _r_plant_point_query,
+    ),
+    Rule(
+        "route_comparison_is_recorded_data",
+        "routes COMPARED with each other → the register that records the times, not a lane "
+        "that measures sensors (BUG-614)",
+        _r_route_comparison_is_data,
     ),
     Rule(
         "wayfinding_spatial",

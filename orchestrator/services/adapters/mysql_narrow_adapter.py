@@ -36,6 +36,12 @@ _UUID_RE = re.compile(r"^[0-9A-Za-z][0-9A-Za-z-]{7,63}$")
 _TABLE_RE = re.compile(r"^[A-Za-z0-9_]+$")
 
 
+#: Above these the per-sensor union stops being the cheaper shape: the statement itself grows
+#: with the sensor count, and a long per-sensor limit reads the same rows either way.
+_MAX_UNION_BRANCHES = 400
+_MAX_UNION_ROWS_PER_UUID = 1500
+
+
 class MySQLNarrowAdapter(MySQLAdapter):
     """MySQL adapter scoped to one narrow (uuid, datetime, value) modality table."""
 
@@ -194,6 +200,33 @@ class MySQLNarrowAdapter(MySQLAdapter):
         per_uuid = int(limit)
         # Safety cap on the flattened result so a large uuid-set can't explode.
         outer_cap = per_uuid * max(1, len(safe))
+
+        # ONE RANGE SCAN PER SENSOR, not one window over the table (2026-09-16).
+        #
+        # The ROW_NUMBER form below reads every row the WHERE clause admits and ranks it:
+        # measured on a 10.1M-row narrow table, 174 sensors x 60 readings took 32 SECONDS,
+        # which is most of what "which floor is the warmest right now?" cost. These tables are
+        # keyed on (uuid, datetime), so a per-sensor `ORDER BY datetime DESC LIMIT n` is an
+        # index range scan of exactly n rows; the union of them returns the same set.
+        #
+        # The window form is kept for the case it is genuinely better at — many sensors with a
+        # small per-sensor limit is the demo's shape, but one sensor over a long window is a
+        # single scan either way, and a very large uuid set would make an unreasonably long
+        # statement. The threshold is on the STATEMENT, not on the building.
+        per_uuid_where = " AND ".join(c for c in clauses if not c.startswith("`uuid` IN"))
+        if len(safe) <= _MAX_UNION_BRANCHES and per_uuid <= _MAX_UNION_ROWS_PER_UUID:
+            branches = " UNION ALL ".join(
+                (
+                    "(SELECT `datetime` AS timestamp, `uuid` AS uuid, `value` AS value "
+                    f"FROM `{self._table}` WHERE `uuid` = '{u}'"
+                    + (f" AND {per_uuid_where}" if per_uuid_where else "")
+                    + " AND `value` IS NOT NULL "
+                    f"ORDER BY `datetime` DESC LIMIT {per_uuid})"
+                )
+                for u in safe
+            )
+            return f"{branches} ORDER BY `uuid`, `timestamp` DESC LIMIT {outer_cap};"
+
         return (
             "SELECT `timestamp`, `uuid`, `value` FROM ("
             "SELECT `datetime` AS timestamp, `uuid` AS uuid, `value` AS value, "

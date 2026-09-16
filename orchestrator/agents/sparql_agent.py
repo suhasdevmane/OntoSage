@@ -900,6 +900,20 @@ Your Answer:"""
         if record is None:
             return None
 
+        # A PLANT READING IS NOT A REGISTER QUESTION (2026-09-16). "What's the delta-T across
+        # the heating circuit, and is it healthy?" matched PatrolCheckpoint — "circuit" is one
+        # of its lay terms — and was answered with eighteen patrol checkpoints. The dialogue
+        # short-circuit already refuses these; this path resolves the record class again, so
+        # the same rule has to hold here or the guard only moves the wrong answer one lane.
+        from orchestrator.services.routing_contract import PLANT_READING_RE
+
+        if PLANT_READING_RE.search(user_query or ""):
+            logger.info(
+                f"[sparql] {record.local_name} matches, but the question asks what a plant "
+                f"circuit READS — leaving it to the data lanes"
+            )
+            return None
+
         # A LARGE REGISTER IS SCOPED, NOT ABANDONED.
         #
         # This used to return None whenever a register exceeded MAX_RECORD_ROWS, on the
@@ -1168,7 +1182,9 @@ Your Answer:"""
             + " If these records do not record what the question asks, say so plainly in the "
             "first sentence, name what they DO record, and stop there: never map a field onto a "
             "different concept (an approval, effective or review date is not an operating, start, "
-            "attendance or occupancy time; an approval status is not a usage record). Never "
+            "attendance or occupancy time; an approval status is not a usage record; a "
+            "commissioned or design DUTY is not an operating SCHEDULE, so a unit running below "
+            "its duty is not a unit running outside its hours). Never "
             "certify, approve or guarantee safety, compliance, accessibility, confidentiality or "
             "adequacy, and never call a record 'yours' — report what the records state. When a "
             "word in the question could cover more than one recorded status (\"open\" can mean "
@@ -2565,6 +2581,22 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
             "thermal": "brick:Air_Temperature_Sensor",
             "humidity": "brick:Humidity_Sensor",
             "co2": "brick:CO2_Sensor",
+            # Water side (2026-09-16). "delta-T across the heating circuit" needs BOTH the
+            # flow and the return, so it resolves to their common parent and the TBox rollup
+            # brings back each generator's pair; a building that types only one of them still
+            # resolves. Without this the question reached the document lane and was declined
+            # while eight water temperatures sat on the boilers, chiller and heat pump.
+            "delta-t": "brick:Water_Temperature_Sensor",
+            "delta t": "brick:Water_Temperature_Sensor",
+            "water temperature": "brick:Water_Temperature_Sensor",
+            "flow temperature": "brick:Leaving_Water_Temperature_Sensor",
+            "return temperature": "brick:Entering_Water_Temperature_Sensor",
+            "leaving water": "brick:Leaving_Water_Temperature_Sensor",
+            "entering water": "brick:Entering_Water_Temperature_Sensor",
+            "heating circuit": "brick:Water_Temperature_Sensor",
+            "chilled circuit": "brick:Water_Temperature_Sensor",
+            "heating loop": "brick:Water_Temperature_Sensor",
+            "chilled loop": "brick:Water_Temperature_Sensor",
             # Air quality synonyms
             "stuffy": "brick:CO2_Level_Sensor",
             "stale air": "brick:CO2_Level_Sensor",

@@ -219,6 +219,13 @@ ontosage:AirTemperature a ontosage:Measurand ;
     ontosage:physicalMax 70 ;
     ontosage:bandSource "Judgement: covers a cold store and a plant room. A building air temperature outside it is a fault or a unit error -- 70 degC would read as 158 degF." .
 
+ontosage:WaterTemperature a ontosage:Measurand ;
+    rdfs:label "water temperature"@en ;
+    ontosage:physicalUnit "degC" ;
+    ontosage:physicalMin -10 ;
+    ontosage:physicalMax 120 ;
+    ontosage:bandSource "Judgement: covers a chilled circuit at 4 degC, a glycol loop below zero, and a heating flow at 82 degC, with headroom to the boiling point at atmospheric pressure. A heating flow of 72 degC is ordinary and was being excluded as impossible because the water points inherited the AIR band from Temperature_Sensor." .
+
 ontosage:RelativeHumidity a ontosage:Measurand ;
     rdfs:label "relative humidity"@en ;
     ontosage:physicalUnit "%RH" ;
@@ -274,6 +281,14 @@ ontosage:BinaryState a ontosage:Measurand ;
 brick:Air_Temperature_Sensor      ontosage:measuresQuantityKind ontosage:AirTemperature .
 brick:Zone_Air_Temperature_Sensor ontosage:measuresQuantityKind ontosage:AirTemperature .
 brick:Temperature_Sensor          ontosage:measuresQuantityKind ontosage:AirTemperature .
+# Water side. Declared on the parent AND on the two specific classes, so a building that
+# types only one of them still resolves a band — and so the most-specific match wins over the
+# air band these classes inherit from Temperature_Sensor.
+brick:Water_Temperature_Sensor    ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Leaving_Water_Temperature_Sensor  ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Entering_Water_Temperature_Sensor ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Hot_Water_Supply_Temperature_Sensor ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Chilled_Water_Supply_Temperature_Sensor ontosage:measuresQuantityKind ontosage:WaterTemperature .
 brick:Humidity_Sensor             ontosage:measuresQuantityKind ontosage:RelativeHumidity .
 brick:Relative_Humidity_Sensor    ontosage:measuresQuantityKind ontosage:RelativeHumidity .
 brick:Zone_Air_Humidity_Sensor    ontosage:measuresQuantityKind ontosage:RelativeHumidity .

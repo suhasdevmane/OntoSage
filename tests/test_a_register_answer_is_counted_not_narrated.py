@@ -148,3 +148,79 @@ def test_a_field_nobody_asked_about_is_not_counted():
 def test_provenance_fields_are_never_counted_as_content():
     rows = [_row(recordId="A", recordStatus="active", recordOwner="X"), _row(recordId="B", recordStatus="active")]
     assert "recordOwner" not in register_facts(rows, "Who is the record owner of each?")
+
+
+DEPARTMENTS = [
+    _row(recordId=f"DEP-{i:02}", recordStatus="active",
+         outOfHoursRoute=("No cover, next working day" if i % 2 else "Security control room"))
+    for i in range(1, 21)
+]
+
+
+def test_a_value_that_says_none_answers_a_question_asking_which_have_none():
+    """BUG-613: "which departments have no out-of-hours route?" was answered "every department
+    has an out-of-hours route value recorded" — true of the FIELD, false of the building."""
+    facts = register_facts(DEPARTMENTS, "Which departments have no out-of-hours route?")
+    line = next(l for l in facts.splitlines() if "state that there is NONE" in l)
+    assert "10 record(s)" in line and "DEP-01" in line and "DEP-02" not in line
+
+
+def test_a_question_not_about_absence_gets_no_such_line():
+    facts = register_facts(DEPARTMENTS, "Who do I contact out of hours?")
+    assert "state that there is NONE" not in facts
+
+
+def test_a_field_with_no_none_like_values_produces_no_line():
+    rows = [_row(recordId="A", recordStatus="active", outOfHoursRoute="Security control room")]
+    assert "NONE" not in register_facts(rows, "Which departments have no out-of-hours route?")
+
+
+SESSIONS = [
+    _row(recordId=f"TS-{i:04}", recordStatus=("scheduled" if i > 17 else "completed"))
+    for i in range(1, 24)
+]
+
+
+def test_a_question_word_that_is_also_a_status_gets_both_readings():
+    """CAVEAT-604: "which teaching sessions are scheduled in Room 1.06?" answered six — the
+    records whose recordStatus is 'scheduled' — of the 23 the room holds."""
+    facts = register_facts(SESSIONS, "Which teaching sessions are scheduled in Room 1.06?")
+    line = next(l for l in facts.splitlines() if l.startswith("- CAREFUL"))
+    assert "'scheduled' is also a recorded STATUS" in line
+    assert "23 in total" in line
+
+
+def test_a_question_that_does_not_use_a_status_word_gets_no_warning():
+    assert "CAREFUL" not in register_facts(SESSIONS, "Which sessions are in Room 1.06?")
+
+
+PLANT = [
+    _row(recordId="AEP-015", recordStatus="active", lastVisited="2026-06-08",
+         inspectionIntervalDays="365"),
+    _row(recordId="AEP-016", recordStatus="active", lastVisited="2025-10-15",
+         inspectionIntervalDays="365"),
+    _row(recordId="AEP-017", recordStatus="active", lastVisited="2025-09-12",
+         inspectionIntervalDays="180"),
+]
+
+
+def test_longest_unseen_is_computed_not_read_off_the_interval_column():
+    """Probe: 'which rarely visited plant areas have the longest blind intervals?' named the two
+    meters with a 365-day INTERVAL, neither of them due, over an exhaust fan 369 days unseen
+    against a 180-day interval."""
+    facts = register_facts(PLANT, "Which rarely visited plant areas have the longest blind intervals?",
+                           date(2026, 9, 16))
+    elapsed = next(l for l in facts.splitlines() if "Days since lastVisited" in l)
+    assert elapsed.index("AEP-017") < elapsed.index("AEP-016") < elapsed.index("AEP-015")
+    assert "AEP-017 369d (+189d" in elapsed
+    past = next(l for l in facts.splitlines() if l.startswith("- PAST its"))
+    assert "AEP-017 by 189d" in past and "AEP-016" not in past
+
+
+def test_a_question_not_about_elapsed_time_gets_no_such_lines():
+    facts = register_facts(PLANT, "Which assets are in the service room?", date(2026, 9, 16))
+    assert "Days since" not in facts
+
+
+def test_without_today_nothing_is_computed():
+    assert "Days since" not in register_facts(PLANT, "longest blind interval?", None)

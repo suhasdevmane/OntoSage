@@ -869,6 +869,16 @@ class DialogueAgent:
         # "these records do not contain any information about how to get from reception to
         # the seminar room" — a regression of a regression-probe case, found in the demo pass.
         _asks_for_a_route = bool(WAYFIND_RE.search(user_query or ""))
+        # A PLANT READING is not a register question either (2026-09-16). "What's the delta-T
+        # across the heating circuit, and is it healthy?" matched PatrolCheckpoint, whose lay
+        # terms include "circuit", and was answered with eighteen patrol checkpoints. The
+        # building's boilers, chiller and heat pump carry flow and return temperatures; a
+        # question asking what a plant circuit READS belongs to the lanes that can read them.
+        from orchestrator.services.routing_contract import PLANT_READING_RE
+
+        _asks_a_plant_reading = bool(_plant_point_question(user_query or "")) or bool(
+            PLANT_READING_RE.search(user_query or "")
+        )
         _ranks_by_measurement = bool(
             DELIBERATE_RE.search(user_query or "")
             and _MEASURED_CONDITION_RE.search(user_query or "")
@@ -880,6 +890,7 @@ class DialogueAgent:
             and not classify_inference(user_query or "")
             and not _ranks_by_measurement
             and not _asks_for_a_route
+            and not _asks_a_plant_reading
         ):
             # The building holds this class as DATA, so the question is answerable by
             # SPARQL and must not be handed to a lane that can only quote prose. A
@@ -947,6 +958,12 @@ class DialogueAgent:
             # these because an equipment id (AHU_F5, VAV_Floor5_West) matches none of its
             # sensor / zone / room / floor patterns. Fourth member of BUG-231's family.
             and not _plant_point_question(user_query)
+            # A reading ACROSS a circuit is the same family: "what's the delta-T across the
+            # heating circuit?" was answered "the documents do not answer this" while the
+            # building's boilers, chiller and heat pump carry flow and return temperatures.
+            and not __import__(
+                "orchestrator.services.routing_contract", fromlist=["PLANT_READING_RE"]
+            ).PLANT_READING_RE.search(user_query or "")
             # V6-T27: metered-consumption questions had no bypass. "How much energy did the
             # building use last week?" was answered "I don't have that on record" while six
             # floor meters held the data, and "How much electricity does the lab on floor 5

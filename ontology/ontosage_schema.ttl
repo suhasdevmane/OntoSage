@@ -2612,6 +2612,16 @@ ontosage:nearestVerticalRoute a owl:DatatypeProperty ;
     rdfs:label "nearest vertical route"@en ;
     rdfs:comment "The lift or stair core serving this space, so travel between levels can be reasoned about rather than guessed."@en .
 
+# CAPACITY PHRASING (2026-09-16): "find a room for 12 with a projector" and "a room for a
+# two-hour mock viva with four people" were answered from the AV register and from nothing at
+# all. This register holds the seats, whether the space is bookable, whether a call can be
+# taken in it and whether a group can use it, and none of that vocabulary said so. Whole
+# phrases only: a bare "room" belongs to no register.
+# CAPACITY PHRASING (2026-09-16). "Find a room for 12 with a projector" and "a room for a
+# two-hour mock viva with four people" were answered from the AV register and from nothing
+# at all: this register holds the seats, whether the space is bookable, whether a call can
+# be taken in it and whether a group can use it, and none of that vocabulary said so.
+# Whole phrases only — a bare "room" belongs to no register (see _terms_for).
 ontosage:WorkspaceProfile ontosage:layTerms "study space", "study spaces", "somewhere to work",
     "somewhere to study", "quiet space", "quiet study", "group study", "workspace",
     "workspaces", "place to work", "place to study", "where can i work",
@@ -2621,7 +2631,10 @@ ontosage:WorkspaceProfile ontosage:layTerms "study space", "study spaces", "some
     "how long to recover", "time to recover", "recover after", "to recover",
     "bookable room", "bookable rooms", "bookable space", "bookable spaces",
     "quiet room", "room for a call", "somewhere to take a call",
-    "recovery", "room readiness" .
+    "recovery", "room readiness",
+    "room for", "rooms for", "space for", "spaces for", "seats for", "room with",
+    "room that seats", "seating capacity", "how many seats", "room big enough",
+    "room for a meeting", "room for a viva", "room for an interview", "room to book" .
 
 
 ontosage:AssetEngineeringProfile rdfs:subClassOf ontosage:Record ; a owl:Class ;
@@ -2956,3 +2969,53 @@ ontosage:recoveryMinutes a owl:DatatypeProperty ;
     rdfs:domain ontosage:WorkspaceProfile ; rdfs:range xsd:decimal ;
     rdfs:label "recovery minutes"@en ;
     rdfs:comment "How long after a full session the room's conditions return to their normal range. The field that makes 'did the previous class leave too little recovery time before mine?' a calculation against the timetable rather than a guess."@en .
+
+# ── Door and shutter hardware (2026-09-16) ────────────────────────────────────
+#
+# Added because "which shutters or doors fail open versus fail locked on power loss?" was
+# answered from the ENERGY METERS: the building models access-control readers and fire doors
+# as equipment, and nothing recorded how an opening behaves when power or the fire alarm
+# changes state. That behaviour is the whole question a fire officer, a security officer and
+# an evacuation planner each ask about an opening, and it cannot be derived from geometry or
+# from the reader on the frame.
+#
+# The fail state is RECORDED, never inferred from the opening kind: a fire shutter and an
+# escape door on the same circuit behave in opposite ways by design, and guessing from the
+# kind would produce a confident answer about the one case where being wrong is dangerous.
+
+ontosage:DoorHardware rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Door and shutter hardware"@en ;
+    rdfs:comment "One controlled opening — door, shutter, barrier or turnstile — and how it behaves when power or the fire alarm changes state: its fail state on power loss, any hold-open device, how it is released, and which system commands it. recordStatus is the owner's recorded state; failStateOnPowerLoss is recorded per opening because a fire shutter and an escape door on one circuit fail in opposite directions by design."@en ;
+    skos:example "which openings fail open on power loss? -> DoorHardware where failStateOnPowerLoss is fail open." .
+
+# The words people use for an opening. A question reaches this class by these or by its
+# formal name, and nothing is derived from part of a phrase.
+ontosage:DoorHardware ontosage:layTerms "door", "doors", "shutter", "shutters",
+    "roller shutter", "barrier", "turnstile", "fail open", "fail locked", "fail safe",
+    "fail secure", "power loss", "power failure", "hold open", "door release", "maglock",
+    "door hardware", "fire shutter", "escape door" .
+
+ontosage:openingKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:DoorHardware ; rdfs:range xsd:string ;
+    rdfs:label "opening kind"@en ;
+    rdfs:comment "What the opening is: escape door, fire shutter, security door, turnstile, vehicle barrier."@en .
+
+ontosage:failStateOnPowerLoss a owl:DatatypeProperty ;
+    rdfs:domain ontosage:DoorHardware ; rdfs:range xsd:string ;
+    rdfs:label "fail state on power loss"@en ;
+    rdfs:comment "How the opening rests when power is lost: fail open (releases), fail locked (stays secure), fail safe (releases for escape) or fail closed (drops, as a fire shutter does). Recorded, never inferred from the opening kind."@en .
+
+ontosage:holdOpenDevice a owl:DatatypeProperty ;
+    rdfs:domain ontosage:DoorHardware ; rdfs:range xsd:string ;
+    rdfs:label "hold-open device"@en ;
+    rdfs:comment "The device holding the opening open in normal use, and what drops it — an acoustic or wired hold-open, a magnet on the fire panel, or none."@en .
+
+ontosage:releaseMechanism a owl:DatatypeProperty ;
+    rdfs:domain ontosage:DoorHardware ; rdfs:range xsd:string ;
+    rdfs:label "release mechanism"@en ;
+    rdfs:comment "How the opening is released in an emergency: break-glass, push pad, fire-panel signal, or manual key override."@en .
+
+ontosage:commandedBySystem a owl:DatatypeProperty ;
+    rdfs:domain ontosage:DoorHardware ; rdfs:range xsd:string ;
+    rdfs:label "commanded by system"@en ;
+    rdfs:comment "Which system commands the opening: fire alarm, access control, building management or none."@en .
