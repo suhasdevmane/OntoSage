@@ -370,6 +370,46 @@ class CapabilityGraphResolver:
         return out
 
 
+#: Words that locate or frame a question about an amenity without changing what it is about.
+_FRAME_WORDS = frozenset(
+    "a an the is are was be there any some this that these those in on at of for to from by with "
+    "near nearest closest nearby where what which who how when do does did can could would will "
+    "i me my we our you your it its please get find go use using have has having got available "
+    "open located location building floor level ground first second third fourth fifth here "
+    "somewhere anywhere inside outside around one ones "
+    # cost framing: "is it free", "do I have to pay / buy" asks about the amenity itself
+    "free paid pay buy cost costs charge need must".split()
+)
+
+
+def leftover_content_words(query_lc: str, lay_phrases: List[str]) -> List[str]:
+    """Content words of a question NOT covered by an amenity's lay phrases (BUG-601).
+
+    "Where are the toilets?" leaves nothing: the amenity IS the question. "Where can I isolate
+    the water supply for the second-floor toilets?" leaves isolate/water/supply — a plumbing
+    question that merely names toilets, and a toilet-location topic answered it with a list of
+    toilets. Used to decide whether a topic may ANSWER, never whether it is retrieved.
+    """
+    phrases = [p.lower() for p in lay_phrases if p and len(p) >= 3]
+    text = query_lc
+    for phrase in sorted(phrases, key=len, reverse=True):
+        text = re.sub(rf"(?<![a-z0-9]){re.escape(phrase)}(?:s|es)?(?![a-z0-9])", " ", text)
+    # A word inside the topic's OWN vocabulary is covered by it, even where the declared phrase
+    # is longer: a drinking-water point declares "bottle filling", and "bottles" in the question
+    # is that same thing, not a second subject.
+    declared = {w for p in phrases for w in re.findall(r"[a-z]+", p) if len(w) > 2}
+    words = re.findall(r"[a-z]+", text)
+    return [
+        w
+        for w in words
+        if len(w) > 2
+        and w not in _FRAME_WORDS
+        and w not in declared
+        and w.rstrip("s") not in declared
+        and not any(w.startswith(d) or d.startswith(w) for d in declared if len(d) > 4)
+    ]
+
+
 def _score(query_lc: str, lay_phrases: List[str]) -> int:
     """Score a query against an amenity's lay-term phrases.
 

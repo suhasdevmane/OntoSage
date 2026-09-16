@@ -36,6 +36,15 @@ _OVERDUE_RE = re.compile(r"\b(overdue|past\s+due|late|behind\s+schedule|out\s+of
 _DUE_COLUMN_RE = re.compile(r"(due|deadline)$", re.I)
 _CLOSED_STATUSES = {"completed", "closed", "void", "cancelled", "canceled", "withdrawn", "retired"}
 
+#: Fields the lifter stamps on every record — provenance, not content anyone asks about.
+_PROVENANCE_FIELDS = frozenset(
+    {
+        "recordId", "recordOwner", "recordVersion", "owningAuthority", "retrievedAt",
+        "derivedFromDocument", "liftedByMapping", "isSimulated", "effectiveFrom", "label",
+        "comment", "type",
+    }
+)
+
 
 def _value(row: Dict, field: str) -> str:
     cell = row.get(field)
@@ -84,6 +93,27 @@ def register_facts(rows: List[Dict], question: str, today: Optional[date] = None
         lines.append(f"- By {col}, then recorded status (a record of one kind is NOT another):")
         for kind in sorted(groups):
             lines.append(f"  - {kind}: {_split(groups[kind])}")
+
+    # A FIELD THE QUESTION NAMES, COUNTED (BUG-605). "Which HVAC systems run outside normal
+    # hours, and is each exception approved?" answered four, six and seven across three runs of
+    # a register holding approvedException on exactly 7 of 10 records. A field present on SOME
+    # records is exactly the filter a language model gets wrong, so where the question names one
+    # the system counts it and lists the records.
+    asked = set(re.findall(r"[a-z]+", (question or "").lower()))
+    for col in columns:
+        if col == STATUS or col in _PROVENANCE_FIELDS:
+            continue
+        col_words = {w.lower() for w in re.findall(r"[A-Za-z][a-z]+", col)}
+        if not (asked & col_words):
+            continue
+        filled = [r for r in rows if _value(r, col)]
+        if not filled or len(filled) == len(rows):
+            continue  # nothing recorded, or recorded everywhere: no filter to get wrong
+        ids = sorted(_ident(r) for r in filled)
+        line = f"- {col} is recorded for {len(filled)} of {len(rows)} records"
+        if len(ids) <= MAX_IDS_LISTED:
+            line += f": {', '.join(ids)}"
+        lines.append(line + ". State that count; do not recount from the rows.")
 
     if _OVERDUE_RE.search(question or ""):
         due_cols = [c for c in columns if _DUE_COLUMN_RE.search(c)]

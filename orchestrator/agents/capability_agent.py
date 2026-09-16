@@ -527,6 +527,51 @@ class CapabilityAgent:
                 # The resolver cutting to this size first is what made the building deny
                 # having bottle-refill points it has twelve of (BUG-337).
                 _facts = [f for f, _ in _pairs][:_PRESENT_FACTS]
+
+                # A TOPIC ANSWERS ONLY THE QUESTION IT IS ABOUT (BUG-601).
+                #
+                # Ranking picks the best of the matching topics; it cannot tell that NONE of
+                # them is what was asked. Measured in stakeholder run #3: "Book me a hotel near
+                # the building" answered with the room-booking topic, "Is the building
+                # pushchair-friendly from the car park?" with travel directions, "Where can I
+                # isolate the water supply for the second-floor toilets?" with a list of
+                # toilets, and "What systems are specific for the meeting room?" with study
+                # spaces — each in about a second, each confidently about something else.
+                #
+                # A topic qualifies when it IS the subject: at most one content word of the
+                # question is left once its own lay terms and the framing words (where, floor,
+                # nearest, free, …) are removed. Where none qualifies the lane falls through to
+                # the documents and then to the honest "not on record" below, which is the
+                # answer this building can defend.
+                from orchestrator.services.capability_graph_resolver import (
+                    leftover_content_words,
+                )
+
+                def _is_subject(f) -> bool:
+                    # Judged against the terms the BUILDING declared for this topic, or its
+                    # label when it declared none. A topic with neither is kept: there is
+                    # nothing to judge it by, and dropping it would deny a declared amenity.
+                    phrases = [
+                        p.strip().lower()
+                        for p in str(getattr(f, "lay_terms", "") or "").split(",")
+                        if p.strip()
+                    ] or [
+                        w.lower()
+                        for w in str(getattr(f, "label", "") or "").split()
+                        if len(w) > 2
+                    ]
+                    if not phrases:
+                        return True
+                    return len(leftover_content_words(_q.lower(), phrases)) <= 1
+
+                _subject = [f for f in _facts if _is_subject(f)]
+                if _facts and not _subject:
+                    logger.info(
+                        "[capability] topics %s match words but are not the subject — "
+                        "not answering from them",
+                        [f.label for f in _facts][:3],
+                    )
+                _facts = _subject
             if _facts:
                 _parts = [f"Here is what I found for **{building_name}**:\n"]
                 # Being ABOUT the subject is not the same as ANSWERING the question.

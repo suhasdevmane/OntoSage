@@ -122,3 +122,29 @@ def test_past_due_records_the_narration_left_out_are_stated_by_the_system():
     assert "FSA-010" in completeness_line("Only FSA-001 is overdue.", missing)
     assert completeness_line("FSA-001 and FSA-010 ...", missing) == ""
     assert passed_due_not_marked(rows, "Which assets are active?", date(2026, 9, 15)) == []
+
+
+REGIMES = [
+    _row(recordId="REG-001", recordStatus="active", operatingWindow="Mon-Fri 07:00-19:00"),
+    _row(recordId="REG-002", recordStatus="active", operatingWindow="Mon-Fri 07:00-20:00",
+         approvedException="extends to 22:00 in assessment weeks"),
+    _row(recordId="REG-003", recordStatus="active", operatingWindow="continuous",
+         approvedException="continuous is the approved regime"),
+    _row(recordId="REG-004", recordStatus="under_review", operatingWindow="Mon-Fri"),
+]
+
+
+def test_a_field_the_question_names_is_counted_with_its_records():
+    facts = register_facts(REGIMES, "Which HVAC systems run outside normal hours, and is each exception approved?")
+    line = next(l for l in facts.splitlines() if "approvedException" in l)
+    assert "recorded for 2 of 4 records: REG-002, REG-003" in line
+
+
+def test_a_field_nobody_asked_about_is_not_counted():
+    facts = register_facts(REGIMES, "Which regimes are under review?")
+    assert "approvedException" not in facts
+
+
+def test_provenance_fields_are_never_counted_as_content():
+    rows = [_row(recordId="A", recordStatus="active", recordOwner="X"), _row(recordId="B", recordStatus="active")]
+    assert "recordOwner" not in register_facts(rows, "Who is the record owner of each?")
