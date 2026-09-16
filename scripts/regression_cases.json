@@ -271,14 +271,18 @@
   {
     "group": "stakeholders",
     "question": "Which stakeholder groups does DEP-13 serve?",
-    "expect": [
-      "three"
-    ],
     "forbid": [
       "documents do not answer"
     ],
-    "note": "By department CODE, which the register holds. Asking by department NAME needs a join from the department directory that no single-register handover can make — tracked as CAVEAT-432, not hidden by rewording.",
-    "building": "bldg1"
+    "note": "By department CODE, which the register holds. Asking by department NAME needs a join from the department directory that no single-register handover can make — tracked as CAVEAT-432, not hidden by rewording. Marker widened 2026-09-16: the answer said \"3\" and \"Total: 3\" and was correct (SH-36/37/38); only the word \"three\" was asserted (CAVEAT-600 family).",
+    "building": "bldg1",
+    "expect_any": [
+      "three",
+      "3 stakeholder groups",
+      "total: 3",
+      "total**: 3",
+      "sh-36"
+    ]
   },
   {
     "group": "honesty",

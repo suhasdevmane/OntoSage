@@ -67,16 +67,17 @@ _ONTOSAGE = "http://ontosage.org/capabilities#"
 #: A cap on an exhaustive query does not fail; it under-reports, and under-reporting from a
 #: GUARD reads exactly like having nothing to report.
 _BANDS_BY_UUID = """
-PREFIX ref: <https://brickschema.org/schema/Brick/ref#>
-PREFIX o:   <http://ontosage.org/capabilities#>
-SELECT ?uuid (SAMPLE(?m) AS ?kind) (SAMPLE(?lo) AS ?lo) (SAMPLE(?hi) AS ?hi)
-       (SAMPLE(?u) AS ?unit) WHERE {
+PREFIX ref:  <https://brickschema.org/schema/Brick/ref#>
+PREFIX o:    <http://ontosage.org/capabilities#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?uuid ?kind ?lo ?hi ?unit (COUNT(DISTINCT ?anc) AS ?depth) WHERE {
   ?s ref:hasExternalReference ?r .
   ?r ref:hasTimeseriesId ?uuid .
-  ?s a ?cls . ?cls o:measuresQuantityKind ?m .
-  ?m o:physicalMin ?lo ; o:physicalMax ?hi .
-  OPTIONAL { ?m o:physicalUnit ?u }
-} GROUP BY ?uuid
+  ?s a ?cls . ?cls o:measuresQuantityKind ?kind .
+  ?kind o:physicalMin ?lo ; o:physicalMax ?hi .
+  OPTIONAL { ?kind o:physicalUnit ?unit }
+  OPTIONAL { ?cls rdfs:subClassOf+ ?anc }
+} GROUP BY ?uuid ?kind ?lo ?hi ?unit
 LIMIT 100000
 """
 
@@ -133,8 +134,23 @@ class PhysicalBands:
         out: Dict[str, Band] = {}
         try:
             res = await self._sparql(_BANDS_BY_UUID)
+            # THE MOST SPECIFIC CLASS OWNS THE BAND (2026-09-16).
+            #
+            # A sensor matches every class it inherits, and more than one of them may declare
+            # a band. Boiler flow water is typed Leaving_Water_Temperature_Sensor, which is a
+            # Water_Temperature_Sensor and also a Temperature_Sensor — and Temperature_Sensor
+            # declares the AIR band, -30..70 degC. SAMPLE() picked whichever the store
+            # returned first, so 1,035 perfectly ordinary readings of a 72 degC heating flow
+            # were announced to the reader as "physically impossible". Depth is the number of
+            # ancestors the declaring class has, so the narrowest declaration wins.
+            depth_by_uuid: Dict[str, int] = {}
             for b in (res or {}).get("results", {}).get("bindings", []):
-                out[b["uuid"]["value"]] = Band(
+                uuid_ = b["uuid"]["value"]
+                depth = int((b.get("depth") or {}).get("value", 0) or 0)
+                if uuid_ in out and depth <= depth_by_uuid.get(uuid_, -1):
+                    continue
+                depth_by_uuid[uuid_] = depth
+                out[uuid_] = Band(
                     kind=str(b["kind"]["value"]).rsplit("#", 1)[-1],
                     low=float(b["lo"]["value"]),
                     high=float(b["hi"]["value"]),

@@ -1,7 +1,7 @@
 {
   "_comment": "DERIVED by scripts/derive_measurand_rollups.py from Brick's asserted hierarchy crossed with ontology/measurand_kinds.ttl. Do not hand-edit: re-run the script after a Brick upgrade. Each entry says that counting the key class also counts the listed classes, which measure something else.",
   "brick_source": "input/Brick_v1.4.ttl",
-  "declared_classes": 56,
+  "declared_classes": 61,
   "rollups": {
     "Flow_Sensor": [
       "Water_Flow_Sensor"
@@ -9,6 +9,13 @@
     "Particulate_Matter_Sensor": [
       "TVOC_Level_Sensor",
       "TVOC_Sensor"
+    ],
+    "Temperature_Sensor": [
+      "Chilled_Water_Supply_Temperature_Sensor",
+      "Entering_Water_Temperature_Sensor",
+      "Hot_Water_Supply_Temperature_Sensor",
+      "Leaving_Water_Temperature_Sensor",
+      "Water_Temperature_Sensor"
     ]
   }
 }

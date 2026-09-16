@@ -61,6 +61,7 @@ _PREFIXES = (
     "PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
     "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
     "PREFIX brick:<https://brickschema.org/schema/Brick#>\n"
+    "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
 )
 
 #: modality -> (Brick class, unit, which equipment kinds carry it)
@@ -75,6 +76,31 @@ PLACEMENT: Dict[str, Tuple[str, str, Tuple[str, ...]]] = {
     "filter_differential_pressure": ("Filter_Differential_Pressure_Sensor", "Pa", ("AHU",)),
     "supply_air_flow": ("Air_Flow_Sensor", "L/s", ("AHU", "VAV")),
     "damper_position": ("Damper_Position_Sensor", "percent", ("VAV",)),
+    # Water side. A generator's flow and return are what make "what is the delta-T across the
+    # heating circuit, and is it healthy?" answerable at all: the question was declined with a
+    # sensor-count message while the graph held boilers, a chiller and a heat pump carrying no
+    # water temperature at all (CAVEAT-603).
+    "leaving_water_temperature": (
+        "Leaving_Water_Temperature_Sensor",
+        "degC",
+        ("Boiler", "Chiller", "Heat_Pump"),
+    ),
+    "entering_water_temperature": (
+        "Entering_Water_Temperature_Sensor",
+        "degC",
+        ("Boiler", "Chiller", "Heat_Pump"),
+    ),
+}
+
+#: kind -> (the class that identifies it, whether it must feed something to count).
+#: Air-side plant is only real when it serves a space; a generator serves a circuit this
+#: building may not have modelled, so it counts on its own.
+KIND_CLASSES: Dict[str, Tuple[str, bool]] = {
+    "AHU": ("brick:AHU", True),
+    "VAV": ("brick:VAV", True),
+    "Boiler": ("brick:Boiler", False),
+    "Chiller": ("brick:Chiller", False),
+    "Heat_Pump": ("ontosage:Heat_Pump", False),
 }
 
 #: The unit as a QUDT IRI. This building declares units with `qudt:hasUnit` and a QUDT IRI
@@ -99,6 +125,8 @@ _CAMEL = {
     "filter_differential_pressure": "Filter_DP",
     "supply_air_flow": "Supply_Air_Flow",
     "damper_position": "Damper_Position",
+    "leaving_water_temperature": "Leaving_Water_Temperature",
+    "entering_water_temperature": "Entering_Water_Temperature",
 }
 
 
@@ -132,10 +160,18 @@ async def discover_equipment(namespace: str) -> List[Dict[str, str]]:
     # template -- the one that answers "on floor 5" for every ordinary room sensor -- returns
     # zero rows for plant. Measured: the right points were resolved and then discarded by a
     # template that could not locate them.
+    # Branches are derived from KIND_CLASSES so adding a plant type is one dict entry.
+    branches = " UNION ".join(
+        (
+            f"{{ ?e a {cls} ; brick:feeds ?t BIND('{kind}' AS ?kind) }}"
+            if needs_feed
+            else f"{{ ?e a {cls} BIND('{kind}' AS ?kind) }}"
+        )
+        for kind, (cls, needs_feed) in sorted(KIND_CLASSES.items())
+    )
     q = (
         _PREFIXES + "SELECT DISTINCT ?e ?label ?kind ?floor WHERE {\n"
-        "  { ?e a brick:AHU BIND('AHU' AS ?kind) } UNION { ?e a brick:VAV BIND('VAV' AS ?kind) }\n"
-        "  ?e brick:feeds ?t .\n"
+        f"  {branches}\n"
         "  OPTIONAL { ?e rdfs:label ?label }\n"
         "  OPTIONAL { { ?e brick:isPartOf ?floor } UNION { ?e brick:hasLocation ?floor }\n"
         "             ?floor a brick:Floor }\n"
@@ -158,7 +194,9 @@ async def discover_equipment(namespace: str) -> List[Dict[str, str]]:
     return sorted(out, key=lambda r: r["iri"])
 
 
-def series(modality: str, seed_key: str, start: datetime, days: int, step_min: int):
+def series(
+    modality: str, seed_key: str, start: datetime, days: int, step_min: int, kind: str = ""
+):
     """A plausible plant series. Deterministic in (modality, physical unit)."""
     rnd = random.Random(f"{modality}|{seed_key}")
     n = int(days * 24 * 60 / step_min)
@@ -186,6 +224,18 @@ def series(modality: str, seed_key: str, start: datetime, days: int, step_min: i
         elif modality == "damper_position":
             base = 55 if occupied else 8
             v = round(min(100.0, max(0.0, base + 18 * math.sin(i / 11.0) + rnd.gauss(0, 4))), 1)
+        elif modality in ("leaving_water_temperature", "entering_water_temperature"):
+            # Flow and return of ONE circuit, with the delta its plant type implies: a boiler or
+            # heat pump sends water out hot and gets it back cooler; a chiller the reverse. Both
+            # sides come from the same seed, so the pair is a coherent circuit rather than two
+            # unrelated series that happen to sit on one asset — which is what makes a delta-T
+            # across them mean anything.
+            heating = kind != "Chiller"
+            flow, delta = (72.0, 11.0) if heating else (6.5, -5.5)
+            if not occupied:
+                flow -= 4.0 if heating else -1.5  # setback: heating cooler, chilled warmer
+            leaving = flow + rnd.gauss(0, 0.5) + 1.5 * math.sin(i / 13.0)
+            v = round(leaving if modality == "leaving_water_temperature" else leaving - delta, 2)
         else:
             v = round(rnd.gauss(0, 1), 3)
         out.append((ts, v))
@@ -279,11 +329,30 @@ async def main() -> int:
     ap.add_argument("--step-min", type=int, default=15)
     ap.add_argument("--dry-run", action="store_true")
     ap.add_argument("--db-key", default="plant_data")
+    ap.add_argument(
+        "--only",
+        default="",
+        help="comma-separated modalities to provision (default: every equipment-scoped one)",
+    )
+    ap.add_argument(
+        "--out",
+        default="",
+        help="TTL path to write (default: input/<building>_plant_points.ttl). Use a separate "
+        "file when adding points so an existing generated file is not rewritten from a graph "
+        "that has since changed — a regeneration drops any point whose equipment no longer "
+        "matches, and those points own live series.",
+    )
     args = ap.parse_args()
 
     building = settings.BUILDING_ID
     namespace = settings.BUILDING_NAMESPACE
     modalities = set(plant_modalities(building))
+    if args.only:
+        wanted = {m.strip() for m in args.only.split(",") if m.strip()}
+        unknown = wanted - modalities
+        if unknown:
+            raise SystemExit(f"not equipment-scoped modalities: {sorted(unknown)}")
+        modalities &= wanted
     if not modalities:
         raise SystemExit(
             "no equipment-scoped modalities in config/saturation_modalities.yaml -- nothing to "
@@ -315,6 +384,7 @@ async def main() -> int:
                     "label": f"{e['label'] or local(e['iri'])} {mod.replace('_', ' ')}",
                     "uuid": stable_uuid(iri),
                     "seed": normalized_unit(e["label"], e["iri"]),
+                    "kind": e["kind"],
                     "floor": e.get("floor", ""),
                 }
             )
@@ -328,7 +398,7 @@ async def main() -> int:
     print(duplicate_report(equipment))
 
     ttl = build_ttl(namespace, points, args.db_key)
-    out = Path("input") / f"{building}_plant_points.ttl"
+    out = Path(args.out) if args.out else Path("input") / f"{building}_plant_points.ttl"
     rows = args.days * 24 * 60 // args.step_min * len(points)
     if args.dry_run:
         print(f"\nDRY RUN — would write {out} ({len(points)} points) and ~{rows:,} rows")
@@ -360,7 +430,14 @@ async def main() -> int:
         for p in points:
             batch = [
                 (p["uuid"], ts, v)
-                for ts, v in series(p["modality"], p["seed"], start, args.days, args.step_min)
+                for ts, v in series(
+                    p["modality"],
+                    p["seed"],
+                    start,
+                    args.days,
+                    args.step_min,
+                    p.get("kind", ""),
+                )
             ]
             cur.executemany(
                 "INSERT IGNORE INTO plant_data (uuid, datetime, value) VALUES (%s,%s,%s)", batch

@@ -37,6 +37,11 @@ VERIFIED_BRICK_CLASSES = {
     "Electrical_Meter",
     "Water_Meter",
     "Availability_Status",
+    # 2026-09-16: both confirmed as owl:Class in input/Brick_v1.4.ttl and in the loaded
+    # TBox before being added here. They carry the flow and return of a generator's
+    # circuit, which is what makes a delta-T answerable.
+    "Leaving_Water_Temperature_Sensor",
+    "Entering_Water_Temperature_Sensor",
     # V6-T44. Both confirmed present as owl:Class declarations in the shipped
     # input/Brick+extensions.ttl before being added here -- this set is an assertion that
     # someone LOOKED, so adding a name to silence the failure without checking would defeat

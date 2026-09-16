@@ -75,6 +75,106 @@ def _split(rows: List[Dict]) -> str:
     return ", ".join(parts)
 
 
+#: A question about the ABSENCE of something: "which have no X", "without X", "lack X".
+_ASKS_ABSENCE_RE = re.compile(
+    r"\b(?:no|without|lack|lacks|lacking|missing|absent|none|not\s+(?:have|covered|provided))\b",
+    re.IGNORECASE,
+)
+
+#: A recorded value that SAYS the thing is absent. "No cover, next working day" is a real
+#: answer to "what happens out of hours", and it means there is none.
+_NONE_LIKE_RE = re.compile(
+    r"^\s*(?:no\b|none\b|nil\b|n/?a\b|not\s+(?:available|provided|recorded|applicable)"
+    r"|without\b|-{1,2}$)",
+    re.IGNORECASE,
+)
+
+
+def _absence_lines(rows, col, question):
+    """Records whose value for ``col`` SAYS there is none, when the question asks for those."""
+    if not _ASKS_ABSENCE_RE.search(question or ""):
+        return []
+    absent = [r for r in rows if _NONE_LIKE_RE.match(_value(r, col))]
+    if not absent:
+        return []
+    ids = sorted(_ident(r) for r in absent)
+    shown = ", ".join(ids[:MAX_IDS_LISTED])
+    return [
+        f"  - of those, {len(absent)} record(s) state that there is NONE (a value such as "
+        f'"{_value(absent[0], col)[:40]}"): {shown}. A recorded value can say the thing is '
+        f"absent; those records are the answer to a question asking which have no {col}."
+    ]
+
+
+#: "how long since", "longest blind interval", "rarely visited", "overdue for a visit".
+_ELAPSED_RE = re.compile(
+    r"\b(?:longest|rarely|seldom|blind|how\s+long\s+since|since\s+(?:it|they)\s+(?:was|were)"
+    r"|not\s+been\s+(?:visited|inspected|checked)|unvisited|uninspected)\b",
+    re.IGNORECASE,
+)
+
+#: A date column recording when something last happened, and an interval column saying how
+#: often it should. Registers record the pair instead of a due date about as often as not.
+_LAST_COLUMN_RE = re.compile(r"^last[A-Z_]|lastvisited|lastcompleted|lasttested", re.IGNORECASE)
+_INTERVAL_COLUMN_RE = re.compile(r"interval", re.IGNORECASE)
+
+
+def _elapsed_lines(rows, columns, question, today):
+    """How long since each record was last seen, and by how far that passes its interval.
+
+    A register that records `last_visited` + `inspection_interval_days` states the answer to
+    "which rarely visited areas have the longest blind interval" only after a subtraction, and
+    the narration did the wrong one: it ranked by the interval VALUE (365 days) and named a
+    meter that is not yet due, over an exhaust fan 369 days unseen against a 180-day interval.
+    """
+    if today is None or not _ELAPSED_RE.search(question or ""):
+        return []
+    last_cols = [c for c in columns if _LAST_COLUMN_RE.search(c)]
+    interval_cols = [c for c in columns if _INTERVAL_COLUMN_RE.search(c)]
+    if not last_cols:
+        return []
+    col = last_cols[0]
+    interval_col = interval_cols[0] if interval_cols else ""
+    scored = []
+    for r in rows:
+        raw = _value(r, col)[:10]
+        try:
+            elapsed = (today - date.fromisoformat(raw)).days
+        except ValueError:
+            continue
+        over = None
+        if interval_col:
+            try:
+                over = elapsed - int(float(_value(r, interval_col)))
+            except (TypeError, ValueError):
+                over = None
+        scored.append((elapsed, over, _ident(r), raw))
+    if not scored:
+        return []
+    scored.sort(key=lambda t: -t[0])
+    out = [
+        f"- Days since {col} on {today.isoformat()} (computed by the system; longest first): "
+        + "; ".join(
+            f"{ident} {elapsed}d"
+            + (f" ({over:+d}d against its {interval_col})" if over is not None else "")
+            for elapsed, over, ident, _raw in scored[:8]
+        )
+        + "."
+    ]
+    if interval_col:
+        beyond = sorted(
+            (t for t in scored if t[1] is not None and t[1] > 0), key=lambda t: -t[1]
+        )
+        if beyond:
+            out.append(
+                f"- PAST its {interval_col}: "
+                + "; ".join(f"{ident} by {over}d" for _e, over, ident, _r in beyond[:8])
+                + ". 'Longest unseen' means this, not the largest interval VALUE: a record with a "
+                "long interval that is still within it is not overdue."
+            )
+    return out
+
+
 def register_facts(rows: List[Dict], question: str, today: Optional[date] = None) -> str:
     """A short block of counted facts, or "" when the rows carry no recorded status."""
     if not rows or not any(_value(r, STATUS) for r in rows):
@@ -107,13 +207,38 @@ def register_facts(rows: List[Dict], question: str, today: Optional[date] = None
         if not (asked & col_words):
             continue
         filled = [r for r in rows if _value(r, col)]
-        if not filled or len(filled) == len(rows):
-            continue  # nothing recorded, or recorded everywhere: no filter to get wrong
-        ids = sorted(_ident(r) for r in filled)
-        line = f"- {col} is recorded for {len(filled)} of {len(rows)} records"
-        if len(ids) <= MAX_IDS_LISTED:
-            line += f": {', '.join(ids)}"
-        lines.append(line + ". State that count; do not recount from the rows.")
+        if not filled:
+            continue  # nothing recorded at all: no filter to get wrong
+        if len(filled) != len(rows):
+            ids = sorted(_ident(r) for r in filled)
+            line = f"- {col} is recorded for {len(filled)} of {len(rows)} records"
+            if len(ids) <= MAX_IDS_LISTED:
+                line += f": {', '.join(ids)}"
+            lines.append(line + ". State that count; do not recount from the rows.")
+        # Checked even when the column is filled everywhere: a present value can still SAY
+        # there is none, which is the department case (BUG-613).
+        lines.extend(_absence_lines(rows, col, question))
+
+    # A QUESTION ASKING WHICH RECORDS HAVE **NO** X (BUG-613). "Which departments have no
+    # out-of-hours route?" was answered "every department has an out-of-hours route value
+    # recorded" — true of the FIELD and false of the building: nine of the twenty say "No
+    # cover, next working day". A field that is present can still say the thing is absent, and
+    # the words that say so are the ordinary English ones.
+    # A QUESTION WORD THAT IS ALSO A RECORDED STATUS (CAVEAT-604). "Which teaching sessions are
+    # scheduled in Room 1.06?" answered six — the records whose recordStatus is "scheduled" —
+    # of the 23 the room holds. Both readings are defensible, which is exactly why the answer
+    # has to carry the total AND the split rather than silently pick one.
+    statuses = {_value(r, STATUS).lower() for r in rows if _value(r, STATUS)}
+    overlap = sorted(statuses & asked)
+    if overlap:
+        lines.append(
+            f"- CAREFUL: {', '.join(repr(w) for w in overlap)} is also a recorded STATUS here. "
+            f"The rows in scope are {len(rows)} in total ({_split(rows)}). If the question's "
+            f"word describes the records themselves rather than their status, answer with the "
+            f"total and give the split; never report the status count alone as the total."
+        )
+
+    lines.extend(_elapsed_lines(rows, columns, question, today))
 
     if _OVERDUE_RE.search(question or ""):
         due_cols = [c for c in columns if _DUE_COLUMN_RE.search(c)]

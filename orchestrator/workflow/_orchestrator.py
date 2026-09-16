@@ -3093,6 +3093,13 @@ Instructions:
 - Compare the series with each other (which is highest, which stays high at night) — every
   series above was read; never say only one was available when several are listed
 - Refer to sensors by their names, never by identifiers or UUIDs
+- Every figure you give must appear in the summarised series above. Do not derive a runtime,
+  a schedule, a cost or a saving that is not there, and do not state a compliance verdict
+  unless a reference value is given above (BUG-606)
+- A value of one property is not evidence about another: a duty is not a schedule, a flow is
+  not a temperature, a sensor count is not occupancy
+- Keep the answer internally consistent: the series you call highest must be the highest
+  figure you list
 - End with a brief priority summary: "Most important action first: ..."
 """
         try:

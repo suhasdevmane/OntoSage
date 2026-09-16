@@ -44,6 +44,7 @@ the last restart and no earlier than 13:00, so the warm answers are still live a
    - What is the average CO2 on each floor right now?
    - Which floor has the lowest humidity right now?
    - Which space in the building has the best conditions for focused work this afternoon?
+   - What's the delta-T across the heating circuit, and is it healthy?
 
    "Right now" answers are cached too. A warm answer can be up to an hour old, and its timestamp
    says so. If someone asks why the value is from 13:20, that's the reason.
@@ -71,6 +72,7 @@ the last restart and no earlier than 13:00, so the warm answers are still live a
 | symptom | action |
 |---|---|
 | An answer takes > 2 min | Keep talking; after ~3 min move to the next question (the longest rehearsed answer took 111 s). Do NOT restart. |
+| A per-floor answer feels slow | Expected at 35-70 s. The narrow-table read was fixed on 16 Sep (20 s -> 2 s per read); what remains is the model writing the answer. The warm-up covers it. |
 | "couldn't generate a response" / empty | Ask the next question. Note the question for the limitation register afterwards. |
 | All answers failing | `docker compose logs --tail=50 orchestrator`. If Ollama is down, restart Ollama (not the stack). |
 | Stale value from a cached answer | Expected within 1 h; explain the cache. |

@@ -7,7 +7,7 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 ## New session orientation (read this first)
 
-**Current branch:** `development` — last commit `b80c3de`. **Never commit or push without
+**Current branch:** `development` — last commit `19c4b1b` (pushed 2026-09-16; three demo-path checkpoints 2292fd7, 8061c06, 19c4b1b). **Never commit or push without
 the user's explicit approval.**
 
 **Three files every session must read** (in order):
@@ -23,26 +23,22 @@ the user's explicit approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **Test suite: 5,898 collected — and the pass/skip split depends on whether a building is
-  active.** With bldg1 up: **5,852 pass / 46 skip** (measured 2026-09-12, 10m07s,
-  `PYTEST_EXIT=0`). The 46th skip is the sqlite adapter where `aiosqlite` is absent — an
-  honest skip, not a regression.
-  In the **PARKED** state, which is what a fresh clone and CI see and what Workflow rule 8
-  requires you to run before committing, expect **~74 more skips** on the same total — that
-  figure was 5,402/119 at 5,521 collected on 2026-09-10 and has not been re-measured since.
-  Quoting one number as "the" suite size is how a green run gets mistaken for a regression.
-  **Two rules learned the hard way on 2026-09-12 (lessons.md #101):** a long run PINS the
-  tree — editing any `.py` while it is in flight makes every `inspect.getsource` test read
-  the wrong lines and invents failures across unrelated subsystems; and
-  `pytest … | tail -40` reports **tail's** exit code, so redirect to a file and echo `$?`. **Live regression probe: 57/59 FIRST-PASS**
-  (`python scripts/regression_probe.py`, **64.7 min** measured 2026-09-09, needs the stack up
-  and Ollama running). This line said `50/50, ~16 min` — both were true of a 50-case set
-  before V12-01 added the seven W0 cases and two building-agnostic ones. The two failures are
-  **BUG-497** (the lift denominator — the new case working as intended) and a **latency
-  timeout** on the timetable case that passed on three subsequent re-asks. It stays counted as
-  a failure: a first-pass failure that recovers is still a first-pass failure (CAVEAT-500).
-  **What would falsify this line:** adding or removing a probe case, or any change to a
-  routing rule. Re-run it, do not edit the number.
+- **Test suite: measured 2026-09-16 on `-m unit`, and the split depends on whether a building
+  is active.** bldg1 up: **6,101 pass / 46 skip / 0 fail** (10m03s). PARKED — what a fresh
+  clone, CI and Workflow rule 8 see: **6,024 pass / 123 skip / 0 fail** (9m37s). Quoting one
+  number as 'the' suite size is how a green run gets mistaken for a regression.
+  **Two rules learned the hard way (lessons.md #101, #107):** a long run PINS the tree —
+  editing any `.py` mid-run makes every `inspect.getsource` test read the wrong lines; and
+  `pytest … | tail -40` reports **tail's** exit code, so redirect to a file and echo `$?`.
+  Never write Python source through a shell heredoc: the escapes arrive mangled (a regex
+  word-boundary escape arrived as a literal BACKSPACE and silently matched nothing; this very
+  sentence lost the escape it was describing, twice). **Live regression probe: 58/60 FIRST-PASS**
+  (`python scripts/regression_probe.py`, **28.3 min** measured 2026-09-15 night on 8061c06 —
+  the run was 75 min before the narrow-table read was fixed, BUG-610). The two failures are
+  register answers graded PARTIAL, not misrepresentations (CAVEAT-604): a status word read one
+  way ('scheduled' as a recordStatus rather than the timetable) and one exception row omitted.
+  **What would falsify this line:** adding or removing a probe case, or any change to a routing
+  rule. Re-run it, do not edit the number.
   Nothing since `b80c3de` is committed.
 - **ACTIVE WORKSTREAM: V12 — the plan after the supervisor review.**
   Built from four sources and no others: the review
