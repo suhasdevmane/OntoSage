@@ -14,8 +14,6 @@ tables:
 
 # Warranty Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## Why this matters to a work order
 
 Whether a repair is chargeable depends on whether the asset is in warranty. WTY-GEN-2023

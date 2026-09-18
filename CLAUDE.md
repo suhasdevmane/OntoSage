@@ -23,20 +23,66 @@ the user's explicit approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **Test suite: measured 2026-09-16 on `-m unit`, and the split depends on whether a building
-  is active.** bldg1 up: **6,101 pass / 46 skip / 0 fail** (10m03s). PARKED — what a fresh
-  clone, CI and Workflow rule 8 see: **6,024 pass / 123 skip / 0 fail** (9m37s). Quoting one
+- **Test suite: measured 2026-09-17 on `-m unit`, and the split depends on whether a building
+  is active.** bldg1 up, late 2026-09-17 after the readiness wave: **7,394 pass / 48 skip /
+  3 xfail / 1 fail** (13m50s) — the one failure was a source-string test pinning a call's old
+  argument list, fixed and re-run 18/18. PARKED — what a fresh
+  clone, CI and Workflow rule 8 see: **6,024 pass / 123 skip / 0 fail** (9m37s, 2026-09-16,
+  RE-MEASURE OWED — the parked number is now ~1,370 tests behind the active one, and
+  parked is the number that gates a commit).
+  **DO NOT QUOTE A SUITE DURATION AS A PROPERTY.** The same suite ran **10m20s** and then
+  **68m17s** the same afternoon, on identical work: both runs logged exactly 19
+  timeout/connection lines and 44 adapter pool failures, every container was idle when checked
+  immediately after, and both reported 0 failures. Unattributed, and folded into CAVEAT-500,
+  which is the same shape one level down. Quoting one
   number as 'the' suite size is how a green run gets mistaken for a regression.
+  **Do not pass `-p no:logging`** — it removes the `caplog` fixture and eight tests report as
+  ERRORS that pass 92/92 with logging on (lessons.md #111).
   **Two rules learned the hard way (lessons.md #101, #107):** a long run PINS the tree —
   editing any `.py` mid-run makes every `inspect.getsource` test read the wrong lines; and
   `pytest … | tail -40` reports **tail's** exit code, so redirect to a file and echo `$?`.
   Never write Python source through a shell heredoc: the escapes arrive mangled (a regex
   word-boundary escape arrived as a literal BACKSPACE and silently matched nothing; this very
-  sentence lost the escape it was describing, twice). **Live regression probe: 58/60 FIRST-PASS**
-  (`python scripts/regression_probe.py`, **28.3 min** measured 2026-09-15 night on 8061c06 —
-  the run was 75 min before the narrow-table read was fixed, BUG-610). The two failures are
-  register answers graded PARTIAL, not misrepresentations (CAVEAT-604): a status word read one
-  way ('scheduled' as a recordStatus rather than the timetable) and one exception row omitted.
+  sentence lost the escape it was describing, twice). **Live regression probe: 60/60 FIRST-PASS**
+  (`python scripts/regression_probe.py`, **18.2 min** measured 2026-09-17 after BUG-663, with
+  `resp_cache` flushed first — see below, that flush is not optional).
+  **The probe now reports LATENCY PERCENTILES per lane** (nearest rank, no interpolation):
+  ALL LANES p50 **12.4 s**, p95 **36.2 s**, slowest **73.8 s**, **0 timed out**. Re-run late
+  2026-09-17 after the readiness wave (v17): **60/60 first-pass in 24.6 min**, p50 **16.7 s**,
+  p95 **64.7 s**, slowest **167.9 s** — and the slowest is NOT query work: the host Ollama log
+  shows a 136-token prompt generating 16,248 tokens until the context filled, empty content,
+  retry in 5 s (CAVEAT-727; `OLLAMA_NUM_PREDICT` now caps it). The unit suite ran concurrently,
+  so the rest of the slowdown is unattributed. Thirteen of
+  sixteen lanes print `— (n<5)` instead of a number, and every p95 that IS printed carries `*`
+  because no lane reaches n=20, so its nearest-rank p95 equals its slowest case. **The fix for
+  that is more cases per lane, not a lower threshold.** This discharges the measurement half of
+  CAVEAT-500; the 10x variance it was opened about did not reproduce.
+  **FLUSH `resp_cache:*` BEFORE EVERY PROBE RUN (BUG-662).** The probe does not do it — grep it,
+  there is no redis reference at all — so a question you asked by hand in the last hour is
+  answered from cache: it reports PASS in 0.0 s, the lane is never exercised, and **a cached
+  answer produced BEFORE your change will pass a case that your change has broken.** Observed
+  2026-09-17: the lift case passed in 0.0 s having been asked by hand minutes earlier.
+  An earlier run took **49.6 min**, and the cause is worth knowing: the publisher had been
+  handed every narrow point including the correlated plant series, so it wrote continuously to
+  the same MySQL the queries read. Excluding those points restored the time. **A doubling in
+  probe wall-clock is a load question before it is a query question.** Four runs on 2026-09-16:
+  60, 60, 59, 60 — the 59 was the PROVIDER, labelled `LLM-DEGRADED:empty_completion` by the
+  harness itself and correct in 26 s on re-ask, and still counted as a first-pass failure
+  (CAVEAT-500).
+  **The probe was green THROUGHOUT the worst defect of the day (BUG-631, P1):** every
+  floor-scoped SPARQL query was rejected as malformed, and the fallback answered about a
+  different floor with a plausible number. Three verification layers saw nothing. It was found
+  by asking a question whose answer could be checked by eye — "air quality on floor 3",
+  answered from sensors named 5.02. lessons.md #112.
+  Earlier the same day the probe DID earn its keep: the register stealing the deliberation lane
+  (BUG-623) and a same-floor route counted as a floor pair (BUG-624) both showed up as other
+  cases moving. **A probe that moves without the data moving is telling you something** — the
+  circulation case answered "nine" and then "15 of 21" from the same 21 rows, because the
+  comparison was left to the narration.
+  **Per-floor coverage is measured with `scripts/floor_modality_matrix.py`**, which reads
+  sensor → space → floor from the graph. `data_coverage_audit.py` parses the floor out of
+  sensor NAMES and files ~4,000 of 5,874 under "F?", so its per-floor gaps cannot be trusted
+  (TODO-624B found six gases on one floor only that it could not see).
   **What would falsify this line:** adding or removing a probe case, or any change to a routing
   rule. Re-run it, do not edit the number.
   Nothing since `b80c3de` is committed.
@@ -237,7 +283,11 @@ the user's explicit approval.**
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (36 parse-stage + 1 post-stage + 3 concept-stage ordered rules, counted 2026-09-08 — this line said 17+1+1 for weeks after it stopped being true; order
+  (**43** parse-stage + 1 post-stage + 3 concept-stage ordered rules, counted FROM THE MODULE
+  2026-09-17 — this line said 17+1+1 for weeks after it stopped being true, then 36+1+3 for
+  another nine days, which is the same failure twice. Count it, do not read it: `python -c
+  "from orchestrator.services import routing_contract as r; print(len(r.PARSE_STAGE_RULES),
+  len(r.POST_STAGE_RULES), len(r.CONCEPT_STAGE_RULES))"`; order
   pinned by `tests/test_routing_contract.py::test_precedence_order_is_pinned` — update that
   test in the SAME commit as any rule change). Add/change a routing rule THERE — never as a
   new inline override in `dialogue_agent`.

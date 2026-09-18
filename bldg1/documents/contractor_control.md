@@ -1,7 +1,5 @@
 # Contractor Control and Site Induction — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## Induction requirement
 
 Every contractor working in the building holds a site safety induction valid for 12

@@ -160,6 +160,14 @@ storage:
     - submeter_data
     - waterflow_data
     - parking_data
+    # BUG-649: waste as a measurable domain. Declared as modalities by V6-T43 and never
+    # provisioned, so both resolved to zero points for months. Registering them here as
+    # well as in database_registry.yaml is not optional — see the note above, which
+    # describes this exact failure: with the store missing from THIS list the registry
+    # silently builds the wide adapter, and every reading dies on
+    # "Unknown column '<uuid>' in 'field list'". Reproduced on the first live ask.
+    - wastefill_data
+    - wasteweight_data
 
 # ── Floor-plan aliases (Phase 4 — 2026-05-29) ────────────────────────────────
 #

@@ -42,6 +42,25 @@ VERIFIED_BRICK_CLASSES = {
     # circuit, which is what makes a delta-T answerable.
     "Leaving_Water_Temperature_Sensor",
     "Entering_Water_Temperature_Sensor",
+    # 2026-09-16, TODO-624B: the six gases that were measured on ONE floor only. Each was
+    # grepped out of input/Brick_v1.4.ttl as a definition before being added here — the
+    # point of this set is that somebody looked, so a name added to silence a failure
+    # defeats the only thing it does. They are also already in use in this building's own
+    # graph, which is NOT evidence: a source TTL can type a sensor with a class Brick has
+    # never defined, and that is exactly what this guard catches.
+    "CO_Level_Sensor",
+    "NO2_Level_Sensor",
+    "Formaldehyde_Level_Sensor",
+    "TVOC_Level_Sensor",
+    "PM10_Level_Sensor",
+    "PM1_Level_Sensor",
+    # 2026-09-16, the floor-parity pass: multi-gas detection existed on one floor only, and
+    # power was metered for the building where energy was metered per floor. Each grepped
+    # out of input/Brick_v1.4.ttl as a definition before being added here.
+    "Gas_Sensor",
+    # Flow RATE per floor, alongside the meter that records volume: the rate existed on two
+    # floors of six. Confirmed as a definition in input/Brick_v1.4.ttl before adding.
+    "Water_Flow_Sensor",
     # V6-T44. Both confirmed present as owl:Class declarations in the shipped
     # input/Brick+extensions.ttl before being added here -- this set is an assertion that
     # someone LOOKED, so adding a name to silence the failure without checking would defeat

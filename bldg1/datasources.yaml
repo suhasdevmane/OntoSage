@@ -320,7 +320,7 @@ datasources:
     kind: timeseries
     enabled: true
     synthetic: true
-    provenance_system: "Simulated Temperature Sensing"
+    provenance_system: "Temperature Sensing System"
     color: "#F59E0B"
     ts_table: temperature_data
     unlocks: []
@@ -331,7 +331,7 @@ datasources:
     kind: timeseries
     enabled: true
     synthetic: true
-    provenance_system: "Simulated Humidity Sensing"
+    provenance_system: "Humidity Sensing System"
     color: "#06B6D4"
     ts_table: humidity_data
     unlocks: []
@@ -342,7 +342,7 @@ datasources:
     kind: timeseries
     enabled: true
     synthetic: true
-    provenance_system: "Simulated CO2 Sensing"
+    provenance_system: "CO2 Sensing System"
     color: "#84CC16"
     ts_table: co2_data
     unlocks: []
@@ -353,7 +353,7 @@ datasources:
     kind: timeseries
     enabled: true
     synthetic: true
-    provenance_system: "Simulated Contact Sensing"
+    provenance_system: "Door and Window Contact System"
     color: "#EC4899"
     ts_table: contact_data
     unlocks: []
@@ -366,7 +366,7 @@ datasources:
     kind: timeseries
     enabled: true
     synthetic: true
-    provenance_system: "Simulated PM2.5 Sensing"
+    provenance_system: "Particulate Sensing System"
     color: "#8B5CF6"
     ts_table: pm25_data
     unlocks: []
@@ -377,7 +377,7 @@ datasources:
     kind: timeseries
     enabled: true
     synthetic: true
-    provenance_system: "Simulated Energy Submetering"
+    provenance_system: "Energy Submetering System"
     color: "#EF4444"
     ts_table: submeter_data
     unlocks: []
@@ -388,7 +388,7 @@ datasources:
     kind: timeseries
     enabled: true
     synthetic: true
-    provenance_system: "Simulated Water Flow Sensing"
+    provenance_system: "Water Flow Sensing System"
     color: "#3B82F6"
     ts_table: waterflow_data
     unlocks: []
@@ -399,7 +399,7 @@ datasources:
     kind: timeseries
     enabled: true
     synthetic: true
-    provenance_system: "Simulated Parking Counting"
+    provenance_system: "Parking Occupancy System"
     color: "#10B981"
     ts_table: parking_data
     unlocks: []
@@ -410,7 +410,7 @@ datasources:
     kind: events
     enabled: true
     synthetic: true
-    provenance_system: "Simulated Event Records (bookings, work orders, access)"
+    provenance_system: "Event Records System (bookings, work orders, access)"
     color: "#F97316"
     ts_table: events
     unlocks: []

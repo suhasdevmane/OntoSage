@@ -9,6 +9,8 @@ sys.path.append("/app")
 import json
 import re
 from datetime import datetime, timezone
+from functools import lru_cache
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 from zoneinfo import ZoneInfo
 
@@ -36,6 +38,88 @@ from shared.utils import (
 )
 
 logger = get_logger(__name__)
+
+
+# ── SCHEMA DOCUMENTATION IS NOT AN ANSWER ────────────────────────────────────
+#
+# Run-3 rows 139 and 146 (2026-09-17) handed readers the `rdfs:comment` and
+# `skos:example` that OntoSage's own TBox carries on its record classes. A person asking
+# about a barometric meter was shown: "The three stream columns are separate deliberately
+# -- a point recorded as general waste, labelled mixed recycling and fitted with a narrow
+# slot is one people will use wrongly, and collapsing them into a single stream field
+# makes that disagreement unrepresentable when the disagreement IS the answer."
+#
+# That paragraph is a DESIGN NOTE. It explains to a developer why a register is modelled
+# with three columns; it says nothing about the building, and a reader cannot act on it.
+# The same fields on Brick classes are genuine definitions and stay eligible — only the
+# annotations OntoSage wrote about its own data model are withheld, which is why the set
+# is built from the subjects in the `ontosage:` namespace inside `ontology/` rather than
+# from a word list.
+#
+# Withheld at the point the results become answer CONTENT, not from the prose afterwards
+# and not from retrieval: a design note is still a legitimate signal for choosing a query.
+_SCHEMA_DOC_PREDICATES = ("rdfs:comment", "skos:example", "skos:definition")
+_ONTOLOGY_DIR = Path(__file__).resolve().parents[2] / "ontology"
+_TTL_LITERAL_RE = re.compile(r"(?:" + "|".join(_SCHEMA_DOC_PREDICATES) + r')\s+"((?:[^"\\]|\\.)*)"')
+_TTL_SUBJECT_RE = re.compile(r"^\s*(?:ontosage|o):([\w.\-]+)", re.M)
+
+
+def _normalise_prose(text: str) -> str:
+    """Whitespace-insensitive form, so a re-wrapped literal still matches itself."""
+    return " ".join(str(text or "").split())
+
+
+@lru_cache(maxsize=1)
+def schema_documentation_literals() -> frozenset:
+    """Every annotation OntoSage's own TBox carries, normalised for comparison.
+
+    Empty when `ontology/` is missing — nothing is withheld, which is the same failure
+    mode as an unreachable graph and never removes a real answer.
+    """
+    out = set()
+    if not _ONTOLOGY_DIR.is_dir():
+        return frozenset()
+    for path in sorted(_ONTOLOGY_DIR.glob("*.ttl")):
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:  # pragma: no cover - unreadable file
+            continue
+        body = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
+        for stmt in re.split(r'(?<=[\s>"])\.\s*(?:\n|$)', body):
+            if not _TTL_SUBJECT_RE.search(stmt):
+                continue
+            for raw in _TTL_LITERAL_RE.findall(stmt):
+                literal = raw.replace("\\n", " ").replace('\\"', '"').replace("\\\\", "\\")
+                normalised = _normalise_prose(literal)
+                if len(normalised) >= 40:  # a one-word label is not a design note
+                    out.add(normalised)
+    return frozenset(out)
+
+
+def redact_schema_documentation(bindings: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], int]:
+    """Drop binding cells whose value IS one of the TBox's own design notes.
+
+    Returns the surviving bindings and how many cells were withheld. A row left with
+    nothing goes too — an empty row in a result list reads as a record that exists and
+    has no content, which is a different and equally false statement.
+    """
+    known = schema_documentation_literals()
+    if not known:
+        return bindings, 0
+    kept: List[Dict[str, Any]] = []
+    withheld = 0
+    for b in bindings:
+        row = {}
+        for var, cell in b.items():
+            value = (cell or {}).get("value") if isinstance(cell, dict) else None
+            if isinstance(value, str) and _normalise_prose(value) in known:
+                withheld += 1
+                continue
+            row[var] = cell
+        if row:
+            kept.append(row)
+    return kept, withheld
+
 
 RAG_SERVICE_URL = f"http://{settings.RAG_SERVICE_HOST}:{settings.RAG_SERVICE_PORT}"
 # GraphDB SPARQL endpoint (new architecture)
@@ -194,6 +278,41 @@ _ACROSS_FLOORS_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: Brick classes that measure PLANT air or water, never a room (WB-14). A ROOM question on a
+#: floor excludes them, so an AHU's supply air is not averaged into the floor's temperature.
+#: A question that NAMES one of them is the opposite case and must get exactly that class
+#: (BUG-667) -- see `_plant_quantity_class`.
+_PLANT_SIDE_CLASSES: Tuple[str, ...] = (
+    "brick:Supply_Air_Temperature_Sensor",
+    "brick:Return_Air_Temperature_Sensor",
+    "brick:Mixed_Air_Temperature_Sensor",
+    "brick:Discharge_Air_Temperature_Sensor",
+    "brick:Outside_Air_Temperature_Sensor",
+    "brick:Leaving_Water_Temperature_Sensor",
+    "brick:Entering_Water_Temperature_Sensor",
+    "brick:Supply_Air_Humidity_Sensor",
+    "brick:Return_Air_Humidity_Sensor",
+    "brick:Outside_Air_Humidity_Sensor",
+)
+
+#: Intents whose question asks for a READING, a count of readings or a value (CAVEAT-654).
+#: Taken from `orchestrator/intents/intent_definitions.yaml` (`pipeline_group: data`), minus
+#: the ones whose answer is legitimately prose about the building rather than a figure:
+#: `metadata` and `discovery` (open "what is there" questions) and `recommend` (advice).
+_DATA_READING_INTENTS = frozenset(
+    {
+        "sensor_data",
+        "analytics",
+        "compare",
+        "trend",
+        "anomaly",
+        "report",
+        "export",
+        "compliance",
+        "visualization",
+    }
+)
+
 
 class SPARQLAgent:
     """Generates and executes SPARQL queries with RAG support"""
@@ -234,6 +353,7 @@ Instructions:
 5. If you find a label (rdfs:label) or definition, include it
 6. Format your answer clearly (use bold for key values, bullets for lists)
 7. Always be helpful — if data isn't available, suggest the closest relevant sensor type that IS available
+8. The data above comes from the building's own records, not from the user — never call it data the user "provided" or "supplied"; call it the building's records
 
 Your Answer:"""
 
@@ -274,6 +394,115 @@ Your Answer:"""
             "analytics_required": False,
             "llm_reasoning": "Semantic RAG fallback used",
             "method": "semantic_rag",
+        }
+
+    @staticmethod
+    def _humanise_class(brick_class: str) -> str:
+        """'brick:Supply_Air_Temperature_Sensor' -> 'supply air temperature'; CO2 stays CO2."""
+        local = brick_class.split(":", 1)[-1]
+        local = re.sub(r"_(Sensor|Command|Status|Setpoint)$", "", local) or local
+        words = []
+        for word in local.split("_"):
+            keep = any(ch.isdigit() for ch in word) or (word.isupper() and len(word) > 1)
+            words.append(word if keep else word.lower())
+        return " ".join(w for w in words if w)
+
+    def _typed_absence(
+        self,
+        state: ConversationState,
+        user_query: str,
+        sparql_query: Optional[str],
+        results: Any,
+        used_floor_scope: bool,
+        class_target: Optional[str],
+        class_targets: Optional[List[str]],
+        concept_populated: Optional[bool] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """A typed NOT_DECLARED outcome for an empty data-reading lookup, or None (CAVEAT-654).
+
+        None means "this emptiness proves nothing", and the caller keeps its old path. The
+        conditions, all required, are argued at the call site: a data-reading intent, the
+        deterministic floor-scoped resolver selecting by CLASS, and a query that RAN (a result
+        envelope with an empty bindings list, not a failure's empty dict).
+
+        The shape is the one the referent and sensor-type gates already hand the response
+        node — success, no analytics, a formatted_response — so no new reader is needed to
+        narrate it. `results` stays the real, empty SPARQL envelope, so the verifier's
+        `_bindings` reads [] and records it as ungrounded rather than crashing (BUG-643).
+        The wording is retrieval_outcome's ONE authorised sentence for the state; its remedy
+        ("add the sensor to the ontology") is carried separately and NOT put in front of the
+        user, because remediation is for administrators.
+        """
+        intent = str((state.intermediate_results or {}).get("intent") or "")
+        if intent not in _DATA_READING_INTENTS or not used_floor_scope:
+            return None
+        inner = results.get("results") if isinstance(results, dict) else None
+        if not isinstance(inner, dict) or not isinstance(inner.get("bindings"), list):
+            return None  # the query did not run: a failure, not an absence
+        if inner["bindings"]:
+            return None
+        # The SAME selection the query was built with, or the coverage check below compares
+        # against classes the query never asked for.
+        cls, classes, plant = self._floor_scope_classes(
+            user_query, class_target, class_targets, concept_populated
+        )
+        if not classes and not cls:
+            return None  # label tier: an empty text match establishes nothing
+        selected = set(classes or [cls])
+        unasked = set(class_targets or []) - selected
+        if unasked and not plant:
+            # The query did not ask for everything the question's CONCEPT means, so its
+            # emptiness is not an absence of that concept. Measured live: "noise on floor 4"
+            # selects the keyword map's building-prefixed Noise_Level_Sensor (one instance
+            # in the building, none on floor 4) while the concept resolves to
+            # ontosage:Sound_Level_Sensor — 52 of them on floor 4. Announcing "there is no
+            # noise measurement on floor 4" there would be the false absence this project
+            # has a guard for. (A named plant quantity drops room concept classes on
+            # purpose, so it is exempt.)
+            logger.info(
+                f"[sparql] empty floor-scoped result did not cover concept classes "
+                f"{sorted(unasked)} — no typed absence"
+            )
+            return None
+        floors = sorted(
+            set(re.findall(r"\b(?:floor|level)\s*(\d+)\b", user_query, re.IGNORECASE)), key=int
+        )
+        if not floors:
+            where = "on any floor"
+        elif len(floors) == 1:
+            where = f"on floor {floors[0]}"
+        else:
+            where = "on floors " + ", ".join(floors[:-1]) + f" and {floors[-1]}"
+        quantity = self._humanise_class(plant or cls or classes[0])
+        subject = f"{quantity} measurement {where}"
+
+        from orchestrator.services.retrieval_outcome import (
+            classify as _classify_nothing,
+        )
+
+        outcome = _classify_nothing(declared=False, subject=subject)
+        logger.info(
+            f"[sparql] intent={intent}: floor-scoped resolve by class {classes or [cls]} "
+            f"returned 0 rows -> typed absence ({outcome.outcome.value}), no semantic fallback"
+        )
+        return {
+            "success": True,
+            "query": sparql_query,
+            "results": results,
+            "formatted_response": outcome.external,
+            "standardized": [],
+            "context": [],
+            "analytics_required": False,
+            "llm_reasoning": "Deterministic floor-scoped lookup returned no rows",
+            "method": "typed_absence",
+            "retrieval_outcome": {
+                "outcome": outcome.outcome.value,
+                "internal": outcome.internal,
+                "subject": subject,
+                "remedy": outcome.remedy,
+                "classes": list(classes or [cls]),
+                "floors": floors,
+            },
         }
 
     async def generate_query(self, state: ConversationState, user_query: str) -> Dict[str, Any]:
@@ -394,6 +623,7 @@ Your Answer:"""
                     )
             # T05: prefer HBCO concept brick class over static keyword map
             class_target = None
+            _concept_classes: List[str] = []
             _hbco_concepts = state.intermediate_results.get("concepts") or []
             for _cm in _hbco_concepts:
                 _bc = _cm.get("brick_classes") or []
@@ -409,13 +639,35 @@ Your Answer:"""
                     # was answered "294" -- the building's space count, presented as
                     # free bays. A real number from a real query to a different
                     # question, so the numeric guard had no reason to object.
-                    class_target = self._most_specific_class(_bc)
+                    # The TBox decides, not the alphabet: the resolver SORTS these, and
+                    # "first" made every temperature concept target
+                    # Outside_Air_Temperature_Sensor (one instance in bldg1).
+                    _anc, _inst = await self._class_relations(_bc)
+                    class_target = self._most_specific_class(_bc, _anc, _inst)
+                    # Kept alongside the single pick: the floor-scoped resolver can query
+                    # them all, and a composite concept means all of them (BUG-632).
+                    _concept_classes = list(_bc)
                     logger.info(
                         f"[sparql] class from HBCO concept "
                         f"'{_cm.get('concept_id')}': {class_target}"
                         + (f" (from {len(_bc)} candidates)" if len(_bc) > 1 else "")
                     )
                     break
+            # Does the building hold any instance of what the concept resolved to? True makes
+            # the concept outrank the static keyword map; False hands the choice back to the
+            # map; None (the graph could not say) leaves the ranking as it was.
+            _concept_populated: Optional[bool] = None
+            if _concept_classes:
+                _held = await self._populated_classes(_concept_classes)
+                if _held is not None:
+                    _concept_populated = bool(_held)
+                if _concept_populated is False:
+                    _kw_cls = self._infer_class(user_query.lower())
+                    logger.info(
+                        f"[sparql] concept classes {_concept_classes} have no instances here "
+                        f"— keyword map class {_kw_cls} used instead"
+                    )
+                    class_target = _kw_cls or class_target
             if not class_target:
                 class_target = self._infer_class(user_query.lower())
             instance_candidates = []
@@ -442,8 +694,14 @@ Your Answer:"""
             # floor 1 and floor 5" → resolve the metric's sensors per floor via the
             # Brick spatial hierarchy (no building-specific label parsing). Falls
             # through when the query names no floor + inferrable metric.
-            sparql_query = self._floor_scoped_sparql(user_query, class_target)
-            if sparql_query is not None:
+            sparql_query = self._floor_scoped_sparql(
+                user_query,
+                class_target,
+                class_targets=_concept_classes,
+                concept_populated=_concept_populated,
+            )
+            used_floor_scope = sparql_query is not None
+            if used_floor_scope:
                 logger.info("[sparql] using deterministic floor-scoped template (portable)")
 
             # Phase 3.1: Template-first routing (zero LLM for common patterns)
@@ -555,6 +813,40 @@ Your Answer:"""
                 has_results = len(bindings) > 0
 
             if not has_results:
+                # CAVEAT-654 — decided per intent AND per what the empty result proves.
+                #
+                # The semantic-RAG fallback is LLM prose over retrieved ontology text with no
+                # bindings behind it. For a question asking for a READING it can only produce
+                # a figure nothing measured, or a paragraph about sensors in place of the
+                # value; for an open metadata / discovery question it is often the best
+                # answer available. So:
+                #   * data-reading intent + the deterministic floor-scoped resolver, by CLASS,
+                #     ran and returned zero rows -> a typed absence (NOT_DECLARED in the
+                #     authorised scope). That query's meaning is fixed, so its emptiness is a
+                #     fact about the graph and the absence machinery words it.
+                #   * data-reading intent + an LLM-generated or label-matched query that came
+                #     back empty -> STILL the fallback. An empty result from a query nobody
+                #     can vouch for is not evidence of absence (review C08), and
+                #     retrieval_outcome has no authorised wording for "the lookup established
+                #     neither"; claiming NOT_DECLARED there would be the false "this building
+                #     has no X" that absence_guard exists to catch. BUG-643 now records those
+                #     answers grounded=False, and the gated intents withhold their figures.
+                #   * a query that FAILED (no result envelope at all) is not an absence either
+                #     and keeps the old path.
+                #   * every other intent (metadata, discovery, general, recommend...) keeps
+                #     the fallback unchanged.
+                absence = self._typed_absence(
+                    state,
+                    user_query,
+                    sparql_query,
+                    results,
+                    used_floor_scope,
+                    class_target,
+                    _concept_classes,
+                    _concept_populated,
+                )
+                if absence is not None:
+                    return absence
                 logger.warning("SPARQL returned no results, attempting semantic fallback")
                 return await self.answer_semantically(state, user_query, context)
 
@@ -617,6 +909,103 @@ Your Answer:"""
     def _rendered_chars(self, results: Dict[str, Any]) -> int:
         """How many characters these rows cost the narration prompt."""
         return len(self._render_rows(results.get("results", {}).get("bindings", []), hoist=True))
+
+    #: How many columns a register hands over.
+    #:
+    #: This was 12, set when a wide register's narration kept failing and width was the
+    #: suspect. Width was NOT the cause (CAVEAT-619: the provider's runner was dying with a
+    #: CUDA fault, on prompts as small as 155 tokens), and the cap then caused a worse defect
+    #: than the one it was meant to fix: asked for spaces suitable for quiet focused work, the
+    #: projection dropped `noiseProfile`, `quietestPeriod` and `seatCount`, and the answer
+    #: truthfully reported that the building records no such thing (BUG-622). A narrower
+    #: handover that makes the system deny its own data is not a saving.
+    #:
+    #: So the cap is now set where it only trims the genuinely extreme, and the real budget is
+    #: the character one below. Direct measurement: this provider answers prompts of 351k
+    #: characters; the widest register here renders in ~15k.
+    MAX_HANDOVER_COLUMNS = 24
+
+    #: Columns every register answer needs whatever was asked: what the record IS and what
+    #: state its owner put it in.
+    _ALWAYS_KEEP = ("record", "recordId", "label", "recordStatus")
+
+    #: Stamped on every row by the lifter; they say where the record came from, never what it
+    #: says. Dropped first, and the answer's provenance chip carries them anyway.
+    _PROVENANCE_COLUMNS = (
+        "retrievedAt",
+        "liftedByMapping",
+        "derivedFromDocument",
+        "recordVersion",
+        "owningAuthority",
+        "isSimulated",
+        "effectiveFrom",
+        "recordOwner",
+    )
+
+    def _project_columns(
+        self, results: Dict[str, Any], columns: List[str], question: str
+    ) -> Tuple[Dict[str, Any], List[str], List[str]]:
+        """Keep the columns the question names, plus identity and status. Returns what was cut.
+
+        Ranked, never truncated arbitrarily: a column whose words appear in the question comes
+        first, then the rest in their original order. What is dropped is NAMED in the guidance,
+        so the answer can say the register holds more than it showed.
+        """
+        # The stamps go whatever the width: they record where a row came from, never what it
+        # says, and the answer's provenance chip carries them already. The facts are counted
+        # from the full rows upstream, so nothing computed depends on their being here.
+        #
+        # `effectiveFrom` is judged by its VALUES, not its name (BUG-639): the lifter stamps
+        # it from the front matter only when a row has no mapped column of its own, so in ten
+        # registers it holds the record's real date. Dropping it as a stamp answered "when was
+        # the last project handover?" with "the records do not contain dates for handovers"
+        # from a register carrying an issue date on every row.
+        from orchestrator.services.register_facts import provenance_fields
+
+        _stamps = set(self._PROVENANCE_COLUMNS) & provenance_fields(
+            results.get("results", {}).get("bindings", [])
+        ) | (set(self._PROVENANCE_COLUMNS) - {"effectiveFrom"})
+        content = [c for c in columns if c not in _stamps]
+        if len(content) <= self.MAX_HANDOVER_COLUMNS and len(content) == len(columns):
+            return results, columns, []
+        columns, dropped_provenance = content, [c for c in columns if c in _stamps]
+        asked = set(re.findall(r"[a-z]+", (question or "").lower()))
+
+        def _named(col: str) -> bool:
+            # Matched on STEMS and PREFIXES, not whole words. "services" must keep
+            # `servesService` (the first version dropped it), and "quiet" must keep
+            # `quietestPeriod` — the column the question is actually about, which a whole-word
+            # comparison misses entirely (BUG-622).
+            stems = {w.rstrip("s") for w in asked if len(w) > 3}
+            words = {w.lower().rstrip("s") for w in re.findall(r"[A-Za-z][a-z]+", col)}
+            return any(w.startswith(s) or s.startswith(w) for s in stems for w in words)
+
+        keep = [c for c in columns if c in self._ALWAYS_KEEP]
+        keep += [c for c in columns if c not in keep and _named(c)]
+        for col in columns:
+            if len(keep) >= self.MAX_HANDOVER_COLUMNS:
+                break
+            if col in keep or col in _stamps:
+                continue
+            keep.append(col)
+        # Order the survivors as the register declares them: a table whose columns arrive in
+        # question-order reads as a ranking the register never made.
+        keep = [c for c in columns if c in keep]
+        dropped = [c for c in columns if c not in keep] + dropped_provenance
+        kept_set = set(keep)
+        projected = {
+            "results": {
+                "bindings": [
+                    {k: v for k, v in row.items() if k in kept_set}
+                    for row in results["results"]["bindings"]
+                ]
+            }
+        }
+        logger.info(
+            f"[sparql] register projected to {len(keep)} of {len(keep) + len(dropped)} "
+            f"columns; dropped {dropped}"
+        )
+        return projected, keep, dropped
 
     @staticmethod
     def _pivot_by_subject(bindings: List[Dict[str, Any]]) -> Tuple[Dict[str, Any], List[str]]:
@@ -1093,6 +1482,14 @@ Your Answer:"""
             )
             return None
 
+        # THE FACTS ARE COUNTED FROM EVERY FIELD, and only the NARRATION is projected
+        # (BUG-622). `passed_due_not_marked()` needs `nextTestDue`, completeness needs the
+        # columns a question names; counting them from the trimmed rows would make the system
+        # state, in code and with authority, a figure derived from data it had just discarded.
+        _full_rows = list(results["results"]["bindings"])
+
+        results, columns, _dropped_columns = self._project_columns(results, columns, user_query)
+
         logger.info(
             f"[sparql] whole-register fetch: {record.local_name} "
             f"({record.instances} instances, {len(columns)} fields) — no SPARQL generated"
@@ -1115,14 +1512,13 @@ Your Answer:"""
         # question spanning two things; handing over the building's whole record layer is
         # the prompt-size failure that already cost an empty completion (BUG-433).
         # BUG-589: the counted facts describe the register the question named, so they are
-        # taken from its rows BEFORE a second register is merged in.
-        _primary_rows = list(results["results"]["bindings"])
+        # taken from its rows BEFORE a second register is merged in — and from the FULL
+        # fields, not the projected ones (BUG-622).
+        _primary_rows = _full_rows
         second_label = ""
         try:
-            from orchestrator.services.record_registry import (
-                record_classes as _rc,
-                second_record_class,
-            )
+            from orchestrator.services.record_registry import record_classes as _rc
+            from orchestrator.services.record_registry import second_record_class
 
             _second = second_record_class(user_query, await _rc(), record)
             if _second is not None:
@@ -1187,7 +1583,7 @@ Your Answer:"""
             "its duty is not a unit running outside its hours). Never "
             "certify, approve or guarantee safety, compliance, accessibility, confidentiality or "
             "adequacy, and never call a record 'yours' — report what the records state. When a "
-            "word in the question could cover more than one recorded status (\"open\" can mean "
+            'word in the question could cover more than one recorded status ("open" can mean '
             "open or in progress), give the count for EACH status rather than choosing one."
         )
         if second_label:
@@ -1218,7 +1614,16 @@ Your Answer:"""
                 "report those as well, as dates passed, alongside the recorded status. "
                 f"Answer only from these records.{grounding})"
             )
-        # BUG-581: the counting is done in code, not left to the narration.
+            if _dropped_columns:
+                guidance += (
+                    "\n\n(This register holds more fields than are shown: "
+                    + ", ".join(_dropped_columns[:12])
+                    + ". They were left out to keep the handover readable. If the question needs "
+                    "one of them, say that they are recorded and can be read on request rather "
+                    "than answering from the fields above as though they were all there.)"
+                )
+
+            # BUG-581: the counting is done in code, not left to the narration.
         try:
             from orchestrator.services.register_facts import register_facts
 
@@ -1226,14 +1631,20 @@ Your Answer:"""
                 _primary_rows,
                 user_query,
                 building_local_now(getattr(state, "building_id", None)).date(),
+                register_label=record.label or record.local_name,
             )
-            logger.info(f"[sparql] register facts for {record.local_name}: {_facts!r}"[:900])
+            logger.info(
+                f"[sparql] register facts for {record.local_name} ({len(_facts)} chars): "
+                f"{_facts!r}"[:900]
+            )
             if _facts:
                 guidance += (
                     "\n\nRECORDED FACTS — counted by the system from every row above. Every "
                     "count, list and status you state must agree with these; never recount, "
-                    "and never move a record into a kind or status it does not have:\n"
-                    + _facts
+                    "and never move a record into a kind or status it does not have. They "
+                    "also state WHAT THE REGISTER DOES NOT RECORD and where it disagrees "
+                    "with itself: those statements are the answer to that part of the "
+                    "question, so say them rather than reasoning past them:\n" + _facts
                 )
         except Exception as exc:  # pragma: no cover - the rows still answer without it
             logger.warning(f"[sparql] register facts skipped: {type(exc).__name__}: {exc}")
@@ -1293,7 +1704,9 @@ Your Answer:"""
             )
         )
         try:  # BUG-589: completeness of an overdue answer is not left to the narration
-            from orchestrator.services.requested_interval import building_local_now as _bln
+            from orchestrator.services.requested_interval import (
+                building_local_now as _bln,
+            )
 
             _narration += completeness_line(
                 _narration,
@@ -1786,14 +2199,25 @@ Return ONLY the corrected SPARQL query."""
         logger.info(f"Repaired SPARQL query:\n{repaired}")
         return repaired
 
-    def _floor_scoped_sparql(self, user_query: str, class_target: Optional[str]) -> Optional[str]:
+    def _floor_scoped_sparql(
+        self,
+        user_query: str,
+        class_target: Optional[str],
+        class_targets: Optional[List[str]] = None,
+        concept_populated: Optional[bool] = None,
+    ) -> Optional[str]:
         """Deterministic, building-portable floor-scoped sensor resolver.
+
+        ``concept_populated`` is whether the graph holds instances of the resolved concept's
+        classes (``_populated_classes``). True makes the concept's classes win over the static
+        keyword map; False or None (unknown) keeps the keyword map first, as before.
 
         For queries naming one or more floors plus an inferrable metric
         ("compare temperature between floor 1 and floor 5", "average CO2 on
         floor 3"), resolve that metric's sensors per floor through the Brick
         spatial hierarchy: sensor → brick:hasLocation → (isPartOf|^hasPart)* →
-        brick:Floor. No building-specific label parsing, so it keeps working
+        brick:Floor, or a point of equipment that feeds a location on that floor
+        (BUG-667). No building-specific label parsing, so it keeps working
         after a building swap. Returns None when the query names no floor or no
         metric class can be inferred (callers fall through to the normal path).
         """
@@ -1839,11 +2263,9 @@ Return ONLY the corrected SPARQL query."""
         #     naming scheme (e.g. bldg:bldgx.ZONE.AHU01.RM123.Zone_Air_Temp) as long
         #     as the point is labelled (every point carries rdfs:label).
         # Either way resolution keys off class/label/location, never the URI string.
-        cls = self._infer_class(user_query.lower()) or class_target
-        # BUG-586: "a report on the temperature AND CO2 on floor 2" resolved one class, so the
-        # report said "CO2 measurements were not included in the supplied dataset". A question
-        # that joins two measurands gets both.
-        _classes = self._infer_classes(user_query.lower()) if cls else []
+        cls, _classes, _plant_q = self._floor_scope_classes(
+            user_query, class_target, class_targets, concept_populated
+        )
         if len(_classes) > 1:
             type_clause = (
                 "VALUES ?metricCls { " + " ".join(_classes) + " }\n"
@@ -1870,26 +2292,70 @@ Return ONLY the corrected SPARQL query."""
                 "FILTER(" + " && ".join(f'CONTAINS(LCASE(STR(?label)), "{t}")' for t in terms) + ")"
             )
             logger.info(f"[sparql] floor-scoped resolve: label-match terms={terms} floors={floors}")
-        # ref: prefix is not in the standard block — declare it explicitly.
+        # The `ref:` prefix WAS absent from the standard block when this was written, and is
+        # in it now — so re-declaring it made GraphDB reject the whole query with "Multiple
+        # prefix declarations for prefix 'ref'" (BUG-631, P1). Nothing announced that: the
+        # floor-scoped template failed, the agent fell back, and the fallback took the first
+        # 40 instances of the class with NO floor constraint. "What is the air quality on
+        # floor 3?" was answered from sensors labelled 5.02 and 5.03 — the right class, the
+        # wrong floor, stated with confidence. Ask the block what it declares instead of
+        # remembering what it used to.
+        _prefixes = self._prefix_block()
+        if "PREFIX ref:" not in _prefixes:
+            _prefixes += "\nPREFIX ref: <https://brickschema.org/schema/Brick/ref#>"
+        # WB-14 keeps plant-side points out of a ROOM question on a floor. When the question
+        # NAMES a plant quantity the exclusion is the opposite of what was asked — it removed
+        # the one point that answers "supply air temperature on floor 3" while the composite
+        # temperature concept let 49 room sensors through (BUG-667). The type clause above is
+        # then the specific plant class alone, so no room sensor can satisfy it either way.
+        if _plant_q:
+            plant_side_filter = ""
+        else:
+            plant_side_filter = (
+                "FILTER NOT EXISTS { ?sensor a ?plantSide .\n"
+                "    VALUES ?plantSide { " + " ".join(_PLANT_SIDE_CLASSES) + " } }"
+            )
+        # A point belongs to a floor when it is LOCATED there, or when it is a point of
+        # equipment that FEEDS a place on that floor (BUG-667). An air handler serves its floor
+        # from a plant room: the graph says `AHU feeds HVAC_Zone`, `HVAC_Zone isPartOf Floor`,
+        # and its outside-air damper point is `isPointOf` a damper that `isPartOf` the AHU —
+        # with no location anywhere on that chain, so "the damper position on floor 3" found
+        # nothing while "the damper position on AHU F3" answered from 989 readings. Asserting a
+        # location on the AHU would make that work by writing something the building does not
+        # say. Both relationship directions, as everywhere else in this file; `?equip` must be
+        # Equipment and `?served` a Location, so a whole SYSTEM feeding a zone does not put every
+        # point of every unit in it on that floor, and a boiler feeding an air handler that sits
+        # on a floor does not put the boiler there either.
+        #
+        # `a brick:Equipment`, not `rdf:type/rdfs:subClassOf*`: measured on the live store, the
+        # path form cost about a second on EVERY floor question (energy across floors 0.02 s ->
+        # 1.5 s) while the direct form cost 0.1 s. The store materialises superclass types —
+        # the plant fallback's `?sensor a brick:Point` already depends on that.
+        floor_membership = (
+            "{\n"
+            "    ?sensor brick:hasLocation ?loc .\n"
+            "    ?loc (brick:isPartOf|^brick:hasPart)* ?floor .\n"
+            "  } UNION {\n"
+            "    ?sensor (brick:isPointOf|^brick:hasPoint) ?host .\n"
+            "    ?host (brick:isPartOf|^brick:hasPart)* ?equip .\n"
+            "    ?equip a brick:Equipment .\n"
+            "    ?equip (brick:feeds|^brick:isFedBy) ?served .\n"
+            "    ?served a brick:Location .\n"
+            "    ?served (brick:isPartOf|^brick:hasPart)* ?floor .\n"
+            "  }"
+        )
         return (
-            self._prefix_block()
-            + "\nPREFIX ref: <https://brickschema.org/schema/Brick/ref#>"
+            _prefixes
             + f"""
 SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage WHERE {{
-  ?sensor rdfs:label ?label ;
-          brick:hasLocation ?loc .
+  ?sensor rdfs:label ?label .
   {type_clause}
   {label_clause}
-  ?loc (brick:isPartOf|^brick:hasPart)* ?floor .
+  {floor_membership}
   ?floor a brick:Floor .
   BIND(REPLACE(STR(?floor), "^.*[Ff]loor", "") AS ?floorNum)
   {floor_filter}
-  FILTER NOT EXISTS {{ ?sensor a ?plantSide .
-    VALUES ?plantSide {{ brick:Supply_Air_Temperature_Sensor brick:Return_Air_Temperature_Sensor
-      brick:Mixed_Air_Temperature_Sensor brick:Discharge_Air_Temperature_Sensor
-      brick:Outside_Air_Temperature_Sensor brick:Leaving_Water_Temperature_Sensor
-      brick:Entering_Water_Temperature_Sensor brick:Supply_Air_Humidity_Sensor
-      brick:Return_Air_Humidity_Sensor brick:Outside_Air_Humidity_Sensor }} }}
+  {plant_side_filter}
   ?sensor ref:hasExternalReference ?ref .
   ?ref ref:hasTimeseriesId ?uuid .
   OPTIONAL {{ ?ref ref:storedAt ?storage }}
@@ -2625,14 +3091,16 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
             "runtime": "brick:Run_Time_Sensor",
             "run time": "brick:Run_Time_Sensor",
         }
-        # Custom point classes use the active building prefix (Brick 1.4 has no
-        # native noise/vibration point class). Absent in other buildings → the
-        # query simply returns nothing and the caller falls through gracefully.
-        _pfx = _active_prefix()
-        static_map["noise"] = f"{_pfx}:Noise_Level_Sensor"
-        static_map["sound"] = f"{_pfx}:Noise_Level_Sensor"
-        static_map["acoustic"] = f"{_pfx}:Noise_Level_Sensor"
-        static_map["vibration"] = f"{_pfx}:Vibration_Sensor"
+        # Acoustic questions resolve to the OCBV class, never to a class in ONE BUILDING'S
+        # namespace (design contract 3). These entries used to be `<building prefix>:
+        # Noise_Level_Sensor` — one instance in bldg1 — while 233 points were typed
+        # ontosage:Sound_Level_Sensor, so "noise on floor 4" found none of the 52 on that
+        # floor. `vibration` is deliberately NOT mapped: Brick has no vibration point class
+        # and the schema declares none, so the naming-agnostic label tier owns it rather than
+        # a class name that exists in one building only.
+        static_map["noise"] = "ontosage:Sound_Level_Sensor"
+        static_map["sound"] = "ontosage:Sound_Level_Sensor"
+        static_map["acoustic"] = "ontosage:Sound_Level_Sensor"
         if ontology_introspector.is_ready():
             # Phase 15A: per-request building prefix (falls back to settings).
             _bldg_pfx = _active_prefix()
@@ -2707,6 +3175,124 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
                 if cls:
                     return f"brick:{cls}"
         return None
+
+    @classmethod
+    def _plant_quantity_class(cls, uq: str) -> Optional[str]:
+        """The plant-side class a question NAMES, or None (BUG-667).
+
+        Two sources, neither a keyword list of its own: the equipment-scope modalities in
+        config (`_infer_plant_class`), then the plant-side Brick classes by their own NAMES
+        ("Return_Air_Temperature_Sensor" -> "return air temperature"). The second catches the
+        classes config does not declare a modality for, and it is derived from the class, so
+        adding a class to `_PLANT_SIDE_CLASSES` adds its phrase. Longest phrase wins.
+        """
+        plant = cls._infer_plant_class(uq)
+        if plant:
+            return plant
+        best: Optional[Tuple[int, str]] = None
+        for brick_class in _PLANT_SIDE_CLASSES:
+            phrase = brick_class.split(":", 1)[-1]
+            phrase = re.sub(r"_Sensor$", "", phrase).replace("_", " ").lower()
+            if re.search(rf"(?<![a-z0-9]){re.escape(phrase)}(?![a-z0-9])", uq):
+                if best is None or len(phrase) > best[0]:
+                    best = (len(phrase), brick_class)
+        return best[1] if best else None
+
+    @staticmethod
+    def _plant_family(plant_class: str) -> Set[str]:
+        """Every class config groups with this plant class in ONE equipment modality.
+
+        `damper_position` is `Damper_Position_Sensor` AND `Damper_Position_Command`; a concept
+        naming both is naming one quantity, and keeping both is not a substitution. A class no
+        equipment modality declares is its own family.
+        """
+        family = {plant_class}
+        try:
+            from orchestrator.services.deliberation.coverage_audit import (
+                load_modality_raw,
+            )
+
+            raw = load_modality_raw() or {}
+        except Exception:  # pragma: no cover - defensive, config is optional
+            return family
+        local = plant_class.split(":", 1)[-1]
+        for spec in raw.values():
+            spec = spec or {}
+            sat = spec.get("sat") or {}
+            if str(sat.get("scope", "room")).lower() != "equipment":
+                continue
+            members = {str(c) for c in (spec.get("brick_classes") or [])}
+            if sat.get("brick_class"):
+                members.add(str(sat["brick_class"]))
+            if local in members:
+                family.update(f"brick:{m}" for m in members)
+        return family
+
+    def _floor_scope_classes(
+        self,
+        user_query: str,
+        class_target: Optional[str],
+        class_targets: Optional[List[str]] = None,
+        concept_populated: Optional[bool] = None,
+    ) -> Tuple[Optional[str], List[str], Optional[str]]:
+        """(class, classes, plant class) the floor-scoped resolver selects points by.
+
+        `classes` is empty for the label tier. `plant class` is set only when the question
+        names a plant-side quantity, and then it is the ONLY kind of class selected.
+
+        Precedence: a named plant quantity; then the resolved CONCEPT, when the graph shows
+        its classes have instances; then the static keyword map; then the label tier.
+        """
+        uq = user_query.lower()
+        # THE CONCEPT OUTRANKS THE KEYWORD MAP when the building holds its classes. The map
+        # is a hand-written English table; the concept is the building's own vocabulary
+        # resolved against its own graph. Ranked the other way, "noise on floor 4" selected
+        # the map's building-namespace Noise_Level_Sensor (one instance in the building) and
+        # never saw the 52 ontosage:Sound_Level_Sensor points on that floor. When the
+        # concept's classes have NO instances, or that could not be checked, the map stays
+        # first — a concept naming a class nobody typed is no better than a keyword.
+        concept_wins = bool(concept_populated and class_targets and class_target)
+        cls = (class_target if concept_wins else self._infer_class(uq)) or class_target
+        # BUG-586: "a report on the temperature AND CO2 on floor 2" resolved one class, so the
+        # report said "CO2 measurements were not included in the supplied dataset". A question
+        # that joins two measurands gets both.
+        classes = self._infer_classes(uq) if cls else []
+        # MOST SPECIFIC DECLARING CLASS WINS (BUG-609), and a plant quantity is more specific
+        # than any room concept that happens to share its noun. "What is the supply air
+        # temperature on floor 3?" resolves the temperature CONCEPT — Temperature_Sensor,
+        # Zone_Air_Temperature_Sensor, Outside_Air_Temperature_Sensor — and the composite rule
+        # below replaced the supply-air class with all three, so it answered 24.1 °C from
+        # "Air Temperature Sensor installed-node 3.66", a room sensor (BUG-667). A concept class
+        # is kept beside the plant class only when config puts both in the same equipment
+        # modality; if the floor has no point of that kind the result is an honest absence,
+        # never the room sensors.
+        plant = self._plant_quantity_class(uq)
+        if plant:
+            family = self._plant_family(plant)
+            kept = [c for c in (class_targets or []) if c in family and c != plant]
+            classes = list(dict.fromkeys([plant] + kept))
+            if class_targets and set(class_targets) - set(classes):
+                logger.info(
+                    f"[sparql] plant quantity {plant} named: concept classes "
+                    f"{sorted(set(class_targets) - set(classes))} not substituted"
+                )
+            return plant, classes, plant
+        if concept_wins and len(classes) <= 1:
+            # Every class the concept resolved to, as the composite rule below would take
+            # them. Two JOINED measurands (BUG-586) still come from the question, because the
+            # dialogue hands over the first concept only.
+            classes = list(dict.fromkeys(class_targets or [])) or [cls]
+            logger.info(f"[sparql] populated concept outranks the keyword map: {classes}")
+            return cls, classes, None
+        # A COMPOSITE concept names several constituents on purpose — "air quality" is CO2
+        # AND PM2.5 AND TVOC AND the generic air-quality point — and picking the most
+        # specific one answered with an opaque "level" instead of the pollutants a person
+        # means (BUG-632). Most-specific is the right rule for a concept naming a class and
+        # its PARENT (the parking case it was written for) and the wrong one here.
+        if len(classes) <= 1 and class_targets and len(class_targets) > 1:
+            classes = list(dict.fromkeys(class_targets))
+            logger.info(f"[sparql] composite concept contributes {len(classes)} classes")
+        return cls, classes, None
 
     async def _ts_bearing(self, entities: List[str]) -> Set[str]:
         """Which of these entities actually carry a timeseries reference.
@@ -2817,34 +3403,236 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
         return ordered or [first]
 
     @staticmethod
-    def _most_specific_class(candidates: List[str]) -> str:
-        """The most specific of a concept's classes, without asking the graph.
+    def _most_specific_class(
+        candidates: List[str],
+        ancestors: Optional[Dict[str, Set[str]]] = None,
+        instances: Optional[Dict[str, int]] = None,
+    ) -> str:
+        """The most specific of a concept's classes. Pure: the graph facts are ARGUMENTS.
 
         A concept may legitimately name a class AND its parent — the parent so a
         building that types only the generic form still resolves, the child so a
         building that types precisely gets a precise answer. Which one the store
         returns first is arbitrary, so the choice cannot be made on order.
 
-        An OCBV (``ontosage:``) class exists PRECISELY BECAUSE Brick lacked one, and
-        is declared as a subclass of the nearest Brick parent — so where both appear,
-        the extension is by construction the specific one. That makes this a pure
-        function: no query, no network, no failure mode.
+        ``ancestors`` maps each candidate to the OTHER candidates it is a subclass of,
+        read from the TBox by ``_class_relations``; ``instances`` is how many instances
+        of each the building holds. With them (BUG-609's rule, "most specific declaring
+        class wins"):
 
-        The first version did ask the graph, and always fell back: `_execute_query`
+          1. a candidate that is an ancestor of another candidate is never chosen — the
+             descendant is more specific along that chain;
+          2. when several incomparable candidates remain, none of them is "more specific"
+             than the others. The concept named siblings, so the question is at the level
+             of a candidate that COVERS all of them, and the deepest such candidate wins.
+             `temperature_reading` names Temperature_Sensor, Zone_Air_Temperature_Sensor
+             and Outside_Air_Temperature_Sensor: the two leaves tie on depth, and on bldg1
+             one of them holds 66 instances and the other 1 while the room sensors (288)
+             are typed as neither — so the parent is the only honest pick;
+          3. with no covering candidate, the leaf the building actually has instances of
+             wins, most instances first — never a class with none. Pure depth would pick
+             Damper_Position_Command (depth 8, no instances) over Damper_Position_Sensor
+             (depth 7, six instances);
+          4. then an OCBV (``ontosage:``/``hbco:``) class, then the concept's own order.
+
+        WITHOUT them (graph unreachable, or a caller that has none) the old rule stands:
+        an OCBV class exists PRECISELY BECAUSE Brick lacked one and is declared a subclass
+        of the nearest Brick parent, so it wins; otherwise the first candidate. The
+        concept resolver SORTS its classes, so that first candidate is alphabetical — which
+        made every "temperature" concept target Outside_Air_Temperature_Sensor, one
+        instance in bldg1. That fallback is logged where the facts failed to arrive.
+
+        The first version asked the graph FROM HERE, and always fell back: `_execute_query`
         raised `[Errno -2] Name or service not known` from its Fuseki fallback, the
         `except` swallowed it at DEBUG level, and the function silently returned
         `candidates[0]` — which is why "how many parking spaces are free?" kept
         answering 294 (the building's space count) from the generic parent class,
-        through three rounds of me "verifying" a fix that had never once run.
+        through three rounds of me "verifying" a fix that had never once run. So the
+        query lives in the caller and this stays unable to fail on a network call.
         """
-        if not candidates:
+        uniq = list(dict.fromkeys(c for c in candidates if c))
+        if not uniq:
             return ""
-        if len(candidates) == 1:
-            return candidates[0]
-        for cand in candidates:
-            if cand.startswith("ontosage:") or cand.startswith("hbco:"):
-                return cand
-        return candidates[0]
+        if len(uniq) == 1:
+            return uniq[0]
+
+        def _extension(c: str) -> bool:
+            return c.startswith("ontosage:") or c.startswith("hbco:")
+
+        if ancestors is None:
+            for cand in uniq:
+                if _extension(cand):
+                    return cand
+            return uniq[0]
+
+        def _is_ancestor(a: str, b: str) -> bool:
+            return a != b and a in (ancestors.get(b) or set())
+
+        leaves = [c for c in uniq if not any(_is_ancestor(c, o) for o in uniq)]
+        if len(leaves) == 1:
+            return leaves[0]
+        covering = [
+            c for c in uniq if c not in leaves and all(_is_ancestor(c, lf) for lf in leaves)
+        ]
+        if covering:
+            # The deepest cover: the one no other cover is a descendant of.
+            deepest = [c for c in covering if not any(_is_ancestor(c, o) for o in covering)]
+            return deepest[0]
+        counts = instances or {}
+        order = {c: i for i, c in enumerate(uniq)}
+        return sorted(
+            leaves,
+            key=lambda c: (
+                -(1 if counts.get(c, 0) > 0 else 0),
+                -counts.get(c, 0),
+                0 if _extension(c) else 1,
+                order[c],
+            ),
+        )[0]
+
+    def _expand_class_curies(self, classes: List[str]) -> Optional[Dict[str, str]]:
+        """{curie: full IRI} via the prefix block, or None if any class cannot be expanded.
+
+        The local name must be a plain name, so nothing a concept carries can inject SPARQL.
+        """
+        prefixes: Dict[str, str] = {}
+        for line in self._prefix_block().splitlines():
+            m = re.match(r"\s*PREFIX\s+([\w-]*):\s*<([^>]+)>", line)
+            if m:
+                prefixes[m.group(1)] = m.group(2)
+        iris: Dict[str, str] = {}
+        for curie in classes:
+            if curie.startswith("http://") or curie.startswith("https://"):
+                if re.search(r"[\s<>\"{}|\\^`]", curie):
+                    return None
+                iris[curie] = curie
+                continue
+            pfx, _, local = curie.partition(":")
+            if not local or pfx not in prefixes or not re.fullmatch(r"[\w.\-]+", local):
+                return None
+            iris[curie] = prefixes[pfx] + local
+        return iris
+
+    async def _populated_classes(self, classes: List[str]) -> Optional[Set[str]]:
+        """Which of these classes have at least one instance in the ACTIVE building, or None.
+
+        None means the graph could not say, and is logged at WARNING: the caller then keeps
+        its previous ranking rather than guessing in either direction. An existence test per
+        class (FILTER EXISTS), not a COUNT — the answer needed is yes/no. Cached per building
+        for the process, like `_class_relations`; data loads come with a restart here.
+        """
+        uniq = sorted({c for c in classes if c})
+        if not uniq:
+            return set()
+        iris = self._expand_class_curies(uniq)
+        if iris is None:
+            logger.warning(f"[sparql] class population: cannot expand {uniq}")
+            return None
+        namespace = _active_namespace()
+        cache = self.__dict__.setdefault("_populated_class_cache", {})
+        key = (namespace, tuple(uniq))
+        if key in cache:
+            return cache[key]
+        back = {v: k for k, v in iris.items()}
+        values = " ".join(f"<{v}>" for v in iris.values())
+        scope = (
+            f'    FILTER(STRSTARTS(STR(?i), "{self._escape_literal(namespace)}"))\n'
+            if namespace
+            else ""
+        )
+        query = (
+            "SELECT DISTINCT ?c WHERE {\n"
+            f"  VALUES ?c {{ {values} }}\n"
+            "  FILTER EXISTS {\n"
+            "    ?i a ?c .\n" + scope + "  }\n"
+            "} LIMIT 1000"
+        )
+        try:
+            data = await self._execute_query(query)
+        except Exception as exc:
+            logger.warning(
+                f"[sparql] class population: graph unavailable ({type(exc).__name__}: {exc}) "
+                f"for {uniq}"
+            )
+            return None
+        held = {
+            back[v]
+            for b in (data or {}).get("results", {}).get("bindings", [])
+            for v in [(b.get("c") or {}).get("value", "")]
+            if v in back
+        }
+        cache[key] = held
+        return held
+
+    async def _class_relations(
+        self, candidates: List[str]
+    ) -> Tuple[Optional[Dict[str, Set[str]]], Optional[Dict[str, int]]]:
+        """Which candidates subsume which, and how many instances each has — from the graph.
+
+        Returns (None, None) when the graph cannot say, and says so at WARNING: a silent
+        fallback here is exactly how the parking fix "worked" for three rounds without
+        once running. Cached per building for the process; the TBox does not change
+        between questions, and a new instance does not change which class is specific.
+        """
+        uniq = sorted({c for c in candidates if c})
+        if len(uniq) < 2:
+            return None, None
+        iris = self._expand_class_curies(uniq)
+        if iris is None:
+            logger.warning(f"[sparql] class specificity: cannot expand {uniq} — order fallback")
+            return None, None
+        back = {v: k for k, v in iris.items()}
+        cache = self.__dict__.setdefault("_class_relation_cache", {})
+        key = (_active_namespace(), tuple(uniq))
+        if key in cache:
+            return cache[key]
+        values = " ".join(f"<{v}>" for v in iris.values())
+        sub_q = (
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+            "SELECT ?c ?anc WHERE {\n"
+            f"  VALUES ?c {{ {values} }}\n"
+            f"  VALUES ?anc {{ {values} }}\n"
+            "  ?c rdfs:subClassOf+ ?anc .\n"
+            "  FILTER(?c != ?anc)\n"
+            "} LIMIT 1000"
+        )
+        count_q = (
+            "SELECT ?c (COUNT(DISTINCT ?i) AS ?n) WHERE {\n"
+            f"  VALUES ?c {{ {values} }}\n"
+            "  ?i a ?c .\n"
+            "} GROUP BY ?c LIMIT 1000"
+        )
+        try:
+            sub = await self._execute_query(sub_q)
+            ancestors: Dict[str, Set[str]] = {c: set() for c in uniq}
+            for b in (sub or {}).get("results", {}).get("bindings", []):
+                c = back.get((b.get("c") or {}).get("value", ""))
+                a = back.get((b.get("anc") or {}).get("value", ""))
+                if c and a:
+                    ancestors[c].add(a)
+            # Instances matter only when the hierarchy leaves the choice open — incomparable
+            # leaves with no candidate covering them — so the count is not paid otherwise.
+            leaves = [c for c in uniq if not any(c in ancestors[o] for o in uniq if o != c)]
+            open_choice = len(leaves) > 1 and not any(
+                c not in leaves and all(c in ancestors[lf] for lf in leaves) for c in uniq
+            )
+            cnt = await self._execute_query(count_q) if open_choice else {}
+        except Exception as exc:
+            logger.warning(
+                f"[sparql] class specificity: graph unavailable ({type(exc).__name__}: {exc}) "
+                f"— falling back to concept order for {uniq}"
+            )
+            return None, None
+        instances: Dict[str, int] = {}
+        for b in (cnt or {}).get("results", {}).get("bindings", []):
+            c = back.get((b.get("c") or {}).get("value", ""))
+            if c:
+                try:
+                    instances[c] = int(float((b.get("n") or {}).get("value", "0")))
+                except ValueError:
+                    continue
+        cache[key] = (ancestors, instances)
+        return ancestors, instances
 
     async def _get_instances_for_class(self, brick_class: str, limit: int = 40) -> List[str]:
         """Query GraphDB for instances of a Brick class. Returns <prefix>: URIs only.
@@ -3640,6 +4428,15 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
                 deduped.append(b)
         bindings = deduped
 
+        # A design note about how a register is MODELLED is not an answer about the
+        # building (rows 139/146). Withheld here, before the rows become either the
+        # narration prompt or the deterministic fallback, so neither path can quote one.
+        bindings, _withheld = redact_schema_documentation(bindings)
+        if _withheld:
+            logger.info(
+                f"[sparql] withheld {_withheld} schema-documentation literal(s) from the answer"
+            )
+
         if not bindings:
             return "No results found for your query."
 
@@ -3785,12 +4582,80 @@ Example 3 (Equipment List):
   hold only counts or lists, say the results do not record it and stop
 - Never describe the results as data the user "provided", "supplied" or "pulled back": they
   are the building's records
+- A FIELD IS EVIDENCE OF ITSELF AND NOTHING ELSE (BUG-709, 17 answers measured 2026-09-17).
+  Questions ask whether something is orphaned, adequate, justified, stable, viable, verified,
+  compliant, suitable, at risk or complete. Report such a judgement ONLY when a field records
+  it. If no field does, say which field would have recorded it and stop — do not reason your
+  way to a verdict from the fields that are present. Measured failures to avoid: "each record
+  has a mapped opening and a granted role, so none lack evidence of ownership or purpose"
+  (the question asked which are orphaned); "assets list probable containment features that
+  would limit damage from a leak" (no field records containment)
+- A MISSING FIELD MEANS UNKNOWN, NEVER SATISFACTORY. "No evidence reference recorded" is not
+  "no evidence needed", an empty exception field is not "no exception", and a record with
+  nothing in a column is not a record that passed
+- A STATUS DESCRIBES THE RECORD, NOT THE WORLD. A record whose status is "current" says the
+  RECORD is current; it does not say the equipment works, the test passed or the activity
+  happened. Say which of the two you are reporting
+- DO NOT INVENT A CATEGORY. If you group records under a heading the records do not use
+  ("displaced activities", "late-stopping systems"), say in the same sentence which field you
+  grouped on and what value you treated as meaning that
+- TWO THINGS ARE THE SAME ONLY IF A FIELD SAYS SO. When the question names something no record
+  names, say that no record records it — do not nominate the nearest-looking record as it. An
+  escorted contractor's one-off lab permit is not a new starter's permission package; a chiller
+  handover is not an event-space handover; an inspection interval is not a sampling rate
+- NEVER ISSUE AN INSTRUCTION, A PLAN, A RECOVERY ORDER OR A PRIORITY unless a field records it.
+  Report what the records state and stop. A recorded threshold, limit or target is the level at
+  which something is TRIGGERED, never a level anyone should bring a value up to; a recorded
+  role's task is not the reader's task; the order records appear in is not an order of work
+- NAME A FIELD IN PLAIN WORDS AND A RECORD BY ITS OWN NAME. Write "the recorded state", "a
+  response target in hours" or "the capital value band" — never a field's internal name, in
+  backticks or otherwise, and never relabel a field as the thing the question asked for.
+  Identify a record by its own name and reference, not by a place or a system named in one of
+  its other fields
+- THE RECORDED FACTS BLOCK IS YOUR WORKING-OUT, NOT TEXT TO COPY. It is written to you, not to
+  the reader. Never quote it, never repeat its phrasing ("recorded, in …", "no field is named
+  for it", "does not appear as a field name or value"), and never put one of its field names in
+  your answer. Write an ordinary answer about the building instead, and let the block decide
+  what may be in it
+- YOUR SENTENCES MUST AGREE WITH THE COMPUTED NUMBERS. Restate a count, a split or a list from
+  the facts block verbatim rather than working it out again in prose: if the block says a group
+  holds 9 records, the sentence says 9 and the table has 9 rows, and every record named in that
+  group appears. Measured failures: "high — 9 assets" above a table of 8, with two assets in no
+  table at all; "a summary of the 12 records" above 9 rows
+- ONE RECORD, ONE CATEGORY, AND A HEADING IS A FILTER. A record belongs to exactly one value of
+  the field you group by — never list the same record under two kinds — and a heading that
+  names a status or a kind may contain ONLY the records the block lists under it. Measured
+  failures: three workspaces filed under two kinds each, 31 placements for 28 records; a table
+  headed "routes that are open" containing a restricted route and a closed one
+- NEVER WRITE AN ABSENCE BESIDE THE ROWS THAT ANSWER IT. Before saying the records do not cover
+  something, check what you have already shown: if your own answer lists records bearing on it,
+  that absence sentence is false and it is the worst thing on the page. Measured failures: "the
+  register does not record whether the building is pushchair-friendly from the car park", above
+  its own three step-free routes from the drop-off; "no continuity information is available for
+  a communications room", four lines under a row reading "secondary comms room"; "the register
+  does not record any open actions", over five records the same answer lists as requiring a
+  decision
+- A WORD THE RECORDS DO NOT HOLD IS NOT A QUESTION YOU CANNOT ANSWER. Most questions name
+  several things and the records hold some of them. Answer from the ones they hold FIRST, name
+  the records, and give the unrecorded part one clause at the end. Measured failure to avoid:
+  "Who do I contact about a broken door closer, and how quickly should they respond?" answered
+  in full with "The records do not record a specific department responsible for broken door
+  closers; they do record contactEmail, contactPhone, and respondsWithinHours for each
+  department" — from a register in which one department's recorded scope covers doors and its
+  recorded response target is 24 hours. Saying only what is missing, in internal field names,
+  is the worst available answer. Never end on what is absent when something was found
 
 Generate your response now:"""
 
         if used_template:
             # For template queries, always use LLM formatting for better UX
             try:
+                # BUG-618: when a register narration fails, the FIRST question is how big the
+                # prompt was. It was guesswork twice; now it is in the log either way.
+                logger.info(
+                    f"[sparql] narration prompt: {len(summary_prompt)} chars, "
+                    f"{len(bindings)} rows"
+                )
                 summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
                 return summary.strip()
             except Exception as e:
@@ -3946,7 +4811,9 @@ Generate your response now:"""
     _COUNT_RE = re.compile(
         r"\(\s*COUNT\s*\(\s*(?:DISTINCT\s+)?(\?\w+|\*)\s*\)\s+AS\s+(\?\w+)\s*\)", re.IGNORECASE
     )
-    _COUNTED_CLASS_RE = re.compile(r"\b(?:a|rdf:type)(?:/rdfs:subClassOf\*)?\s+([A-Za-z0-9]+:[A-Za-z_][\w-]*)")
+    _COUNTED_CLASS_RE = re.compile(
+        r"\b(?:a|rdf:type)(?:/rdfs:subClassOf\*)?\s+([A-Za-z0-9]+:[A-Za-z_][\w-]*)"
+    )
 
     @classmethod
     def _count_meaning(cls, sparql_query: str) -> str:
@@ -3963,7 +4830,9 @@ Generate your response now:"""
             return ""
         what = cls._COUNTED_CLASS_RE.search(sparql_query or "")
         kind = f" of type {what.group(1)}" if what else ""
-        grouped = " for that row's group" if re.search(r"\bGROUP\s+BY\b", sparql_query, re.I) else ""
+        grouped = (
+            " for that row's group" if re.search(r"\bGROUP\s+BY\b", sparql_query, re.I) else ""
+        )
         pairs = ", ".join(
             f"{alias} = how many {var if var != '*' else 'matches'}{kind} the building model "
             f"holds{grouped}"

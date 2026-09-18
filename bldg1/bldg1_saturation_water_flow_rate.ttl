@@ -1,0 +1,85 @@
+# SATURATE (V4-T08): simulated water_flow_rate sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'waterflow_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data>
+    a ref:Database ;
+    rdfs:label "Waterflow Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0_sat_water_flow_rate>
+    a brick:Water_Flow_Sensor ;
+    rdfs:label "Floor0 water_flow_rate [L/s]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "04ddba1f-38ab-528f-aab8-a84cff5ce07b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1_sat_water_flow_rate>
+    a brick:Water_Flow_Sensor ;
+    rdfs:label "Floor1 water_flow_rate [L/s]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ebf7b718-9bf4-5d19-b9ba-b27db0722967" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2_sat_water_flow_rate>
+    a brick:Water_Flow_Sensor ;
+    rdfs:label "Floor2 water_flow_rate [L/s]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fd3ded0c-592a-5a71-9a70-eaf97d8ef6ae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3_sat_water_flow_rate>
+    a brick:Water_Flow_Sensor ;
+    rdfs:label "Floor3 water_flow_rate [L/s]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1909e31e-d6c4-52ce-ae76-6269a4a2a2f8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4_sat_water_flow_rate>
+    a brick:Water_Flow_Sensor ;
+    rdfs:label "Floor4 water_flow_rate [L/s]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "af79cbd9-7073-5219-8942-41da3491c100" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5_sat_water_flow_rate>
+    a brick:Water_Flow_Sensor ;
+    rdfs:label "Floor5 water_flow_rate [L/s]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b570db18-be3c-5cc5-b13e-d31932ae92c0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .

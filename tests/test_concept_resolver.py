@@ -126,10 +126,40 @@ async def test_longer_lay_term_first():
     """'stale air' (longer) should sort before 'stuffy' (shorter) when both match."""
     resolver = _resolver_with_map(_SAMPLE_MAP)
     results = await resolver.resolve("the stale air is stuffy today")
-    # Both 'stale air' and 'stuffy' match the stuffiness concept, but only one fires
-    # (break after first lay_term match per concept). We verify at least stuffiness matched.
+    # Both 'stale air' and 'stuffy' match the stuffiness concept; the concept is recorded ONCE,
+    # represented by its LONGEST matching term (it used to be whichever term came first).
     concept_ids = [m.concept_id for m in results]
     assert "stuffiness" in concept_ids
+    assert concept_ids.count("stuffiness") == 1
+    assert next(m for m in results if m.concept_id == "stuffiness").lay_term == "stale air"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_a_concept_is_represented_by_its_longest_matching_term():
+    """The cross-concept sort ranks by the recorded term's length, so the recorded term must be
+    the most specific one that matched — whatever order the graph returned the terms in.
+
+    Measured: 'how full is the recycling bin' was recorded as matching 'bin' (first in order)
+    and then lost the sort to a concept whose single term was the longer word 'full'.
+    """
+    concept_map = {
+        "waste_fill": {
+            "concept_id": "waste_fill",
+            # Short term deliberately FIRST, as an alphabetical graph ordering puts it.
+            "lay_terms": ["bin", "recycling bin"],
+            "brick_classes": ["ontosage:Waste_Fill_Sensor"],
+        },
+        "crowded": {
+            "concept_id": "crowded",
+            "lay_terms": ["full"],
+            "brick_classes": ["brick:Occupancy_Count_Sensor"],
+        },
+    }
+    resolver = _resolver_with_map(concept_map)
+    results = await resolver.resolve("how full is the recycling bin")
+    assert results[0].concept_id == "waste_fill"
+    assert results[0].lay_term == "recycling bin"
 
 
 @pytest.mark.unit

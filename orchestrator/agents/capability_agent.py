@@ -140,6 +140,46 @@ async def _search_documents(
         return []
 
 
+def _held_register_note(query: str, held: List[Any]) -> Optional[str]:
+    """Name the register this building HOLDS for this question, when it holds one (BUG-749).
+
+    The document lane is the catch-all, and its decline claims an absence: "the building's
+    records do not cover this". Measured on the 147-question live read, that sentence was
+    said over registers the building holds and the lane never looked at — 30 cleaning tasks
+    for "which washroom should I service next", accessible routes for a pushchair question.
+    A false absence is the worst answer this system can give short of a fabricated number,
+    so before any decline the held registers get a say.
+
+    Building-agnostic by construction: the classes, their labels and their vocabulary all
+    come from the ontology and the counts from the active graph — `rank_record_classes` is
+    the same scorer the routing short-circuit uses, so this cannot disagree with it.
+
+    Returns None when the question names no held register, which is the common case and
+    must leave the decline exactly as it was. Naming a register the question did NOT name
+    is the C8 defect (a decline reciting an unrelated register's statistics) with the sign
+    flipped, and is worse than saying nothing.
+    """
+    if not held:
+        return None
+    try:
+        from orchestrator.services.record_registry import rank_record_classes
+
+        ranked = rank_record_classes(query or "", held)
+    except Exception as exc:  # pragma: no cover - never block a decline on this
+        logger.debug(f"[capability] register ranking unavailable: {exc}")
+        return None
+    if not ranked:
+        return None
+    record = ranked[0][1]
+    label = (record.label or record.local_name).strip().lower()
+    return (
+        f"**This is a question for {label} records, and the building keeps them.** "
+        f"I searched the building's documents instead, which do not cover it, but "
+        f"{record.instances} {label} record(s) are held and they are where the answer "
+        f"would be. Ask for the {label} records and I will read them."
+    )
+
+
 class CapabilityAgent:
     """
     Answers building capability / off-ontology questions from the building's own data.
@@ -255,6 +295,7 @@ class CapabilityAgent:
             from orchestrator.services.grounding_guard import (
                 SUBJECT_SPACE,
                 enablement_hint,
+                reader_is_admin_in,
             )
             from orchestrator.services.referent_resolver import (
                 NOT_FOUND,
@@ -293,13 +334,27 @@ class CapabilityAgent:
                 f"[capability] '{resolution.referent}' is not in this building — declining "
                 "rather than answering with whole-building figures"
             )
+            # What DOES exist, as the resolver found it in the graph — never a guess. Read
+            # defensively: a missing list must not turn a clean "not found" into the
+            # "could not verify" branch below.
+            _have = [str(s) for s in (getattr(resolution, "suggestions", None) or []) if s]
             return {
                 "success": True,
                 "response": (
-                    f"I couldn't find **{resolution.referent}** in **{building_name}**'s model, "
-                    "so I can't give you figures for it — the counts I hold describe other "
-                    "parts of the building, and reporting them here would suggest this one "
-                    "exists.\n\n" + enablement_hint(SUBJECT_SPACE, resolution.referent)
+                    f"I couldn't find **{resolution.referent}** in **{building_name}**'s "
+                    "records, so I can't give you figures for it — the counts I hold describe "
+                    "other parts of the building, and reporting them here would suggest this "
+                    "one exists."
+                    + (
+                        f"\n\nWhat this building does have: **{', '.join(_have)}**."
+                        if _have
+                        else ""
+                    )
+                    + enablement_hint(
+                        SUBJECT_SPACE,
+                        resolution.referent,
+                        for_admin=reader_is_admin_in(state),
+                    )
                 ),
                 "provenance": "referent_not_found",
                 "building_name": building_name,
@@ -336,12 +391,16 @@ class CapabilityAgent:
 
             from orchestrator.agents.sparql_agent import SPARQLAgent, _active_namespace
 
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
+            # Every reader gets the decline; only an administrator is told what to add.
+            _for_admin = reader_is_admin_in(state)
             profile = await bp.resolve(_active_namespace(), SPARQLAgent()._execute_query)
-            text = bp.render(profile, facet, building_name)
+            text = bp.render(profile, facet, building_name, for_admin=_for_admin)
             if text is None:
-                # The building states nothing about itself. Decline, and say what
-                # to add — the same contract the sensor path keeps.
-                text = bp.enablement_hint(building_name)
+                # The building states nothing about itself. Decline for everyone; say
+                # what to add only to an administrator.
+                text = bp.enablement_hint(building_name, for_admin=_for_admin)
                 provenance = "building_profile_absent"
             else:
                 provenance = "building_profile"
@@ -602,7 +661,9 @@ class CapabilityAgent:
                     ),
                     "",
                 )
-                _sources = ["building ontology (triples)"]
+                # Worded for every reader (2026-09-17): "ontology (triples)" is how the fact
+                # is stored, not where a supervisor would say it came from.
+                _sources = ["building's own records"]
                 if _doc_ref:
                     _extra = await _search_documents(
                         state.user_message or "", building_id, only_document=_doc_ref
@@ -708,7 +769,13 @@ class CapabilityAgent:
             except Exception as _prov_err:
                 logger.debug(f"[capability] could not load previous turn: {_prov_err}")
 
-            _rendered = render(_record, state.user_message or "")
+            try:
+                from orchestrator.services.grounding_guard import reader_is_admin_in
+
+                _prov_for_admin = reader_is_admin_in(state)
+            except Exception:  # pragma: no cover - the plain read-back is the safe side
+                _prov_for_admin = False
+            _rendered = render(_record, state.user_message or "", for_admin=_prov_for_admin)
             state.intermediate_results["capability_result"] = {
                 "success": True,
                 "response": _rendered
@@ -782,6 +849,7 @@ class CapabilityAgent:
         # building holds no contracts. Saying which system is missing is both true and
         # actionable, and it is decidable — the ontology defines the class and the graph
         # holds no instances of it.
+        _held_classes: List[Any] = []
         try:
             from orchestrator.services.record_registry import (
                 absent_record_class,
@@ -790,27 +858,37 @@ class CapabilityAgent:
             )
 
             await load_lay_terms()
-            _absent = absent_record_class(state.user_message or "", await record_classes())
+            _held_classes = await record_classes()
+            _absent = absent_record_class(state.user_message or "", _held_classes)
         except Exception as _rr_err:  # pragma: no cover - never block the lane on this
             logger.debug(f"[capability] record registry unavailable: {_rr_err}")
             _absent = None
 
         if _absent:
             _readable = re.sub(r"(?<!^)(?=[A-Z])", " ", _absent).lower()
-            state.intermediate_results["capability_result"] = {
-                "success": True,
-                "response": (
-                    f"**{building_name} holds no {_readable} records**, so I cannot answer "
-                    f"this from the building's own data.\n\n"
-                    f"I checked: the ontology defines `ontosage:{_absent}`, and this "
+            _response = (
+                f"**{building_name} holds no {_readable} records**, so I cannot answer "
+                f"this from the building's own data.\n\n"
+                f"The {_readable} owner holds the authoritative answer."
+            )
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
+            if reader_is_admin_in(state):
+                # The remediation is for someone who can change the building's data. Told to
+                # an occupant or a supervisor it is an instruction they cannot follow, and
+                # "front-matter" in an answer reads as the system being broken.
+                _response += (
+                    f"\n\nI checked: the ontology defines `ontosage:{_absent}`, and this "
                     f"building has no instances of it.\n\n"
                     f"To make this answerable, add a {_readable} record — either as TTL, "
                     f"or as a document carrying the record-document front-matter "
                     f"(`record_type`, `owner`, `authority`, `effective_from`, `version`), "
                     f"which is lifted into queryable triples on ingest. No code change is "
-                    f"needed.\n\n"
-                    f"Meanwhile, the {_readable} owner holds the authoritative answer."
-                ),
+                    f"needed."
+                )
+            state.intermediate_results["capability_result"] = {
+                "success": True,
+                "response": _response,
                 "provenance": "absent_system_of_record",
                 "absent_record_class": _absent,
                 "building_name": building_name,
@@ -895,8 +973,13 @@ class CapabilityAgent:
                 logger.debug(f"[capability] corpus stats unavailable: {exc}")
                 _corpus_df, _n_docs = {}, 0
 
-            _strong = any(
-                match_strength(
+            # Kept as a LIST rather than an `any(...)`, because the decline below has to
+            # name which documents were about the question and which merely surfaced
+            # (BUG-748). The boolean is exactly what it was.
+            _distinctive = [
+                h
+                for h in doc_hits
+                if match_strength(
                     state.user_message or "",
                     str(h.get("text", "")),
                     extra_vocab=_concept_vocab,
@@ -904,8 +987,8 @@ class CapabilityAgent:
                     n_docs=_n_docs,
                 )
                 == MATCH_DISTINCTIVE
-                for h in doc_hits
-            )
+            ]
+            _strong = bool(_distinctive)
 
             # ── Answer FROM the passage, or decline (V7-T20 / BUG-369) ───────
             #
@@ -941,23 +1024,79 @@ class CapabilityAgent:
                 return state
 
             if _decided and doc_hits:
+                from orchestrator.services.grounding_guard import reader_is_admin_in
+
                 _cited = sorted({h["doc_name"].replace("_", " ").title() for h in doc_hits})
+                # BUG-748: a decline must not recite registers that have nothing to do with
+                # the question. Measured on the 147-question live read: "which washroom
+                # should I service next" was declined with "I searched Asset Engineering
+                # Register, Waste Collection Register, Water Hygiene Legionella", and a
+                # security records question with "Continuity Provision, Coordination
+                # Function, Patrol Checkpoint". The retriever returns the nearest passages
+                # whatever the distance, so naming all of them tells the reader the system
+                # looked in the wrong places — which is exactly what it did. Only passages
+                # the strength test calls DISTINCTIVE are named; when none is, the boundary
+                # is stated without a list.
+                _named = sorted({h["doc_name"].replace("_", " ").title() for h in _distinctive})
+                # BUG-730: this used to end "The owner of that record holds the answer." — an
+                # owner nobody named, pointing nowhere, on 19 of 147 recorded answers. A
+                # retrieved passage carries text, document name and score, never an owner, so
+                # there is no one real to name here; the plain boundary is the whole answer.
+                # BUG-710: and the sentence that replaced it over-claimed in the other
+                # direction. "…so the building's records do not cover this" was a statement
+                # about EVERYTHING the building holds, reached by searching DOCUMENTS only.
+                # Measured on run 3 of the 147-question read: "which current Security records
+                # are incomplete, stale, duplicated or conflicting?" was answered with it
+                # while 18 patrol checkpoints are held and row 22 of the same run listed
+                # CHK-105, CHK-301 and CHK-302 overdue — a supervisor asking two related
+                # questions sees the contradiction himself. A decline may report only what
+                # was actually looked in, and `_absent_note` below is the one path allowed to
+                # speak for the building as a whole, because it has counted.
+                if _named:
+                    _response = (
+                        f"**{building_name}'s documents do not answer this.** I searched "
+                        f"{', '.join(_named)}; they are the closest material and none of "
+                        "them contains the answer. That is a statement about the documents, "
+                        "not about the building — if you can name the record or the "
+                        "measurement this would be written down as, I will look there next."
+                    )
+                else:
+                    _response = (
+                        f"**I could not find this in {building_name}'s documents.** I "
+                        "searched them and none is about this question, so I have nothing "
+                        "grounded to answer it with. Name the record or the measurement it "
+                        "would be written down as and I will look there next."
+                    )
+                # ...unless the building holds a REGISTER the question names, in which case
+                # the honest thing is to name that, not to report an absence. This is a
+                # backstop: a register question normally routes to the graph lane long
+                # before here (dialogue_agent's TTL-first short-circuit), and it reaches
+                # this line only when some earlier stage claimed the question for documents.
+                _register_note = _held_register_note(state.user_message or "", _held_classes)
+                if _register_note:
+                    _response = _register_note
+                elif reader_is_admin_in(state):
+                    _response += (
+                        "\n\nIf the answer should be in a document, add or update it — a "
+                        "document carrying record-document front-matter is also lifted "
+                        "into queryable data on ingest."
+                    )
                 state.intermediate_results["capability_result"] = {
                     "success": True,
-                    "response": (
-                        f"**{building_name}'s documents do not answer this.** I searched "
-                        f"{', '.join(_cited)}; they are the closest material and none of "
-                        "them contains the answer.\n\n"
-                        "If the answer should be in a document, add or update it — a "
-                        "document carrying record-document front-matter is also lifted "
-                        "into queryable data on ingest. Otherwise the owner of that "
-                        "record holds it."
+                    "response": _response,
+                    "provenance": (
+                        "held_register_named" if _register_note else "documents_do_not_answer"
                     ),
-                    "provenance": "documents_do_not_answer",
                     "building_name": building_name,
+                    # What was SEARCHED stays on the evidence record — only the sentence the
+                    # reader sees is narrowed to what was actually about the question.
                     "documents": _cited,
+                    "documents_named": _named,
                 }
-                logger.info(f"[capability] documents searched and none answered: {_cited}")
+                logger.info(
+                    f"[capability] documents searched and none answered: {_cited} "
+                    f"(named to the reader: {_named or 'none'})"
+                )
                 return state
 
             seen_docs: set = set()
@@ -1002,12 +1141,32 @@ class CapabilityAgent:
 
         # ── 4. Honest boundary — every source missed ─────────────────────────
         # BUG-103: a refusal must also say how to MAKE it answerable (connect-data →
-        # get-answers), otherwise the user is left at a dead end with no next step.
+        # get-answers), otherwise the user is left at a dead end with no next step. The next
+        # step differs by reader: everyone is pointed at the people who hold the answer; only
+        # an administrator, who can act on it, is also told how to add it (2026-09-17).
         from orchestrator.services.grounding_guard import (
             SUBJECT_DOCUMENT,
             SUBJECT_SENSOR,
             enablement_hint,
+            reader_is_admin_in,
         )
+
+        # BUG-749: "I don't have that specific information on record" was said to a visitor
+        # asking whether the building is pushchair-friendly from the car park, while the
+        # accessible-route register held a step-free ground-level parking entrance. Nothing
+        # reached it, and the boundary sentence turned a routing miss into a statement about
+        # the building. A held register the question names is checked before that sentence
+        # is allowed out.
+        _register_note = _held_register_note(state.user_message or "", _held_classes)
+        if _register_note:
+            state.intermediate_results["capability_result"] = {
+                "success": True,
+                "response": _register_note,
+                "provenance": "held_register_named",
+                "building_name": building_name,
+            }
+            logger.info("[capability] no source matched — named the register held instead")
+            return state
 
         _q = (state.user_message or "").lower()
         _kind = (
@@ -1021,7 +1180,7 @@ class CapabilityAgent:
                 f"I don't have that specific information on record for **{building_name}**. "
                 f"For building-specific queries please contact your building's facilities / "
                 f"estates management team."
-                f"{enablement_hint(_kind)}"
+                f"{enablement_hint(_kind, for_admin=reader_is_admin_in(state))}"
             ),
             "provenance": "no_match",
             "building_name": building_name,

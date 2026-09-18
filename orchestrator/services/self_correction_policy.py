@@ -1,6 +1,19 @@
 """
 SelfCorrectionPolicy — unified repair interface for all data nodes.
 
+NOT WIRED IN. VERIFIED 2026-09-17: nothing in ``orchestrator/``, ``shared/`` or ``scripts/``
+imports this module. Its only reader is ``tests/test_survey_aligned_phases.py``, which
+exercises it directly. So the claim below that "SQL has NO repair loop -- this module adds
+that gap" describes an intention, not the running system: the gap is still open, because the
+module that closes it is never called.
+
+That matters beyond tidiness. The SQL lane's actual behaviour on an empty window is to
+substitute rows of a different period (BUG-658) rather than to repair anything, and this
+module sitting here unread is part of why nobody noticed the lane had no repair path. Either
+wire it into the SQL node -- with the probe green before and after, one lane at a time -- or
+delete it. Do not leave it as a third state where the code exists, the tests pass, and the
+behaviour is absent.
+
 Survey justification (Phase 2 / Thesis Contribution):
   G4 "Future work hooks" calls for a closed-loop feedback log.
   Self-correction is the headline research methodology: the system repairs

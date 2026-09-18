@@ -385,4 +385,87 @@ def test_an_answer_with_no_figure_gets_no_boundary_line():
     src = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
     body = src[src.index("async def _meter_boundary_line") :][:2200]
     assert '"privacy_refusal"' in body, "a refusal can still collect a boundary line"
-    assert 'search(r"\d", answer' in body, "an answer with no number can still collect one"
+    assert "states_a_metered_quantity(" in body, "an answer with no figure can still collect one"
+
+
+# ── C6a: a digit is not a figure ─────────────────────────────────────────────
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "Floor 3 used 120 kWh yesterday.",
+        "Total consumption was 5.46 kWh.",
+        "The building drew 1,200 kWh last week.",
+        "Peak demand reached 42.5 kW at 14:00.",
+        "Annual use was 3.2 MWh.",
+        "The chiller drew 900 W.",
+        "Gas use was 14 m³ today.",
+        "Gas use was 14 m3 today.",
+        "It used 22 kilowatt-hours.",
+    ],
+)
+def test_an_energy_quantity_is_a_figure(answer):
+    from orchestrator.services.evidence.meter_boundary import states_a_metered_quantity
+
+    assert states_a_metered_quantity(answer)
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        # The three recorded answers that collected the line (C6a), in their shape.
+        "Room 2.15 has been withdrawn from booking since 12 September 2026.",
+        "I can't advise on a pregnant occupant overheating in Room 3.04; speak to your manager.",
+        "The building's records do not hold an energy tariff; record TAR-2026-001 is absent.",
+        "Work order 4471 was raised on 2026-09-14 at 09:30.",
+        "Floor 2 West has 14 sensors.",
+        "2 w",
+        # Litres are a quantity only for a water meter.
+        "The tank holds 500 L.",
+    ],
+)
+def test_a_digit_that_is_not_an_energy_quantity_is_not_a_figure(answer):
+    from orchestrator.services.evidence.meter_boundary import states_a_metered_quantity
+
+    assert not states_a_metered_quantity(answer)
+
+
+def test_litres_are_a_figure_only_for_water():
+    from orchestrator.services.evidence.meter_boundary import states_a_metered_quantity
+
+    assert states_a_metered_quantity("Water use was 500 litres.", water=True)
+    assert states_a_metered_quantity("Water use was 500 L.", water=True)
+    assert not states_a_metered_quantity("Water use was 500 litres.", water=False)
+
+
+def test_a_room_number_on_an_energy_word_gets_no_boundary_line(monkeypatch):
+    """End to end through the method: the energy word matches, the digit is a room number, and
+    no line may be attached — and the topology is never even loaded."""
+    import asyncio
+    from types import SimpleNamespace
+
+    import orchestrator.workflow._orchestrator as orch
+
+    called = []
+
+    async def _boundaries(*_a, **_k):
+        called.append(True)
+        return {}
+
+    import orchestrator.services.evidence.meter_boundary as mb
+
+    monkeypatch.setattr(mb, "for_building", _boundaries)
+    state = SimpleNamespace(
+        messages=[SimpleNamespace(content="Why is Room 2.15 not available? Energy saving?")],
+        current_intent="capability",
+        intermediate_results={},
+    )
+    self_ = SimpleNamespace(_ENERGY_ANSWER_RE=orch.WorkflowOrchestrator._ENERGY_ANSWER_RE)
+    line = asyncio.run(
+        orch.WorkflowOrchestrator._meter_boundary_line(
+            self_, state, "Room 2.15 was withdrawn for energy works on 12 September."
+        )
+    )
+    assert line == ""
+    assert not called

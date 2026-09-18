@@ -46,8 +46,25 @@ _WORDING: Dict[OmissionReason, str] = {
     OmissionReason.INADEQUATE_COVERAGE: "a source that does not cover the place asked about",
 }
 
-#: The remedy that actually resolves each cause. A stated gap with no route out reads as an
-#: excuse; these say who or what changes the answer.
+#: What EVERY reader is told about each cause: why the criterion was left out and what that
+#: means for the answer, in plain words. No instruction to change the building's data -- an
+#: occupant or a supervisor cannot act on one, and it makes an honest gap read as a fault
+#: (2026-09-17 user decision). RESTRICTED keeps its route because the route is the reader's.
+_READER_NOTE: Dict[OmissionReason, str] = {
+    OmissionReason.MISSING: "No readings for it are available, so it was left out rather than "
+    "guessed.",
+    OmissionReason.STALE: "The sensor exists but has stopped reporting, so its last value was "
+    "not used.",
+    OmissionReason.RESTRICTED: "A user with the necessary permission can see it; this is an "
+    "access decision, not a gap in the data.",
+    OmissionReason.NOT_INSTRUMENTED: "This building does not measure it, so it was left out "
+    "rather than estimated.",
+    OmissionReason.INADEQUATE_COVERAGE: "Only a reading from nearby exists, so it was not "
+    "scored for the place asked about.",
+}
+
+#: The remedy that actually resolves each cause, for an ADMINISTRATOR. A stated gap with no
+#: route out reads as an excuse; these say who or what changes the answer.
 _REMEDY: Dict[OmissionReason, str] = {
     OmissionReason.MISSING: "Connecting readings for it would let this criterion be scored.",
     OmissionReason.STALE: "The sensor exists but has stopped reporting; restoring it restores "
@@ -115,16 +132,21 @@ def classify(facts: CriterionFacts) -> Optional[OmissionReason]:
     return None
 
 
-def omission_for(facts: CriterionFacts) -> Optional[OmittedCriterion]:
-    """One structured omission, or None when the criterion was usable."""
+def omission_for(facts: CriterionFacts, for_admin: bool = False) -> Optional[OmittedCriterion]:
+    """One structured omission, or None when the criterion was usable.
+
+    The generic detail is the administrator's remedy when ``for_admin``, and the plain
+    reader note otherwise. A caller-supplied detail is used as given either way.
+    """
     reason = classify(facts)
     if reason is None:
         return None
-    detail = facts.detail.strip() or _REMEDY[reason]
+    generic = _REMEDY[reason] if for_admin else _READER_NOTE[reason]
+    detail = facts.detail.strip() or generic
     return OmittedCriterion(criterion=facts.criterion, reason=reason, detail=detail)
 
 
-def collect(all_facts: Iterable[CriterionFacts]) -> List[OmittedCriterion]:
+def collect(all_facts: Iterable[CriterionFacts], for_admin: bool = False) -> List[OmittedCriterion]:
     """Every omission among the requested criteria, in the order they were requested.
 
     Request order, not severity order: the user's own sequence is the one they can check
@@ -133,7 +155,7 @@ def collect(all_facts: Iterable[CriterionFacts]) -> List[OmittedCriterion]:
     """
     out: List[OmittedCriterion] = []
     for facts in all_facts:
-        omission = omission_for(facts)
+        omission = omission_for(facts, for_admin=for_admin)
         if omission is not None:
             out.append(omission)
     return out

@@ -95,8 +95,25 @@ def test_the_sql_decline_says_what_to_ask_instead():
     from orchestrator.agents import sql_agent
 
     source = inspect.getsource(sql_agent.SQLAgent)
-    for hint in ("one floor, or one room", "one measurement at a time"):
+    for hint in ("One floor, one room", "as a comparison"):
         assert hint in source
+
+
+def test_the_sql_decline_does_not_tell_the_reader_to_drop_a_measurement():
+    """Rows 0/16/17/25 of the 2026-09-17 stakeholder read.
+
+    Every one of them asked about several measurements at once — "the best balance of
+    temperature, ventilation, light and quiet" — and every one was answered with "one
+    measurement at a time (temperature, or CO2 — not both)". That is advice to ask a
+    different question, and it misdescribes the system: the comparison lane ranks spaces on
+    several measurements at once across the whole building. The budget is real; this
+    narrowing was not.
+    """
+    from orchestrator.agents import sql_agent
+
+    source = inspect.getsource(sql_agent.SQLAgent)
+    assert "one measurement at a time" not in source
+    assert "not both" not in source
 
 
 def test_a_deliberate_decline_is_not_re_explained_as_missing_data():

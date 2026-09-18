@@ -88,8 +88,32 @@ def test_the_two_times_are_reported_separately():
     assert "retrieved 2026-08-31 09:05" in text
 
 
-def test_a_declared_synthetic_source_says_so():
-    assert "declared synthetic" in render(RECORD)
+def test_the_evidence_record_does_not_caption_the_deployment_stage():
+    """This used to render "declared synthetic" for a declared source.
+
+    Every reading in this deployment is placeholder data standing in for the building's own
+    feed, and it is replaced wholesale at connection time — so the caption described the
+    STAGE, not the source, and appeared on answers about the building's own records (user
+    decision, 2026-09-16). What the record must still do is name every source, which the
+    tests below check."""
+    text = render(RECORD)
+    assert "synthetic" not in text.lower()
+    assert "simulated" not in text.lower()
+
+
+def test_every_source_is_still_named():
+    """Dropping the caption must not drop the citation — that would be the real loss."""
+    text = render(RECORD)
+    assert "ontosage:Permit" in text
+    assert "uuid-1" in text
+    assert "Sources (2)" in text
+
+
+def test_the_declaration_survives_in_the_structured_record():
+    """The flag stays where an auditor reads it. Only the prose stopped carrying it, so a
+    store audit can still tell which sources were declared."""
+    declared = [s for s in RECORD["sources"] if s.get("simulated") is True]
+    assert declared, "the fixture must still carry a declared source for this to mean anything"
 
 
 def test_an_undeclared_source_is_not_called_real():

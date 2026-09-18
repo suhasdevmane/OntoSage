@@ -177,6 +177,11 @@ class BuildingMetrics:
         """
         cached = self._cache.get(building_id)
         if cached and (time.monotonic() - cached.generated_at) < _CACHE_TTL_S:
+            # Recorded on the CACHED path too. A figure is evidence because a query produced
+            # it, not because the query ran in this particular second -- and recording only
+            # on a miss would have made the honesty check pass or fail depending on the cache
+            # clock, which is the least defensible failure mode available (CAVEAT-769).
+            record_snapshot_figures(cached)
             return cached
 
         ns = namespace or _resolve_namespace(building_id)
@@ -242,6 +247,7 @@ class BuildingMetrics:
             logger.warning(f"[building_metrics] reporting-coverage check failed: {e}")
 
         self._cache[building_id] = snap
+        record_snapshot_figures(snap)
         return snap
 
     async def _count(self, sparql: str) -> Optional[int]:
@@ -557,11 +563,90 @@ def _bindings(data: dict) -> list:
     return []
 
 
+#: The source name this lane's figures are filed under in the turn's evidence record.
+EVIDENCE_SOURCE = "building_metrics"
+
+
+def snapshot_figures(snap: BuildingMetricsSnapshot) -> Dict[str, float]:
+    """Every figure this snapshot computed, as ``{field: number}``.
+
+    Pure, so the contract between what is COUNTED and what is RECORDED can be pinned by a
+    unit test rather than inferred from a live turn. Field names come from the snapshot and
+    from the graph (a Brick class local name) -- never from the rendered prose, which would
+    let the answer vouch for itself.
+
+    Keys are omitted rather than zeroed when a metric could not be computed: ``None`` means
+    the query failed, and filing it as 0 would offer the binder a figure the building never
+    produced.
+    """
+    out: Dict[str, float] = {}
+
+    def put(name: str, value) -> None:
+        if isinstance(value, (int, float)) and not isinstance(value, bool):
+            out[name] = float(value)
+
+    put("points_described", snap.total_points)
+    put("sensors_declared", snap.total_sensors)
+    put("zones", snap.zone_count)
+    put("floors", snap.floor_count)
+    put("rooms", snap.room_count)
+    put("streams_reporting", snap.reporting_sensors)
+    put("reporting_window_hours", snap.reporting_window_h)
+    put("mapped_area_m2", snap.total_area_m2)
+    if snap.per_floor_area:
+        put("mapped_floors", len(snap.per_floor_area))
+        for floor, area, spaces in snap.per_floor_area:
+            put(f"floor_{floor}_area_m2", area)
+            put(f"floor_{floor}_spaces", spaces)
+        put("mapped_spaces", sum(s for _f, _a, s in snap.per_floor_area))
+    # The breakdown the answer names: "6 storeys plus 1 rooftop". Each part is a COUNT the
+    # graph returned, so each part is evidence -- and the storey subtotal is stated in the
+    # prose while living in no single field, which is exactly how it came to look invented.
+    storeys = sum(n for k, n in snap.floor_kinds if k in ("Floor", "Storey"))
+    if storeys:
+        put("storeys", storeys)
+    for kind, n in snap.floor_kinds:
+        put(f"floor_kind_{kind}", n)
+    for cls, n in snap.sensor_types:
+        put(f"sensor_type_{str(cls).replace(' ', '_')}", n)
+    return out
+
+
+def record_snapshot_figures(snap: BuildingMetricsSnapshot) -> None:
+    """File this snapshot's counts as evidence for the turn that asked for it (CAVEAT-769).
+
+    Never raises. A building's answer must not fail because the honesty record could not be
+    written -- the binder degrades to record-only when it cannot see evidence, which is the
+    safe direction, and an exception here would be the unsafe one.
+    """
+    try:
+        from orchestrator.services.evidence import computed
+
+        computed.record(EVIDENCE_SOURCE, snapshot_figures(snap))
+    except Exception as e:  # pragma: no cover - defensive
+        logger.debug(f"[building_metrics] evidence recording skipped: {e}")
+
+
 def render_metrics_block(snap: BuildingMetricsSnapshot, building_name: str) -> str:
-    """Render the snapshot as an authoritative, human-readable markdown block."""
-    lines = [f"**Live building figures for {building_name}** (computed now from the ontology):"]
+    """Render the snapshot as an authoritative, human-readable markdown block.
+
+    Every reader sees this block, so it is worded for someone who has never heard of an
+    ontology, a triple or a "point" (2026-09-17 user decision): the source is named as the
+    building's own model, and the point count as the readings and settings it describes.
+    """
+    # Recorded here as well as in `snapshot`, so "every figure this block states was filed as
+    # evidence" is true of the RENDER and not only of the fetch. A caller that assembles a
+    # snapshot itself still gets a bindable answer, and a repeat record overwrites.
+    record_snapshot_figures(snap)
+    lines = [
+        f"**Live building figures for {building_name}** "
+        "(computed now from the building's own model):"
+    ]
     if snap.total_points is not None:
-        lines.append(f"- Instrumented points in the ontology: **{snap.total_points:,}**")
+        lines.append(
+            f"- Readings and settings described in the building model: "
+            f"**{snap.total_points:,}**"
+        )
     if snap.total_sensors is not None:
         # CAVEAT-007: never present the ontology count as operational reality —
         # say what is DECLARED and, when known, how many actually reported data.
@@ -580,7 +665,7 @@ def render_metrics_block(snap: BuildingMetricsSnapshot, building_name: str) -> s
             # with the same noun invited exactly the reading it got.
             lines.append(
                 f"- Data streams that reported in the last {snap.reporting_window_h} h: "
-                f"**{snap.reporting_sensors:,}** (live check across the registered "
+                f"**{snap.reporting_sensors:,}** (live check across the connected "
                 f"databases — a sensor can carry more than one stream, so this is not "
                 f"comparable to the sensor count above)"
             )
@@ -599,7 +684,7 @@ def render_metrics_block(snap: BuildingMetricsSnapshot, building_name: str) -> s
             lines.append(
                 f"- Floors: **{snap.floor_count}** — {storeys} storey"
                 f"{'s' if storeys != 1 else ''} plus {others} "
-                f"(Brick counts these as floors)"
+                f"(the building model counts these as floors)"
             )
         else:
             lines.append(f"- Floors: **{snap.floor_count}**")

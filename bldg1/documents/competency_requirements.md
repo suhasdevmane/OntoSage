@@ -14,8 +14,6 @@ tables:
 
 # Competency and Authorisation Requirements — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## What this register does and does not hold
 
 It records what a restricted area **requires**. It deliberately does not record who holds

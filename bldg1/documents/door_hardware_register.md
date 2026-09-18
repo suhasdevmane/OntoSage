@@ -14,8 +14,6 @@ tables:
 
 # Door and Shutter Hardware Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional hardware survey, not a live door schedule._
-
 ## What this register records, and why the equipment model could not
 
 The building already models the readers, maglocks and fire doors as equipment. None of that

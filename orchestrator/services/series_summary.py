@@ -175,3 +175,194 @@ def summarise_series(
     if len(ordered) > max_series:
         lines.append(f"- …and {len(ordered) - max_series} more series not shown")
     return "\n".join(lines), has_energy
+
+
+#: A question about how something CHANGED, or about one period against another. Matched on the
+#: question, never on the data: the same rows answer "what is the CO2 now" and "how has the CO2
+#: changed this week", and only the question says which.
+_TEMPORAL_RE = None  # built lazily below, so the module keeps importing with no regex cost
+
+
+def asks_how_it_changed(question: str) -> bool:
+    """True when the answer has to be a shape over time, not a single figure.
+
+    "How has the temperature on floor 3 changed over the last week?" was answered *"No change
+    data available for floor 3 over the last week"* from a week of readings that had been
+    fetched, clamped and handed over — as per-floor means, because a per-FLOOR summary is the
+    only one that existed (BUG-626). A mean over a week cannot show a change within it.
+    """
+    global _TEMPORAL_RE
+    if _TEMPORAL_RE is None:
+        import re as _re
+
+        _TEMPORAL_RE = _re.compile(
+            r"\b(?:how\s+(?:has|have|did|is|are)\b[^?]*\bchang|chang(?:e|ed|ing)\s+over"
+            r"|trend|trending|over\s+(?:the\s+)?(?:last|past|previous)\s+\w+"
+            r"|compared?\s+(?:with|to)\s+(?:last|previous|the\s+(?:previous|preceding))"
+            # "Compare this week's electricity use with last week" — the comparison word and
+            # the period it names are six words apart, so an adjacency pattern misses it.
+            r"|\bthis\s+(?:week|month|year|quarter)\b[^?]{0,60}?\b(?:last|previous|prior)\s+"
+            r"(?:week|month|year|quarter)\b"
+            r"|\b(?:last|previous|prior)\s+(?:week|month|year|quarter)\b[^?]{0,60}?\bthis\s+"
+            r"(?:week|month|year|quarter)\b"
+            r"|week\s+on\s+week|day\s+on\s+day|month\s+on\s+month"
+            r"|rise|risen|rising|fall|fallen|falling|increase[sd]?|decrease[sd]?"
+            r"|busiest|quietest|peak\s+(?:time|hour)|what\s+time\b)",
+            _re.IGNORECASE,
+        )
+    return bool(_TEMPORAL_RE.search(question or ""))
+
+
+def _bucket_of(when: datetime, size: str) -> str:
+    if size == "hour":
+        return when.strftime("%Y-%m-%d %H:00")
+    if size == "week":
+        iso = when.isocalendar()
+        return f"{iso[0]}-W{iso[1]:02d}"
+    return when.strftime("%Y-%m-%d")
+
+
+def _bucket_size(span_hours: float, question: str = "") -> str:
+    """Chosen from the period the QUESTION names, else from the span.
+
+    "Compare this week's electricity use with last week" bucketed by day answered with the
+    first day against the last day — two PARTIAL days, one of them today — and reported a
+    291.7% rise that no week had. A question that names weeks is answered in weeks.
+
+    No calendar literal about this building: a span is a span wherever it was measured.
+    """
+    import re as _re
+
+    asked = (question or "").lower()
+    for word, hours in (("year", 24 * 365), ("quarter", 24 * 90), ("month", 24 * 28), ("week", 24 * 7)):
+        if _re.search(rf"\b(?:this|last|previous|prior|past|each|per)\s+{word}\b", asked):
+            # Only if the window actually holds more than one of them; otherwise one bucket
+            # is the whole answer and says nothing.
+            if span_hours >= hours * 1.5:
+                return word
+    if span_hours <= 72:
+        return "hour"
+    if span_hours <= 24 * 70:
+        return "day"
+    return "week"
+
+
+def _complete_buckets(ordered: List[str], per_bucket: Dict[str, List[float]]) -> List[str]:
+    """Drop an edge bucket that is materially shorter than the rest — it is partial.
+
+    The window almost always starts mid-bucket and ends NOW, so the first and last buckets
+    hold a fraction of the readings the others do. Comparing them states a change in the
+    measurement window as though it were a change in the building.
+    """
+    if len(ordered) < 3:
+        return ordered
+    counts = sorted(len(per_bucket[b]) for b in ordered)
+    typical = counts[len(counts) // 2]
+    if typical <= 0:
+        return ordered
+    keep = list(ordered)
+    for edge in (0, -1):
+        if len(keep) > 2 and len(per_bucket[keep[edge]]) < typical * 0.6:
+            keep.pop(edge)
+    return keep
+
+
+def summarise_periods(
+    rows: Iterable[Any],
+    metadata: Optional[Dict[str, Dict[str, Any]]] = None,
+    question: str = "",
+    bucket: str = "",
+) -> Optional[str]:
+    """Per-period aggregates and the change across them, computed here not by the narrator.
+
+    The counterpart of :func:`summarise_groups`: that one answers "which floor", this one
+    answers "when" and "how did it change". Energy is summed per period and everything else
+    averaged, by the same unit decision, so a period total never silently averages kWh.
+    """
+    from orchestrator.services.units import _KIND, aggregation_decision, normalise
+
+    metadata = metadata or {}
+    stamped: List[Tuple[datetime, str, float]] = []
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        when = _parse_ts(
+            row.get("datetime") or row.get("timestamp") or row.get("time") or row.get("Datetime")
+        )
+        if when is None:
+            continue
+        try:
+            value = float(row.get("value"))
+        except (TypeError, ValueError):
+            continue
+        stamped.append((when, str(row.get("uuid") or row.get("sensor") or ""), value))
+    if len(stamped) < 4:
+        return None
+
+    span_hours = (max(s[0] for s in stamped) - min(s[0] for s in stamped)).total_seconds() / 3600.0
+    if span_hours < 1:
+        return None
+    size = bucket or _bucket_size(span_hours, question)
+
+    units = {str((metadata.get(u) or {}).get("unit") or "") for _, u, _ in stamped}
+    decision = aggregation_decision(units)
+    if not decision.ok:
+        return f"Per-period aggregates were NOT computed: {decision.reason}."
+    unit = decision.target
+    is_energy = _KIND.get(normalise(unit)) == "energy"
+
+    per_bucket: Dict[str, List[float]] = {}
+    for when, _uid, value in stamped:
+        per_bucket.setdefault(_bucket_of(when, size), []).append(value)
+    if len(per_bucket) < 2:
+        return None
+
+    ordered = sorted(per_bucket)
+    # A long window is reported at its ends and its extremes, not as two hundred lines.
+    shown = ordered if len(ordered) <= 14 else ordered[:6] + ordered[-6:]
+    lines = [
+        f"Per-{size} figures, computed from the readings fetched (quote these; do not "
+        f"recompute them, and do not say the data holds only latest values):"
+    ]
+    for key in shown:
+        values = per_bucket[key]
+        stat = sum(values) if is_energy else mean(values)
+        word = "total" if is_energy else "mean"
+        lines.append(
+            f"- {key}: {word} {_fmt(stat)} {unit} "
+            f"({len(values)} readings, {_fmt(min(values))} to {_fmt(max(values))})"
+        )
+    if len(ordered) > len(shown):
+        lines.append(f"- … {len(ordered) - len(shown)} further {size}(s) omitted from this list")
+
+    def _stat(key: str) -> float:
+        return sum(per_bucket[key]) if is_energy else mean(per_bucket[key])
+
+    # The change is measured between COMPLETE periods. A window that begins mid-period and
+    # ends now makes its two edge buckets partial, and comparing those reports a change in
+    # the measurement window as a change in the building (BUG-627).
+    whole = _complete_buckets(ordered, per_bucket)
+    partial = [b for b in ordered if b not in whole]
+    first, last = _stat(whole[0]), _stat(whole[-1])
+    change = last - first
+    direction = "up" if change > 0 else ("down" if change < 0 else "unchanged")
+    pct = f" ({change / first * 100:+.1f}%)" if first else ""
+    lines.append(
+        f"CHANGE ACROSS THE WINDOW: {_fmt(first)} {unit} in {whole[0]} to "
+        f"{_fmt(last)} {unit} in {whole[-1]} — {direction} by "
+        f"{_fmt(abs(change))} {unit}{pct}. This is the answer to how it changed; state it."
+    )
+    if partial:
+        lines.append(
+            f"PARTIAL {size}(s) EXCLUDED from that comparison: {', '.join(partial)} — each holds "
+            f"far fewer readings than a whole {size} because the window starts or ends inside "
+            f"it. Do not compare them with a whole {size}, and do not present their figure as a "
+            f"{size}'s worth."
+        )
+    hi = max(whole, key=_stat)
+    lo = min(whole, key=_stat)
+    lines.append(
+        f"HIGHEST {size}: {hi} at {_fmt(_stat(hi))} {unit}. LOWEST: {lo} at "
+        f"{_fmt(_stat(lo))} {unit}."
+    )
+    return "\n".join(lines)

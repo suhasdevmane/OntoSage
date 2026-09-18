@@ -1,0 +1,85 @@
+# SATURATE (V4-T08): simulated electric_power sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'submeter_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#submeter_data>
+    a ref:Database ;
+    rdfs:label "Submeter Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0_sat_electric_power>
+    a brick:Electric_Power_Sensor ;
+    rdfs:label "Floor0 electric_power [kW]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7132834f-208b-5401-9ae1-9160bd0ee5d7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#submeter_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1_sat_electric_power>
+    a brick:Electric_Power_Sensor ;
+    rdfs:label "Floor1 electric_power [kW]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "53a2387f-903f-5bde-b331-6dd443994795" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#submeter_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2_sat_electric_power>
+    a brick:Electric_Power_Sensor ;
+    rdfs:label "Floor2 electric_power [kW]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "97f8ec3d-c332-5bad-9041-bbf0520e3bb2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#submeter_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3_sat_electric_power>
+    a brick:Electric_Power_Sensor ;
+    rdfs:label "Floor3 electric_power [kW]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "087f6aba-e0a2-5866-ac62-5f965910a885" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#submeter_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4_sat_electric_power>
+    a brick:Electric_Power_Sensor ;
+    rdfs:label "Floor4 electric_power [kW]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0d4b3ddb-b2e9-59c0-8682-4d556de6c5dd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#submeter_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5_sat_electric_power>
+    a brick:Electric_Power_Sensor ;
+    rdfs:label "Floor5 electric_power [kW]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a9415984-e2db-58c2-963a-646ca7b726b7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#submeter_data> ;
+    ] .

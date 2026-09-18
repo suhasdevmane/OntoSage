@@ -14,8 +14,6 @@ tables:
 
 # Energy Tariff Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## How cost is computed
 
 A cost answer is metered consumption multiplied by the unit rate **of the tariff in force

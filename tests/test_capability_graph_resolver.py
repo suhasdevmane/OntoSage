@@ -183,7 +183,9 @@ async def test_capability_agent_answers_from_triples(monkeypatch):
     res = out.intermediate_results["capability_result"]
     assert res["provenance"] == "capability_graph"
     assert "Main passenger lift" in res["response"]
-    assert "ontology" in res["response"].lower()
+    # The answer still names where it came from, in words every reader understands
+    # (2026-09-17: "ontology (triples)" is withheld from non-administrators).
+    assert "building's own records" in res["response"].lower()
 
 
 # ── new Facility / Service / Accessibility amenities (Phase 1.2) ──────────────
@@ -330,8 +332,10 @@ async def test_off_topic_document_is_not_presented_as_an_answer(monkeypatch):
     assert "800 ppm" not in res["response"]
     assert res["provenance"] in ("no_match", "referent_not_found", "referent_unverified")
     if res["provenance"] == "no_match":
-        # Post-search boundary: must tell the user how to make it answerable.
-        assert "no code changes" in res["response"].lower()
+        # Post-search boundary: an honest decline. This state carries no role, so the
+        # "how to add it" steps are withheld (2026-09-17: administrators only).
+        assert "don't have that specific information" in res["response"].lower()
+        assert "no code changes" not in res["response"].lower()
     else:
         # Pre-search gate: must be clearly about the named thing, not a doc miss.
         assert "water tank" in res["response"]

@@ -220,10 +220,43 @@ async def class_census(
     for require_all in (True, False):
         rows = await _census_query(terms, namespace, endpoint, limit, require_all=require_all)
         if rows:
+            record_census_figures(rows)
             return rows
         if len(terms) == 1:
             break
     return []
+
+
+#: The source name this lane's figures are filed under in the turn's evidence record.
+EVIDENCE_SOURCE = "class_census"
+
+
+def census_figures(rows: List[Tuple[str, int]]) -> Dict[str, float]:
+    """The census as ``{class local name: count}`` -- the figures the answer will state.
+
+    Pure, so what is COUNTED and what is RECORDED are pinned by a unit test. The names come
+    from the graph's own class IRIs, never from the rendered sentence.
+    """
+    out: Dict[str, float] = {}
+    for local, n in rows or []:
+        if isinstance(n, (int, float)) and not isinstance(n, bool):
+            out[str(local)] = float(n)
+    return out
+
+
+def record_census_figures(rows: List[Tuple[str, int]]) -> None:
+    """File a census as evidence for the turn that asked for it (CAVEAT-769).
+
+    Without this the only place "280" existed was the sentence under test, so claim binding
+    in enforce mode deleted the number the question had asked for. A count is the result of a
+    query; recording it is what separates it from a guess. Never raises.
+    """
+    try:
+        from orchestrator.services.evidence import computed
+
+        computed.record(EVIDENCE_SOURCE, census_figures(rows))
+    except Exception as e:  # pragma: no cover - defensive
+        logger.debug(f"[inventory] evidence recording skipped: {e}")
 
 
 async def _census_query(
@@ -322,9 +355,7 @@ def collapse_synonyms(rows: List[Tuple[str, int, str, str]]) -> List[Tuple[str, 
 OVERLAP_PROBE_ENABLED = False
 
 
-async def overlap_notes(
-    rows: List[Tuple[str, int]], namespace: str, endpoint: str
-) -> List[str]:
+async def overlap_notes(rows: List[Tuple[str, int]], namespace: str, endpoint: str) -> List[str]:
     """Which census rows are SUBSETS of other census rows (V12-09, CAVEAT-006 residual).
 
     A census reads as a partition. "Air Quality Sensor 523, CO2 Sensor 214, CO2 Level
@@ -403,9 +434,7 @@ SELECT ?an ?bn (COUNT(DISTINCT ?s) AS ?n) WHERE {{
     )
 
 
-def overlap_sentences(
-    pairs: List[Tuple[str, str, int]], counts: Dict[str, int]
-) -> List[str]:
+def overlap_sentences(pairs: List[Tuple[str, str, int]], counts: Dict[str, int]) -> List[str]:
     """Turn measured pair overlaps into the sentences a reader needs. Pure, so it is
     testable without a graph.
 
@@ -445,7 +474,12 @@ def render_census(
     """Render a census as prose, or None when there is nothing to report."""
     if not rows:
         return None
-    lines = [f"Here is what **{building_name}** has, counted live from its ontology:\n"]
+    # Recorded at the render too, so "every figure this block states was filed as evidence"
+    # is true of the RENDER and not only of the fetch. A repeat record overwrites.
+    record_census_figures(rows)
+    # Worded for every reader (2026-09-17 user decision): "ontology" and "triples" are the
+    # implementation, and a supervisor reading them sees a system talking to itself.
+    lines = [f"Here is what **{building_name}** has, counted live from its building model:\n"]
     notes: List[str] = list(overlaps or [])
     for local, n in rows:
         lines.append(f"- **{local.replace('_', ' ')}** — {n}")
@@ -462,6 +496,6 @@ def render_census(
                 notes.append(note)
         except Exception:  # pragma: no cover - a disclosure must never break a count
             pass
-    lines.append("\n*Counted now from the building's own ontology (triples).*")
+    lines.append("\n*Counted now from the building's own model.*")
     lines.extend("\n" + n for n in notes)
     return "\n".join(lines)

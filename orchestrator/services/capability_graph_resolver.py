@@ -162,6 +162,31 @@ class CapabilityFact:
         return f"Drinkability: {reading} — published by {self.potability_authority}{when}.{stale}"
 
 
+#: The lay terms an amenity INHERITS from its kind, declared once on the class in the OCBV
+#: TBox ("multi-faith room" on ontosage:PrayerRoom) rather than on every building's instances.
+#:
+#: Nothing read them before 2026-09-17. The query below this one asked only for
+#: `?a ontosage:layTerms`, so a synonym declared on a class did nothing, and a building was
+#: reachable only by the words its own TTL happened to repeat on each instance: bldg1's
+#: amenities carried their vocabulary, and a building typed `a ontosage:PrayerRoom` with no
+#: instance terms could not be asked about its prayer room at all.
+#:
+#: Restricted to Capability subclasses so a class from another module (a record register, a
+#: sensor class) can never lend its vocabulary to an amenity that happens to share a type.
+_KIND_TERMS_QUERY = (
+    f"{_ONTO}{_RDFS}"
+    'SELECT ?a (GROUP_CONCAT(DISTINCT ?klay; separator="|") AS ?klays) WHERE { '
+    "{ ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } "
+    "?a a ?kind . ?kind rdfs:subClassOf+ ontosage:Capability ; ontosage:layTerms ?klay . "
+    "} GROUP BY ?a"
+)
+
+
+def _phrases(value: str) -> List[str]:
+    """Lay-term text as lower-cased phrases: instance literals use ',', class terms '|'."""
+    return [p.strip().lower() for p in re.split(r"[,|]", value or "") if p.strip()]
+
+
 @dataclass
 class _Amenity:
     label: str
@@ -334,6 +359,17 @@ class CapabilityGraphResolver:
             "OPTIONAL { ?a ontosage:potabilityAuthority ?potauth } "
             "OPTIONAL { ?a ontosage:potabilityIssuedOn ?potdate } }"
         )
+        # Kind vocabulary first, in its own query: a failure here must cost only the inherited
+        # terms, never the amenities themselves.
+        kind_terms: dict = {}
+        try:
+            for kb in _bindings(await self._exec(_KIND_TERMS_QUERY)):
+                iri = kb.get("a", {}).get("value", "")
+                klays = kb.get("klays", {}).get("value", "")
+                if iri and klays:
+                    kind_terms[iri] = _phrases(klays)
+        except Exception as e:  # an older GraphDB, a malformed class term: keep instance terms
+            logger.debug(f"[capability_graph] kind lay terms unavailable: {describe_exception(e)}")
         data = await self._exec(q)
         out: List[_Amenity] = []
         for b in _bindings(data):
@@ -342,13 +378,15 @@ class CapabilityGraphResolver:
             def _v(key: str) -> str:
                 return b.get(key, {}).get("value", "").strip()
 
+            own = _phrases(lay)
+            inherited = [p for p in kind_terms.get(_v("a"), []) if p not in own]
             out.append(
                 _Amenity(
                     label=_v("label"),
                     location=_v("loc"),
                     note=_v("note"),
                     category=_v("cat"),
-                    lay_phrases=[p.strip().lower() for p in lay.split(",") if p.strip()],
+                    lay_phrases=own + inherited,
                     answer=_v("answer"),
                     url=_v("url"),
                     email=_v("email"),

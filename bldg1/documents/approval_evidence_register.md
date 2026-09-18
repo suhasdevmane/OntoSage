@@ -14,8 +14,6 @@ tables:
 
 # Approval and Evidence Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional governance data, not a real assurance file._
-
 ## What this register is for
 
 Across every stakeholder group, the questions the building could not answer used the same

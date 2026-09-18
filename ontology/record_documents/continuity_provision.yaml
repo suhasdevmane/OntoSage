@@ -1,0 +1,79 @@
+# Service continuity register -> ontosage:ContinuityProvision
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# "If the primary server room, communications room or core-network area is unavailable, which
+# services have a verified alternative location, path and operating capacity?" was answered
+# with a list of 21 lab spaces (stakeholder run #3 #16). The building modelled rooms and
+# equipment; nothing recorded which service depends on which space, whether an alternative
+# exists, or whether anybody has proved it. A list of rooms reads as a list of options, which
+# is the worst possible answer to a continuity question.
+#
+# VERIFIED AND CLAIMED ARE DIFFERENT FACTS. `status` is the owner's recorded state and an
+# alternative with no proving evidence is recorded `unverified`, never `verified`. A register
+# that let an untested plan read as a provision would send somebody to a room that cannot
+# carry the load.
+#
+# "NONE IDENTIFIED" IS A ROW, NOT A GAP. A service with no arranged alternative is exactly
+# what a continuity question needs to surface, so it is recorded explicitly rather than left
+# out of the register.
+record_type: continuity_provision
+class: ontosage:ContinuityProvision
+iri_template: "continuity/{provision}"
+label_column: service
+
+columns:
+  provision:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  service:
+    predicate: ontosage:servesService
+    datatype: xsd:string
+    required: true
+  depends_on:
+    predicate: ontosage:dependsOnSpace
+    datatype: xsd:string
+    required: true
+  criticality:
+    predicate: ontosage:criticality
+    datatype: xsd:string
+  alternative_location:
+    predicate: ontosage:alternativeLocation
+    datatype: xsd:string
+    required: true
+  alternative_path:
+    predicate: ontosage:alternativePath
+    datatype: xsd:string
+  alternative_capacity:
+    predicate: ontosage:alternativeCapacity
+    datatype: xsd:string
+  ride_through_minutes:
+    predicate: ontosage:rideThroughMinutes
+    datatype: xsd:integer
+  last_proved_on:
+    predicate: ontosage:lastProvedOn
+    datatype: xsd:date
+  next_due:
+    predicate: ontosage:nextTestDue
+    datatype: xsd:date
+  evidence_ref:
+    predicate: ontosage:evidenceReference
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      verified: ["Verified", "Proved", "Tested"]
+      unverified: ["Unverified", "Untested", "Planned", "Claimed"]
+      none: ["None", "No alternative", "None identified"]
+      overdue: ["Overdue", "Proof overdue"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

@@ -112,6 +112,9 @@ def test_every_omission_carries_a_remedy():
     ):
         omission = omission_for(facts)
         assert omission is not None and omission.detail.strip()
+        # An administrator gets the remedy; every other reader a plain note (2026-09-17).
+        admin = omission_for(facts, for_admin=True)
+        assert admin is not None and admin.detail.strip()
 
 
 def test_caller_detail_overrides_the_generic_remedy():

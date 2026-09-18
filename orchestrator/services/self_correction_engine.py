@@ -388,11 +388,29 @@ class SelfCorrectionEngine:
                 logger.warning("❌ All self-correction strategies exhausted")
                 break
 
-            # Fast-path: "Empty result set" is a data-absence, not a query bug.
+            # Fast-path: an empty result is a data-absence, not a query bug.
             # Syntax/prefix fixes and LLM regeneration won't help when the sensor
             # type simply doesn't exist in the ontology.  Stop here so the caller
             # can fall through to semantic RAG quickly.
-            if error == "Empty result set":
+            #
+            # THIS BRANCH NEVER FIRED on the main path until 2026-09-17. It compared
+            # against the literal "Empty result set", which is the string SYNTHESISED
+            # eleven lines above -- and only when the executor reported no error at all.
+            # The sparql lane reports its own: `"error": None if bindings else
+            # "Empty results"` (sparql_agent.py:518). That value is truthy, so the `or`
+            # short-circuits and `error` is "Empty results", which never equals the
+            # literal tested here. Every honest "no data" answer therefore paid for up to
+            # three more SPARQL executions at a 30 s timeout each before falling through
+            # to exactly the same place.
+            #
+            # Now branching on the CONDITION rather than on either spelling of it: two
+            # modules agreeing on a magic string is what failed, so the string is no
+            # longer the contract. The direction is safe as well as faster -- an empty
+            # result with success=True means the query PARSED AND RAN, so the syntax and
+            # prefix strategies cannot be repairing anything; they can only mutate a valid
+            # query into a different one, and if that mutation returns rows those rows
+            # become the answer to a question the user did not ask.
+            if is_success and result_count <= EMPTY_RESULT_THRESHOLD:
                 logger.info(
                     "⚡ Empty result set — skipping further corrections, falling back to semantic RAG"
                 )

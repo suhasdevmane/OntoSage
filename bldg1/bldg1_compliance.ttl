@@ -10,371 +10,371 @@
 
 bldg:compliance_fire_alarm_weekly_test_01 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -1)"@en ;
-    ontosage:dueDate "2026-08-12T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-08-13T17:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-16T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-09-17T17:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_02 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -2)"@en ;
-    ontosage:dueDate "2026-08-05T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-08-06T14:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-09T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-09-10T14:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_03 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -3)"@en ;
-    ontosage:dueDate "2026-07-29T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-30T12:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-02T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-09-03T12:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_04 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -4)"@en ;
-    ontosage:dueDate "2026-07-22T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-23T09:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-26T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-27T09:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_05 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -5)"@en ;
-    ontosage:dueDate "2026-07-15T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-16T09:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-19T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-20T09:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_06 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -6)"@en ;
-    ontosage:dueDate "2026-07-08T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-08T18:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-12T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-12T18:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_07 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -7)"@en ;
-    ontosage:dueDate "2026-07-01T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-30T21:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-05T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-04T21:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_08 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -8)"@en ;
-    ontosage:dueDate "2026-06-24T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-23T07:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-29T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-28T07:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_09 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -9)"@en ;
-    ontosage:dueDate "2026-06-17T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-17T15:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-22T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-22T15:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_10 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -10)"@en ;
-    ontosage:dueDate "2026-06-10T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-11T22:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-15T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-16T22:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_11 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -11)"@en ;
-    ontosage:dueDate "2026-06-03T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-03T02:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-08T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-08T02:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_12 a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test (cycle -12)"@en ;
-    ontosage:dueDate "2026-05-27T19:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-05-29T06:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-01T19:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-03T06:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_alarm_weekly_test_current a ontosage:ComplianceCheck ;
     rdfs:label "Fire alarm weekly call-point test"@en ;
-    ontosage:dueDate "2026-08-19T19:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-23T19:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "open" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_emergency_lighting_function_test_01 a ontosage:ComplianceCheck ;
     rdfs:label "Emergency lighting monthly function test (cycle -1)"@en ;
-    ontosage:dueDate "2026-08-02T05:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-08-03T11:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-01T05:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-09-02T11:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_emergency_lighting_function_test_02 a ontosage:ComplianceCheck ;
     rdfs:label "Emergency lighting monthly function test (cycle -2)"@en ;
-    ontosage:dueDate "2026-07-03T05:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-03T20:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-02T05:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-02T20:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_emergency_lighting_function_test_03 a ontosage:ComplianceCheck ;
     rdfs:label "Emergency lighting monthly function test (cycle -3)"@en ;
-    ontosage:dueDate "2026-06-03T05:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-03T11:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-03T05:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-03T11:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_emergency_lighting_function_test_04 a ontosage:ComplianceCheck ;
     rdfs:label "Emergency lighting monthly function test (cycle -4)"@en ;
-    ontosage:dueDate "2026-05-04T05:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-05-04T22:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-06-03T05:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-06-03T22:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_emergency_lighting_function_test_05 a ontosage:ComplianceCheck ;
     rdfs:label "Emergency lighting monthly function test (cycle -5)"@en ;
-    ontosage:dueDate "2026-04-04T05:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-04-04T20:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-05-04T05:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-05-04T20:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_emergency_lighting_function_test_06 a ontosage:ComplianceCheck ;
     rdfs:label "Emergency lighting monthly function test (cycle -6)"@en ;
-    ontosage:dueDate "2026-03-05T05:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-03-04T13:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-04-04T05:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-04-03T13:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_emergency_lighting_function_test_current a ontosage:ComplianceCheck ;
     rdfs:label "Emergency lighting monthly function test"@en ;
-    ontosage:dueDate "2026-09-01T05:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-10-01T05:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "open" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_01 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -1)"@en ;
-    ontosage:dueDate "2026-08-12T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-08-12T13:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-16T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-09-16T13:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_02 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -2)"@en ;
-    ontosage:dueDate "2026-08-05T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-08-03T22:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-09T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-09-07T22:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_03 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -3)"@en ;
-    ontosage:dueDate "2026-07-29T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-28T11:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-02T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-09-01T11:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_04 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -4)"@en ;
-    ontosage:dueDate "2026-07-22T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-21T00:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-26T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-25T00:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_05 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -5)"@en ;
-    ontosage:dueDate "2026-07-15T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-13T21:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-19T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-17T21:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_06 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -6)"@en ;
-    ontosage:dueDate "2026-07-08T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-07T22:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-12T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-11T22:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_07 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -7)"@en ;
-    ontosage:dueDate "2026-07-01T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-30T11:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-05T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-04T11:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_08 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -8)"@en ;
-    ontosage:dueDate "2026-06-24T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-25T11:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-29T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-30T11:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_09 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -9)"@en ;
-    ontosage:dueDate "2026-06-17T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-18T15:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-22T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-23T15:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_10 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -10)"@en ;
-    ontosage:dueDate "2026-06-10T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-10T13:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-15T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-15T13:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_11 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -11)"@en ;
-    ontosage:dueDate "2026-06-03T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-03T21:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-08T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-08T21:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_12 a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets (cycle -12)"@en ;
-    ontosage:dueDate "2026-05-27T09:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-05-26T10:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-01T09:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-06-30T10:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_legionella_outlet_flush_current a ontosage:ComplianceCheck ;
     rdfs:label "Legionella flushing of infrequently used outlets"@en ;
-    ontosage:dueDate "2026-08-19T09:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-23T09:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "open" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_water_temperature_monitoring_01 a ontosage:ComplianceCheck ;
     rdfs:label "Hot/cold water temperature monitoring (cycle -1)"@en ;
-    ontosage:dueDate "2026-07-31T23:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-31T03:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-08-30T23:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-08-30T03:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_water_temperature_monitoring_02 a ontosage:ComplianceCheck ;
     rdfs:label "Hot/cold water temperature monitoring (cycle -2)"@en ;
-    ontosage:dueDate "2026-07-01T23:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-07-01T12:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-31T23:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-31T12:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_water_temperature_monitoring_03 a ontosage:ComplianceCheck ;
     rdfs:label "Hot/cold water temperature monitoring (cycle -3)"@en ;
-    ontosage:dueDate "2026-06-01T23:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-06-01T21:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-01T23:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-01T21:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_water_temperature_monitoring_04 a ontosage:ComplianceCheck ;
     rdfs:label "Hot/cold water temperature monitoring (cycle -4)"@en ;
-    ontosage:dueDate "2026-05-02T23:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-05-02T06:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-06-01T23:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-06-01T06:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_water_temperature_monitoring_05 a ontosage:ComplianceCheck ;
     rdfs:label "Hot/cold water temperature monitoring (cycle -5)"@en ;
-    ontosage:dueDate "2026-04-02T23:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-04-02T15:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-05-02T23:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-05-02T15:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_water_temperature_monitoring_06 a ontosage:ComplianceCheck ;
     rdfs:label "Hot/cold water temperature monitoring (cycle -6)"@en ;
-    ontosage:dueDate "2026-03-03T23:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-03-03T09:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-04-02T23:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-04-02T09:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_water_temperature_monitoring_current a ontosage:ComplianceCheck ;
     rdfs:label "Hot/cold water temperature monitoring"@en ;
-    ontosage:dueDate "2026-08-30T23:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-09-29T23:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "open" ;
     ontosage:responsibleRole "maintenance" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_door_inspection_01 a ontosage:ComplianceCheck ;
     rdfs:label "Fire door quarterly inspection (cycle -1)"@en ;
-    ontosage:dueDate "2026-04-26T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-04-25T14:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-07-25T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-07-24T14:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_door_inspection_02 a ontosage:ComplianceCheck ;
     rdfs:label "Fire door quarterly inspection (cycle -2)"@en ;
-    ontosage:dueDate "2026-01-26T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2026-01-25T11:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-04-26T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-04-25T11:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_door_inspection_03 a ontosage:ComplianceCheck ;
     rdfs:label "Fire door quarterly inspection (cycle -3)"@en ;
-    ontosage:dueDate "2025-10-28T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2025-10-27T13:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-01-26T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-01-25T13:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_door_inspection_04 a ontosage:ComplianceCheck ;
     rdfs:label "Fire door quarterly inspection (cycle -4)"@en ;
-    ontosage:dueDate "2025-07-30T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2025-07-30T19:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2025-10-28T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2025-10-28T19:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_door_inspection_05 a ontosage:ComplianceCheck ;
     rdfs:label "Fire door quarterly inspection (cycle -5)"@en ;
-    ontosage:dueDate "2025-05-01T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2025-05-01T13:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2025-07-30T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2025-07-30T13:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_door_inspection_06 a ontosage:ComplianceCheck ;
     rdfs:label "Fire door quarterly inspection (cycle -6)"@en ;
-    ontosage:dueDate "2025-01-31T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2025-01-30T13:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2025-05-01T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2025-04-30T13:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
 
 bldg:compliance_fire_door_inspection_current a ontosage:ComplianceCheck ;
     rdfs:label "Fire door quarterly inspection"@en ;
-    ontosage:dueDate "2026-07-25T02:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-10-23T02:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "open" ;
     ontosage:responsibleRole "facility_manager" ;
     ontosage:isSimulated true .
@@ -491,55 +491,55 @@ bldg:compliance_loler_lift_examination_current a ontosage:ComplianceCheck ;
 
 bldg:compliance_pat_testing_01 a ontosage:ComplianceCheck ;
     rdfs:label "Portable appliance testing (PAT) (cycle -1)"@en ;
-    ontosage:dueDate "2025-05-17T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2025-05-17T18:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2026-05-17T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2026-05-17T18:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "contractor" ;
     ontosage:isSimulated true .
 
 bldg:compliance_pat_testing_02 a ontosage:ComplianceCheck ;
     rdfs:label "Portable appliance testing (PAT) (cycle -2)"@en ;
-    ontosage:dueDate "2024-05-17T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2024-05-17T20:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2025-05-17T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2025-05-17T20:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "contractor" ;
     ontosage:isSimulated true .
 
 bldg:compliance_pat_testing_03 a ontosage:ComplianceCheck ;
     rdfs:label "Portable appliance testing (PAT) (cycle -3)"@en ;
-    ontosage:dueDate "2023-05-18T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2023-05-17T10:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2024-05-17T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2024-05-16T10:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "contractor" ;
     ontosage:isSimulated true .
 
 bldg:compliance_pat_testing_04 a ontosage:ComplianceCheck ;
     rdfs:label "Portable appliance testing (PAT) (cycle -4)"@en ;
-    ontosage:dueDate "2022-05-18T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2022-05-16T15:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2023-05-18T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2023-05-16T15:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "contractor" ;
     ontosage:isSimulated true .
 
 bldg:compliance_pat_testing_05 a ontosage:ComplianceCheck ;
     rdfs:label "Portable appliance testing (PAT) (cycle -5)"@en ;
-    ontosage:dueDate "2021-05-18T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2021-05-17T12:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2022-05-18T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2022-05-17T12:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "contractor" ;
     ontosage:isSimulated true .
 
 bldg:compliance_pat_testing_06 a ontosage:ComplianceCheck ;
     rdfs:label "Portable appliance testing (PAT) (cycle -6)"@en ;
-    ontosage:dueDate "2020-05-18T02:31:24"^^xsd:dateTime ;
-    ontosage:completedDate "2020-05-17T20:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2021-05-18T02:31:24"^^xsd:dateTime ;
+    ontosage:completedDate "2021-05-17T20:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "done" ;
     ontosage:responsibleRole "contractor" ;
     ontosage:isSimulated true .
 
 bldg:compliance_pat_testing_current a ontosage:ComplianceCheck ;
     rdfs:label "Portable appliance testing (PAT)"@en ;
-    ontosage:dueDate "2026-05-17T02:31:24"^^xsd:dateTime ;
+    ontosage:dueDate "2027-05-17T02:31:24"^^xsd:dateTime ;
     ontosage:recordStatus "open" ;
     ontosage:responsibleRole "contractor" ;
     ontosage:isSimulated true .

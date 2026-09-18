@@ -85,16 +85,47 @@ _ASSESSABLE_INTENTS = frozenset(
 )
 
 
+def _bindings(sparql_result: Any) -> List[Dict[str, Any]]:
+    """The SPARQL bindings inside a lane result, or [] for any other shape.
+
+    WHY THIS IS A FUNCTION AND NOT TWO INLINE CHAINS. The sparql lane does not always
+    return the SPARQL protocol shape. Its semantic-RAG fallback returns
+    ``{"results": [{"answer": "..."}], "method": "semantic_rag", ...}`` -- ``results`` as
+    a LIST, deliberately, as "mock results for compatibility". Both readers below dug
+    ``result["results"]["results"]["bindings"]`` with an ``isinstance`` guard on the
+    OUTER value only, which is a dict and passes; the second ``.get`` then ran against
+    the list and raised AttributeError.
+
+    That exception escaped ``verify()`` into a caller that logged it at DEBUG, so the
+    turn produced NO verification record at all -- and ``publication_gate`` treats a
+    missing record as "the check did not run", which it publishes by design. The result
+    was that the one lane whose output is ungrounded LLM prose was the one lane with no
+    grounding check, silently, on every such turn (BUG-643).
+
+    Returning [] here is not a workaround: a RAG answer genuinely has no bindings, so the
+    verifier should record it as ungrounded rather than crash and record nothing.
+    """
+    if not isinstance(sparql_result, dict):
+        return []
+    inner = sparql_result.get("results")
+    if not isinstance(inner, dict):
+        return []
+    inner = inner.get("results")
+    if not isinstance(inner, dict):
+        return []
+    bindings = inner.get("bindings")
+    return bindings if isinstance(bindings, list) else []
+
+
 def _extract_sensor_ids(sparql_result: Dict[str, Any]) -> List[str]:
     """Pull sensor/uuid values from SPARQL bindings."""
     ids: List[str] = []
-    bindings = (
-        sparql_result.get("results", {}).get("results", {}).get("bindings", [])
-        if isinstance(sparql_result, dict)
-        else []
-    )
-    for b in bindings:
+    for b in _bindings(sparql_result):
+        if not isinstance(b, dict):
+            continue
         for k, v in b.items():
+            if not isinstance(v, dict):
+                continue
             val = str(v.get("value", ""))
             if val and ("uuid" in k.lower() or "sensor" in k.lower() or "id" in k.lower()):
                 ids.append(val)
@@ -165,8 +196,7 @@ def _sparql_returned_data(sparql_result: Dict[str, Any]) -> bool:
         return False
     if not sparql_result.get("success", True):
         return False
-    bindings = sparql_result.get("results", {}).get("results", {}).get("bindings", [])
-    return len(bindings) > 0
+    return len(_bindings(sparql_result)) > 0
 
 
 class VerifierAgent:

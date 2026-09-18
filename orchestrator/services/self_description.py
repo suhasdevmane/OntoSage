@@ -31,7 +31,7 @@ capability updates it without anyone remembering to edit a paragraph.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from shared.utils import get_logger
 
@@ -101,13 +101,48 @@ def _pretty(name: str) -> str:
     return name.replace("_", " ")
 
 
+#: Fact labels the caller computes, in the words a non-administrator reads them in. The
+#: precise labels ("Sensors in the ontology") are kept for an administrator, who needs to know
+#: which count is which; everyone else gets the same figure without the implementation.
+_PLAIN_FACT_LABELS: Dict[str, str] = {
+    "Sensors in the ontology": "Sensors in the building model",
+    "Instrumented points": "Readings and settings described",
+}
+
+
+def _plain_fact(label: str, value: Any) -> Tuple[str, Any]:
+    """(label, value) as a non-administrator should read them."""
+    if label in _PLAIN_FACT_LABELS:
+        return _PLAIN_FACT_LABELS[label], value
+    if label == "Connected databases":
+        # The values are store keys ("database1, database2") — meaningless to anyone who did
+        # not configure them. The count is the fact a reader can use.
+        n = len([v for v in str(value).split(",") if v.strip()])
+        return "Connected data sources", f"{n:,}"
+    return re.sub(r"\bontology\b", "building model", label, flags=re.IGNORECASE), value
+
+
+def _plain_source(label: str) -> str:
+    """A grounding-source label without its implementation: "Knowledge graph (SPARQL/GraphDB)"
+    -> "Knowledge graph", "Building ontology (triples)" -> "Building model"."""
+    text = re.sub(r"\s*\([^)]*\)", "", label).strip()
+    return re.sub(r"\bontology\b", "model", text, flags=re.IGNORECASE)
+
+
 def describe(
     registry: Any,
     building_name: str,
     facts: Optional[Dict[str, Any]] = None,
     source_types: Optional[List[str]] = None,
+    for_admin: bool = False,
 ) -> str:
-    """Compose the answer. ``facts`` and ``source_types`` are read from the live building."""
+    """Compose the answer. ``facts`` and ``source_types`` are read from the live building.
+
+    ``for_admin`` keeps the implementation terms — TTL, SPARQL, the ontology, store keys —
+    and how to load a building with no data. Every other reader gets the same description in
+    plain words and is never told to add or register anything (2026-09-17 user decision). The
+    default is the plain form, so a caller that does not know who is reading fails toward it.
+    """
     facts = facts or {}
     # WHAT ONTOSAGE IS does not change when the building changes. Saying "I am a
     # conversational layer over <this building>" made the identity sound like a
@@ -115,28 +150,50 @@ def describe(
     # it IS. The identity below is therefore constant on every building — including
     # one onboarded today with no data yet — and the site appears only under what is
     # currently connected.
-    lines = [
-        "I'm **OntoSage** — a building-agnostic framework for asking a building "
-        "questions in plain English. I'm not built for any one site: connect a "
-        "building's knowledge graph, point me at the databases holding its sensor "
-        "readings, and I answer questions about it. Onboarding a new building is "
-        "configuration and data — a TTL describing what exists, database credentials, "
-        "optionally floor plans and documents — with no code changes.\n",
-        "I'm meant for whoever needs to ask: facility managers, occupants, "
-        "researchers, sustainability and safety officers, executives, visitors and "
-        "administrators. You need no knowledge of SPARQL, SQL or the building's "
-        "schema — everyday words are resolved to whatever the building actually "
-        "calls things.\n",
-        "**How I answer**\n",
-        "Every answer is traced to a source rather than generated from memory. I look "
-        "up what exists in the building's ontology, read live values from the "
-        "databases those sensors are registered in, and compute anything that needs "
-        "calculating. If the thing you asked about isn't in the connected building's "
-        "model, I say so instead of giving you a number that looks right.\n",
-    ]
+    if for_admin:
+        lines = [
+            "I'm **OntoSage** — a building-agnostic framework for asking a building "
+            "questions in plain English. I'm not built for any one site: connect a "
+            "building's knowledge graph, point me at the databases holding its sensor "
+            "readings, and I answer questions about it. Onboarding a new building is "
+            "configuration and data — a TTL describing what exists, database credentials, "
+            "optionally floor plans and documents — with no code changes.\n",
+            "I'm meant for whoever needs to ask: facility managers, occupants, "
+            "researchers, sustainability and safety officers, executives, visitors and "
+            "administrators. You need no knowledge of SPARQL, SQL or the building's "
+            "schema — everyday words are resolved to whatever the building actually "
+            "calls things.\n",
+            "**How I answer**\n",
+            "Every answer is traced to a source rather than generated from memory. I look "
+            "up what exists in the building's ontology, read live values from the "
+            "databases those sensors are registered in, and compute anything that needs "
+            "calculating. If the thing you asked about isn't in the connected building's "
+            "model, I say so instead of giving you a number that looks right.\n",
+        ]
+    else:
+        lines = [
+            "I'm **OntoSage** — a building-agnostic framework for asking a building "
+            "questions in plain English. I'm not built for any one site: I work from a "
+            "building's own description of itself and the readings from its sensors, and "
+            "answer questions about it. Connecting a different building is a matter of "
+            "setup, with no code changes.\n",
+            "I'm meant for whoever needs to ask: facility managers, occupants, "
+            "researchers, sustainability and safety officers, executives, visitors and "
+            "administrators. You don't need to know how the building's data is stored — "
+            "everyday words are matched to whatever the building actually calls things.\n",
+            "**How I answer**\n",
+            "Every answer is traced to a source rather than generated from memory. I look "
+            "up what exists in the building's own records, read live values from its "
+            "sensors, and compute anything that needs calculating. If the thing you asked "
+            "about isn't recorded for this building, I say so instead of giving you a "
+            "number that looks right.\n",
+        ]
 
     if source_types:
-        lines.append("I can ground an answer in: " + ", ".join(sorted(source_types)) + ".\n")
+        shown = sorted(
+            dict.fromkeys(source_types if for_admin else (_plain_source(s) for s in source_types))
+        )
+        lines.append("I can ground an answer in: " + ", ".join(shown) + ".\n")
 
     groups = _capabilities(registry)
     if groups:
@@ -153,11 +210,18 @@ def describe(
         if facts:
             for label, value in facts.items():
                 if value:
+                    if not for_admin:
+                        label, value = _plain_fact(label, value)
                     lines.append(f"- {label}: **{value}**")
-        else:
+        elif for_admin:
             lines.append(
                 "- No data loaded yet — add a TTL describing the building and register "
                 "a database for its readings, and the questions above become answerable."
+            )
+        else:
+            lines.append(
+                "- No data loaded yet, so I can't answer questions about this building's "
+                "figures at the moment."
             )
         lines.append("")
 

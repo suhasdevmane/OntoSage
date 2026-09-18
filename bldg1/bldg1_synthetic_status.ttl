@@ -18,12 +18,25 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ontosage: <http://ontosage.org/capabilities#> .
 
+# ONE STATUS PER REAL LIFT (BUG-497). This was a single record naming bldg:Lift_Main, a
+# subject invented so the status lane had something of type ontosage:Lift to match -- so
+# "are the lifts working?" answered "1 of 1" about a building with two lifts, one at each
+# side. The building owner settled the count on 2026-09-17.
 bldg:status_lift_0 a ontosage:AssetStatus ;
-    rdfs:label "Status of Main passenger lift"@en ;
-    ontosage:statusOf bldg:Lift_Main ;
+    rdfs:label "Status of Passenger Lift 1"@en ;
+    ontosage:statusOf bldg:Lift_1 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "lift_controller" ;
-    ontosage:statusObservedAt "2026-09-06T10:44:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T10:44:43"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
+    ontosage:isSimulated true .
+
+bldg:status_lift_1 a ontosage:AssetStatus ;
+    rdfs:label "Status of Passenger Lift 2 / Goods Lift"@en ;
+    ontosage:statusOf bldg:Lift_2 ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "lift_controller" ;
+    ontosage:statusObservedAt "2026-09-17T10:44:43"^^xsd:dateTime ;
     ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
     ontosage:isSimulated true .
 
@@ -49,7 +62,7 @@ bldg:status_av_1 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.01 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T10:08:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T10:08:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -75,7 +88,7 @@ bldg:status_av_3 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.05 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T10:23:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T10:23:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -101,7 +114,7 @@ bldg:status_av_5 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.07 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T03:58:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T03:58:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -114,7 +127,7 @@ bldg:status_av_6 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.08 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T07:16:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T07:16:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -127,7 +140,7 @@ bldg:status_av_7 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.10 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T04:08:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T04:08:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -140,7 +153,7 @@ bldg:status_av_8 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.17 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T01:43:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T01:43:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -153,7 +166,7 @@ bldg:status_av_9 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.18 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T07:34:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T07:34:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -166,7 +179,7 @@ bldg:status_av_10 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.19 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T10:19:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T10:19:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -179,7 +192,7 @@ bldg:status_av_11 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:av_Room0.20 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "av_support" ;
-    ontosage:statusObservedAt "2026-09-06T04:36:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T04:36:43"^^xsd:dateTime ;
     ontosage:assistanceContact "AV support, ext 4321" ;
     ontosage:isSimulated true .
 
@@ -191,7 +204,7 @@ bldg:status_wifi_0 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:wifi_Floor0 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "network_operations" ;
-    ontosage:statusObservedAt "2026-09-06T11:19:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T11:19:43"^^xsd:dateTime ;
     ontosage:isSimulated true .
 
 bldg:wifi_Floor1 a ontosage:NetworkService ;
@@ -202,7 +215,7 @@ bldg:status_wifi_1 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:wifi_Floor1 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "network_operations" ;
-    ontosage:statusObservedAt "2026-09-06T10:59:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T10:59:43"^^xsd:dateTime ;
     ontosage:isSimulated true .
 
 bldg:wifi_Floor2 a ontosage:NetworkService ;
@@ -213,7 +226,7 @@ bldg:status_wifi_2 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:wifi_Floor2 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "network_operations" ;
-    ontosage:statusObservedAt "2026-09-06T11:13:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T11:13:43"^^xsd:dateTime ;
     ontosage:isSimulated true .
 
 bldg:wifi_Floor3 a ontosage:NetworkService ;
@@ -224,7 +237,7 @@ bldg:status_wifi_3 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:wifi_Floor3 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "network_operations" ;
-    ontosage:statusObservedAt "2026-09-06T11:23:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T11:23:43"^^xsd:dateTime ;
     ontosage:isSimulated true .
 
 bldg:wifi_Floor4 a ontosage:NetworkService ;
@@ -235,7 +248,7 @@ bldg:status_wifi_4 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:wifi_Floor4 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "network_operations" ;
-    ontosage:statusObservedAt "2026-09-06T11:09:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T11:09:43"^^xsd:dateTime ;
     ontosage:isSimulated true .
 
 bldg:wifi_Floor5 a ontosage:NetworkService ;
@@ -246,7 +259,7 @@ bldg:status_wifi_5 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:wifi_Floor5 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "network_operations" ;
-    ontosage:statusObservedAt "2026-09-06T11:21:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T11:21:43"^^xsd:dateTime ;
     ontosage:isSimulated true .
 
 bldg:wifi_Rooftop a ontosage:NetworkService ;
@@ -257,7 +270,7 @@ bldg:status_wifi_6 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:wifi_Rooftop ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "network_operations" ;
-    ontosage:statusObservedAt "2026-09-06T11:08:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T11:08:43"^^xsd:dateTime ;
     ontosage:isSimulated true .
 
 bldg:wifi_Parking_Level_Ground a ontosage:NetworkService ;
@@ -268,6 +281,6 @@ bldg:status_wifi_7 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:wifi_Parking_Level_Ground ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "network_operations" ;
-    ontosage:statusObservedAt "2026-09-06T11:15:43"^^xsd:dateTime ;
+    ontosage:statusObservedAt "2026-09-17T11:15:43"^^xsd:dateTime ;
     ontosage:isSimulated true .
 

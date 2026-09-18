@@ -14,7 +14,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 4.66 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 4.66 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -26,7 +26,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 4.67 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 4.67 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -38,7 +38,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 4.68 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 4.68 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -50,7 +50,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 4.69 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 4.69 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -62,7 +62,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 4.70 — Staff Break Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 4.70 — Staff Break Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -74,7 +74,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 4.71 — Storage Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 4.71 — Storage Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -86,7 +86,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.01 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.01 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -98,7 +98,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.02 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.02 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -110,7 +110,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.03 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.03 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -122,7 +122,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.04 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.04 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -134,7 +134,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.05 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.05 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -146,7 +146,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.06 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.06 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -158,7 +158,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.07 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.07 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -170,7 +170,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.08 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.08 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -182,7 +182,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.09 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.09 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -194,7 +194,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.10 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.10 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -206,7 +206,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.11 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.11 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -218,7 +218,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.12 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.12 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -230,7 +230,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.13 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.13 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -242,7 +242,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.14 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.14 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -254,7 +254,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.15 — Seminar / Conference Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -266,7 +266,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.16 — Seminar / Conference Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -278,7 +278,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.17 — Meeting Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.17 — Meeting Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -290,7 +290,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.18 — Meeting Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.18 — Meeting Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -302,7 +302,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.20 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.20 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -314,7 +314,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.21 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.21 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -326,7 +326,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.22 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.22 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -338,7 +338,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.23 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.23 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -350,7 +350,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.26 — Staff Break Room / Kitchen temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -362,7 +362,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.34 — Telecommunications Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.34 — Telecommunications Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -374,7 +374,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.35 — Restroom (Male) temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.35 — Restroom (Male) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -386,7 +386,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.36 — Restroom (Female) temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.36 — Restroom (Female) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -398,7 +398,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.44 — Server Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.44 — Server Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -410,7 +410,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.45 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.45 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -422,7 +422,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.48 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.48 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -434,7 +434,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.49 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.49 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -446,7 +446,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.50 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.50 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -458,7 +458,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.51 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.51 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -470,7 +470,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.52 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.52 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -482,7 +482,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.53 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.53 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -494,7 +494,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.54 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.54 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -506,7 +506,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.56 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.56 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -518,7 +518,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.57 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.57 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -530,7 +530,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.58 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.58 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -542,7 +542,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.59 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.59 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -554,7 +554,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.60 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.60 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -566,7 +566,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.61 — Research Laboratory temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.61 — Research Laboratory temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -578,7 +578,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.62 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.62 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -590,7 +590,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.63 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.63 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -602,7 +602,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.64 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.64 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -614,7 +614,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.65 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.65 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -626,7 +626,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.66 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.66 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -638,7 +638,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.67 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.67 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -650,7 +650,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.68 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.68 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -662,7 +662,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.69 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.69 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -674,7 +674,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.70 — Academic Office temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.70 — Academic Office temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -686,7 +686,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Room 5.71 — Storage Room temperature (simulated) [degC]"@en ;
+    rdfs:label "Room 5.71 — Storage Room temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -698,7 +698,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Server Room — Floor 2 (Room 2.44) temperature (simulated) [degC]"@en ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -710,7 +710,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Server Room — Floor 4 (Room 4.44) temperature (simulated) [degC]"@en ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -722,7 +722,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Server Room — Floor 5 (Room 5.44) temperature (simulated) [degC]"@en ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -734,7 +734,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) temperature (simulated) [degC]"@en ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -746,7 +746,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) temperature (simulated) [degC]"@en ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -758,7 +758,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) temperature (simulated) [degC]"@en ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -770,7 +770,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) temperature (simulated) [degC]"@en ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -782,7 +782,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) temperature (simulated) [degC]"@en ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -794,7 +794,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5_sat_temperature>
     a brick:Zone_Air_Temperature_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) temperature (simulated) [degC]"@en ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) temperature [degC]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;

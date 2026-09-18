@@ -1124,6 +1124,25 @@ async def lifespan(app: FastAPI):
         # landed. Nothing uploaded + already initialised → no-op (no restart needed).
         if (not _phase1_state["inited"]) or summary["uploaded"]:
             await _ontology_phase1(force_sensor_map=bool(summary["uploaded"]))
+
+        # EVERY POINT THE GRAPH DECLARES MUST BE FED, and the map that decides which ones
+        # are fed was a manual step (2026-09-16). 498 points were added, uploaded, and
+        # answered "no recent reading" — the graph knew them, the publisher did not, and
+        # nothing connected the two but somebody remembering to run a script. A point that
+        # exists and never reports is indistinguishable, to a stakeholder, from a broken
+        # sensor. Refreshing it here means `docker compose up -d` is genuinely all you need
+        # (core contract #11), for this building and for the next one.
+        if summary["uploaded"]:
+            try:
+                from orchestrator.services.publisher_map import refresh_publish_map
+
+                _map = await refresh_publish_map(settings.BUILDING_ID)
+                logger.info(
+                    f"[publisher_map] {_map['points']} point(s) across {_map['tables']} "
+                    f"table(s) — recreate data-publisher to pick up {_map['added']} new"
+                )
+            except Exception as _pm_err:  # never block a boot on the dev publisher
+                logger.warning(f"[publisher_map] refresh skipped: {_pm_err}")
     except Exception as e:
         logger.warning(f"TTL auto-upload failed (non-fatal): {e}")
 
@@ -2341,6 +2360,76 @@ async def _run_workflow_as_job(
         await job_queue.update_job(job_id, _JobStatus.FAILED, error=str(e))
 
 
+# ── ONE inherited-state guard for every conversational entry point (BUG-655) ─────────────
+#
+# `prune_inherited` (V12-11) used to run on /v1/chat/completions ONLY. /chat, /chat/stream and
+# the /stream websocket each restore the WHOLE `intermediate_results` from Redis and pruned
+# nothing, so a result about room A rode into a question about room B on exactly the endpoint
+# the regression probe measures. Four routes, one helper: a copy per route is how the guard
+# came to be missing from three of them in the first place.
+#
+# It also closes the gap the adjacent-turn comparison left. `switched()` needs BOTH messages
+# to name a place, and a follow-up ("how has that changed?") names none — so in
+# room A -> "how has that changed?" -> room B, comparing turn 3 with turn 2 pruned nothing,
+# and turn 2's artifact about room A survived a question about room B. The comparison here is
+# against the most recent earlier user message that NAMED a place, which is the place any
+# inherited artifact can still be about.
+
+
+def _message_role_and_text(message: Any) -> Tuple[str, str]:
+    """(role, content) of a Message model or a plain OpenAI-shaped dict."""
+    if isinstance(message, dict):
+        return str(message.get("role") or ""), str(message.get("content") or "")
+    return str(getattr(message, "role", "") or ""), str(getattr(message, "content", "") or "")
+
+
+def _last_place_named(prior_messages: Optional[List[Any]]) -> str:
+    """The most recent earlier USER message that names a place, or "" when none did.
+
+    Uses `context_switch.place_of`, the same detector `prune_inherited` compares with, so the
+    look-back and the comparison cannot disagree about what counts as naming a place.
+    """
+    from orchestrator.services.context_switch import place_of
+
+    for message in reversed(list(prior_messages or [])):
+        role, text = _message_role_and_text(message)
+        if role == "user" and place_of(text) is not None:
+            return text
+    return ""
+
+
+def _prune_inherited_state(
+    inherited: Optional[Dict[str, Any]],
+    prior_messages: Optional[List[Any]],
+    latest: str,
+    route: str,
+) -> List[str]:
+    """Drop, IN PLACE, the place-bound keys a turn inherited about a place the user has left.
+
+    `prior_messages` must NOT include the current message. Returns the keys dropped. Nothing
+    is dropped unless the latest message names a place AND an earlier one named a different
+    place — a follow-up naming none is what carry-forward exists for. Never raises: a failed
+    guard is logged loudly and the turn proceeds, because a guard must not sink the answer.
+    """
+    if not inherited:
+        return []
+    try:
+        from orchestrator.services.context_switch import prune_inherited
+
+        previous = _last_place_named(prior_messages)
+        _kept, dropped = prune_inherited(inherited, previous, latest or "")
+    except Exception as exc:
+        logger.warning(
+            f"[{route}] inherited-state prune FAILED, state kept: " f"{describe_exception(exc)}"
+        )
+        return []
+    for key in dropped:
+        inherited.pop(key, None)
+    if dropped:
+        logger.info(f"[{route}] context switch — dropped inherited {dropped}")
+    return dropped
+
+
 @app.post("/chat", response_model=APIResponse)
 async def chat(
     request: ChatRequest,
@@ -2420,6 +2509,11 @@ async def chat(
             elif persona and persona != "general":
                 state.persona = persona
                 state.personas = []
+
+        # BUG-655: the restored intermediate_results is the previous turn's, whole. Prune what
+        # is about a place the user has left — BEFORE this message joins the history, so the
+        # look-back compares against earlier turns only.
+        _prune_inherited_state(state.intermediate_results, state.messages, user_message, "/chat")
 
         # RBAC context for workflow agents (fix 2026-06-12): control, alert and
         # preference nodes read user_role/user_id from intermediate_results, but
@@ -2659,6 +2753,11 @@ async def chat_stream(
                 else:
                     state.user_message = user_message
 
+                # BUG-655: same guard as /chat and /v1, before the message joins the history.
+                _prune_inherited_state(
+                    state.intermediate_results, state.messages, user_message, "/chat/stream"
+                )
+
                 # Propagate fresh_session flag into state so workflow skips memory injection
                 if fresh_session:
                     state.intermediate_results["fresh_session"] = True
@@ -2871,8 +2970,7 @@ async def resolve_forwarded_user(request: Request) -> Tuple[str, str]:
         # valid owner. It is a foreign-key stub, not an identity decision — and it is
         # always readonly. Treating one as an account would let a stub created before
         # the admin provisioned someone permanently shadow their real (higher) role.
-        row = next((r for r in rows if r.get("username") and not _is_placeholder_account(r)),
-                   None)
+        row = next((r for r in rows if r.get("username") and not _is_placeholder_account(r)), None)
         if row is None:
             if rows:
                 logger.debug(f"[forwarded-user] skipping placeholder row for {name!r}")
@@ -3203,6 +3301,10 @@ async def websocket_stream(websocket: WebSocket):
             if not state:
                 state = ConversationState(
                     conversation_id=conversation_id,
+                    # `user_message` is a REQUIRED field. It was omitted here, so the first
+                    # message of every new websocket conversation failed validation, and a
+                    # resumed one ran the workflow on the PREVIOUS turn's question.
+                    user_message=user_message,
                     messages=[],
                     current_intent="unknown",
                     query_results={},
@@ -3213,6 +3315,13 @@ async def websocket_stream(websocket: WebSocket):
                         "building": building,
                     },
                 )
+            else:
+                state.user_message = user_message
+
+            # BUG-655: same guard as /chat and /v1, before the message joins the history.
+            _prune_inherited_state(
+                state.intermediate_results, state.messages, user_message, "/stream"
+            )
 
             # RBAC context for in-pipeline nodes (control/alert/preference),
             # mirroring the /chat endpoint. Proxy-mode identity is untrusted →
@@ -3222,8 +3331,10 @@ async def websocket_stream(websocket: WebSocket):
             state.intermediate_results["user_id"] = auth["username"]
             state.intermediate_results["user_role"] = auth["role"]
 
-            # Add user message
-            state.messages.append(Message(role="user", content=user_message, timestamp=None))
+            # Add user message. `timestamp=None` was passed here and `Message.timestamp` is a
+            # required datetime, so EVERY websocket turn failed validation before the workflow
+            # ran; the field's own default is the correct value.
+            state.messages.append(Message(role="user", content=user_message))
 
             await redis_manager.save_message(conversation_id, "user", user_message)
 
@@ -3516,6 +3627,17 @@ async def generate_report(
 # ==================== OpenAI Compatibility Layer ====================
 
 
+def _resolved_intent(state: Any) -> Optional[str]:
+    """The lane a finished turn was routed to — the value /chat returns as `intent`.
+
+    TODO-657: /v1/chat/completions reported no lane, so a fluent answer from the WRONG lane
+    (BUG-631's shape) was indistinguishable from a right one on the endpoint the demo uses.
+    None when the turn never reached classification (an error before the dialogue node).
+    """
+    intent = getattr(state, "current_intent", None)
+    return str(intent) if intent else None
+
+
 async def _rehydrate_prior_messages(
     conversation_id: str,
     prior_messages: List["Message"],
@@ -3712,24 +3834,10 @@ async def openai_chat_completions(
         # Only place-bound keys are dropped, and only when BOTH questions name a place and
         # the places differ. "Now plot that" names none, which is the case carry-forward
         # exists for and must keep working.
-        if carry_forward:
-            try:
-                from orchestrator.services.context_switch import prune_inherited
-
-                _prev_user = next(
-                    (m.content for m in reversed(prior_messages or []) if m.role == "user"),
-                    "",
-                )
-                carry_forward, _dropped = prune_inherited(
-                    carry_forward, _prev_user or "", user_message or ""
-                )
-                if _dropped:
-                    logger.info(
-                        "[/v1/chat/completions] context switch — dropped inherited %s",
-                        _dropped,
-                    )
-            except Exception as _pe:  # pragma: no cover - pruning must never sink a turn
-                logger.debug(f"[/v1/chat/completions] carry-forward prune skipped: {_pe}")
+        #
+        # BUG-655: the same helper every other chat entry point now calls, comparing against
+        # the last earlier message that NAMED a place rather than merely the last message.
+        _prune_inherited_state(carry_forward, prior_messages, user_message, "/v1/chat/completions")
 
         if carry_forward:
             state.intermediate_results.update(carry_forward)
@@ -3763,7 +3871,7 @@ async def openai_chat_completions(
                 created_ts = int(datetime.now().timestamp())
                 chunk_id = f"chatcmpl-{conversation_id}"
 
-                def sse_chunk(content=None, role=None, finish_reason=None):
+                def sse_chunk(content=None, role=None, finish_reason=None, extra=None):
                     payload = {
                         "id": chunk_id,
                         "object": "chat.completion.chunk",
@@ -3771,6 +3879,12 @@ async def openai_chat_completions(
                         "model": data.get("model", "ontobot-pipeline"),
                         "choices": [{"index": 0, "delta": {}, "finish_reason": finish_reason}],
                     }
+                    # Extension fields ride at the TOP level of a chunk, never inside
+                    # `delta`: a client reads `delta.content`/`delta.role` and ignores what
+                    # it does not know, exactly as it ignores OpenAI's own top-level
+                    # `system_fingerprint` and `usage` on a chunk.
+                    for _k, _v in (extra or {}).items():
+                        payload.setdefault(_k, _v)
                     if role:
                         payload["choices"][0]["delta"]["role"] = role
                     if content is not None:
@@ -3882,7 +3996,13 @@ async def openai_chat_completions(
                     yield sse_chunk(content=assistant_message[i : i + chunk_size])
 
                 # Finalize stream
-                yield sse_chunk(finish_reason="stop")
+                # TODO-657: the lane that answered, on the FINAL chunk only — the one a
+                # client has already stopped rendering content from. Read from the final
+                # state reconstructed above, the same state the answer text came from.
+                yield sse_chunk(
+                    finish_reason="stop",
+                    extra={"ontosage_intent": _resolved_intent(final_state)},
+                )
                 yield "data: [DONE]\n\n"
 
             return StreamingResponse(event_generator(), media_type="text/event-stream")
@@ -3923,6 +4043,8 @@ async def openai_chat_completions(
                     "rate_limited": False,
                     "detail": f"pipeline exceeded {settings.REQUEST_TIMEOUT_SECS}s",
                 },
+                # TODO-657: present on every non-streamed body; no lane finished here.
+                "ontosage_intent": None,
             }
 
         assistant_message = (
@@ -3980,6 +4102,10 @@ async def openai_chat_completions(
             # ontosage_llm_degraded above: unknown fields are ignored by OpenAI clients, so
             # adding it cannot break a consumer.
             "ontosage_evidence_record": updated_state.intermediate_results.get("evidence_record"),
+            # TODO-657: the lane that answered, so a wrong-lane answer is detectable on the
+            # demo endpoint too. The same value /chat returns as `intent`; prefixed like the
+            # two fields above so it cannot collide with a field OpenAI adds later.
+            "ontosage_intent": _resolved_intent(updated_state),
         }
 
     except Exception as e:
@@ -4366,8 +4492,10 @@ async def observability_matrix(
                         "fresh": reach.fresh,
                         # The unlock step, from the lane's own prose. An operator can
                         # act on "the wiring is already in place, check the feed";
-                        # they cannot act on the word "stale".
-                        "note": reach.describe(),
+                        # they cannot act on the word "stale". This endpoint is
+                        # system:admin-gated, so the note carries the remediation that
+                        # chat declines now keep for administrators only.
+                        "note": reach.describe(for_admin=True),
                     }
                 )
 

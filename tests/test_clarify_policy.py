@@ -70,7 +70,22 @@ def test_user_threshold_is_not_an_assumption():
 
 
 def test_forecast_default_horizon_declared():
-    ir = _ir(time=TimeSpec(basis=TimeBasis.FORECAST, source_phrase="tomorrow"))
+    """A defaulted horizon is declared AS a default, not as the time that was asked for.
+
+    Row 99 of the 2026-09-17 stakeholder read asked about "next Wednesday after 2 p.m." and
+    was told the ranking was "forecast 24h ahead from recent history" — which reads as though
+    next Wednesday had been projected. The phrase was never resolved; the default window was
+    used. The projection is still declared, and so is the fact that it is not that day.
+    """
+    ir = _ir(time=TimeSpec(basis=TimeBasis.FORECAST, source_phrase="next Wednesday"))
+    d = decide(ir, AdmissionResult(verdict=ADMIT))
+    texts = [a.text for a in d.assumptions]
+    assert any("next 24 hours" in t for t in texts)
+    assert any("next Wednesday" in t and "does not describe that time" in t for t in texts)
+
+
+def test_forecast_parsed_horizon_is_stated_plainly():
+    ir = _ir(time=TimeSpec(basis=TimeBasis.FORECAST, source_phrase="tomorrow", horizon_hours=24.0))
     d = decide(ir, AdmissionResult(verdict=ADMIT))
     assert any("24h ahead" in a.text for a in d.assumptions)
 

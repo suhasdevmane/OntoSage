@@ -44,7 +44,7 @@ bldg:Issue_BrokenLift a ontosage:KnowledgeTopic,
     ontosage:contactEmail "estates@cardiff.ac.uk" ;
     ontosage:contactPhone "029 2087 6026" ;
     ontosage:layTerms "lift broken, lift not working, elevator broken, lift out of order, lift stuck, elevator not working, is the lift broken" ;
-    ontosage:relatedTopic bldg:Lift_Main ;
+    ontosage:relatedTopic bldg:Lift_1 ;
     ontosage:reportTo "Estates FM helpdesk; if trapped, Security 029 2087 4444" .
 
 bldg:Issue_BrokenLight a ontosage:KnowledgeTopic,

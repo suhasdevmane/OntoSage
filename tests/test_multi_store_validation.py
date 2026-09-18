@@ -110,7 +110,9 @@ def test_the_message_no_longer_claims_the_sensors_are_absent_from_the_database()
         Path(__file__).resolve().parent.parent / "orchestrator" / "agents" / "sql_agent.py"
     ).read_text(encoding="utf-8")
     assert "none exist in the time-series database" not in src
-    assert "have not been loaded yet" in src
+    # Still says the SENSORS are not missing — now without telling a reader something has to be
+    # loaded (2026-09-17: remediation wording is withheld from non-administrators).
+    assert "missing readings rather than missing sensors" in src
 
 
 def test_the_caller_passes_the_whole_map():

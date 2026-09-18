@@ -14,8 +14,6 @@ tables:
 
 # Hazard Control Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional test history, not a real COSHH or asbestos file._
-
 ## Why four documents became one register
 
 The building held COSHH and LEV, asbestos, and water hygiene and legionella as three separate
@@ -43,8 +41,8 @@ two problems they have, and they need different actions from different people.
 | HZ-006 | Cleaning chemical store | COSHH substance | Room 0.29 - Storage Room | Locked store, decanting prohibited, MSDS held on site | Store secure, labels legible | COSHH assessment review, annual | 2026-02-18 | 2027-02-18 | COSHH-2026-02 | Caretaking Supervisor | Active |  |
 | HZ-007 | Asbestos insulating board, riser lining | asbestos-containing material | Level 2 riser cupboard | Managed in place, labelled, access controlled by permit | Good condition, label legible | Asbestos management survey, annual re-inspection | 2026-03-27 | 2027-03-27 | ASB-2026-03 | Estates Operations Manager | Active | The same riser carries the unsealed penetration recorded as FSA-021 |
 | HZ-008 | Asbestos cement flue remnant | asbestos-containing material | Room 0.04 - Mechanical Plant Room | Managed in place, encapsulated, labelled | Encapsulation intact, LABEL DAMAGED | Asbestos management survey, annual re-inspection | 2026-03-27 | 2027-03-27 | ASB-2026-03 | Estates Operations Manager | Defective | Material in good condition under a damaged label - a labelling failure, not a material failure, and the two need different actions |
-| HZ-009 | Domestic hot water calorifier | water system | Room 0.07 - Service Room | Stored at 60 degC, distributed above 50 degC | Temperatures within scheme | L8 / HSG274 written scheme, monthly temperature monitoring | 2026-08-14 | 2026-09-14 | WH-2026-08 | Estates Operations Manager | Active |  |
-| HZ-010 | Little-used outlets, Level 5 washrooms | water system | Level 5 | Weekly flushing regime | Flushing recorded weekly | L8 / HSG274 written scheme, weekly flushing | 2026-08-28 | 2026-09-04 | WH-2026-08 | Caretaking Supervisor | Overdue | OVERDUE by one day; little-used outlets are the highest-risk part of the scheme |
+| HZ-009 | Domestic hot water calorifier | water system | Room 0.07 - Service Room | Stored at 60 degC, distributed above 50 degC | Temperatures within scheme | L8 / HSG274 written scheme, monthly temperature monitoring | 2026-09-14 | 2026-10-15 | WH-2026-08 | Estates Operations Manager | Active |  |
+| HZ-010 | Little-used outlets, Level 5 washrooms | water system | Level 5 | Weekly flushing regime | Flushing recorded weekly | L8 / HSG274 written scheme, weekly flushing | 2026-09-04 | 2026-09-11 | WH-2026-08 | Caretaking Supervisor | Overdue | OVERDUE by one day; little-used outlets are the highest-risk part of the scheme |
 | HZ-011 | Cold water storage tank | water system | Roof plant area | Lidded, insulated, temperature below 20 degC | Tank clean, temperature compliant | L8 / HSG274 written scheme, six-monthly inspection | 2026-05-06 | 2026-11-06 | WH-2026-05 | Estates Operations Manager | Active |  |
 | HZ-012 | Thermostatic mixing valves, accessible washrooms | water system | All floors | TMV set to 41 degC, annual service and temperature check | Within tolerance | L8 / HSG274 written scheme, annual TMV service | 2026-05-06 | 2027-05-06 | WH-2026-05 | M and E Maintenance Supervisor | Active |  |
 

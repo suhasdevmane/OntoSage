@@ -104,13 +104,13 @@ def test_plumbing_intents_are_not_offered_to_the_user():
 
 
 def test_the_building_is_named_and_its_own_figures_are_used():
-    out = describe(
-        _registry(["sensor_data"]),
-        "Some Other Building",
-        facts={"Sensors in the ontology": "1,318", "Connected databases": "database1"},
-    )
+    facts = {"Sensors in the ontology": "1,318", "Connected databases": "database1"}
+    out = describe(_registry(["sensor_data"]), "Some Other Building", facts=facts, for_admin=True)
     assert "Some Other Building" in out
     assert "1,318" in out and "database1" in out
+    # Every other reader gets the same figures without the store keys (2026-09-17).
+    plain = describe(_registry(["sensor_data"]), "Some Other Building", facts=dict(facts))
+    assert "1,318" in plain and "database1" not in plain and "ontology" not in plain.lower()
 
 
 def test_grounding_sources_are_listed_when_the_schema_provides_them():

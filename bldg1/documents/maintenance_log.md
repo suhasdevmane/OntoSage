@@ -14,8 +14,6 @@ tables:
 
 # Maintenance Work Order Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional maintenance history, not a real CAFM export._
-
 ## What this is, and the two corrections made to the source
 
 `ontosage:WorkOrder` was declared in the ontology with lay terms and had no mapping, so the
@@ -44,7 +42,6 @@ reference, so fault history and design duty can be read together - which is what
 repaired asset returned to the same abnormal pattern?"* actually requires.
 
 ## Maintenance work order register
-
 
 | ref | task | asset_code | asset_name | raised_on | category | trade | hours | priority | completed_on | status | note |
 |---|---|---|---|---|---|---|---|---|---|---|---|

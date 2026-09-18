@@ -166,6 +166,39 @@ SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE {{
     )
 
 
+def _disagreeing_predicates(g1: str, g2: str, limit: int = 4) -> List[str]:
+    """Which predicates drive the disagreement count, commonest first.
+
+    The count alone cannot be acted on. Every pair this audit has ever flagged on bldg1
+    turned out to be a COMPLEMENTARY split — `Room5.01 brick:isPartOf Floor5` in one file
+    and `brick:isPartOf Zone_5.01` in the other, both true, because a room is part of its
+    floor AND its zone — or two spellings of one label ("Active_Energy" / "Active Energy").
+    The single-valued-in-both-files test cannot tell those from a real contradiction,
+    because NOTHING in this graph declares which predicates are functional: a query for
+    `?p a owl:FunctionalProperty` returns zero.
+    
+    So the audit stops asking the reader to take a number on trust and names the
+    predicates instead. `rdfs:label` and `brick:isPartOf` are a shrug; `ontosage:area` or
+    a recorded status would be the BUG-194 shape and worth stopping for.
+    """
+    rows = _ask(
+        f"""
+SELECT ?p (COUNT(DISTINCT ?s) AS ?n) WHERE {{
+  GRAPH <{g1}> {{ ?s ?p ?o }}
+  GRAPH <{g2}> {{ ?s ?p ?other }}
+  FILTER(?o != ?other)
+  FILTER(!isBlank(?o) && !isBlank(?other))
+  FILTER NOT EXISTS {{ GRAPH <{g1}> {{ ?s ?p ?alt1 }} FILTER(?alt1 != ?o) }}
+  FILTER NOT EXISTS {{ GRAPH <{g2}> {{ ?s ?p ?alt2 }} FILTER(?alt2 != ?other) }}
+}} GROUP BY ?p ORDER BY DESC(?n) LIMIT {int(limit)}"""
+    )
+    out = []
+    for r in rows:
+        name = r["p"]["value"].rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        out.append(f"{name} x{int(r['n']['value']):,}")
+    return out
+
+
 def dual_referenced_sensors() -> int:
     """Sensors carrying MORE THAN ONE timeseries reference, to DIFFERENT ids.
 
@@ -259,6 +292,9 @@ def main() -> int:
         short1, short2 = g1.split(":")[-1][:34], g2.split(":")[-1][:34]
         print(f"   {shared:>7,}  {bad:>8,}  {short1:34} | {short2}{mark}")
         if bad:
+            preds = _disagreeing_predicates(g1, g2)
+            if preds:
+                print(f"   {'':>7}  {'':>8}    on: {', '.join(preds)}")
             survivors.append((g1, g2, bad))
 
     dual = dual_referenced_sensors()

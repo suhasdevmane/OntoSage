@@ -173,9 +173,12 @@ def unit_for_sensor(
     *,
     building_id: Optional[str] = None,
 ) -> str:
-    """The declared unit for a sensor, from the building's modality config.
+    """The declared unit for a sensor: the building's modality config, then the ontology.
 
-    Returns "" when no modality claims it — deliberately, rather than guessing.
+    Returns "" when neither declares one — deliberately, rather than guessing. The one
+    remaining guess downstream typed every flow point "m³/s" and a water answer
+    recommended plant off "292 m³/s" (run-3 row 132); it has been removed, so "" here
+    means the narration says the unit is not recorded.
     """
     local = _class_local(class_iri)
     if not local:
@@ -187,7 +190,7 @@ def unit_for_sensor(
         specs = load_modalities(building_id)
     except Exception as exc:  # pragma: no cover — the config is optional
         logger.debug(f"[modality_units] modality config unavailable: {exc}")
-        return ""
+        specs = []
 
     for spec in specs:
         # Same class+label discrimination the auditor uses. Matching on class
@@ -195,7 +198,27 @@ def unit_for_sensor(
         # PM2.5, PM10 or TVOC happens to be declared first.
         try:
             if spec.matches(local, text):
-                return display_unit((spec.sat or {}).get("unit"))
+                unit = display_unit((spec.sat or {}).get("unit"))
+                if unit:
+                    return unit
         except Exception:  # pragma: no cover — a malformed spec must not break an answer
             continue
-    return ""
+    return _ontology_unit(local)
+
+
+def _ontology_unit(class_local: str) -> str:
+    """The unit the shared TBox declares for what this class measures, or "".
+
+    TTL-first: `ontology/measurand_kinds.ttl` says a water flow sensor reports L/min and
+    an air flow sensor L/s. Consulted only where the modality config named nothing, so it
+    replaces a guess or a blank and never overrides a building's own declaration.
+    """
+    try:
+        from orchestrator.services.measurand_kinds import measurand_of
+        from orchestrator.services.physical_bands import band_for_measurand
+
+        band = band_for_measurand(measurand_of(class_local))
+    except Exception as exc:  # pragma: no cover — the ontology file is optional
+        logger.debug(f"[modality_units] declared units unavailable: {exc}")
+        return ""
+    return display_unit(band.unit) if band and band.unit else ""

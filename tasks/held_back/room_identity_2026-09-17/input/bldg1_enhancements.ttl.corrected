@@ -1,0 +1,1502 @@
+# =============================================================================
+# Abacws Building — P1-P4 Gap-Filling Triples  (Brick v1.4 A-Box)
+#
+# Covers all priority gaps from scripts/outputs/ttl_gap_analysis.md.
+# Load alongside bldg1_expanded_protege_clean.ttl and bldg1_abacws_metadata.ttl
+# in the same GraphDB repository (ontosage).
+#
+# NOTE ON TIMESERIES UUIDs
+#   UUIDs of the form "00000000-XXXX-..." are PLACEHOLDERS.
+#   Replace with real MySQL UUIDs once the corresponding sensor data is
+#   loaded into the database.  Existing Floor-5 sensors in
+#   bldg1_expanded_protege_clean.ttl use the real UUID series starting at
+#   26f2c139-...  New sensors here use the 00000000- prefix to distinguish
+#   them at a glance.
+# =============================================================================
+
+@prefix brick:   <https://brickschema.org/schema/Brick#> .
+@prefix bldg:    <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:     <http://www.w3.org/2001/XMLSchema#> .
+@prefix ref:     <https://brickschema.org/schema/Brick/ref#> .
+@prefix ashrae:  <http://data.ashrae.org/standard223#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@base <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+# ---------------------------------------------------------------------------
+# Ontology header
+# ---------------------------------------------------------------------------
+
+bldg:AbacwsEnhancementsOntology
+    rdf:type owl:Ontology ;
+    rdfs:label "Abacws Building Enhancements — P1-P4 Gap Filling" ;
+    rdfs:comment "Adds access control, occupancy, sub-metering, water, EV, fire safety, PV, carbon, waste, lighting-CCT, and green-roof triples to answer all survey/pipeline questions classified as GENERIC or DECLINED." ;
+    owl:imports <https://brickschema.org/schema/1.4/Brick> ;
+    dcterms:created "2026-04-25"^^xsd:date ;
+    owl:versionInfo "1.0" .
+
+# ---------------------------------------------------------------------------
+# Custom annotation properties (used where Brick has no property)
+# ---------------------------------------------------------------------------
+
+bldg:maxOccupancy
+    rdf:type owl:DatatypeProperty ;
+    rdfs:label "Maximum occupancy (persons)" ;
+    rdfs:domain brick:Space ;
+    rdfs:range xsd:integer .
+
+bldg:epcRating
+    rdf:type owl:DatatypeProperty ;
+    rdfs:label "Energy Performance Certificate rating (A-G)" ;
+    rdfs:range xsd:string .
+
+bldg:carbonIntensityGCO2perKWh
+    rdf:type owl:DatatypeProperty ;
+    rdfs:label "Grid carbon intensity (gCO2/kWh)" ;
+    rdfs:range xsd:decimal .
+
+bldg:moldRiskThresholdRH
+    rdf:type owl:DatatypeProperty ;
+    rdfs:label "Humidity % above which mold risk is flagged" ;
+    rdfs:range xsd:decimal .
+
+bldg:wasteType
+    rdf:type owl:DatatypeProperty ;
+    rdfs:label "Type of waste collected (general, recycling, composting)" ;
+    rdfs:range xsd:string .
+
+bldg:distanceToEntrance
+    rdf:type owl:DatatypeProperty ;
+    rdfs:label "Approximate walking distance to main entrance (metres)" ;
+    rdfs:range xsd:decimal .
+
+bldg:Waste_Bin
+    rdf:type owl:Class ;
+    rdfs:subClassOf brick:Equipment ;
+    rdfs:label "Waste Bin" ;
+    rdfs:comment "A container for waste collection, potentially equipped with fill-level sensing." .
+
+
+# ===========================================================================
+# P1 - ACCESS CONTROL DOORS + TIMESERIES UUIDs  (Topic 6)
+# ===========================================================================
+
+bldg:Access_Reader_Main_Entrance
+    rdf:type owl:NamedIndividual , brick:Access_Reader ;
+    rdfs:label "Access Reader - Main Building Entrance" ;
+    brick:isPartOf bldg:Room0.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Access_Reader_F1_Entrance
+    rdf:type owl:NamedIndividual , brick:Access_Reader ;
+    rdfs:label "Access Reader - Floor 1 Entrance" ;
+    brick:isPartOf bldg:Floor1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Access_Reader_F2_Entrance
+    rdf:type owl:NamedIndividual , brick:Access_Reader ;
+    rdfs:label "Access Reader - Floor 2 Entrance" ;
+    brick:isPartOf bldg:Floor2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Access_Reader_F3_Entrance
+    rdf:type owl:NamedIndividual , brick:Access_Reader ;
+    rdfs:label "Access Reader - Floor 3 Entrance" ;
+    brick:isPartOf bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Access_Reader_F4_Entrance
+    rdf:type owl:NamedIndividual , brick:Access_Reader ;
+    rdfs:label "Access Reader - Floor 4 Entrance" ;
+    brick:isPartOf bldg:Floor4 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Access_Reader_F5_Entrance
+    rdf:type owl:NamedIndividual , brick:Access_Reader ;
+    rdfs:label "Access Reader - Floor 5 Entrance" ;
+    brick:isPartOf bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac01-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Entry_Count_Sensor_Main
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Entry Count Sensor - Main Entrance (persons/day)" ;
+    brick:isPartOf bldg:Room0.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Entry_Count_Sensor_F1
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Entry Count Sensor - Floor 1" ;
+    brick:isPartOf bldg:Floor1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Entry_Count_Sensor_F2
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Entry Count Sensor - Floor 2" ;
+    brick:isPartOf bldg:Floor2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Entry_Count_Sensor_F3
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Entry Count Sensor - Floor 3" ;
+    brick:isPartOf bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Entry_Count_Sensor_F4
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Entry Count Sensor - Floor 4" ;
+    brick:isPartOf bldg:Floor4 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Entry_Count_Sensor_F5
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Entry Count Sensor - Floor 5" ;
+    brick:isPartOf bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac02-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Door_Sensor_Main_Entrance
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Door Position Sensor - Main Entrance (open=1 / closed=0)" ;
+    brick:isPartOf bldg:Room0.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac03-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Door_Sensor_Server_F2
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Door Position Sensor - Server Room Floor 2 (Room 2.44)" ;
+    brick:isPartOf bldg:Room2.44 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac03-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Door_Sensor_Server_F4
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Door Position Sensor - Server Room Floor 4 (Room 4.44)" ;
+    brick:isPartOf bldg:Room4.44 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac03-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Door_Sensor_Server_F5
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Door Position Sensor - Server Room Floor 5 (Room 5.44)" ;
+    brick:isPartOf bldg:Room5.44 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ac03-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P1 - OCCUPANCY SENSORS + MAX CAPACITY  (Topics 7, 13)
+# ===========================================================================
+
+# CORRECTED 2026-09-17 (BUG-671 follow-up). Twelve of these twenty-nine were physically
+# impossible (Room2.15 = 40 people in 7.83 m2, Room4.13 = 40 in 10.12 m2, Room1.06 = 30 in
+# 11.94 m2) and most of the rest contradicted the architect's drawing. The drawing is the
+# authority on room identity (building owner, 2026-09-17). Same rule as hbco:roomCapacity in
+# bldg1_enrichment_metadata.ttl and scripts/provision_event_and_capacity_data.py, so the two
+# properties agree for every room carrying both: the person count the drawing writes inside
+# the room's own outline; else floor(area / 10 m2 per workplace), at least 1. Areas and labels:
+# tests/fixtures/floor_plans/bldg1_drawing_rooms.json. None of these is a certified fire limit.
+# Room2.15 LOST its figure: the drawing names it "DB Room" (a distribution board room), which
+# nobody is laid out to occupy.
+bldg:Room1.25  bldg:maxOccupancy  8 .   # drawing "8P Research Office", 56.76 m2
+bldg:Room1.26  bldg:maxOccupancy  6 .   # drawing "6P Research Office", 33.94 m2
+bldg:Room2.13  bldg:maxOccupancy  1 .   # drawing "Office", no count; 11.21 m2 / 10
+bldg:Room2.14  bldg:maxOccupancy  1 .   # drawing "Project Rm - 1", no count; 18.48 m2 / 10
+bldg:Room3.13  bldg:maxOccupancy  1 .   # drawing "Office", no count; 10.97 m2 / 10
+bldg:Room3.14  bldg:maxOccupancy  2 .   # drawing "Exec PA", no count; 20.53 m2 / 10
+bldg:Room3.15  bldg:maxOccupancy 12 .   # drawing "8-12 Exec Meeting" (top of range), 14.88 m2
+bldg:Room3.16  bldg:maxOccupancy  1 .   # drawing "Office", no count; 9.77 m2 / 10, at least 1
+bldg:Room3.26  bldg:maxOccupancy  6 .   # drawing "6P PHD Research", 27.11 m2
+bldg:Room3.27  bldg:maxOccupancy  3 .   # drawing "Magic Room", no count; 31.01 m2 / 10
+bldg:Room4.11  bldg:maxOccupancy  6 .   # drawing "6P Research", 41.79 m2
+bldg:Room4.12  bldg:maxOccupancy  1 .   # drawing "Office", no count; 10.75 m2 / 10
+bldg:Room4.13  bldg:maxOccupancy  1 .   # drawing "Office", no count; 10.12 m2 / 10
+bldg:Room5.15  bldg:maxOccupancy  1 .   # drawing "Office", no count; 11.00 m2 / 10
+bldg:Room5.16  bldg:maxOccupancy  1 .   # drawing "Office", no count; 11.27 m2 / 10
+bldg:Room5.17  bldg:maxOccupancy  1 .   # drawing "Office", no count; 11.00 m2 / 10
+bldg:Room5.18  bldg:maxOccupancy  5 .   # drawing "5P PHD Research", 23.63 m2
+bldg:Room1.04  bldg:maxOccupancy 30 .   # drawing "30P Seminar Room", 74.03 m2
+bldg:Room2.66  bldg:maxOccupancy  1 .   # drawing "Office", no count; 10.37 m2 / 10
+bldg:Room3.17  bldg:maxOccupancy  1 .   # drawing "Office", no count; 11.66 m2 / 10
+bldg:Room4.70  bldg:maxOccupancy  6 .   # drawing "6P Prof Serv- IT", 33.82 m2
+bldg:Room5.26  bldg:maxOccupancy  2 .   # drawing "Small Research", no count; 22.58 m2 / 10
+bldg:Room1.06  bldg:maxOccupancy  1 .   # drawing "Office", no count; 11.94 m2 / 10
+bldg:Room1.07  bldg:maxOccupancy  1 .   # drawing "Office", no count; 10.90 m2 / 10
+bldg:Room2.01  bldg:maxOccupancy  8 .   # drawing "8P PHD Students", 35.39 m2
+bldg:Room3.01  bldg:maxOccupancy 20 .   # drawing "16-20P Meeting" (top of range), 41.69 m2
+bldg:Room4.01  bldg:maxOccupancy  7 .   # drawing "7P PHD Research", 30.79 m2
+bldg:Room5.01  bldg:maxOccupancy  8 .   # drawing "8P PHD Research", 32.96 m2
+
+bldg:Occupancy_Sensor_Conf_1_25
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Seminar Room 1.25" ;
+    brick:isPartOf bldg:Room1.25 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Conf_1_26
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Seminar Room 1.26" ;
+    brick:isPartOf bldg:Room1.26 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Conf_2_15
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Seminar Room 2.15" ;
+    brick:isPartOf bldg:Room2.15 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Conf_3_13
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Meeting Room 3.13" ;
+    brick:isPartOf bldg:Room3.13 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Conf_3_26
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Meeting Room 3.26" ;
+    brick:isPartOf bldg:Room3.26 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Conf_4_13
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Seminar Room 4.13" ;
+    brick:isPartOf bldg:Room4.13 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Conf_5_15
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Seminar Room 5.15" ;
+    brick:isPartOf bldg:Room5.15 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000007" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Conf_5_16
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Seminar Room 5.16" ;
+    brick:isPartOf bldg:Room5.16 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc01-0000-0000-000000000008" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Lab_3_01
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Lab 3.01" ;
+    brick:isPartOf bldg:Room3.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc02-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Lab_4_01
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Lab 4.01" ;
+    brick:isPartOf bldg:Room4.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc02-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Occupancy_Sensor_Lab_5_01
+    rdf:type owl:NamedIndividual , brick:Occupancy_Count_Sensor ;
+    rdfs:label "Occupancy Count Sensor - Lab 5.01" ;
+    brick:isPartOf bldg:Room5.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-oc02-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:CO2_Sensor_Lab_3_01
+    rdf:type owl:NamedIndividual , brick:CO2_Sensor ;
+    rdfs:label "CO2 Sensor - Lab 3.01" ;
+    brick:isPartOf bldg:Room3.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-co2a-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:CO2_Sensor_Lab_4_01
+    rdf:type owl:NamedIndividual , brick:CO2_Sensor ;
+    rdfs:label "CO2 Sensor - Lab 4.01" ;
+    brick:isPartOf bldg:Room4.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-co2a-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:CO2_Sensor_Conf_3_13
+    rdf:type owl:NamedIndividual , brick:CO2_Sensor ;
+    rdfs:label "CO2 Sensor - Meeting Room 3.13" ;
+    brick:isPartOf bldg:Room3.13 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-co2a-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:CO2_Sensor_Conf_5_15
+    rdf:type owl:NamedIndividual , brick:CO2_Sensor ;
+    rdfs:label "CO2 Sensor - Seminar Room 5.15" ;
+    brick:isPartOf bldg:Room5.15 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-co2a-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P1 - SUB-METERED ELECTRICAL METERS  (Topics 5, 17)
+# ===========================================================================
+
+bldg:HVAC_Meter_F0
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "HVAC Electrical Sub-Meter - Floor 0" ;
+    brick:isPartOf bldg:Floor0 ;
+    brick:measures bldg:AHU_F0 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:HVAC_Meter_F1
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "HVAC Electrical Sub-Meter - Floor 1" ;
+    brick:isPartOf bldg:Floor1 ;
+    brick:measures bldg:AHU_F1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:HVAC_Meter_F2
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "HVAC Electrical Sub-Meter - Floor 2" ;
+    brick:isPartOf bldg:Floor2 ;
+    brick:measures bldg:AHU_F2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:HVAC_Meter_F3
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "HVAC Electrical Sub-Meter - Floor 3" ;
+    brick:isPartOf bldg:Floor3 ;
+    brick:measures bldg:AHU_F3 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:HVAC_Meter_F4
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "HVAC Electrical Sub-Meter - Floor 4" ;
+    brick:isPartOf bldg:Floor4 ;
+    brick:measures bldg:AHU_F4 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em01-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:HVAC_Meter_F5
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "HVAC Electrical Sub-Meter - Floor 5" ;
+    brick:isPartOf bldg:Floor5 ;
+    brick:measures bldg:AHU_F5 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em01-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Lighting_Meter_F0
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Lighting Electrical Sub-Meter - Floor 0" ;
+    brick:isPartOf bldg:Floor0 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em02-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Lighting_Meter_F1
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Lighting Electrical Sub-Meter - Floor 1" ;
+    brick:isPartOf bldg:Floor1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em02-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Lighting_Meter_F2
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Lighting Electrical Sub-Meter - Floor 2" ;
+    brick:isPartOf bldg:Floor2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em02-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Lighting_Meter_F3
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Lighting Electrical Sub-Meter - Floor 3" ;
+    brick:isPartOf bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em02-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Lighting_Meter_F4
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Lighting Electrical Sub-Meter - Floor 4" ;
+    brick:isPartOf bldg:Floor4 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em02-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Lighting_Meter_F5
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Lighting Electrical Sub-Meter - Floor 5" ;
+    brick:isPartOf bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em02-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:PlugLoad_Meter_F0
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Plug Load Electrical Sub-Meter - Floor 0" ;
+    brick:isPartOf bldg:Floor0 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em03-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:PlugLoad_Meter_F1
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Plug Load Electrical Sub-Meter - Floor 1" ;
+    brick:isPartOf bldg:Floor1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em03-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:PlugLoad_Meter_F2
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Plug Load Electrical Sub-Meter - Floor 2" ;
+    brick:isPartOf bldg:Floor2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em03-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:PlugLoad_Meter_F3
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Plug Load Electrical Sub-Meter - Floor 3" ;
+    brick:isPartOf bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em03-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:PlugLoad_Meter_F4
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Plug Load Electrical Sub-Meter - Floor 4" ;
+    brick:isPartOf bldg:Floor4 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em03-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:PlugLoad_Meter_F5
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "Plug Load Electrical Sub-Meter - Floor 5" ;
+    brick:isPartOf bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-em03-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P1 - WATER METER TIMESERIES UUID LINKS  (Topic 9)
+# ===========================================================================
+
+bldg:Building_Water_Meter
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wm01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Water_Flow_Sensor_Main
+    rdf:type owl:NamedIndividual , brick:Water_Flow_Sensor ;
+    rdfs:label "Water Flow Sensor - Main Supply" ;
+    brick:isPartOf bldg:Floor0 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wm01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Water_Flow_Sensor_HotWater
+    rdf:type owl:NamedIndividual , brick:Water_Flow_Sensor ;
+    rdfs:label "Water Flow Sensor - Hot Water Circuit" ;
+    brick:isPartOf bldg:Hot_Water_System ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wm01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Leak_Detector_PlantRoom_F0
+    rdf:type owl:NamedIndividual , brick:Leak_Detector_Equipment ;
+    rdfs:label "Leak Detector - Ground Floor Plant Room" ;
+    brick:isPartOf bldg:Room0.04 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wm02-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Leak_Detector_Rooftop
+    rdf:type owl:NamedIndividual , brick:Leak_Detector_Equipment ;
+    rdfs:label "Leak Detector - Rooftop Plant Area" ;
+    brick:isPartOf bldg:Rooftop ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wm02-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Water_Usage_Sensor_Main
+    rdf:type owl:NamedIndividual , brick:Water_Usage_Sensor ;
+    rdfs:label "Water Usage Sensor - Building Main (litres/day)" ;
+    brick:isPartOf bldg:Abacws ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wm01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P2 - ELEVATOR POWER SENSORS  (Topic 15)
+# ===========================================================================
+
+bldg:Lift_1_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "Power Sensor - Lift 1 (kW)" ;
+    brick:isPartOf bldg:Lift_1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-lp01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Lift_2_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "Power Sensor - Lift 2 (kW)" ;
+    brick:isPartOf bldg:Lift_2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-lp01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+# WHY TWO STATUS CLASSES (2026-09-17).
+# This point was typed brick:Occupancy_Status alone, and the lift_state modality in
+# config/saturation_modalities.yaml asks for brick:Availability_Status -- so the modality
+# resolved to ZERO points and every lift-availability question fell through it. Measured:
+# no point in the graph carried Availability_Status, and the config's other declared class,
+# brick:Elevator_Status, DOES NOT EXIST in the loaded Brick TBox at all.
+#
+# The fix is TTL-first rather than a config widening: brick:Availability_Status is a real
+# Brick class and is what this point MEANS -- whether the lift is in service. Occupancy_Status
+# is kept because a lift car genuinely reports occupancy-like state (idle / travelling /
+# door-open) and Brick-aware readers already relying on it must not break.
+#
+# The two classes now name two different populations of one point, so occupancy_status in
+# saturation_modalities.yaml excludes lift labels; otherwise a lift door-open state would be
+# counted as a room's occupancy.
+bldg:Lift_1_Status_Sensor
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status , brick:Availability_Status ;
+    rdfs:label "Status Sensor - Lift 1 (idle/travelling/door-open)" ;
+    brick:isPartOf bldg:Lift_1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-lp01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P2 - EV CHARGING STATION SENSORS  (Topic 16)
+# ===========================================================================
+
+bldg:EV_Charger_1_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "Power Sensor - EV Charging Station 1" ;
+    brick:isPartOf bldg:EV_Charger_1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:EV_Charger_2_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "Power Sensor - EV Charging Station 2" ;
+    brick:isPartOf bldg:EV_Charger_2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:EV_Charger_3_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "Power Sensor - EV Charging Station 3" ;
+    brick:isPartOf bldg:EV_Charger_3 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:EV_Charger_4_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "Power Sensor - EV Charging Station 4" ;
+    brick:isPartOf bldg:EV_Charger_4 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:EV_Charger_5_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "Power Sensor - EV Charging Station 5" ;
+    brick:isPartOf bldg:EV_Charger_5 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:EV_Charger_6_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "Power Sensor - EV Charging Station 6" ;
+    brick:isPartOf bldg:EV_Charger_6 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev01-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:EV_Charger_1_State_Sensor
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdfs:label "Charging State Sensor - EV Charger 1 (available/charging/fault)" ;
+    brick:isPartOf bldg:EV_Charger_1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev02-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:EV_Charger_2_State_Sensor
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdfs:label "Charging State Sensor - EV Charger 2 (available/charging/fault)" ;
+    brick:isPartOf bldg:EV_Charger_2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev02-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:NO2_Sensor_Parking
+    rdf:type owl:NamedIndividual , brick:NO2_Level_Sensor ;
+    rdfs:label "NO2/Exhaust Gas Sensor - Parking Level" ;
+    rdfs:comment "Monitors NO2 from vehicle exhausts; linked to exhaust fan control." ;
+    brick:isPartOf bldg:Parking_Level_Ground ;
+    brick:controls bldg:Exhaust_Fan_Parking ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-ev03-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Exhaust_Fan_Parking
+    rdf:type owl:NamedIndividual , brick:Fan ;
+    rdfs:label "Exhaust Fan - Parking Level Ventilation" ;
+    brick:isPartOf bldg:Parking_Level_Ground .
+
+
+# ===========================================================================
+# P2 - FIRE EXIT DOOR SENSORS + EMERGENCY ASSEMBLY  (Topic 8)
+# ===========================================================================
+
+bldg:FireExit_F0_North
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Fire Exit - Ground Floor North" ;
+    rdfs:comment "Emergency exit door to Assembly Point A" ;
+    brick:isPartOf bldg:Floor0 .
+
+bldg:FireExit_F1_North
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Fire Exit - Floor 1 North" ;
+    brick:isPartOf bldg:Floor1 .
+
+bldg:FireExit_F2_North
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Fire Exit - Floor 2 North" ;
+    brick:isPartOf bldg:Floor2 .
+
+bldg:FireExit_F3_North
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Fire Exit - Floor 3 North" ;
+    brick:isPartOf bldg:Floor3 .
+
+bldg:FireExit_F4_North
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Fire Exit - Floor 4 North" ;
+    brick:isPartOf bldg:Floor4 .
+
+bldg:FireExit_F5_North
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Fire Exit - Floor 5 North" ;
+    brick:isPartOf bldg:Floor5 .
+
+bldg:Assembly_Point_A
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Fire Assembly Point A - Senghennydd Road (North side)" ;
+    rdfs:comment "Primary assembly point. Follow green fire exit signs from all floors." ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:Assembly_Point_B
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Fire Assembly Point B - Car Park (South side)" ;
+    brick:isPartOf bldg:Abacws .
+
+bldg:FireExit_Door_Sensor_F0
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Fire Exit Door Sensor - Ground Floor (1=open / 0=closed)" ;
+    brick:isPartOf bldg:FireExit_F0_North ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:FireExit_Door_Sensor_F1
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Fire Exit Door Sensor - Floor 1" ;
+    brick:isPartOf bldg:FireExit_F1_North ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:FireExit_Door_Sensor_F2
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Fire Exit Door Sensor - Floor 2" ;
+    brick:isPartOf bldg:FireExit_F2_North ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:FireExit_Door_Sensor_F3
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Fire Exit Door Sensor - Floor 3" ;
+    brick:isPartOf bldg:FireExit_F3_North ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:FireExit_Door_Sensor_F4
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Fire Exit Door Sensor - Floor 4" ;
+    brick:isPartOf bldg:FireExit_F4_North ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:FireExit_Door_Sensor_F5
+    rdf:type owl:NamedIndividual , brick:Position_Sensor ;
+    rdfs:label "Fire Exit Door Sensor - Floor 5" ;
+    brick:isPartOf bldg:FireExit_F5_North ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-fe01-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Smoke_Detector_F3_Lab
+    rdf:type owl:NamedIndividual , brick:Smoke_Detector ;
+    rdfs:label "Smoke Detector - Floor 3 Lab Corridor" ;
+    brick:isPartOf bldg:Floor3 ;
+    brick:isAssociatedWith bldg:Occupancy_Sensor_Lab_3_01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-fe02-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Smoke_Detector_F5_Lab
+    rdf:type owl:NamedIndividual , brick:Smoke_Detector ;
+    rdfs:label "Smoke Detector - Floor 5 Lab Corridor" ;
+    brick:isPartOf bldg:Floor5 ;
+    brick:isAssociatedWith bldg:Occupancy_Sensor_Lab_5_01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-fe02-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P2 - VIBRATION SENSORS CO-LOCATED WITH PUMPS  (Topic 19)
+# ===========================================================================
+
+bldg:Pump_HW_1
+    rdf:type owl:NamedIndividual , brick:Pump ;
+    rdfs:label "Hot Water Circulation Pump 1" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:Pump_HW_2
+    rdf:type owl:NamedIndividual , brick:Pump ;
+    rdfs:label "Hot Water Circulation Pump 2 (Standby)" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:Pump_Chilled_1
+    rdf:type owl:NamedIndividual , brick:Pump ;
+    rdfs:label "Chilled Water Pump 1" ;
+    brick:isPartOf bldg:Rooftop .
+
+bldg:Vibration_Sensor_Pump_HW_1
+    rdf:type owl:NamedIndividual , brick:Vibration_Sensor_Equipment ;
+    rdfs:label "Vibration Sensor - Hot Water Pump 1 (bearing wear / imbalance)" ;
+    brick:isPartOf bldg:Rooftop ;
+    brick:isAssociatedWith bldg:Pump_HW_1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-vb01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Vibration_Sensor_Pump_HW_2
+    rdf:type owl:NamedIndividual , brick:Vibration_Sensor_Equipment ;
+    rdfs:label "Vibration Sensor - Hot Water Pump 2 Standby" ;
+    brick:isPartOf bldg:Rooftop ;
+    brick:isAssociatedWith bldg:Pump_HW_2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-vb01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Vibration_Sensor_Pump_Chilled_1
+    rdf:type owl:NamedIndividual , brick:Vibration_Sensor_Equipment ;
+    rdfs:label "Vibration Sensor - Chilled Water Pump 1" ;
+    brick:isPartOf bldg:Rooftop ;
+    brick:isAssociatedWith bldg:Pump_Chilled_1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-vb01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P2 - PV SOLAR PANEL GENERATION SENSORS  (Topics 11, 20)
+# ===========================================================================
+
+bldg:PV_Array_1_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "PV Generation Power Sensor - Array 1 South-facing (kW)" ;
+    brick:isPartOf bldg:PV_Array_1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-pv01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:PV_Array_2_Power_Sensor
+    rdf:type owl:NamedIndividual , brick:Active_Power_Sensor ;
+    rdfs:label "PV Generation Power Sensor - Array 2 West-facing (kW)" ;
+    brick:isPartOf bldg:PV_Array_2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-pv01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Solar_Irradiance_Sensor_Roof
+    rdf:type owl:NamedIndividual , brick:Solar_Irradiance_Sensor ;
+    rdfs:label "Solar Irradiance Sensor - Rooftop (W/m2)" ;
+    brick:isPartOf bldg:Rooftop ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-pv01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:PV_Energy_Meter
+    rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
+    rdfs:label "PV Generation Energy Meter - Total Export (kWh)" ;
+    brick:isPartOf bldg:Rooftop ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-pv01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P3 - CARBON / EPC ANNOTATIONS  (Topic 20)
+# ===========================================================================
+
+bldg:Abacws
+    bldg:epcRating "B" ;
+    bldg:carbonIntensityGCO2perKWh "233.0"^^xsd:decimal ;
+    rdfs:comment "EPC Band B as of 2025. Grid carbon intensity 233 gCO2/kWh (UK 2024 average). Target Band A by 2030." .
+
+bldg:Building_Electrical_Meter
+    bldg:carbonIntensityGCO2perKWh "233.0"^^xsd:decimal ;
+    rdfs:comment "Carbon intensity factor for computing CO2 emissions from electrical consumption (kWh x 0.233 = kgCO2)." .
+
+bldg:Energy_Performance_Certificate
+    rdf:type owl:NamedIndividual ;
+    rdfs:label "Abacws EPC Certificate" ;
+    bldg:epcRating "B" ;
+    rdfs:comment "Current EPC Band B. Target EPC Band A by 2030 via HVAC upgrade, PV expansion, and enhanced controls." ;
+    brick:isPartOf bldg:Abacws .
+
+
+# ===========================================================================
+# P3 - HUMIDITY MOLD-RISK SETPOINTS  (Topics 13, 2)
+# ===========================================================================
+
+bldg:MoldRisk_Setpoint_F0
+    rdf:type owl:NamedIndividual , brick:Humidity_Setpoint ;
+    rdfs:label "Mold Risk Humidity Threshold - Floor 0 (70% RH)" ;
+    brick:isPartOf bldg:Floor0 ;
+    bldg:moldRiskThresholdRH "70.0"^^xsd:decimal ;
+    rdfs:comment "Alert if relative humidity exceeds 70% for more than 2 hours." .
+
+bldg:MoldRisk_Setpoint_F1
+    rdf:type owl:NamedIndividual , brick:Humidity_Setpoint ;
+    rdfs:label "Mold Risk Humidity Threshold - Floor 1 (70% RH)" ;
+    brick:isPartOf bldg:Floor1 ;
+    bldg:moldRiskThresholdRH "70.0"^^xsd:decimal .
+
+bldg:MoldRisk_Setpoint_F2
+    rdf:type owl:NamedIndividual , brick:Humidity_Setpoint ;
+    rdfs:label "Mold Risk Humidity Threshold - Floor 2 (70% RH)" ;
+    brick:isPartOf bldg:Floor2 ;
+    bldg:moldRiskThresholdRH "70.0"^^xsd:decimal .
+
+bldg:MoldRisk_Setpoint_F3
+    rdf:type owl:NamedIndividual , brick:Humidity_Setpoint ;
+    rdfs:label "Mold Risk Humidity Threshold - Floor 3 (70% RH)" ;
+    brick:isPartOf bldg:Floor3 ;
+    bldg:moldRiskThresholdRH "70.0"^^xsd:decimal .
+
+bldg:MoldRisk_Setpoint_F4
+    rdf:type owl:NamedIndividual , brick:Humidity_Setpoint ;
+    rdfs:label "Mold Risk Humidity Threshold - Floor 4 (70% RH)" ;
+    brick:isPartOf bldg:Floor4 ;
+    bldg:moldRiskThresholdRH "70.0"^^xsd:decimal .
+
+bldg:MoldRisk_Setpoint_F5
+    rdf:type owl:NamedIndividual , brick:Humidity_Setpoint ;
+    rdfs:label "Mold Risk Humidity Threshold - Floor 5 (70% RH)" ;
+    brick:isPartOf bldg:Floor5 ;
+    bldg:moldRiskThresholdRH "70.0"^^xsd:decimal .
+
+bldg:RH_Sensor_F0
+    rdf:type owl:NamedIndividual , brick:Relative_Humidity_Sensor ;
+    rdfs:label "Relative Humidity Sensor - Floor 0" ;
+    brick:isPartOf bldg:Floor0 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:RH_Sensor_F1
+    rdf:type owl:NamedIndividual , brick:Relative_Humidity_Sensor ;
+    rdfs:label "Relative Humidity Sensor - Floor 1" ;
+    brick:isPartOf bldg:Floor1 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:RH_Sensor_F2
+    rdf:type owl:NamedIndividual , brick:Relative_Humidity_Sensor ;
+    rdfs:label "Relative Humidity Sensor - Floor 2" ;
+    brick:isPartOf bldg:Floor2 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:RH_Sensor_F3
+    rdf:type owl:NamedIndividual , brick:Relative_Humidity_Sensor ;
+    rdfs:label "Relative Humidity Sensor - Floor 3" ;
+    brick:isPartOf bldg:Floor3 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:RH_Sensor_F4
+    rdf:type owl:NamedIndividual , brick:Relative_Humidity_Sensor ;
+    rdfs:label "Relative Humidity Sensor - Floor 4" ;
+    brick:isPartOf bldg:Floor4 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:RH_Sensor_F5
+    rdf:type owl:NamedIndividual , brick:Relative_Humidity_Sensor ;
+    rdfs:label "Relative Humidity Sensor - Floor 5" ;
+    brick:isPartOf bldg:Floor5 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-rh01-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P3 - MEETING ROOM BOOKING STATUS  (Topic 7)
+# ===========================================================================
+
+bldg:Booking_Status_Room1_25
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdfs:label "Booking Status - Seminar Room 1.25 (available=0 / booked=1)" ;
+    brick:isPartOf bldg:Room1.25 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Booking_Status_Room1_26
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdfs:label "Booking Status - Seminar Room 1.26" ;
+    brick:isPartOf bldg:Room1.26 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Booking_Status_Room3_13
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdfs:label "Booking Status - Meeting Room 3.13" ;
+    brick:isPartOf bldg:Room3.13 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Booking_Status_Room3_26
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdfs:label "Booking Status - Meeting Room 3.26" ;
+    brick:isPartOf bldg:Room3.26 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Booking_Status_Room5_15
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdfs:label "Booking Status - Seminar Room 5.15" ;
+    brick:isPartOf bldg:Room5.15 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Booking_Status_Room5_16
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdfs:label "Booking Status - Seminar Room 5.16" ;
+    brick:isPartOf bldg:Room5.16 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-bk01-0000-0000-000000000006" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P4 - WASTE BIN FILL-LEVEL SENSORS  (Topic 10)
+# ===========================================================================
+
+bldg:WasteBin_General_F0_Reception
+    rdf:type owl:NamedIndividual , bldg:Waste_Bin ;
+    rdfs:label "General Waste Bin - Ground Floor Reception" ;
+    bldg:wasteType "general" ;
+    brick:isPartOf bldg:Room0.01 ;
+    brick:hasPoint bldg:WasteBin_Fill_F0_Reception .
+
+bldg:WasteBin_Fill_F0_Reception
+    rdf:type owl:NamedIndividual , brick:Water_Level_Sensor ;
+    rdfs:label "Fill Level Sensor - Waste Bin Ground Floor Reception (%)" ;
+    brick:isPartOf bldg:Room0.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:WasteBin_Recycle_F2_Kitchen
+    rdf:type owl:NamedIndividual , bldg:Waste_Bin ;
+    rdfs:label "Recycling Bin - Floor 2 Break Room" ;
+    bldg:wasteType "recycling" ;
+    brick:isPartOf bldg:Room2.66 ;
+    brick:hasPoint bldg:WasteBin_Fill_F2_Kitchen .
+
+bldg:WasteBin_Fill_F2_Kitchen
+    rdf:type owl:NamedIndividual , brick:Water_Level_Sensor ;
+    rdfs:label "Fill Level Sensor - Recycling Bin Floor 2 Break Room (%)" ;
+    brick:isPartOf bldg:Room2.66 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:WasteBin_General_F3_Common
+    rdf:type owl:NamedIndividual , bldg:Waste_Bin ;
+    rdfs:label "General Waste Bin - Floor 3 Common Room" ;
+    bldg:wasteType "general" ;
+    brick:isPartOf bldg:Room3.17 ;
+    brick:hasPoint bldg:WasteBin_Fill_F3_Common .
+
+bldg:WasteBin_Fill_F3_Common
+    rdf:type owl:NamedIndividual , brick:Water_Level_Sensor ;
+    rdfs:label "Fill Level Sensor - Waste Bin Floor 3 Common Room (%)" ;
+    brick:isPartOf bldg:Room3.17 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:WasteBin_Recycle_F3_Kitchen
+    rdf:type owl:NamedIndividual , bldg:Waste_Bin ;
+    rdfs:label "Recycling Bin - Floor 3 Kitchen" ;
+    bldg:wasteType "recycling" ;
+    brick:isPartOf bldg:Room3.18 ;
+    brick:hasPoint bldg:WasteBin_Fill_F3_Kitchen .
+
+bldg:WasteBin_Fill_F3_Kitchen
+    rdf:type owl:NamedIndividual , brick:Water_Level_Sensor ;
+    rdfs:label "Fill Level Sensor - Recycling Bin Floor 3 Kitchen (%)" ;
+    brick:isPartOf bldg:Room3.18 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:WasteBin_General_F5_Break
+    rdf:type owl:NamedIndividual , bldg:Waste_Bin ;
+    rdfs:label "General Waste Bin - Floor 5 Break Room" ;
+    bldg:wasteType "general" ;
+    brick:isPartOf bldg:Room5.26 ;
+    brick:hasPoint bldg:WasteBin_Fill_F5_Break .
+
+bldg:WasteBin_Fill_F5_Break
+    rdf:type owl:NamedIndividual , brick:Water_Level_Sensor ;
+    rdfs:label "Fill Level Sensor - Waste Bin Floor 5 Break Room (%)" ;
+    brick:isPartOf bldg:Room5.26 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-wb01-0000-0000-000000000005" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P4 - LIGHTING CCT SETPOINTS FOR CIRCADIAN CONTROL  (Topic 3)
+# ===========================================================================
+
+bldg:Luminaire_F3_Lab_3_01
+    rdf:type owl:NamedIndividual , brick:Luminaire ;
+    rdfs:label "Luminaire - Lab 3.01 (CCT-controllable)" ;
+    brick:isPartOf bldg:Room3.01 ;
+    brick:hasPoint bldg:CCT_Command_F3_Lab .
+
+bldg:CCT_Command_F3_Lab
+    rdf:type owl:NamedIndividual , brick:Lighting_Correlated_Color_Temperature_Command ;
+    rdfs:label "CCT Command - Lab 3.01 (Kelvin, circadian schedule)" ;
+    rdfs:comment "Warm 2700K morning/evening; cool-white 5000K 09:00-15:00 for alertness." ;
+    brick:isPartOf bldg:Room3.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-lt01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Luminaire_F3_Office_3_07
+    rdf:type owl:NamedIndividual , brick:Luminaire ;
+    rdfs:label "Luminaire - Office 3.07 (CCT-controllable)" ;
+    brick:isPartOf bldg:Room3.07 ;
+    brick:hasPoint bldg:CCT_Command_F3_Office .
+
+bldg:CCT_Command_F3_Office
+    rdf:type owl:NamedIndividual , brick:Lighting_Correlated_Color_Temperature_Command ;
+    rdfs:label "CCT Command - Office 3.07 (Kelvin)" ;
+    brick:isPartOf bldg:Room3.07 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-lt01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Luminaire_F5_Lab_5_01
+    rdf:type owl:NamedIndividual , brick:Luminaire ;
+    rdfs:label "Luminaire - Lab 5.01 (CCT-controllable)" ;
+    brick:isPartOf bldg:Room5.01 ;
+    brick:hasPoint bldg:CCT_Command_F5_Lab .
+
+bldg:CCT_Command_F5_Lab
+    rdf:type owl:NamedIndividual , brick:Lighting_Correlated_Color_Temperature_Command ;
+    rdfs:label "CCT Command - Lab 5.01 (Kelvin)" ;
+    brick:isPartOf bldg:Room5.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-lt01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:CCT_Sensor_F5_Lab
+    rdf:type owl:NamedIndividual , brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "CCT Sensor - Lab 5.01 (current Kelvin reading)" ;
+    brick:isPartOf bldg:Room5.01 ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-lt01-0000-0000-000000000004" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+
+# ===========================================================================
+# P4 - GREEN ROOF / OUTDOOR ECOLOGY ZONE  (Topic 12)
+# ===========================================================================
+
+bldg:Green_Roof_Zone
+    rdf:type owl:NamedIndividual , brick:Outdoor_Area ;
+    rdfs:label "Rooftop Green Space - Abacws" ;
+    rdfs:comment "Planted sedum/wildflower green roof area supporting biodiversity and stormwater attenuation." ;
+    brick:isPartOf bldg:Rooftop ;
+    brick:hasPart bldg:GreenRoof_SoilMoisture_Sensor ,
+                  bldg:GreenRoof_Rainfall_Sensor ,
+                  bldg:GreenRoof_Ambient_Temp_Sensor .
+
+bldg:GreenRoof_SoilMoisture_Sensor
+    rdf:type owl:NamedIndividual , brick:Sensor ;
+    rdfs:label "Soil Moisture Sensor - Green Roof (% volumetric water content)" ;
+    brick:isPartOf bldg:Green_Roof_Zone ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-gr01-0000-0000-000000000001" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:GreenRoof_Rainfall_Sensor
+    rdf:type owl:NamedIndividual , brick:Sensor ;
+    rdfs:label "Rainfall Sensor - Green Roof (mm/hr)" ;
+    brick:isPartOf bldg:Green_Roof_Zone ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-gr01-0000-0000-000000000002" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:GreenRoof_Ambient_Temp_Sensor
+    rdf:type owl:NamedIndividual , brick:Air_Temperature_Sensor ;
+    rdfs:label "Ambient Temperature Sensor - Green Roof (outdoor reference)" ;
+    brick:isPartOf bldg:Green_Roof_Zone ;
+    ashrae:hasExternalReference [
+        rdf:type ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00000000-gr01-0000-0000-000000000003" ;
+        ref:storedAt bldg:database1_synth
+    ] .
+
+bldg:Indoor_Plants_F3_Common
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Indoor Plant Zone - Floor 3 Common Area" ;
+    rdfs:comment "Planters in Floor 3 common room; co-located with air quality sensors for VOC correlation." ;
+    brick:isPartOf bldg:Room3.17 .
+
+
+# ===========================================================================
+# BONUS - Spatial proximity to entrance for workspace suggestions (T18b)
+# ===========================================================================
+
+bldg:Room0.17  bldg:distanceToEntrance "15.0"^^xsd:decimal .
+bldg:Room0.18  bldg:distanceToEntrance "18.0"^^xsd:decimal .
+bldg:Room0.19  bldg:distanceToEntrance "20.0"^^xsd:decimal .
+bldg:Room0.20  bldg:distanceToEntrance "22.0"^^xsd:decimal .
+bldg:Room0.10  bldg:distanceToEntrance "30.0"^^xsd:decimal .
+bldg:Room1.04  bldg:distanceToEntrance "35.0"^^xsd:decimal .
+bldg:Room1.37  bldg:distanceToEntrance "40.0"^^xsd:decimal .
+bldg:Room1.38  bldg:distanceToEntrance "42.0"^^xsd:decimal .
+bldg:Room1.06  bldg:distanceToEntrance "45.0"^^xsd:decimal .
+bldg:Room1.07  bldg:distanceToEntrance "48.0"^^xsd:decimal .
+
+bldg:Building_Entrance
+    rdf:type owl:NamedIndividual , brick:Space ;
+    rdfs:label "Main Building Entrance - Senghennydd Road" ;
+    brick:isPartOf bldg:Room0.01 .
+
+# End of bldg1_enhancements.ttl
+
+# =============================================================================
+# TYPING CORRECTION (CAVEAT-301, 2026-08-26)
+#
+# Room1.04 carries brick:Common_Space but NOT brick:Room, while every other room
+# in this building carries brick:Room. The coverage auditor selects brick:Room,
+# so this space had NO modality coverage, was never a ranking candidate and could
+# never be recommended — despite holding capacity and occupancy metadata.
+#
+# It surfaced because the timetable ingest REFUSED to bind rows naming it and
+# reported them rather than guessing, which is the strict space resolution doing
+# exactly its job.
+#
+# Additive on purpose: the Common_Space typing is not wrong — the room is a common
+# space — it was simply incomplete. Asserting the missing parent is the smaller and
+# safer change, and it needs no deletion from the graph.
+bldg:Room1.04 a brick:Room .

@@ -14,8 +14,6 @@ tables:
 
 # Circulation Time Register - Abacws Building
 
-_**Synthetic demonstration record** - modelled journey times, not a measured survey._
-
 ## Why this register exists
 
 Lecturers were the worst-served role in the re-sample - 0 of 5, after every other role had

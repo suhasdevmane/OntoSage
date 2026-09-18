@@ -274,14 +274,10 @@
     "forbid": [
       "documents do not answer"
     ],
-    "note": "By department CODE, which the register holds. Asking by department NAME needs a join from the department directory that no single-register handover can make — tracked as CAVEAT-432, not hidden by rewording. Marker widened 2026-09-16: the answer said \"3\" and \"Total: 3\" and was correct (SH-36/37/38); only the word \"three\" was asserted (CAVEAT-600 family).",
+    "note": "V7-T33: the stakeholder mapping answers who a department serves. The marker is the COUNT in either notation - the probe matches 'three' and '3' as one fact since CAVEAT-600.",
     "building": "bldg1",
-    "expect_any": [
-      "three",
-      "3 stakeholder groups",
-      "total: 3",
-      "total**: 3",
-      "sh-36"
+    "expect": [
+      "three"
     ]
   },
   {
@@ -570,18 +566,20 @@
     "building": "bldg1",
     "question": "Is the lift working?",
     "expect": [
-      "Main passenger lift"
+      "2 lift"
     ],
     "expect_any": [
-      "not operational",
-      "out of service"
+      "last checked",
+      "out of service since"
     ],
     "forbid": [
       "no lifts recorded",
-      "no lifts in its model"
+      "no lifts in its model",
+      "Main passenger lift",
+      "All 1 lift"
     ],
     "timeout_s": 180,
-    "why": "Protects against a declared asset reported as absent - the pre-W0 answer was 'This building has no lifts recorded in its model' about a lift the building describes in a published accessibility survey (BUG-438). CORRECTED 2026-09-10: this case briefly also forbade 'of 1 lift', on the reading that '1 of 1 lift(s)' was a denominator over the retrieved set. That was wrong. asset_state_service._status_query asks '?asset a ontosage:Lift' and exactly one subject carries that type, so the count is correct for what the lane asks. The real defect is that three brick:Elevator are declared elsewhere and the lane never sees them (BUG-497) - which no marker over this answer can currently detect, because the honest answer does not exist yet. When it does, assert that the count DISCLOSES its basis."
+    "why": "Protects against a declared asset reported as absent - the pre-W0 answer was 'This building has no lifts recorded in its model' about a lift the building describes in a published accessibility survey (BUG-438). CORRECTED 2026-09-10: this case briefly also forbade 'of 1 lift', on the reading that '1 of 1 lift(s)' was a denominator over the retrieved set. That was wrong at the time. SETTLED 2026-09-17 by the building owner: there are TWO lifts, one at each side. bldg:Lift_Main and bldg:LIFT-01 were both third names for the same fabric, invented so a query would have a subject to match, and both are retired; Lift_1 and Lift_2 carry ontosage:Lift additively alongside brick:Elevator. So the count is now asserted, and - as the previous version of this note asked for - the answer must also DISCLOSE THE BASIS of that count rather than state it bare. The expect_any pair is the two values asset_state_service renders for age_phrase ('last checked' normally, 'out of service since' while an outage episode is live), so this case no longer depends on whether the building happens to be broken during the run - which the previous pair, 'not operational'/'out of service', silently did."
   },
   {
     "group": "w0",

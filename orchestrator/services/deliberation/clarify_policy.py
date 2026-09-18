@@ -92,13 +92,32 @@ def build_assumptions(
     if cqir.time.basis == TimeBasis.NOW and not cqir.time.source_phrase:
         out.append(Assumption(text="interpreted as current conditions", source="default"))
     elif cqir.time.basis == TimeBasis.FORECAST:
-        out.append(
-            Assumption(
-                text=f"'{cqir.time.source_phrase or 'future'}' forecast "
-                f"{cqir.time.horizon_hours or 24:g}h ahead from recent history",
-                source="forecast horizon default" if not cqir.time.horizon_hours else "parsed",
+        if cqir.time.horizon_hours:
+            out.append(
+                Assumption(
+                    text=f"'{cqir.time.source_phrase or 'future'}' forecast "
+                    f"{cqir.time.horizon_hours:g}h ahead from recent history",
+                    source="parsed",
+                )
             )
-        )
+        else:
+            # A DEFAULT IS NOT AN INTERPRETATION OF WHAT WAS ASKED.
+            #
+            # Row 99 of the 2026-09-17 stakeholder read asked about "next Wednesday after
+            # 2 p.m." and was told the ranking was "forecast 24h ahead from recent history" —
+            # a sentence that reads as though next Wednesday had been projected, when the
+            # hour the question named was never resolved and the default window was used
+            # instead. The number is the same; the claim it makes must not be.
+            out.append(
+                Assumption(
+                    text=(
+                        f"I couldn't pin down '{cqir.time.source_phrase or 'the time you named'}', "
+                        "so this projects the next 24 hours from recent readings — it does not "
+                        "describe that time specifically"
+                    ),
+                    source="forecast horizon default",
+                )
+            )
     return out
 
 

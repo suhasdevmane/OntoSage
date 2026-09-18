@@ -213,22 +213,31 @@ class ConceptResolver:
 
         matches: List[ConceptMatch] = []
         for entry in concept_map.values():
+            # THE LONGEST MATCHING TERM represents the concept, not the first one found.
+            # This used to `break` on the first hit in whatever order the terms came back
+            # from the graph (effectively alphabetical), so "how full is the recycling bin"
+            # was recorded as matching "bin" and then lost the cross-concept sort below —
+            # which ranks by the length of that recorded term — to a concept matching the
+            # longer word "full". The sort's whole premise, longer is more specific, only
+            # holds if each concept is represented by its most specific evidence.
+            best: Optional[str] = None
             for lay_term in entry.get("lay_terms", []):
                 if not lay_term:
                     continue
                 # Whole-word boundary check to avoid 'hot' matching 'shot'
                 pattern = r"(?<![a-z])" + re.escape(lay_term) + r"(?![a-z])"
-                if re.search(pattern, normalized):
-                    matches.append(
-                        ConceptMatch(
-                            concept_id=entry["concept_id"],
-                            lay_term=lay_term,
-                            brick_classes=list(entry.get("brick_classes", [])),
-                            recipe_id=entry.get("recipe_id"),
-                            confidence=entry.get("confidence", ""),
-                        )
+                if re.search(pattern, normalized) and (best is None or len(lay_term) > len(best)):
+                    best = lay_term
+            if best is not None:
+                matches.append(
+                    ConceptMatch(
+                        concept_id=entry["concept_id"],
+                        lay_term=best,
+                        brick_classes=list(entry.get("brick_classes", [])),
+                        recipe_id=entry.get("recipe_id"),
+                        confidence=entry.get("confidence", ""),
                     )
-                    break  # one match per concept is enough
+                )
 
         # Sort: longer lay term first (more specific), then by confidence
         _conf_order = {"high": 0, "medium": 1, "low": 2, "": 3}

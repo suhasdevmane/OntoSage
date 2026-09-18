@@ -140,13 +140,15 @@ def switch_condition_for(modality: str, chosen: str = "", runner_up: str = "") -
     """
     what = (modality or "conditions").replace("_", " ")
     where = chosen or "the space you chose"
+    # "conditions … moves" read as a typo on every answer that fell back to the generic word.
+    verb = "move" if what == "conditions" else "moves"
     if runner_up:
         return (
-            f"{what} in {where} moves outside the range that made it the best option — "
+            f"{what} in {where} {verb} outside the range that made it the best option — "
             f"the next best was {runner_up}."
         )
     return (
-        f"{what} in {where} moves outside the range that made it the best option, or the space "
+        f"{what} in {where} {verb} outside the range that made it the best option, or the space "
         f"becomes occupied."
     )
 

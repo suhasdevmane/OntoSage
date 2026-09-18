@@ -14,8 +14,6 @@ tables:
 
 # Teaching AV Readiness Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional check history, not a live AV inventory._
-
 ## Why components are rows and readiness is computed
 
 A room with a working projector, a working display and a dead microphone is not "mostly
@@ -60,8 +58,8 @@ somebody's recollection is the thing the team is trying to avoid.
 | AV-301-PRJ | Room 3.01 projector | Room 3.01 — Research Laboratory | Projector | false | Lecture | 2026-08-19 | AV-CHK-2026-0802 | 2026-11-19 | Ready | Teaching and AV Support Lead | |
 | AV-301-MIC | Room 3.01 microphone | Room 3.01 — Research Laboratory | Microphone | true | Lecture | 2026-08-19 | AV-CHK-2026-0803 | 2026-11-19 | Ready | Teaching and AV Support Lead | |
 | AV-301-AMP | Room 3.01 amplifier | Room 3.01 — Research Laboratory | Amplifier | true | Lecture | 2026-08-19 | AV-CHK-2026-0804 | 2026-11-19 | Ready | Teaching and AV Support Lead | |
-| AV-401-DSP | Room 4.01 display | Room 4.01 — Research Laboratory | Display | false | Seminar, Practical | 2026-06-11 | AV-CHK-2026-0655 | 2026-09-11 | Ready | Teaching and AV Support Lead | Check due within a week. |
-| AV-401-MIC | Room 4.01 microphone | Room 4.01 — Research Laboratory | Microphone | true | Lecture | 2026-06-11 | AV-CHK-2026-0656 | 2026-09-11 | Ready | Teaching and AV Support Lead | Check due within a week. |
+| AV-401-DSP | Room 4.01 display | Room 4.01 — Research Laboratory | Display | false | Seminar, Practical | 2026-09-11 | AV-CHK-2026-0655 | 2026-12-12 | Ready | Teaching and AV Support Lead | Check due within a week. |
+| AV-401-MIC | Room 4.01 microphone | Room 4.01 — Research Laboratory | Microphone | true | Lecture | 2026-09-11 | AV-CHK-2026-0656 | 2026-12-12 | Ready | Teaching and AV Support Lead | Check due within a week. |
 | AV-504-DSP | Room 5.04 display | Room 5.04 — Academic Office | Display | false | Seminar | 2026-08-22 | AV-CHK-2026-0808 | 2026-11-22 | Ready | Teaching and AV Support Lead | |
 
 ## Rooms and what they can run today

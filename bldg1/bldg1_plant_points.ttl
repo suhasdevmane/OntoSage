@@ -405,184 +405,106 @@ bldg:AHU_F5_Supply_Air_Temperature a brick:Supply_Air_Temperature_Sensor ;
         ref:storedAt bldg:plant_data
     ] .
 
-bldg:VAV_Floor5_Central_Damper_Position a brick:Damper_Position_Sensor ;
-    rdfs:label "VAV Box Floor 5 Central / Corridor Areas damper position" ;
-    brick:isPointOf bldg:VAV_Floor5_Central ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "percent" ;
+bldg:Boiler_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sensor ;
+    rdfs:label "Gas Boiler 1 — Building Central Plant entering water temperature" ;
+    brick:isPointOf bldg:Boiler_1 ;
+    brick:hasLocation bldg:Rooftop ;
+    brick:hasUnit "degC" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/PERCENT> ;
+    qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "97d0ee47-5426-55bf-b67b-f91eb93c80bd" ;
+        ref:hasTimeseriesId "d01cb867-704d-549b-b479-c0b299334bc0" ;
         ref:storedAt bldg:plant_data
     ] .
 
-bldg:VAV_Floor5_Central_Supply_Air_Flow a brick:Air_Flow_Sensor ;
-    rdfs:label "VAV Box Floor 5 Central / Corridor Areas supply air flow" ;
-    brick:isPointOf bldg:VAV_Floor5_Central ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "L/s" ;
+bldg:Boiler_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sensor ;
+    rdfs:label "Gas Boiler 1 — Building Central Plant leaving water temperature" ;
+    brick:isPointOf bldg:Boiler_1 ;
+    brick:hasLocation bldg:Rooftop ;
+    brick:hasUnit "degC" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
+    qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "479cef8d-29bd-5664-89dc-a5ae552aaa16" ;
+        ref:hasTimeseriesId "f3befa81-7de7-5484-ba15-fefa200f8655" ;
         ref:storedAt bldg:plant_data
     ] .
 
-bldg:VAV_Floor5_East_Damper_Position a brick:Damper_Position_Sensor ;
-    rdfs:label "VAV Box Floor 5 East Wing damper position" ;
-    brick:isPointOf bldg:VAV_Floor5_East ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "percent" ;
+bldg:Boiler_2_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sensor ;
+    rdfs:label "Gas Boiler 2 — Building Central Plant (Standby) entering water temperature" ;
+    brick:isPointOf bldg:Boiler_2 ;
+    brick:hasLocation bldg:Rooftop ;
+    brick:hasUnit "degC" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/PERCENT> ;
+    qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "dd8ce30a-1e07-5009-bb43-b24e357aff65" ;
+        ref:hasTimeseriesId "9fdfca22-d653-5173-93e1-aad381732c76" ;
         ref:storedAt bldg:plant_data
     ] .
 
-bldg:VAV_Floor5_East_Supply_Air_Flow a brick:Air_Flow_Sensor ;
-    rdfs:label "VAV Box Floor 5 East Wing supply air flow" ;
-    brick:isPointOf bldg:VAV_Floor5_East ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "L/s" ;
+bldg:Boiler_2_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sensor ;
+    rdfs:label "Gas Boiler 2 — Building Central Plant (Standby) leaving water temperature" ;
+    brick:isPointOf bldg:Boiler_2 ;
+    brick:hasLocation bldg:Rooftop ;
+    brick:hasUnit "degC" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
+    qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "6adbcf3d-fd1d-563c-9ac9-a3e426ff3335" ;
+        ref:hasTimeseriesId "8691b1f1-7dc0-5e7f-90d3-d5fe295a92be" ;
         ref:storedAt bldg:plant_data
     ] .
 
-bldg:VAV_Floor5_NorthEast_Damper_Position a brick:Damper_Position_Sensor ;
-    rdfs:label "VAV Box Floor 5 North-East Wing damper position" ;
-    brick:isPointOf bldg:VAV_Floor5_NorthEast ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "percent" ;
+bldg:Chiller_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sensor ;
+    rdfs:label "Chiller 1 — Building Central Cooling Plant entering water temperature" ;
+    brick:isPointOf bldg:Chiller_1 ;
+    brick:hasLocation bldg:Rooftop ;
+    brick:hasUnit "degC" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/PERCENT> ;
+    qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "8d6739aa-8414-54f7-b7db-fb0197c0215d" ;
+        ref:hasTimeseriesId "f3fab327-f4ae-501d-b635-356e64441a39" ;
         ref:storedAt bldg:plant_data
     ] .
 
-bldg:VAV_Floor5_NorthEast_Supply_Air_Flow a brick:Air_Flow_Sensor ;
-    rdfs:label "VAV Box Floor 5 North-East Wing supply air flow" ;
-    brick:isPointOf bldg:VAV_Floor5_NorthEast ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "L/s" ;
+bldg:Chiller_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sensor ;
+    rdfs:label "Chiller 1 — Building Central Cooling Plant leaving water temperature" ;
+    brick:isPointOf bldg:Chiller_1 ;
+    brick:hasLocation bldg:Rooftop ;
+    brick:hasUnit "degC" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
+    qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "9ec58f48-bdfb-5f2b-8e84-2e5eadfa689b" ;
+        ref:hasTimeseriesId "7089555f-4f70-5fac-b78d-9c28c7395efe" ;
         ref:storedAt bldg:plant_data
     ] .
 
-bldg:VAV_Floor5_NorthWest_Damper_Position a brick:Damper_Position_Sensor ;
-    rdfs:label "VAV Box Floor 5 North-West Wing damper position" ;
-    brick:isPointOf bldg:VAV_Floor5_NorthWest ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "percent" ;
+bldg:Heat_Pump_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sensor ;
+    rdfs:label "Heat Pump 1 — Building Heating/Cooling Plant entering water temperature" ;
+    brick:isPointOf bldg:Heat_Pump_1 ;
+    brick:hasLocation bldg:Rooftop ;
+    brick:hasUnit "degC" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/PERCENT> ;
+    qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "89584a95-9d8c-53fb-a732-58bbcbd5256d" ;
+        ref:hasTimeseriesId "aa2dac34-0510-5ac8-afc0-282493f644d9" ;
         ref:storedAt bldg:plant_data
     ] .
 
-bldg:VAV_Floor5_NorthWest_Supply_Air_Flow a brick:Air_Flow_Sensor ;
-    rdfs:label "VAV Box Floor 5 North-West Wing supply air flow" ;
-    brick:isPointOf bldg:VAV_Floor5_NorthWest ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "L/s" ;
+bldg:Heat_Pump_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sensor ;
+    rdfs:label "Heat Pump 1 — Building Heating/Cooling Plant leaving water temperature" ;
+    brick:isPointOf bldg:Heat_Pump_1 ;
+    brick:hasLocation bldg:Rooftop ;
+    brick:hasUnit "degC" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
+    qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "c880fc0c-c31d-57c4-a32a-a523004d856a" ;
-        ref:storedAt bldg:plant_data
-    ] .
-
-bldg:VAV_Floor5_South_Damper_Position a brick:Damper_Position_Sensor ;
-    rdfs:label "VAV Box Floor 5 South Wing damper position" ;
-    brick:isPointOf bldg:VAV_Floor5_South ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "percent" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/PERCENT> ;
-    ref:hasExternalReference [
-        a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "5ae38ae7-c9e2-5d19-b7e6-5b642c7da58e" ;
-        ref:storedAt bldg:plant_data
-    ] .
-
-bldg:VAV_Floor5_South_Supply_Air_Flow a brick:Air_Flow_Sensor ;
-    rdfs:label "VAV Box Floor 5 South Wing supply air flow" ;
-    brick:isPointOf bldg:VAV_Floor5_South ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
-    ref:hasExternalReference [
-        a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "d85947ef-9347-5058-8463-98567a65bbf6" ;
-        ref:storedAt bldg:plant_data
-    ] .
-
-bldg:VAV_Floor5_SouthEast_Damper_Position a brick:Damper_Position_Sensor ;
-    rdfs:label "VAV Box Floor 5 South-East Wing damper position" ;
-    brick:isPointOf bldg:VAV_Floor5_SouthEast ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "percent" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/PERCENT> ;
-    ref:hasExternalReference [
-        a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "1a692579-0e63-565c-9c4c-5900c0e42dd2" ;
-        ref:storedAt bldg:plant_data
-    ] .
-
-bldg:VAV_Floor5_SouthEast_Supply_Air_Flow a brick:Air_Flow_Sensor ;
-    rdfs:label "VAV Box Floor 5 South-East Wing supply air flow" ;
-    brick:isPointOf bldg:VAV_Floor5_SouthEast ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
-    ref:hasExternalReference [
-        a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "3b9f86a2-4c38-50c8-b9aa-71910fa83a25" ;
-        ref:storedAt bldg:plant_data
-    ] .
-
-bldg:VAV_Floor5_West_Damper_Position a brick:Damper_Position_Sensor ;
-    rdfs:label "VAV Box Floor 5 West Wing damper position" ;
-    brick:isPointOf bldg:VAV_Floor5_West ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "percent" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/PERCENT> ;
-    ref:hasExternalReference [
-        a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "9e2280af-9afb-568b-afda-e9395cce908a" ;
-        ref:storedAt bldg:plant_data
-    ] .
-
-bldg:VAV_Floor5_West_Supply_Air_Flow a brick:Air_Flow_Sensor ;
-    rdfs:label "VAV Box Floor 5 West Wing supply air flow" ;
-    brick:isPointOf bldg:VAV_Floor5_West ;
-    brick:hasLocation bldg:Floor5 ;
-    brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
-    qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
-    ref:hasExternalReference [
-        a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "76d1a0d2-659a-5d80-a874-97a0dc44f196" ;
+        ref:hasTimeseriesId "271c53fd-ea0a-5db9-9842-44f79d8a7351" ;
         ref:storedAt bldg:plant_data
     ] .

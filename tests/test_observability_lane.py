@@ -101,7 +101,11 @@ class TestReachOutcomes:
 
 class TestUnlockSteps:
     def test_uninstrumented_says_a_figure_would_be_invented(self):
-        text = reach_from_coverage("formaldehyde", "Room 5.01", {"status": "missing"}).describe()
+        # The unlock steps are an administrator's (2026-09-17); every reader keeps the
+        # verdict. tests/test_declines_speak_to_the_reader.py pins the non-admin side.
+        text = reach_from_coverage("formaldehyde", "Room 5.01", {"status": "missing"}).describe(
+            for_admin=True
+        )
         assert "not measured" in text
         assert "invented" in text, "the answer does not say why it will not guess"
         assert "Unlock:" in text
@@ -109,7 +113,9 @@ class TestUnlockSteps:
     def test_unconnected_names_the_two_halves_of_contract_8(self):
         """A point described in the ontology with no rows behind it is a plumbing job, and the
         answer should say exactly which plumbing."""
-        text = reach_from_coverage("co2", "Room 5.01", {"status": "unbacked"}).describe()
+        text = reach_from_coverage("co2", "Room 5.01", {"status": "unbacked"}).describe(
+            for_admin=True
+        )
         assert "ref:hasTimeseriesId" in text and "ref:storedAt" in text
         assert "No code change" in text or "no code change" in text
 
@@ -118,7 +124,7 @@ class TestUnlockSteps:
         edit a TTL when the instrument is dead wastes their afternoon."""
         text = reach_from_coverage(
             "co2", "Room 5.01", {"status": "present", "fresh": False, "stored_at": "co2_data"}
-        ).describe()
+        ).describe(for_admin=True)
         assert "not reported recently" in text
         assert "wiring is already in place" in text
 

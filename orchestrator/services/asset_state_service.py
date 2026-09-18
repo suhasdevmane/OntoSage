@@ -360,21 +360,24 @@ class AssetStateService:
         return out
 
     # ── answers ──────────────────────────────────────────────────────────────
-    def _decline(self, what: str, add: str) -> Dict[str, Any]:
-        """An honest decline that names the unlock path, never an empty guess."""
-        return {
-            "success": False,
-            "kind": "asset_state",
-            "formatted_response": (
-                f"This building has no {what} recorded in its model, so I can't tell you "
-                f"its state. {add}"
-            ),
-        }
+    def _decline(self, what: str, add: str, for_admin: bool = False) -> Dict[str, Any]:
+        """An honest decline, never an empty guess.
 
-    async def _answer_status(self, kind: str, question: str, now: datetime) -> Dict[str, Any]:
+        ``add`` is the unlock path and is shown to an administrator only: every reader is
+        told nothing is recorded, and only one who can change the building's data is told
+        how to record it.
+        """
+        text = f"This building has no {what} on record, so I can't answer that without guessing."
+        if for_admin and add:
+            text += f" {add}"
+        return {"success": False, "kind": "asset_state", "formatted_response": text}
+
+    async def _answer_status(
+        self, kind: str, question: str, now: datetime, for_admin: bool = False
+    ) -> Dict[str, Any]:
         family = next((f for f in _FAMILIES if f[0] == kind), None)
         if family is None:
-            return self._decline("assets of that kind", "")
+            return self._decline("assets of that kind", "", for_admin=for_admin)
         _k, class_local, _pat, noun = family
         rows = await self._select(self._status_query(class_local))
         if not rows:
@@ -382,6 +385,7 @@ class AssetStateService:
                 f"{noun}s",
                 "Describe them in the ontology with a status source and this becomes "
                 "answerable with no code change.",
+                for_admin=for_admin,
             )
 
         # Episodes OUTRANK the graph's status triple. The triple records what was true
@@ -485,7 +489,7 @@ class AssetStateService:
                 f"was {rendered_age}.*"
             )
         if simulated:
-            text += " *Source: simulated service feed.*"
+            text += ""  # the source is named by the provenance chip, not as a caveat on the answer
 
         return {
             "success": True,
@@ -505,12 +509,15 @@ class AssetStateService:
             "formatted_response": text,
         }
 
-    async def _answer_schedule(self, question: str, now: datetime) -> Dict[str, Any]:
+    async def _answer_schedule(
+        self, question: str, now: datetime, for_admin: bool = False
+    ) -> Dict[str, Any]:
         rows = await self._select(self._schedule_query())
         if not rows:
             return self._decline(
                 "cleaning or service schedules",
                 "Add them as ontosage:ServiceSchedule entries and this becomes answerable.",
+                for_admin=for_admin,
             )
         simulated = any(str(r.get("simulated", "")).lower() in ("true", "1") for r in rows)
         listed = [
@@ -548,7 +555,7 @@ class AssetStateService:
         ]
         text = head + ":\n" + "\n".join(lines)
         if simulated:
-            text += "\n\n*Source: simulated service feed.*"
+            text += ""  # the source is named by the provenance chip, not as a caveat on the answer
         return {
             "success": True,
             "kind": "asset_state:schedule",
@@ -591,7 +598,7 @@ class AssetStateService:
         ]
         text = f"**{len(listed)} planned closure(s) on record**:\n" + "\n".join(lines)
         if simulated:
-            text += "\n\n*Source: simulated estates feed.*"
+            text += ""  # the source is named by the provenance chip, not as a caveat on the answer
         return {
             "success": True,
             "kind": "asset_state:closure",
@@ -601,8 +608,13 @@ class AssetStateService:
             "formatted_response": text,
         }
 
-    async def answer(self, question: str, now: Optional[datetime] = None) -> Dict[str, Any]:
-        """Answer an asset/service-state question. Never raises."""
+    async def answer(
+        self, question: str, now: Optional[datetime] = None, for_admin: bool = False
+    ) -> Dict[str, Any]:
+        """Answer an asset/service-state question. Never raises.
+
+        ``for_admin`` adds how to record what is missing; every other reader gets the decline.
+        """
         now = now or datetime.now(timezone.utc)
         kind = classify_asset_question(question)
         if kind is None:
@@ -614,10 +626,10 @@ class AssetStateService:
                 ),
             }
         if kind == "schedule":
-            return await self._answer_schedule(question, now)
+            return await self._answer_schedule(question, now, for_admin=for_admin)
         if kind == "closure":
             return await self._answer_closure(question, now)
-        return await self._answer_status(kind, question, now)
+        return await self._answer_status(kind, question, now, for_admin=for_admin)
 
 
 __all__ = [

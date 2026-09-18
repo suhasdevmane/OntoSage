@@ -73,7 +73,10 @@ def alternatives_for(verdict: PolicyVerdict, question: str = "") -> List[str]:
         if "rate limit" in reason:
             out.append(verdict.alternative or "retry shortly")
         elif "no access policy" in reason:
-            out.append("ask an administrator to register a policy for your role")
+            # Kept, reworded (2026-09-17). Pointing a reader at the administrator is the one
+            # thing they CAN do about an access decision — unlike "upload a TTL", it asks
+            # nothing of them but a request. "Register a policy" was the jargon, not the advice.
+            out.append("ask an administrator to give your role access to this information")
         else:
             rewritten = _room_free_phrasing(question)
             if rewritten:
@@ -92,6 +95,10 @@ def explain(verdict: PolicyVerdict, policy_comment: str = "") -> str:
             "This system explains the building — occupancy counts, conditions, "
             "bookings — and never identifies or tracks a person."
         )
+    if verdict.decision == "deny" and "no access policy" in (verdict.reason or "").lower():
+        # The engine's reason ("no access policy is registered for role 'x'") is written for
+        # the audit log; the reader is told the same fact in their own words.
+        return "Your role has not been given access to this kind of information."
     return verdict.reason or ""
 
 

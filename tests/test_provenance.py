@@ -125,8 +125,16 @@ def test_render_chips_marks_synthetic(tmp_path: Path):
     reg.load()
     tags = prov.build_tags(["ontology", "store:occupancy_data"], reg)
     chips = prov.render_chips(tags)
-    assert "Building Ontology" in chips
-    assert "Occupancy Sensing System · simulated" in chips
+    # BUG-780: the chip says "Building model". A reader does not know what an ontology is,
+    # and the word printed under 9 answers in the 2026-09-18 hand read.
+    assert "Building model" in chips
+    assert "ontology" not in chips.lower()
+    # The chip names the SOURCE. It used to append " · simulated", which described the
+    # deployment stage rather than the source and appeared on every answer (user decision,
+    # 2026-09-16). The flag itself is still on the tag, checked below.
+    assert "Occupancy Sensing System" in chips
+    assert "simulated" not in chips.lower()
+    assert any(t.synthetic for t in tags), "the flag must survive on the tag for audits"
 
 
 def test_render_chips_empty():

@@ -130,7 +130,10 @@ def _binding_text(binding: Dict[str, Any]) -> str:
 
 
 def results_match_modality(
-    bindings: Sequence[Dict[str, Any]], modality: str, building_id: Optional[str] = None
+    bindings: Sequence[Dict[str, Any]],
+    modality: str,
+    building_id: Optional[str] = None,
+    extra_classes: Sequence[str] = (),
 ) -> bool:
     """True when ANY returned sensor plausibly belongs to this modality.
 
@@ -140,9 +143,27 @@ def results_match_modality(
     """
     if not bindings:
         return False
-    classes = modality_classes(modality, building_id)
-    needles = {c.lower() for c in classes}
+    classes = list(modality_classes(modality, building_id))
+    # A COMPOSITE concept names its constituents; this catalogue names one class. Asked for
+    # "air quality" the graph returned CO2, PM2.5, TVOC and the gases — every one of them an
+    # air-quality reading — and the match test, knowing only Air_Quality_Sensor, called it a
+    # total miss and replaced the lot (BUG-632). Whoever resolved the concept passes what it
+    # resolved to, so one concept does not get two incompatible definitions.
+    resolved = [str(c).rsplit(":", 1)[-1] for c in extra_classes if c]
+    needles = {c.lower() for c in classes + resolved}
     needles.add(modality.lower())
+    # The resolved classes get a LOWER token threshold than the catalogue ones. `CO2_Level_
+    # Sensor` splits into "co2" (three characters, below the general cut) and "level" and
+    # "sensor" (both generic), so it contributed no usable needle at all and 107 CO2 readings
+    # read as "no air quality sensors". Being generous here can only PREVENT a wrongful
+    # replacement, never cause one: these classes are what the concept resolver deliberately
+    # chose for this question. The general threshold stays where it is, because lowering it
+    # there would let "air" from Air_Quality_Sensor match every air temperature sensor.
+    for c in resolved:
+        for word in re.split(r"[_\W]+", c):
+            w = word.lower()
+            if len(w) >= 3 and w not in _GENERIC_TOKENS:
+                needles.add(w)
     # class local names are CamelCase_With_Underscores; also try the bare words
     for c in classes:
         for word in re.split(r"[_\W]+", c):
@@ -157,22 +178,45 @@ def results_match_modality(
 
 
 def build_modality_query(
-    modality: str, namespace: str, limit: int = MAX_SENSORS, building_id: Optional[str] = None
+    modality: str,
+    namespace: str,
+    limit: int = MAX_SENSORS,
+    building_id: Optional[str] = None,
+    floors: Sequence[str] = (),
 ) -> Optional[str]:
     """A deterministic SPARQL for every sensor of this modality that HAS readings.
 
     Requires a timeseries reference, because a sensor with no UUID cannot answer
     a data question — returning it would only reproduce the "no data" dead end.
+
+    ``floors`` KEEPS THE QUESTION'S SCOPE (BUG-632). This query is building-wide by
+    construction and it REPLACES whatever retrieval returned — so for "what is the air
+    quality on floor 3?" it discarded 107 correctly-scoped floor-3 rows and substituted 400
+    from the whole building, which the answer then reported as floor 3. A repair that widens
+    the scope is not a repair: it answers a different question, confidently.
     """
     classes = modality_classes(modality, building_id)
     if not classes or not namespace:
         return None
     values = " ".join(f'"{c}"' for c in classes)
+    floor_clause = ""
+    _floor_in = ", ".join(f'"{str(f).strip()}"' for f in floors if str(f).strip())
+    if _floor_in:
+        # The same hierarchy the floor-scoped template walks: sensor -> space -> floor.
+        # No building-specific label parsing, so it survives a building swap.
+        floor_clause = (
+            "  ?sensor brick:hasLocation ?loc .\n"
+            "  ?loc (brick:isPartOf|^brick:hasPart)* ?floor .\n"
+            "  ?floor a brick:Floor .\n"
+            '  BIND(REPLACE(STR(?floor), "^.*[Ff]loor", "") AS ?floorNum)\n'
+            f"  FILTER(?floorNum IN ({_floor_in}))\n"
+        )
     return (
         "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+        "PREFIX brick: <https://brickschema.org/schema/Brick#>\n"
         "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
         "SELECT DISTINCT ?sensor ?label ?uuid ?storage WHERE {\n"
-        "  ?sensor a ?cls .\n"
+        "  ?sensor a ?cls .\n" + floor_clause + ""
         f"  VALUES ?local {{ {values} }}\n"
         '  FILTER(STRENDS(STR(?cls), CONCAT("#", ?local)) || '
         'STRENDS(STR(?cls), CONCAT("/", ?local)))\n'
@@ -189,13 +233,14 @@ def needs_repair(
     bindings: Sequence[Dict[str, Any]],
     modality: Optional[str],
     building_id: Optional[str] = None,
+    extra_classes: Sequence[str] = (),
 ) -> bool:
     """Should the deterministic query replace what retrieval returned?"""
     if not modality:
         return False  # no clear modality — the LLM path owns these shapes
     if not modality_classes(modality, building_id):
         return False  # unknown modality for THIS building: never guess
-    return not results_match_modality(bindings, modality, building_id)
+    return not results_match_modality(bindings, modality, building_id, extra_classes)
 
 
 #: Phrasings that make the QUESTION about a population rather than a place.

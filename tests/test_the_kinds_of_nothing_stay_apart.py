@@ -161,7 +161,9 @@ def test_every_state_that_can_be_remedied_says_how():
     ):
         r = classify(subject="X", **kwargs)
         assert r.remedy, f"{r.outcome} offers no way forward"
-        assert r.remedy in describe(r)
+        # The whole remedy reaches an administrator; other readers get only the step they
+        # can take themselves (tests/test_declines_speak_to_the_reader.py).
+        assert r.remedy in describe(r, for_admin=True)
 
 
 def test_a_restricted_answer_offers_no_remedy_on_purpose():

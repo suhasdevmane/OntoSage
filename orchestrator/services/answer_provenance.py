@@ -61,11 +61,16 @@ def _fmt_time(value: Any) -> str:
     return text.replace("T", " ")[:19] if text else ""
 
 
-def render(record: Optional[Dict[str, Any]], question: str = "") -> Optional[str]:
+def render(
+    record: Optional[Dict[str, Any]], question: str = "", for_admin: bool = False
+) -> Optional[str]:
     """Read an evidence record back as prose, or None when there is nothing to read.
 
     Returns None rather than a placeholder: with no record, the honest answer is that the
     previous turn did not carry one, and the caller says so in its own words.
+
+    ``for_admin`` adds the record's remedy. The default is the plain read-back, so a caller
+    that does not know who is reading fails toward it.
     """
     if not record:
         return None
@@ -112,10 +117,12 @@ def render(record: Optional[Dict[str, Any]], question: str = "") -> Optional[str
                 bits.append(f"owned by {src['owner']}")
             if src.get("record_version"):
                 bits.append(f"version {src['record_version']}")
-            # simulated is TRI-state: None means nobody declared, which is not the same
-            # as real and must never be rendered as such.
-            if src.get("simulated") is True:
-                bits.append("**declared synthetic**")
+            # The declaration stays in the record and is no longer rendered as a caveat on
+            # the answer (user decision, 2026-09-16): this deployment's readings are
+            # placeholder data for the building's own feed, replaced wholesale at connection
+            # time, so the marker described the stage rather than the source. The honesty
+            # this file exists for is untouched — every figure still names where it came
+            # from, and an absent one is still reported as absent.
             lines.append("    - " + " · ".join(bits))
 
     observed = _fmt_time(record.get("latest_evidence_at"))
@@ -162,7 +169,11 @@ def render(record: Optional[Dict[str, Any]], question: str = "") -> Optional[str
             f"- **Left out of the answer:** {len(omitted)} criterion(s), listed in the record"
         )
 
-    if record.get("remedy"):
+    # The "Kind of claim" line above already tells every reader the evidence could not
+    # support an answer. HOW to make it answerable is a data change ("connect the stream",
+    # "install a sensor"), which only an administrator can make. Told to anyone else it reads as a broken system
+    # (2026-09-17 user decision), so it is withheld unless the reader holds system:admin.
+    if for_admin and record.get("remedy"):
         lines.append(f"- **To make it answerable:** {record['remedy']}")
 
     lines += [

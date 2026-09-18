@@ -31,13 +31,32 @@ from typing import List
 REPO = Path(__file__).resolve().parents[1]
 DEFAULT_OUT = REPO / "input" / "documents"
 
-#: The building these records belong to. Set from --building-name / --authority, because a
-#: register names its own building and its own owning organisation: the SHAPE of a record
-#: document is shared across buildings, the CONTENT never is. Hard-coding them here made
-#: this generator usable for exactly one building, which is the opposite of the point the
-#: Record Document standard exists to make.
-BUILDING = "Abacws Building"
-AUTHORITY = "Cardiff University Estates"
+#: The building these records belong to. Set from --building-name / --authority, or taken
+#: from the ACTIVE BUILDING when neither is given, because a register names its own building
+#: and its own owning organisation: the SHAPE of a record document is shared across
+#: buildings, the CONTENT never is.
+#:
+#: These were the previous building's own name and estate, written in as the defaults. The
+#: flags existed, so this looked parameterised — but run for any other building without
+#: them, the generator stamped a register for one building with the name of another, and
+#: said so in a document header that reads as authoritative. A default that is silently
+#: wrong is worse than no default.
+BUILDING = ""
+AUTHORITY = ""
+
+
+def _active_building_defaults() -> "tuple[str, str]":
+    """(name, authority) from the active building's own config; empty if none is active."""
+    try:
+        from shared.config import settings
+
+        name = (getattr(settings, "BUILDING_NAME", "") or "").strip()
+    except Exception:  # a generator must run without a booted stack
+        name = ""
+    # The owning organisation is a property of the estate, not of this tool. Where the
+    # building does not declare one, say so rather than inventing an authority: a register
+    # citing a body that does not own it is a fabrication with a letterhead.
+    return name, ""
 
 #: Bookable spaces, in the naming convention THIS building uses. One writes "Room 5.15",
 #: another writes "RM001A" — a room label is content, and an availability answer that
@@ -55,9 +74,12 @@ ROOMS = [
 #: a stable question rather than one whose answer drifts with the wall clock.
 ANCHOR = date(2026, 8, 31)
 
-BANNER = (
-    "_**Synthetic demonstration record** — fictional history, " "not a real compliance document._\n"
-)
+#: These registers are lifted into the graph and QUOTED IN ANSWERS, so a banner describing
+#: the stage of the deployment reached stakeholders as a statement about the building's own
+#: records. The content is placeholder data for those registers and is replaced at connection
+#: time (user decision, 2026-09-16). The front matter still carries `simulated:`, which the
+#: lifter puts onto every triple, so the declaration survives where an auditor can read it.
+BANNER = ""
 
 
 def d(offset_days: int) -> str:
@@ -922,10 +944,20 @@ def main(argv: List[str]) -> int:
     args = ap.parse_args(argv)
 
     global BUILDING, AUTHORITY
-    if args.building_name:
-        BUILDING = args.building_name
-    if args.authority:
-        AUTHORITY = args.authority
+    _name, _authority = _active_building_defaults()
+    BUILDING = args.building_name or _name
+    AUTHORITY = args.authority or _authority
+    if not BUILDING:
+        ap.error(
+            "no building name: pass --building-name, or run with a building active so it can "
+            "be read from building.yaml. These registers carry the name in every header, and "
+            "writing one building's name onto another's records is the failure this refuses."
+        )
+    if not AUTHORITY:
+        ap.error(
+            "no owning authority: pass --authority. Every register cites the body that owns "
+            "it, and naming one that does not is a fabrication with a letterhead."
+        )
     if args.rooms:
         global ROOMS
         ROOMS = [r.strip() for r in args.rooms.split(",") if r.strip()]

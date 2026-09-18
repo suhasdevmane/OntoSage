@@ -1,0 +1,85 @@
+# SATURATE (V4-T08): simulated nitrogen_dioxide sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'iaq_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data>
+    a ref:Database ;
+    rdfs:label "Iaq Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0_sat_nitrogen_dioxide>
+    a brick:NO2_Level_Sensor ;
+    rdfs:label "Floor0 nitrogen_dioxide [ppb]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "55c8cc81-7515-5f36-b83b-105551c6e578" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1_sat_nitrogen_dioxide>
+    a brick:NO2_Level_Sensor ;
+    rdfs:label "Floor1 nitrogen_dioxide [ppb]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9c22dca8-c91a-5d21-9c50-2c64053bfc6b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2_sat_nitrogen_dioxide>
+    a brick:NO2_Level_Sensor ;
+    rdfs:label "Floor2 nitrogen_dioxide [ppb]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0138c0bc-ec8f-58ca-b783-95acf868a14f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3_sat_nitrogen_dioxide>
+    a brick:NO2_Level_Sensor ;
+    rdfs:label "Floor3 nitrogen_dioxide [ppb]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5aa2a383-ee2f-5469-929b-9b4858985dfa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4_sat_nitrogen_dioxide>
+    a brick:NO2_Level_Sensor ;
+    rdfs:label "Floor4 nitrogen_dioxide [ppb]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1c357e81-be15-5b3d-948f-ae17e70aa01f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5_sat_nitrogen_dioxide>
+    a brick:NO2_Level_Sensor ;
+    rdfs:label "Floor5 nitrogen_dioxide [ppb]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ed575699-3bac-5edf-b2ce-35af83577fab" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .

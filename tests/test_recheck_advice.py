@@ -184,3 +184,67 @@ class TestWiring:
         src = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
         body = _method_body(src, "async def _recheck_line")
         assert "except Exception" in body
+
+
+# ── C6a: no line about a choice that was never made ──────────────────────────
+
+
+def test_the_generic_switch_trigger_agrees_in_number():
+    """ "conditions in the space you chose moves" read as a typo on every generic fallback."""
+    text = switch_condition_for("", chosen="")
+    assert "conditions in the space you chose move outside" in text
+    assert " moves " not in text
+    assert "co2 in Room A moves outside" in switch_condition_for("co2", chosen="Room A")
+
+
+def _recheck(dossier, intent="recommend"):
+    import asyncio
+    from types import SimpleNamespace
+
+    from orchestrator.workflow import _orchestrator as orch
+
+    results = {"deliberate_result": {"ok": True}}
+    if dossier is not None:
+        results["evidence_dossier"] = dossier
+    state = SimpleNamespace(
+        intermediate_results=results, current_intent=intent, building_id=None, messages=[]
+    )
+    return asyncio.run(orch.WorkflowOrchestrator._recheck_line(SimpleNamespace(), state, "x"))
+
+
+def test_a_decline_with_no_ranking_and_no_evidence_time_gets_no_recheck_line():
+    """Row 115, "Which capital project this year had the best measured outcome?" — a decline
+    that carried "Evidence time: unknown … Switch if: …" about a space nobody chose."""
+    assert _recheck(None) == ""
+    assert _recheck({"ranked": [], "evidence": []}) == ""
+
+
+def test_a_chosen_space_with_no_observation_time_keeps_its_unverified_warning():
+    """A real ranking whose readings carry no time is exactly where 'treat as unverified'
+    belongs; only a line about a choice never made is noise."""
+    dossier = {
+        "ranked": [{"space": "Room A"}, {"space": "Room B"}],
+        "evidence": [{"modality": "co2", "basis": "latest reading"}],
+    }
+    line = _recheck(dossier)
+    assert "Evidence time: unknown" in line
+    assert "Room A" in line
+
+
+def test_an_observation_time_with_no_chosen_space_gets_no_recheck_line():
+    dossier = {
+        "ranked": [],
+        "evidence": [{"modality": "co2", "basis": "latest reading", "latest": "2026-09-17T10:00"}],
+    }
+    assert _recheck(dossier) == ""
+
+
+def test_a_real_recommendation_still_carries_its_recheck_line():
+    dossier = {
+        "ranked": [{"space": "Room A"}, {"space": "Room B"}],
+        "evidence": [{"modality": "co2", "basis": "latest reading", "latest": "2026-09-17T10:00"}],
+    }
+    line = _recheck(dossier)
+    assert "As measured at" in line
+    assert "Switch if:" in line and "Room A" in line and "Room B" in line
+    assert "Evidence time: unknown" not in line

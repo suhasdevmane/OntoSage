@@ -1,0 +1,2821 @@
+# SATURATE (V4-T08): simulated lighting_cct sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'equipment_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data>
+    a ref:Database ;
+    rdfs:label "Equipment Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.01 — Main Reception lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2cf7d53f-3edf-5482-898c-c9b6ef028858" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.04 — Mechanical Plant Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ac2b298a-83f9-5320-97b9-bc6e93859498" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.05 — Mechanical Plant Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "133954b2-386c-5123-8b84-dbafa6417d76" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.06 — Loading and Goods Storage lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b762f266-f0b7-5711-9f16-fc8ec8755be5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.07 — Service Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b12d9233-8f0c-579b-abed-8781b7e923cc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.08 — Service Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ae63f29-318e-582d-9cce-7aa9232d189f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.10 — Building Management Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c6f0e63c-3f52-563b-8048-892c958e5605" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.17 — Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "42f50f5d-e651-594d-a881-735e3d161ddd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.18 — Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9506b1ae-0e6c-57b8-a821-076b523d50ef" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.19 — Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "442ffa7a-5f55-531f-a18c-df57bb831bc5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.20 — Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5a921ab1-d5c3-5435-94c7-98fe9a8997f6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.29 — Storage Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c6c0a7ce-d3b6-58bc-b7b2-396c61f97a9e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.31 — Mechanical/Service Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "412c10af-b4fd-5056-8e9f-9244ffd190b2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.32 — Mechanical/Service Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6c783cf8-abac-5fba-9d77-63bca9582667" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.33 — Mechanical/Service Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "db41f1de-3875-5e81-8cee-482c046fd8a9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 0.34 — Building Telecommunications Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b668860b-3177-587e-81de-017e53754a40" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.04_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.04 — Common Area / Atrium lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "174dec5b-a0fc-5134-a10b-a4583ddecb05" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.06 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1a9903f7-7baf-5b34-bb61-af25ca39d436" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.07 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "80b76f75-2362-5d45-91a5-2c5131a2fedb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.08 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6fc03306-6d52-5980-bec7-b6115444cad5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.09 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "79c68ddd-1532-57d0-b5f9-c5f5c381c78d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.25 — Conference/Seminar Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d2100cc9-2232-5a12-aa82-386a465963c4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.26 — Conference/Seminar Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6206083c-e06e-57bb-9695-c68c499a9cde" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.34 — Telecommunications Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8d45f011-f31b-5dfe-9fdf-22291bbc1008" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.37 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "878f7e11-cae0-5150-8995-25aab324a738" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.38 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2b06d1cd-b31f-54df-a36a-0f16970ca565" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.39 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9c57dab0-3474-5438-b4bc-f203c4ac8513" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.40 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8632a63c-353d-5741-88c3-404ef301298f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 1.41 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1c4287f4-3718-589b-9f10-16216908ed03" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.01 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0db85e0e-2c89-5f44-b04d-fcd17ac826be" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.02 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6449742c-67a3-5873-85db-a90b1ea77bbd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.03 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "05a65c5f-b226-5795-9524-cc67a4a267b2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.04 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a90ae6de-f9c3-5854-a0be-9954d027d9c9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.05 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1f5f6d5b-f5f6-52b8-8d06-7a8b42ead209" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.06 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3ced546e-d253-58e6-a64b-dd824e34ce04" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.07 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "70e88c6f-b681-5c7e-92c6-2adb90231f4c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.08 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5f7efcae-06b1-58e9-8e04-932b7b9cbee6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.09 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "86ab4034-15fd-5119-85e4-c4df0d1bbfaa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.10 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d63dcb08-0dbd-5a35-be6f-63db536ced45" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.11 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5a070780-ddf2-538e-95f5-3a3c2ed19ee4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.12 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b7dc026a-d436-5bc8-a67c-0439229913b9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.13 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "762c9f0a-1eb2-53d6-ba9f-f7d1be7ef82a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.14 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fd34a85a-1254-5c6e-bc84-16f4bfd5a79e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.15 — Seminar Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "07f847f0-e4e3-5160-a8c0-35673f6df53e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.17 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7c2c8554-bd62-535a-9321-3046d7712d5e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.18 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "266cc5cc-5f8a-5327-82f1-9e66fc83df4a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.19 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9e76134c-f03c-5822-9f3a-41c8d524d7ab" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.20 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "decb0dc5-9e9f-56f2-80c3-6167d3b0a37e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.21 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1498eb85-81f6-562b-984e-b68b3be752e3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.22 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f732741b-d6ea-55ea-80c1-3fd801fb212e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.24 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "794506b3-c90d-5118-b08a-ccb8007b4cf6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.26 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "41ab16d4-f962-51e0-b666-a76d944b1e82" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.34 — Telecommunications Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "abdb491d-6bab-50da-8f0c-9ccaaf5f4d9e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.35 — Restroom (Male) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "732b0dc3-48d7-5558-979f-2dc94eee412a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.36 — Restroom (Female) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0f647ca0-d3e2-5db1-8b2f-8ace067ec7a2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.44 — Server Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1ed01a20-c471-596e-a58f-38c0bc46fd3e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.47 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3df10b1f-418a-5684-8c55-b131b86e5ffa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.48 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b472e691-f75f-5e18-b7c5-9b466f4ede5e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.49 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e0f57066-d3c1-55ff-9f02-bd0ab627eae1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.50 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c98e3cf7-d9c6-5e2f-b765-04266f06fa29" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.52 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a988e224-4191-575a-8768-c0fdb5073741" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.53 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "75b4aff9-6c51-57b5-93f7-6daee172ed1a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.54 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "94f1f416-c87d-5905-93f6-3a094ac4fb1c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.55 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e3d97da7-2b4b-5596-935c-0472a74f5f60" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.56 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d44f6252-752a-5edd-9181-009c349253da" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.57 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e5c3911e-3053-5d27-bc29-07e3a942fb72" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.58 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "722d9b37-f842-52cc-b380-e666ea493e0c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.59 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "215532ac-798c-5d2a-ba70-d8d29e468b4a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.60 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cf85d5f3-83b4-5a6a-98bd-218b6b0e5c33" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.61 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b907ff86-13ff-5cce-a66f-624c1421d8a6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.62 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0244cab7-9c21-5ae7-a6b9-dc5d3b451bae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.63 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6be3db29-cf05-51d9-8e31-73f3ca8ee3cb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.64 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d2975ea0-60ef-50aa-abae-6e30c071cc7b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.65 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2240151c-db85-5cb8-bcb0-92f3f641c8ea" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.66 — Staff Break Room / Kitchen lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7962cd9f-be03-530d-b208-06df09e4ba70" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 2.67 — Storage Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "00b45b60-855e-5278-b454-5f9d486147dc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.01 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4341d343-afaa-5580-9013-8c77ecb292bc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.02 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ce118206-ad04-5224-9abf-7caaf73fe216" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.03 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e21c420f-53c4-5528-9a9a-53b853f50f2b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.04 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d928c60a-8cdf-531c-97bd-1517a5b1095e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.05 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1b8c5652-1e74-5be8-941e-21c664bc827d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.06 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "64d5e07a-1970-51ef-a65f-656950e46b80" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.07 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "366d1c7d-4c62-5bc9-9049-2e48f9bad3d2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.08 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "09dd3480-84c6-5b88-8886-4355c9d0fa86" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.09 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a03e335c-8786-5448-9188-3c4a1cd00ab7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.10 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2974c11a-e218-5203-9877-7927dc815290" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.11 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f078d5aa-dee9-5d8b-b3a8-c0b3d9f857bc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.12 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7f972121-5dc3-51d0-b417-79c4da71287e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.13 — Seminar Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "19860a63-5388-5d55-9c45-7f2118de84d6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.14 — Seminar Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "26a797a1-37bb-58b3-bbe5-b93c49430d7a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.15 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7d743de3-ddd3-59ff-8a90-492d16413ba6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.16 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "96b17edb-9511-508a-8c74-8d8d52de3a7a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.17 — Staff Common Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b621a972-6e23-571b-9519-4b48e281a47f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.18 — Kitchen lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1331bcbc-657b-5c9f-8356-4b74fbcd99aa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.20 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8981ef37-b84b-5473-88ef-62252650fb61" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.22 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6d52f37f-bdaa-5594-950e-891103d25c77" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.26 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7f48e9dd-f289-5b1f-8600-9d176232edd8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.27 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d2be4be2-a45c-550b-a2ec-ce7c61287c75" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.36 — Restroom (Male) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8a356cf1-768d-54a7-b237-8574c1d00a7c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.37 — Restroom (Female) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a68f7252-d321-5fbc-8a88-84560f204310" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.38 — Telecommunications Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0b3d71c5-5774-53b2-9d92-bdce85efdc40" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.46 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5ae3140f-32c0-5f03-9ef9-5063cfd442c9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.48 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e192cf84-1d1b-55d3-b383-385c914111a2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.50 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "43f707ab-6328-5433-b848-e84ed77c365b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.51 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cd6f5dc1-e27b-5262-bb81-f14e94dbffef" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.52 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2d2cd99f-669d-5099-a560-a8818ecc0c22" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.53 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "183f283d-c201-5b39-95cb-a87436867fe9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.54 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "70dd5809-727f-5971-bc30-ccee4b40d4ae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.56 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4a25b114-b225-529a-877f-37939d66dcde" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.57 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3b2823f2-acba-5fd9-9abb-3d103c5a794e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.58 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1b352df4-ce24-571c-a0bd-11ec375b2f82" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.59 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9a5cf277-1d90-5bf8-9c8e-a7cb35f66f06" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.60 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "64d1448b-3ef3-5c93-bb46-887d88ea2f14" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.61 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3af08c44-5fa1-5115-9f70-80c39d641493" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.62 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f8b5fe89-5044-598f-96db-05687b262ebf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.63 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "762b44b5-3d1a-51d1-a6da-2d5b5c18fe32" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.64 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2ee8971e-ffbb-5db9-ac8d-d5f17e8bc45c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.65 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9543faac-85fb-5621-9c7b-c96e44dc8f27" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.66 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6cbbf8b0-009a-50ed-9391-a14737d6f605" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.67 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9f7bd8df-3bed-541e-af24-318c9fed508b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.68 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "76dfed15-ca49-5995-8383-88df9085be6e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.69 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "94ba4ef0-851c-50ed-a90e-74ccba551bbc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.70 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b40af84f-aee2-5e84-9087-44a3ea25c1cc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 3.71 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b06eb007-5f89-56ce-bc0a-a499a320c118" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.01 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "15dedc71-1a4a-513c-870b-dda8ac9265a1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.02 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "68f87a21-e74d-5cf6-a545-c8c59a86d7d5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.03 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "94e0f722-3b56-5c32-924f-0bc65bda6e82" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.05 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "095bd712-f6d5-5bb0-8cde-e5c35630c1dd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.06 — Computer Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a90e552d-e818-5864-9ec7-a7e7e10f14be" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.07 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ba19d471-946c-5568-b4a4-ef542c3e1e7d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.08 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6816f978-ba4c-57d7-aa23-be432201c7d4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.09 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fb9244ed-c280-57c2-a267-8f86f0b1997c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.10 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9ca23479-fd89-5fcf-8db4-876875aceff4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.11 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0455cf30-285b-5cfe-a932-85855a88b3b6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.12 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c5539ff8-b56c-5036-93e2-ae31a1d2467d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.13 — Seminar Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7400d129-c99b-5bd5-8531-ec76fb928132" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.14 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f051bf40-3bc5-5ddf-a4f9-92df947a951c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.15 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "efc3d34c-8f9b-542d-b5bd-82242cb02dc0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.16 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2f78005c-c23c-5da9-ba9e-7bd6e858e4ff" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.18 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2cc3dcbe-9b02-5116-91fb-808c87d84248" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.19 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "371f8f1b-e0ae-5ee6-946f-9c1f8e5413e8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.20 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9f19e849-e917-531c-89ea-6046af924757" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.21 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "387a1449-5563-5438-9d4b-097bec31ec0f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.22 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d9b50782-d6f6-5aee-bfed-30e1afa582f6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.23 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "727b5cd2-5c20-5f54-a03b-ff1c18e30d1c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.24 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0f7f2d36-7219-56a3-af1b-c6f237e2ce24" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.34 — Telecommunications Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "66cd7a53-4009-56f1-a09e-c3ca9af228bc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.35 — Restroom (Male) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1a86e8a1-9206-509e-89dc-a7bd2443cee8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.36 — Restroom (Female) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "af6a28cd-2cc9-55c9-ade4-f4debf9f2223" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.38 — Mechanical/Service Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "12aa366c-aa30-5d62-aa71-252fd88b57e9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.44 — Server Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5c5ba873-2d09-50df-9343-e7bbad77081d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.47 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b1720f92-4956-59ef-9a46-820164a1e002" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.49 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6f655f26-c080-58c7-aaba-b0493b37bbe5" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.50 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9a22494a-ada0-516b-bca2-55daccb4f607" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.51 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e7928cdc-f4a9-5921-9621-a53a1312582b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.52 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9e01d190-c44c-5f00-b5e8-4878f0097580" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.53 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6c30bfba-76a6-570c-8971-dbb05dbb1ea7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.55 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b0587466-b71c-59c8-8d2a-a342ce7d6953" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.56 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "74e11fd5-13a1-56b8-a57e-46745ba3da69" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.57 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7fc0941c-461a-5362-9198-fc500505e7db" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.58 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a87ee49b-0a22-5128-b8ed-97e0318b0db9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.59 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4948f058-f561-59fa-a146-1ad413c2e600" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.60 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "a6c73b1b-e680-5045-9a73-922e483d4510" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.61 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5e1fa105-354f-59da-b8bd-acb2a0a432bf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.62 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "77dabe27-f659-5d9e-8490-e036f6fd2373" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.63 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "14faa0da-4e85-59df-82ee-799fde6c6c84" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.64 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eea98a3e-2743-581a-898b-dd3f6b92aa39" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.65 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b55dd32a-1301-5078-995f-509bfbc7ede8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.66 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c7e169af-c201-55bc-a43e-1d1b90996556" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.67 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1fde8074-ce0e-593d-980a-9cfb412aa56c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.68 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "de8e3cff-91c6-594a-8110-931143d24a92" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.69 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e44ec545-9adf-56a2-a9eb-f68d34d491bd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.70 — Staff Break Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "94b04ecd-90be-53dc-bb06-936c64063fcd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 4.71 — Storage Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "18823a45-da9f-5488-8c42-2d912f68ee30" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.01 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "05ddcc8e-eaea-5a49-98dd-d5c1535a3915" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.02 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "70cd3eeb-55c3-5563-83d1-3c684c7550cf" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.03 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9a41a8be-9f7a-5a86-916d-4c23397249c4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.04 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "31b65d62-fb9b-57f6-9b97-55d9e83da081" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.05 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "903adf28-477a-5ec8-8078-a303d0cf8f4e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.06 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8a0da06f-4942-5d7b-bb11-cb9a90e2324d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.07 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6fdd1686-8810-52fa-b2a2-38f251287f37" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.08 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "41751d7f-6f03-5211-9dc2-7c2c3cdccd22" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.09 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0d0c3d6c-da2e-50de-9e8f-d3e4d5fa7c23" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.10 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "78c9d68a-f46f-5824-8444-f6cf03d22586" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.11 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5b083830-626f-541a-af1a-512e04d25ee0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.12 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "772d2a94-1841-53f3-9c51-2c45c5c963ac" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.13 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "b6453d77-329d-57a3-8cef-674c7a48f2d8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.14 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "28980afa-23d1-5f9f-86c7-df10612bbf90" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5b630611-8828-593d-8be1-e04d0ea48509" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4532563a-9185-59c6-be1e-93a4719c7908" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.17 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "74c23795-c411-55b7-ba4f-37a873ef2f63" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.18 — Meeting Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "884ebb17-9649-5599-a9ea-e62711731ff4" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.20 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "810123dd-b8ed-5cfa-970d-58714813d09d" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.21 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "1913e6b6-e289-53c3-b760-0fa2bc4e2c44" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.22 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "68a42203-e6f8-5133-96f0-53124f0df40e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.23 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "37dc3a43-92c6-554a-bb60-eb02d3367215" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "ceb72d1d-292c-5f0c-8c6f-cec3d854b9ae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.34 — Telecommunications Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "941673ba-1858-58c0-97cb-1d75568cc675" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.35 — Restroom (Male) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "54402a11-b230-55b0-bb7a-a123e4b936fa" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.36 — Restroom (Female) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "718b3cb5-2389-5824-9532-b2f75b72cb65" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.44 — Server Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5a31755b-e21a-5e7a-988e-85f410050aa9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.45 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "213cabee-2547-5a94-b8d4-8776e97736e2" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.48 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5b935043-4acd-59f3-b314-b7c81d78282f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.49 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "65fcaf8c-df95-5f66-afc0-492dda2dc657" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.50 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "92918c44-2f83-58a7-ac95-c811d147091e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.51 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c21619e2-169f-5b7e-a946-cc6804fa86ae" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.52 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cbc2ebc8-e29d-5bcc-b16a-0d63040d14d8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.53 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "cdf0d4ce-4e43-5f91-bfba-be95be6d881e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.54 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8b9a9886-541b-5866-87ad-fbce48d73ff9" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.56 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f7e52d71-b4d9-5a5e-b071-c18fc3950a3e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.57 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "2914b75b-19d5-5866-8f65-008d1cbacb04" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.58 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5f0dab01-4177-54ba-9c2c-f3938df26866" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.59 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d6001245-fb6b-5f77-80e4-55fed06fdf4a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.60 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dea2e3b7-76df-5aaa-97fd-f6b5d2700170" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.61 — Research Laboratory lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "be862ed7-5597-5421-9b2e-857465371221" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.62 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "728cad23-79e4-5c27-8484-dad87ac03b4e" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.63 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "4f4f0fb1-14a8-5233-9bdb-2e3692de3b66" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.64 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d0c15fe5-8358-53b2-b452-1bf7f6ff1040" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.65 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "0ca7c685-b783-5cd1-873c-2145b2ae093f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.66 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "47860c7b-ec70-5cc7-b7a5-62c930d753f6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.67 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9ef65136-889d-513c-a60e-1a0cd68c2d46" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.68 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "fff36d18-2013-5783-940a-cc571bbf1ea1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.69 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7b091537-33d9-5b2a-b676-4f26ae3e916a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.70 — Academic Office lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "eda2529e-8c75-5d3d-9dac-f9f042733e4f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Room 5.71 — Storage Room lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e72631f7-82ff-502a-a226-77c1d7de2bd7" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "9675b1c6-e984-5b19-acea-8937d26dd4ad" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "526b5bf3-7679-5105-9bb5-a5f2b793ca56" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "984564b7-419c-5deb-8a87-5860849a103f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d657cbfb-5041-5eb9-b081-72595b5ff5c3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "065f659d-6fb3-59a2-8b5f-a56ec66b08ac" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "61c6e203-a110-5ac6-9ca1-c7a23800a453" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6e6a446c-6d4b-5f49-b580-1ea5adc41b9b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6aa54e8b-38b0-565f-b8d0-7edab6b3da55" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5_sat_lighting_cct>
+    a brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) lighting_cct [K]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7f4b077f-d3c3-5441-95c2-49f3594e5893" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#equipment_data> ;
+    ] .

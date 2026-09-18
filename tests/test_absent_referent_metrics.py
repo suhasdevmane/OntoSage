@@ -65,8 +65,14 @@ async def test_a_named_place_that_does_not_exist_is_declined(monkeypatch):
     assert out["provenance"] == "referent_not_found"
     assert "swimming pool" in out["response"]
     assert _NAME in out["response"]
-    # It must not merely refuse — it must say how to make the question answerable.
-    assert "ontology" in out["response"].lower()
+    # It must not merely refuse — it must say how to make the question answerable, to the
+    # reader who can act on it. Since 2026-09-17 that is a reader holding system:admin only;
+    # anyone else gets the decline without the TTL steps.
+    assert "ontology" not in out["response"].lower()
+    admin_state = _state("How many sensors are in the swimming pool?")
+    admin_state.intermediate_results["user_role"] = "admin"
+    admin = await cap.CapabilityAgent._absent_referent_decline(admin_state, "bldgX", _NAME)
+    assert "ontology" in admin["response"].lower()
 
 
 async def test_a_named_place_that_exists_is_not_blocked(monkeypatch):

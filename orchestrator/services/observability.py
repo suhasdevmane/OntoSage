@@ -21,9 +21,11 @@ different people:
 ``unconnected``     described in the ontology and pointing at no rows; a data-plumbing job
 ``uninstrumented``  no such point in that space; a procurement or installation decision
 
-**Every negative names its unlock step.** "No" on its own tells a facilities manager nothing
-they can act on, and an unanswerable question that explains what would make it answerable is
-worth more than a confident guess.
+**Every negative names what IS measured, and — for an administrator — its unlock step.** "No"
+on its own tells a reader nothing they can act on. The unlock step (link a timeseries
+reference, upload a TTL) is only actionable by someone who can edit the building's data, so it
+is shown only to a reader holding ``system:admin``; everyone else gets the verdict and the
+alternatives in plain words (2026-09-17, user decision).
 
 **Silence is never read as absence.** If the coverage matrix cannot be built, the answer says
 the reach is unknown rather than reporting an empty building — the degrade-to-a-legal-value
@@ -91,8 +93,25 @@ class Reach:
     def answerable(self) -> bool:
         return self.status == OBSERVABLE
 
-    def describe(self) -> str:
-        """The answer, and for every negative the step that would change it."""
+    def _what_is_measured(self) -> str:
+        """The offer that follows a negative — only what the coverage matrix saw reporting."""
+        if not self.alternatives:
+            return ""
+        return (
+            f"\n\nWhat IS measured there: {', '.join(self.alternatives[:8])}"
+            f"{' and more' if len(self.alternatives) > 8 else ''}."
+        )
+
+    def describe(self, for_admin: bool = False) -> str:
+        """The answer; for an administrator, every negative also names the step that changes it.
+
+        The verdict and what IS measured are for every reader. The remediation — link a
+        timeseries reference, upload a TTL, check the feed — is shown only when
+        ``for_admin``: an occupant or a supervisor cannot act on it, and "upload a TTL" in
+        an answer to "is radiation measured in the atrium?" reads as the system being
+        broken rather than as the building not measuring radiation. The default is the
+        plain message, so a caller that does not know who is reading fails toward it.
+        """
         what = self.lay_term or self.modality.replace("_", " ")
         where = self.space_label or "this building"
 
@@ -104,10 +123,12 @@ class Reach:
 
         if self.status == STALE:
             line = (
-                f"**Partly.** {what.capitalize()} is instrumented in {where} and the point is "
-                f"connected, but it has not reported recently, so I would be answering from "
-                f"stale readings rather than current ones."
+                f"**Partly.** {what.capitalize()} is measured in {where}, but the sensor has "
+                f"not reported recently, so I would be answering from old readings rather "
+                f"than current ones."
             )
+            if not for_admin:
+                return line
             if self.stored_at:
                 line += f" Its readings are stored in `{self.stored_at}`."
             return (
@@ -115,24 +136,29 @@ class Reach:
             )
 
         if self.status == UNCONNECTED:
-            return (
-                f"**Not yet.** {what.capitalize()} is described in the ontology for {where}, but "
-                f"the point has no readings behind it — no timeseries id resolving to rows in a "
-                f"registered database.\n\nUnlock: give the point a `ref:hasTimeseriesId` and a "
-                f"`ref:storedAt`, and register the database that holds its rows. No code change "
-                f"is needed."
+            line = (
+                f"**No — I have no {what} readings for {where}.** A sensor for it is recorded "
+                f"there, but no readings from it are available, so any figure I gave you would "
+                f"be invented."
+                f"{self._what_is_measured()}"
+            )
+            if not for_admin:
+                return line
+            return line + (
+                "\n\nUnlock: the point is described in the ontology but has no timeseries id "
+                "resolving to rows in a registered database. Give it a `ref:hasTimeseriesId` "
+                "and a `ref:storedAt`, and register the database that holds its rows. No code "
+                "change is needed."
             )
 
         if self.status == UNINSTRUMENTED:
             line = (
-                f"**No — {what} is not measured in {where}.** There is no point of that kind "
-                f"located there, so any figure I gave you would be invented."
+                f"**No — {what} is not measured in {where}.** There is no sensor of that kind "
+                f"there, so any figure I gave you would be invented."
+                f"{self._what_is_measured()}"
             )
-            if self.alternatives:
-                line += (
-                    f"\n\nWhat IS measured there: {', '.join(self.alternatives[:8])}"
-                    f"{' and more' if len(self.alternatives) > 8 else ''}."
-                )
+            if not for_admin:
+                return line
             return line + (
                 "\n\nUnlock: install a sensor and describe it in the ontology, or upload a TTL "
                 "for one that already exists."

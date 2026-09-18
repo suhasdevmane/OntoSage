@@ -875,8 +875,13 @@ Rules:
         )
         floor = (state.floor_context or {}).get("floor")
 
+        from orchestrator.services.grounding_guard import reader_is_admin_in
+
         agent = get_spatial_agent()
-        markdown = await agent.resolve(sub_query, building_id, floor)
+        # Every reader gets the decline; how to supply missing geometry is for an admin.
+        markdown = await agent.resolve(
+            sub_query, building_id, floor, for_admin=reader_is_admin_in(state)
+        )
         return {
             "success": True,
             "formatted_response": markdown,

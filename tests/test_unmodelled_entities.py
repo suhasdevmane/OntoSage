@@ -101,9 +101,14 @@ async def test_an_answer_with_no_zero_claim_is_never_touched():
 
 # -- the correction says what would fix it -----------------------------------
 def test_the_correction_distinguishes_itself_from_none_and_says_what_to_do():
-    out = correction_text("desks", "0 desks available")
+    # What would fix it is for an administrator only (2026-09-17 user decision); every reader
+    # keeps the distinction from "none".
+    out = correction_text("desks", "0 desks available", for_admin=True)
     assert "not the same as there being none" in out
     assert "TTL" in out
+    plain = correction_text("desks", "0 desks available")
+    assert "not the same as there being none" in plain
+    assert "TTL" not in plain and "ontology" not in plain.lower()
 
 
 # -- class-name forms --------------------------------------------------------
@@ -129,5 +134,9 @@ def test_the_guard_is_called_in_the_response_node():
 
     from orchestrator.workflow import _orchestrator
 
+    import re
+
     src = inspect.getsource(_orchestrator)
-    assert "_unmodelled_guard(final_response, _sx)" in src
+    # The call, not its exact argument list: the reader's role was added as a keyword on
+    # 2026-09-17 (TODO-692), and a literal match failed a guard that was still being called.
+    assert re.search(r"_unmodelled_guard\(\s*final_response,\s*_sx\b", src)

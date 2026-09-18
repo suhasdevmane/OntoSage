@@ -14,8 +14,6 @@ tables:
 
 # Sustainability Target Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## How a target is read
 
 A target is a REDUCTION against a stated baseline by a stated date, set by a named

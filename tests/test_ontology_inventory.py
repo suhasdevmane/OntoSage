@@ -78,7 +78,9 @@ def test_render_lists_every_class_with_its_live_count():
     assert "Test Building" in out
     assert "HVAC Equipment" in out and "149" in out
     assert "Variable Air Volume Box" in out and "132" in out
-    assert "ontology" in out.lower(), "the answer must say where the figures came from"
+    # Where the figures came from, in words every reader understands (2026-09-17: "ontology"
+    # and "triples" are withheld from non-administrators).
+    assert "building model" in out.lower(), "the answer must say where the figures came from"
 
 
 def test_nothing_found_renders_nothing_rather_than_an_empty_claim():

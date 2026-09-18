@@ -1,0 +1,2859 @@
+# Live asks — 2026-09-17 17:27
+
+147 question(s) x 1; response cache flushed before every ask, so every run is a real first pass.
+
+| question | runs ok | min s | median s | max s |
+|---|---|---|---|---|
+| Which remaining period today has the best supported balance of temperature, ventilation, light and quiet for concentrated work? | 1/1 | 9.1 | 9.1 | 9.1 |
+| Is this shared desk officially available to me now, or does it only appear unoccupied? | 1/1 | 5.0 | 5.0 | 5.0 |
+| Is today's noise a brief corridor-related peak or a sustained room-level problem likely to continue? | 1/1 | 35.5 | 35.5 | 35.5 |
+| Which permission groups or zones are orphaned because no current owner, purpose or mapped opening can be evidenced? | 1/1 | 10.1 | 10.1 | 10.1 |
+| What authority, prior-state evidence and independent checks are required before considering restoration after an erroneous suspension? | 1/1 | 35.0 | 35.0 | 35.0 |
+| Which minimum approved permission package should be prepared for this verified starter on the authorised effective date? | 1/1 | 12.0 | 12.0 | 12.0 |
+| Have closures, room moves and route changes reached each affected attendee and accompanying person through their selected authorised channels before travel? | 1/1 | 40.2 | 40.2 | 40.2 |
+| When signs, maps, bookings and live route states disagree, what can we safely publish now and which owner must resolve each conflict? | 1/1 | 5.6 | 5.6 | 5.6 |
+| Can we communicate likely waiting for an accessible toilet using privacy-safe aggregate evidence, without identifying users or constructing visit histories? | 1/1 | 4.1 | 4.1 | 4.1 |
+| How do observed route lengths, waits and hand-offs compare with the workflow and adjacency assumptions used in the design? | 1/1 | 45.3 | 45.3 | 45.3 |
+| Which electrical, heating, cooling, ventilation, water and data capacities and connection routes are adequate for the proposal, and where is an upgrade decision needed? | 1/1 | 29.9 | 29.9 | 29.9 |
+| Which water-supply, drainage, containment and isolation details minimise the consequence of leaks, blockages or uncontrolled discharge? | 1/1 | 39.5 | 39.5 | 39.5 |
+| Which matters require a formal management representation because independent evidence is unavailable, incomplete or solely management-held? | 1/1 | 35.2 | 35.2 | 35.2 |
+| When assets were moved, replaced, isolated, recommissioned or retired, were active controls transferred while prior evidence remained linked and retrievable? | 1/1 | 46.1 | 46.1 | 46.1 |
+| For each local, shared or inherited control, who operates, monitors and evidences each component, and what must be tested within this unit? | 1/1 | 0.8 | 0.8 | 0.8 |
+| Which systems started late or stopped late against today's approved schedule, and by how much? | 1/1 | 102.8 | 102.8 | 102.8 |
+| Which zones have not stabilised after the approved warm-up or cool-down period should have completed? | 1/1 | 20.3 | 20.3 | 20.3 |
+| Which zones are recovering from setback more slowly than their own recent verified warm-up or cool-down pattern? | 1/1 | 30.0 | 30.0 | 30.0 |
+| Where is the current approved collection point for batteries, WEEE, sharps or other special waste I may encounter? | 1/1 | 12.6 | 12.6 | 12.6 |
+| When is the next authorised waste collection, and what needs to be ready before the contractor arrives? | 1/1 | 17.8 | 17.8 | 17.8 |
+| Which washroom should I service next, considering required frequency, time since the last confirmed service and current demand evidence? | 1/1 | 5.5 | 5.5 | 5.5 |
+| Which critical activities are displaced, what dependencies block them, and which approved continuity options are viable now? | 1/1 | 29.1 | 29.1 | 29.1 |
+| What authority, facts, decisions, open actions, restrictions and unresolved risks must be handed over at command or shift change? | 1/1 | 15.7 | 15.7 | 15.7 |
+| Which command decisions, agency requests and open actions need coordination before the next decision point? | 1/1 | 11.1 | 11.1 | 11.1 |
+| Which temporary works, events, parked plant, barriers or closures have changed emergency access since the latest controlled access plan? | 1/1 | 17.3 | 17.3 | 17.3 |
+| What defensible aggregate occupancy range applied to each affected zone at the incident start time? | 1/1 | 12.6 | 12.6 | 12.6 |
+| Which boundary-to-door route is currently evidenced for ambulance crews, stretcher teams and responders on foot, including step-free constraints? | 1/1 | 12.2 | 12.2 | 12.2 |
+| Which HVAC assets operate beyond approved service windows, and is each exception justified by safety, frost, specialist service, override or fault evidence? | 1/1 | 15.2 | 15.2 | 15.2 |
+| Which planned purchases can be met from verified internal reuse stock without compromising safety, function or timing? | 1/1 | 49.7 | 49.7 | 49.7 |
+| Which utility or end-use profiles show a persistent step change, drift or repeating anomaly that merits a meter, controls or asset check? | 1/1 | 41.5 | 41.5 | 41.5 |
+| Which maintenance, setpoint, firmware, control or building changes occurred shortly before the fault, and which are only hypotheses rather than established causes? | 1/1 | 5.7 | 5.7 | 5.7 |
+| Which next manual test would best distinguish the remaining plausible fault locations while minimising intrusive work? | 1/1 | 12.2 | 12.2 | 12.2 |
+| Which authorised role must witness, accept or close each hold point, and what evidence must be available? | 1/1 | 9.6 | 9.6 | 9.6 |
+| Which entrances or route segments need a facilities inspection before the next high-footfall transition? | 1/1 | 19.6 | 19.6 | 19.6 |
+| Is the evidence complete enough for organiser and service owners to review event-space handover? | 1/1 | 9.1 | 9.1 | 9.1 |
+| Which rooms have lighting levels or control states that do not fit their current authorised task and schedule? | 1/1 | 10.2 | 10.2 | 10.2 |
+| Which assets should receive survey, maintenance, refurbishment or replacement funding first when criticality, condition, risk and whole-life cost are combined? | 1/1 | 24.1 | 24.1 | 24.1 |
+| Are conflicts of interest, related-party links and segregation-of-duty controls complete for each procurement, approval and payment role? | 1/1 | 8.8 | 8.8 | 8.8 |
+| Among technically compliant options, which has the lowest comparable whole-life cost across purchase, integration, energy, maintenance, downtime, renewal and disposal? | 1/1 | 7.7 | 7.7 | 7.7 |
+| Which occupied zones lack confirmed fire-warden or marshal coverage for the current operating period? | 1/1 | 0.9 | 0.9 | 0.9 |
+| Which approved incident messages were sent, by which channel and at what time, and what delivery or acknowledgement evidence exists? | 1/1 | 16.7 | 16.7 | 16.7 |
+| For each active impairment, which authorised temporary controls lack current evidence of placement, operation, coverage or handover? | 1/1 | 7.7 | 7.7 | 7.7 |
+| Is the approved first-aid cover and equipment provision suitable for the declared occupancy, activities, hazards and operating period? | 1/1 | 7.6 | 7.6 | 7.6 |
+| Which occupied zones coincide with a verified impairment of ventilation, alarm, access release or another required safety-critical service? | 1/1 | 12.9 | 12.9 | 12.9 |
+| For the scheduled assurance activity, which required evidence is current, permissioned, traceable and reproducible, and which evidence is missing? | 1/1 | 69.8 | 69.8 | 69.8 |
+| If the primary server room, communications room or core-network area is unavailable, which services have a verified alternative location, path and operating capacity? | 1/1 | 17.0 | 17.0 | 17.0 |
+| Which approved plant, sensor, access-control or building-management endpoints have lost expected connectivity, and is the fault local, segment-wide or upstream? | 1/1 | 13.6 | 13.6 | 13.6 |
+| Which hosts, clusters or hypervisors face sustained CPU, memory, storage-I/O or network-I/O pressure, and which services are exposed? | 1/1 | 34.3 | 34.3 | 34.3 |
+| What temporary exposure is created by active construction, refurbishment, commissioning, relocation or intrusive maintenance, and during which zones and time windows? | 1/1 | 46.6 | 46.6 | 46.6 |
+| For each defect, what remedial scope and acceptance evidence were required, what was completed, and has the corrected condition remained stable? | 1/1 | 95.5 | 95.5 | 95.5 |
+| Can every digital evidence item be authenticated, scoped, permissioned and preserved with an unbroken chain from collection to analysis? | 1/1 | 9.7 | 9.7 | 9.7 |
+| I have a 9 a.m. lecture. Before I leave my office, what is confirmed, what is still unknown, and how early should I arrive? | 1/1 | 60.1 | 60.1 | 60.1 |
+| Which approved network, presentation and account requirements should I send an external speaker before arrival? | 1/1 | 2.9 | 2.9 | 2.9 |
+| If my assigned room is withdrawn, which currently eligible alternative should I ask the room team to consider? | 1/1 | 13.4 | 13.4 | 13.4 |
+| Which M&E asset-register records must be reconciled before they can support design, maintenance or lifecycle decisions? | 1/1 | 23.3 | 23.3 | 23.3 |
+| Which points and sampling rates should be trended so this commissioning or diagnostic test can observe the expected behaviour? | 1/1 | 10.0 | 10.0 | 10.0 |
+| Which sensors should be calibrated or replaced first because their uncertainty most affects current engineering decisions? | 1/1 | 55.7 | 55.7 | 55.7 |
+| Is a Changing Places toilet available in or near Abacws, and what are the current verified access arrangements? | 1/1 | 28.3 | 28.3 | 28.3 |
+| I may need to stand, move or take short breaks. Which authorised seating area lets me do that without blocking circulation? | 1/1 | 56.0 | 56.0 | 56.0 |
+| I need a seat near an exit. Which authorised seating options meet that preference without obstructing circulation? | 1/1 | 17.5 | 17.5 | 17.5 |
+| We need a room for a two-hour mock viva with four people. Which option is confidential, accessible, quiet and suitable for one hybrid participant? | 1/1 | 30.6 | 30.6 | 30.6 |
+| I need a step-free route to supervision that avoids the busiest and noisiest areas around class changeover. Which verified route should I take? | 1/1 | 37.3 | 37.3 | 37.3 |
+| Can the corridor sensor outside this office tell me what conditions were like inside, or is valid room-level evidence required? | 1/1 | 17.3 | 17.3 | 17.3 |
+| An alarm or emergency message has occurred. What is the latest authoritative instruction for my location and role? | 1/1 | 30.9 | 30.9 | 30.9 |
+| I may need to work in Abacws this evening. Are my access, workspace and lone-working requirements officially confirmed for that period? | 1/1 | 16.2 | 16.2 | 16.2 |
+| I have appointments on different floors with a short gap. What conservative travel and setup buffer should I allow? | 1/1 | 6.6 | 6.6 | 6.6 |
+| Is my next course talk likely to be crowded or poorly ventilated enough to consider a repeat session? | 1/1 | 12.8 | 12.8 | 12.8 |
+| Is today's Abacws open day confirmed, which entrance should we use, and when should we arrive? | 1/1 | 8.5 | 8.5 | 8.5 |
+| How much time should we allow for the course talk, building tour and questions with staff? | 1/1 | 6.6 | 6.6 | 6.6 |
+| Are compliance records retained for the correct period, in the authorised system and format, with integrity, access and disposal controls appropriate to their purpose? | 1/1 | 11.3 | 11.3 | 11.3 |
+| Are accessible entrances, routes, lifts, doors, toilets, refuges and assistance arrangements available as currently published, including temporary alternatives? | 1/1 | 38.4 | 38.4 | 38.4 |
+| Do Abacws local procedures and work instructions implement the current institutional policies without omissions, contradictions or unauthorised local variation? | 1/1 | 49.2 | 49.2 | 49.2 |
+| The lift on my usual route is unavailable. What current step-free alternative or suitable relocated workspace is officially verified? | 1/1 | 7.1 | 7.1 | 7.1 |
+| What evidence is missing, stale or too weak for the building to answer my question about this room responsibly? | 1/1 | 28.5 | 28.5 | 28.5 |
+| I've developed a headache in this room. What are the current measured conditions, and is anything clearly unusual compared with this room's reliable baseline? | 1/1 | 3.7 | 3.7 | 3.7 |
+| Is the calibration chain traceable and accurate enough for the smallest difference or threshold the study intends to interpret? | 1/1 | 209.2 | 209.2 | 209.2 |
+| To which buildings, systems and operating conditions could a result reasonably transfer, and which target settings remain unsupported? | 1/1 | 18.1 | 18.1 | 18.1 |
+| Which exact data, schema, mapping, code, environment and model versions produced each table, figure and reported number? | 1/1 | 15.8 | 15.8 | 15.8 |
+| Which room and time categories show repeated no-shows strongly enough to justify an owner-led review of release rules? | 1/1 | 3.8 | 3.8 | 3.8 |
+| The authorised occupancy sources disagree about this booked room. Should the booking remain protected from release? | 1/1 | 11.9 | 11.9 | 11.9 |
+| If the preferred room becomes unavailable, which three eligible alternatives are closest and what verified trade-offs would each introduce? | 1/1 | 22.3 | 22.3 | 22.3 |
+| Which dependency-aware recovery order should incident leaders adopt to restore priority services safely with the people and resources currently available? | 1/1 | 43.2 | 43.2 | 43.2 |
+| Does the current portfolio provide enough suitable bookable and informal settings for teaching, collaboration, focus, confidentiality and accessible use? | 1/1 | 18.8 | 18.8 | 18.8 |
+| Where are teaching, research, workplace and public-facing priorities competing for the same room, route or service, and which trade-off needs an accountable decision? | 1/1 | 41.9 | 41.9 | 41.9 |
+| Which events are due today, and which approved Security arrangements are current, missing or no longer valid for each one? | 1/1 | 4.0 | 4.0 | 4.0 |
+| Which authorised public routes are interrupted by an official closure, unavailable door, lift fault or unverified segment? | 1/1 | 10.5 | 10.5 | 10.5 |
+| Which current Security records are incomplete, stale, duplicated or conflicting, and which operational decisions do those defects block? | 1/1 | 4.9 | 4.9 | 4.9 |
+| Which functions must be co-located or kept within a stated travel time, which are preferences, and which adjacency claims lack evidence? | 1/1 | 6.1 | 6.1 | 6.1 |
+| Which workplace peaks and troughs are stable enough to plan for, and how do they vary across weekdays, term phases, projects and exceptional periods? | 1/1 | 60.0 | 60.0 | 60.0 |
+| What mix of desks, focus rooms, collaboration areas, meeting rooms, storage and support space is justified by approved operating assumptions and consultation? | 1/1 | 77.5 | 77.5 | 77.5 |
+| I am on campus for only one day this week. Can you plan a practical sequence for study, an online call, printing and a group meeting around my classes? | 1/1 | 4.2 | 4.2 | 4.2 |
+| Tomorrow I have classes on different floors, a short online meeting and two gaps for reading. Can you plan a practical sequence of spaces that keeps unnecessary movement to a minimum? | 1/1 | 15.8 | 15.8 | 15.8 |
+| During group-project deadline week, which time windows are most likely to offer a suitable meeting space for our team? | 1/1 | 41.8 | 41.8 | 41.8 |
+| During managed-network degradation, which room AV functions still have current evidence that they can operate? | 1/1 | 9.6 | 9.6 | 9.6 |
+| Are the current recording notice, retention rule and authorised-access conditions confirmed for this session? | 1/1 | 3.3 | 3.3 | 3.3 |
+| Which scheduled rooms should be included in the walk-round because remote readiness evidence is missing, stale or contradictory? | 1/1 | 14.1 | 14.1 | 14.1 |
+| If enrolment moves within the approved planning range, which group counts or room allocations become fragile first? | 1/1 | 129.3 | 129.3 | 129.3 |
+| Which proposed fairness checks are responsibly answerable with current authorised data and permissions, and which are not? | 1/1 | 5.5 | 5.5 | 5.5 |
+| Which currently eligible rooms are approved for the required hybrid, lecture-capture or assistive-technology setup? | 1/1 | 9.6 | 9.6 | 9.6 |
+| I'm coming to Abacws next Wednesday after 2 p.m. for about 90 minutes. Where am I most likely to find a calm, relatively quiet place with low foot traffic and reasonable measured temperature and air-quality indicators, close to my 4 p.m. class? | 1/1 | 122.9 | 122.9 | 122.9 |
+| Should I stay here, or are noise, crowding or CO2 likely to get noticeably worse during the next hour? | 1/1 | 125.2 | 125.2 | 125.2 |
+| The previous class has just ended. Are CO2 and temperature back near this room's usual pre-class levels? | 1/1 | 45.5 | 45.5 | 45.5 |
+| Which closed work orders lack enough asset, test or outcome evidence for estates teams to rely on the stated result? | 1/1 | 12.2 | 12.2 | 12.2 |
+| How would plausible growth or change in teaching, research and workplace demand affect asset capacity, service headroom and operational risk? | 1/1 | 4.6 | 4.6 | 4.6 |
+| Which non-mandatory tasks have enough sensing, failure-mode knowledge and fallback control to be considered for condition-based triggering? | 1/1 | 18.8 | 18.8 | 18.8 |
+| The event room has changed. What is the new confirmed room, and what public route should I take? | 1/1 | 24.0 | 24.0 | 24.0 |
+| Is there an official place near check-in to leave a coat or bag, and is it open? | 1/1 | 5.8 | 5.8 | 5.8 |
+| My companion is not attending the session. Where are they permitted to wait? | 1/1 | 21.1 | 21.1 | 21.1 |
+| Were bins, skips, compactors, seals or locks exchanged and handed back exactly as recorded? | 1/1 | 7.5 | 7.5 | 7.5 |
+| How should shared vehicle or campus-level weights be allocated to Abacws without false precision? | 1/1 | 19.0 | 19.0 | 19.0 |
+| Is the loading or exchange area clear, booked and operationally ready for the next confirmed collection? | 1/1 | 12.5 | 12.5 | 12.5 |
+| Is the building pushchair-friendly from the car park? | 1/1 | 1.3 | 1.3 | 1.3 |
+| Book me a hotel near the building for tomorrow. | 1/1 | 2.6 | 2.6 | 2.6 |
+| Which plant items are running outside their normal schedule right now? | 1/1 | 27.0 | 27.0 | 27.0 |
+| Which capital project this year had the best measured outcome? | 1/1 | 1.5 | 1.5 | 1.5 |
+| Rank the glazing, roof, and AHU replacements by comfort improvement per pound. | 1/1 | 40.1 | 40.1 | 40.1 |
+| The bins on floor 2 are always full by lunchtime - can you check that? | 1/1 | 38.5 | 38.5 | 38.5 |
+| I'm pregnant and overheating - where's the coolest place to work today? | 1/1 | 42.6 | 42.6 | 42.6 |
+| How much would submetering every floor cost, and when does it pay back? | 1/1 | 5.3 | 5.3 | 5.3 |
+| Whats the best empty room to convert into two phone booths, by demand? | 1/1 | 38.2 | 38.2 | 38.2 |
+| What's the delta-T across the heating circuit, and is it healthy? | 1/1 | 45.0 | 45.0 | 45.0 |
+| What's the filter size for the FCUs on floor 4? | 1/1 | 22.5 | 22.5 | 22.5 |
+| Find a room for 12 with a projector, free 2-4pm today, near the cafe. | 1/1 | 13.4 | 13.4 | 13.4 |
+| What's the optimal battery dispatch for tomorrow's tariff and solar forecast? | 1/1 | 6.8 | 6.8 | 6.8 |
+| Whats the daylight hour count in the deepest workstation this December? | 1/1 | 5.0 | 5.0 | 5.0 |
+| How many open work orders are there, and which are overdue? | 1/1 | 7.2 | 7.2 | 7.2 |
+| What percentage of bookings are recurring 'ghost' meetings that never happen? | 1/1 | 5.4 | 5.4 | 5.4 |
+| You mentioned a sensor fault earlier - has it been fixed yet? | 1/1 | 0.9 | 0.9 | 0.9 |
+| What happens to comfort if we cut the AHU runtime by an hour each end of day? | 1/1 | 38.3 | 38.3 | 38.3 |
+| Which drains have needed jetting more than twice this year? | 1/1 | 59.8 | 59.8 | 59.8 |
+| Which shutters or doors fail open versus fail locked on power loss? | 1/1 | 13.0 | 13.0 | 13.0 |
+| Can my manager see when I badge in and out? | 1/1 | 8.9 | 8.9 | 8.9 |
+| Is tap water free somewhere, or do I have to buy bottles? | 1/1 | 33.4 | 33.4 | 33.4 |
+| Where can I isolate the water supply for the second-floor toilets? | 1/1 | 5.5 | 5.5 | 5.5 |
+| How many free-cooling hours did we capture last month versus what was available? | 1/1 | 30.3 | 30.3 | 30.3 |
+| why autism happens | 1/1 | 10.1 | 10.1 | 10.1 |
+| What if ozone layer vanished | 1/1 | 11.0 | 11.0 | 11.0 |
+| What systems are specific for the meeting room? | 1/1 | 1.4 | 1.4 | 1.4 |
+| Can you guide me to a meeting room? | 1/1 | 8.1 | 8.1 | 8.1 |
+| in the barometric meter will functions | 1/1 | 59.6 | 59.6 | 59.6 |
+| does your building have smoke detectors | 1/1 | 63.3 | 63.3 | 63.3 |
+| How do glare sensors work? Does that come from the monitor itself? | 1/1 | 10.2 | 10.2 | 10.2 |
+| Does co2 ever realistically get so high that it bothers people? | 1/1 | 29.3 | 29.3 | 29.3 |
+| how does building prevent this space? | 1/1 | 21.7 | 21.7 | 21.7 |
+| How can a building shift to greener hours and still be productive? | 1/1 | 4.9 | 4.9 | 4.9 |
+| can you provide energy saving suggestion? | 1/1 | 47.3 | 47.3 | 47.3 |
+| How do we map relationships etween equipment in a semantic model? | 1/1 | 12.5 | 12.5 | 12.5 |
+
+## Answers
+
+### Which remaining period today has the best supported balance of temperature, ventilation, light and quiet for concentrated work? — run 1 (9.1 s, OK)
+
+```
+That question reaches **296 sensors** — more than I can read and summarise in one request without either timing out or quietly answering from a fraction of them.
+
+Narrow it and I can answer directly:
+- one floor, or one room
+- one measurement at a time (temperature, or CO₂ — not both)
+- a shorter period
+
+I would rather say this than report a figure without telling you which part of the building it came from.
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Is this shared desk officially available to me now, or does it only appear unoccupied? — run 1 (5.0 s, OK)
+
+```
+the building's data do not contain any information about shared desk availability. They record 10 operating regime entries, with 9 marked **active** and 1 marked **under_review** (REG-004).
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Is today's noise a brief corridor-related peak or a sustained room-level problem likely to continue? — run 1 (35.5 s, OK)
+
+```
+'brief corridor' does not exist in this building, so there is nothing to report about it.
+
+---
+**You might also ask:** Show the full anomaly report? | Check compliance? | View historical trend?
+```
+
+### Which permission groups or zones are orphaned because no current owner, purpose or mapped opening can be evidenced? — run 1 (10.1 s, OK)
+
+```
+The query results do not show any permission groups or zones that are truly orphaned.  
+Each of the 20 records contains a mapped opening (`controlsOpening`) and a granted role (`grantedToRole`), so none lack the basic evidence of ownership, purpose or access point that would make them orphaned.  
+
+**What the records do provide**
+
+- 20 permission groups (APG‑001 to APG‑020)  
+- For each group:  
+  • `recordStatus` (active, exception, suspended, withdrawn)  
+  • `effectiveFrom` and, where applicable, `effectiveTo` dates  
+  • `controlsOpening` (the opening that the group controls)  
+  • `grantedToRole` (the role that is granted access)  
+  • `timeProfile`, `overriddenBy`, `approvalRoute`, and optional `comment`  
+
+Since every group has a defined opening and a role, none are orphaned according to the criteria you asked about.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### What authority, prior-state evidence and independent checks are required before considering restoration after an erroneous suspension? — run 1 (35.0 s, OK)
+
+```
+**Answer**
+
+The ontology does not contain a dedicated “restoration” or “erroneous suspension” concept, but the relevant information is captured in the **ApprovalRecord** class and the **policyOwner** property.  From these you can derive the authority, evidence, and checks that should be in place before a restoration is considered.
+
+| Item | What the ontology tells us | How to apply it |
+|------|----------------------------|-----------------|
+| **Authority** | *policyOwner* – the team or role that owns the policy.  The ApprovalRecord also records the **role** that approved the action. | The restoration must be authorised by the same role that owns the policy (or by the role recorded in the ApprovalRecord’s *approvedBy* field). |
+| **Prior‑state evidence** | ApprovalRecord contains **evidenceKind** and **evidenceDate** (via the “approval evidence” lay terms). | Before restoring, you must retrieve the evidence that documented the state *before* the suspension.  This evidence should be referenced in the ApprovalRecord and dated. |
+| **Independent checks** | ApprovalRecord is a subclass of *IntervalRecord* and includes fields for **reviewDue** and **accountable**.  The lay terms “who is accountable” and “review due” imply a review process. | 1. **Independent verification** of the evidence by the accountable role (the one listed in *who is accountable*).  <br>2. **Review due** check – ensure the record is still within its review period or has been re‑reviewed.  <br>3. **Sign‑off** – the role that signed off on the restoration should be recorded (see lay terms “signed off”, “sign‑off”). |
+
+**Practical steps**
+
+- **Identify the policy owner** (via *policyOwner*).  
+- **Locate the relevant ApprovalRecord** for the suspended element.  
+- **Confirm the evidence** that shows the state before suspension (look for *evidenceKind* / *evidenceDate*).  
+- **Have the accountable role independently verify** that the evidence is correct and that restoration is safe.  
+- **Obtain a sign‑off** from the authorised role (recorded in the ApprovalRecord’s *approvedBy* / *signed off* fields).  
+- **Check the review due date** to ensure the record is still valid.
+
+These steps align with the ontology’s emphasis on **approval, evidence, authority, and accountability**.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which minimum approved permission package should be prepared for this verified starter on the authorised effective date? — run 1 (12.0 s, OK)
+
+```
+The records do not contain a concept of a “verified starter” or an “authorised effective date.” They record the following fields for each permission group:
+
+- `recordStatus` (active, exception, suspended, withdrawn)  
+- `effectiveFrom` and `effectiveTo` dates  
+- `label`, `grantedToRole`, `timeProfile`, `approvalRoute`, and other access‑control details.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Have closures, room moves and route changes reached each affected attendee and accompanying person through their selected authorised channels before travel? — run 1 (40.2 s, OK)
+
+```
+**3 planned closure(s) on record**:
+- Floor2: planned electrical maintenance, from 2026-08-28T08:00 to 2026-08-28T17:00
+- Floor0: deep clean, from 2026-09-13T08:00 to 2026-09-13T17:00
+- Floor1: planned electrical maintenance, from 2026-09-18T08:00 to 2026-09-18T17:00
+```
+
+### When signs, maps, bookings and live route states disagree, what can we safely publish now and which owner must resolve each conflict? — run 1 (5.6 s, OK)
+
+```
+the building's data only contain booking information - status, dates, location, and the party that booked. They do not include any data about signs, maps, or live route states, so I cannot determine any conflicts between those elements.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Can we communicate likely waiting for an accessible toilet using privacy-safe aggregate evidence, without identifying users or constructing visit histories? — run 1 (4.1 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Accessible Route Register, Circulation Times, Workspace Profile Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### How do observed route lengths, waits and hand-offs compare with the workflow and adjacency assumptions used in the design? — run 1 (45.3 s, OK)
+
+```
+I have no measured series for the requested sensor or zone, so there is nothing to compare from readings.
+
+If what you asked about is RECORDED rather than measured — a route time, a design duty, a booking — name it and I will read it from the building's records. For a sensor comparison, naming the two spaces and the quantity works best, e.g. *'compare the average CO2 on floor 1 versus floor 3'*.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which electrical, heating, cooling, ventilation, water and data capacities and connection routes are adequate for the proposal, and where is an upgrade decision needed? — run 1 (29.9 s, OK)
+
+```
+I understood the question but could not put an answer together for it.
+
+- I read it as a **sensor data** question.
+- The ontology lane, the time-series lane ran, but returned nothing to report.
+
+That is a gap on my side, not a statement that the building has no such data. Rephrasing with a specific room, floor or date range often reaches a lane that can answer — or ask *"what can you tell me about this building?"* to see what is connected.
+
+---
+*Sources: `Building Ontology` `Water Metering System` `Water Flow Sensing System`*
+```
+
+### Which water-supply, drainage, containment and isolation details minimise the consequence of leaks, blockages or uncontrolled discharge? — run 1 (39.5 s, OK)
+
+```
+The building’s engineering records show that most of the water‑related assets already have **proven isolation points** and a number of **containment features** that would limit the impact of a leak, blockage or uncontrolled discharge.
+
+**Key isolation and containment details**
+
+| Asset | Isolation point (local name) | Proven date | Main water‑supply or drainage service | Containment / protection noted |
+|-------|------------------------------|-------------|--------------------------------------|--------------------------------|
+| **AEP‑001** | MCC‑0‑way‑3 (LI‑AHU‑00) | 2026‑06‑16 | Chilled‑water flow & return, LV sub‑main | Fire‑alarm loop (probable) |
+| **AEP‑002** | MCC‑1‑way‑2 (LI‑AHU‑01) | 2026‑06‑16 | CHW flow & return, LV sub‑main, BMS field bus | Data containment (probable) |
+| **AEP‑003** | MCC‑2‑way‑2 (LI‑AHU‑02) | 2026‑06‑16 | CHW flow & return, LV sub‑main | Abandoned duct branch (unknown) |
+| **AEP‑004** | MCC‑3‑way‑2 (LI‑AHU‑03) | 2026‑05‑11 | CHW flow & return, LV sub‑main | Sprinkler main above plant‑room door (probable) |
+| **AEP‑005** | MCC‑4‑way‑2 (LI‑AHU‑04) | 2026‑06‑16 | CHW flow & return, LV sub‑main | – |
+| **AEP‑006** | MCC‑5‑way‑2 (LI‑AHU‑05) | 2026‑06‑16 | CHW flow & return, LV sub‑main | – |
+| **AEP‑007** | CP‑1‑way‑1 (HV/LV panel) | 2026‑04‑01 | CHW flow & return, HV supply, condenser water | Lightning‑protection bond (probable) |
+| **AEP‑008** | MCC‑0‑way‑7 (LI‑P‑01) | 2026‑06‑08 | CHW flow & return, LV sub‑main | – |
+| **AEP‑009** | MCC‑0‑way‑8 (LI‑P‑02) | *not proven* | CHW flow & return, LV sub‑main | – |
+| **AEP‑010** | Roof isolator (RI‑CT‑01) | 2026‑04‑01 | Condenser water flow & return, LV supply | Redundant gas line (unknown) |
+| **AEP‑011** | LMR‑1 (lift motor room) | 2026‑06‑16 | LV supply, lift shaft data | Fire‑alarm interface (probable) |
+| **AEP‑012** | GCP‑1 (generator control panel) | 2026‑02‑14 | LV distribution, fuel line, exhaust | Fire‑alarm interface (confirmed) |
+| **AEP‑013** | BESS DC isolator & AC contactor panel | 2026‑06‑08 | LV supply, DC bus, cooling | Data cable to energy meter (probable) |
+| **AEP‑014** | Panel mains isolator & standby battery link | 2026‑08‑26 | Alarm loops, LV supply, lift interface, door release circuits | – |
+| **AEP‑015** | MP‑1 test link (metering panel) | 2026‑06‑08 | LV busbar, CT wiring, data cable | – |
+| **AEP‑016** | SV‑1 (incoming main stop valve) | *not proven* | Incoming water main | Bypass (unknown) |
+| **AEP‑017** | Parking level MCC‑way‑4 | *not proven* | LV supply, CO detection interlock | Sprinkler branch (probable) |
+| **AEP‑018** | Incoming switch‑disconnector | 2026‑06‑08 | LV sub‑main, final circuits | – |
+| **AEP‑019** | Incoming switch‑disconnector | 2026‑06‑08 | LV sub‑main, final circuits | Data containment (probable) |
+| **AEP‑020** | Incoming switch‑disconnector | 2026‑06‑08 | LV sub‑main, final circuits | – |
+| **AEP‑021** | Incoming switch‑disconnector | 2026‑06‑13 | LV sub‑main, final circuits | – |
+| **AEP‑022** | Incoming switch‑disconnector | 2026‑06‑08 | LV sub‑main, final circuits | – |
+| **AEP‑023** | Incoming switch‑disconnector | 2026‑06‑08 | LV sub‑main, final circuits | – |
+| **AEP‑024** | Local isolator behind reception desk | 2026‑06‑16 | LV supply, access control bus, fire‑alarm release interface | – |
+
+**Summary**
+
+* **Isolation** – 21 of the 24 assets have a proven isolation point (dates range from 2026‑04‑01 to 2026‑08‑26).  
+* **Containment / protection** – Several assets list probable containment features that would limit damage from a leak or blockage:  
+  * Sprinkler mains (AEP‑004, AEP‑017)  
+  * Fire‑alarm loops or interfaces (AEP‑001, AEP‑011, AEP‑012, AEP‑014)  
+  * Data containment (AEP‑002, AEP‑019)  
+  * Lightning‑protection bond (AEP‑007)  
+  * Redundant gas line (AEP‑010)  
+  * Bypass (AEP‑016)  
+
+These details are the primary means, according to the records, of reducing the consequence of leaks, blockages or uncontrolled discharge in the building’s water‑supply and drainage systems.
+
+**Bou
+```
+
+### Which matters require a formal management representation because independent evidence is unavailable, incomplete or solely management-held? — run 1 (35.2 s, OK)
+
+```
+**Answer**
+
+The ontology data you provided does not contain any explicit list of “matters” that are flagged as requiring a formal management representation because independent evidence is unavailable, incomplete, or solely held by management.  
+
+The only property that hints at a governance or accountability relationship is:
+
+- **policyOwner** – the team accountable for a given policy (e.g., “IT Services”).  
+  *However, the data does not enumerate which specific matters or policies are covered by this property.*
+
+**Bottom line:**  
+- **No matters are identified in the ontology as needing formal management representation for the reasons you mentioned.**  
+- If you need to identify such matters, you would need to consult additional policy or governance documents that are not part of the current ontology.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### When assets were moved, replaced, isolated, recommissioned or retired, were active controls transferred while prior evidence remained linked and retrievable? — run 1 (46.1 s, OK)
+
+```
+**Answer**
+
+The ontology data you provided contains only information about **ApprovalRecord** objects and the **accountableRole** property.  
+There is no explicit statement or triple that describes:
+
+* the transfer of active controls when an asset is moved, replaced, isolated, recommissioned or retired, **or**
+* the retention of prior evidence linked to those controls during such events.
+
+**What we can infer**
+
+- **ApprovalRecord** instances record *approval decisions*, *evidence* (via the `approvalEvidence` property), and *accountability* (via `accountableRole`).  
+- However, the data does **not** show any linkage between an asset’s lifecycle event (e.g., “moved” or “retired”) and the transfer or preservation of its controls or evidence.
+
+**Bottom line**
+
+Based on the current ontology data, we cannot confirm that active controls were transferred while prior evidence remained linked and retrievable. If you need to track this information, you would need to extend the ontology with properties that capture asset lifecycle events and evidence retention (e.g., `hasLifecycleEvent`, `hasTransferredControl`, `hasRetainedEvidence`, etc.).
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### For each local, shared or inherited control, who operates, monitors and evidences each component, and what must be tested within this unit? — run 1 (0.8 s, OK)
+
+```
+**Abacws Building** — operated by: **Cardiff University Estates**.
+```
+
+### Which systems started late or stopped late against today's approved schedule, and by how much? — run 1 (102.8 s, OK)
+
+```
+The building’s operating‑regime records show only one system that is **recorded to run beyond its approved schedule** on a regular basis:
+
+- **AHU Floor 0 supply air (REG‑001)**  
+  • Approved operating window: Mon‑Fri 07:00‑19:00  
+  • Approved exception: runs until 22:00 on published open days  
+  • **Late stop**: 3 hours past the scheduled end time (19:00 → 22:00)
+
+No other record lists a permanent late start or stop.  
+Some regimes (e.g., REG‑002 and REG‑006) have conditional extensions—such as “extended to 22:00 during assessment weeks” or “runs to 21:00 when a conference is booked”—but the records do not indicate that those conditions are in effect today, so we cannot say they are late for Thursday 17 Sep 2026.
+
+**Summary**
+
+- Total regimes: 10 (9 active, 1 under review)  
+- Systems with a recorded late stop: 1 (AHU Floor 0 supply air, 3 hours late)  
+- No systems are recorded as starting late.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which zones have not stabilised after the approved warm-up or cool-down period should have completed? — run 1 (20.3 s, OK)
+
+```
+That question reaches **296 sensors** — more than I can read and summarise in one request without either timing out or quietly answering from a fraction of them.
+
+Narrow it and I can answer directly:
+- one floor, or one room
+- one measurement at a time (temperature, or CO₂ — not both)
+- a shorter period
+
+I would rather say this than report a figure without telling you which part of the building it came from.
+
+---
+**You might also ask:** Show the full anomaly report? | Check compliance? | View historical trend?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which zones are recovering from setback more slowly than their own recent verified warm-up or cool-down pattern? — run 1 (30.0 s, OK)
+
+```
+That question reaches **296 sensors** — more than I can read and summarise in one request without either timing out or quietly answering from a fraction of them.
+
+Narrow it and I can answer directly:
+- one floor, or one room
+- one measurement at a time (temperature, or CO₂ — not both)
+- a shorter period
+
+I would rather say this than report a figure without telling you which part of the building it came from.
+
+---
+**You might also ask:** Show the full anomaly report? | Check compliance? | View historical trend?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Where is the current approved collection point for batteries, WEEE, sharps or other special waste I may encounter? — run 1 (12.6 s, OK)
+
+```
+The building’s records show where batteries, WEEE, and sharps are collected.
+
+**Current approved points**
+
+| Waste type | Record | Status | Location (room / bin store) | Next collection |
+|------------|--------|--------|-----------------------------|-----------------|
+| Batteries & WEEE | **WCP‑017** | active | Waste compound and bin store (ST‑GROUND‑B) | 25 Sep 2026 |
+| Sharps – Level 2 | **WCP‑023** | active | Room 2.01 – Research Laboratory (ST‑L2‑B) | 18 Sep 2026 |
+| Sharps – Level 3 | **WCP‑024** | overdue | Room 3.01 – Research Laboratory (ST‑L3‑B) | 18 Sep 2026 (missed 18 Aug 2026) |
+
+**Summary of the waste‑collection register**
+
+- Total records: **24**  
+- Active: **22** (including the WEEE/batteries point and the Level 2 sharps point)  
+- Overdue: **1** (Level 3 sharps)  
+- Withdrawn: **1** (not relevant to the question)
+
+So, if you need to drop batteries or WEEE, use the bin at the Waste compound and bin store. For sharps, the active point is in Room 2.01 of the Research Laboratory; the Level 3 sharps bin is currently overdue and should be checked for any missed collection.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### When is the next authorised waste collection, and what needs to be ready before the contractor arrives? — run 1 (17.8 s, OK)
+
+```
+The building’s waste‑collection register shows that the **next authorised collection is scheduled for 18 September 2026**.  
+It involves two clinical‑sharps bins:
+
+| Location | Record | Waste stream | Waste station | Fill level | Approved threshold |
+|----------|--------|--------------|---------------|------------|--------------------|
+| Level 2 laboratory (Room 2.01) | **WCP‑023** | Clinical sharps | ST‑L2‑B | 55 % | 60 % |
+| Level 3 laboratory (Room 3.01) | **WCP‑024** | Clinical sharps | ST‑L3‑B | 40 % | 60 % |
+
+**What the records say about readiness**
+
+* The register lists the waste stations that will be visited (ST‑L2‑B and ST‑L3‑B).  
+* No explicit “ready‑before‑arrival” instructions (e.g., bin removal, safety checks, or special handling) are recorded in these entries.  
+* The bins are currently below their approved fill thresholds, so they are within the normal operating range.
+
+**Summary**
+
+- **Next collection date:** 18 Sep 2026  
+- **Bins to be collected:** Level 2 and Level 3 laboratory sharps bins (ST‑L2‑B, ST‑L3‑B)  
+- **Recorded readiness requirement:** None beyond the bins being present and within threshold.  
+
+If you need more detail on any other waste‑collection points or wish to confirm additional readiness steps, let me know.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which washroom should I service next, considering required frequency, time since the last confirmed service and current demand evidence? — run 1 (5.5 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Asset Engineering Register, Waste Collection Register, Water Hygiene Legionella; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Which critical activities are displaced, what dependencies block them, and which approved continuity options are viable now? — run 1 (29.1 s, OK)
+
+```
+**Displaced critical activities (status = none or overdue)**  
+
+| Activity (label) | Record ID | Depends on | Approved continuity option (if any) | Notes |
+|-------------------|-----------|------------|-------------------------------------|-------|
+| Research compute and lab data capture | CP‑003 | **Room 4.44 – Server Room** | – | No alternative location or path recorded. |
+| Access control and door release | CP‑005 | **Room 4.44 – Server Room** | **Local controller cache at each door** – existing card holders only, no new grants | Overdue (last test due 14 May 2026). |
+| CCTV recording | CP‑006 | **Room 4.44 – Server Room** | – | No alternative location or path recorded. |
+| Chilled water to the server room | CP‑011 | **Chiller 1 – Building Central Cooling Plant** | – | No alternative location or path recorded. |
+| Lift service (step‑free access) | CP‑012 | **Main passenger lift** | – | No alternative location or path recorded. |
+
+**Key points**
+
+- **Total displaced critical activities:** 5 (CP‑003, CP‑005, CP‑006, CP‑011, CP‑012).  
+- **Only one activity has a viable approved continuity option now:** *Access control and door release* (CP‑005) via the local controller cache at each door.  
+- The other displaced activities have no recorded alternative location or path, so no approved continuity option is available at present.  
+
+If you need more detail on any of these records or wish to explore other non‑critical activities, let me know!
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### What authority, facts, decisions, open actions, restrictions and unresolved risks must be handed over at command or shift change? — run 1 (15.7 s, OK)
+
+```
+**Authority**  
+- Estates Duty Manager  
+- Soft Services Manager  
+- Estates Governance Lead  
+- Head of Security  
+- Events and Communications Coordinator  
+
+**Facts**  
+- Lift B is out of service to 2026‑09‑12; controller reports ready but maintainer record says otherwise.  
+
+**Decisions required before the next period**  
+- CF‑03 Refuge point communication  
+- CF‑05 Laboratory spill response  
+
+**Open actions**  
+- CHK‑105, CHK‑301, CHK‑302 overdue (missed on a single‑crewed round)  
+- CHK‑304 cannot be walked until the COSHH restriction lifts on 2026‑09‑09  
+- CHK‑402 has a faulty reader tag and needs an IT escort not rostered at night  
+
+**Restrictions**  
+- COSHH restriction on CHK‑304 until 2026‑09‑09  
+
+**Unresolved risks**  
+- Outstanding handover records: HO‑CHILL‑OM, HO‑GEN‑OM, HO‑SPRINK‑OM  
+- Lift B status mismatch (controller vs. maintainer record)  
+- “Not met” statuses for CF‑10, CF‑11, CF‑12, CF‑14 (no confirmed resolution)
+
+---
+*From Abacws Building's documents: Coordination Function Register, Handover Register, Patrol Checkpoint Register. For the current version, contact facility management.*
+```
+
+### Which command decisions, agency requests and open actions need coordination before the next decision point? — run 1 (11.1 s, OK)
+
+```
+The building’s records show **five** items that are still **open** and require coordination before the next decision point.  
+All of them are in a *provisional* state and have `decisionRequired = true`.
+
+| Record | Label | Accountable role | Primary system | Activation criterion | Criterion state | Status |
+|--------|-------|------------------|----------------|----------------------|-----------------|--------|
+| **CF‑03** | Refuge point communication | Head of Security | Refuge intercom system | Any evacuation with a registered PEEP holder | unknown | provisional |
+| **CF‑05** | Laboratory spill response | Laboratory Manager | COSHH response procedure | A spill of a listed substance | unknown | provisional |
+| **CF‑08** | Occupant communication | Events & Communications Coordinator | Mass notification service | An incident affecting occupancy for >30 min | not_met | provisional |
+| **CF‑10** | Lift recall and entrapment | Estates Duty Manager | Lift controller recall | Alarm from any lift car, or an evacuation | conflicting | provisional |
+| **CF‑13** | Roll call and accounting | Head of Security | Access control presence data | Any full evacuation | unknown | provisional |
+
+**Key points**
+
+- **Total records:** 14  
+- **Records needing coordination:** 5 (all provisional, all with `decisionRequired = true`)  
+- **No other records** in the register are marked as requiring coordination before the next decision point.  
+- None of the records list a due date that has already passed, so there are no overdue coordination actions to report.  
+
+If you need more detail on any of these items or want to see the full record data, let me know!
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which temporary works, events, parked plant, barriers or closures have changed emergency access since the latest controlled access plan? — run 1 (17.3 s, OK)
+
+```
+**3 planned closure(s) on record**:
+- Floor2: planned electrical maintenance, from 2026-08-28T08:00 to 2026-08-28T17:00
+- Floor0: deep clean, from 2026-09-13T08:00 to 2026-09-13T17:00
+- Floor1: planned electrical maintenance, from 2026-09-18T08:00 to 2026-09-18T17:00
+```
+
+### What defensible aggregate occupancy range applied to each affected zone at the incident start time? — run 1 (12.6 s, OK)
+
+```
+That question reaches **250 sensors** — more than I can read and summarise in one request without either timing out or quietly answering from a fraction of them.
+
+Narrow it and I can answer directly:
+- one floor, or one room
+- one measurement at a time (temperature, or CO₂ — not both)
+- a shorter period
+
+I would rather say this than report a figure without telling you which part of the building it came from.
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which boundary-to-door route is currently evidenced for ambulance crews, stretcher teams and responders on foot, including step-free constraints? — run 1 (12.2 s, OK)
+
+```
+RTE-001 Accessible drop‑off to Reception
+
+---
+*From Abacws Building's documents: Accessible Route Register, Asset Engineering Register, Stakeholder Group Register. For the current version, contact facility management.*
+```
+
+### Which HVAC assets operate beyond approved service windows, and is each exception justified by safety, frost, specialist service, override or fault evidence? — run 1 (15.2 s, OK)
+
+```
+**HVAC assets that run outside their normal operating windows**
+
+| Asset (local name) | Normal operating window | Exception period | Justification (as recorded) |
+|--------------------|-------------------------|------------------|-----------------------------|
+| **AHU_Floor_0_supply_air** | Mon‑Fri 07:00‑19:00 | Runs to 22:00 on *published open days* | Override – the building’s published open‑day schedule allows the extra hours |
+| **AHU_Floor_1_supply_air** | Mon‑Fri 07:00‑20:00 | Extended to 22:00 during *assessment weeks* (approved by the School) | Specialist service – assessment weeks require extra ventilation |
+| **AHU_Floor_5_supply_air** | Mon‑Fri 07:00‑19:00 | Runs to 21:00 when a conference is booked in rooms 5.15 or 5.16 | Specialist service – conference bookings trigger the extra hour |
+| **Chilled_water_system** | Continuous while enabled (normally 01 May‑30 Sep) | Enabled outside the cooling season when ambient > 18 °C | Override – ambient‑temperature‑driven exception, not a fault or safety issue |
+
+**Summary**
+
+* 10 operating‑regime records exist in the building’s register.  
+* 4 of those records (40 %) show HVAC assets that operate beyond their standard windows.  
+* All four exceptions are explicitly recorded in the `approvedException` field and are justified by **override** or **specialist service** criteria; none are recorded as safety, frost, or fault evidence.  
+* The remaining 6 records either run continuously (no window to exceed) or have no exception beyond their normal window.  
+
+If you need more detail on any particular asset or wish to see the full list of all 10 records, just let me know!
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which planned purchases can be met from verified internal reuse stock without compromising safety, function or timing? — run 1 (49.7 s, OK)
+
+```
+**Answer**
+
+The provided building ontology data does **not** contain any information about:
+
+- Planned purchases  
+- Verified internal reuse stock  
+- Safety, functional, or timing constraints related to those items  
+
+Because none of these concepts appear in the triples or entities listed, I cannot determine which planned purchases could be satisfied from internal reuse stock without compromising safety, function, or timing.
+
+**What to do next**
+
+- Check other data sources or databases that track procurement, inventory, and safety requirements for this building.  
+- If you have a separate ontology or dataset that includes purchase orders, stock levels, and safety criteria, I can help interpret that information.  
+
+Feel free to provide additional data, and I’ll gladly reassess.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which utility or end-use profiles show a persistent step change, drift or repeating anomaly that merits a meter, controls or asset check? — run 1 (41.5 s, OK)
+
+```
+**4 place(s) with repeat reports** — grouped by location and category, from the reports people filed:
+
+| place | category | reports | first | latest | closed |
+|---|---|---:|---|---|---:|
+| d 7baf 689-b 028-5ba 7-91a 4-686a 66265659 | other | 556 | 2026-09-08 | 2026-09-15 | 0 |
+| a 66ca 165-1e 06-4901-a 997-780fafc 8581a | other | 84 | 2026-09-07 | 2026-09-17 | 0 |
+| 0f 186c 73-dbf 7-512d-9695-53c 096c 8b 6ac | other | 2 | 2026-09-08 | 2026-09-14 | 0 |
+| Room 5.16 | maintenance | 2 | 2026-08-23 | 2026-08-23 | 0 |
+
+_Counted from reports filed by building users. 290 report(s) in the window carry no location and could not take part in this. A repeat count is evidence that something was reported again, not a diagnosis of why — that is for the responsible owner to establish._
+```
+
+### Which maintenance, setpoint, firmware, control or building changes occurred shortly before the fault, and which are only hypotheses rather than established causes? — run 1 (5.7 s, OK)
+
+```
+The operating‑regime records you provided do not contain any information about changes that happened just before a fault, nor do they list any hypotheses about fault causes. They only record the current operating regimes, set‑point ranges, operating windows, seasonal changeovers, and a few comments about commissioning status or exceptions.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which next manual test would best distinguish the remaining plausible fault locations while minimising intrusive work? — run 1 (12.2 s, OK)
+
+```
+Thermographic survey
+
+---
+*From Abacws Building's documents: Asset Engineering Register, Maintenance Log. For the current version, contact facility management.*
+```
+
+### Which authorised role must witness, accept or close each hold point, and what evidence must be available? — run 1 (9.6 s, OK)
+
+```
+_Served at 5-second resolution — this building's access policy sets the finest detail available to you for data this recent. The figures below are averages over each interval, not instantaneous readings._
+
+I’m sorry, but the sensor data you provided does not contain any information about authorised roles, hold‑point procedures, or the evidence required for witnessing, accepting, or closing those hold points. To answer your question, I would need access to the relevant process or compliance documentation that specifies which role (e.g., Safety Officer, Quality Manager, or Operations Lead) is responsible for each step and what records (inspection reports, digital signatures, calibration certificates, etc.) must be available. If you can share that documentation or point me to the appropriate database table, I’ll be happy to translate it into a clear, natural‑language summary.
+
+---
+*Sources: `Building Ontology` `Live Sensor Data`*
+```
+
+### Which entrances or route segments need a facilities inspection before the next high-footfall transition? — run 1 (19.6 s, OK)
+
+```
+The records show three pending inspections that relate to building entrances or route segments and must be completed before the next high‑footfall period:
+
+• **Emergency lighting monthly function test** – open, due 2026‑09‑01  
+• **Fire alarm weekly call‑point test** – open, due 2026‑08‑19  
+• **Fire door quarterly inspection** – open, due 2026‑07‑25  
+
+These are the only entrance‑ or route‑segment inspections that are still open in the current compliance register.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Is the evidence complete enough for organiser and service owners to review event-space handover? — run 1 (9.1 s, OK)
+
+```
+These records do not contain evidence for event‑space handover; they record handover records for equipment such as AHUs, BMS, fire alarm, lift, PV array, and related systems.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which rooms have lighting levels or control states that do not fit their current authorised task and schedule? — run 1 (10.2 s, OK)
+
+```
+I understood the question but could not put an answer together for it.
+
+- I read it as a **sensor data** question.
+- The ontology lane ran, but returned nothing to report.
+
+That is a gap on my side, not a statement that the building has no such data. Rephrasing with a specific room, floor or date range often reaches a lane that can answer — or ask *"what can you tell me about this building?"* to see what is connected.
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which assets should receive survey, maintenance, refurbishment or replacement funding first when criticality, condition, risk and whole-life cost are combined? — run 1 (24.1 s, OK)
+
+```
+The records show 24 assets in the building.  
+From the data that is recorded we can combine:
+
+| Asset | Condition | Criticality | Whole‑life cost (value band) | Why it ranks high |
+|-------|-----------|-------------|-----------------------------|-------------------|
+| **AEP‑004 – Air Handling Unit – Floor 3** | degraded | high | 100 k–250 k | Degraded condition + high criticality + moderate cost |
+| **AEP‑013 – Building Battery Energy Storage System** | degraded | medium | 100 k–250 k | Degraded condition + medium criticality + moderate cost |
+| **AEP‑007 – Chiller 1 – Building Central Cooling Plant** | active | continuity‑critical | 250 k–1 M | Highest criticality, very high cost, active condition |
+| **AEP‑011 – Main passenger lift** | active | continuity‑critical | 100 k–250 k | Continuity‑critical, high cost, active condition |
+| **AEP‑010 – Cooling Tower 1 – Rooftop** | active | continuity‑critical | 100 k–250 k | Continuity‑critical, high cost, active condition |
+| **AEP‑012 – Emergency Diesel Generator** | active | continuity‑critical | 100 k–250 k | Continuity‑critical, moderate cost, active condition |
+| **AEP‑009 – Chilled Water Pump 1 (stand‑by)** | active | high | 10 k–100 k | High criticality, low cost, active condition |
+| **AEP‑017 – Exhaust Fan – Parking Level Ventilation** | active | high | 10 k–100 k | High criticality, low cost, active condition |
+| **AEP‑018 – Electrical Breaker Panel – Floor 0** | active | high | 10 k–100 k | High criticality, low cost, active condition |
+| **AEP‑019 – Electrical Breaker Panel – Floor 1** | active | high | 10 k–100 k | High criticality, low cost, active condition |
+| **AEP‑020 – Electrical Breaker Panel – Floor 2** | active | high | 10 k–100 k | High criticality, low cost, active condition |
+| **AEP‑021 – Electrical Breaker Panel – Floor 3** | active | high | 10 k–100 k | High criticality, low cost, active condition |
+| **AEP‑022 – Electrical Breaker Panel – Floor 4** | active | medium | 10 k–100 k | Medium criticality, low cost, active condition |
+| **AEP‑023 – Electrical Breaker Panel – Floor 5** | active | medium | 10 k–100 k | Medium criticality, low cost, active condition |
+| **AEP‑024 – Turnstile / Access Barrier – Main Entrance** | active | high | 10 k–100 k | High criticality, low cost, active condition |
+| **AEP‑001, AEP‑002, AEP‑003, AEP‑005, AEP‑006, AEP‑008** | active | continuity‑critical or high | 10 k–250 k | Active condition, high or continuity‑critical criticality, varying cost |
+
+### Suggested funding priority (top‑to‑bottom)
+
+1. **AEP‑004** – urgent survey/maintenance/refurbishment because it is already degraded and critical.  
+2. **AEP‑013** – next degraded asset; medium criticality but still needs attention.  
+3. **AEP‑007** – the only irreplaceable chiller; continuity‑critical and very high cost.  
+4. **AEP‑011** – main lift; continuity‑critical, high cost.  
+5. **AEP‑010** – rooftop cooling tower; continuity‑critical, high cost.  
+6. **AEP‑012** – emergency generator; continuity‑critical, moderate cost.  
+7. **AEP‑009** – standby pump; high criticality, low cost.  
+8. **AEP‑017** – exhaust fan; high criticality, low cost.  
+9. **AEP‑018, AEP‑019, AEP‑020, AEP‑021** – high‑criticality breaker panels; low cost.  
+10. **AEP‑022, AEP‑023** – medium‑criticality breaker panels; low cost.  
+11. **AEP‑024** – turnstile; high criticality, low cost.  
+12. **AEP‑001, AEP‑002, AEP‑003, AEP‑005, AEP‑006, AEP‑008** – active, high or continuity‑critical assets with varying cost; schedule for routine maintenance after the higher‑priority items.
+
+This ordering uses only the recorded status, criticality, and value band. No additional assumptions or calculations are made.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+---
+**You might also ask:** Who owns these records? | Which of these are
+```
+
+### Are conflicts of interest, related-party links and segregation-of-duty controls complete for each procurement, approval and payment role? — run 1 (8.8 s, OK)
+
+```
+the building's data do not contain any information about conflicts of interest, related-party links, or segregation-of-duty controls for procurement, approval or payment roles.  
+
+They do record:
+
+* **Building cost line** - status, provider, cost centre, spend category, budget, actual, committed, accrued amounts, and variance causes.  
+* **Approval and evidence record** - status, subject kind, decision, approving role, approval date, evidence type, and review dates.  
+
+No further details on the requested controls are available in these records.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Among technically compliant options, which has the lowest comparable whole-life cost across purchase, integration, energy, maintenance, downtime, renewal and disposal? — run 1 (7.7 s, OK)
+
+```
+the building's data do not contain the detailed whole-life cost information (purchase, integration, energy, maintenance, downtime, renewal, disposal) needed to compare options. They only record:
+
+- **Budget amounts** (planned spend)
+- **Actual amounts** (spent to date)
+- **Committed amounts** (future obligations)
+- **Accrued amounts** (costs incurred but not yet paid)
+
+Because those specific cost components are not recorded, I cannot determine which option has the lowest comparable whole-life cost.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which occupied zones lack confirmed fire-warden or marshal coverage for the current operating period? — run 1 (0.9 s, OK)
+
+```
+I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+```
+
+### Which approved incident messages were sent, by which channel and at what time, and what delivery or acknowledgement evidence exists? — run 1 (16.7 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Approval Evidence Register, Department Directory, Incident And Near Miss Log; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### For each active impairment, which authorised temporary controls lack current evidence of placement, operation, coverage or handover? — run 1 (7.7 s, OK)
+
+```
+The handover records you provided do **not** contain any information about active impairments or authorised temporary controls that lack evidence of placement, operation, coverage or handover.  
+
+They record the following:
+
+- 9 handover records (6 held, 3 outstanding) for various building systems  
+- Each record lists its status, effective date, covered scope, and provider name.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Is the approved first-aid cover and equipment provision suitable for the declared occupancy, activities, hazards and operating period? — run 1 (7.6 s, OK)
+
+```
+the building's data do not contain any information about first-aid cover or equipment provision. They only record hazard control details (status, test dates, control measures, etc.) for the building's COSHH substances, asbestos, local exhaust ventilation, and water systems.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which occupied zones coincide with a verified impairment of ventilation, alarm, access release or another required safety-critical service? — run 1 (12.9 s, OK)
+
+```
+These records do not record occupancy status. They record service‑continuity provision records, including record status, the service covered, the space it depends on, and relevant dates.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### For the scheduled assurance activity, which required evidence is current, permissioned, traceable and reproducible, and which evidence is missing? — run 1 (69.8 s, OK)
+
+```
+**Evidence that is currently available and satisfies the “current, permissioned, traceable, reproducible” criteria**
+
+- **`recordOwner`** – the accountable owner of the interval record (e.g., a scheduled assurance log).  
+- **`policyOwner`** – the team responsible for the policy that governs the assurance activity.  
+
+Both properties are defined in the ontology, are attached to concrete records or knowledge topics, and therefore can be traced back to a responsible party and are considered up‑to‑date.
+
+**Evidence that is missing (or not represented in the ontology)**
+
+- **`approvedException`** – no record of any authorised deviations for the assurance activity.  
+- **`commissionedDuty`** – no evidence of what was actually commissioned and signed off.  
+- **`zoneValidated`, `zoneValidationMethod`, `zoneValidatedOn`** – no validation status, method, or date for the zone that the assurance activity covers.  
+
+These missing items would provide the necessary audit trail, permissioning, and reproducibility that the scheduled assurance activity requires.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### If the primary server room, communications room or core-network area is unavailable, which services have a verified alternative location, path and operating capacity? — run 1 (17.0 s, OK)
+
+```
+There are 12 continuity records in total – 6 verified, 4 with no status (CP‑003, CP‑006, CP‑011, CP‑012), 1 overdue (CP‑005) and 1 unverified (CP‑008).  
+Among the verified records, 8 have an alternative location, 8 have an alternative path and 8 have an alternative capacity recorded.
+
+**If the primary server room, communications room or core‑network area is unavailable, the following services have a verified alternative location, path and operating capacity:**
+
+| Service (label) | Alternative location | Alternative path | Alternative capacity |
+|-----------------|----------------------|------------------|----------------------|
+| **Core network and building uplink** (CP‑001) | Level 3 riser cupboard (secondary comms room) | Diverse fibre through the north riser | Full uplink, 60 % of switch ports |
+| **Wireless access across teaching floors** (CP‑002) | Level 3 riser cupboard (secondary comms room) | Same diverse fibre as CP‑001 | Floors 1‑3 only; floors 4‑5 lose coverage |
+| **Lecture capture and streaming** (CP‑009) | Cloud service (external) | Public internet via the diverse uplink | Full, while the uplink holds |
+
+These are the only verified continuity provisions that provide all three pieces of information (location, path, capacity) for services that depend on the primary server room. No other verified record meets all three criteria for the server‑room/communications‑room/core‑network area.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which approved plant, sensor, access-control or building-management endpoints have lost expected connectivity, and is the fault local, segment-wide or upstream? — run 1 (13.6 s, OK)
+
+```
+Here is what **Abacws Building** has, counted live from its building model:
+
+- **Sensor** — 3248
+- **Air Quality Sensor** — 835
+- **Contact Sensor** — 466
+- **Particulate Matter Sensor** — 366
+- **Temperature Sensor** — 296
+- **Air Temperature Sensor** — 288
+- **Relative Humidity Sensor** — 281
+- **CO2 Sensor** — 280
+- **CO2 Level Sensor** — 274
+- **Illuminance Sensor** — 269
+- **Occupancy Count Sensor** — 257
+- **PM2.5 Level Sensor** — 245
+- **Lighting Correlated Color Temperature Sensor** — 235
+- **Gas Sensor** — 210
+- **Zone Air Humidity Sensor** — 208
+- **Zone Air Temperature Sensor** — 66
+- **NO2 Level Sensor** — 41
+- **TVOC Level Sensor** — 41
+- **CO Sensor** — 40
+
+*Counted now from the building's own model.*
+
+_Note: in Brick, `Particulate_Matter_Sensor` measures particulate matter, but it is also the parent of `TVOC_Level_Sensor`, `TVOC_Sensor`, which measure volatile organic compounds. This count includes them — Brick uses that class as a general pollutant supertype, so the total is broader than the name suggests._
+
+_Note: in Brick, `Temperature_Sensor` measures air temperature, but it is also the parent of `Chilled_Water_Supply_Temperature_Sensor`, `Entering_Water_Temperature_Sensor`, `Hot_Water_Supply_Temperature_Sensor`, `Leaving_Water_Temperature_Sensor`, `Water_Temperature_Sensor`, which measure water temperature. This count includes them — Brick uses that class as a general pollutant supertype, so the total is broader than the name suggests._
+```
+
+### Which hosts, clusters or hypervisors face sustained CPU, memory, storage-I/O or network-I/O pressure, and which services are exposed? — run 1 (34.3 s, OK)
+
+```
+**Live building figures for Abacws Building** (computed now from the building's own model):
+- Readings and settings described in the building model: **3,512**
+- Sensors declared in the building model: **3,248**
+- Data streams that reported in the last 24 h: **3,543** (live check across the connected databases — a sensor can carry more than one stream, so this is not comparable to the sensor count above)
+- Zones / locations: **298**
+- Floors: **8** — 6 storeys plus 1 rooftop, 1 parking level (the building model counts these as floors)
+- Rooms: **234**
+- Mapped floor area: **6,129 m²** across 6 floors
+- Most common sensor types: Air Quality Sensor (835), Contact Sensor (466), Particulate Matter Sensor (366), Temperature Sensor (296), Air Temperature Sensor (288), Humidity Sensor (281)
+
+*These figures are computed live from the building's ontology and floor plans.*
+```
+
+### What temporary exposure is created by active construction, refurbishment, commissioning, relocation or intrusive maintenance, and during which zones and time windows? — run 1 (46.6 s, OK)
+
+```
+There are no records in this register that describe a **temporary exposure** created by construction, refurbishment, commissioning, relocation or intrusive maintenance, nor any associated zones or time windows.  
+
+What the records do provide is:
+
+- **Total assets**: 24  
+- **Status counts**: 22 active, 2 degraded (AEP‑004, AEP‑013)  
+- **Location information**: each asset’s floor and room (e.g., “Room 0.04 – Mechanical Plant Room” for AEP‑001).  
+- **Last‑visited dates** and **isolation‑proven‑on** dates, which indicate when the asset was last inspected or when its isolation point was verified.  
+
+If you need details about a particular asset’s status, location, or inspection history, let me know and I can pull that information for you.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### For each defect, what remedial scope and acceptance evidence were required, what was completed, and has the corrected condition remained stable? — run 1 (95.5 s, OK)
+
+```
+✅ Thank you — your **maintenance request** has been logged as **REP-7420E1**.
+
+- **Category:** Maintenance request
+- **Priority:** NORMAL
+- **Status:** OPEN
+
+An administrator has been notified and will review it. You can check progress any time by asking *"what's the status of REP-7420E1"*.
+
+📍 I couldn't tell **where** this is. If you reply with the room, floor or area, I'll attach it — that is what lets the building notice when the same problem keeps coming back in the same place.
+
+**One thing missing:** Which room, floor or piece of equipment is affected? Reply with the room, floor or equipment and I'll add it to this report — otherwise whoever picks it up won't know where to go.
+```
+
+### Can every digital evidence item be authenticated, scoped, permissioned and preserved with an unbroken chain from collection to analysis? — run 1 (9.7 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Access Permission Register, Approval Evidence Register, Department Directory; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### I have a 9 a.m. lecture. Before I leave my office, what is confirmed, what is still unknown, and how early should I arrive? — run 1 (60.1 s, OK)
+
+```
+**What the building records show for 9 a.m.**
+
+- **Confirmed** – All 109 sessions that start at 09:00 are marked **completed**.  
+  *This means the lecture is scheduled and the room is booked.*
+
+- **Unknown** – The query does not tell us which of those 109 sessions is yours.  
+  *We don’t have a room number or session ID for your specific lecture.*
+
+- **How early to arrive** – Standard practice is to arrive **10–15 minutes before the start time** to allow for any last‑minute checks or adjustments.  
+  *So aim to be in the room by 08:45–08:50.*
+
+---
+
+### Quick snapshot of the 09:00 sessions
+
+| Location (room) | Example session IDs |
+|-----------------|---------------------|
+| Room 2.15 – Seminar Room | TS‑0001 |
+| Room 5.61 – Research Laboratory | TS‑0002 |
+| Room 3.53 – Research Laboratory | TS‑0020 |
+| Room 4.55 – Research Laboratory | TS‑0021 |
+| … | … |
+
+(There are 109 such sessions spread across the building; all are marked as completed.)
+
+---
+
+**Next steps**
+
+1. **Check your calendar or booking system** for the exact session ID or room number.  
+2. **Arrive 10–15 minutes early** to settle in and verify the room.  
+3. If you need any room‑specific details (e.g., AV equipment, access codes), let me know and I can pull that information for you.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which approved network, presentation and account requirements should I send an external speaker before arrival? — run 1 (2.9 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Av Readiness Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### If my assigned room is withdrawn, which currently eligible alternative should I ask the room team to consider? — run 1 (13.4 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Continuity Provision Register, Room Bookings; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Which M&E asset-register records must be reconciled before they can support design, maintenance or lifecycle decisions? — run 1 (23.3 s, OK)
+
+```
+**Asset‑register records that need reconciliation before they can reliably inform design, maintenance or lifecycle decisions**
+
+| Record | Issue(s) that prevent confident use | Why it matters |
+|--------|-------------------------------------|----------------|
+| **AEP‑004** (Air Handling Unit – Floor 3) | • Degraded status<br>• Last visit 2026‑05‑11, inspection interval 90 days → overdue (due 2026‑08‑09) | Design‑to‑observed gap is the largest in the building; the unit is already past its inspection deadline. |
+| **AEP‑006** (Air Handling Unit – Floor 5) | • No observed duty recorded<br>• Last visit 2026‑06‑16, inspection interval 90 days → overdue (due 2026‑09‑14) | Without a measured performance figure the unit’s operating condition cannot be verified. |
+| **AEP‑009** (Chilled Water Pump 1) | • Isolation never proved<br>• Last visit 2025‑11‑20, inspection interval 180 days → overdue (due 2026‑05‑19) | The pump’s isolation status is unknown, so its safety and reliability cannot be confirmed. |
+| **AEP‑012** (Emergency Diesel Generator) | • No observed duty recorded<br>• Last visit 2026‑02‑14, inspection interval 90 days → overdue (due 2026‑05‑15) | The generator has only a 4‑hour test; its full 8‑hour capability is unverified. |
+| **AEP‑017** (Exhaust Fan – Parking Level) | • Isolation never proved<br>• Last visit 2025‑09‑12, inspection interval 180 days → overdue (due 2026‑03‑12) | The CO‑linked interlock has not been inspected, compromising fire‑safety compliance. |
+| **AEP‑014** (Building Fire Alarm Control Panel) | • Last visit 2026‑08‑26, inspection interval 7 days → overdue (due 2026‑09‑02) | Weekly testing is required; the panel has not been checked in over a month. |
+| **AEP‑016** (Building‑Level Water Meter) | • Isolation never proved<br>• Last visit 2025‑10‑15, inspection interval 365 days → not yet overdue but missing isolation data | Without confirmed isolation the meter’s integrity cannot be guaranteed. |
+| **AEP‑013** (Building Battery Energy Storage System) | • Degraded status (80 % of commissioned capacity) | Degradation affects capacity planning and replacement timing; the record should be updated with a current health assessment. |
+
+**Summary**
+
+- **Total records:** 24  
+- **Active records:** 22  
+- **Degraded records:** 2 (AEP‑004, AEP‑013)  
+- **Records needing reconciliation:** 8 (listed above)
+
+Reconciliation involves updating missing performance data, proving isolation where required, and ensuring inspection dates are current. Once these records are brought up to date, they can be confidently used for design validation, maintenance scheduling, and lifecycle decision‑making.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which points and sampling rates should be trended so this commissioning or diagnostic test can observe the expected behaviour? — run 1 (10.0 s, OK)
+
+```
+the building's data do not contain any sensor-point names or sampling-rate information.  
+They only record:
+
+* **Design duty** (the intended flow or power)
+* **Commissioned duty** (the value that was verified at installation)
+* **Observed duty** (the value measured by the building management system)
+* **Isolation point** and the date it was proven
+* **Downstream dependencies** (what the asset supplies)
+* **Inspection interval** and last-visited date
+
+Because no sensor identifiers or data-sampling frequencies are listed, I can't tell you which points to trend or at what rate.  
+
+**Summary of the records**
+
+* 24 asset engineering profiles in total  
+* 22 are in the *active* status, 2 are *degraded* (AEP-004 and AEP-013)  
+
+If you need to determine which points to trend, you'll need to consult the detailed instrumentation or control-system documentation that lists the actual sensor tags and their configured sampling rates.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which sensors should be calibrated or replaced first because their uncertainty most affects current engineering decisions? — run 1 (55.7 s, OK)
+
+```
+**Actionable Recommendations for Air‑Quality Sensors in Zone 5**
+
+1. **Perform a baseline calibration check on all four sensors**  
+   *Why:* Accurate air‑quality data is the foundation for HVAC control, occupant comfort, and energy‑saving strategies. A baseline calibration ensures that each sensor’s readings are trustworthy before any further analysis or adjustments.
+
+2. **Prioritize calibration of sensors in zones that host high‑occupancy or sensitive activities**  
+   *Why:* In spaces where people work, meet, or conduct research, even small inaccuracies in CO₂ or particulate readings can lead to over‑ventilation (wasting energy) or under‑ventilation (affecting health). If you know which of the four zones is used most heavily, start there.
+
+3. **Replace any sensor that consistently reports values outside typical indoor‑air‑quality ranges**  
+   *Why:* A sensor that is stuck at a high or low value can mislead the building management system, causing unnecessary fan or filter operation. Replacing such a sensor restores reliable data and prevents energy waste.
+
+4. **Establish a regular calibration schedule for all air‑quality sensors**  
+   *Why:* Sensor drift over time can degrade accuracy. A routine calibration (e.g., every few months) keeps the system reliable and ensures that HVAC decisions are based on current, accurate data.
+
+---
+
+**Priority Summary**  
+*Most important action first:* Perform a baseline calibration check on all four air‑quality sensors. This step guarantees that the data you rely on for HVAC control and occupant comfort is accurate and sets the stage for the other actions.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+**As measured at 16:45 on 17 Sep, 1 minutes ago.** Recheck by **17:00** (15 minutes of useful life). Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied.
+
+---
+*Sources: `Building Ontology` `Live Sensor Data`*
+```
+
+### Is a Changing Places toilet available in or near Abacws, and what are the current verified access arrangements? — run 1 (28.3 s, OK)
+
+```
+**Answer**
+
+- **Availability of a Changing Places toilet near Abacws:**  
+  The ontology data provided does **not contain any information** about a Changing Places toilet (or any specific toilet) in or near the Abacws location. Therefore, I cannot confirm that such a facility exists based on the current data.
+
+- **Verified access arrangements:**  
+  Because no toilet or access‑arrangement entities are present in the dataset, there are no verified access arrangements to report.
+
+**What to do next**
+
+- **Check the building’s facilities list or contact facilities management** for up‑to‑date information on accessible toilets.  
+- If you need sensor data (e.g., occupancy or usage), the current ontology does not list any sensors, so you would need to consult a different data source or ask the building’s IT/Facilities team for available sensor types.
+
+---
+*Sources: `Building Ontology`*
+```
+
+### I may need to stand, move or take short breaks. Which authorised seating area lets me do that without blocking circulation? — run 1 (56.0 s, OK)
+
+```
+**Best match: Room 0.18 — Office** (floor Floor0, score 0).
+1. **Room 0.18 — Office** — score 0 (occupancy: 23.933)
+2. **Room 5.57 — Research Laboratory** — score 0 (occupancy: 23.933)
+3. **Room 4.05 — Computer Laboratory** — score 0 (occupancy: 24)
+
+**Assumptions:** 'Which authorised seating area lets me do that without blocking circulation?' scored as minimize occupancy against the 0-8 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; occupancy: 194/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under access policy — policy_facility_manager_any: resolution clamped to 5s for data 0 min old
+Note: the top choice can flip under ±25% preference-weight changes — the leading options are close.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: list_matching over 194 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | occupancy | 25.267 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.10 — Building Management Office | occupancy | 25.467 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.17 — Office | occupancy | 26.267 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.18 — Office | occupancy | 23.933 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.19 — Office | occupancy | 25.267 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.20 — Office | occupancy | 26 | recent mean (last readings) | 15 | occupancy_data |
+| Room 1.06 — Computer Laboratory | occupancy | 25.933 | recent mean (last readings) | 15 | occupancy_data |
+| Room 1.07 — Computer Laboratory | occupancy | 24.6 | recent mean (last readings) | 15 | occupancy_data |
+| Room 1.08 — Computer Laboratory | occupancy | 25.6 | recent mean (last readings) | 15 | occupancy_data |
+| Room 1.09 — Computer Laboratory | occupancy | 26.533 | recent mean (last readings) | 15 | occupancy_data |
+| Room 1.25 — Conference/Seminar Room | occupancy | 26.267 | recent mean (last readings) | 15 | occupancy_data |
+| Room 1.26 — Conference/Seminar Room | occupancy | 26.6 | recent mean (last readings) | 15 | occupancy_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.05 — Mechanical Plant Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.06 — Loading and Goods Storage (not an occupied space — name it to include it (Storage_Room)); Room 0.07 — Service Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.08 — Service Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.29 — Storage Room (not an occupied space — name it to include it (Storage_Room))
+
+**Scoring bands:** relative occupancy band (0 = empty)
+
+</details>
+
+**As measured at 16:46 on 17 Sep, 2 minutes ago.** Recheck by **16:51** (5 minutes of useful life). Switch if: occupancy in Room 0.18 — Office moves outside the range that made it the best option — the next best was Room 5.57 — Research Laboratory.
+
+> **Primary:** Room 0.18 — Office. **Backup:** Room 5.57 — Research Laboratory — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.
+```
+
+### I need a seat near an exit. Which authorised seating options meet that preference without obstructing circulation? — run 1 (17.5 s, OK)
+
+```
+I’m sorry, but the building’s records do not contain any information about how close a workspace is to an exit or whether a seat would obstruct circulation.  
+What the records do provide is:
+
+| Workspace | Floor | Access classification | Seat count | Nearest vertical route |
+|-----------|-------|------------------------|------------|------------------------|
+| WS‑01 Atrium open study | 1 | Open to all | 48 | Main lift core |
+| WS‑02 Level 1 computer lab 1.06 | 1 | Open when not timetabled | 30 | Main lift core |
+| WS‑03 Level 1 computer lab 1.07 | 1 | Open when not timetabled | 30 | Main lift core |
+| WS‑04 Level 1 computer lab 1.08 | 1 | Open when not timetabled | 24 | Main lift core |
+| WS‑05 Level 1 computer lab 1.09 | 1 | Open when not timetabled | 24 | Main lift core |
+| WS‑06 Seminar room 1.25 | 1 | Bookable | 16 | Main lift core |
+| WS‑07 Seminar room 1.26 | 1 | Bookable | 16 | Main lift core |
+| WS‑08 Level 2 computer lab 2.07 | 2 | Open when not timetabled | 28 | Main lift core |
+| WS‑09 Level 2 computer lab 2.08 | 2 | Open when not timetabled | 28 | Main lift core |
+| WS‑10 Meeting room 2.13 | 2 | Bookable | 8 | Main lift core |
+| WS‑11 Meeting room 2.14 | 2 | Bookable | 8 | Main lift core |
+| WS‑12 Seminar room 2.15 | 2 | Bookable | 20 | Main lift core |
+| WS‑13 Level 3 computer lab 3.05 | 3 | Open when not timetabled | 26 | Main lift core |
+| WS‑14 Level 3 computer lab 3.06 | 3 | Open when not timetabled | 26 | Main lift core |
+| WS‑15 Seminar room 3.13 | 3 | Bookable | 18 | Main lift core |
+| WS‑16 Seminar room 3.14 | 3 | Bookable | 18 | Main lift core |
+| WS‑17 Meeting room 3.15 | 3 | Bookable | 6 | Main lift core |
+| WS‑18 Meeting room 3.16 | 3 | Bookable | 6 | Main lift core |
+| WS‑19 Staff common room 3.17 | 3 | Staff only | 20 | Main lift core |
+| WS‑20 Meeting room 3.26 | 3 | Bookable | 10 | North stair core |
+| WS‑21 Meeting room 3.27 | 3 | Bookable | 10 | North stair core |
+| WS‑22 Meeting room 4.11 | 4 | Bookable | 8 | Main lift core |
+| WS‑23 Meeting room 4.12 | 4 | Bookable | 8 | Main lift core |
+| WS‑24 Seminar room 4.13 | 4 | Bookable | 22 | Main lift core |
+| WS‑25 Seminar room 5.15 | 5 | Bookable | 30 | Main lift core |
+| WS‑26 Seminar room 5.16 | 5 | Bookable | 30 | Main lift core |
+| WS‑27 Meeting room 5.17 | 5 | Bookable | 6 | Main lift core |
+| WS‑28 Meeting room 5.18 | 5 | Bookable | 6 | Main lift core |
+
+**Key take‑away:**  
+- All 28 workspaces are authorised (open to all, bookable, or open when not timetabled).  
+- None of the records indicate proximity to an exit or whether a seat would obstruct circulation.  
+
+If you need a seat that is confirmed to be near an exit, you’ll need to consult the building’s evacuation or circulation plans, which are not part of these workspace records.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### We need a room for a two-hour mock viva with four people. Which option is confidential, accessible, quiet and suitable for one hybrid participant? — run 1 (30.6 s, OK)
+
+```
+The building has **18 bookable rooms** that are quiet (or silent), suitable for calls, and can host at least four people – all of which meet your “confidential, accessible, quiet and hybrid‑friendly” criteria.
+
+**Floor 1**
+
+| Room | Seats | Noise profile | Notes |
+|------|-------|---------------|-------|
+| 1.25 (WS‑06) | 16 | quiet | Good for a small group |
+| 1.26 (WS‑07) | 16 | quiet | Same as 1.25 |
+
+**Floor 2**
+
+| Room | Seats | Noise profile | Notes |
+|------|-------|---------------|-------|
+| 2.13 (WS‑10) | 8 | quiet | Compact but adequate |
+| 2.14 (WS‑11) | 8 | quiet | Same as 2.13 |
+| 2.15 (WS‑12) | 20 | quiet | Larger room, still quiet |
+
+**Floor 3**
+
+| Room | Seats | Noise profile | Notes |
+|------|-------|---------------|-------|
+| 3.13 (WS‑15) | 18 | quiet | Good size |
+| 3.14 (WS‑16) | 18 | quiet | Same as 3.13 |
+| 3.15 (WS‑17) | 6 | quiet | Small but suitable |
+| 3.16 (WS‑18) | 6 | quiet | Same as 3.15 |
+| 3.26 (WS‑20) | 10 | quiet | Mid‑size |
+| 3.27 (WS‑21) | 10 | quiet | Same as 3.26 |
+
+**Floor 4**
+
+| Room | Seats | Noise profile | Notes |
+|------|-------|---------------|-------|
+| 4.11 (WS‑22) | 8 | quiet | Compact |
+| 4.12 (WS‑23) | 8 | quiet | Same as 4.11 |
+| 4.13 (WS‑24) | 22 | quiet | Largest on this floor |
+
+**Floor 5**
+
+| Room | Seats | Noise profile | Notes |
+|------|-------|---------------|-------|
+| 5.15 (WS‑25) | 30 | quiet | Very large, still quiet |
+| 5.16 (WS‑26) | 30 | quiet | Same as 5.15 |
+| 5.17 (WS‑27) | 6 | silent | Best for confidentiality |
+| 5.18 (WS‑28) | 6 | silent | Same as 5.17 |
+
+All of these rooms are **Bookable** (not staff‑only), have a **noise profile of quiet or silent**, and are marked **suitable for calls**, making them ideal for a two‑hour mock viva with four participants, including one hybrid attendee.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### I need a step-free route to supervision that avoids the busiest and noisiest areas around class changeover. Which verified route should I take? — run 1 (37.3 s, OK)
+
+```
+**Best match: Room 5.22 — Academic Office** (floor Floor5, score 0.1816).
+1. **Room 5.22 — Academic Office** — score 0.1816 (noise: 55.473, occupancy: 26.333)
+2. **Room 0.18 — Office** — score 0.1787 (noise: 55.7, occupancy: 23.867)
+3. **Room 5.14 — Academic Office** — score 0.1758 (noise: 55.933, occupancy: 25.733)
+
+**Assumptions:** 'avoid the busiest areas' scored as minimize occupancy against the 0-8 band; 'avoid the noisiest areas' scored as minimize noise against the 30-70 band; all stated preferences weighted equally; interpreted as current conditions; 'step-free route' isn't a sensed modality here — ignored; 'Supervision' isn't a sensed modality here — ignored; 'class changeover' isn't a sensed modality here — ignored.
+**Coverage:** 195 of 234 spaces considered; noise: 194/195 instrumented; occupancy: 194/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under access policy — policy_facility_manager_any: resolution clamped to 5s for data 0 min old
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: select_one over 194 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | occupancy | 25.133 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.01 — Main Reception | noise | 59.5 | recent mean (last readings) | 15 | noise_data |
+| Room 0.10 — Building Management Office | occupancy | 25.333 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.10 — Building Management Office | noise | 57.693 | recent mean (last readings) | 15 | noise_data |
+| Room 0.17 — Office | occupancy | 26.067 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.17 — Office | noise | 58.953 | recent mean (last readings) | 15 | noise_data |
+| Room 0.18 — Office | occupancy | 23.867 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.18 — Office | noise | 55.7 | recent mean (last readings) | 15 | noise_data |
+| Room 0.19 — Office | occupancy | 25.2 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.19 — Office | noise | 57.013 | recent mean (last readings) | 15 | noise_data |
+| Room 0.20 — Office | occupancy | 25.6 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.20 — Office | noise | 57 | recent mean (last readings) | 15 | noise_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.05 — Mechanical Plant Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.06 — Loading and Goods Storage (not an occupied space — name it to include it (Storage_Room)); Room 0.07 — Service Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.08 — Service Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.29 — Storage Room (not an occupied space — name it to include it (Storage_Room))
+
+**Scoring bands:** WHO guideline band 30-70 dB(A) indoor · relative occupancy band (0 = empty)
+
+</details>
+
+**As measured at 16:48 on 17 Sep, 1 minutes ago.** Recheck by **16:53** (5 minutes of useful life). Switch if: occupancy in Room 5.22 — Academic Office moves outside the range that made it the best option — the next best was Room 0.18 — Office.
+
+> **Primary:** Room 5.22 — Academic Office. **Backup:** Room 0.18 — Office — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.
+```
+
+### Can the corridor sensor outside this office tell me what conditions were like inside, or is valid room-level evidence required? — run 1 (17.3 s, OK)
+
+```
+**Which space did you mean?** I can say what is measured in a particular room, floor or zone, but I need to know which one before I can answer whether it is instrumented.
+```
+
+### An alarm or emergency message has occurred. What is the latest authoritative instruction for my location and role? — run 1 (30.9 s, OK)
+
+```
+**Latest instruction for a Mechanical Technician**
+
+- **Alarm ID:** ALM‑BA99AC46  
+- **Condition:** Damper position not reached  
+- **Effective from:** 2026‑09‑17 13:28  
+- **Status:** Open  
+- **Responsible role:** Mechanical technician  
+
+**What you need to do:**  
+Check the damper that is not in the correct position and bring it to the required setting. Once the damper is correctly positioned, mark the alarm as closed in the building management system.
+
+*This is the only active alarm for your role at the moment.*
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### I may need to work in Abacws this evening. Are my access, workspace and lone-working requirements officially confirmed for that period? — run 1 (16.2 s, OK)
+
+```
+All 28 workspace records in the Abacws building are **active**.  
+The records give you:
+
+| Access classification | Workspace kind | Typical opening hours |
+|------------------------|----------------|-----------------------|
+| Open to all | open study | Mon‑Sun 07:00‑22:00 |
+| Open when not timetabled | computer lab | Mon‑Fri 08:00‑20:00 |
+| Bookable | bookable room | Mon‑Fri 08:00‑18:00 |
+| Staff only | common room | Mon‑Fri 07:00‑19:00 |
+
+**Lone‑working** requirements are **not recorded** in any of the workspace records, so the system cannot confirm that for you.
+
+---
+
+### Evening availability (after 18:00)
+
+Only the following spaces remain open in the evening:
+
+| Record ID | Label | Floor | Opening hours | Access | Workspace kind |
+|-----------|-------|-------|---------------|--------|----------------|
+| WS‑01 | Atrium open study | 1 | Mon‑Sun 07:00‑22:00 | Open to all | open study |
+| WS‑02 | Level 1 computer lab 1.06 | 1 | Mon‑Fri 08:00‑20:00 | Open when not timetabled | computer lab |
+| WS‑03 | Level 1 computer lab 1.07 | 1 | Mon‑Fri 08:00‑20:00 | Open when not timetabled | computer lab |
+| WS‑04 | Level 1 computer lab 1.08 | 1 | Mon‑Fri 08:00‑20:00 | Open when not timetabled | computer lab |
+| WS‑05 | Level 1 computer lab 1.09 | 1 | Mon‑Fri 08:00‑20:00 | Open when not timetabled | computer lab |
+| WS‑08 | Level 2 computer lab 2.07 | 2 | Mon‑Fri 08:00‑20:00 | Open when not timetabled | computer lab |
+| WS‑09 | Level 2 computer lab 2.08 | 2 | Mon‑Fri 08:00‑20:00 | Open when not timetabled | computer lab |
+
+All other workspaces close at 18:00 or earlier, so they would not be available for evening work.
+
+---
+
+**Bottom line:**  
+- Your access and workspace type are confirmed for the evening in the spaces listed above.  
+- Lone‑working requirements are not recorded, so you’ll need to check with your supervisor or the building’s policy documents for that detail.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### I have appointments on different floors with a short gap. What conservative travel and setup buffer should I allow? — run 1 (6.6 s, OK)
+
+```
+Use a buffer of at least **9.5 minutes** travel time – the longest journey (Level 0 to Level 5) takes 9.5 minutes walking, which exceeds the standard five‑minute changeover.
+
+---
+*From Abacws Building's documents: Circulation Times. For the current version, contact facility management.*
+```
+
+### Is my next course talk likely to be crowded or poorly ventilated enough to consider a repeat session? — run 1 (12.8 s, OK)
+
+```
+The records do not contain any information about crowding or ventilation for the course talk.  
+
+What they do record for that activity (ACT‑0042‑2) is:  
+
+- **Status** – scheduled  
+- **Location** – Room 1.06 — Computer Laboratory  
+- **Companion policy** – Companions welcome  
+- **Accessibility note** – Step‑free; hearing loop at the front  
+- **Expected duration** – 45 minutes  
+- **Circuit sequence** – 2  
+- **Part of event** – EVT‑2026‑0042  
+- **Optional flag** – false  
+
+No sensor data, occupancy counts, or ventilation metrics are present in these records.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Is today's Abacws open day confirmed, which entrance should we use, and when should we arrive? — run 1 (8.5 s, OK)
+
+```
+There is no record of an Abacws open day today.  
+The register does record two open‑day‑type events:
+
+- **Open day – School of Computer Science** (scheduled for 11 September 2026)  
+- **Estates open forum** (cancelled, had been scheduled for 9 September 2026)
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### How much time should we allow for the course talk, building tour and questions with staff? — run 1 (6.6 s, OK)
+
+```
+The building’s records show the following scheduled activities for the event you’re planning:
+
+| Activity | Expected duration |
+|----------|-------------------|
+| Course talk – Computer Science | 45 minutes |
+| Building tour | 40 minutes |
+| Questions with academic staff | 30 minutes |
+
+**Total time to allow:**  
+45 + 40 + 30 = **115 minutes** (just under 2 hours).
+
+---
+
+**Quick context**
+
+- The event has **24 activity records** in total.  
+- **23** of those are in the *scheduled* state, and **1** is *full* (the “Meet your supervisor” activity).  
+- The three activities above are all *scheduled* and are part of the same event (EVT‑2026‑0042).  
+
+Feel free to let me know if you need more details about any other parts of the schedule!
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Are compliance records retained for the correct period, in the authorised system and format, with integrity, access and disposal controls appropriate to their purpose? — run 1 (11.3 s, OK)
+
+```
+The records you have show that the building’s compliance checks are being logged in a single system, with each entry recording:
+
+* **Label** – the type of check (e.g., “Emergency lighting monthly function test”)  
+* **Due date** – when the check was scheduled  
+* **Completed date** – when the check was actually finished (if it has been done)  
+* **Record status** – “done” or “open”  
+* **Responsible role** – who performed the check (maintenance, contractor, facility manager, etc.)
+
+**What the records do not show**
+
+* **Retention period** – there is no field indicating how long each record must be kept.  
+* **Authorised system or format** – the data are stored in the building’s compliance‑management system, but the specific system name or file format is not recorded.  
+* **Integrity, access or disposal controls** – nothing in the records indicates how the data are protected, who can view them, or how/when they are disposed of.
+
+**Summary of the current record set**
+
+* Total records: **82**  
+* Completed (“done”) records: **72**  
+* Pending (“open”) records: **10** (one each for the current cycle of the 10 check types)
+
+Because the records lack explicit information on retention periods, authorised system details, and the controls that guarantee integrity, access, and disposal, we cannot confirm that the records are retained for the correct period or that the appropriate controls are in place. The records do show that the checks themselves are being performed and logged, but they do not provide the evidence needed to answer the compliance‑retention question.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Are accessible entrances, routes, lifts, doors, toilets, refuges and assistance arrangements available as currently published, including temporary alternatives? — run 1 (38.4 s, OK)
+
+```
+**Short answer:**  
+Yes – the building’s published records show that accessible entrances, routes, lifts, doors, toilets, refuges and assistance arrangements are all documented, and temporary alternatives are noted where a route or lift is not currently usable.
+
+---
+
+### Overview of the 16 accessible‑route records
+
+| Status | Count | Notes |
+|--------|-------|-------|
+| **Open** | 13 | Routes that are currently available for use. |
+| **Restricted** | 2 | Routes that are offered only with an alternative (e.g., a lift or corridor). |
+| **Closed** | 1 | Route that is temporarily out of service; an alternative is provided. |
+
+---
+
+### Key details by route
+
+| Route ID | Label | Main feature | Lift status | Door operation | Assistance contact | Temporary alternative (if any) |
+|----------|-------|--------------|-------------|----------------|--------------------|--------------------------------|
+| **RTE‑001** | Accessible drop‑off to Reception | 2 benches, 40 m, 10 min | – | automatic | Text 07700 900142 | – |
+| **RTE‑002** | Cathays station to Reception | 3 benches, 640 m, 20 min | – | automatic | Text 07700 900142 | – |
+| **RTE‑003** | Bus stop to Reception | 1 bench, 120 m, 12 min | – | automatic | Text 07700 900142 | – |
+| **RTE‑004** | Reception to Level 1 Atrium | 1 bench, 55 m, 8 min | **Lift A** – *in_service* | automatic | In‑person, Main Reception | – |
+| **RTE‑005** | Reception to Level 1 Computer Lab | 1 bench, 70 m, 10 min | **Lift A** – *in_service* | assisted | In‑person, Main Reception | – |
+| **RTE‑006** | Reception to Level 2 labs | 1 bench, 85 m, 14 min | **Lift A** – *in_service* | manual | In‑person, Main Reception | Alternative: **Lift B** + north corridor |
+| **RTE‑007** | Reception to Level 3 labs | 1 bench, 90 m, 14 min | **Lift A** – *in_service* | assisted | In‑person, Main Reception | – |
+| **RTE‑008** | Reception to Level 4 labs | 1 bench, 95 m, 15 min | **Lift A** – *in_service* | assisted | In‑person, Main Reception | – |
+| **RTE‑009** | Reception to Level 5 offices | 1 bench, 100 m, 16 min | **Lift A** – *in_service* | assisted | In‑person, Main Reception | – |
+| **RTE‑010** | Quiet arrival route | 2 benches, 75 m, 12 min | **Lift B** – *in_service* | automatic | Text 07700 900142 | – |
+| **RTE‑011** | Low‑vision route to Reception | 3 benches, 640 m, 22 min | – | automatic | Text 07700 900142 | – |
+| **RTE‑012** | Companion/assistance‑dog route | 2 benches, 80 m, 12 min | **Lift A** – *in_service* | automatic | Text 07700 900142 | – |
+| **RTE‑013** | Evacuation route – Level 1 refuge | 0 benches, 30 m, 3 min | – | assisted | Intercom at refuge point | – |
+| **RTE‑014** | Reception to accessible washroom | 1 bench, 60 m, 9 min | **Lift A** – *in_service* | assisted | In‑person, Main Reception | – |
+| **RTE‑015** | North stair route – not step free | 0 benches, 110 m, 18 min | – | manual | In‑person, Main Reception | – |
+| **RTE‑016** | Lift B route to Level 3 | 1 bench, 95 m, 15 min | **Lift B** – *out_of_service* | assisted | In‑person, Main Reception | Alternative: **RTE‑007** + north corridor |
+
+---
+
+### What the records *do* provide
+
+* **Accessible routes** – all 16 routes are documented with distance, time, benches, and sensory level.  
+* **Lifts** – each route lists the lift used (if any) and its current status (*in_service*, *out_of_service*).  
+* **Doors** – door operation type (automatic, assisted, manual) is recorded for every route.  
+* **Toilets** – RTE‑014 records a route to an accessible washroom.  
+* **Refuges** – RTE‑013 records an evacuation route to a Level 1 refuge.  
+* **Assistance arrangements** – every route lists an assistance contact (text, in‑person, intercom).  
+* **Temporary alternatives** – RTE‑006 and RTE‑016 note alternative routes when a lift or door is not usable.
+
+---
+
+**Bottom line:** The building’s published records confirm that all required accessible features—entrances, routes, lifts, doors, toilets, refuges, and assistance arrangements—are available and that tempo
+```
+
+### Do Abacws local procedures and work instructions implement the current institutional policies without omissions, contradictions or unauthorised local variation? — run 1 (49.2 s, OK)
+
+```
+**Compliance Check — Zone or Sensor Required**
+
+To assess ASHRAE / WELL / BREEAM compliance I need live sensor readings from a specific zone or sensor.  Please try one of:
+
+- *'Is the temperature in Zone 5.28 within ASHRAE 55 comfort limits?'*
+- *'Check ASHRAE 62.1 compliance for Zone 5.28'*
+- *'What is the temperature across all zones?'* (then click **Check compliance against ASHRAE?**)
+
+---
+**You might also ask:** Generate a full compliance report? | Export results as PDF? | Show trend over time?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### The lift on my usual route is unavailable. What current step-free alternative or suitable relocated workspace is officially verified? — run 1 (7.1 s, OK)
+
+```
+The records do not contain any information about step‑free routes or alternative workspaces that are guaranteed to be accessible if a lift is out of service.  
+
+What the records do provide:
+
+* **28 active workspaces** in the building, all currently recorded as “active”.
+* Workspace kinds and counts:
+  * 18 bookable rooms  
+  * 1 common room  
+  * 8 computer labs  
+  * 1 open study  
+* Each workspace lists its floor, opening hours, access classification (e.g., “Open to all”, “Bookable”, “Staff only”), and the nearest vertical route (Main lift core or North stair core).
+
+If you need a step‑free alternative, you may need to consult additional building‑access or accessibility records that are not part of this workspace register.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### What evidence is missing, stale or too weak for the building to answer my question about this room responsibly? — run 1 (28.5 s, OK)
+
+```
+I understood the question but could not put an answer together for it.
+
+- I read it as a **metadata** question.
+- The ontology lane ran, but returned nothing to report.
+
+That is a gap on my side, not a statement that the building has no such data. Rephrasing with a specific room, floor or date range often reaches a lane that can answer — or ask *"what can you tell me about this building?"* to see what is connected.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### I've developed a headache in this room. What are the current measured conditions, and is anything clearly unusual compared with this room's reliable baseline? — run 1 (3.7 s, OK)
+
+```
+I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+```
+
+### Is the calibration chain traceable and accurate enough for the smallest difference or threshold the study intends to interpret? — run 1 (209.2 s, OK)
+
+```
+**Answer**
+
+The building ontology data you provided does **not contain any information about a calibration chain, its traceability, or the accuracy of any measurement system**.  
+The only measurement‑related property listed is the **`noiseProfile`** property, which is a *descriptive* attribute (e.g., “silent”, “quiet”, “conversational”, “busy”) and not a calibrated sensor reading.
+
+- **No calibration chain data available**  
+- **No sensor accuracy or traceability information**  
+
+If you need to evaluate calibration traceability or measurement accuracy, you would need to consult the metadata of the specific sensors that are installed in the building (e.g., sound level meters, temperature sensors, etc.). Those details are not present in the current ontology snapshot.
+
+**Evidence time: unknown.** I can't tell you how old these readings are, so treat the recommendation as unverified rather than current. How quickly this goes out of date is not declared for conditions, so I can't give you a recheck point — check again before relying on it. Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied.
+
+---
+*Sources: `Building Ontology`*
+```
+
+### To which buildings, systems and operating conditions could a result reasonably transfer, and which target settings remain unsupported? — run 1 (18.1 s, OK)
+
+```
+The query results all refer to the **Abacws Building** at Cardiff University.  
+No specific HVAC, lighting, or other building‑system details are present, and there are no operating‑condition parameters (e.g., temperature set‑points, occupancy schedules) listed.
+
+**What the results can reasonably transfer to**
+
+- **Building**: Abacws Building (School of Computer Science and Informatics, Cardiff University, Senghennydd Road, Cardiff CF24 4AG)  
+- **Target setting**: The building’s current EPC band is **B** (as of 2025).  
+- **Future goal**: The target is to reach **EPC Band A by 2030**.
+
+**What remains unsupported**
+
+- **Systems**: No HVAC, lighting, or other system identifiers are provided, so the data cannot be mapped to any particular system.  
+- **Operating conditions**: No set‑points, schedules, or real‑time operating parameters are listed, so the results do not cover any operational state.  
+- **Target settings**: The EPC Band A target is mentioned but not yet achieved; the current state (Band B) is the only supported value.
+
+**Summary**
+
+- Total results: 3 (all describing the same building).  
+- The data is limited to building identification and an energy‑performance target.  
+- No system‑level or operating‑condition information is available, and the future target (Band A) is not yet supported by the current data.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which exact data, schema, mapping, code, environment and model versions produced each table, figure and reported number? — run 1 (15.8 s, OK)
+
+```
+**Hazard control register**  
+- Data source: Hazard Control Register  
+- Schema: table name “Hazard control register” with columns  
+  `code | hazard | kind | location | control | condition | regime | last_tested_on | next_test_due | evidence_ref | owner | status | note`  
+- Mapping: maps_to: hazard_controls  
+- Code: record_type: coshh_and_lev  
+- Environment: simulated: true  
+- Model version: version: 2026.9  
+
+**Asset engineering profile register**  
+- Data source: Asset Engineering Register  
+- Schema: table name “Asset engineering profile register” (columns as defined in the register)  
+- Mapping: maps_to: asset_engineering_profiles  
+- Code: record_type: asset_engineering  
+- Environment: simulated: true  
+- Model version: version: 2026.9  
+
+**Planned service schedule**  
+- Data source: Planned Maintenance Schedule  
+- Schema: table name “Planned service schedule” with columns  
+  `code | task | category | scope | frequency | last_completed | next_due | statutory | owner | provider | status | note`  
+- Mapping: maps_to: service_schedules  
+- Code: record_type: service_schedules  
+- Environment: simulated: true  
+- Model version: version: 2026.9
+
+---
+*From Abacws Building's documents: Asset Engineering Register, Coshh And Lev, Service Schedules. For the current version, contact facility management.*
+
+---
+*⚠️ I summarised the data above but couldn't render the chart this time. Please try again, or rephrase the request as e.g. "plot sensor 5.27 temperature for the last 24 hours as a line chart".*
+```
+
+### Which room and time categories show repeated no-shows strongly enough to justify an owner-led review of release rules? — run 1 (3.8 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Room Bookings, Service Schedules, Timetabled Sessions; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### The authorised occupancy sources disagree about this booked room. Should the booking remain protected from release? — run 1 (11.9 s, OK)
+
+```
+The records do not indicate whether a booking should remain protected from release. They only record each booking’s status (confirmed, provisional, or cancelled).
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### If the preferred room becomes unavailable, which three eligible alternatives are closest and what verified trade-offs would each introduce? — run 1 (22.3 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Circulation Times, Continuity Provision Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Which dependency-aware recovery order should incident leaders adopt to restore priority services safely with the people and resources currently available? — run 1 (43.2 s, OK)
+
+```
+I'm sorry, but the building's data only lists the building's sensors - it doesn't include any information about a recovery order or how priority services should be restored.  
+
+**What the results do show:**
+
+- 257 sensor entries (e.g., "Entry Count Sensor - Main Entrance", "Occupancy Count Sensor - Seminar Room 1.25", etc.)  
+- Sensors are spread across the main entrance, each floor, and various rooms, but no dependencies or recovery steps are recorded.
+
+**What you'll need to determine a recovery order:**
+
+1. **Recovery Plan Documents** - Check the building's incident response or business-continuity plan; these usually outline the sequence for restoring critical services.  
+2. **Dependency Mapping** - Identify which services rely on others (e.g., HVAC depends on power, which depends on the main generator).  
+3. **Resource Availability** - Confirm which personnel and equipment are on hand to carry out each step.  
+4. **Safety Checks** - Ensure that any restoration activity does not endanger occupants or staff.
+
+If you have access to those documents or a dependency map, I can help you interpret them or draft a clear, step-by-step recovery order. Let me know how you'd like to proceed!
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Does the current portfolio provide enough suitable bookable and informal settings for teaching, collaboration, focus, confidentiality and accessible use? — run 1 (18.8 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Stakeholder Group Register, Workspace Profile Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Where are teaching, research, workplace and public-facing priorities competing for the same room, route or service, and which trade-off needs an accountable decision? — run 1 (41.9 s, OK)
+
+```
+I understood the question but could not put an answer together for it.
+
+- I read it as a **metadata** question.
+- The ontology lane ran, but returned nothing to report.
+
+That is a gap on my side, not a statement that the building has no such data. Rephrasing with a specific room, floor or date range often reaches a lane that can answer — or ask *"what can you tell me about this building?"* to see what is connected.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which events are due today, and which approved Security arrangements are current, missing or no longer valid for each one? — run 1 (4.0 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Incident And Near Miss Log, Public Event Register, Service Schedules; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Which authorised public routes are interrupted by an official closure, unavailable door, lift fault or unverified segment? — run 1 (10.5 s, OK)
+
+```
+These records do not record authorised public routes; they record closures of floors 0, 1, and 2.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which current Security records are incomplete, stale, duplicated or conflicting, and which operational decisions do those defects block? — run 1 (4.9 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Continuity Provision Register, Coordination Function Register, Patrol Checkpoint Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Which functions must be co-located or kept within a stated travel time, which are preferences, and which adjacency claims lack evidence? — run 1 (6.1 s, OK)
+
+```
+The circulation records you provided only describe walking and step‑free travel times between floors in the building. They do not contain any information about which functions must be co‑located, any stated travel‑time preferences, or evidence for adjacency claims.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which workplace peaks and troughs are stable enough to plan for, and how do they vary across weekdays, term phases, projects and exceptional periods? — run 1 (60.0 s, OK)
+
+```
+I’m sorry, but the data you retrieved only lists the PIR lighting detectors on each floor (Floor 0 through Floor 5). It doesn’t contain any information about occupancy peaks, troughs, or how those patterns vary by weekday, term phase, project, or exceptional period.  
+
+If you’d like to analyze stable workplace usage patterns, we’ll need time‑series data from occupancy or motion sensors that record activity levels over time. Let me know if you’d like help locating or querying that data!
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### What mix of desks, focus rooms, collaboration areas, meeting rooms, storage and support space is justified by approved operating assumptions and consultation? — run 1 (77.5 s, OK)
+
+```
+## Lab
+
+**21** space(s) found:
+
+| Floor | Zone | Label | Type | Area (m²) |
+|-------|------|-------|------|-----------|
+| 0 | `0Z013` | 41P Collab S | lab | 102.2 |
+| 1 | `1Z01` | 1Z01 16P Collab Sp 1Z01 | lab | — |
+| 1 | `1Z011` | 4P Collab Space | lab | 10.4 |
+| 1 | `1Z013` | 16P Collab Sp | lab | 37.6 |
+| 1 | `1Z02` | 1Z02 4P Collab Space 1Z02 | lab | — |
+| 1 | `1Z03` | 1Z03 3P Collab Space 1Z03 | lab | — |
+| 2 | `2.44` | 2.44 | lab | 21.3 |
+| 2 | `2.53` | 2.53 | lab | 59.1 |
+| 2 | `2Z01` | 2Z01 10P Collab Sp 2Z01 | lab | — |
+| 2 | `2Z035` | 8P Collab Sp | lab | 21.7 |
+| 2 | `2Z038` | 10P Collab Sp | lab | 38.2 |
+| 2 | `2Z041` | 11P Collab Sp | lab | 20.6 |
+| 2 | `2Z10` | 2Z10 8P Collab Sp 2Z10 | lab | — |
+| 3 | `3Z01` | 3Z01 10P Collab Sp 3Z01 | lab | — |
+| 3 | `3Z055` | 10P Collab Sp | lab | 41.6 |
+| 4 | `4.38` | 4.38 | lab | 56.0 |
+| 4 | `4.47` | 4.47 | lab | 18.6 |
+| 4 | `4Z01` | 4Z01 10P Collab Sp 4Z01 | lab | — |
+| 4 | `4Z047` | 10P Collab Sp | lab | 36.7 |
+| 5 | `5Z01` | 5Z01 10P Collab Sp 5Z01 | lab | — |
+| 5 | `5Z050` | 10P Collab Sp | lab | 29.8 |
+```
+
+### I am on campus for only one day this week. Can you plan a practical sequence for study, an online call, printing and a group meeting around my classes? — run 1 (4.2 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Event Activity Register, Public Event Register, Timetabled Sessions; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Tomorrow I have classes on different floors, a short online meeting and two gaps for reading. Can you plan a practical sequence of spaces that keeps unnecessary movement to a minimum? — run 1 (15.8 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Circulation Times, Event Activity Register, Workspace Profile Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### During group-project deadline week, which time windows are most likely to offer a suitable meeting space for our team? — run 1 (41.8 s, OK)
+
+```
+The building’s records show that all 28 work‑spaces are **active**.  
+- **Bookable rooms**: 18 (Mon‑Fri 08:00‑18:00)  
+- **Common room**: 1 (Mon‑Fri 07:00‑19:00)  
+- **Computer labs**: 8 (Mon‑Fri 08:00‑20:00)  
+- **Open study**: 1 (Mon‑Sun 07:00‑22:00)
+
+Each space lists a *busiestPeriod* that is typical for a “group‑project deadline week” (i.e., a teaching week).  The busiest windows are:
+
+| Space type | Typical busiest period |
+|------------|------------------------|
+| Bookable rooms | 09:00‑12:00 or 10:00‑15:00 |
+| Common room | 12:00‑14:00 |
+| Open study | 11:00‑14:00 |
+| Computer labs | 10:00‑16:00 |
+
+Because the records only give these busy windows, the most reliable times to find a suitable meeting space are the periods **outside** them.  The windows that are consistently free across all space types are:
+
+- **08:00 – 09:00** (before the earliest busy period for every space)  
+- **15:00 – 18:00** (after the latest busy period for labs and bookable rooms, and still within the opening hours of all spaces)
+
+These two windows are the best candidates for a group‑project meeting during a deadline week.  The records do not provide actual occupancy or real‑time availability, so the recommendation is based solely on the recorded busiest periods.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### During managed-network degradation, which room AV functions still have current evidence that they can operate? — run 1 (9.6 s, OK)
+
+```
+Lecture capture and streaming in **Room 4.44 — Server Room**.
+
+---
+*From Abacws Building's documents: Av Readiness Register, Continuity Provision Register. For the current version, contact facility management.*
+```
+
+### Are the current recording notice, retention rule and authorised-access conditions confirmed for this session? — run 1 (3.3 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Av Readiness Register, Continuity Provision Register, Timetabled Sessions; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Which scheduled rooms should be included in the walk-round because remote readiness evidence is missing, stale or contradictory? — run 1 (14.1 s, OK)
+
+```
+I understood the question but could not put an answer together for it.
+
+- I read it as a **metadata** question.
+- The ontology lane ran, but returned nothing to report.
+
+That is a gap on my side, not a statement that the building has no such data. Rephrasing with a specific room, floor or date range often reaches a lane that can answer — or ask *"what can you tell me about this building?"* to see what is connected.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### If enrolment moves within the approved planning range, which group counts or room allocations become fragile first? — run 1 (129.3 s, OK)
+
+```
+**Executive Summary**  
+The Abacws Building sensor audit covered 1,000 readings from 100 deployed sensors. Analysis revealed that 522 sensors lack declared units, preventing any meaningful aggregation of their data. All readings were complete, but the absence of units limits actionable insights.
+
+**Key Findings**  
+- 522 sensors were not summarised together because no unit is declared for these readings, so what an aggregate of them would mean is not established.  
+
+**Anomalies / Concerns**  
+- No anomalies were detected in the data set.  
+
+**Recommendations**  
+1. Define and assign appropriate units to the 522 sensors to enable aggregation and trend analysis.  
+2. Review sensor configuration and documentation to ensure all sensors have clear labels and unit declarations.  
+3. Consider consolidating sensor data streams where possible to improve summarisation and reporting efficiency.  
+
+*Note: The provided data does not contain information on enrolment, group counts, or room allocations, so those aspects cannot be addressed here.*
+```
+
+### Which proposed fairness checks are responsibly answerable with current authorised data and permissions, and which are not? — run 1 (5.5 s, OK)
+
+```
+The records do not contain any information about proposed fairness checks. They record access permission group records, their status, effective dates, and related attributes.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which currently eligible rooms are approved for the required hybrid, lecture-capture or assistive-technology setup? — run 1 (9.6 s, OK)
+
+```
+The records do not indicate any rooms that are currently approved for a hybrid, lecture‑capture or assistive‑technology setup. They do record current approvals for accessible routes, space use, procedures, contracts, cost lines, patrol circuits, policies, cleaning standards, systems, and other facilities, but none of those approvals specifically cover the requested hybrid or assistive‑technology arrangements.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### I'm coming to Abacws next Wednesday after 2 p.m. for about 90 minutes. Where am I most likely to find a calm, relatively quiet place with low foot traffic and reasonable measured temperature and air-quality indicators, close to my 4 p.m. class? — run 1 (122.9 s, OK)
+
+```
+**Best match: Room 4.03 — Research Laboratory** (floor Floor4, score 0.5066).
+1. **Room 4.03 — Research Laboratory** — score 0.5066 (co2: 793.297, noise: 54.102, occupancy: 21.525, pm25: 20.184, temperature: 22.964, 0 m to the requested amenity)
+2. **Room 1.08 — Computer Laboratory** — score 0.4943 (co2: 817.311, noise: 55.631, occupancy: 21.358, pm25: 19.342, temperature: 22.923, 0 m to the requested amenity)
+3. **Room 2.03 — Research Laboratory** — score 0.4919 (co2: 774.21, noise: 56.419, occupancy: 20.667, pm25: 19.731, temperature: 22.819, 0 m to the requested amenity)
+
+**Assumptions:** 'calm, relatively quiet place' scored as minimize noise against the 30-70 band; 'low foot traffic' scored as minimize occupancy against the 0-8 band; 'reasonable measured temperature' scored as near_value temperature against the 20-26 band; 'air-quality indicators' scored as minimize co2 against the 420-1500 band; 'air-quality indicators' scored as minimize pm25 against the 0-15 band; all stated preferences weighted equally; 'next Wednesday after 2 p.m. for about 90 minutes' forecast 24h ahead from recent history.
+**Coverage:** 195 of 234 spaces considered; co2: 195/195 instrumented; noise: 194/195 instrumented; occupancy: 194/195 instrumented; pm25: 195/195 instrumented; temperature: 195/195 instrumented; 39 excluded (listed).
+Forecasts: 25 series projected 24h ahead (SeasonalNaive, 95% CI 41.225–70.039, backtest MAE 4.8401).
+**Privacy:** computed under access policy — policy_facility_manager_any: resolution clamped to 5s for data 0 min old
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: list_matching over 5 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01 | noise | 54.877 | forecast | 500 | noise_data |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01 | occupancy | 22.336 | forecast | 500 | occupancy_data |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01 | temperature | 23.804 | forecast | 500 | database1_floors04 |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01 | co2 | 764.666 | forecast | 500 | database1_floors04 |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01 | pm25 | 18.485 | forecast | 500 | pm25_data |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10 | noise | 53.917 | forecast | 500 | noise_data |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10 | occupancy | 21.344 | forecast | 500 | occupancy_data |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10 | temperature | 23.88 | forecast | 500 | database1_floors04 |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10 | co2 | 780.669 | forecast | 500 | database1_floors04 |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10 | pm25 | 19.041 | forecast | 500 | pm25_data |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17 | noise | 54.075 | forecast | 500 | noise_data |
+| http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17 | occupancy | 21.466 | forecast | 500 | occupancy_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.05 — Mechanical Plant Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.06 — Loading and Goods Storage (not an occupied space — name it to include it (Storage_Room)); Room 0.07 — Service Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.08 — Service Room (not an occupied space — name it to include it (Mechanical_Room)); Room 0.29 — Storage Room (not an occupied space — name it to include it (Storage_Room))
+
+**Scoring bands:** ASHRAE 55 comfort range 20-26 °C · ASHRAE 62.1 comfort band 420-1500 ppm · WHO 2021 AQG 24-h PM2.5 guideline 15 ug/m3 · WHO guideline band 30-70 dB(A) indoor · relativ
+```
+
+### Should I stay here, or are noise, crowding or CO2 likely to get noticeably worse during the next hour? — run 1 (125.2 s, OK)
+
+```
+**Forecast not available**
+
+Could not build a clean time series for 'Sound/Loudness Sensor installed-node 5.06': too_few_points. Try a larger time window (e.g. 'last 48 hours') or a different sensor.
+
+---
+**You might also ask:** Detect anomalies in this trend? | Compare with another sensor? | Export as CSV?
+
+---
+*Sources: `Building Ontology` `Live Sensor Data`*
+```
+
+### The previous class has just ended. Are CO2 and temperature back near this room's usual pre-class levels? — run 1 (45.5 s, OK)
+
+```
+That question reaches **296 sensors** — more than I can read and summarise in one request without either timing out or quietly answering from a fraction of them.
+
+Narrow it and I can answer directly:
+- one floor, or one room
+- one measurement at a time (temperature, or CO₂ — not both)
+- a shorter period
+
+I would rather say this than report a figure without telling you which part of the building it came from.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which closed work orders lack enough asset, test or outcome evidence for estates teams to rely on the stated result? — run 1 (12.2 s, OK)
+
+```
+The records do not contain any evidence of asset, test or outcome for closed work orders.  
+They record the following for each work order:
+
+- **Status** (completed, in_progress, open)  
+- **Label** (e.g., “Fault investigation”, “Annual service”)  
+- **Location** (e.g., “Air Handling Unit – Floor 1”)  
+- **Priority** (high, routine, urgent)  
+- **Responsible role** (Controls technician, Electrical technician, etc.)  
+- **Schedule kind** (planned, reactive)  
+- **Effective date** (when the work was scheduled to start)  
+- **Record ID** (e.g., WO‑001)  
+- **Expected minutes** (estimated duration)  
+- **Primary system** (e.g., AEP‑002, AEP‑011)  
+- **Completed date** (for completed work orders)
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### How would plausible growth or change in teaching, research and workplace demand affect asset capacity, service headroom and operational risk? — run 1 (4.6 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Asset Engineering Register, Workspace Profile Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Which non-mandatory tasks have enough sensing, failure-mode knowledge and fallback control to be considered for condition-based triggering? — run 1 (18.8 s, OK)
+
+```
+Incident command  
+Building evacuation control  
+Lift recall and entrapment  
+Waste and contamination containment  
+Business continuity handover  
+Roll call and accounting  
+Media and enquiries
+
+---
+*From Abacws Building's documents: Coordination Function Register. For the current version, contact facility management.*
+```
+
+### The event room has changed. What is the new confirmed room, and what public route should I take? — run 1 (24.0 s, OK)
+
+```
+I’m sorry, but the building model doesn’t contain information about the event room’s new location or the public route to get there. The data I have shows how many sensors each space holds, but it doesn’t record room changes or navigation routes.
+
+**What the model does tell us (just for context):**
+
+- **Floors** – 24 sensors on Floor 0, 21 on Floor 1, 21 on Floor 2, 24 on Floor 3, 21 on Floor 4, 27 on Floor 5.  
+- **Rooms** – 15 sensors in Room 0.01, 11 in Room 0.04, 11 in Room 0.05, 11 in Room 0.06, etc.
+
+If you need the updated event room details or a public‑route map, you’ll need to check the latest event schedule or the building’s navigation system. Let me know if there’s anything else I can help with!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Is there an official place near check-in to leave a coat or bag, and is it open? — run 1 (5.8 s, OK)
+
+```
+The event records do not mention any official coat‑or‑bag storage near the check‑in area, nor do they indicate whether such a facility is open.  
+
+What the records do provide is:
+
+- The status of each event (scheduled, cancelled, moved)  
+- The event dates, times, and opening/check‑in times  
+- The venue location and entrance used for each event  
+- Registration and companion policies, and accessibility notes for the event spaces  
+
+No information about coat or bag drop‑off points is recorded in these 12 event entries.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### My companion is not attending the session. Where are they permitted to wait? — run 1 (21.1 s, OK)
+
+```
+Your companion can wait at the visitor entrance for all scheduled events.  
+For the Accessibility user panel (EVT‑2026‑0052) the companion may wait at the **accessible drop‑off on Senghennydd Road north**.  
+
+In short:  
+- **Main Entrance** – waiting area for every scheduled event.  
+- **Accessible drop‑off (Senghennydd Road north)** – waiting area for the Accessibility user panel.  
+
+The companion is not admitted to the event itself, but may use these entrances to wait.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Were bins, skips, compactors, seals or locks exchanged and handed back exactly as recorded? — run 1 (7.5 s, OK)
+
+```
+The records do not contain information about whether bins, skips, compactors, seals or locks were exchanged and handed back exactly as recorded.  
+
+They do record the current status of each waste‑collection point (active, overdue, withdrawn), its location, waste stream, capacity, fill level, and other operational details.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### How should shared vehicle or campus-level weights be allocated to Abacws without false precision? — run 1 (19.0 s, OK)
+
+```
+The SPARQL query you ran only returned the list of floors in the Abacws building - it didn't give any information about vehicle usage or campus-wide weight allocations.  
+So, while I can't pull a precise number from the building's data, I can outline a practical way to share vehicle or campus-level weights across the Abacws floors without over-precising the figures.
+
+---
+
+## How to Allocate Shared Vehicle/Campus-Level Weights
+
+1. **Define the Weight Source**  
+   * **Vehicle-level weight** - e.g., total vehicle mass or fuel consumption for the campus.  
+   * **Campus-level weight** - e.g., overall building load or energy usage that includes all vehicles.
+
+2. **Choose a Fair Allocation Basis**  
+   * **Floor area** - proportion of each floor's square footage relative to the whole building.  
+   * **Vehicle usage** - if you have data on how many vehicles use each floor (e.g., parking counts).  
+   * **Occupancy or activity level** - e.g., number of people or scheduled events per floor.
+
+3. **Apply a Rounded Percentage**  
+   * Instead of reporting exact decimals (e.g., 12.345 %), round to the nearest whole or half percent.  
+   * This keeps the allocation realistic and avoids implying a level of precision that the data can't support.
+
+4. **Document the Method**  
+   * Keep a short note (e.g., "Vehicle weight allocated by floor area, rounded to nearest 1 %") so future users understand the basis and limits of the numbers.
+
+5. **Review Periodically**  
+   * Re-calculate when floor plans change, new parking lots open, or vehicle usage patterns shift.
+
+---
+
+### Quick Example
+
+| Floor | Floor Area (m²) | % of Total Area | Allocated Vehicle Weight (rounded) |
+|-------|-----------------|-----------------|------------------------------------|
+| Rooftop | 200 | 5 % | 5 % of total vehicle weight |
+| Floor 0 | 400 | 10 % | 10 % |
+| Floor 1 | 350 | 8.75 % → 9 % | 9 % |
+| … | … | … | … |
+
+*(Numbers are illustrative; you'd replace them with your actual floor-area data.)*
+
+---
+
+**Bottom line:**  
+Use a clear, simple metric (area, usage, or occupancy) to split the shared weight, round the result to avoid giving a false sense of precision, and document the method so the allocation remains transparent and easy to update.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+**Evidence time: unknown.** I can't tell you how old these readings are, so treat the recommendation as unverified rather than current. How quickly this goes out of date is not declared for conditions, so I can't give you a recheck point — check again before relying on it. Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied.
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Is the loading or exchange area clear, booked and operationally ready for the next confirmed collection? — run 1 (12.5 s, OK)
+
+```
+**Which space should I check?**
+
+I can compile a readiness check for any room the building holds — what its teaching technology last tested at and when, what the surveyed network is, how long it takes to set up, and what is not recorded. Name the room, or ask again when a session is scheduled and I will use the next one from the timetable.
+```
+
+### Is the building pushchair-friendly from the car park? — run 1 (1.3 s, OK)
+
+```
+I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+```
+
+### Book me a hotel near the building for tomorrow. — run 1 (2.6 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Room Bookings; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### Which plant items are running outside their normal schedule right now? — run 1 (27.0 s, OK)
+
+```
+There are **8 plant items** that are currently operating outside their normal schedule (i.e., the observed duty differs from the design or commissioned duty).  
+All other plant assets are running at or near their scheduled duty, or no operating data are recorded.
+
+---
+
+### Plant items running below their scheduled duty
+
+| Floor / Zone | Asset (label) | Tag in BMS | Observed duty | Design duty | Comment |
+|--------------|---------------|------------|---------------|-------------|---------|
+| **Floor 0** | Air Handling Unit – Floor 0 (AEP‑001) | AHU_GF_01 | 2.1 m³ s⁻¹ | 2.4 m³ s⁻¹ | 12 % below design |
+| **Floor 1** | Air Handling Unit – Floor 1 (AEP‑002) | AHU_L1_01 | 2.95 m³ s⁻¹ | 3.1 m³ s⁻¹ | 5 % below design |
+| **Floor 2** | Air Handling Unit – Floor 2 (AEP‑003) | AHU_L2_01 | 2.85 m³ s⁻¹ | 3.1 m³ s⁻¹ | 8 % below design |
+| **Floor 3** | Air Handling Unit – Floor 3 (AEP‑004) | AHU_L3_01 | 2.4 m³ s⁻¹ | 3.1 m³ s⁻¹ | 23 % below design |
+| **Floor 4** | Air Handling Unit – Floor 4 (AEP‑005) | AHU_L4_01 | 2.7 m³ s⁻¹ | 2.8 m³ s⁻¹ | 4 % below design |
+| **Roof** | Chiller 1 – Building Central Cooling Plant (AEP‑007) | CHILLER_1 | 565 kW | 620 kW | 9 % below design |
+| **Floor 0** | Chiller Pump 1 (AEP‑008) | PUMP_CH_1 | 26.9 l s⁻¹ | 28 l s⁻¹ | 4 % below design |
+| **Floor 0** | Building Battery Energy Storage System (AEP‑013) | BESS_1 | 94 kWh | 120 kWh | 22 % below design |
+
+---
+
+### Summary
+
+- **Total plant assets:** 24  
+- **Assets running outside schedule:** 8 (≈ 33 %)  
+- **Pattern:** All affected units are AHUs, the central chiller, its pump, and the battery storage system.  
+- **Other assets:** All remaining 16 plant items are operating at or near their scheduled duty, or no operating data are currently recorded.
+
+Let me know if you’d like more detail on any of these units or on the remaining assets.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which capital project this year had the best measured outcome? — run 1 (1.5 s, OK)
+
+```
+I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+```
+
+### Rank the glazing, roof, and AHU replacements by comfort improvement per pound. — run 1 (40.1 s, OK)
+
+```
+I’m sorry, but the data I have only lists the six Air Handling Units (AHUs) in the building – AHU_F0 through AHU_F5. There are no records of glazing or roof replacements, and none of the results include the key figures (comfort‑improvement scores or replacement costs) needed to calculate “comfort improvement per pound.”  
+
+**What we do know**
+
+- **AHUs present**: 6 units, one on each floor from 0 to 5.  
+- **No glazing or roof data**: The query didn’t return any glazing or roof replacement entries.  
+- **Missing metrics**: Comfort‑improvement values and replacement costs are not part of the current dataset, so a ranking can’t be produced.
+
+If you have access to the comfort‑improvement scores and the cost of each replacement, I can help you calculate and rank them. Let me know if you’d like to provide that information or if there’s another way I can assist!
+
+**Evidence time: unknown.** I can't tell you how old these readings are, so treat the recommendation as unverified rather than current. How quickly this goes out of date is not declared for conditions, so I can't give you a recheck point — check again before relying on it. Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied.
+
+---
+*Sources: `Building Ontology`*
+```
+
+### The bins on floor 2 are always full by lunchtime - can you check that? — run 1 (38.5 s, OK)
+
+```
+I’m sorry, but the records do not contain any information about the fill level of floor‑2 bins at lunchtime. The records only list the current fill percentage and the next scheduled collection date for each bin. They do not record hourly or lunchtime measurements, so I can’t confirm whether the bins are always full by that time.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### I'm pregnant and overheating - where's the coolest place to work today? — run 1 (42.6 s, OK)
+
+```
+I couldn't map part of your request (coolest place to work today; pregnant) — could you rephrase or drop that part?
+```
+
+### How much would submetering every floor cost, and when does it pay back? — run 1 (5.3 s, OK)
+
+```
+the building's data do not contain any information about the cost of installing sub-metering on every floor, nor do they include any pay-back calculations for such a project. They only record the 24 individual cost items for services and supplies that the building currently has or is planning, such as electricity supply, water, HVAC maintenance, lift maintenance, cleaning, security, IT, and accessibility improvements.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Whats the best empty room to convert into two phone booths, by demand? — run 1 (38.2 s, OK)
+
+```
+I understood the question but could not put an answer together for it.
+
+- I read it as a **recommend** question.
+- The ontology lane ran, but returned nothing to report.
+
+That is a gap on my side, not a statement that the building has no such data. Rephrasing with a specific room, floor or date range often reaches a lane that can answer — or ask *"what can you tell me about this building?"* to see what is connected.
+
+**Evidence time: unknown.** I can't tell you how old these readings are, so treat the recommendation as unverified rather than current. How quickly this goes out of date is not declared for conditions, so I can't give you a recheck point — check again before relying on it. Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied.
+
+---
+*Sources: `Building Ontology`*
+```
+
+### What's the delta-T across the heating circuit, and is it healthy? — run 1 (45.0 s, OK)
+
+```
+**Boiler 2 Leaving Water Temperature – Boiler 2 Entering Water Temperature = 11.05 °C** (the largest ΔT).  
+Boiler 1 shows a ΔT of 10.52 °C, which is 0.53 °C lower than Boiler 2.  
+The two ΔT values are close, with Boiler 2 slightly higher and Boiler 1 slightly lower.  
+Because the ΔT values are similar and the spread is small, the heating circuit is operating with a consistent temperature rise.  
+**Recommendation:** Verify that the flow rate through each boiler remains steady to preserve this ΔT range.
+
+---
+**You might also ask:** Generate a full compliance report? | Export results as PDF? | Show trend over time?
+
+---
+*Sources: `Building Ontology` `Sensor data` `Analytics Engine`*
+```
+
+### What's the filter size for the FCUs on floor 4? — run 1 (22.5 s, OK)
+
+```
+**Answer**
+
+The ontology data you provided does not contain any information about Fan‑Coil Units (FCUs) or their filter sizes.  
+There are no FCU sensor types listed, so we cannot give a filter size for floor 4.
+
+**What is available in this building**
+
+- **Filter Air Differential Pressure Sensor**  
+  - *Definition:* “Measures the difference in air pressure before and after an air filter.”  
+  - This sensor type is the closest relevant device for monitoring filter performance.  
+
+If you need filter size details for FCUs, you would need to consult additional documentation or a more detailed asset register that includes FCU specifications.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Find a room for 12 with a projector, free 2-4pm today, near the cafe. — run 1 (13.4 s, OK)
+
+```
+I’m sorry, but the building’s records do not contain the information you’re looking for.  
+They do not record:
+
+* whether a room has a projector  
+* the current booking status for any time slot (so I can’t tell you if a room is free from 2 – 4 pm today)  
+* the distance or direction to the café  
+
+What the records do provide is a snapshot of the spaces that exist in the building today.  All 28 records are **active**.  Among them, 18 are bookable rooms.  Below is a quick reference for the bookable rooms that can seat 12 or more people, along with their opening hours and seat counts.
+
+| Room | Floor | Seat Count | Opening Hours | Notes |
+|------|-------|------------|---------------|-------|
+| **WS‑06** | 1 | 16 | Mon‑Fri 08:00‑18:00 | Bookable, 16 seats |
+| **WS‑07** | 1 | 16 | Mon‑Fri 08:00‑18:00 | Bookable, 16 seats |
+| **WS‑12** | 2 | 20 | Mon‑Fri 08:00‑18:00 | Bookable, 20 seats |
+| **WS‑15** | 3 | 18 | Mon‑Fri 08:00‑18:00 | Bookable, 18 seats |
+| **WS‑16** | 3 | 18 | Mon‑Fri 08:00‑18:00 | Bookable, 18 seats |
+| **WS‑24** | 4 | 22 | Mon‑Fri 08:00‑18:00 | Bookable, 22 seats |
+| **WS‑25** | 5 | 30 | Mon‑Fri 08:00‑18:00 | Bookable, 30 seats |
+| **WS‑26** | 5 | 30 | Mon‑Fri 08:00‑18:00 | Bookable, 30 seats |
+
+All of these rooms are open from 8 am to 6 pm (or 8 pm for some computer labs, but those are not bookable).  None of the records mention a projector, so I can’t confirm that any of these rooms have one.  Likewise, there is no data on current bookings or on how close a room is to the café.
+
+If you need further details about any of these rooms (e.g., exact location, power access, or network rating), let me know and I can pull that information from the records.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### What's the optimal battery dispatch for tomorrow's tariff and solar forecast? — run 1 (6.8 s, OK)
+
+```
+I'm sorry, but the building's data do not contain any information about battery dispatch or solar forecasts. They only record the energy tariffs that the building holds.
+
+**Tariff records that are recorded:**
+
+| Utility | Record ID | Provider | Effective From | Effective To | Unit Rate (£/kWh) | Standing Charge (£/day) |
+|---------|-----------|----------|----------------|--------------|-------------------|------------------------|
+| Electricity | TAR-ELEC-2025 | Cardiff University Estates energy framework | 2024-12-31 | 2025-12-30 | 0.3102 | 0.588 |
+| Electricity | TAR-ELEC-2026 | Cardiff University Estates energy framework | 2025-12-31 | 2026-12-31 | 0.2847 | 0.612 |
+| Gas | TAR-GAS-2026 | Cardiff University Estates energy framework | 2025-12-31 | 2026-12-31 | 0.0691 | 0.341 |
+| Water | TAR-WATER-2026 | Dwr Cymru Welsh Water | 2025-12-31 | 2026-12-31 | 1.945 | 0.0 |
+
+All four tariffs are currently in effect (effective dates are in the past but the records are still active). No battery dispatch or solar forecast data is present in these records.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Whats the daylight hour count in the deepest workstation this December? — run 1 (5.0 s, OK)
+
+```
+I’m sorry, but the building model does not contain a daylight‑hour count for the deepest workstation.  
+What it does record is the number of illuminance sensors installed in the building, which is **269**. If you’d like to see which specific sensors are in that workstation or get other sensor data, just let me know!
+
+---
+*Sources: `Building Ontology`*
+```
+
+### How many open work orders are there, and which are overdue? — run 1 (7.2 s, OK)
+
+```
+There are **24 work‑order records** in the building’s register:
+
+- **Completed**: 15  
+- **In progress**: 6 (WO‑001, WO‑010, WO‑011, WO‑012, WO‑021, WO‑022)  
+- **Open**: 3 (WO‑008, WO‑013, WO‑015)
+
+**Open work orders**
+
+| Work‑Order ID | Location | Priority | Responsible Role |
+|---------------|----------|----------|------------------|
+| WO‑008 | Air Handling Unit – Floor 3 | routine | Electrical technician |
+| WO‑013 | Electrical Breaker Panel – Floor 3 | high | Electrical technician |
+| WO‑015 | Fan Coil Unit Room 5.03 | routine | Mechanical technician |
+
+**Overdue status**
+
+The register does **not** contain any due‑date or deadline field, and no status is recorded as “overdue.” Therefore, it is not possible to determine which, if any, work orders are overdue from the current data.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### What percentage of bookings are recurring 'ghost' meetings that never happen? — run 1 (5.4 s, OK)
+
+```
+The records do not contain any information about recurring “ghost” meetings that never happen. They only record the booking status (confirmed, provisional, cancelled) and the scheduled dates for each booking.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### You mentioned a sensor fault earlier - has it been fixed yet? — run 1 (0.9 s, OK)
+
+```
+I haven't said anything earlier in this conversation — this is its first message to me — so I have nothing to follow up on. If you tell me which sensor, room or fault you mean, I can check its current state or look for reports about it.
+```
+
+### What happens to comfort if we cut the AHU runtime by an hour each end of day? — run 1 (38.3 s, OK)
+
+```
+**No comfort data available**.  
+The sensor data only reports the “AHU Run Time Sensor — Floor 5” and the “AHU‑F5 Runtime Sensor”, both measured in hours (HR).  
+For the current period the mean runtime is 0.67 HR, with a minimum of 0.50 HR and a maximum of 0.82 HR.  
+Because comfort metrics (temperature, humidity, CO₂, etc.) are not present, we cannot assess how a one‑hour reduction at each end of day would affect thermal or air‑quality comfort.  
+**Recommendation:** Deploy sensors that capture temperature, humidity, and CO₂ levels to evaluate the impact of runtime changes on occupant comfort.
+
+---
+**You might also ask:** Detect anomalies in this trend? | Compare with another sensor? | Export as CSV?
+
+---
+*Sources: `Building Ontology` `Equipment Monitoring System` `Analytics Engine`*
+```
+
+### Which drains have needed jetting more than twice this year? — run 1 (59.8 s, OK)
+
+```
+**Answer**
+
+This building does not have any records or sensors related to drain jetting in the provided ontology.  
+The only entities listed are *ContinuityProvision* objects (e.g., `bldg:continuity/CP-001` … `bldg:continuity/CP-012`), which describe service continuity plans but do not include maintenance or plumbing data.
+
+**What you can do instead**
+
+- **Check maintenance logs or work‑order systems**: If your building’s maintenance management system logs drain jetting activities, those records will be the best source for determining how many times each drain has been jetted this year.
+- **Look for other sensor types**: The ontology does not list any plumbing or drainage sensors. If your building uses sensors for water flow or leak detection, those would be the closest related data points, but they are not present in the current dataset.
+
+If you need help locating or interpreting maintenance logs, let me know!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### Which shutters or doors fail open versus fail locked on power loss? — run 1 (13.0 s, OK)
+
+```
+**Shutters and doors that stay open when power is lost**  
+• **Reception turnstile** (DR‑012) – fails open on power loss.  
+• **Car‑park vehicle barrier** (DR‑013) – fails open on power loss.  
+
+**Shutters and doors that stay locked when power is lost**  
+• **Server room door** (DR‑006) – fails locked on power loss.  
+• **Communications room door** (DR‑007) – fails locked on power loss.  
+• **Mechanical plant room door** (DR‑008) – fails locked on power loss.  
+• **Basement tank room door** (DR‑015) – fails locked on power loss.  
+• **Bike store door** (DR‑016) – fails locked on power loss.  
+
+**Summary**  
+- Total records examined: **16**.  
+- **2** doors/shutters fail open on power loss.  
+- **5** doors/shutters fail locked on power loss.  
+
+(Other doors/shutters in the register have different fail‑state behaviours—“fail safe” or “fail closed”—but those were not requested.)
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Can my manager see when I badge in and out? — run 1 (8.9 s, OK)
+
+```
+**I can't answer that.** The system explains the building; it never tracks individuals. Denied for every role; aggregate alternatives are offered.
+
+You can instead:
+- ask for room or floor level counts and conditions (never individuals)
+- ask about spaces you are assigned to, at full detail
+
+_Policy: `policy_inference_individual_pattern`._
+```
+
+### Is tap water free somewhere, or do I have to buy bottles? — run 1 (33.4 s, OK)
+
+```
+**Actionable Recommendations for Tap‑Water Use**
+
+1. **Install on‑site water dispensers on Floor 4**  
+   *Why:* Floor 4’s mean flow rate is the highest of all floors (12.4 L / min) and its peak reaches 292 L / min. This shows a strong demand for water at that level. Providing a convenient tap or dispenser there will encourage occupants to use tap water instead of buying bottles.  
+
+2. **Use the Water_Flow_Sensor_Main to cap peak usage**  
+   *Why:* The main tap sensor shows a mean of 6.12 L / min but a maximum of 34.9 L / min. Those spikes likely correspond to bulk usage (e.g., coffee makers, dishwashers). Installing flow restrictors or a usage‑limit setting on the main supply can keep the average below 10 L / min, reducing waste and the temptation to buy bottled water.  
+
+3. **Add a water‑quality sensor near the HotWater flow point**  
+   *Why:* The HotWater sensor records a mean of 12.6 L / min and a maximum of 281 L / min, indicating frequent hot‑tap use. Without quality data, occupants may doubt the safety of tap water. A simple quality monitor (e.g., for chlorine, turbidity) will give confidence that tap water is safe, encouraging its use.  
+
+4. **Place clear signage next to the HotWater sensor**  
+   *Why:* The high hot‑water flow (mean 12.6 L / min) shows many people are already using hot tap water. Signage reminding users that tap water is free and safe can further reduce bottled‑water purchases.  
+
+5. **Schedule water‑intensive tasks during daylight hours**  
+   *Why:* All floor sensors show lower night means (≈ 4.7–5.8 L / min) versus day means (≈ 7–8 L / min). Moving tasks that require large volumes of water (e.g., cleaning, laundry) to daytime hours will keep peak usage lower and make tap water more attractive.  
+
+---
+
+**Priority Summary**
+
+1. **Install dispensers on Floor 4** (highest demand).  
+2. **Cap peak usage via the Water_Flow_Sensor_Main**.  
+3. **Add a water‑quality sensor near HotWater**.  
+4. **Place signage next to HotWater**.  
+5. **Schedule intensive tasks during day**.  
+
+These steps will help you determine whether tap water is truly free and encourage its use, reducing the need to buy bottled water.
+
+**Boundary: not declared.** I can't say what this figure covers — the building's records don't say what the meter behind it measures, so read it as that meter's figure rather than a confirmed total for the area you asked about.
+
+**As measured at 17:20 on 17 Sep, 1 minutes ago.** Recheck by **17:35** (15 minutes of useful life). Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied.
+
+---
+*Sources: `Building Ontology` `Water Metering System` `Water Flow Sensing System`*
+```
+
+### Where can I isolate the water supply for the second-floor toilets? — run 1 (5.5 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Asset Engineering Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### How many free-cooling hours did we capture last month versus what was available? — run 1 (30.3 s, OK)
+
+```
+**Answer**
+
+- **Free‑cooling sensors**: This building does not have free‑cooling sensors.  
+- **Closest available information**: The ontology provides building access hours, which describe when card‑holders can enter the building.  
+  - **Card‑holder access**: 07:00 – 22:00 on weekdays, 08:00 – 18:00 on weekends.  
+  - **Reception staffing**: Monday‑Friday 09:00 – 16:30.
+
+If you need data on actual cooling usage or availability, you would need to add a free‑cooling sensor to the building’s asset registry.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### why autism happens — run 1 (10.1 s, OK)
+
+```
+Autism spectrum disorder (ASD) is thought to arise from a complex interplay of genetic and environmental factors that affect brain development. Multiple genes linked to neuronal growth, synapse formation, and immune function have been identified, and variations in these genes can increase susceptibility. Prenatal and perinatal exposures—such as maternal infections, advanced parental age, or certain medications—may also influence neurodevelopmental pathways. The result is atypical connectivity and processing in brain circuits that underlie social communication, behavior, and sensory perception, leading to the characteristic features of autism.
+```
+
+### What if ozone layer vanished — run 1 (11.0 s, OK)
+
+```
+If the ozone layer were to disappear, the stratosphere would no longer absorb the Sun’s harmful ultraviolet (UV‑B and UV‑C) radiation, allowing far greater amounts of these wavelengths to reach Earth’s surface. This would lead to a sharp rise in skin cancers, cataracts, and other UV‑related health problems in humans and animals. Ecosystems would suffer: phytoplankton and other UV‑sensitive organisms would decline, disrupting food webs, and terrestrial plants would experience reduced growth and increased mortality. The increased UV could also accelerate the breakdown of certain atmospheric pollutants, potentially altering climate chemistry. In short, the loss of the ozone layer would have widespread, detrimental effects on human health, wildlife, and the global environment.
+```
+
+### What systems are specific for the meeting room? — run 1 (1.4 s, OK)
+
+```
+I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+```
+
+### Can you guide me to a meeting room? — run 1 (8.1 s, OK)
+
+```
+I couldn't identify the destination in your query. Please specify a room number (e.g. `5.01`) or room name. Example: *'how do I get to room 5.01 from reception'*
+```
+
+### in the barometric meter will functions — run 1 (59.6 s, OK)
+
+```
+**Answer**
+
+The ontology data you provided contains information only about **Waste Collection Points** (e.g., `bldg:waste/WCP-001`, `bldg:waste/WCP-002`, …).  
+There is **no barometric meter sensor** listed in this building’s data.
+
+**What is available**
+
+- **Waste Collection Point**  
+  - **Label**: *Waste collection point*  
+  - **Description**: “One bin or container: its station, what the SYSTEM records it as, what the bin is LABELLED, what its aperture physically accepts, its fill against an approved threshold, and when it is next collected.”  
+  - **Key properties**: fill level, fill threshold, next collection date, waste stream type, etc.
+
+If you need environmental data (e.g., temperature, humidity, pressure), the building’s current ontology does not include such sensors. You might consider adding a new sensor type to the ontology or checking other data sources for barometric or other environmental sensors.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building Ontology`*
+```
+
+### does your building have smoke detectors — run 1 (63.3 s, OK)
+
+```
+**Answer**
+
+Yes, the building has smoke detectors.  
+There are 6 smoke‑detector assets recorded in the fire‑safety register:
+
+| Floor | Asset ID | Status | Notes |
+|-------|----------|--------|-------|
+| 0 (Ground) | **FSA‑002** | active | Fire alarm zone – Floor 0 |
+| 1 | **FSA‑003** | active | Fire alarm zone – Floor 1 |
+| 2 | **FSA‑004** | active | Fire alarm zone – Floor 2 |
+| 3 | **FSA‑005** | defective | Two detectors in the Level 3 common room report low signal |
+| 4 | **FSA‑006** | active | Fire alarm zone – Floor 4 |
+| 5 | **FSA‑007** | active | Fire alarm zone – Floor 5 |
+
+**Context**
+
+* Total fire‑safety assets in the building: **30**  
+* Active assets: **24**  
+* Defective assets: **4** (including the one smoke‑detector above)  
+* Overdue assets: **2** (FSA‑001 – alarm, FSA‑027 – suppression)
+
+The smoke detectors are all classified under the **detection** fire‑asset kind. One of them (FSA‑005) is currently defective, while the others are active and have passed their last scheduled tests.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### How do glare sensors work? Does that come from the monitor itself? — run 1 (10.2 s, OK)
+
+```
+Glare sensors are small photodetectors—usually photodiodes or phototransistors—mounted near a display or in a room that measure the intensity of ambient light. They convert the light into an electrical signal that a controller uses to adjust the display’s backlight, brightness, or contrast so the screen remains readable without excessive glare. The sensor does not “come from” the monitor itself; it senses external light conditions and feeds that information back to the monitor’s adaptive‑brightness system.
+```
+
+### Does co2 ever realistically get so high that it bothers people? — run 1 (29.3 s, OK)
+
+```
+Yes—when indoor CO₂ concentrations rise well above normal outdoor levels (≈400 ppm), people can feel the effects. Levels around 1 000–2 000 ppm may cause mild drowsiness or headaches, while 3 000–5 000 ppm can produce noticeable discomfort, impaired cognition, and short‑term health symptoms. Concentrations above 5 000 ppm are considered hazardous and can lead to serious health issues; 10 000 ppm or higher can be life‑threatening. In most well‑ventilated buildings CO₂ stays below 1 000 ppm, but in poorly ventilated or densely occupied spaces it can climb to the ranges that bother occupants.
+```
+
+### how does building prevent this space? — run 1 (21.7 s, OK)
+
+```
+calls_ok requires acoustic separation, not merely a door.
+
+---
+*From Abacws Building's documents: Workspace Profile Register. For the current version, contact facility management.*
+```
+
+### How can a building shift to greener hours and still be productive? — run 1 (4.9 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Department Directory, Stakeholder Group Register; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+```
+
+### can you provide energy saving suggestion? — run 1 (47.3 s, OK)
+
+```
+**Energy‑saving actions for the six‑floor building**
+
+| # | Recommendation | Why it matters (data reference) | Practical steps |
+|---|----------------|----------------------------------|-----------------|
+| 1 | **Target the highest‑consuming floor – Floor 3** | Floor 3 has the highest average use (mean = 7.65 kWh h⁻¹) and the highest peak (max = 79.1 kWh h⁻¹). Its night mean (4.99 kWh h⁻¹) is also higher than all other floors (4.43–4.57 kWh h⁻¹). | • Lower the HVAC set‑point by 1.5 °C during off‑peak (00‑06 h). <br>• Expect a ~10 % drop in the 4.99 kWh h⁻¹ night mean → ~4.5 kWh h⁻¹. <br>• Monitor the next 7‑day period to confirm the change. |
+| 2 | **Implement occupancy‑based lighting on Floors 3 & 4** | Day‑time means are 9.77 kWh h⁻¹ (Floor 3) and 9.54 kWh h⁻¹ (Floor 4), while night means are 4.99 kWh h⁻¹ and 5.07 kWh h⁻¹ respectively. The large drop indicates lighting is a major contributor. | • Install motion sensors or dimming controls that reduce lighting to 70 % when no one is present. <br>• Aim for a 15–20 % reduction in the day‑time mean (≈ 1.5–2 kWh h⁻¹). |
+| 3 | **Use Floors 0 & 1 as efficiency benchmarks** | These floors have the lowest averages (Floor 0 = 7.03 kWh h⁻¹, Floor 1 = 6.96 kWh h⁻¹) and the lowest peaks (73.8 kWh h⁻¹ and 71.3 kWh h⁻¹). | • Audit HVAC, lighting, and plug‑load schedules on Floors 0 & 1. <br>• Replicate successful practices (e.g., tighter thermostat set‑points, scheduled equipment off‑times) on higher‑consumption floors. |
+| 4 | **Shift peak load on Floor 5** | Floor 5’s peak (78.2 kWh h⁻¹) occurs at 17 Sep 15:24, with a mean of 7.35 kWh h⁻¹. | • Move non‑critical HVAC or equipment start‑up to 07‑09 h. <br>• Target a 5 % reduction in the 78.2 kWh h⁻¹ peak → ~3.9 kWh h⁻¹. |
+| 5 | **Apply demand‑response on Floor 2** | Floor 2’s peak (75 kWh h⁻¹) occurs at 17 Sep 17:04, with a mean of 7.22 kWh h⁻¹. | • Program a 10 % load‑shedding event during the 17:00‑18:00 window. <br>• Expect a 7.5 kWh h⁻¹ drop in the peak. |
+
+---
+
+### Priority summary  
+**Most important action first:**  
+1. **Adjust HVAC set‑points on Floor 3** (highest consumption).  
+2. **Install occupancy‑based lighting on Floors 3 & 4** (biggest day‑night gap).  
+3. **Use Floors 0 & 1 as efficiency models** to guide changes on other floors.  
+4. **Shift peak load on Floor 5** to earlier hours.  
+5. **Apply demand‑response on Floor 2** during the 17:00 peak.  
+
+Implementing these steps will give the quickest, most measurable reductions in energy use across the building.
+
+**Boundary:** summed across 6 meters (Energy_Meter_Floor0, Energy_Meter_Floor1, Energy_Meter_Floor2, Energy_Meter_Floor3, Energy_Meter_Floor4, Energy_Meter_Floor5), covering Floor 0 (Ground Floor), Floor 1 (First Floor), Floor 2 (Second Floor), Floor 3 (Third Floor), Floor 4 (Fourth Floor), Floor 5 (Fifth Floor). The total is the sum of those boundaries — it is not a separate whole-site reading.
+
+**As measured at 17:19 on 17 Sep, 8 minutes ago.** Recheck by **17:34** (15 minutes of useful life). Switch if: conditions in the space you chose moves outside the range that made it the best option, or the space becomes occupied.
+
+---
+*Sources: `Building Ontology` `Energy Metering System`*
+```
+
+### How do we map relationships etween equipment in a semantic model? — run 1 (12.5 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Asset Engineering Register, Av Readiness Register, Maintenance Log; they are the closest material and none of them contains the answer.
+
+The owner of that record holds the answer.
+
+---
+*⚠️ I summarised the data above but couldn't render the chart this time. Please try again, or rephrase the request as e.g. "plot sensor 5.27 temperature for the last 24 hours as a line chart".*
+```

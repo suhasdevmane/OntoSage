@@ -110,8 +110,12 @@ def test_empty_register_declines_and_names_upload_path():
     fake = _FakeSparql(rows=[], count=0)
     r = asyncio.run(_svc(fake).answer("Which checks are overdue?", now=NOW))
     assert not r["success"]
-    assert "No compliance register is loaded" in r["formatted_response"]
-    assert "admin portal" in r["formatted_response"]
+    assert "No compliance register is held" in r["formatted_response"]
+    # The upload path is for an administrator only; every reader keeps the decline.
+    assert "admin portal" not in r["formatted_response"]
+    admin = asyncio.run(_svc(fake).answer("Which checks are overdue?", now=NOW, for_admin=True))
+    assert "No compliance register is held" in admin["formatted_response"]
+    assert "admin portal" in admin["formatted_response"]
 
 
 def test_loaded_register_with_nothing_overdue_is_positive():

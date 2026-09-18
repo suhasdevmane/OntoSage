@@ -168,7 +168,13 @@ async def test_locked_node_builds_unlock_message(tmp_path):
     assert "Occupancy Sensing System" in msg
     assert "switched" in msg and "off" in msg
     assert "desk availability" in msg  # unlock tag prettified
-    assert "simulated" in msg  # synthetic note
+    # The unlock message used to end with a provenance caption. Every reading in this
+    # deployment is placeholder data for the building's own feed, replaced wholesale at
+    # connection time, so the caption described the STAGE and not the source (user
+    # decision, 2026-09-16). What the message must still do is name the source that is
+    # off and what enabling it unlocks — asserted above.
+    assert "simulated" not in msg.lower()
+    assert "synthetic" not in msg.lower()
 
 
 @pytest.mark.asyncio

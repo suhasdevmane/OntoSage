@@ -2,7 +2,15 @@
 #
 # Each rule: id, name, enabled, trigger, action.
 # trigger.sensor_uuid: direct UUID from MySQL sensor_data column.
-# trigger.concept: HBCO concept (resolved to Brick class -> UUID at runtime).
+# trigger.concept: HBCO concept (resolved to Brick class -> UUIDs at runtime).
+# trigger.scope:   REQUIRED on a concept rule — `all` or `first_reporting`.
+# trigger.floor / trigger.space: optional spatial scope (TODO-528). Resolved through the
+#   graph's own hierarchy (sensor -> brick:hasLocation -> ...isPartOf/hasPart... ->
+#   brick:Floor), never by reading a floor number out of a sensor's name. The value is
+#   matched against the floor's or space's own IRI local name and rdfs:label, so "3",
+#   "Floor3" and "Floor 3 (Third Floor)" all name the same floor. A scope matching no
+#   point leaves the rule watching NOTHING and says so in the log — it never falls back
+#   to a point elsewhere in the building.
 # trigger.duration_min: how many minutes the condition must be sustained before firing.
 # action.type: notify (Phase F) — future Phase G adds actuate.
 # Cooldown: rules re-fire at most once per 30 minutes per sensor.
@@ -45,19 +53,21 @@ rules:
       op: ">"
       threshold: 65.0
       duration_min: 30
-      # REQUIRED on a concept rule (V12-20, BUG-482). A concept resolves to a Brick CLASS,
-      # and a class has many points; without this the engine bound to whichever one
-      # happened to be reporting and evaluated only that, while the rule read as though it
-      # covered the class.
-      #
-      # `first_reporting` and not `all`, deliberately: this rule is named for FLOOR 3 and
-      # the trigger has no way to say so — there is no spatial qualifier on a concept
-      # trigger (TODO-528). `all` would notify about humidity on every floor under a rule
-      # whose name promises one, which is a worse lie than the one being fixed. So it
-      # watches a single point, and now SAYS it watches a single point; the engine logs
-      # which. Change to `all` once a floor qualifier exists.
-      scope: first_reporting
+      # WHERE (TODO-528). The rule's NAME used to be the only place "floor 3" existed, and
+      # a name enforces nothing: the trigger had no spatial qualifier, so this rule watched
+      # one humidity sensor that could have been on any floor.
+      floor: "3"
+      # WHAT, within that where (V12-20, BUG-482). A concept resolves to a Brick CLASS and
+      # a class has many points, so a concept rule must say whether it means all of them or
+      # one. It was `first_reporting` only because `all` without a floor would have notified
+      # about humidity across the whole building under a rule whose name promises one floor.
+      # With the floor declared, `all` is what the rule has always claimed to be: every
+      # humidity point on floor 3.
+      scope: all
     action:
       type: notify
-      message: "Humidity is {value:.0f}% on floor 3 (above {threshold:.0f}% for {duration_min} min). Investigate for damp or ventilation issues."
+      # {sensor} names the point that breached — with scope:all a single cycle can raise
+      # several of these, and without it every one would read identically apart from the
+      # number. {floor}/{space} are also available.
+      message: "Humidity is {value:.0f}% at {sensor} on floor {floor} (above {threshold:.0f}% for {duration_min} min). Investigate for damp or ventilation issues."
       severity: warning

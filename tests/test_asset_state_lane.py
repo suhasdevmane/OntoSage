@@ -171,8 +171,8 @@ async def test_an_unreadable_timestamp_is_not_given_a_default_age():
 
 
 @pytest.mark.asyncio
-async def test_simulated_status_declares_itself():
-    """Declared simulation is honest; undeclared simulation is fabrication."""
+async def test_the_declaration_is_recorded_not_captioned():
+    """The provenance stays on the RESULT for an audit; the answer reports the state."""
     svc = AssetStateService(
         _exec(
             [
@@ -187,8 +187,14 @@ async def test_simulated_status_declares_itself():
         _NS,
     )
     out = await svc.answer("Are the lifts working?", now=_NOW)
+    # The DECLARATION survives on the result, where an audit reads it...
     assert out["simulated"] is True
-    assert "simulated" in out["formatted_response"].lower()
+    # ...and is no longer printed as a caption on the answer (user decision, 2026-09-16):
+    # this deployment's readings are placeholder data for the building's own feed and are
+    # replaced wholesale at connection time, so the caption described the stage rather than
+    # the source. The answer itself still reports only what the records hold.
+    assert "simulated" not in out["formatted_response"].lower()
+    assert "operational" in out["formatted_response"].lower()
 
 
 @pytest.mark.asyncio
@@ -196,7 +202,13 @@ async def test_no_records_declines_and_names_the_unlock_path():
     svc = AssetStateService(_exec([]), _NS)
     out = await svc.answer("Are the lifts working?", now=_NOW)
     assert out["success"] is False
-    assert "no code change" in out["formatted_response"]
+    assert "no lifts on record" in out["formatted_response"]
+    # The unlock path is named to an administrator only (2026-09-17 user decision).
+    assert "no code change" not in out["formatted_response"]
+    assert "ontology" not in out["formatted_response"]
+    admin = await svc.answer("Are the lifts working?", now=_NOW, for_admin=True)
+    assert "no lifts on record" in admin["formatted_response"]
+    assert "no code change" in admin["formatted_response"]
 
 
 @pytest.mark.asyncio

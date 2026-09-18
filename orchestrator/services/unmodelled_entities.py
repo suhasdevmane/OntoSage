@@ -149,24 +149,37 @@ async def class_is_modelled(noun: str, sparql_exec: Callable[[str], Any]) -> Opt
     return None if n is None else n > 0
 
 
-def correction_text(noun: str, original: str) -> str:
-    """Replace a fabricated zero with what is actually known."""
-    return (
-        f"This building's model does not include **{noun}** at all — there is no such "
-        f"class in its ontology and nothing has been recorded about them. That is not "
-        f"the same as there being none: I have no basis to count them either way. "
-        f"Adding them to the building's TTL would make the question answerable."
+def correction_text(noun: str, original: str, for_admin: bool = False) -> str:
+    """Replace a fabricated zero with what is actually known.
+
+    Every reader is told the building does not record the thing and that this is not the same
+    as there being none. Only an administrator (``for_admin``) is told how to make it
+    answerable: a supervisor cannot edit the building's data, and an instruction to do so reads
+    as a broken system (2026-09-17 user decision). The default is the plain form.
+    """
+    text = (
+        f"This building's model does not include **{noun}** at all — nothing about them has "
+        f"been recorded. That is not the same as there being none: I have no basis to count "
+        f"them either way."
     )
+    if for_admin:
+        text += (
+            f" There is no such class in the building's ontology; adding them to the "
+            f"building's TTL would make the question answerable."
+        )
+    return text
 
 
 async def guard_answer(
     text: str,
     sparql_exec: Callable[[str], Any],
+    for_admin: bool = False,
 ) -> Tuple[str, Optional[dict]]:
     """Return (possibly corrected answer, violation record or None).
 
     Fails open in every uncertain case: no zero-claim, an unverifiable lookup, or a
-    class that IS modelled all leave the answer untouched.
+    class that IS modelled all leave the answer untouched. ``for_admin`` is passed to
+    ``correction_text``; the default withholds the remediation.
     """
     noun = detect_zero_entity_claim(text)
     if not noun:
@@ -178,4 +191,7 @@ async def guard_answer(
         f"[unmodelled] answer reported zero {noun!r}; the ontology defines no such class "
         f"— rewritten as not-modelled"
     )
-    return correction_text(noun, text), {"entity": noun, "original": text[:300]}
+    return correction_text(noun, text, for_admin=for_admin), {
+        "entity": noun,
+        "original": text[:300],
+    }

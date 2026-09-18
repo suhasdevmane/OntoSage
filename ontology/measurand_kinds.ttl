@@ -347,6 +347,15 @@ ontosage:VolatileOrganicCompounds ontosage:typicalMin    0 ; ontosage:typicalMax
 ontosage:ParticulateMatter        ontosage:typicalMin    2 ; ontosage:typicalMax   35 ; ontosage:typicalDecimals 0 .
 ontosage:AirQualityIndex          ontosage:typicalMin    0 ; ontosage:typicalMax  150 ; ontosage:typicalDecimals 0 .
 ontosage:AirTemperature           ontosage:typicalMin   18 ; ontosage:typicalMax   28 ; ontosage:typicalDecimals 2 .
+
+# Water temperature had a PHYSICAL band and no ordinary one, so any water point fell back to
+# the AIR range that Temperature_Sensor carries — and a 69 degC boiler flow was published at
+# 22.5 degC (BUG-638). The range below spans both circuits this building runs: a chilled loop
+# in single figures and a heating flow in the seventies. It is deliberately WIDE, because one
+# measurand covers both and narrowing it would assert a distinction the ontology does not
+# make; a point whose series must stay coherent (a flow and its return) is generated as a
+# correlated set instead of drawn from this range.
+ontosage:WaterTemperature         ontosage:typicalMin    5 ; ontosage:typicalMax   80 ; ontosage:typicalDecimals 1 .
 ontosage:RelativeHumidity         ontosage:typicalMin   30 ; ontosage:typicalMax   70 ; ontosage:typicalDecimals 2 .
 ontosage:Illuminance              ontosage:typicalMin    0 ; ontosage:typicalMax 1000 ; ontosage:typicalDecimals 0 .
 ontosage:SoundPressureLevel       ontosage:typicalMin   30 ; ontosage:typicalMax   80 ; ontosage:typicalDecimals 0 .
@@ -385,8 +394,16 @@ ontosage:ElectricalPower a ontosage:Measurand ;
 ontosage:ElectricalEnergy a ontosage:Measurand ;
     rdfs:label "electrical energy"@en ;
     ontosage:physicalUnit "kWh" ; ontosage:physicalMin 0 ; ontosage:physicalMax 1000000 ;
-    ontosage:bandSource "Judgement: a cumulative or interval meter register; only the lower bound is physical." ;
-    ontosage:typicalMin 0 ; ontosage:typicalMax 100 ; ontosage:typicalDecimals 2 .
+    # NARROWED 2026-09-17 (BUG-756). The typical band is what a generated point is drawn
+    # from, and 0-100 is a CUMULATIVE REGISTER's range, not one INTERVAL read. When the floor
+    # submeters joined the publish map on 2026-09-16 18:00 they began emitting 30-75 kWh per
+    # 15-minute sample where the preceding fortnight averaged 3.4, and "compare this week's
+    # electricity use with last week" answered "+160.9%" from the scale change alone.
+    # 8 is the observed interval maximum of this building's own history (per-floor samples ran
+    # 1.9-4.9 kWh), with headroom. The physical band above is unchanged: a cumulative register
+    # is still physically possible, it is simply not what a generated interval sample is.
+    ontosage:bandSource "Measured: interval reads on this building's floor submeters, 2026-09-03..16, ran 1.9-4.9 kWh per 15 minutes. Only the lower bound is physical." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 8 ; ontosage:typicalDecimals 2 .
 
 ontosage:ColourTemperature a ontosage:Measurand ;
     rdfs:label "correlated colour temperature"@en ;

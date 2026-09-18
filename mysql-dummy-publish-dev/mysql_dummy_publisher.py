@@ -17,7 +17,7 @@ import re
 import signal
 import sys
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
 
 # NOT `import signal`: that name is the stdlib module, used below for SIGTERM.
@@ -139,7 +139,16 @@ def load_narrow_sensors(filepath=None):
             data = json.load(f)
         entries = data.values() if isinstance(data, dict) else data
         NARROW_SENSORS = [
-            {"uuid": e["uuid"], "table": e["table"], "value_col": e.get("value_col", "generic")}
+            {
+                "uuid": e["uuid"],
+                "table": e["table"],
+                "value_col": e.get("value_col", "generic"),
+                # The point's own ordinary range, where the ontology declares one. Dropping
+                # these here is what left every gas sharing the `voc` column's range.
+                "lo": e.get("lo"),
+                "hi": e.get("hi"),
+                "dec": e.get("dec", 2),
+            }
             for e in entries
             if e.get("uuid") and e.get("table")
         ]
@@ -206,7 +215,16 @@ def publish_narrow(conn, verbose=False) -> int:
     for s in NARROW_SENSORS:
         if not _signal.due(s["uuid"], s["value_col"], now_s):
             continue
-        lo, hi, dec = _NARROW_RANGES.get(s["value_col"], (0.0, 100.0, 2))
+        # THE POINT'S OWN BAND WINS over the column default. A narrow table holds one column
+        # for a whole family — every gas in this building writes to `iaq_data.voc` — so the
+        # column default gave carbon monoxide the range for TVOC and published it at ~204
+        # ppm. The building declares CO's ordinary range as 0-5; 200 ppm is the shape of
+        # reading somebody evacuates over. The band comes from the ontology's own
+        # typicalMin/typicalMax, carried per point in the publish map.
+        if s.get("lo") is not None and s.get("hi") is not None:
+            lo, hi, dec = float(s["lo"]), float(s["hi"]), int(s.get("dec", 2))
+        else:
+            lo, hi, dec = _NARROW_RANGES.get(s["value_col"], (0.0, 100.0, 2))
         value, _raw = _signal.next_value(s["uuid"], s["value_col"], lo, hi, dec, now_dt)
         by_table.setdefault(s["table"], []).append((s["uuid"], value))
         _signal.mark_written(s["uuid"], now_s)
@@ -234,6 +252,613 @@ def publish_narrow(conn, verbose=False) -> int:
 # sensor_data_synth = 106 synthetic). Values are typed per Brick class in the
 # manifest (lo/hi/dec), so a temperature reads 18-28, not 0-100.
 EXTENDED_SENSORS: List[Dict[str, object]] = []  # [{uuid, table, lo, hi, dec}]
+
+
+# ── Plant: CORRELATED points, published per EQUIPMENT and not per point ─────
+#
+# A boiler's entering and leaving water temperatures are ONE physical fact measured twice,
+# and their difference is the answer to "what's the delta-T across the heating circuit, and
+# is it healthy?". Walking them independently is what collapsed that answer from 11.08 K to
+# 0.12 K (BUG-638) — after which plant_data was removed from the ordinary narrow map and
+# stopped receiving rows at all, so the live answer decayed to ambient and read 0.04 K.
+#
+# So each group derives its members from ONE seed: a lead value inside the band its own
+# history occupied, and a delta sampled from the delta distribution its own history held.
+# The bands live in <building>_plant_publish_map.json, measured from the healthy period,
+# never from the decayed tail.
+PLANT_GROUPS: List[Dict[str, object]] = []
+PLANT_TABLE = "plant_data"
+
+#: Flow and filter pressure legitimately collapse when the fan stops; AIR TEMPERATURES DO
+#: NOT — a sensor in a still duct keeps reading the air around it. Roughly half the stored
+#: history wrote ~0 °C whenever the fan was off, which is why the supply-air average reads
+#: 8 °C against a 20 °C median of its non-zero rows. Published temperatures therefore stay
+#: in band whatever the fan is doing.
+_FAN_OFF_FRACTION = 0.12
+
+
+def _plant_map_path() -> str:
+    override = os.environ.get("PLANT_MAP", "").strip()
+    if override:
+        return override
+    found = sorted(glob.glob("/app/input/*_plant_publish_map.json"))
+    return found[0] if found else "/app/input/plant_publish_map.json"
+
+
+def load_plant_groups(filepath=None) -> int:
+    global PLANT_GROUPS, PLANT_TABLE
+    filepath = filepath or _plant_map_path()
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            doc = json.load(f)
+        PLANT_GROUPS = list(doc.get("groups") or [])
+        PLANT_TABLE = str(doc.get("table") or "plant_data")
+        print(
+            f"[py-dummy] plant map: {len(PLANT_GROUPS)} equipment group(s) from {filepath}",
+            flush=True,
+        )
+    except FileNotFoundError:
+        PLANT_GROUPS = []
+        print(f"[py-dummy] no plant map at {filepath} — plant publishing disabled", flush=True)
+    except Exception as e:
+        PLANT_GROUPS = []
+        print(f"[py-dummy] plant map unreadable ({e}) — plant publishing disabled", flush=True)
+    return len(PLANT_GROUPS)
+
+
+def _band(entry, fallback_lo=0.0, fallback_hi=1.0):
+    lo = entry.get("lo")
+    hi = entry.get("hi")
+    if lo is None or hi is None or float(hi) <= float(lo):
+        return float(fallback_lo), float(fallback_hi)
+    return float(lo), float(hi)
+
+
+def _walk(prev, lo, hi):
+    """A small step from the previous value, reflected back inside the band.
+
+    Reflected rather than clamped: clamping parks a series on its own boundary and makes
+    every subsequent reading identical, which is a different kind of wrong from noise.
+    """
+    span = hi - lo
+    if prev is None:
+        prev = lo + span * random.random()
+    step = random.gauss(0.0, span * 0.06)
+    nxt = prev + step
+    if nxt < lo:
+        nxt = lo + (lo - nxt)
+    if nxt > hi:
+        nxt = hi - (nxt - hi)
+    return min(hi, max(lo, nxt))
+
+
+_PLANT_LAST: Dict[str, float] = {}
+
+
+def publish_plant(conn, verbose=False) -> int:
+    """One coherent sample per equipment group into the plant table."""
+    if not PLANT_GROUPS:
+        return 0
+
+    rows: List[Tuple[str, float]] = []
+    for group in PLANT_GROUPS:
+        roles = group.get("roles") or {}
+        delta_spec = group.get("delta") or {}
+        lead_role = delta_spec.get("lead")
+        follow_role = delta_spec.get("follow")
+
+        fan_on = True
+        if "fan_status" in roles:
+            fan_on = random.random() > _FAN_OFF_FRACTION
+            rows.append((roles["fan_status"]["uuid"], 1.0 if fan_on else 0.0))
+
+        lead_value = None
+        if lead_role and lead_role in roles and follow_role in roles:
+            lo, hi = _band(roles[lead_role], 0.0, 100.0)
+            key = roles[lead_role]["uuid"]
+            lead_value = _walk(_PLANT_LAST.get(key), lo, hi)
+            _PLANT_LAST[key] = lead_value
+
+            d_lo = float(delta_spec.get("lo", 0.0))
+            d_hi = float(delta_spec.get("hi", 0.0))
+            if d_hi < d_lo:
+                d_lo, d_hi = d_hi, d_lo
+            # TRIANGULAR about the historical MEDIAN, not uniform across the range.
+            # The boiler delta is near-symmetric so it makes no difference there, but the
+            # AHU air-side delta is skewed (p10 -8.8, median -2.9, p90 -1.1) and a uniform
+            # draw centres on -4.9 — every value inside the historical band, and the typical
+            # value moved by 2 K. Staying in range is not the same as continuing the series.
+            d_mid = float(delta_spec.get("mid", (d_lo + d_hi) / 2.0))
+            d_mid = min(d_hi, max(d_lo, d_mid))
+            delta = random.triangular(d_lo, d_hi, d_mid)
+            follow_value = lead_value - delta
+
+            rows.append((roles[lead_role]["uuid"], round(lead_value, 2)))
+            rows.append((roles[follow_role]["uuid"], round(follow_value, 2)))
+
+        for role, entry in roles.items():
+            if role in ("fan_status", lead_role, follow_role):
+                continue
+            lo, hi = _band(entry, 0.0, 100.0)
+            if role in ("supply_air_flow", "filter_dp") and not fan_on:
+                # Genuinely near zero with the fan stopped — unlike the temperatures.
+                value = round(random.uniform(0.0, max(0.01, lo * 0.02)), 3)
+            elif role == "damper_position" and not fan_on:
+                # NEAR shut, not shut. A real outside-air damper has a leakage position,
+                # and its band in the map is measured over running hours only (it is
+                # `fan_conditioned`), so the stopped state has to be written here rather
+                # than drawn from a band that does not describe it.
+                value = round(random.uniform(0.0, 5.0), 1)
+            else:
+                key = entry["uuid"]
+                value = round(_walk(_PLANT_LAST.get(key), lo, hi), 2)
+                _PLANT_LAST[key] = value
+            rows.append((entry["uuid"], value))
+
+    if not rows:
+        return 0
+    try:
+        with conn.cursor() as cur:
+            cur.executemany(
+                f"INSERT INTO `{PLANT_TABLE}` (`uuid`, `datetime`, `value`) "
+                f"VALUES (%s, UTC_TIMESTAMP(), %s) "
+                f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
+                rows,
+            )
+        return len(rows)
+    except Exception as e:
+        if verbose:
+            print(f"[py-dummy] plant insert failed: {e}", flush=True)
+        return 0
+
+
+# ── Waste: a bin FILLS AND IS EMPTIED; it does not random-walk ──────────────
+#
+# Fill level is a sawtooth. It accumulates while the building is occupied and drops to near
+# empty when the bin is collected. A walk would make "which bins need emptying?" meaningless
+# and "how often are these collected?" unanswerable — the shape IS the information here.
+#
+# Weight follows fill through the bin's own capacity, and capacity differs by stream:
+# general waste is denser than mixed dry recycling, which is largely air by volume. A single
+# constant across both streams would make every recycling weight wrong while each number
+# still looked individually plausible — the failure mode that hid BUG-638 for a week.
+WASTE_BINS: List[Dict[str, object]] = []
+WASTE_FILL_TABLE = "wastefill_data"
+WASTE_WEIGHT_TABLE = "wasteweight_data"
+WASTE_CAPACITY_KG: Dict[str, float] = {}
+
+#: Chance per tick that a bin is collected once it is worth collecting.
+_COLLECTION_CHANCE = 0.04
+_COLLECT_ABOVE_PCT = 55.0
+
+_WASTE_STATE: Dict[str, Dict[str, float]] = {}
+
+
+def _waste_map_path() -> str:
+    override = os.environ.get("WASTE_MAP", "").strip()
+    if override:
+        return override
+    found = sorted(glob.glob("/app/input/*_waste_publish_map.json"))
+    return found[0] if found else "/app/input/waste_publish_map.json"
+
+
+def load_waste_bins(filepath=None) -> int:
+    global WASTE_BINS, WASTE_FILL_TABLE, WASTE_WEIGHT_TABLE, WASTE_CAPACITY_KG
+    filepath = filepath or _waste_map_path()
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            doc = json.load(f)
+        WASTE_BINS = list(doc.get("bins") or [])
+        WASTE_FILL_TABLE = str(doc.get("fill_table") or "wastefill_data")
+        WASTE_WEIGHT_TABLE = str(doc.get("weight_table") or "wasteweight_data")
+        WASTE_CAPACITY_KG = dict(doc.get("capacity_kg") or {})
+        print(f"[py-dummy] waste map: {len(WASTE_BINS)} bin(s) from {filepath}", flush=True)
+    except FileNotFoundError:
+        WASTE_BINS = []
+        print(f"[py-dummy] no waste map at {filepath} — waste publishing disabled", flush=True)
+    except Exception as e:
+        WASTE_BINS = []
+        print(f"[py-dummy] waste map unreadable ({e}) — waste publishing disabled", flush=True)
+    return len(WASTE_BINS)
+
+
+def _occupancy_factor(now_dt) -> float:
+    """Rubbish arrives when people do."""
+    if now_dt.weekday() >= 5:
+        return 0.15
+    return 1.0 if 7 <= now_dt.hour < 19 else 0.12
+
+
+def publish_waste(conn, verbose=False, now_dt=None) -> int:
+    """Advance every bin's fill, derive its weight, and write both."""
+    if not WASTE_BINS:
+        return 0
+    now_dt = now_dt or datetime.utcnow()
+    occupancy = _occupancy_factor(now_dt)
+
+    fill_rows: List[Tuple[str, float]] = []
+    weight_rows: List[Tuple[str, float]] = []
+    for b in WASTE_BINS:
+        roles = b.get("roles") or {}
+        if "fill" not in roles or "weight" not in roles:
+            continue
+        key = str(b.get("bin") or roles["fill"]["uuid"])
+        state = _WASTE_STATE.setdefault(
+            key,
+            {
+                "fill": random.uniform(5.0, 45.0),
+                "rate": random.uniform(0.9, 1.6),
+                "tare": random.uniform(1.5, 3.5),
+            },
+        )
+
+        state["fill"] += state["rate"] * occupancy * random.uniform(0.55, 1.45)
+        if state["fill"] >= _COLLECT_ABOVE_PCT and random.random() < _COLLECTION_CHANCE:
+            state["fill"] = random.uniform(1.0, 6.0)  # collected
+        state["fill"] = min(100.0, max(0.0, state["fill"]))
+
+        cap = float(WASTE_CAPACITY_KG.get(str(b.get("stream") or ""), 40.0))
+        # +/-0.5%, not +/-4%. A load cell is a precise instrument: at 4% the noise on a
+        # 30 kg bin (+/-1.2 kg) swamps one tick's worth of rubbish (~0.55 kg), so the
+        # measured weight FELL while the bin filled about a third of the time. That would
+        # make "how much did we throw away this week" jitter and could show a bin getting
+        # lighter as it fills — a defect that every individual reading still looks fine
+        # under, which is the shape of failure this project keeps rediscovering.
+        weight = state["tare"] + (state["fill"] / 100.0) * cap * random.uniform(0.995, 1.005)
+
+        fill_rows.append((roles["fill"]["uuid"], round(state["fill"], 1)))
+        weight_rows.append((roles["weight"]["uuid"], round(weight, 2)))
+
+    written = 0
+    try:
+        with conn.cursor() as cur:
+            for table, rows in (
+                (WASTE_FILL_TABLE, fill_rows),
+                (WASTE_WEIGHT_TABLE, weight_rows),
+            ):
+                if not rows:
+                    continue
+                cur.executemany(
+                    f"INSERT INTO `{table}` (`uuid`, `datetime`, `value`) "
+                    f"VALUES (%s, UTC_TIMESTAMP(), %s) "
+                    f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
+                    rows,
+                )
+                written += len(rows)
+    except Exception as e:
+        if verbose:
+            print(f"[py-dummy] waste insert failed: {e}", flush=True)
+        return 0
+    return written
+
+
+# ── Events: the events store's time-based records, kept live (CAVEAT-672) ────
+#
+# The events store's footfall, bookings, work orders and asset outages were seeded ONCE by
+# scripts/backfill_events.py and nothing wrote them afterwards, so from 2026-09-05 "how busy
+# was the entrance today?" answered 0 and every work order raised before then was still
+# "open" three weeks later. The sensor stores stayed current the whole time, which is why the
+# building-wide freshness sweep reported everything live.
+#
+# THE GENERATOR IS LOADED, NOT COPIED. The shapes live in the orchestrator's
+# synthetic_events.py / synthetic_signals.py, and the backfill used exactly those. This image
+# is a separate build context and the `orchestrator` package's __init__ imports the entire
+# application, so a plain import is not possible here; the two files are loaded BY PATH from
+# a read-only mount instead (EVENTS_GENERATOR_DIR, default /app/generators). With the same
+# room list those functions reproduce the stored event ids exactly — measured 2026-09-17,
+# 100% id overlap on four backfilled days — so a live row continues the backfill rather than
+# resembling it.
+#
+# ANOMALY ROWS ARE NEVER WRITTEN HERE. The orchestrator's scanner owns every `anomaly:*` row;
+# a second writer on one series is BUG-666, whichever of the two is right.
+#
+# IDEMPOTENT. Every event id is a uuid5 of building, kind, subject and start, so a restart,
+# an overlapping window or the catch-up script re-deriving the same period cannot write an
+# event twice. A row that already exists only has its LIFECYCLE refreshed (status, end_dt):
+# a work order raised on Monday is "assigned" by Wednesday, a booking that has started is no
+# longer "confirmed", and a status stamped once at generation time and never revisited is
+# the same defect as the stale readings, one column over.
+EVENTS_SPEC: Dict[str, object] = {}
+EVENTS_GEN = None  # the generator module, loaded from the orchestrator's own source
+EVENTS_TABLE = "events"
+
+#: The kinds this publisher may write. Nothing outside this set is ever written, whatever a
+#: map asks for — in particular no `anomaly*` kind.
+EVENT_KINDS = ("access", "booking", "workorder", "asset_outage")
+_FOREIGN_KIND_PREFIXES = ("anomaly",)
+
+#: Per-kind evaluation cadence and window. Cadence is no faster than the kind occurs: access
+#: is aggregated into the generator's 10-minute buckets and a booking slot is 10 minutes;
+#: work orders and outages arrive a few times a day at most. The backward window re-covers
+#: a publisher outage of that length on restart (longer gaps are the catch-up script's job),
+#: and is wide enough for each kind's lifecycle to finish (a work order can take 12 days).
+_EVENT_KIND_DEFAULTS: Dict[str, Dict[str, int]] = {
+    "access": {"cadence_s": 600, "lookback_days": 7, "forward_days": 0},
+    "booking": {"cadence_s": 600, "lookback_days": 7, "forward_days": 14},
+    "workorder": {"cadence_s": 900, "lookback_days": 14, "forward_days": 0},
+    "asset_outage": {"cadence_s": 900, "lookback_days": 7, "forward_days": 0},
+}
+
+_GENERATOR_FILES = ("synthetic_signals.py", "synthetic_events.py")
+_GEN_PACKAGE = "orchestrator.services.deliberation"
+_REGISTRY_MODULE = "orchestrator.services.datasource_registry"
+
+#: event_id -> (status, end_dt, start_dt) as last written, so an unchanged event is not
+#: re-sent every tick. Empty after a restart, which costs one idempotent pass and no more.
+_EVENTS_WRITTEN: Dict[str, Tuple[str, Optional[str], str]] = {}
+_EVENTS_LAST_EVAL: Dict[str, float] = {}
+_EVENTS_WRITTEN_PRUNE_AT = 50000
+
+_EVENTS_UPSERT = (
+    "INSERT INTO `{table}` "
+    "(`event_id`, `event_type`, `subject_uuid`, `start_dt`, `end_dt`, `status`, `attrs`) "
+    "VALUES (%s, %s, %s, %s, %s, %s, %s) "
+    "ON DUPLICATE KEY UPDATE "
+    "`status` = IF(`event_type` = VALUES(`event_type`), VALUES(`status`), `status`), "
+    "`end_dt` = IF(`event_type` = VALUES(`event_type`), VALUES(`end_dt`), `end_dt`)"
+)
+
+
+def _is_foreign_kind(kind: object) -> bool:
+    return str(kind or "").lower().startswith(_FOREIGN_KIND_PREFIXES)
+
+
+def _events_map_path() -> str:
+    override = os.environ.get("EVENTS_MAP", "").strip()
+    if override:
+        return override
+    found = sorted(glob.glob("/app/input/*_events_publish_map.json"))
+    return found[0] if found else "/app/input/events_publish_map.json"
+
+
+def _events_generator_dir() -> str:
+    return os.environ.get("EVENTS_GENERATOR_DIR", "").strip() or "/app/generators"
+
+
+def _subject_uuid_from_spec(building_id: str, source_id: str, local: str) -> str:
+    """Stands in for datasource_registry.derive_point_uuid inside this image.
+
+    That module cannot be imported here (it pulls yaml, pydantic and the shared package).
+    The namespace is NOT restated in this file: the catch-up script reads it from the
+    orchestrator and writes it into the map, and tests/test_events_stay_live.py pins this
+    derivation to the orchestrator's own function.
+    """
+    import uuid as _uuid
+
+    ns = str(EVENTS_SPEC.get("subject_uuid_namespace") or "")
+    if not ns:
+        raise KeyError("events map carries no subject_uuid_namespace")
+    return str(_uuid.uuid5(_uuid.UUID(ns), f"{building_id}:{source_id}:{local}"))
+
+
+def _load_module_from(name: str, path: str):
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ImportError(f"cannot load {path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_event_generator(directory: Optional[str] = None):
+    """The orchestrator's event generator, loaded by path from `directory`.
+
+    The generator's two imports are satisfied by temporary stand-ins that are removed again
+    before this returns, so the process's module table is exactly as it was — which matters
+    in a test run where the real `orchestrator` package is already imported.
+    """
+    import types
+
+    directory = directory or _events_generator_dir()
+    paths = {name: os.path.join(directory, name) for name in _GENERATOR_FILES}
+    missing = [p for p in paths.values() if not os.path.isfile(p)]
+    if missing:
+        raise FileNotFoundError(f"generator source not found: {missing}")
+
+    signals_name = f"{_GEN_PACKAGE}.synthetic_signals"
+    names = ("orchestrator", "orchestrator.services", _GEN_PACKAGE, _REGISTRY_MODULE, signals_name)
+    absent = object()
+    saved = {n: sys.modules.get(n, absent) for n in names}
+    try:
+        for n in names[:3]:
+            pkg = types.ModuleType(n)
+            pkg.__path__ = []  # type: ignore[attr-defined]
+            sys.modules[n] = pkg
+        registry = types.ModuleType(_REGISTRY_MODULE)
+        registry.derive_point_uuid = _subject_uuid_from_spec  # type: ignore[attr-defined]
+        sys.modules[_REGISTRY_MODULE] = registry
+        sys.modules[signals_name] = _load_module_from(signals_name, paths["synthetic_signals.py"])
+        return _load_module_from("_publisher_synthetic_events", paths["synthetic_events.py"])
+    finally:
+        for n, mod in saved.items():
+            if mod is absent:
+                sys.modules.pop(n, None)
+            else:
+                sys.modules[n] = mod
+
+
+def _disable_events() -> None:
+    global EVENTS_SPEC, EVENTS_GEN, EVENTS_TABLE
+    EVENTS_SPEC, EVENTS_GEN, EVENTS_TABLE = {}, None, "events"
+    _EVENTS_WRITTEN.clear()
+    _EVENTS_LAST_EVAL.clear()
+
+
+def configure_events(spec: Dict[str, object], generator_dir: Optional[str] = None) -> int:
+    """Validate a spec, load the generator, and enable publishing. Returns the kind count.
+
+    Never raises: anything missing or malformed disables events publishing and says why,
+    because a broken events map must not take the sensor publishing down with it.
+    """
+    global EVENTS_SPEC, EVENTS_GEN, EVENTS_TABLE
+    _disable_events()
+    if not isinstance(spec, dict):
+        print("[py-dummy] events map is not an object — events publishing disabled", flush=True)
+        return 0
+    rooms = spec.get("rooms")
+    if not spec.get("building_id") or not isinstance(rooms, list) or not rooms:
+        print("[py-dummy] events map lacks building_id/rooms — events publishing disabled")
+        return 0
+    if not spec.get("subject_uuid_namespace"):
+        print("[py-dummy] events map lacks subject_uuid_namespace — events publishing disabled")
+        return 0
+
+    requested = spec.get("kinds") or {k: {} for k in EVENT_KINDS}
+    kinds: Dict[str, Dict[str, int]] = {}
+    for name, cfg in dict(requested).items():
+        if _is_foreign_kind(name):
+            print(f"[py-dummy] events map names '{name}' — owned by the scanner, never written")
+            continue
+        if name not in EVENT_KINDS:
+            print(f"[py-dummy] events map names unknown kind '{name}' — ignored", flush=True)
+            continue
+        merged = dict(_EVENT_KIND_DEFAULTS[name])
+        for key in merged:
+            try:
+                if isinstance(cfg, dict) and cfg.get(key) is not None:
+                    merged[key] = max(0, int(cfg[key]))
+            except (TypeError, ValueError):
+                pass
+        kinds[name] = merged
+    if not kinds:
+        print("[py-dummy] events map enables no publishable kind — events publishing disabled")
+        return 0
+
+    EVENTS_SPEC = dict(spec)
+    EVENTS_SPEC["kinds"] = kinds
+    try:
+        gen = load_event_generator(generator_dir)
+    except Exception as e:
+        _disable_events()
+        print(f"[py-dummy] event generator not loaded ({e}) — events publishing disabled")
+        return 0
+    EVENTS_GEN = gen
+    EVENTS_TABLE = str(spec.get("table") or "events")
+    return len(kinds)
+
+
+def load_events(filepath: Optional[str] = None, generator_dir: Optional[str] = None) -> int:
+    """Read the events map and enable publishing; a missing map disables it quietly."""
+    filepath = filepath or _events_map_path()
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            spec = json.load(f)
+    except FileNotFoundError:
+        _disable_events()
+        print(f"[py-dummy] no events map at {filepath} — events publishing disabled", flush=True)
+        return 0
+    except Exception as e:
+        _disable_events()
+        print(f"[py-dummy] events map unreadable ({e}) — events publishing disabled", flush=True)
+        return 0
+    n = configure_events(spec, generator_dir)
+    if n:
+        print(
+            f"[py-dummy] events: {n} kind(s) {sorted(EVENTS_SPEC['kinds'])} over "
+            f"{len(EVENTS_SPEC['rooms'])} room(s) from {filepath}",
+            flush=True,
+        )
+    return n
+
+
+def _day0(dt: datetime) -> datetime:
+    return dt.replace(hour=0, minute=0, second=0, microsecond=0)
+
+
+def event_rows_for_window(
+    gen, spec: Dict[str, object], kind: str, first_day: datetime, last_day: datetime, now: datetime
+) -> List[tuple]:
+    """INSERT rows the generator produces for `kind` on each day in [first_day, last_day].
+
+    Cut at `now` for everything that cannot exist before it happens: an access bucket only
+    once it has CLOSED (a half-open bucket would publish arrivals that have not happened
+    yet), a work order only once raised. Outages already stop at `now` inside the generator.
+    Bookings are the one kind that legitimately lives in the future, as a room calendar does,
+    and the generator marks those "confirmed" rather than "done".
+    """
+    if _is_foreign_kind(kind) or kind not in EVENT_KINDS:
+        raise ValueError(f"not a publishable event kind: {kind}")
+    building_id = str(spec["building_id"])
+    rooms = [str(r) for r in (spec.get("rooms") or [])]
+    assets = [tuple(a) for a in (spec.get("assets") or [])]
+    out: List[tuple] = []
+    day = _day0(first_day)
+    while day <= last_day:
+        if kind == "access":
+            events = [
+                e for e in gen.access_events_for_day(building_id, rooms, day) if e["end_dt"] <= now
+            ]
+        elif kind == "booking":
+            events = gen.bookings_for_building_day(building_id, rooms, day, now)
+        elif kind == "workorder":
+            events = [
+                e
+                for e in gen.workorders_for_day(building_id, rooms, day, now)
+                if e["start_dt"] <= now
+            ]
+        else:
+            events = gen.outages_for_day(building_id, assets, day, now) if assets else []
+        out.extend(gen.to_row(e) for e in events if e.get("event_type") == kind)
+        day += timedelta(days=1)
+    return out
+
+
+def events_due_rows(now_dt: datetime, now_s: float, force: bool = False) -> List[tuple]:
+    """Rows for every enabled kind whose own cadence has elapsed (all of them with force)."""
+    if EVENTS_GEN is None or not EVENTS_SPEC:
+        return []
+    rows: List[tuple] = []
+    today = _day0(now_dt)
+    for kind, cfg in dict(EVENTS_SPEC.get("kinds") or {}).items():
+        if not force and (now_s - _EVENTS_LAST_EVAL.get(kind, float("-inf"))) < cfg["cadence_s"]:
+            continue
+        _EVENTS_LAST_EVAL[kind] = now_s
+        first = today - timedelta(days=cfg["lookback_days"])
+        last = today + timedelta(days=cfg["forward_days"])
+        rows.extend(event_rows_for_window(EVENTS_GEN, EVENTS_SPEC, kind, first, last, now_dt))
+    return rows
+
+
+def publish_events(conn, verbose=False, now_dt=None, now_s=None, force=False) -> int:
+    """Write new events and lifecycle changes; returns how many rows were sent."""
+    if EVENTS_GEN is None or not EVENTS_SPEC:
+        return 0
+    now_dt = now_dt or datetime.utcnow()
+    now_s = time.time() if now_s is None else now_s
+    try:
+        rows = events_due_rows(now_dt, now_s, force=force)
+    except Exception as e:
+        if verbose:
+            print(f"[py-dummy] event generation failed: {e}", flush=True)
+        return 0
+    changed = [
+        r
+        for r in rows
+        if not _is_foreign_kind(r[1]) and _EVENTS_WRITTEN.get(r[0]) != (r[5], r[4], r[3])
+    ]
+    if not changed:
+        return 0
+    try:
+        with conn.cursor() as cur:
+            sql = _EVENTS_UPSERT.format(table=EVENTS_TABLE)
+            for i in range(0, len(changed), 500):
+                cur.executemany(sql, changed[i : i + 500])
+    except Exception as e:
+        if verbose:
+            print(f"[py-dummy] events insert failed: {e}", flush=True)
+        return 0
+    for r in changed:
+        _EVENTS_WRITTEN[r[0]] = (r[5], r[4], r[3])
+    if len(_EVENTS_WRITTEN) > _EVENTS_WRITTEN_PRUNE_AT:
+        widest = max(
+            [c["lookback_days"] for c in dict(EVENTS_SPEC.get("kinds") or {}).values()] or [0]
+        )
+        horizon = (_day0(now_dt) - timedelta(days=widest + 1)).strftime("%Y-%m-%d %H:%M:%S")
+        for key in [k for k, v in _EVENTS_WRITTEN.items() if v[2] < horizon]:
+            del _EVENTS_WRITTEN[key]
+    return len(changed)
 
 
 def _extended_map_path() -> str:
@@ -426,6 +1051,14 @@ SETTINGS = {
     "TIMESTAMP_COLUMN": "Datetime",
     # Loop cadence (env var: PUBLISH_INTERVAL)
     "INTERVAL_SECONDS": int(os.environ.get("PUBLISH_INTERVAL", "30")),
+    # Plant runs on its OWN, slower cadence. A boiler's water temperature does not move
+    # meaningfully in 30 s, and writing it that often buys nothing while adding load to the
+    # same MySQL the queries read — which is the documented cause of a probe run doubling in
+    # wall-clock. Five minutes is what the building owner asked for and is ample for it.
+    "PLANT_INTERVAL_S": int(os.environ.get("PLANT_INTERVAL", "300")),
+    # Events are checked on their own timer; each kind then applies its own cadence from the
+    # events map, so this is how often the question is ASKED, not how often a kind is written.
+    "EVENTS_INTERVAL_S": int(os.environ.get("EVENTS_INTERVAL", "300")),
     # BUG-144: bldg1's wide table is the REAL abacws historian — fabricated rows
     # must never land there. Wide-table publishing is therefore opt-in (dev only);
     # the narrow synthetic-labeled tables are this publisher's actual job.
@@ -725,6 +1358,9 @@ def main() -> int:
     load_schema_map()
     load_narrow_sensors()
     load_extended_sensors()
+    load_plant_groups()
+    load_waste_bins()
+    load_events()
 
     try:
         publish_wide = bool(SETTINGS.get("PUBLISH_WIDE", False))
@@ -753,6 +1389,13 @@ def main() -> int:
             )
 
         total = 0
+        plant_interval = max(0, int(SETTINGS.get("PLANT_INTERVAL_S", 300)))
+        # Publish plant on the FIRST tick rather than one interval in: the series has been
+        # stale since publishing stopped, and making a restart wait five minutes to prove
+        # itself is five minutes of not knowing whether it works.
+        _last_plant_at = 0.0
+        events_interval = max(0, int(SETTINGS.get("EVENTS_INTERVAL_S", 300)))
+        _last_events_at = 0.0
         while True:
             if _SHOULD_STOP:
                 break
@@ -772,8 +1415,30 @@ def main() -> int:
 
                 # Live-publish the narrow per-modality tables (the publisher's real job).
                 publish_narrow(conn, verbose=verbose)
-                # Live-publish the extended narrow tables (floors 0-4 + synthetic sensors).
+                # Live-publish the extended narrow tables (floors 0-4 + additional sensors).
                 publish_extended(conn, verbose=verbose)
+
+                # Plant, on its own slower cadence and as coherent equipment groups.
+                if (_tick_started - _last_plant_at) >= plant_interval:
+                    _n_plant = publish_plant(conn, verbose=verbose)
+                    # Waste shares the slow cadence: a bin's level does not move in 30 s,
+                    # and its own sawtooth is what carries the information.
+                    _n_waste = publish_waste(conn, verbose=verbose)
+                    _last_plant_at = _tick_started
+                    if verbose and (_n_plant or _n_waste):
+                        print(
+                            f"[py-dummy] plant: {_n_plant} point(s), "
+                            f"waste: {_n_waste} point(s)",
+                            flush=True,
+                        )
+
+                # Events on their own timer; publish_events never raises, so a broken events
+                # map cannot stop the sensor tables above from being topped up.
+                if (_tick_started - _last_events_at) >= events_interval:
+                    _n_events = publish_events(conn, verbose=verbose)
+                    _last_events_at = _tick_started
+                    if verbose and _n_events:
+                        print(f"[py-dummy] events: {_n_events} row(s)", flush=True)
 
                 # Print debug sample every 5 minutes
                 if publish_wide:

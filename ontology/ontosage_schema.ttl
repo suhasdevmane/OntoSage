@@ -165,6 +165,107 @@ ontosage:VendingMachine rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:la
 ontosage:DrinkingWater  rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Drinking water"@en ; rdfs:comment "Drinking fountain, water cooler or bottle-filling point."@en ; skos:example "\"water available?\" / \"where can I fill my bottle?\"" .
 ontosage:FirstAidPoint  rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "First aid / defibrillator"@en ; rdfs:comment "First-aid point or defibrillator (AED). Where the building models AED devices as equipment, the amenity should name their locations so the question is answered from the building's own graph."@en ; skos:example "\"where is the nearest defibrillator?\"" .
 
+# ── A.1b Lay terms for the amenity KINDS (2026-09-17) ─────────────────────────────────────────
+#
+# WHY ON THE CLASS. Every amenity synonym used to live on one building's INSTANCES, so it did
+# not transfer: a building typing `a ontosage:PrayerRoom` with no terms of its own could not be
+# asked about its prayer room at all. Declared here, every building inherits the words for a
+# kind of thing, and its own instance terms still ADD to them (CapabilityGraphResolver reads
+# both; before 2026-09-17 it read only the instance's).
+#
+# WHAT A TERM HAS TO BE. A name a person uses for that kind of thing, whole — never a word that
+# merely co-occurs in questions about it. A single word here claims a question before the LLM
+# classifies it (a match needs one), so a bare word is used only where it names nothing else:
+# "toilet" yes, "water" and "bin" and "study" no. Each list was screened against every other
+# lay term in this file and in hbco_mappings.ttl; the exact collisions found were DROPPED, not
+# shared, and are named in the comment above the class they were dropped from.
+#
+# NOT HERE: ontosage:Facility and ontosage:Service (a named lab, a reception desk) are named
+# by each building, not by kind; and the KnowledgeTopic subclasses carry no class terms,
+# because "policy" or "procedure" would claim every question that mentions one.
+
+ontosage:PrayerRoom ontosage:layTerms "prayer room", "prayer rooms", "prayer space",
+    "prayer spaces", "multi-faith room", "multi-faith rooms", "multifaith room",
+    "multi faith room", "multi-faith space", "faith room", "reflection room", "reflection rooms",
+    "contemplation room", "meditation room", "place to pray", "somewhere to pray",
+    "where can i pray" .
+
+# British and US names for the same outlet. "coffee" and "food" alone are not names of a café.
+ontosage:Cafe ontosage:layTerms "cafe", "cafes", "café", "cafés", "canteen", "canteens",
+    "cafeteria", "cafeterias", "coffee shop", "coffee bar", "refectory", "snack bar",
+    "food outlet", "catering outlet", "get a coffee", "buy a coffee" .
+
+ontosage:BikeStorage ontosage:layTerms "bike storage", "bicycle storage", "cycle storage",
+    "cycle store", "bike store", "bike rack", "bike racks", "bicycle rack", "bicycle racks",
+    "cycle rack", "cycle racks", "bike shed", "bike shelter", "cycle shelter", "bike parking",
+    "bicycle parking", "cycle parking", "park my bike", "lock my bike", "leave my bike" .
+
+ontosage:ShowerFacility ontosage:layTerms "shower", "showers", "shower room", "shower rooms",
+    "shower facilities", "changing room", "changing rooms", "changing facilities" .
+
+# "wc" is not listed: the resolver ignores phrases shorter than three characters.
+ontosage:ToiletFacility ontosage:layTerms "toilet", "toilets", "washroom", "washrooms",
+    "restroom", "restrooms", "bathroom", "bathrooms", "lavatory", "lavatories", "loo", "loos" .
+
+# "baby changing" is deliberately absent: it is usually a toilet fitting, not a nursing room.
+ontosage:NursingRoom ontosage:layTerms "nursing room", "nursing rooms", "feeding room",
+    "baby feeding room", "breastfeeding room", "breast feeding room", "breastfeeding",
+    "lactation room", "mothers room", "mother's room", "parents room", "parent's room",
+    "express milk" .
+
+# "study area", "study space", "workspace", "quiet study" and "place to work" are NOT here:
+# ontosage:WorkspaceProfile declares them, and a register the building holds must keep them.
+# "silent study" was dropped for sharing "silent" with the hbco:quiet_zone concept.
+ontosage:StudyArea ontosage:layTerms "study room", "study rooms", "study pod", "study pods",
+    "learning space", "learning spaces", "learning commons" .
+
+# NO bare "lift" or "elevator": both are hbco:lift_status terms, and "is lift B out of service?"
+# is a status question, not a request for a lift's location. Only the phrases that name or
+# locate one. "lift lobby" was tried and dropped: in the stakeholder corpus it appears in
+# route and cleaning questions, never in a request for the lift.
+ontosage:Lift ontosage:layTerms "passenger lift", "passenger lifts", "platform lift",
+    "platform lifts", "nearest lift", "nearest elevator", "where is the lift",
+    "where is the elevator", "where are the lifts", "where are the elevators" .
+
+ontosage:Locker ontosage:layTerms "locker", "lockers", "locker bank", "locker banks",
+    "storage locker", "storage lockers", "day locker", "day lockers" .
+
+ontosage:PrinterPoint ontosage:layTerms "printer", "printers", "photocopier", "photocopiers",
+    "copier", "copiers", "print room", "print station", "print stations", "printing point",
+    "where can i print" .
+
+ontosage:VendingMachine ontosage:layTerms "vending machine", "vending machines", "vending",
+    "snack machine", "snack machines", "drinks machine", "drinks machines", "drink machine" .
+
+# NO "drinking water" (an hbco:water_quality term: "is the drinking water safe?" asks about
+# quality) and no bare "water" (leaks, supply, meters).
+ontosage:DrinkingWater ontosage:layTerms "water fountain", "water fountains",
+    "drinking fountain", "drinking fountains", "water cooler", "water coolers",
+    "water dispenser", "water dispensers", "water refill", "refill station", "refill stations",
+    "refill point", "bottle refill", "bottle filling", "bottle filler", "fill my bottle",
+    "fill my water bottle", "tap water", "water point" .
+
+ontosage:FirstAidPoint ontosage:layTerms "first aid", "first-aid", "first aid kit",
+    "first aid kits", "first aid box", "first aid point", "first aid room", "defibrillator",
+    "defibrillators", "aed", "aeds" .
+
+# Where waste is DEPOSITED. "waste", "bin", "bins" and "recycling" belong to the collection
+# register (ontosage:WasteCollectionPoint); "recycling bin", "waste bin" and "rubbish bin" are
+# hbco:waste_fill terms ("is the recycling bin full?" is a fill-level reading). What is left
+# are the phrases that ask where to put something.
+ontosage:WastePoint ontosage:layTerms "recycling point", "recycling points",
+    "recycling station", "recycling stations", "where are the bins", "where are the recycling bins",
+    "where can i recycle", "litter bin", "litter bins", "trash can", "trash cans" .
+
+# "hearing loop" is NOT here: ontosage:AVReadiness declares it. "induction loop" is, but note
+# that ontosage:CompetencyRecord's bare "induction" still outscores it wherever that register
+# is held -- a defect in that register's vocabulary, not fixable from this side.
+ontosage:AccessibilityFeature ontosage:layTerms "hearing loops", "induction loop",
+    "induction loops", "tactile paving", "changing places", "accessible toilet",
+    "accessible toilets", "accessible wc", "disabled toilet", "disabled toilets",
+    "accessible parking", "disabled parking", "blue badge parking", "power assisted door",
+    "power-assisted door", "height adjustable desk", "adjustable desk" .
+
 # ── A.2 Knowledge topics (non-physical) ────────────────────────────────────────────────────────
 ontosage:KnowledgeTopic a owl:Class ;
     rdfs:subClassOf ontosage:Capability ;
@@ -1058,6 +1159,55 @@ ontosage:detectedBy a owl:DatatypeProperty ;
 ontosage:baselineValue a owl:DatatypeProperty ;
     rdfs:domain ontosage:AnomalyEvent ; rdfs:range xsd:double ;
     rdfs:label "baseline value"@en ; rdfs:comment "The expected-band context the deviation is measured against."@en .
+
+# ── J.1b Event-record fields the placeholder alarm / access / anomaly records carry (2026-09-17) ──
+# Declared because scripts/provision_event_and_capacity_data.py emits them and an undeclared
+# predicate is invisible to every reader that works from the TBox (schema_hint's comments,
+# the admin form, the RAG index). Checked first for an existing equivalent: none exists.
+# ontosage:responsibleRole is who OWNS the response, not who presented at a reader;
+# ontosage:completedDate and effectiveTo close an episode, they do not acknowledge it;
+# ontosage:observedDuty is an engineering duty, not a sensor value. No lay terms: these are
+# fields, and a question reaches them through their class.
+
+ontosage:acknowledgedAt a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AlarmEvent ; rdfs:range xsd:dateTime ;
+    rdfs:label "acknowledged at"@en ;
+    rdfs:comment "When an operator acknowledged the alarm. ABSENT means it has never been acknowledged — not that the time is unknown — and an unacknowledged active alarm is the case an answer must surface first. Raised is effectiveFrom, cleared is effectiveTo."@en .
+
+ontosage:alarmCondition a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AlarmEvent ; rdfs:range xsd:string ;
+    rdfs:label "alarm condition"@en ;
+    rdfs:comment "The condition the alarm reports, in the source system's own words (frost protection trip, high temperature, filter dirty). Read as recorded; never normalised into a severity, which the record carries separately."@en .
+
+ontosage:alarmPriority a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AlarmEvent ; rdfs:range xsd:string ;
+    rdfs:label "alarm priority"@en ;
+    rdfs:comment "The priority the source system assigned to this activation. Declared separately from ontosage:priority, whose domain is ontosage:MaintenanceIssue: using that one on an alarm lets an RDFS reasoner type the alarm as a maintenance issue, and so as a KnowledgeTopic."@en .
+
+ontosage:accessEventKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessEvent ; rdfs:range xsd:string ;
+    rdfs:label "access event kind"@en ;
+    rdfs:comment "What happened at the opening: access_denied | held_open | forced_door. An exception log, not a movement log — routine granted entries are not recorded as events."@en .
+
+ontosage:presentedRole a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessEvent ; rdfs:range xsd:string ;
+    rdfs:label "presented role"@en ;
+    rdfs:comment "The ROLE TEMPLATE of the credential presented (caretaking and cleaning, academic staff, contractor) — NEVER an individual, a card number or anything that identifies a person. Per-person access questions are refused by inference-class policy whatever this field holds."@en .
+
+ontosage:denialReason a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AccessEvent ; rdfs:range xsd:string ;
+    rdfs:label "denial reason"@en ;
+    rdfs:comment "Why access was refused, as the controller recorded it (outside the role's time profile, zone not in the permission group). Blank on events that were not refusals."@en .
+
+ontosage:observedValue a owl:DatatypeProperty ;
+    rdfs:domain ontosage:AnomalyEvent ; rdfs:range xsd:double ;
+    rdfs:label "observed value"@en ;
+    rdfs:comment "The reading that deviated, in the unit of the point it is about (ontosage:aboutPoint). Compared against ontosage:baselineValue; neither is meaningful without the other."@en .
+
+ontosage:capacityBasis a owl:DatatypeProperty ;
+    rdfs:domain brick:Space ; rdfs:range xsd:string ;
+    rdfs:label "capacity basis"@en ;
+    rdfs:comment "How the space's hbco:roomCapacity was arrived at: certified, surveyed, or ESTIMATED from floor-plan area at a stated density, with the density and its source. A capacity with no basis cannot be told apart from a certified fire capacity, and an estimate quoted as a limit is a safety claim nobody made."@en .
 
 # ── J.2 Forecast skill (P3 PREDICT) ────────────────────────────────────────────────────────────
 
@@ -2269,13 +2419,26 @@ ontosage:recordId a owl:DatatypeProperty ;
 #  and no code changes.
 ####################################################################################################
 
+# NARROWED 2026-09-17 (scripts/register_reach.py over the 2,960 stakeholder questions).
+# Bare "collection" (36 captures) and "stream" (16) also meant DATA collection and SENSOR
+# streams: "which measurement would reduce uncertainty before full collection?" and "one
+# sensor stream is drifting" were answered from the bin register. Replaced by the phrases
+# that name a waste collection or a waste stream.
 ontosage:WasteCollectionPoint ontosage:layTerms "waste", "bin", "bins", "recycling",
-    "collection point", "collection", "stream", "general waste", "food waste",
+    "collection point", "waste collection", "waste collections", "bin collection",
+    "bin collections", "missed collection", "missed collections", "collection round",
+    "collection rounds", "collection frequency", "waste stream", "waste streams",
+    "recycling stream", "recycling streams", "general waste", "food waste",
     "fill level", "full bin", "emptied", "refuse", "skip", "waste station" .
 
+# NARROWED 2026-09-17. Bare "emergency" (35 captures), "fallback" (17) and "escalation" (12)
+# named the coordination function in about one question in eight: emergency STOPS, emergency
+# LIGHTING, a fallback WORKSPACE, a leak ESCALATION RULE. The function is named by what it
+# coordinates, so those phrases replace them.
 ontosage:CoordinationFunction ontosage:layTerms "coordination", "coordination function",
-    "emergency", "incident command", "activation", "escalation",
-    "operational period", "fallback", "manual fallback", "evacuation control",
+    "emergency coordination", "emergency coordinator", "emergency coordinators",
+    "emergency response role", "emergency response roles", "incident command", "activation",
+    "operational period", "manual fallback", "evacuation control",
     "roll call", "who is on call", "are we ready for an incident" .
 
 ontosage:AVReadiness ontosage:layTerms "av", "audio visual", "audiovisual",
@@ -2286,47 +2449,173 @@ ontosage:AVReadiness ontosage:layTerms "av", "audio visual", "audiovisual",
 # No bare "activity"/"activities" (BUG-545): in a building those are usually work, safety or
 # continuity activities, and 43 of the 4,060 corpus questions reached the event agenda on that
 # one word — two of them answered with a raw 56-row dump of an open-day programme.
-ontosage:EventActivity ontosage:layTerms "agenda", "programme", "schedule of the day",
-    "event activity", "event activities", "session", "sessions", "talk", "tour", "workshop",
+# NARROWED 2026-09-17. Bare "session"/"sessions" (61 captures) and "programme" (8) named an
+# event agenda in about one question in six: a study session, a hybrid class session, a degree
+# programme, a control programme. Teaching sessions belong to ontosage:TimetabledSession.
+ontosage:EventActivity ontosage:layTerms "agenda", "event programme", "event program",
+    "schedule of the day", "event activity", "event activities", "event session",
+    "event sessions", "breakout session", "breakout sessions", "talk", "tour", "workshop",
     "how much time", "how long will", "what should we prioritise", "itinerary" .
 
+# NARROWED 2026-09-17 — this class took 25.2% of every register selection over the 2,960
+# stakeholder questions (498), and reading them showed why: the catalogues use "evidence",
+# "confirmed", "verified" and "owner" as words about KNOWLEDGE ("does the evidence support a
+# diagnosis?", "which services are confirmed, probable or unknown?", "owner review"), not as
+# names of an approval record. Bare "evidence" alone took 288 questions, and in a sample of 45
+# about four were approval lookups. The class comment's own measurement — the six words that
+# recur in every role's unanswered set — is exactly the co-occurrence signal that must not
+# become vocabulary.
+#
+# Removed: evidence, evidenced, verified, confirmed, proof, owner, accountable, governance,
+# assurance, certificate (ontosage:ComplianceCheck owns it), permitted, is this allowed, and
+# bare authorised/authorized ("authorised to use a desk" is access, not approval).
+# Kept: approved/approval/approvals, sign-off wording, "who owns" and "who is accountable"
+# (the probe's refuge-point question hands this register over as a second on "who owns").
+# Added: the phrases an approval record is actually asked for by.
 ontosage:ApprovalRecord ontosage:layTerms "approved", "approval", "approvals",
-    "authorised", "authorized", "authorisation", "who approved", "signed off",
-    "sign-off", "evidence", "evidenced", "verified", "confirmed", "proof",
-    "accountable", "who is accountable", "who owns", "owner", "governance",
-    "review due", "certificate", "assurance", "is this allowed", "permitted" ;
+    "authorisation", "who approved", "signed off", "sign-off", "sign off", "who signed off",
+    "approved by", "authorised by", "authorized by", "who authorised", "who authorized",
+    "officially approved", "formally approved", "approval record", "approval records",
+    "approval status", "approval decision", "approval evidence", "evidence of approval",
+    "approval expiry", "who is accountable", "who owns", "review due" ;
+    # The qualifier list is KEPT whole although only "approved" is still a lay term here: a
+    # building overlay that declares "verified" or "confirmed" for this class inherits the
+    # attributive guard (BUG-545) instead of reintroducing the over-capture above.
     ontosage:qualifierTerms "approved", "authorised", "authorized", "evidenced", "verified",
     "confirmed", "permitted" .
 
+# NARROWED 2026-09-17. Bare "commitment"/"commitments" (10 captures) was a financial
+# commitment in one: "strategic commitments", "social-value commitments", "building
+# commitments" in a diary.
 ontosage:CostLine ontosage:layTerms "cost", "costs", "budget", "budgets", "spend",
-    "spending", "actuals", "commitment", "commitments", "accrual", "accruals",
+    "spending", "actuals", "open commitments", "committed spend", "accrual", "accruals",
     "free balance", "variance", "overspend", "underspend", "cost centre", "invoice",
     "procurement", "purchase", "supplier spend", "what did it cost" .
 
+# "security records" was TRIED HERE AND REJECTED, 2026-09-18 (live run 3 row 86). The row
+# is a false absence — "none of them contains the answer, so the building's records do not
+# cover this", while row 22 of the same run lists CHK-105, CHK-301 and CHK-302 overdue and
+# CHK-402 with a faulty reader from these 18 records. But the question spans patrol
+# checkpoints, access permissions, incident records and door hardware at once, and this
+# register holds a quarter of it: answering from a quarter and presenting it as the whole is
+# the defect that declined the row in the first place, one register further on. See
+# test_register_reach.py::test_a_security_records_question_claims_no_register_at_all, which
+# pins that decision and names the real fix — what the DECLINE says. That fix landed in
+# capability_agent on the same day.
 ontosage:PatrolCheckpoint ontosage:layTerms "patrol", "patrols", "checkpoint",
     "checkpoints", "security round", "rounds", "circuit", "post", "posts", "guard",
     "security officer", "shift handover", "my shift", "this shift", "overdue check",
     "walk the building" .
 
-ontosage:AccessibleRoute ontosage:layTerms "accessible route", "step free", "step-free",
+# NARROWED 2026-09-17. Bare "step-free"/"step free" (50 captures) named a ROUTE in about half:
+# the rest asked for a room, a desk or a break "with step-free access". Bare "accessibility"
+# (31) named a route almost never ("accessibility barriers", "accessibility preferences").
+# The route is named by the phrases below; "wheelchair" and "mobility" are unchanged.
+# RESTORED 2026-09-17 (live rerun, rows 26/72): the narrowing also lost "what step-free
+# ALTERNATIVE" when a lift is out and "including step-free CONSTRAINTS" for responders — both
+# route questions. Measured: 5 corpus questions move, all to this register, guard set
+# unchanged. NOT "step-free access", which moved nine room-booking questions here.
+# PUSHCHAIR PHRASING (2026-09-17, live rerun row 111). "Is the building pushchair-friendly
+# from the car park?" was answered "I don't have that specific information on record" while
+# this register holds 16 routes including a step-free ground-level parking entrance. A
+# pushchair, a pram and a buggy pose a building the same question a wheelchair does —
+# stairs, door widths, narrow sections — and none of that vocabulary said so. Whole phrases
+# only: a bare "pushchair" opening a compound ("pushchair-friendly") cannot select a
+# register anyway, see _only_modifies. Measured: 1 catalogue question moves (PF-015, "we
+# have a pushchair or small suitcase ... which approved route avoids stairs", which was
+# going to CirculationTime — travel minutes, not step-free evidence); guard set unchanged
+# at 0 violations.
+# THE ROUTE ITSELF (2026-09-18, live run 3 rows 33 and 85). This register holds the 16
+# surveyed routes, each with a visitor entrance, a from and a to, a surveyed-on date, a
+# door operation and — on ten of them — the lift it depends on and that lift's status.
+# Neither of the two questions that asked about a route as a THING reached it: row 33
+# ("which entrances or route segments need a facilities inspection") was answered from
+# the fire-and-legionella compliance register, which correctly reported that no field of
+# ITS records refers to an entrance; and row 85 ("which authorised public routes are
+# interrupted by ... an unavailable door, lift fault or unverified segment") was told no
+# such record is present, while RTE-016 is CLOSED with Lift B out_of_service and RTE-006
+# and RTE-015 are restricted. The register's whole vocabulary was about the PERSON
+# travelling — wheelchair, pushchair, carer, low vision — and none of it about the route.
+# NOT "unavailable door": measured, it pushed this register's score on row 85 above
+# twice ontosage:ClosurePeriod's, which dropped the three floor closures that the same
+# question names and that the run-3 answer reported correctly. A register that knocks
+# out the second register a question equally names has not helped the question.
+ontosage:AccessibleRoute ontosage:layTerms "accessible route", "step free route",
+    "step-free route", "step-free routes", "step free routes", "step-free path",
+    "step-free journey", "step-free entrance", "step-free alternative",
+    "step free alternative", "step-free constraints",
     "wheelchair", "wheelchair access", "accessible entrance", "level access", "ramp",
     "seated rest", "somewhere to sit", "how long should i allow", "assistance",
     "assistance dog", "carer", "personal assistant", "low vision", "quiet route",
-    "lower stimulation", "heavy door", "which lift", "mobility", "accessibility" .
+    "lower stimulation", "heavy door", "which lift", "mobility",
+    "pushchair-friendly", "pushchair friendly", "with a pushchair", "have a pushchair",
+    "pushchair access", "pushchair route", "with a pram", "with a buggy",
+    "public route", "public routes", "route segment", "route segments",
+    "lift fault", "lift faults", "lift out of service",
+    "surveyed route", "surveyed routes", "route survey" .
 
-ontosage:AccessPermission ontosage:layTerms "access", "access control", "permission",
+# NARROWED 2026-09-17. Bare "access" took 97 questions and named a permission in a small
+# minority: access SWITCHES (network), access CONDITIONS for a room, loss of access as a
+# utility, access and sensory PREFERENCES. The permission is named by the phrases below.
+# SUSPENSION AND RESTORATION (2026-09-18, live run 3 row 4). "What authority,
+# prior-state evidence and independent checks are required before considering
+# restoration after an erroneous suspension?" reached no register, and a procedure was
+# invented from class and property names and shown to the reader. These 20 permission
+# groups carry the recorded state ("withdrawn"), the approval route, the granting role
+# and comments such as "Suspended while the COSHH assessment is under review". Phrases
+# only: a bare "suspended" is a ceiling and a bare "restoration" is building fabric.
+ontosage:AccessPermission ontosage:layTerms "access control", "permission",
     "permissions", "permission group", "entitlement", "entitlements", "card access",
-    "door access", "who can get in", "access rights", "swipe", "badge", "credential",
-    "time profile", "lockdown", "escorted access", "access request" .
+    "door access", "who can get in", "access rights", "access level", "access levels",
+    "access group", "access groups", "access card", "access cards", "who has access",
+    "swipe", "badge", "credential",
+    "time profile", "lockdown", "escorted access", "access request",
+    "suspend access", "access suspended", "access suspension", "permission suspended",
+    "permission suspension", "suspended permission", "withdrawn permission",
+    "restore access", "access restoration", "reinstate access", "access reinstatement",
+    "erroneous suspension", "suspension was wrong" .
 
-ontosage:PublicEvent ontosage:layTerms "event", "events", "seminar", "lecture", "open day",
-    "showcase", "visitor", "visitors", "attending", "check in", "check-in", "doors open",
+# NARROWED 2026-09-17. Bare "event"/"events" (71 captures) were an INCIDENT, a teaching
+# release, a wireless design scenario or an alarm about as often as a public event, and
+# "Show me the anomaly events" was answered from this register. "visitor"/"visitors" (27)
+# were meeting guests and prospective students. "lecture" tied with
+# ontosage:TimetabledSession, which declares it too, and the tie broke alphabetically in this
+# class's favour. "seminar" stays: the probe's route and readiness questions pass on it.
+# RESTORED AS PHRASES 2026-09-17 after the live rerun: rows 84 ("which events are due today")
+# and 105 ("the event room has changed") had been answered well from this register and lost it.
+# Measured: 3 corpus questions move, all here; guard set unchanged. NOT bare "event room",
+# which took a temperature question and two toilet-location questions.
+ontosage:PublicEvent ontosage:layTerms "seminar", "public lecture", "public lectures",
+    "event room has changed", "event room changed", "event venue", "event has moved",
+    "event moved", "events due", "events are due", "events today", "today's events",
+    "upcoming events",
+    "public talk", "public talks", "open day", "open days",
+    "showcase", "attending", "check in", "check-in", "doors open",
     "which entrance", "companion", "support person", "registration", "ticket",
     "has the venue changed", "what time should i arrive" .
 
+# WASHROOM SERVICING (2026-09-17, live rerun row 20). "Which washroom should I service
+# next?" was declined with "<the building>'s documents do not answer this" while this
+# register holds 30 tasks with a cleaningZone, a cleaningStandard and a serviceFrequency —
+# exactly what the question asks for. Nothing in the vocabulary named a washroom, and
+# "which washrooms have a confirmed service this shift" was going to PatrolCheckpoint on
+# "this shift": a cleaning round answered from the security patrol register.
+# The phrases below name a washroom AND the act of servicing it, because neither half is
+# safe alone and all three were measured: bare "which washroom" took "which washroom is
+# closest to Room 3.02?" away from the toilet amenity, which is what answers where one is;
+# bare "should i service"/"service next" took "which chiller should I service next?" away
+# from the service-schedule register; and "service this shift", which would also have
+# recovered CT-025, took "which plant items are due for service this shift?". Measured:
+# 1 catalogue question moves (CT-021); guard set unchanged at 0 violations.
+# STILL NOT REACHED, and left alone deliberately: CT-025 ("which washrooms have a confirmed
+# service this shift") selects PatrolCheckpoint on "this shift" — a cleaning round answered
+# from the security patrol register. Every phrase that recovers it costs a plant question.
 ontosage:CleaningTask ontosage:layTerms "cleaning", "clean", "cleaner", "caretaker",
     "caretaking", "janitorial", "housekeeping", "my zone", "my round", "task list",
-    "cleaning schedule", "cleaning standard", "which rooms must be ready", "my shift" .
+    "cleaning schedule", "cleaning standard", "which rooms must be ready", "my shift",
+    "washroom should i service", "washrooms should i service", "washroom service",
+    "washrooms service", "washroom servicing", "washrooms servicing", "washroom cleaning",
+    "washrooms cleaning" .
 
 ontosage:Permit ontosage:layTerms "permit", "permits", "permit to work", "ptw", "hot works permit",
     "roof access permit", "work authorisation", "isolation permit" .
@@ -2354,7 +2643,11 @@ ontosage:HandoverRecord ontosage:layTerms "project handover", "handover record",
     "operating manual", "as-built", "as built", "commissioning certificate",
     "project record" .
 
-ontosage:ConditionSurvey ontosage:layTerms "condition survey", "condition", "asset condition",
+# NARROWED 2026-09-17: bare "condition" (45 captures once ApprovalRecord stopped outscoring it)
+# named a survey in none of a sample of seven: battery condition, a room condition, an
+# "exceptional condition", condition-based triggering. The graded forms below are the survey.
+ontosage:ConditionSurvey ontosage:layTerms "condition survey", "asset condition",
+    "condition grade", "condition grades", "condition rating", "condition ratings",
     "expected life", "remaining life", "beyond life", "life expired", "end of life",
     "replacement programme", "backlog", "dilapidation" .
 
@@ -2368,27 +2661,64 @@ ontosage:RiskAssessment ontosage:layTerms "risk assessment", "risk assessments",
 # (V7-T38) and had no lay terms, so no question could route to it. A register that is
 # populated and unreachable is indistinguishable from one that was never built.
 ontosage:SustainabilityTarget ontosage:layTerms "sustainability target",
-    "sustainability targets", "carbon target", "carbon", "net zero", "emissions",
+    "sustainability targets", "carbon target", "net zero", "emissions",
     "emissions target", "energy reduction", "reduction target", "scope 1", "scope 2",
-    "environmental target", "are we on track", "sustainability commitment" .
+    "environmental target", "are we on track", "sustainability commitment",
+    "carbon emissions", "carbon footprint", "carbon reduction", "carbon neutral" .
 
 ontosage:Tariff ontosage:layTerms "tariff", "tariffs", "unit rate", "standing charge",
     "energy price", "energy cost", "cost per kwh", "utility rate" .
 
+# NO-SHOW PHRASING (2026-09-17, live rerun C11). Four room-booking catalogue questions ask
+# about no-shows, release rules and recovered room-hours, and none of them named this
+# register: they reached the document lane and were told the building's documents do not
+# answer them. A no-show is a property of a booking nobody attended, so the booking register
+# is where the question starts. Measured: 4 catalogue questions move, all from the
+# room-booking catalogue (RB-032, RB-034, RB-040, RB-074); guard set unchanged at 0.
 ontosage:Booking ontosage:layTerms "booking", "bookings", "reservation", "reservations",
-    "room booking", "booked", "who has booked" .
+    "room booking", "booked", "who has booked", "no-show", "no-shows" .
 
 # Lay terms for the three record classes that had none.
 #
 # Nothing is derived from part of a class name any more, so a class without declared lay
 # terms is reachable only by its full label. These were the three, and ComplianceCheck
 # holds 82 instances — the largest register in the building.
+# ASSURANCE (2026-09-18, live run 3 row 44). The ApprovalRecord narrowing note above says
+# in as many words that "assurance" and "certificate" belong to ontosage:ComplianceCheck —
+# and only "certificate" was ever moved here. So "for the scheduled assurance activity,
+# which required evidence is current, permissioned, traceable and reproducible?" selected
+# no register at all, fell through to the definition lane, and a safety officer was told
+# "no records of scheduled inspections are present in the ontology" and instructed to
+# "create a record", while 82 compliance checks are held with due dates, completion dates
+# and a responsible role. A documented hand-off that never landed.
 ontosage:ComplianceCheck ontosage:layTerms "compliance check", "compliance checks",
     "compliance", "statutory check", "statutory checks", "inspection", "inspections",
-    "test due", "overdue check", "certificate" .
+    "test due", "overdue check", "certificate",
+    "assurance", "assurance activity", "assurance activities", "assurance evidence" .
 
+# DEFECTS AND DRAINS (2026-09-18, live run 3 rows 49 and 129). This register holds 24 work
+# orders with a priority, a schedule kind, a completion date and a recorded status — the
+# maintenance log — and neither the word a defect is reported by nor the work done to a
+# drain reached it. "Which drains have needed jetting more than twice this year?" was
+# answered "the building's records do not contain any information about drain jetting"
+# while WO-015 is "Condensate drain clearance", and "for each defect, what remedial scope
+# and acceptance evidence were required" was sent outside the building entirely.
+# Whole phrases for the drain work, because a bare "drain" is a verb and a bare "drainage"
+# is a system; "remedial"/"rectification" are what a work order is raised against.
+#
+# BARE "defect"/"defects" WAS TRIED AND REJECTED, 2026-09-18. It reached row 49 and eight
+# more catalogue questions, but read, three of the nine were wrong and one of the three cost
+# a working answer: FP-010 ("is the current management cost view decision-ready, and which
+# unresolved defects could move the reported position above materiality?") left CostLine for
+# the maintenance log, and — worse — SO-072, the row 86 false absence, landed on WORK ORDERS,
+# which is the wrong-register decline that row was already suffering from. "defects" is a
+# consequence word: it appears wherever anything is imperfect, including in data, in cost
+# positions and in security records. The work raised against one is what this register holds,
+# so the work is what it is named by. Row 49 reaches it on "remedial scope" without it.
 ontosage:WorkOrder ontosage:layTerms "work order", "work orders", "job", "jobs",
-    "maintenance job", "reactive job", "ticket", "tickets" .
+    "maintenance job", "reactive job", "ticket", "tickets",
+    "remedial", "remedial work", "remedial scope", "rectification",
+    "jetting", "drain jetting", "drain clearance", "blocked drain", "drain blockage" .
 
 ontosage:TimetabledSession ontosage:layTerms "timetabled session", "timetabled sessions",
     "timetable", "scheduled class", "scheduled classes", "teaching session",
@@ -2404,9 +2734,12 @@ ontosage:AssetStatus ontosage:layTerms "asset status", "equipment status",
     "out of service", "in service", "operational status", "serviceable",
     "unserviceable", "is it working", "condition of the equipment" .
 
-ontosage:ClosurePeriod ontosage:layTerms "closure", "closures", "closed period",
+# NARROWED 2026-09-17: bare "closure"/"closures" (34 captures) was the closure of an ACTION, of
+# fieldwork or of evidence at least as often as a closed space. The named closures remain.
+ontosage:ClosurePeriod ontosage:layTerms "closed period",
     "closed periods", "shutdown", "out of use", "temporarily closed",
-    "when does it reopen", "planned closure" .
+    "when does it reopen", "planned closure", "planned closures", "official closure",
+    "temporary closure", "building closure", "room closure", "closure notice" .
 
 ontosage:AnomalyEvent ontosage:layTerms "anomaly", "anomalies", "unusual reading",
     "unusual readings", "abnormal reading", "out of range", "outlier", "odd reading" .
@@ -2427,6 +2760,12 @@ ontosage:AccessEvent ontosage:layTerms "access event", "access events", "door ev
     "accessed", "access log", "access logs", "who entered", "who went in",
     "entry record", "entry records", "badge in", "badged in", "swipe record" .
 
+### MEASURED 2026-09-17 and deliberately NOT changed: once this class is held (271 placeholder
+### activations), singular "alarm" names the activation log in about three of fourteen
+### stakeholder questions read and something else in five (an alarm TEST, an audible-alarm
+### provision, a hyphenated "fire-alarm" interface that "fire alarm" does not match). It stays
+### because tests/test_an_absent_class_does_not_steal_a_held_question.py pins it (TODO-490);
+### dropping it is a decision for the owner of that test, not for a vocabulary pass.
 ontosage:AlarmEvent ontosage:layTerms "alarm activation", "alarm activations",
     "alarm event", "alarm events", "false alarm", "false alarms", "alarm history",
     "when did the alarm sound",
@@ -2541,9 +2880,11 @@ ontosage:dataNeeds a owl:DatatypeProperty ;
     rdfs:label "data needs"@en ;
     rdfs:comment "The kinds of building data this group asks for, in their own words."@en .
 
+# NARROWED 2026-09-17: bare "audience" (9 captures) was the audience of a message, a disclosure
+# or a lecture in every one read, never a stakeholder group.
 ontosage:StakeholderGroup ontosage:layTerms "stakeholder", "stakeholders",
     "stakeholder group", "occupant group", "user group", "building users",
-    "who uses the building", "who is affected", "which groups", "audience",
+    "who uses the building", "who is affected", "which groups",
     "who does this affect", "who needs to know" .
 
 
@@ -2622,6 +2963,13 @@ ontosage:nearestVerticalRoute a owl:DatatypeProperty ;
 # at all: this register holds the seats, whether the space is bookable, whether a call can
 # be taken in it and whether a group can use it, and none of that vocabulary said so.
 # Whole phrases only — a bare "room" belongs to no register (see _terms_for).
+# ALTERNATIVE ROOM (2026-09-17, live rerun C11 row 53). "If my assigned room is withdrawn,
+# which currently eligible alternative should I ask the room team to consider?" reached the
+# document lane; this register holds the 28 profiles that decide eligibility. SINGULAR
+# ONLY, measured: the PLURAL "eligible alternatives" also matches RB-056 ("which BOOKINGS
+# no longer have a verified route ... and what eligible alternatives exist"), where it
+# outscored "bookings" and took that question away from the booking register. 1 catalogue
+# question moves (LT-005); guard set unchanged at 0 violations.
 ontosage:WorkspaceProfile ontosage:layTerms "study space", "study spaces", "somewhere to work",
     "somewhere to study", "quiet space", "quiet study", "group study", "workspace",
     "workspaces", "place to work", "place to study", "where can i work",
@@ -2631,10 +2979,16 @@ ontosage:WorkspaceProfile ontosage:layTerms "study space", "study spaces", "some
     "how long to recover", "time to recover", "recover after", "to recover",
     "bookable room", "bookable rooms", "bookable space", "bookable spaces",
     "quiet room", "room for a call", "somewhere to take a call",
-    "recovery", "room readiness",
+    # NARROWED 2026-09-17: bare "recovery" (14 captures) was HEAT recovery, PARTS recovery and
+    # a symptom's recovery more often than a room's; the recovery-time phrases above remain.
+    "room readiness",
     "room for", "rooms for", "space for", "spaces for", "seats for", "room with",
     "room that seats", "seating capacity", "how many seats", "room big enough",
-    "room for a meeting", "room for a viva", "room for an interview", "room to book" .
+    "room for a meeting", "room for a viva", "room for an interview", "room to book",
+    "work quietly", "quiet working", "somewhere to concentrate",
+    "group work", "work as a group", "for a group of", "suitable for work",
+    "suitable for study", "spaces suitable", "space suitable",
+    "eligible alternative" .
 
 
 ontosage:AssetEngineeringProfile rdfs:subClassOf ontosage:Record ; a owl:Class ;
@@ -2727,6 +3081,9 @@ ontosage:AssetEngineeringProfile ontosage:layTerms "design duty", "commissioned 
     "designed for", "designed and commissioned", "commissioned for", "design intent",
     "commissioning", "isolation", "isolation point", "isolation points", "safe isolation",
     "downstream dependencies", "asset tag", "asset tags", "tag consistency",
+    "asset register", "asset registers", "asset record", "asset records",
+    "m and e asset", "mechanical and electrical asset", "asset reconciliation",
+    "reconciled", "reconcile",
     "plant item", "plant items", "commissioning record",
     "services in the void", "riser contents", "blind interval", "rarely visited",
     "replacement value", "irreplaceable", "continuity critical", "criticality",
@@ -2773,7 +3130,11 @@ ontosage:actionsOutstanding a owl:DatatypeProperty ;
     rdfs:domain ontosage:IncidentRecord ; rdfs:range xsd:string ;
     rdfs:label "actions outstanding"@en .
 
-ontosage:IncidentRecord ontosage:layTerms "incident", "incidents", "near miss",
+# NARROWED 2026-09-17: singular "incident" (53 captures) was THE incident in progress — "the
+# reported incident area", "the incident indicators", "after the incident" — for responders,
+# not the log of past ones. The plural, which counts records, stays.
+ontosage:IncidentRecord ontosage:layTerms "incidents", "incident report", "incident reports",
+    "accident report", "accident reports", "near miss",
     "near misses", "accident", "accidents", "injury", "injuries", "what went wrong",
     "incident log", "incident history", "reportable incident", "riddor",
     "lessons learned", "recurring incident" .
@@ -2872,6 +3233,11 @@ ontosage:seasonalChangeover a owl:DatatypeProperty ;
     rdfs:domain ontosage:OperatingRegime ; rdfs:range xsd:string ;
     rdfs:label "seasonal changeover"@en .
 
+# 2026-09-18, live run 3 row 76: "to which buildings, systems and OPERATING CONDITIONS
+# could a result reasonably transfer?" was told "no operating-condition fields (e.g.
+# set-point temperatures, occupancy schedules) are recorded", which is what these 10
+# records are made of. "operating regime" and "operating window" were declared; the
+# words a researcher writes were not.
 ontosage:OperatingRegime ontosage:layTerms "setpoint", "setpoints", "operating regime",
     "plant schedule", "hvac schedule", "heating schedule", "ventilation schedule",
     "started late", "stopped late", "start late", "stop late", "ran late", "ran early",
@@ -2880,7 +3246,8 @@ ontosage:OperatingRegime ontosage:layTerms "setpoint", "setpoints", "operating r
     "approved exception", "approved exceptions", "heating season", "cooling season",
     "outside its window", "service window", "service windows",
     "outside normal hours", "normal hours", "outside approved hours",
-    "beyond approved", "runs outside" .
+    "beyond approved", "runs outside",
+    "operating condition", "operating conditions" .
 
 
 ontosage:EvacuationProvision rdfs:subClassOf ontosage:Record ; a owl:Class ;
@@ -2952,12 +3319,21 @@ ontosage:dependsOnLift a owl:DatatypeProperty ;
     rdfs:label "depends on lift"@en ;
     rdfs:comment "Whether the step-free time assumes the lift. When it fails, every journey marked true has no step-free alternative at all rather than a slower one."@en .
 
+# ROUTE LENGTH AND WAIT (2026-09-18, live run 3 row 9). "How do observed route lengths,
+# waits and hand-offs compare with the design assumptions?" reached no register, was
+# answered from PIR lighting means, and then stated that the building's data "do not
+# provide information on route lengths, waits" — while these 21 records hold a walking
+# time, a step-free time, a from-floor and a to-floor for each floor pair, and say in
+# their own comments that the lift WAIT dominates the short climbs. Hand-offs are NOT
+# recorded here and no term claims them: naming the register that holds two of the three
+# is the answer, claiming the third would be the defect one level down.
 ontosage:CirculationTime ontosage:layTerms "travel time", "travel times", "how long to get",
     "walking time", "transition time", "between floors", "floor to floor",
     "back to back", "back-to-back", "get from one room to another",
     "time between rooms", "changeover", "changeover time",
     "how long does it take", "take to get", "stairs", "by the stairs",
-    "floor pairs", "slower than the stairs", "journey time", "vertical travel" .
+    "floor pairs", "slower than the stairs", "journey time", "vertical travel",
+    "route length", "route lengths", "lift wait", "lift waits" .
 
 
 ontosage:setupMinutes a owl:DatatypeProperty ;
@@ -2990,7 +3366,11 @@ ontosage:DoorHardware rdfs:subClassOf ontosage:Record ; a owl:Class ;
 
 # The words people use for an opening. A question reaches this class by these or by its
 # formal name, and nothing is derived from part of a phrase.
-ontosage:DoorHardware ontosage:layTerms "door", "doors", "shutter", "shutters",
+# NARROWED 2026-09-17: bare "door"/"doors" (44 captures) asked about door HARDWARE in about two
+# of seven read — door openings skewing a CO2 reading, a boundary-to-door ambulance route, a
+# door on a step-free journey. The fail-state and hardware phrases carry the register.
+ontosage:DoorHardware ontosage:layTerms "shutter", "shutters", "door controller",
+    "door controllers", "door interface", "door interfaces", "door lock", "door locks",
     "roller shutter", "barrier", "turnstile", "fail open", "fail locked", "fail safe",
     "fail secure", "power loss", "power failure", "hold open", "door release", "maglock",
     "door hardware", "fire shutter", "escape door" .
@@ -3019,3 +3399,69 @@ ontosage:commandedBySystem a owl:DatatypeProperty ;
     rdfs:domain ontosage:DoorHardware ; rdfs:range xsd:string ;
     rdfs:label "commanded by system"@en ;
     rdfs:comment "Which system commands the opening: fire alarm, access control, building management or none."@en .
+
+# ── Service continuity provision (2026-09-16) ─────────────────────────────────
+#
+# Added because "if the primary server room, communications room or core-network area is
+# unavailable, which services have a verified alternative location, path and operating
+# capacity?" was answered with a list of 21 LAB SPACES. The building modelled rooms and
+# equipment, and nothing said which service depends on which space, whether an alternative
+# exists, or whether anyone has proved it works. A list of rooms reads as a list of options,
+# which is the most dangerous possible answer to a continuity question.
+#
+# VERIFIED AND CLAIMED ARE DIFFERENT FACTS. An alternative nobody has tested is a plan, not a
+# provision; the register records when it was last proved and by what evidence, and a row
+# without that evidence cannot be recorded as verified.
+
+ontosage:ContinuityProvision rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Service continuity provision"@en ;
+    rdfs:comment "One service, the space or system it normally depends on, and what happens when that is unavailable: the alternative location, the path to it, the capacity that alternative can carry, how long the service can run before the alternative is needed, and when the arrangement was last proved. recordStatus is the owner's recorded state; an alternative with no proving evidence is recorded as unverified rather than as a provision, because a continuity answer that offers an untested option is worse than one that says there is none."@en ;
+    skos:example "which services have a verified alternative if the server room is unavailable? -> ContinuityProvision where dependsOnSpace matches and recordStatus is verified." .
+
+    # NOT "recovery time": the workspace register owns that phrase for how long a room's
+    # conditions take to settle after a class. A term claimed by two registers routes
+    # alphabetically, which is a coin toss dressed as a decision.
+    # NARROWED 2026-09-17: bare "unavailable" (56 captures) and "resilience" (15) named a
+    # continuity provision in about one question in eight — an unavailable DOOR or LIFT, a
+    # platform that is down, "resilience value" in a space appraisal.
+ontosage:ContinuityProvision ontosage:layTerms "continuity", "business continuity",
+    "alternative location", "alternative site", "fallback location", "failover",
+    "if unavailable", "if it is unavailable", "if it becomes unavailable", "resilient",
+    "disaster recovery", "standby location", "backup location", "backup site",
+    "operating capacity", "critical service", "critical services",
+    "displaced", "displacement" .
+
+ontosage:servesService a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:string ;
+    rdfs:label "service"@en ;
+    rdfs:comment "The service this row is about, in the words the people who run it use."@en .
+
+ontosage:dependsOnSpace a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:string ;
+    rdfs:label "depends on space"@en ;
+    rdfs:comment "The space or system the service normally runs from. The thing whose loss the rest of the row answers."@en .
+
+ontosage:alternativeLocation a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:string ;
+    rdfs:label "alternative location"@en ;
+    rdfs:comment "Where the service runs instead, or 'none identified' where nothing has been arranged. Recorded either way: a missing alternative is the answer somebody needs."@en .
+
+ontosage:alternativePath a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:string ;
+    rdfs:label "alternative path"@en ;
+    rdfs:comment "How the service reaches the alternative: a diverse fibre route, a second riser, a generator feed, a manual process."@en .
+
+ontosage:alternativeCapacity a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:string ;
+    rdfs:label "alternative capacity"@en ;
+    rdfs:comment "What the alternative can actually carry, against what the service needs. A half-capacity fallback is a different answer from a full one."@en .
+
+ontosage:rideThroughMinutes a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:integer ;
+    rdfs:label "ride-through minutes"@en ;
+    rdfs:comment "How long the service keeps running on its own before the alternative has to carry it — UPS autonomy, buffer tank, batch queue."@en .
+
+ontosage:lastProvedOn a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:date ;
+    rdfs:label "last proved on"@en ;
+    rdfs:comment "When the arrangement was last exercised end to end. Without a date and an evidence reference the row is unverified, whatever the plan says."@en .

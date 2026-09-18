@@ -41,7 +41,12 @@ _UUID_NS = uuid.UUID("6f4c2e1a-9b3d-5f7a-8c21-0d1e2f3a4b5c")
 BUILTIN_PROVENANCE: Dict[str, ProvenanceTag] = {
     "ontology": ProvenanceTag(
         source_id="ontology",
-        label="Building Ontology",
+        # THE CHIP IS READ BY A STAKEHOLDER, NOT BY US (BUG-780). 'Building Ontology' printed
+        # under 9 answers in the 2026-09-18 hand read; a facility manager does not know what an
+        # ontology is, and the word made the source look like a system component rather than the
+        # building's own model of itself. The source_id, the colour and every lookup key are
+        # unchanged — only the words a reader sees.
+        label="Building model",
         color="#6B7280",
         synthetic=False,
         store="graphdb",

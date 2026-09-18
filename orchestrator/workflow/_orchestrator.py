@@ -11,7 +11,7 @@ import time
 
 sys.path.append("/app")
 
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Dict, List, Literal, Optional, Sequence, Tuple
 from uuid import uuid4
 
 from langgraph.graph import END, StateGraph
@@ -622,6 +622,7 @@ async def apply_referent_gate(state, question: str, sparql_exec, *, lane: str) -
     # while logging a line nobody reads. Failing open is right; failing open silently on a
     # coding error is how a guard becomes decorative.
     from orchestrator.agents.sparql_agent import _active_namespace
+    from orchestrator.services.grounding_guard import reader_is_admin_in
     from orchestrator.services.referent_resolver import NOT_FOUND, ReferentResolver
 
     try:
@@ -630,6 +631,7 @@ async def apply_referent_gate(state, question: str, sparql_exec, *, lane: str) -
             entities=state.intermediate_results.get("entities", []),
             namespace=_active_namespace(),
             building_name=getattr(settings, "BUILDING_NAME", "this building"),
+            for_admin=reader_is_admin_in(state),
         )
     except Exception as exc:  # an existence check that errors must not take the lane down
         logger.warning(f"[referent_gate/{lane}] check did not run: {exc}")
@@ -738,54 +740,529 @@ def _clear_stale_lane_results(state) -> None:
         logger.debug(f"[workflow] cleared {len(dropped)} stale lane result(s) from a prior turn")
 
 
-def _unanswered_response(state, ctx) -> str:
-    """What to say when no lane produced anything to say (BUG-355).
+def _class_local_name(cls) -> str:
+    """Lower-cased local name of a class given as an IRI, a CURIE or a bare name (BUG-677).
+
+    'https://brickschema.org/schema/Brick#CO2_Sensor', 'brick:CO2_Sensor' and 'CO2_Sensor'
+    are one class to every matcher that compares a sensor's class with a modality's.
+    """
+    s = str(cls or "").strip()
+    for sep in ("#", "/", ":"):
+        if sep in s:
+            s = s.rsplit(sep, 1)[-1]
+    return s.lower()
+
+
+#: Where the response-cache lookup leaves the key it used, for the store to reuse (BUG-668).
+_CACHE_REQUEST_KEY = "response_cache_request"
+
+
+def _typed_text(message) -> str:
+    """What the user typed for a turn, before the dialogue node rewrote it.
+
+    The dialogue node REPLACES the latest message -- typography folded (`typed_query`), an
+    affirmation or a co-reference rewrite (`original_query`) -- and a stored conversation
+    keeps those replacements. The rawest recorded form wins, so a conversation read back from
+    Redis and the same conversation sent by a client key alike.
+    """
+    meta = getattr(message, "metadata", None)
+    if isinstance(meta, dict):
+        for key in ("typed_query", "original_query"):
+            value = meta.get(key)
+            if isinstance(value, str) and value.strip():
+                return value
+    return str(getattr(message, "content", "") or "")
+
+
+def _cache_question_and_context(state) -> Tuple[str, List[str]]:
+    """(latest user question, the earlier user questions that bind it), as typed (BUG-668)."""
+    from orchestrator.services.response_cache import CONTEXT_TURNS
+
+    messages = list(getattr(state, "messages", None) or [])
+    users = [i for i, m in enumerate(messages) if getattr(m, "role", "") == "user"]
+    if not users:
+        return "", []
+    latest = users[-1]
+    earlier = [_typed_text(messages[i]) for i in users[:-1]]
+    earlier = [t for t in earlier if t.strip()]
+    return _typed_text(messages[latest]), earlier[-CONTEXT_TURNS:]
+
+
+def _response_cache_request(state) -> Tuple[str, List[str]]:
+    """The (question, context) this turn's answer is stored under -- the lookup's own key.
+
+    `put` used to key on `messages[-2].content`, which by the response node is the REWRITTEN
+    question, while `get` had looked up the raw words: the two disagreed on every rewritten
+    turn. The lookup records what it used and this consumes it, so a key cannot outlive its
+    turn on a persisted bus. Without a record (a caller that skipped the lookup) the same
+    derivation runs on the messages.
+    """
+    results = getattr(state, "intermediate_results", None)
+    recorded = results.pop(_CACHE_REQUEST_KEY, None) if isinstance(results, dict) else None
+    if isinstance(recorded, dict) and isinstance(recorded.get("question"), str):
+        context = [str(t) for t in (recorded.get("context") or [])]
+        return recorded["question"], context
+    return _cache_question_and_context(state)
+
+
+def _latest_typed_question(state) -> str:
+    """The latest user turn as typed, before any rewrite (BUG-682)."""
+    for message in reversed(list(getattr(state, "messages", None) or [])):
+        if getattr(message, "role", "") == "user":
+            return _typed_text(message)
+    return ""
+
+
+# ── what the building measures, from its own graph (BUG-680 / BUG-681) ─────────────────────
+#
+# Several answers here decided or listed a building's quantities from literals in this file
+# ("temperature, humidity, CO₂, air quality, water flow, or pressure"; a set of six Brick
+# classes). A building that measures noise could be told it has no noise sensor.
+#
+# The source reused is `absence_guard.count_sensors` -- the building-wide "does this building
+# have modality X" check the response node already runs at request time (BUG-192): matched on
+# the class LOCAL name in any namespace, with each modality's label discriminators, over the
+# modalities the building declares in config. NOT the observability coverage matrix: that
+# matrix only assesses ROOM-scoped modalities (30 of the 45 declared ones are floor-,
+# building- or equipment-scoped), so absence in it is not absence in the building -- the
+# limitation BUG-663 recorded when carbon monoxide dropped out of its list.
+#
+# None always means "could not check", never "none measured".
+
+#: Successful, complete counts per (building, namespace), kept for the process lifetime.
+_MEASURED_COUNTS_CACHE: Dict[Tuple[str, str], Dict[str, int]] = {}
+#: An in-flight count per key, shared by concurrent callers and finished even when a caller
+#: stops waiting, so a slow cold graph still warms the cache for the next question.
+_MEASURED_COUNTS_PENDING: Dict[Tuple[str, str], "asyncio.Task"] = {}
+#: Concurrent COUNT queries while filling the cache.
+_MEASURED_COUNTS_PARALLEL = 4
+
+
+def _humanise_modality(name: str) -> str:
+    """A modality name as a reader would say it ('water_flow' -> 'water flow')."""
+    return str(name or "").replace("_", " ").strip()
+
+
+async def _count_one_modality(
+    name: str, key: Tuple[str, str], sparql_exec, gate
+) -> Tuple[str, Optional[int]]:
+    """(modality, points) through absence_guard.count_sensors; None when it cannot be read."""
+    from orchestrator.services.absence_guard import count_sensors
+
+    building_id, namespace = key
+    async with gate:
+        try:
+            return name, await count_sensors(name, namespace, sparql_exec, building_id)
+        except Exception as exc:  # one unreadable modality is unknown, not absent
+            logger.debug(f"[measured] count failed for {name}: {exc}")
+            return name, None
+
+
+async def _count_declared_modalities(
+    key: Tuple[str, str], sparql_exec, specs
+) -> Optional[Dict[str, Optional[int]]]:
+    """Count every declared modality's points; cache only a complete result."""
+    # Module-level helper, not a nested `async def`: tests that scan this file for node
+    # functions treat any indented `async def` as a method boundary.
+    gate = asyncio.Semaphore(_MEASURED_COUNTS_PARALLEL)
+    rows = await asyncio.gather(
+        *(_count_one_modality(s.name, key, sparql_exec, gate) for s in specs)
+    )
+    counts: Dict[str, Optional[int]] = dict(rows)
+    if all(v is None for v in counts.values()):
+        return None
+    if all(v is not None for v in counts.values()):
+        _MEASURED_COUNTS_CACHE[key] = {k: int(v) for k, v in counts.items()}
+    return counts
+
+
+async def _measured_modality_counts(
+    timeout_s: float,
+    building_id: Optional[str] = None,
+    namespace: Optional[str] = None,
+    sparql_exec=None,
+    specs=None,
+) -> Optional[Dict[str, Optional[int]]]:
+    """{declared modality: points in the live graph} for the active building, or None.
+
+    None when nothing could be read (graph down, no modalities declared, timeout). A value of
+    None inside the dict is one modality that could not be counted. Neither is ever zero.
+    """
+    building_id = building_id or settings.BUILDING_ID
+    namespace = namespace or settings.BUILDING_NAMESPACE
+    if not namespace:
+        return None
+    key = (str(building_id), str(namespace))
+    hit = _MEASURED_COUNTS_CACHE.get(key)
+    if hit is not None:
+        return dict(hit)
+    try:
+        if specs is None:
+            from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+            specs = load_modalities(building_id)
+        if not specs:
+            return None
+        if sparql_exec is None:
+            from orchestrator.services.deliberation.live import sparql_exec as _live_exec
+
+            sparql_exec = _live_exec
+        loop = asyncio.get_running_loop()
+        task = _MEASURED_COUNTS_PENDING.get(key)
+        if task is None or task.done() or task.get_loop() is not loop:
+            task = loop.create_task(_count_declared_modalities(key, sparql_exec, specs))
+            _MEASURED_COUNTS_PENDING[key] = task
+        return await asyncio.wait_for(asyncio.shield(task), timeout=timeout_s)
+    except asyncio.TimeoutError:
+        logger.info(f"[measured] modality counts not ready within {timeout_s:.0f}s")
+        return None
+    except Exception as exc:
+        logger.warning(f"[measured] modality counts unavailable: {describe_exception(exc)}")
+        return None
+
+
+def _measured_names(counts: Optional[Dict[str, Optional[int]]]) -> List[str]:
+    """Readable names of the modalities with at least one point, sorted."""
+    return sorted({_humanise_modality(name) for name, n in (counts or {}).items() if n and n > 0})
+
+
+def _modality_named_in(text: str, declared: List[str]) -> Optional[str]:
+    """The declared modality a question names through absence_guard's English aliases.
+
+    A fallback after the concept resolver and the modality names themselves. Longest alias
+    first, so "hot water" is not claimed by "water"; only modalities the building declares.
+    """
+    try:
+        from orchestrator.services.absence_guard import _MODALITY_ALIASES
+    except Exception:  # pragma: no cover - the alias table is optional here
+        return None
+    low = (text or "").lower()
+    wanted = set(declared or [])
+    pairs = sorted(
+        ((alias, name) for name, aliases in _MODALITY_ALIASES.items() for alias in aliases),
+        key=lambda p: -len(p[0]),
+    )
+    for alias, name in pairs:
+        if name in wanted and re.search(rf"\b{re.escape(alias)}\b", low):
+            return name
+    return None
+
+
+#: Channel types whose dispatch reaches a person. `log` writes only to the server log, and the
+#: smtp dispatcher is a placeholder that sends nothing (notification_service._send_smtp).
+_DELIVERING_CHANNEL_TYPES = ("webhook",)
+
+
+def _notification_delivery_configured(building_id: Optional[str] = None) -> bool:
+    """True when this building has an enabled channel that actually delivers a notification."""
+    try:
+        from orchestrator.services.notification_service import get_notification_service
+
+        svc = get_notification_service(building_id or settings.BUILDING_ID)
+        return any(svc.has_channel_type(t) for t in _DELIVERING_CHANNEL_TYPES)
+    except Exception as exc:  # unreadable config promises nothing
+        logger.debug(f"[notifications] channel check failed: {exc}")
+        return False
+
+
+def _is_typed_absence(result: Any) -> bool:
+    """True when the sparql lane returned a deliberate, typed absence (CAVEAT-654)."""
+    return isinstance(result, dict) and result.get("method") == "typed_absence"
+
+
+async def _closest_holdings(state, timeout_s: float = 5.0) -> Tuple[List[str], List[Any]]:
+    """What the active building MEASURES and the record classes it HOLDS — live, or empty.
+
+    Both halves are derived from the graph, never declared here: `_measured_modality_counts`
+    counts points per declared modality and `record_registry.record_classes` reads the record
+    classes that have instances. Either half may come back empty (graph slow, graph down, a
+    building that declares neither), and an empty half is simply not mentioned — a sentence
+    about what the building holds must never be padded with a guess.
+    """
+    measured: List[str] = []
+    records: List[Any] = []
+    try:
+        measured = _measured_names(
+            await _measured_modality_counts(
+                timeout_s=timeout_s, building_id=getattr(state, "building_id", None) or None
+            )
+        )
+    except Exception as exc:
+        logger.debug(f"[holdings] measured modalities unavailable: {describe_exception(exc)}")
+    try:
+        from orchestrator.services.record_registry import record_classes
+
+        records = sorted(await record_classes(), key=lambda r: -r.instances)
+    except Exception as exc:
+        logger.debug(f"[holdings] record classes unavailable: {describe_exception(exc)}")
+    return measured, records
+
+
+def _record_vocabulary(records: List[Any]) -> List[str]:
+    """Every word the building's own record classes are known by."""
+    vocab: List[str] = []
+    for record in records or []:
+        vocab.append(getattr(record, "label", "") or "")
+        vocab.extend(getattr(record, "terms", ()) or ())
+    return [v for v in vocab if v]
+
+
+def _and_list(items: Sequence[str], limit: int = 3) -> str:
+    """'a, b and c' — the form a reader expects, not a comma-joined dump."""
+    kept = [str(i) for i in items[:limit] if str(i).strip()]
+    if len(kept) <= 1:
+        return kept[0] if kept else ""
+    return ", ".join(kept[:-1]) + f" and {kept[-1]}"
+
+
+#: Internal intent names a reader should never have to interpret. An intent not listed here is
+#: shown with its underscores spaced out, which reads acceptably ("floor plan", "sensor data");
+#: these are the ones that do not ("recommend", "metadata", "deliberate").
+_INTENT_IN_PLAIN_WORDS = {
+    "recommend": "what to do",
+    "metadata": "what the building records",
+    "discovery": "what the building has",
+    "deliberate": "choosing between spaces",
+    "analytics": "working something out from readings",
+    "sensor_data": "current readings",
+    "compare": "a comparison",
+    "trend": "how something has changed",
+    "anomaly": "unusual readings",
+    "compliance": "meeting a standard",
+    "asset_state": "whether equipment is working",
+    "readiness_check": "whether a room is ready",
+    "observability": "what can be measured",
+    "register": "the building's records",
+}
+
+
+def _intent_in_plain_words(intent: str) -> str:
+    """An intent name as a reader would say it."""
+    key = str(intent or "").strip().lower()
+    return _INTENT_IN_PLAIN_WORDS.get(key, key.replace("_", " "))
+
+
+async def _unanswered_response(state, ctx) -> str:
+    """What to say when no lane produced anything to say (BUG-355, BUG-706).
 
     *"I processed your request, but couldn't generate a response"* is the documented
     signature of a lane that routes correctly, executes, and is never collected by this
     node — `.claude/rules/agent-patterns.md` records it as the step nobody remembers, and
     it has been measured at least twice (the observability lane in V6-T10, the diagnosis
-    lane in BUG-354). It is the worst possible string to emit, for two reasons: it tells
-    the user nothing they can act on, and it tells whoever is debugging nothing about
-    which component went quiet.
+    lane in BUG-354).
 
-    This says what was understood, which lane ran, and what to try instead. It states no
-    figure and no fact about the building — there is nothing to state, and inventing a
-    plausible one here is exactly the failure the honesty contract exists to prevent.
+    ITS REPLACEMENT WAS WRITTEN FOR THE WRONG READER, and the 2026-09-17 hand read of 147
+    live answers caught it on six (rows 10, 35, 73, 83, 95, 119). *"The ontology lane, the
+    time-series lane ran, but returned nothing to report. That is a gap on my side"* names
+    two components the reader cannot see, confesses a fault, and then gives advice that
+    would be identical for every question ever asked. It is diagnostics addressed to a
+    developer, printed at a facility manager.
+
+    So the diagnosis now goes to the LOG, where the developer is, and the reader is told
+    three things instead: what the question was understood to be, which part of it — if
+    any — the building has no vocabulary for, and what this building does hold that is
+    closest. The last of those is derived live (`_closest_holdings`); nothing about the
+    building is written down here.
+
+    It still states no figure and no fact the graph did not supply, and it still does not
+    claim the building lacks the data: not answering and not holding are different facts,
+    and the whole point of this text is to stop presenting one as the other.
     """
+    from orchestrator.services.grounding_guard import reader_is_admin_in, unmatched_terms
+
     results = getattr(state, "intermediate_results", None) or {}
     intent = str(results.get("intent") or "").strip()
     entities = [str(e) for e in (results.get("entities") or []) if str(e).strip()]
-    ran = [label for key, label in _LANE_KEYS_FOR_DIAGNOSIS if results.get(key)]
     error = str(results.get("error") or "").strip()
+    question = str(getattr(state, "user_message", "") or "")
+    if not question:
+        messages = getattr(state, "messages", None) or []
+        question = str(getattr(messages[-1], "content", "")) if messages else ""
+
+    # THE DIAGNOSIS, to the log. "Nothing was tried" and "something was tried and came back
+    # empty" are different bugs and the distinction is worth keeping — for whoever is
+    # reading the logs, which is never the person who asked the question.
+    ran = [label for key, label in _LANE_KEYS_FOR_DIAGNOSIS if results.get(key)]
+    logger.warning(
+        "[response] nothing to say: intent=%s entities=%s ran=%s error=%s",
+        intent or "none",
+        entities[:3] or "none",
+        ", ".join(ran) or "none",
+        error[:160] or "none",
+    )
+
+    measured, records = await _closest_holdings(state)
+    unmatched = unmatched_terms(question, list(measured) + _record_vocabulary(records))
+    building = str(getattr(settings, "BUILDING_NAME", "") or "").strip() or "this building"
 
     lines = ["I understood the question but could not put an answer together for it."]
     detail = []
     if intent:
-        detail.append(f"read it as a **{intent.replace('_', ' ')}** question")
+        detail.append(f"read it as a question about **{_intent_in_plain_words(intent)}**")
     if entities:
         detail.append(f"about **{', '.join(entities[:3])}**")
     if detail:
         lines.append("")
         lines.append(f"- I {' '.join(detail)}.")
-    if ran:
-        # Naming the lane that ran and returned nothing is the single most useful thing
-        # here: it separates "nothing was tried" from "something was tried and came back
-        # empty", which are different problems with different fixes.
-        lines.append(f"- {', '.join(ran).capitalize()} ran, but returned nothing to report.")
-    else:
-        lines.append("- No data lane produced a result for it.")
-    if error:
+    if unmatched:
+        lines.append(
+            f"- I could not match **{'** or **'.join(unmatched)}** to anything this "
+            f"building records, so I had nothing to build the answer on."
+        )
+    if error and reader_is_admin_in(state):
+        # Remediation and internals are for the reader who can act on them (design
+        # contract 7): a facility manager cannot do anything with a stack trace.
         lines.append(f"- A step reported: {error[:160]}")
 
-    lines += [
-        "",
-        "That is a gap on my side, not a statement that the building has no such data. "
-        "Rephrasing with a specific room, floor or date range often reaches a lane that "
-        'can answer — or ask *"what can you tell me about this building?"* to see what '
-        "is connected.",
-    ]
+    holds = []
+    if measured:
+        holds.append(f"measures {_and_list(measured, 4)}")
+    if records:
+        holds.append(f"keeps {_and_list([r.label for r in records[:3]])} records")
+    if holds:
+        lines.append("")
+        lines.append(
+            f"What {building} does hold, closest to what you asked: it {_and_list(holds)}."
+        )
+
+    # ONE question back, and only when part of the request could not be mapped — which is
+    # the deliberation compiler's rule ("I couldn't map part of your request (…) — could
+    # you rephrase or drop that part?") applied where that compiler never runs.
+    if unmatched:
+        about = f" for {entities[0]}" if entities else ""
+        if records:
+            offer = f"the {records[0].label.lower()} records{about}"
+        elif measured:
+            offer = f"what is measured{about}"
+        else:
+            offer = ""
+        lines.append("")
+        lines.append(
+            f"Shall I answer from {offer} instead — or tell me where **{unmatched[0]}** "
+            "is written down and I will read it there?"
+            if offer
+            else f"Where is **{unmatched[0]}** written down?"
+        )
+    else:
+        lines.append("")
+        lines.append("Naming one room, floor or date usually gives me enough to answer from those.")
     return "\n".join(lines)
+
+
+#: An answer declaring that the building holds nothing of the kind asked about. Read only on
+#: the semantic RAG fallback's own prose, where it was measured on fourteen of 147 answers.
+_ABSENCE_CLAIM_RE = re.compile(
+    r"\b(?:do(?:es)?\s+not|don'?t|doesn'?t|is\s+no|are\s+no|has\s+no|have\s+no|no)\b"
+    r"[^.!?\n]{0,70}?\b(?:contains?|includes?|lists?|records?|recorded|holds?|"
+    r"present|available|information)\b",
+    re.IGNORECASE,
+)
+
+
+def _spaced(local_name: str) -> str:
+    """'ConditionSurvey' -> 'condition survey'."""
+    return re.sub(r"(?<!^)(?=[A-Z])", " ", str(local_name or "")).lower().strip()
+
+
+async def _ground_semantic_fallback(state, text: str) -> str:
+    """Hold the ontology RAG fallback to instances, and to absences the graph supports.
+
+    The fallback (`SPARQLAgent.answer_semantically`, `method="semantic_rag"`) hands an LLM a
+    similarity-retrieved slice of the graph and asks it to answer from that slice alone. The
+    slice is frequently TBox — a class, its rdfs:comment, its declared properties — and the
+    model then does two things it should never do, both measured on 2026-09-17 across
+    fourteen live answers:
+
+    * it narrates the SCHEMA as though it were the building ("the only property that hints at
+      a governance relationship is policyOwner"), and
+    * it converts "not in the slice I was given" into "not in the building" — a person with
+      accessibility needs was told the building has no toilet records, and a space planner
+      that it has no occupancy sensors, while both are in the graph in quantity.
+
+    Two bounded corrections, neither of which invents anything:
+
+    1. **Remediation is withheld from non-admins.** "You would need to extend the ontology
+       with `hasLifecycleEvent`…" is `enablement_hint` in the model's own words, and that
+       hint is already admin-only (design contract 7). Enforcing the rule on our
+       deterministic text and not on generated text enforces it on the half that never
+       broke it.
+    2. **An absence the graph contradicts is replaced by the record that holds it.** The
+       test is the building's own register vocabulary (`held_record_class` over live
+       `record_classes`), so it is true for any building and configured in no file. When
+       the absence IS supported, the answer stands and, where the ontology defines a class
+       for it that this building does not hold, the decline is told which one — a decline
+       that names the missing record is worth far more than one that does not.
+
+    Returns ``text`` unchanged for every other lane, and on any failure.
+    """
+    results = getattr(state, "intermediate_results", None) or {}
+    sparql_result = results.get("sparql_result") or {}
+    if not isinstance(sparql_result, dict) or sparql_result.get("method") != "semantic_rag":
+        return text
+    if not (text or "").strip():
+        return text
+
+    from orchestrator.services.grounding_guard import (
+        plain_prose,
+        reader_is_admin_in,
+        schema_remediation_reason,
+        strip_schema_remediation,
+    )
+
+    hint = schema_remediation_reason(text)
+    if hint and not reader_is_admin_in(state):
+        trimmed = strip_schema_remediation(text)
+        if trimmed.strip():
+            logger.info(f"[response] schema remediation withheld from a non-admin: {hint!r}")
+            results["schema_remediation_withheld"] = hint
+            text = trimmed
+
+    # The claim leads the answer in every measured case, and reading only the head keeps a
+    # long correct answer that mentions an absence in passing out of this guard's way.
+    if not _ABSENCE_CLAIM_RE.search(plain_prose(text)[:500]):
+        return text
+
+    question = str(getattr(state, "user_message", "") or "")
+    if not question:
+        messages = getattr(state, "messages", None) or []
+        question = str(getattr(messages[-1], "content", "")) if messages else ""
+
+    _, records = await _closest_holdings(state)
+    from orchestrator.services.record_registry import absent_record_class, held_record_class
+
+    held = held_record_class(question, records)
+    if held and held.instances > 0:
+        if held.label.lower() in text.lower():
+            # The answer already names the register; its absence claim is about something
+            # else and is not this guard's business.
+            return text
+        building = str(getattr(settings, "BUILDING_NAME", "") or "").strip() or "this building"
+        logger.warning(
+            "[response] semantic fallback declared an absence the graph contradicts: "
+            "%s holds %s (%s)",
+            building,
+            held.label,
+            held.instances,
+        )
+        results["unsupported_absence_corrected"] = held.local_name
+        return (
+            f"{building} does record this: **{held.label}** — {held.instances} entries.\n\n"
+            f"What I read for that question was the description of those records rather "
+            f"than the records themselves, so I would rather not answer from it. Ask me for "
+            f"the {held.label.lower()} records — naming a room, floor or date if you have "
+            f"one — and I will read them."
+        )
+
+    absent = absent_record_class(question, records)
+    if absent:
+        note = (
+            f"If that is kept anywhere, it would be a **{_spaced(absent)}** record, and "
+            f"this building holds none."
+        )
+        if note not in text:
+            results["absent_record_named"] = absent
+            text = f"{text}\n\n{note}"
+    return text
 
 
 _PHYSICAL_BANDS = None
@@ -1707,12 +2184,15 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                             from orchestrator.services.grounding_guard import (
                                 SUBJECT_EQUIPMENT,
                                 enablement_hint,
+                                reader_is_admin_in,
                             )
 
                             _generic = (
                                 f"I couldn't find anything of that kind in "
-                                f"**{_bname}**'s ontology, so there is nothing to list.\n\n"
-                                + enablement_hint(SUBJECT_EQUIPMENT)
+                                f"**{_bname}**'s ontology, so there is nothing to list."
+                                + enablement_hint(
+                                    SUBJECT_EQUIPMENT, for_admin=reader_is_admin_in(state)
+                                )
                             )
                 except Exception as _inv_err:
                     logger.warning(f"[discovery] inventory render skipped: {_inv_err}")
@@ -1988,6 +2468,155 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             # is how a gate becomes decorative -- which this project has measured before.
             logger.warning(f"[referent_gate] turn-level check did not run: {exc}")
 
+    async def _kind_is_confirmed_absent(
+        self, keywords, state: ConversationState, sparql_exec=None
+    ) -> bool:
+        """True only when the live graph holds NO point of any class this sensor kind covers.
+
+        The classes come from the building's own declarations: every declared modality the
+        kind's words name (by modality name or absence_guard alias), plus the classes the
+        concept resolver chose for the question. Counted on the class LOCAL name in any
+        namespace (absence_guard's count query), so an ontosage:-typed point is seen as well
+        as a brick: one. No classes, an unreadable graph, or a timeout all return False: a
+        check that could not run must never become a claim of absence (BUG-152).
+        """
+        try:
+            from orchestrator.agents.sparql_agent import _active_namespace
+            from orchestrator.services.absence_guard import _MODALITY_ALIASES, _count_query
+            from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+            words = {str(k).lower() for k in (keywords or ())}
+            classes = set()
+            for spec in load_modalities(state.building_id or settings.BUILDING_ID) or []:
+                spoken = {_humanise_modality(spec.name).lower()}
+                spoken |= {a.lower() for a in _MODALITY_ALIASES.get(spec.name, ())}
+                if any(
+                    re.search(rf"\b{re.escape(s)}\b", w) or re.search(rf"\b{re.escape(w)}\b", s)
+                    for s in spoken
+                    for w in words
+                    if s and w
+                ):
+                    classes.update(spec.brick_classes)
+            for cm in state.intermediate_results.get("concepts") or []:
+                if isinstance(cm, dict):
+                    classes.update(cm.get("brick_classes") or [])
+            locals_ = tuple(
+                sorted(
+                    {
+                        name
+                        for name in (
+                            str(c).rsplit("#", 1)[-1].rsplit("/", 1)[-1].rsplit(":", 1)[-1]
+                            for c in classes
+                        )
+                        if re.fullmatch(r"[A-Za-z0-9_.\-]+", name)
+                    }
+                )
+            )
+            if not locals_:
+                return False
+            if sparql_exec is None:
+                from orchestrator.services.deliberation.live import sparql_exec
+
+            res = await asyncio.wait_for(
+                sparql_exec(_count_query(locals_, _active_namespace())), timeout=8.0
+            )
+            bindings = (res or {}).get("results", {}).get("bindings", [])
+            if not bindings:
+                return False
+            return int(float(bindings[0]["n"]["value"])) == 0
+        except Exception as exc:
+            logger.warning(
+                f"[{state.current_intent}] sensor-kind existence check failed "
+                f"({describe_exception(exc)}) — refusing to claim absence"
+            )
+            return False
+
+    async def _repair_retrieved_modality(
+        self, state: ConversationState, result: Dict[str, Any], _sparql_query: str
+    ) -> None:
+        """Replace a wrong-modality or under-populated SPARQL result in place (CAVEAT-148).
+
+        NOT AFTER A TYPED ABSENCE. When the sparql lane has established that the building
+        declares no point of what was asked (method == "typed_absence", a NOT_DECLARED
+        outcome), zero bindings is the answer, not a retrieval miss. Repairing it would
+        re-answer "supply air temperature on floor N" with the ROOM temperature sensors of
+        that floor -- a plant question answered from room readings.
+        """
+        if _is_typed_absence(result):
+            logger.info("[modality_repair] typed absence from the sparql lane -- not repaired")
+            return
+        # CAVEAT-148 — repair a retrieval that returned the WRONG modality.
+        # Measured: "building-wide average humidity" generated SPARQL binding
+        # bldg:Building_Air_Static_Pressure_Sensor.01 — a PRESSURE sensor — so the
+        # answer could only decline, and any aggregate would have rested on 2 of
+        # ~70 humidity sensors. Fires ONLY on a total miss (the question names a
+        # modality and NOT ONE returned sensor matches it), so a correct or even
+        # partially-correct retrieval is untouched.
+        try:
+            from orchestrator.services import modality_repair as _mr
+
+            _want = self._infer_query_kind(_sparql_query)
+            _res_now = result.get("results", {}) if isinstance(result, dict) else {}
+            _binds_now = (
+                _res_now.get("results", {}).get("bindings", [])
+                if isinstance(_res_now, dict)
+                else []
+            )
+            # Two distinct failures share one repair. A WRONG-modality result is a
+            # total miss. An UNDER-POPULATED one has the right modality but too
+            # little of it — and for a question that claims to span the building
+            # that is equally wrong: "building-wide average humidity" was computed
+            # from 8 of ~70 humidity sensors, which the k-anonymity floor then
+            # blocked at k=8. The privacy gate was catching a correctness bug.
+            # What the concept resolved to, so a composite's constituents are not mistaken
+            # for a total miss, and which floors the question named, so the repair cannot
+            # answer about the building when it was asked about a floor (BUG-632).
+            _resolved_classes = [
+                c
+                for _cm in (state.intermediate_results.get("concepts") or [])
+                for c in (_cm.get("brick_classes") or [])
+            ]
+            _asked_floors = re.findall(r"\b(?:floor|level)\s*(\d+)\b", _sparql_query or "", re.I)
+
+            _miss = _mr.needs_repair(_binds_now, _want, extra_classes=_resolved_classes)
+            _under = _mr.needs_population(_sparql_query, _binds_now, _want)
+            logger.info(
+                f"[modality_repair] want={_want} rows={len(_binds_now)} "
+                f"miss={_miss} under_populated={_under} floors={_asked_floors or 'any'}"
+            )
+            if _miss or _under:
+                _q = _mr.build_modality_query(
+                    _want, settings.BUILDING_NAMESPACE, floors=_asked_floors
+                )
+                if _q:
+                    from orchestrator.services.deliberation.live import (
+                        sparql_exec as _sx,
+                    )
+
+                    _repaired = await _sx(_q)
+                    _rb = (_repaired or {}).get("results", {}).get("bindings", [])
+                    # For an under-populated aggregate, only replace if the graph
+                    # genuinely offers MORE — never shrink a good result set.
+                    if _rb and (_miss or len(_rb) > len(_binds_now)):
+                        logger.warning(
+                            f"[modality_repair] {'no' if _miss else 'only a sample of'} {_want} "
+                            f"sensors from retrieval ({len(_binds_now)} rows); "
+                            f"replaced with {len(_rb)} from the graph"
+                        )
+                        result["results"] = _repaired
+                        result["success"] = True
+                        result["analytics_required"] = True
+                        state.intermediate_results["modality_repair"] = {
+                            "modality": _want,
+                            "reason": "wrong_modality" if _miss else "under_populated",
+                            "was": len(_binds_now),
+                            "now": len(_rb),
+                        }
+        except Exception as _mr_err:
+            # WARNING, not debug: a guard that stops guarding must say so, or a
+            # disabled repair is indistinguishable from one that found nothing.
+            logger.warning(f"[modality_repair] skipped ({type(_mr_err).__name__}): {_mr_err}")
+
     async def _sparql_node(self, state: ConversationState) -> ConversationState:
         """
         Execute ontology query using LLM-generated SPARQL or semantic agent
@@ -2068,6 +2697,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             if settings.REFERENT_VALIDATION_ENABLED:
                 from orchestrator.agents.sparql_agent import _active_namespace
                 from orchestrator.services.referent_resolver import (
+                    AMBIGUOUS,
                     GATED_INTENTS,
                     NOT_FOUND,
                     SKIPPED,
@@ -2076,12 +2706,44 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
                 _gate_intent = state.current_intent or state.intermediate_results.get("intent", "")
                 if _gate_intent in GATED_INTENTS:
+                    from orchestrator.services.grounding_guard import reader_is_admin_in
+
                     _resolution = await ReferentResolver(self.sparql_agent._execute_query).resolve(
                         query=latest_message,
                         entities=state.intermediate_results.get("entities", []),
                         namespace=_active_namespace(),
                         building_name=getattr(settings, "BUILDING_NAME", "this building"),
+                        for_admin=reader_is_admin_in(state),
                     )
+                    # AMBIGUOUS is answered the same way as NOT_FOUND — by asking — because
+                    # the failure is the same one: without it the lane answers about
+                    # whichever of the matching rooms the store returned first, in the
+                    # user's own words (BUG-526). The difference is only what we can say:
+                    # here we can name the candidates.
+                    if _resolution.status == AMBIGUOUS:
+                        logger.info(
+                            f"[referent_gate] '{_resolution.referent}' matches "
+                            f"{len(_resolution.suggestions)} ids and names none of them "
+                            "— asking instead of picking one"
+                        )
+                        state.intermediate_results["sparql_result"] = {
+                            "success": True,
+                            "analytics_required": False,
+                            "formatted_response": _resolution.message
+                            + (
+                                "\n\nDid you mean: "
+                                + ", ".join(f"**{s}**" for s in _resolution.suggestions)
+                                + "?"
+                                if _resolution.suggestions
+                                else ""
+                            ),
+                            "referent_ambiguous": _resolution.referent,
+                        }
+                        state.query_results = {}
+                        state.analytics_required = False
+                        state.intermediate_results["referent_resolution"] = "ambiguous"
+                        return state
+
                     if _resolution.status == NOT_FOUND:
                         logger.info(
                             f"[referent_gate] '{_resolution.referent}' not found in ontology "
@@ -2172,65 +2834,9 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         finally:
             reset_request_bctx(_bctx_token)
 
-        # CAVEAT-148 — repair a retrieval that returned the WRONG modality.
-        # Measured: "building-wide average humidity" generated SPARQL binding
-        # bldg:Building_Air_Static_Pressure_Sensor.01 — a PRESSURE sensor — so the
-        # answer could only decline, and any aggregate would have rested on 2 of
-        # ~70 humidity sensors. Fires ONLY on a total miss (the question names a
-        # modality and NOT ONE returned sensor matches it), so a correct or even
-        # partially-correct retrieval is untouched.
-        try:
-            from orchestrator.services import modality_repair as _mr
-
-            _want = self._infer_query_kind(_sparql_query)
-            _res_now = result.get("results", {}) if isinstance(result, dict) else {}
-            _binds_now = (
-                _res_now.get("results", {}).get("bindings", [])
-                if isinstance(_res_now, dict)
-                else []
-            )
-            # Two distinct failures share one repair. A WRONG-modality result is a
-            # total miss. An UNDER-POPULATED one has the right modality but too
-            # little of it — and for a question that claims to span the building
-            # that is equally wrong: "building-wide average humidity" was computed
-            # from 8 of ~70 humidity sensors, which the k-anonymity floor then
-            # blocked at k=8. The privacy gate was catching a correctness bug.
-            _miss = _mr.needs_repair(_binds_now, _want)
-            _under = _mr.needs_population(_sparql_query, _binds_now, _want)
-            logger.info(
-                f"[modality_repair] want={_want} rows={len(_binds_now)} "
-                f"miss={_miss} under_populated={_under}"
-            )
-            if _miss or _under:
-                _q = _mr.build_modality_query(_want, settings.BUILDING_NAMESPACE)
-                if _q:
-                    from orchestrator.services.deliberation.live import (
-                        sparql_exec as _sx,
-                    )
-
-                    _repaired = await _sx(_q)
-                    _rb = (_repaired or {}).get("results", {}).get("bindings", [])
-                    # For an under-populated aggregate, only replace if the graph
-                    # genuinely offers MORE — never shrink a good result set.
-                    if _rb and (_miss or len(_rb) > len(_binds_now)):
-                        logger.warning(
-                            f"[modality_repair] {'no' if _miss else 'only a sample of'} {_want} "
-                            f"sensors from retrieval ({len(_binds_now)} rows); "
-                            f"replaced with {len(_rb)} from the graph"
-                        )
-                        result["results"] = _repaired
-                        result["success"] = True
-                        result["analytics_required"] = True
-                        state.intermediate_results["modality_repair"] = {
-                            "modality": _want,
-                            "reason": "wrong_modality" if _miss else "under_populated",
-                            "was": len(_binds_now),
-                            "now": len(_rb),
-                        }
-        except Exception as _mr_err:
-            # WARNING, not debug: a guard that stops guarding must say so, or a
-            # disabled repair is indistinguishable from one that found nothing.
-            logger.warning(f"[modality_repair] skipped ({type(_mr_err).__name__}): {_mr_err}")
+        # CAVEAT-148 repair of a wrong-modality or under-populated retrieval. Never after a
+        # typed absence: see _repair_retrieved_modality.
+        await self._repair_retrieved_modality(state, result, _sparql_query)
 
         state.intermediate_results["sparql_result"] = result
         state.query_results = result.get("results", {})
@@ -2290,19 +2896,43 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 if _original_intent == "trend":
                     _fallback_msg = (
                         f"I couldn't retrieve trend data for {_entities_hint} directly. "
-                        "The sensor may be referenced by a different label in the ontology. "
+                        "The sensor may be recorded under a different name. "
                         "To get a weekly or daily trend, try specifying the zone instead — "
                         "e.g. *'Show CO2 sensor trend for Zone 5.08 over the last 7 days'* "
                         "or *'What was the average CO2 in Zone 5.08 this week?'*  "
                         "Ventilation adequacy can be assessed once I have zone-level sensor data."
                     )
                 elif _original_intent == "compare":
+                    # NOT EVERY COMPARISON IS A SENSOR COMPARISON (BUG-617). "How do
+                    # observed route lengths, waits and hand-offs compare with the design
+                    # assumptions?" was answered "comparing observed_route_lengths ... requires
+                    # sensors with linked time-series data ... give me zone IDs" — asking the
+                    # reader for a zone id about walking routes. When the building measures
+                    # nothing of the kind asked about, the honest answer names what it DOES
+                    # measure and points at the records, instead of asking for a sensor.
+                    # MEASURED, not DECLARED (BUG-663 shape): the declared config names
+                    # modalities with no point in the graph. Omitted when unreadable.
+                    _measured = _measured_names(
+                        await _measured_modality_counts(
+                            timeout_s=5.0, building_id=state.building_id or None
+                        )
+                    )
+                    _what_is_measured = (
+                        "\n\nWhat this building measures: "
+                        + ", ".join(_measured[:10])
+                        + (" and more." if len(_measured) > 10 else ".")
+                        if _measured
+                        else ""
+                    )
                     _fallback_msg = (
-                        f"Comparing {_entities_hint} requires sensors with linked time-series data. "
-                        "Floor-level energy or zone comparison works best when referencing specific "
-                        "zone IDs — e.g. *'Compare temperature in Zone 5.01 vs Zone 5.28 last month'* "
-                        "or *'Which floor had higher average CO2 this week?'*  "
-                        "I can pull data for any sensor zone once a specific zone or sensor ID is provided."
+                        f"I have no measured series for {_entities_hint}, so there is nothing "
+                        "to compare from readings."
+                        + _what_is_measured
+                        + "\n\nIf what you asked about is RECORDED rather than measured — a "
+                        "route time, a design duty, a booking — name it and I will read it from "
+                        "the building's records. For a sensor comparison, naming the two spaces "
+                        "and the quantity works best, e.g. *'compare the average CO2 on floor 1 "
+                        "versus floor 3'*."
                     )
                 else:
                     _fallback_msg = (
@@ -2804,57 +3434,14 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             # no-UUIDs path — a discovery miss must not become a false absence
             # claim.
             if _missing_type is not None:
-                _kind_classes = {
-                    "occupancy": (
-                        "Occupancy_Count_Sensor",
-                        "People_Count_Sensor",
-                        "Occupancy_Sensor",
-                        "Motion_Sensor",
-                    ),
-                    "energy": (
-                        "Energy_Sensor",
-                        "Electrical_Energy_Sensor",
-                        "Energy_Usage_Sensor",
-                        "Power_Sensor",
-                        "Electric_Power_Sensor",
-                    ),
-                }[_missing_type]
-                try:
-                    import httpx as _httpx
-
-                    from orchestrator.agents.sparql_agent import (
-                        GRAPHDB_QUERY_ENDPOINT as _GQE,
-                    )
-                    from orchestrator.agents.sparql_agent import (
-                        _active_namespace as _ns_fn,
-                    )
-
-                    _vals = " ".join(f"brick:{c}" for c in _kind_classes)
-                    _ask = (
-                        "PREFIX brick: <https://brickschema.org/schema/Brick#> "
-                        "ASK { ?s a ?cls . VALUES ?cls { " + _vals + " } "
-                        f'FILTER(STRSTARTS(STR(?s), "{_ns_fn()}")) }}'
-                    )
-                    async with _httpx.AsyncClient(timeout=8.0) as _client:
-                        _resp = await _client.post(
-                            _GQE,
-                            content=_ask.encode("utf-8"),
-                            headers={
-                                "Content-Type": "application/sparql-query",
-                                "Accept": "application/sparql-results+json",
-                            },
-                        )
-                        _resp.raise_for_status()
-                        if bool(_resp.json().get("boolean")):
-                            logger.info(
-                                f"[{state.current_intent}] {_missing_type} sensors DO exist "
-                                "in the graph — discovery missed them; using generic path"
-                            )
-                            _missing_type = None
-                except Exception as _exc:
-                    logger.warning(
-                        f"[{state.current_intent}] sensor-kind existence check failed "
-                        f"({_exc}) — refusing to claim absence"
+                # WHICH CLASSES, from the building's own declarations: this used a class list
+                # written here, two of whose names (People_Count_Sensor,
+                # Electrical_Energy_Sensor) exist in neither Brick 1.4 nor OCBV, and whose
+                # brick: IRIs could never see an ontosage:-typed point.
+                if not await self._kind_is_confirmed_absent(_unavailable[_missing_type], state):
+                    logger.info(
+                        f"[{state.current_intent}] {_missing_type} absence not confirmed by "
+                        "the graph — using generic path"
                     )
                     _missing_type = None
 
@@ -2869,7 +3456,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     "results": {"data": []},
                     "formatted_response": (
                         "**No occupancy sensors are modelled for this building.**\n\n"
-                        "Its ontology lists no occupancy counters, motion detectors, or "
+                        "Its sensor catalogue lists no occupancy counters, motion detectors, or "
                         "desk-utilisation monitors, so headcounts and space-utilisation "
                         "reports cannot be generated from sensor data.\n\n"
                         'Ask *"what does this building monitor?"* to see the sensor '
@@ -2889,7 +3476,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     "results": {"data": []},
                     "formatted_response": (
                         "**No energy meters are modelled for this building.**\n\n"
-                        "Its ontology lists no smart energy meters or power sensors, so "
+                        "Its sensor catalogue lists no smart energy meters or power sensors, so "
                         "direct kWh readings, Energy Use Intensity (EUI) calculations and "
                         "energy-cost estimates cannot be produced from the installed "
                         "hardware.\n\n"
@@ -2906,16 +3493,24 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     f"[{state.current_intent}] No UUIDs found — skipping text-to-SQL "
                     "(no specific sensor type detected; returning SPARQL context response)"
                 )
+                _fallback_text = sparql_result.get("formatted_response")
+                if not _fallback_text:
+                    # Named from what the building measures, not a fixed four (BUG-681 shape);
+                    # left out when the counts cannot be read quickly.
+                    _have = _measured_names(await _measured_modality_counts(timeout_s=5.0))
+                    _fallback_text = "I wasn't able to find specific sensor data for your request."
+                    if _have:
+                        _fallback_text += (
+                            " Try asking about one of the quantities this building measures, "
+                            "e.g. "
+                            + ", ".join(_have[:10])
+                            + (" and more." if len(_have) > 10 else ".")
+                        )
                 result = {
                     "success": False,
                     "query": "NO_UUIDS_NO_SQL",
                     "results": {"data": []},
-                    "formatted_response": sparql_result.get("formatted_response")
-                    or (
-                        "I wasn't able to find specific sensor data for your request. "
-                        "Try asking about temperature, CO₂, humidity, or air quality — "
-                        "those are the sensor types available in this building."
-                    ),
+                    "formatted_response": _fallback_text,
                     "analytics_required": False,
                 }
                 state.analytics_required = False
@@ -3072,11 +3667,46 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 "energy consumption was not measured here."
             )
 
+        # ── WHAT THIS BUILDING ALREADY MEASURES ─────────────────────────────
+        #
+        # BUG-718. Without this list the lane advised buying and fitting sensing for
+        # quantities the building already meters — light, comfort and presence among them
+        # — with its own answer listing those readings two lines earlier. Each piece of
+        # advice is generic consultancy, and each is contradicted by the building it was
+        # addressed to, which is the most damaging kind of wrong answer here: it reads as
+        # expertise and it tells the reader to buy what they already own.
+        #
+        # Read from the declared modality set, which is CONFIG rather than code, so a
+        # building that adds a quantity gets it in the prompt with no edit here and no
+        # building's name appears in this file.
+        _measured = ""
+        try:
+            from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+            _names = sorted(
+                {
+                    str(spec.name).replace("_", " ")
+                    for spec in load_modalities(getattr(state, "building_id", None))
+                }
+            )
+            if _names:
+                _measured = (
+                    "\n\n=== WHAT THIS BUILDING ALREADY MEASURES ===\n"
+                    + ", ".join(_names)
+                    + "\nNEVER recommend installing, adding, fitting, deploying or "
+                    "retrofitting sensing for any quantity in this list — it is already "
+                    "instrumented, and saying otherwise contradicts the building. Where a "
+                    "quantity here is relevant, recommend USING it: a threshold to watch, a "
+                    "schedule to change, a reading to check."
+                )
+        except Exception as _mod_err:  # a missing config must not cost the answer
+            logger.debug(f"[recommend] measured-modality list unavailable: {_mod_err}")
+
         prompt = f"""You are an expert smart-building consultant. The user asked:
 "{query}"
 
 Based on the building data below, provide clear, ACTIONABLE recommendations.
-Focus on domain: {recommendation_domain or "general (HVAC, energy, air quality, comfort)"}.{_sensor_context}
+Focus on domain: {recommendation_domain or "general (HVAC, energy, air quality, comfort)"}.{_sensor_context}{_measured}
 
 === SENSOR DATA (one line per series: the readings fetched, summarised) ===
 {data_summary if data_summary else "No real-time data available — provide general best-practice recommendations based on building type and available sensor types."}
@@ -3100,6 +3730,12 @@ Instructions:
   not a temperature, a sensor count is not occupancy
 - Keep the answer internally consistent: the series you call highest must be the highest
   figure you list
+- Every recommendation must act on something named above — a series, a sensor, a space or
+  a figure. Generic best practice that could be written about any building is not an
+  answer to a question about this one (BUG-718)
+- Answer the question that was asked. If the reader asked whether something is available
+  to them, say so plainly before anything else; a list of improvements is not an answer to
+  a question about what exists today
 - End with a brief priority summary: "Most important action first: ..."
 """
         try:
@@ -3919,8 +4555,14 @@ SELECT ?l WHERE {
         except Exception as e:
             logger.debug(f"[self_description] source types unavailable: {e}")
 
+        from orchestrator.services.grounding_guard import reader_is_admin_in
+
         state.intermediate_results["dialogue_response"] = describe(
-            registry, building_name, facts=facts, source_types=source_types
+            registry,
+            building_name,
+            facts=facts,
+            source_types=source_types,
+            for_admin=reader_is_admin_in(state),
         )
         state.current_intent = "self_description"
         return state
@@ -4538,6 +5180,15 @@ SELECT ?l WHERE {
             ranked = dossier.get("ranked") or []
             chosen = str((ranked[0] or {}).get("space", "")) if ranked else ""
             runner_up = str((ranked[1] or {}).get("space", "")) if len(ranked) > 1 else ""
+            # C6a: the line describes a CHOICE. With no space chosen there is nothing to switch
+            # away from — measured on a DECLINE ("which capital project had the best measured
+            # outcome?"), which got "Evidence time: unknown … Switch if: conditions in the
+            # space you chose moves outside the range" about a choice never made.
+            # A choice WITH an unknown evidence time keeps its line: "treat as unverified" is
+            # the honest warning on exactly that recommendation, and dropping it would let an
+            # undated ranking read as current.
+            if not chosen.strip():
+                return ""
             # The modality the ranking actually used, read off the dossier's own evidence
             # rows. "conditions" is the last resort, and it makes both the switch trigger and
             # the recheck horizon generic -- the horizon especially, since volatility is
@@ -4574,10 +5225,16 @@ SELECT ?l WHERE {
         # withheld rather than being impossible to produce.
         if state.current_intent in ("privacy_refusal", "clarification", "greeting", "control"):
             return ""
-        if not re.search(r"\d", answer or ""):
+        from orchestrator.services.evidence import meter_boundary as _mb
+
+        # C6a: a FIGURE is a number with an energy, power or volume unit. "Any digit" attached
+        # the line to a room withdrawal ("Room 2.15"), a decline and a tariff decline — dates,
+        # room numbers and record ids all carry digits and none of them is a consumption.
+        if not _mb.states_a_metered_quantity(
+            answer or "", water=bool(re.search(r"\bwater\b", f"{question} {answer}", re.I))
+        ):
             return ""
 
-        from orchestrator.services.evidence import meter_boundary as _mb
         from orchestrator.services.evidence.assemble import contributing_uuids
 
         results = state.intermediate_results or {}
@@ -4595,7 +5252,12 @@ SELECT ?l WHERE {
         hits = _mb.match(boundaries, uuids, names)
         # No hit means the figure's meter is unknown to the topology. Saying nothing would let
         # the number stand boundary-less, which is the state this turn exists to end.
-        return _mb.statement(hits, subject=question[:60])
+        # No `subject`: statement() no longer interpolates it, and the first 60 characters of
+        # the question pasted into a sentence read "whether it is the whole Which floor used
+        # the most energy yeste or one circuit". The remediation line is for admins only.
+        from orchestrator.services.grounding_guard import reader_is_admin_in
+
+        return _mb.statement(hits, for_admin=reader_is_admin_in(state))
 
     async def _response_node(self, state: ConversationState) -> ConversationState:
         """Format final response — with response-cache store after generation.
@@ -4704,7 +5366,13 @@ SELECT ?l WHERE {
         try:
             state = await self.verifier_agent.verify(state)
         except Exception as _ve:
-            logger.debug(f"Verifier skipped: {_ve}")
+            # WARNING, not DEBUG, and with a traceback -- for the same reason the evidence
+            # record above logs at WARNING. A verifier that raises produces NO verification
+            # record, and publication_gate treats a missing record as "the check did not
+            # run" and publishes. So a crash here silently REMOVES a grounding gate rather
+            # than failing loudly, and at DEBUG nobody would ever see it. One did exactly
+            # that on every semantic-RAG turn until 2026-09-17 (BUG-643).
+            logger.warning(f"verification record skipped: {type(_ve).__name__}: {_ve}", exc_info=True)
 
         # Phase 7B — typed snapshot of the pipeline state.  Subsequent reads
         # benefit from IDE autocomplete + mypy safety.  The snapshot is taken
@@ -4913,7 +5581,7 @@ SELECT ?l WHERE {
             # guess is the failure the disambiguation step exists to prevent.
             final_response = dialogue_response
         else:
-            final_response = _unanswered_response(state, ctx)
+            final_response = await _unanswered_response(state, ctx)
 
         # ── What was excluded must reach the reader, whichever lane narrates ──
         #
@@ -4952,6 +5620,40 @@ SELECT ?l WHERE {
                 )
         except Exception as exc:
             logger.warning(f"[response] could not attach the exclusion note: {exc}")
+
+        # ── A period the answer did not use must reach the reader too (BUG-659) ──
+        #
+        # The SAME defect as the exclusion note above, in a second disclosure, found the
+        # same way. When the requested window returns nothing the SQL lane can fall back
+        # to the most recent rows of ANY date and records that on the bus (BUG-658). It
+        # appends the sentence to its OWN prose -- and this dispatch prefers
+        # `analytics_result` over `sql_result`, so whenever the analytics lane ran, the
+        # figures survived and the disclosure that they are not from the requested period
+        # did not. Stale readings narrated as current, with the warning removed in the
+        # last step before the user sees them.
+        #
+        # Appended after the whole dispatch for the same reason as the exclusion note, and
+        # read from the STRUCTURED marker rather than from prose: a check that guessed from
+        # wording would be wrong in exactly the cases that matter, where the wording is
+        # confident and the period is not the one asked for.
+        try:
+            from orchestrator.services.disclosure_gate import (
+                substitution_note as _substitution_note,
+            )
+            from orchestrator.services.disclosure_gate import (
+                window_substitution_in as _window_substitution_in,
+            )
+
+            _sub = _window_substitution_in(state.intermediate_results)
+            if _sub and final_response:
+                _note = _substitution_note(_sub)
+                # The SQL lane already carries it when ITS prose won the dispatch; the
+                # guard is on the note's own text so a reworded note cannot slip a
+                # duplicate past a marker-based check.
+                if _note and _note not in final_response:
+                    final_response = f"{final_response}\n\n{_note}"
+        except Exception as exc:
+            logger.warning(f"[response] could not attach the substitution note: {exc}")
 
         # ── Meta-answer guard (BUG-443) ───────────────────────────────────────
         #
@@ -5022,7 +5724,7 @@ SELECT ?l WHERE {
                     f"produced prose about the pipeline rather than about the building"
                 )
                 state.intermediate_results["meta_answer_suppressed"] = _meta
-                final_response = _unanswered_response(state, ctx)
+                final_response = await _unanswered_response(state, ctx)
         except Exception as exc:  # never let the guard cost an answer
             logger.warning(f"[response] meta-answer check skipped: {exc}")
 
@@ -5313,11 +6015,21 @@ SELECT ?l WHERE {
                 guard_answer as _unmodelled_guard,
             )
 
-            final_response, _unmodelled = await _unmodelled_guard(final_response, _sx)
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
+            final_response, _unmodelled = await _unmodelled_guard(
+                final_response, _sx, for_admin=reader_is_admin_in(state)
+            )
             if _unmodelled:
                 state.intermediate_results["unmodelled_correction"] = _unmodelled
         except Exception as _ag_err:
             logger.debug(f"absence guard skipped: {_ag_err}")
+
+        # ── The ontology RAG fallback answers about CLASSES, not about the building ──
+        try:
+            final_response = await _ground_semantic_fallback(state, final_response)
+        except Exception as _sf_err:  # never let this cost an answer
+            logger.debug(f"[response] semantic-fallback grounding skipped: {_sf_err}")
 
         # V12-06 / review T07, case B14 — SAY WHEN ONLY HALF THE REQUEST WAS SERVED.
         #
@@ -5493,6 +6205,59 @@ SELECT ?l WHERE {
             # every honest answer down with the unverified ones.
             logger.warning(f"[publication_gate] skipped: {_pg_err}", exc_info=True)
 
+        # BUG-679 / BUG-699 — LAST WORDING PASS, on the text as the user will receive it.
+        #
+        # This append is the one place the answer text becomes final: /chat, the non-streamed
+        # /v1 body AND the streamed /v1 path all read `messages[-1].content`, and the stream
+        # sends only progress lines until the graph has finished. The cache below stores the
+        # same string. Placed after every guard that rewrites `final_response` (absence,
+        # unmodelled, publication) so they judge the model's own words and this cleans the
+        # result: retrieved records narrated as data the USER "provided", and provenance flags
+        # ("simulated: true") the owner's standing rule keeps out of user-visible text.
+        try:
+            from orchestrator.services.answer_wording import polish_answer as _polish_answer
+
+            final_response = _polish_answer(
+                final_response, state.user_message, intent=state.current_intent
+            )
+        except Exception as _aw_err:  # pragma: no cover - wording must never cost the answer
+            logger.debug(f"[answer_wording] skipped: {_aw_err}")
+
+        # A2 — CLAIM BINDING. Every figure in the answer must point at a row.
+        #
+        # Here, and only here, for the same reason the wording pass is here: this is the one
+        # place the answer text becomes final. /chat, the non-streamed /v1 body and the
+        # streamed /v1 path all read `messages[-1].content`, and the response cache stores
+        # this same string. Any earlier hook would leave one transport unchecked, and a
+        # per-lane hook would have to be written ten times and kept in step (which is how
+        # `numeric_guard` ended up covering two lanes out of ten).
+        #
+        # Runs AFTER polish_answer so it judges the text the reader receives, and BEFORE the
+        # bulky-key cleanup at the end of this node, which pops the very rows it binds against.
+        #
+        # DEFAULT IS RECORD-ONLY: `final_response` is unchanged unless CLAIM_BINDING_ENABLED
+        # is set. The counts it records are the measurement that justifies enforcing.
+        try:
+            from orchestrator.services.claim_binder import run as _bind_claims
+
+            # `state.intermediate_results` and not the local `results`: that local is bound
+            # inside a try block a thousand lines above, and a binder that quietly did nothing
+            # because its input name was out of scope would look exactly like a binder that
+            # found nothing to flag. This is the shape of half the defects in this file.
+            _bus = state.intermediate_results
+            final_response, _claim_report = _bind_claims(final_response, _bus)
+            _bus["claim_binding"] = _claim_report
+            # Stored ON the evidence record so a turn's claims travel with the statement of
+            # what supports them -- including through the response cache, which carries the
+            # record (BUG-235) and would otherwise replay prose with no binding history.
+            _ev_rec = _bus.get("evidence_record")
+            if isinstance(_ev_rec, dict):
+                _ev_rec["claim_binding"] = _claim_report
+        except Exception as _cb_err:
+            # Fails OPEN. A binder that could take an answer down with it would turn an
+            # honesty check into an outage -- strictly worse than the defect it guards.
+            logger.warning(f"[claim_binder] skipped: {_cb_err}", exc_info=True)
+
         # Add to messages
         state.messages.append(
             Message(
@@ -5505,10 +6270,13 @@ SELECT ?l WHERE {
         # B.2: Store in response cache (non-blocking, best-effort)
         if self.response_cache:
             try:
-                original_query = state.messages[-2].content if len(state.messages) >= 2 else ""
+                # BUG-668: the lookup's own (question, context), not messages[-2] -- by now
+                # that is the co-reference rewrite, which the lookup never saw.
+                original_query, _cache_context = _response_cache_request(state)
                 if original_query:
                     await self.response_cache.put(
                         question=original_query,
+                        context=_cache_context,
                         response=final_response,
                         intent=state.current_intent or "general",
                         media=[media_payload] if media_payload else [],
@@ -5529,7 +6297,9 @@ SELECT ?l WHERE {
         # Phase 5: Also store failures so the correction corpus grows.
         if self.agent_memory and state.user_id:
             try:
-                original_query = state.messages[-2].content if len(state.messages) >= 2 else ""
+                # BUG-682: what the user TYPED. messages[-2] is by now the co-reference
+                # rewrite (or folded / translated text), which the user never wrote.
+                original_query = _latest_typed_question(state)
                 entities = state.intermediate_results.get("entities", [])
                 _verification = state.intermediate_results.get("verification", {})
                 _is_grounded = _verification.get("grounded", True)
@@ -5852,11 +6622,21 @@ SELECT ?l WHERE {
         if n > 0:
             return None  # the type is present → answer normally
         readable = " ".join(words)
+        # WHAT IT HAS, FROM ITS OWN GRAPH (BUG-681). The suggestion was a fixed list
+        # ("temperature, humidity, CO₂, air quality, water flow, or pressure") printed for
+        # every building. A short wait only: a decline must not stall on a cold count, and
+        # when the counts cannot be read the suggestion is left out rather than invented.
+        measured = _measured_names(await _measured_modality_counts(timeout_s=5.0))
+        if measured:
+            shown = ", ".join(measured[:10]) + (" and more" if len(measured) > 10 else "")
+            suggestion = f"Ask about a sensor type it has — e.g. {shown} — or ask "
+        else:
+            suggestion = "Ask about a sensor type it has, or ask "
         return (
             f"This building doesn't have any **{readable} sensors**. I only report what its "
-            "ontology actually contains. Ask about a sensor type it has — e.g. temperature, "
-            "humidity, CO₂, air quality, water flow, or pressure — or ask "
-            '*"what types of sensors does this building have?"*'
+            "sensor catalogue actually contains. "
+            + suggestion
+            + '*"what types of sensors does this building have?"*'
         )
 
     def _check_locked_capability(self, state: ConversationState) -> Optional[str]:
@@ -5939,17 +6719,30 @@ SELECT ?l WHERE {
             "\n".join(f"- {tag.replace('_', ' ')}" for tag in spec.unlocks)
             or "- additional question types"
         )
-        note = (
-            "\n\n_This is simulated data, injected to demonstrate the capability._"
-            if spec.synthetic
-            else ""
-        )
-        state.intermediate_results["dialogue_response"] = (
+        # No provenance caveat on the answer (user decision, 2026-09-16): every reading in
+        # this deployment is placeholder data standing in for the building's own feed, and it
+        # is replaced wholesale at connection time — so the sentence described the deployment
+        # stage rather than the reading. The figure still comes from the store, and an absent
+        # one is still reported as absent.
+        note = ""
+        from orchestrator.services.grounding_guard import reader_is_admin_in
+
+        verdict = (
             f"🔒 This question needs the **{spec.provenance_system}**, which is currently "
-            f"switched **off**.\n\n"
-            f"Enable the **{spec.label}** data source in the configuration panel to unlock:\n"
-            f"{unlocks}{note}"
+            f"switched **off**, so I can't answer it.\n\n"
         )
+        if reader_is_admin_in(state):
+            # Only an administrator can act on the switch; told to anyone else, "enable it in
+            # the configuration panel" is an instruction they cannot follow.
+            state.intermediate_results["dialogue_response"] = (
+                f"{verdict}"
+                f"Enable the **{spec.label}** data source in the configuration panel to unlock:\n"
+                f"{unlocks}{note}"
+            )
+        else:
+            state.intermediate_results["dialogue_response"] = (
+                f"{verdict}When it is switched on, it answers questions about:\n{unlocks}{note}"
+            )
         logger.info(f"[locked_capability] declined — source '{source_id}' disabled")
         return state
 
@@ -6784,15 +7577,21 @@ SELECT ?l WHERE {
         # list when nothing did — never a rephrase loop for missing vocabulary
         cqir, _dropped_terms, _must_decline = _cp.absorb_unmapped(cqir)
         if _must_decline:
-            sensed = ", ".join(sorted(m.name for m in modalities))
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
+            # What it senses is COUNTED, not read off the declared config (BUG-663 shape).
+            sensed = ", ".join(_measured_names(await _measured_modality_counts(timeout_s=5.0)))
             _what = ", ".join(f"'{d}'" for d in _dropped_terms) or "that"
+            _text = (
+                f"**{_what} isn't something this building senses**, so I can't rank "
+                "spaces by it."
+                + (f" It does sense: {sensed}. Ask about any of those." if sensed else "")
+            )
+            if reader_is_admin_in(state):
+                _text += "\n\nTo unlock it, add the sensor (TTL + registered readings)."
             state.intermediate_results["deliberate_result"] = {
                 "success": False,
-                "formatted_response": (
-                    f"**{_what} isn't something this building senses**, so I can't rank "
-                    f"spaces by it. It does sense: {sensed}. Ask about any of those — or "
-                    "add the sensor (TTL + registered readings) and this unlocks."
-                ),
+                "formatted_response": _text,
             }
             state.intermediate_results["user_context"] = user_ctx
             return state
@@ -6887,19 +7686,25 @@ SELECT ?l WHERE {
                 return state
 
         if decision.action == "decline":
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
             missing = ", ".join(admission.missing_modalities)
+            if missing:
+                _text = (
+                    f"**No {missing} sensors are modelled with data for this building**, "
+                    "so I can't rank spaces on that. Ask \"what does this building "
+                    "monitor?\" to see what's available."
+                )
+                if reader_is_admin_in(state):
+                    _text += (
+                        "\n\nTo unlock it, add the sensors (TTL + registered readings) — no "
+                        "code change is needed."
+                    )
+            else:
+                _text = f"I can't run this request honestly: {decision.reason}."
             state.intermediate_results["deliberate_result"] = {
                 "success": False,
-                "formatted_response": (
-                    (
-                        f"**No {missing} sensors are modelled with data for this building**, "
-                        "so I can't rank spaces on that. Ask \"what does this building "
-                        "monitor?\" to see what's available — or add the sensors (TTL + "
-                        "registered readings) and this question unlocks."
-                    )
-                    if missing
-                    else f"I can't run this request honestly: {decision.reason}."
-                ),
+                "formatted_response": _text,
             }
             state.intermediate_results["user_context"] = user_ctx
             return state
@@ -7042,18 +7847,25 @@ SELECT ?l WHERE {
         if not result.get("anomalies") and not (result.get("success") or False):
             resolved = _resolved_point_count(state)
             if resolved == 0:
+                from orchestrator.services.grounding_guard import reader_is_admin_in
+
                 quantity = _quantity_asked_about(latest_message)
                 named = f"**{quantity}**" if quantity else "what you asked about"
+                _text = (
+                    f"This building has nothing instrumented for {named}, so there is "
+                    "nothing to check for anomalies.\n\n"
+                    "_That is a statement about what is connected here, not a fault: no "
+                    'sensor of that kind is recorded for this building._ Ask "what does this '
+                    'building monitor?" to see what is.'
+                )
+                if reader_is_admin_in(state):
+                    _text += (
+                        "\n\nIf one exists, adding it to the ontology and registering its "
+                        "readings makes this answerable with no code change."
+                    )
                 result = {
                     **result,
-                    "formatted_response": (
-                        f"This building has nothing instrumented for {named}, so there is "
-                        "nothing to check for anomalies.\n\n"
-                        "_That is a statement about what is connected here, not a fault: no "
-                        "sensor of that kind appears in this building's ontology. If one "
-                        "exists, adding it to the ontology and registering its readings makes "
-                        "this answerable with no code change._"
-                    ),
+                    "formatted_response": _text,
                     "declined_reason": "modality_not_instrumented",
                 }
         state.intermediate_results["anomaly_result"] = result
@@ -7200,7 +8012,13 @@ SELECT ?l WHERE {
                 present_modalities,
                 reach_from_coverage,
             )
+            from orchestrator.services.grounding_guard import reader_is_admin_in
             from shared.config import settings
+
+            # Who is reading decides whether a negative carries its remediation ("upload a
+            # TTL for one that already exists"). Everyone gets the verdict and what IS
+            # measured; only a reader holding system:admin gets the step (2026-09-17).
+            _for_admin = reader_is_admin_in(state)
 
             schema = await build_schema(
                 settings.BUILDING_ID,
@@ -7229,16 +8047,40 @@ SELECT ?l WHERE {
                     space_label="this building",
                     status=UNINSTRUMENTED,
                     lay_term=_named,
-                    # load_modalities returns ModalitySpec objects, not strings; sorting
-                    # them raised TypeError and the lane fell to "I could not build the
-                    # coverage picture" — an infrastructure message for a question it could
-                    # answer. Take the NAME each spec carries.
+                    # WHAT IS MEASURED, NOT WHAT IS DECLARED (BUG-663).
+                    #
+                    # This listed every modality in config/saturation_modalities.yaml, with
+                    # nothing checking that any point of it exists. Measured live 2026-09-17
+                    # on the demo script: "What is the radiation level in the atrium?" came
+                    # back "No — radiation is not measured in this building ... any figure I
+                    # gave you would be invented", and then named `damper_position` among
+                    # what IS measured. Damper_Position_Sensor and Damper_Position_Command
+                    # each have ZERO instances in the graph. An invented capability inside
+                    # the sentence that exists to avoid inventing things.
+                    #
+                    # The per-space branch below already did this correctly, via
+                    # `present_modalities`, which keeps only entries whose coverage status is
+                    # "present". The honest set for the whole building is the union of that
+                    # over every space, so this now reuses the same function rather than a
+                    # second, looser notion of "measured".
+                    #
+                    # An EMPTY union omits the sentence entirely (Reach.describe guards on
+                    # `if self.alternatives`), which is the right failure: saying nothing
+                    # about alternatives is honest, and listing the declared config is not.
+                    # `load_modalities` is still used above to BUILD the schema — declaring a
+                    # modality is what makes it auditable; it is only as evidence of
+                    # measurement that it was wrong.
                     alternatives=sorted(
-                        str(getattr(m, "name", m))
-                        for m in (load_modalities(settings.BUILDING_ID) or [])
+                        {
+                            name
+                            for _sp in (schema.spaces or [])
+                            for name in present_modalities(
+                                getattr(_sp, "modalities", None) or {}
+                            )
+                        }
                     ),
                 )
-                text = reach.describe()
+                text = reach.describe(for_admin=_for_admin)
             elif space is None and is_open_question(question):
                 # THE BUILDING IS A SPACE. Asking which one is asking for what was given.
                 #
@@ -7253,10 +8095,23 @@ SELECT ?l WHERE {
                 # produce without a room: the modalities the building declares. Narrow to
                 # open questions so a specific one about an unnamed room still clarifies —
                 # there the answer really does vary space by space, and asking is right.
-                _mods = sorted(
-                    str(getattr(m, "name", m))
-                    for m in (load_modalities(settings.BUILDING_ID) or [])
-                )
+                #
+                # WHAT IT MEASURES, NOT WHAT IS DECLARED (the BUG-663 defect in this branch):
+                # this listed every modality in the config whether or not a point of it
+                # exists. Counted from the graph over every scope; if the counts cannot be
+                # read, the room-coverage union above is a true (partial) list; if neither can,
+                # say so rather than "nothing is readable", which would be a false absence.
+                _counts = await _measured_modality_counts(timeout_s=25.0)
+                if _counts is not None:
+                    _mods = _measured_names(_counts)
+                else:
+                    _mods = sorted(
+                        {
+                            name
+                            for _sp in (schema.spaces or [])
+                            for name in present_modalities(getattr(_sp, "modalities", None) or {})
+                        }
+                    )
                 # The building's own name, resolved — never a literal, and never the id.
                 try:
                     from orchestrator.services.building_context import (
@@ -7280,11 +8135,22 @@ SELECT ?l WHERE {
                         "Ask for any of these — name a room, a floor or a zone and I will "
                         "answer from live readings."
                     )
-                else:
+                elif _counts is None or any(v is None for v in _counts.values()):
+                    text = (
+                        f"**I couldn't read {_bname}'s sensor catalogue just now,** so I can't "
+                        "list what it measures. Ask about a particular quantity, or try again "
+                        "in a moment."
+                    )
+                elif _for_admin:
                     text = (
                         "**Nothing is currently readable in this building.** Either no "
                         "sensor is declared in the ontology, or the points that are have "
                         "no readings behind them."
+                    )
+                else:
+                    text = (
+                        "**Nothing is currently readable in this building.** No sensor in "
+                        "its catalogue has readings I can use."
                     )
             elif space is None:
                 # No resolvable referent. The referent-existence gate owns "that room does not
@@ -7309,7 +8175,7 @@ SELECT ?l WHERE {
                     lay_term=named_quantity(question),
                     alternatives=present_modalities(space.modalities or {}),
                 )
-                text = reach.describe()
+                text = reach.describe(for_admin=_for_admin)
             elif modality is None:
                 # Asking what is measured HERE, rather than about one quantity.
                 have = present_modalities(space.modalities or {})
@@ -7331,7 +8197,7 @@ SELECT ?l WHERE {
                     lay_term=lay,
                     present_modalities=present_modalities(space.modalities or {}),
                 )
-                text = reach.describe()
+                text = reach.describe(for_admin=_for_admin)
                 state.intermediate_results["observability_reach"] = {
                     "modality": reach.modality,
                     "space": reach.space_label,
@@ -7397,14 +8263,17 @@ SELECT ?l WHERE {
         specs = load_modalities(settings.BUILDING_ID)
 
         concepts = (state.intermediate_results or {}).get("concepts") or []
+        # BUG-677: LOCAL names on both sides. The resolver hands back CURIEs
+        # ("brick:CO2_Level_Sensor") while the modality config lists bare local names
+        # ("CO2_Level_Sensor") and only a few prefixed OCBV ones, so stripping '#' alone left
+        # every Brick concept unmatched and only a prefixed ontosage: entry could ever meet.
         wanted_classes = {
-            str(c).rsplit("#", 1)[-1].lower()
-            for cm in concepts
-            for c in (cm.get("brick_classes") or [])
+            _class_local_name(c) for cm in concepts for c in (cm.get("brick_classes") or [])
         }
+        wanted_classes.discard("")
         if wanted_classes:
             for spec in specs:
-                if {c.lower() for c in spec.brick_classes} & wanted_classes:
+                if {_class_local_name(c) for c in spec.brick_classes} & wanted_classes:
                     lay = ""
                     for cm in concepts:
                         lay = lay or str(cm.get("concept_id") or "")
@@ -7502,14 +8371,16 @@ SELECT ?l WHERE {
             service = EventQueryService(
                 building_id, adapter, rooms, point_map=point_map, tz_name=building_tz(building_id)
             )
-            result = await service.answer(question)
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
+            result = await service.answer(question, for_admin=reader_is_admin_in(state))
             state.intermediate_results["events_result"] = guard_payload(result, "events")
         except Exception as exc:
             logger.error(f"[events] node failed: {exc}", exc_info=True)
             state.intermediate_results["events_result"] = {
                 "success": False,
                 "formatted_response": (
-                    "I couldn't read the events store just now — please try again."
+                    "I couldn't read the building's records just now — please try again."
                 ),
             }
         return state
@@ -7645,8 +8516,11 @@ SELECT ?l WHERE {
             service = AssetStateService(
                 sparql_exec, settings.BUILDING_NAMESPACE, events_adapter=_events
             )
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
             state.intermediate_results["asset_state_result"] = guard_payload(
-                await service.answer(question), "asset_state"
+                await service.answer(question, for_admin=reader_is_admin_in(state)),
+                "asset_state",
             )
         except Exception as exc:
             logger.error(f"[asset_state] node failed: {exc}", exc_info=True)
@@ -7672,8 +8546,10 @@ SELECT ?l WHERE {
             from shared.config import settings
 
             service = ComplianceRegisterService(sparql_exec, settings.BUILDING_NAMESPACE)
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
             state.intermediate_results["register_result"] = guard_payload(
-                await service.answer(question), "register"
+                await service.answer(question, for_admin=reader_is_admin_in(state)), "register"
             )
         except Exception as exc:
             logger.error(f"[register] node failed: {exc}", exc_info=True)
@@ -7817,7 +8693,16 @@ SELECT ?l WHERE {
         if kind == "pressure":
             return "Pa"
         if kind == "flow":
-            return "m³/s"
+            # NO GUESS HERE (run-3 row 132, 2026-09-17). This table's last resort typed
+            # every flow point "m³/s", and a water answer recommended filtration and leak
+            # detection off "a mean flow rate of 14.2 m³/s" and "a peak of 292 m³/s" — a
+            # river, through a building main. The numbers were RIGHT: the ontology declares
+            # water flow in L/min (0–2000) and the modality config declares L/s, and 292
+            # sits inside both. Only the unit was invented, by four orders of magnitude.
+            # "flow" cannot be resolved here — the graph distinguishes water flow from air
+            # flow and this coarse kind does not — so it returns nothing, and the narration
+            # is instructed to say the unit is not recorded rather than supply one.
+            return ""
         return ""
 
     def _build_sensor_metadata_from_bindings(self, bindings: list) -> Dict[str, Dict[str, str]]:
@@ -7995,7 +8880,11 @@ SELECT ?l WHERE {
             from orchestrator.agents.spatial_agent import get_spatial_agent
 
             agent = get_spatial_agent()
-            markdown = await agent.resolve(user_query, building_id, floor)
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
+            markdown = await agent.resolve(
+                user_query, building_id, floor, for_admin=reader_is_admin_in(state)
+            )
             # V6-T02: its OWN key, not the floor-plan lane's. This node used to write
             # `floor_plan_result` because that is what _response_node renders, which broke
             # the reserved-key rule and made every geometry answer look like a drawing
@@ -8710,84 +9599,56 @@ SELECT ?l WHERE {
         system state: (a) does a sensor point exist for X, (b) is notify-able via rules engine,
         (c) physical actuation requires a BMS driver (per the active building's actuation config).
         """
-        import re as _re_ac
-
         logger.info(f"[automation_capability] intent={state.intermediate_results.get('intent')}")
 
-        query_text = (state.messages[-1].content if state.messages else "").lower()
-        entities = state.intermediate_results.get("entities", [])
-        concepts = state.intermediate_results.get("concepts", [])
+        question = state.messages[-1].content if state.messages else ""
+        concepts = state.intermediate_results.get("concepts") or []
         building_id = state.intermediate_results.get("building_id") or settings.BUILDING_ID
 
-        # ── Identify what the user wants to monitor ──────────────────────
-        # Try concept resolver results first (HBCO lay-term → Brick class)
-        concept_label = None
+        # ── Identify what the user wants to monitor (BUG-680) ────────────
+        # From the building's own vocabulary, never a keyword table in this file: the HBCO
+        # concepts the dialogue node resolved and the modality names the building declares
+        # (the observability lane's resolver), then absence_guard's English aliases. A
+        # hardcoded map here pointed "noise" at brick:Noise_Level_Sensor, a class Brick does
+        # not define, while the building's sound sensors carry another class.
+        modality, lay = None, ""
+        try:
+            modality, lay = await self._observability_modality(question, state)
+            if modality is None:
+                from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+                modality = _modality_named_in(
+                    question, [s.name for s in (load_modalities(building_id) or [])]
+                )
+        except Exception as exc:  # an unreadable config means "could not check", below
+            logger.warning(f"[automation_capability] quantity not resolved: {exc}")
+
         brick_class = None
-        recipe_id = None
-        if concepts and isinstance(concepts[0], dict):
-            first = concepts[0]
-            concept_label = first.get("concept_id", "").replace("_", " ")
-            classes = first.get("brick_classes", [])
-            brick_class = classes[0] if classes else None
-            recipe_id = first.get("recipe_id")
-
-        # Fallback: extract noun from entities or keyword scan. The LLM emits
-        # entities as plain STRINGS ('Outdoor_Air_Intake'); only dict-shaped
-        # entities carry a type — strings fall through to the keyword scan.
-        if not concept_label:
-            for e in entities:
-                if isinstance(e, dict) and e.get("type") in (
-                    "sensor_type",
-                    "metric",
-                    "concept",
-                    "parameter",
-                ):
-                    concept_label = str(e.get("value", "")).lower()
-                    break
-
-        if not concept_label:
-            _KW_MAP = {
-                "co2": ("CO2 / air quality", "brick:CO2_Level_Sensor"),
-                "carbon dioxide": ("CO2 / air quality", "brick:CO2_Level_Sensor"),
-                "air quality": ("CO2 / air quality", "brick:CO2_Level_Sensor"),
-                "temperature": ("temperature", "brick:Temperature_Sensor"),
-                "warm": ("temperature", "brick:Temperature_Sensor"),
-                "hot": ("temperature", "brick:Temperature_Sensor"),
-                "humid": ("humidity", "brick:Relative_Humidity_Sensor"),
-                "humidity": ("humidity", "brick:Relative_Humidity_Sensor"),
-                "energy": ("energy use", "brick:Electrical_Energy_Sensor"),
-                "electricity": ("energy use", "brick:Electrical_Energy_Sensor"),
-                "occupancy": ("occupancy / busyness", "brick:Occupancy_Sensor"),
-                "busy": ("occupancy / busyness", "brick:Occupancy_Sensor"),
-                "leak": ("water / leak", "brick:Water_Flow_Sensor"),
-                "water": ("water / leak", "brick:Water_Flow_Sensor"),
-                "noise": ("noise level", "brick:Noise_Level_Sensor"),
-                "fault": ("equipment faults", None),
-            }
-            for kw, (label, cls) in _KW_MAP.items():
-                if kw in query_text:
-                    concept_label = label
-                    brick_class = cls
-                    break
-
-        if not concept_label:
+        for cm in concepts:
+            if isinstance(cm, dict) and cm.get("brick_classes"):
+                brick_class = cm["brick_classes"][0]
+                break
+        if modality:
+            concept_label = _humanise_modality(lay or modality)
+        elif concepts and isinstance(concepts[0], dict) and concepts[0].get("concept_id"):
+            concept_label = _humanise_modality(concepts[0]["concept_id"])
+        else:
             concept_label = "the condition you mentioned"
 
         # ── Determine monitoring capability ──────────────────────────────
-        # (a) Sensor point: available if brick_class maps to a known sensor type in this building.
-        _KNOWN_SENSOR_CLASSES = {
-            "brick:CO2_Level_Sensor",
-            "brick:Temperature_Sensor",
-            "brick:Relative_Humidity_Sensor",
-            "brick:Electrical_Energy_Sensor",
-            "brick:Occupancy_Sensor",
-            "brick:Outside_Air_Temperature_Sensor",
-        }
-        sensor_available = brick_class is not None and brick_class in _KNOWN_SENSOR_CLASSES
+        # (a) Sensor point, from the live graph. True = points exist; False = the building
+        # declares this quantity and has NO point of it; None = could not check (no quantity
+        # identified, graph unreadable, count unavailable). None is never reported as absent.
+        counts = await _measured_modality_counts(timeout_s=25.0, building_id=building_id)
+        sensor_count = (counts or {}).get(modality) if modality else None
+        if counts is None or not modality or sensor_count is None:
+            sensor_available: Optional[bool] = None
+        else:
+            sensor_available = sensor_count > 0
 
-        # (b) Notify: rules engine is always running (T20); user can create personal alert rules
-        # (T21) for any sensor that has a UUID in the building.
-        notify_available = True  # T20 rules engine is always active when orchestrator is up
+        # (b) Notify: only when a channel that reaches a person is configured. The rules engine
+        # writes every breach to the server log, which nobody asking this question receives.
+        notify_available = _notification_delivery_configured(building_id)
 
         # (c) Physical actuation: Phase G actuation driver not yet configured for this building.
         # Building.yaml actuation block would need driver: bms|bacnet; currently only sim/none.
@@ -8800,45 +9661,103 @@ SELECT ?l WHERE {
             else concept_label
         )
 
+        from orchestrator.services.grounding_guard import reader_is_admin_in
+
+        _for_admin = reader_is_admin_in(state)
+        _actuation_line = (
+            "- Automatically change a physical system (e.g. open a valve, adjust a thermostat "
+            "setpoint) — that needs a building-control connection that is not set up for this "
+            "building."
+        )
+        _no_channel = (
+            "No notification channel is set up for this building, so I can't send you an "
+            "automatic alert."
+        )
+        _measured = _measured_names(counts)
+
         if sensor_available and notify_available:
             answer_parts = [
                 f"Yes — I can already watch {monitoring_str} and send you a personalised alert "
                 f"when it crosses a threshold you choose.",
                 "",
                 "**What I can do right now:**",
-                f"- Monitor {monitoring_str} continuously (sensors are live and streaming)",
+                f"- Monitor {monitoring_str} from the building's {sensor_count} sensor point(s)",
                 "- Trigger a notification rule when a threshold is breached — say the word and "
                 "I'll set one up for you",
                 "- Log every breach for audit / historical review",
                 "",
                 "**What I cannot do yet (physical actuation):**",
-                "- Automatically change a physical system (e.g. open a valve, adjust a thermostat "
-                "setpoint) — that requires a BMS driver integration that is not yet configured for "
-                f"this building.",
+                _actuation_line,
                 "",
                 f"Want me to create an alert rule for {monitoring_str}? "
                 "Tell me the threshold (e.g. 'above 1000 ppm' / 'above 25 °C') and I'll set it up.",
             ]
-        elif notify_available:
+        elif sensor_available:
             answer_parts = [
-                f"I don't have a dedicated sensor for {monitoring_str} wired up in this building yet, "
-                "but the monitoring framework is in place.",
+                f"This building does measure {monitoring_str} ({sensor_count} sensor point(s)), "
+                "so you can ask me for its current value or its recent history at any time.",
+                "",
+                _no_channel,
+                "",
+                "**What I cannot do yet (physical actuation):**",
+                _actuation_line,
+            ]
+            if _for_admin:
+                answer_parts += [
+                    "",
+                    "Configure a delivering channel (for example a webhook) in the building's "
+                    "channels.yaml and the rules engine can send alerts on it — no code change "
+                    "is needed.",
+                ]
+        elif sensor_available is False:
+            answer_parts = [
+                f"I don't have a dedicated sensor for {monitoring_str} wired up in this building "
+                "yet, so I can't set an alert on it.",
                 "",
                 "**What's possible:**",
-                "- Once a sensor point is registered for that metric, the rules engine can watch it "
-                "and send you alerts automatically",
-                "- Notify-only automation is available today; physical actuation (valves, setpoints) "
-                "needs a BMS driver not yet configured here",
-                "",
-                "If you can confirm the sensor exists or share the data source, I can register it "
-                "and set up the alert rule.",
             ]
+            if _measured:
+                answer_parts.append(
+                    "- This building does measure: "
+                    + ", ".join(_measured[:12])
+                    + (" and more" if len(_measured) > 12 else "")
+                )
+            answer_parts.append(
+                "- Alerts can be set on conditions this building measures"
+                if notify_available
+                else f"- {_no_channel}"
+            )
+            answer_parts.append("- Physical actuation (valves, setpoints) is not configured here")
+            if _for_admin:
+                # "Share the data source and I can register it" promised every reader an
+                # action the chat cannot take; the step belongs to whoever edits the model.
+                answer_parts += [
+                    "",
+                    "Once a sensor point for that metric is described in the ontology with "
+                    "registered readings, the rules engine can watch it and send alerts — no "
+                    "code change is needed.",
+                ]
         else:
+            # COULD NOT CHECK. Not "no sensor": a graph that did not answer, or a quantity this
+            # turn could not identify, is not evidence that the building lacks it (BUG-680).
+            if modality:
+                reason = (
+                    f"I couldn't check the building's sensors for {monitoring_str} just now, "
+                    "so I won't tell you whether it can be watched."
+                )
+            else:
+                reason = (
+                    f"I couldn't tell which measured quantity {monitoring_str} corresponds to, "
+                    "so I won't guess whether this building can watch it."
+                )
             answer_parts = [
-                f"Automatic responses related to {monitoring_str} are not currently configured "
-                "for this building.",
-                "Contact your facility manager to discuss what automation extensions are available.",
+                reason,
+                "",
+                "Name the quantity (for example a reading you would want to be alerted on), or "
+                'ask "what does this building monitor?" and I will check again.',
             ]
+            if not notify_available:
+                answer_parts += ["", _no_channel]
 
         response = "\n".join(answer_parts)
         logger.info(
@@ -8864,7 +9783,14 @@ SELECT ?l WHERE {
         """
         # B.2: Check response cache before running the full pipeline
         if self.response_cache:
-            user_query = state.messages[-1].content if state.messages else ""
+            # BUG-668: a follow-up is keyed on the user questions before it, or "how has that
+            # changed?" in one chat is answered from another chat's entry about another room.
+            # Recorded so the store in _response_node uses this key, not the rewritten text.
+            user_query, context = _cache_question_and_context(state)
+            state.intermediate_results[_CACHE_REQUEST_KEY] = {
+                "question": user_query,
+                "context": context,
+            }
             cached = await self.response_cache.get(
                 question=user_query,
                 building_id=state.building_id,
@@ -8873,15 +9799,30 @@ SELECT ?l WHERE {
                 # occupant was served a facility manager's room-level reading — the
                 # exact figure the PDP had refused them moments earlier.
                 role=state.intermediate_results.get("user_role") or "",
+                context=context,
             )
             if cached:
+                state.intermediate_results.pop(_CACHE_REQUEST_KEY, None)
                 logger.info(
                     f"Response cache HIT — skipping pipeline (type={cached.get('cache_type')})"
                 )
+                # An answer cached before the BUG-679/699 wording pass existed is cleaned on
+                # the way out too; the pass is idempotent, so a fresh entry is unchanged.
+                _cached_text = cached["response"]
+                try:
+                    from orchestrator.services.answer_wording import (
+                        polish_answer as _polish_answer,
+                    )
+
+                    _cached_text = _polish_answer(
+                        _cached_text, state.user_message, intent=cached.get("intent")
+                    )
+                except Exception as _aw_err:  # pragma: no cover
+                    logger.debug(f"[answer_wording] cache pass skipped: {_aw_err}")
                 state.messages.append(
                     Message(
                         role="assistant",
-                        content=cached["response"],
+                        content=_cached_text,
                         metadata={
                             "cache_hit": True,
                             "cache_type": cached.get("cache_type"),

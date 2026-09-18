@@ -22,6 +22,7 @@ provider-swap determinism proof.
 from __future__ import annotations
 
 import hashlib
+import re
 import time
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
@@ -121,7 +122,10 @@ MAX_WINDOW_PER_UUID = 4320
 
 
 def window_coverage_note(
-    series_by_uuid: Dict[str, Series], limit: int, window_start: str, window_hours: float,
+    series_by_uuid: Dict[str, Series],
+    limit: int,
+    window_start: str,
+    window_hours: float,
     tz_name: Optional[str] = None,
 ) -> Optional[str]:
     """Say so when a window mean was computed from only the newest part of the window.
@@ -157,6 +161,7 @@ def window_coverage_note(
         f"readings than one request reads, so their means use the newest {limit} readings "
         f"(from about {earliest} building time), not the whole {window_hours:g} h asked for."
     )
+
 
 Forecaster = Callable[[Series, float], Awaitable[Tuple[float, str]]]
 
@@ -222,6 +227,19 @@ class ExecutionOutcome:
     #: across runs measures the building's state, not the system's reasoning.
     plan_fingerprint: str = ""
     timings_ms: Dict[str, int] = field(default_factory=dict)
+    #: Sentences naming values that were dropped because they cannot be a reading of the
+    #: quantity they were filed under. Carried rather than folded into the prose, so the
+    #: dossier and the answer say the same thing and a reader can tell a filtered ranking
+    #: from an unfiltered one.
+    impossible_readings: List[str] = field(default_factory=list)
+    #: Sentences naming criteria whose readings run past the end of the range they are
+    #: scored against, so that criterion cannot separate the spaces shown.
+    band_notes: List[str] = field(default_factory=list)
+    #: The whole answer, when this lane must not answer at all. A ranking of spaces is an
+    #: answer to "which space"; handed a question about something else — a ROUTE — it would
+    #: put real numbers behind the wrong question. The dossier renders this instead of a
+    #: ranking, and nothing is fetched.
+    refusal: str = ""
 
 
 async def _linear_forecast(series: Series, horizon_hours: float) -> Tuple[float, str]:
@@ -428,9 +446,99 @@ def _evidence_policy(building_id: str) -> str:
         cfg = _load_building_yaml(building_id) or {}
         block = cfg.get("provenance") or {}
         value = str(block.get("evidence_policy") or "").strip().lower()
-        return value if value in ("all_connected_readings", "measured_only") else "all_connected_readings"
+        return (
+            value
+            if value in ("all_connected_readings", "measured_only")
+            else "all_connected_readings"
+        )
     except Exception:  # pragma: no cover - config is best-effort by design
         return "all_connected_readings"
+
+
+#: A question about HOW TO GET SOMEWHERE, which this lane must not answer by ranking rooms.
+#:
+#: Row 61 of the 2026-09-17 stakeholder read: "I need a step-free route to supervision that
+#: avoids the busiest and noisiest areas around class changeover. Which verified route should
+#: I take?" was answered "**Best match: Room 5.22 — Academic Office**", with "'step-free
+#: route' isn't a sensed modality here — ignored" printed in the assumptions. Every number in
+#: it was real and the question it answered was not the one asked.
+_ROUTE_QUESTION_RE = re.compile(
+    r"\broutes?\b|\bwayfinding\b|\bdirections\b|\bhow (?:do|can|should) i get (?:to|from)\b",
+    re.IGNORECASE,
+)
+
+#: What the reader is told instead. It names what the building DOES record about getting
+#: around, so the decline is a place to go next rather than a dead end — and it names no
+#: sensor, policy or identifier.
+ROUTE_REFUSAL = (
+    "**You asked about a route, and I answer by comparing spaces — so I won't hand you a "
+    "room instead.** Sensors record the conditions inside a space; they don't record how "
+    "you travel between spaces, and ranking rooms on how quiet or how busy they are would "
+    "answer a different question from the one you asked.\n\n"
+    "What this building keeps about getting around is held separately: the step-free ways "
+    "between two places, the lifts they depend on and whether those are in service. Name "
+    "the two places — where you are and where you need to be — and the answer has to come "
+    "from those records, not from readings."
+)
+
+
+def route_question(query: str) -> bool:
+    """True when the question asks for a way THROUGH the building, not a space in it."""
+    return bool(_ROUTE_QUESTION_RE.search(query or ""))
+
+
+#: How many ranked spaces the answer shows. The out-of-band check reads the same ones the
+#: reader sees, because a note about a figure nobody is shown explains nothing.
+_SHOWN_RANKS = 3
+
+
+def _out_of_band_notes(score, anchors) -> List[str]:
+    """Say when a shown criterion runs past the range the same answer scores it against.
+
+    Row 58 of the stakeholder read offered three rooms, quoted "the 0-8 band" in its own
+    assumptions, and printed occupancy readings of about 24 beside them. Every utility had
+    saturated at the end of the band, so the order between those rooms came from the
+    tie-break and carried no meaning — and nothing in the answer said so. The reader saw a
+    recommendation.
+
+    Reported, not repaired. The band is the right band and the reading is the right
+    reading; what is wrong is presenting an order the band cannot support. A reader told
+    that a criterion is off the end of its scale can weigh the rest of the answer, which
+    is exactly what the silent version denied them.
+    """
+    notes: List[str] = []
+    shown = list(getattr(score, "ranked", []) or [])[:_SHOWN_RANKS]
+    if len(shown) < 2:
+        return notes  # nothing is being ordered, so nothing is being ordered wrongly
+    modalities = sorted({c.modality for s in shown for c in (s.criteria or [])})
+    for modality in modalities:
+        anchor = (anchors or {}).get(modality)
+        if anchor is None:
+            continue
+        values = [
+            c.value
+            for s in shown
+            for c in (s.criteria or [])
+            if c.modality == modality and c.value is not None
+        ]
+        if not values or not all(v < anchor.lo or v > anchor.hi for v in values):
+            continue
+        end = "below" if values[0] < anchor.lo else "above"
+        # WHAT THE ORDER THEN RESTS ON, which is the part the reader can act on. With
+        # another criterion in play the ranking still means something; with only this one
+        # it does not, and saying "the order comes from the others" when there are no
+        # others would be the same confident nothing this note exists to replace.
+        rest = (
+            "the order between them comes from the other things you asked for"
+            if len(modalities) > 1
+            else "the order between them is not something these readings support"
+        )
+        notes.append(
+            f"**Every {modality} reading above sits {end} the {anchor.lo:g} to "
+            f"{anchor.hi:g} range used to weigh it**, so on that count these spaces are "
+            f"all at the same end of the scale and {rest}."
+        )
+    return notes
 
 
 async def execute(
@@ -443,6 +551,19 @@ async def execute(
 ) -> ExecutionOutcome:
     """Run the admitted constraint program end-to-end, deterministically."""
     forecaster = forecaster or _default_forecaster
+
+    # A ROUTE IS NOT A SPACE. Checked before anything is enumerated or fetched: there is no
+    # ranking of rooms that answers it, so computing one would only make the wrong answer
+    # look expensive.
+    if route_question(cqir.raw_query):
+        logger.info("[deliberate] route question — declining rather than ranking spaces")
+        return ExecutionOutcome(
+            score=ScoreResult(ranked=[], excluded=[]),
+            ledger=CoverageLedger(),
+            candidates=[],
+            refusal=ROUTE_REFUSAL,
+        )
+
     timings: Dict[str, int] = {}
     modalities = [c.modality for c in cqir.constraints]
     # Standards bands, overlaid with this building's own calibration where it
@@ -677,6 +798,70 @@ async def execute(
         candidates = [c for c in candidates if c.space_iri in shortlist] or candidates
         timings["forecast_ms"] = int((time.time() - t0) * 1000)
 
+    # ── A NUMBER THAT CANNOT BE A READING IS NOT EVIDENCE ───────────────────
+    #
+    # Run-3 row 99 (2026-09-17) recommended a room to a visitor and showed its evidence as
+    # `occupancy: -7.719, co2: -260.986`. Minus seven people and minus 261 ppm of carbon
+    # dioxide. Both came from the tier-2 forecaster: a least-squares trend on a falling
+    # series extrapolates straight through zero, and nothing between the model and the
+    # answer asked whether the result could be a quantity at all.
+    #
+    # Checked HERE, at the point the value is selected, rather than in the prose: by the
+    # time it is a sentence it has already been scored, ranked and turned into a
+    # recommendation. Both bases are covered because both reach `values` -- the window
+    # mean above and the forecast that overwrites it.
+    #
+    # Excluded, counted and NAMED. Dropping it silently would leave the ranking looking
+    # authoritative over whatever survived, which is the failure this guards against; and
+    # the criterion is then simply absent, so the scorer renormalizes the remaining weights
+    # and records a data gap, exactly as it does for a sensor that returned nothing.
+    impossible_readings: List[str] = []
+    try:
+        from orchestrator.services.physical_bands import (
+            Implausible,
+            band_for_modality,
+            excluded_sentence,
+        )
+
+        _cand_of = {c.space_iri: c for c in candidates}
+        _label_of = {c.space_iri: (c.label or "") for c in candidates}
+        _bad: List[Implausible] = []
+        for _iri in list(values.keys()):
+            for _modality in list(values[_iri].keys()):
+                _band = band_for_modality(_modality, schema.building_id)
+                _value = values[_iri][_modality]
+                if _band is None or _band.holds(float(_value)):
+                    continue
+                _handle = (getattr(_cand_of.get(_iri), "sensors", {}) or {}).get(_modality) or {}
+                _bad.append(
+                    Implausible(
+                        uuid=str(_handle.get("uuid") or ""),
+                        value=float(_value),
+                        band=_band,
+                        label=f"{_label_of.get(_iri) or _iri} {_modality}",
+                    )
+                )
+                values[_iri].pop(_modality, None)
+        if _bad:
+            _gone = {(i.label) for i in _bad}
+            evidence = [
+                e
+                for e in evidence
+                if f"{_label_of.get(e.space_iri) or e.space_iri} {e.modality}" not in _gone
+            ]
+            forecasts = [
+                f
+                for f in forecasts
+                if f"{_label_of.get(f.space_iri) or f.space_iri} {f.modality}" not in _gone
+            ]
+            logger.warning(
+                f"[deliberate] {len(_bad)} value(s) excluded as physically impossible "
+                f"across {len({i.label for i in _bad})} space/modality pair(s)"
+            )
+            impossible_readings.append(excluded_sentence(_bad))
+    except Exception as exc:  # a failed check must never cost the answer
+        logger.warning(f"[deliberate] plausibility check skipped: {exc}")
+
     # ── V12-04: what each candidate's evidence actually is ──────────────────
     #
     # Built here rather than inside the scorer so the scorer stays a pure function of
@@ -748,15 +933,22 @@ async def execute(
         )
         if score.ranked:
             _sim = ", ".join(sorted({c.modality for c in cqir.constraints}))
+            # The basis is still stated in the first lines, but in the reader's terms. The owner's
+            # standing rule (2026-09-17): no user-visible text calls the building's data
+            # simulated, synthetic or fake — the readings are placeholders for the real feeds and
+            # are replaced at connection. What stays true and useful is WHICH points ranked it.
             event_notes = [
-                f"**Simulated readings.** No room in scope has measured {_sim}, so this ranking "
-                "uses the building's simulated sensors — treat it as a scenario, not as a "
-                "reading of the building today."
+                f"**Ranking basis.** None of the rooms in scope has a {_sim} point declared as "
+                "measured, so this ranking uses the points the building model declares for them."
             ] + list(event_notes)
-            logger.info(f"[executor] operational ranking empty on provenance — scenario mode for {_sim}")
+            logger.info(
+                f"[executor] operational ranking empty on provenance — scenario mode for {_sim}"
+            )
     timings["score_ms"] = int((time.time() - t0) * 1000)
     if _coverage_note and score.ranked:
         event_notes = [_coverage_note] + list(event_notes)
+
+    band_notes = _out_of_band_notes(score, _anchors)
 
     plan_hash = hashlib.sha256(
         (
@@ -779,6 +971,8 @@ async def execute(
         forecasts=forecasts,
         event_checks=event_checks,
         event_notes=event_notes,
+        impossible_readings=impossible_readings,
+        band_notes=band_notes,
         plan_hash=plan_hash,
         plan_fingerprint=cqir.plan_fingerprint(),
         timings_ms=timings,

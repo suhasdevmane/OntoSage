@@ -59,9 +59,15 @@ def test_the_matrix_reuses_the_lane_and_does_not_recompute_coverage():
 
 
 def test_every_cell_carries_the_step_that_would_change_it():
-    """A matrix of red cells an operator cannot act on is decoration."""
+    """A matrix of red cells an operator cannot act on is decoration.
+
+    `describe()` now withholds the remediation unless told the reader is an administrator
+    (2026-09-17), so the admin-only matrix must say so -- a bare `describe()` would ship a
+    matrix of verdicts with the unlock steps stripped out.
+    """
     body = _endpoint_body("/api/v1/admin/observability/matrix")
-    assert "reach.describe()" in body
+    assert "reach.describe(for_admin=True)" in body
+    assert 'require_permission("system:admin")' in body
 
 
 def test_the_cell_list_is_bounded_and_says_what_it_cut():

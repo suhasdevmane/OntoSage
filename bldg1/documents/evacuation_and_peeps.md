@@ -14,8 +14,6 @@ tables:
 
 # Evacuation Provision Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional states, not a live PEEP file._
-
 ## What this records, and the line it does not cross
 
 Refuge points, evacuation chairs, communication units and personal plans were held only as

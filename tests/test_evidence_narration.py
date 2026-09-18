@@ -123,8 +123,10 @@ def test_collect_omissions_is_case_insensitive():
 
 def test_refusal_carries_reason_and_remedy():
     """Without both, a grader cannot tell a justified refusal from giving up."""
+    # The remedy is an administrator's; test_remaining_declines_speak_to_the_reader.py pins
+    # that every other reader keeps the reason and never sees it.
     text = describe_not_assessable(
-        "the newest reading is three days old", "restart the publisher for co2_data"
+        "the newest reading is three days old", "restart the publisher for co2_data", for_admin=True
     )
     assert "Not assessable" in text
     assert "three days old" in text

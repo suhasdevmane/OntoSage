@@ -318,7 +318,6 @@ _FLOOR_PLAN_BYPASS_PHRASES: FrozenSet[str] = frozenset(
 #: not.
 _SPACE_MEASURE_WORDS: FrozenSet[str] = frozenset(
     [
-        "area",
         "how big",
         "how large",
         "size of",
@@ -328,6 +327,27 @@ _SPACE_MEASURE_WORDS: FrozenSet[str] = frozenset(
         "perimeter",
         "floor space",
     ]
+)
+
+#: "AREA" IS A MEASUREMENT AND A KIND OF PLACE, AND ONLY ONE OF THEM IS GEOMETRY.
+#:
+#: The bare substring "area" used to sit in the set above, and "collaboration areas"
+#: contains it. So "what mix of desks, focus rooms, collaboration AREAS, meeting
+#: ROOMS, storage and support space is justified by approved operating assumptions?"
+#: satisfied both halves of the test and was answered with a table of twenty-one
+#: labs and their floor sizes (C19). A question about how a building's space is
+#: APPORTIONED is not a question about one room's measured extent.
+#:
+#: This keeps every phrasing the two-ingredient test was built for — "area of room
+#: 3.13", "the total area", "what is the area", "how much area" — and requires the
+#: word to be doing measuring work rather than naming a place.
+_AREA_AS_MEASUREMENT_RE = _re.compile(
+    r"\bareas?\s+of\b"
+    r"|\b(?:total|gross|net|floor|usable|surface|combined|mapped|internal)\s+areas?\b"
+    r"|\bhow\s+much\s+area\b"
+    r"|\bwhat(?:'s| is| are)\s+the\s+areas?\b"
+    r"|\bareas?\s+in\s+(?:m|sq|square)",
+    _re.IGNORECASE,
 )
 
 #: Generic nouns only. A room identifier ("0.34", "RM001A") is the stronger
@@ -730,9 +750,7 @@ _REFERS_TO_EARLIER_REPLY_RE = _re.compile(
 
 def normalise_quotes(text: str) -> str:
     """Model- or keyboard-typographic quotes and dashes as ASCII, for pattern matching."""
-    return (text or "").translate(
-        str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"', "—": "-"})
-    )
+    return (text or "").translate(str.maketrans({"’": "'", "‘": "'", "“": '"', "”": '"', "—": "-"}))
 
 
 #: BUG-548: a failure MODE ("fails open", "fail locked", "fail-safe") describes a device.
@@ -750,6 +768,35 @@ _INFORMATION_QUESTION_RE = _re.compile(
     r"^\W*(?:(?:which|what|where|when|why|who|whose|how)\b|"
     r"(?:is|are|was|were|does|do|did|has|have|had)\s+"
     r"(?:i|we|they|it|he|she|the|this|that|these|those|there|any|all|my|our|their|its|a|an)\b)",
+    _re.IGNORECASE,
+)
+
+#: BUG-731: a question that OPENS with a scoping phrase before its wh-word. "For each defect,
+#: what remedial scope and acceptance evidence were required ... ?" was classified as
+#: maintenance and filed as REP-7420E1: the start-anchored rule above never reached the
+#: "what". The lead-in may carry no finite fault ("Since the lift is broken, when ...?" is
+#: checked against the report phrase sets by the caller), and a decimal room id ("In 2.01,")
+#: does not end it. Used by `is_information_question` only — NOT by the control gate.
+_SCOPED_QUESTION_RE = _re.compile(
+    r"^\W*(?P<lead>(?:for|in|during|over|across|since|between|among|within|after|before|per|"
+    r"of|on|at|under|by|from|regarding|concerning|considering|given|excluding|including|"
+    r"compared\s+(?:to|with)|apart\s+from|other\s+than|besides|as\s+an?|looking\s+at|"
+    r"thinking\s+about|with\s+(?:respect|regard)\s+to|in\s+terms\s+of)\b"
+    r"(?:[^,;:?!.]|(?<=\d)\.(?=\d)){0,120})[,;:]\s*"
+    r"(?:(?:which|what|where|when|why|who|whose|how)\b|"
+    r"(?:is|are|was|were|does|do|did|has|have|had|can|could|will|would|should)\s+"
+    r"(?:i|we|they|it|he|she|the|this|that|these|those|there|any|all|my|our|their|its|a|an)\b)",
+    _re.IGNORECASE,
+)
+
+#: BUG-731: modal yes/no questions ("can we see ...", "will there be ...") and requests for
+#: information ("tell me which ...", "list the ...") — the same openers `report_intake_intent`
+#: already treats as questions. "you"/"someone" are excluded, so "can you fix the tap?" and
+#: "could someone look at the broken light?" are still requests that get filed.
+_MODAL_OR_INFO_REQUEST_RE = _re.compile(
+    r"^\W*(?:(?:can|could|will|would|should)\s+"
+    r"(?:i|we|they|it|this|that|these|those|there|any|all|my|our|their|its)\b|"
+    r"(?:tell|show|give)\s+me\b|list\b)",
     _re.IGNORECASE,
 )
 
@@ -917,7 +964,7 @@ class SemanticRouter:
         if not query or not query.strip():
             return False
         q = query.lower()
-        if not any(w in q for w in _SPACE_MEASURE_WORDS):
+        if not (any(w in q for w in _SPACE_MEASURE_WORDS) or _AREA_AS_MEASUREMENT_RE.search(q)):
             return False
         return any(_re.search(rf"\b{n}\b", q) for n in _SPACE_NOUNS)
 
@@ -968,8 +1015,24 @@ class SemanticRouter:
         """True when the text ASKS for information (wh-word, or auxiliary + subject) (BUG-548).
 
         Used to keep a question from being executed as a command or filed as a report.
+        BUG-731 widened it to questions that open with a scoping phrase ("For each defect,
+        what ...?") and to modal / tell-me openers. The control gate uses the narrower
+        `_INFORMATION_QUESTION_RE` directly and is unaffected.
         """
-        return bool(query and _INFORMATION_QUESTION_RE.search(_FAIL_MODE_RE.sub(" ", query)))
+        if not query:
+            return False
+        probe = _FAIL_MODE_RE.sub(" ", query)
+        if _INFORMATION_QUESTION_RE.search(probe) or _MODAL_OR_INFO_REQUEST_RE.search(probe):
+            return True
+        m = _SCOPED_QUESTION_RE.search(probe)
+        if not m:
+            return False
+        # A lead-in that itself states a fault is a report with a question attached.
+        lead = m.group("lead").lower()
+        return not any(
+            p in lead
+            for p in (_REPORT_FAULT_PHRASES | _REPORT_SAFETY_PHRASES | _REPORT_COMPLAINT_PHRASES)
+        )
 
     @staticmethod
     def is_control_command(query: str) -> bool:
