@@ -1,0 +1,85 @@
+# SATURATE (V4-T08): simulated pm1 sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'iaq_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data>
+    a ref:Database ;
+    rdfs:label "Iaq Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0_sat_pm1>
+    a brick:PM1_Level_Sensor ;
+    rdfs:label "Floor0 pm1 [ug/m3]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7bc0ee96-3f3d-5b6c-bf44-f8da7087523f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1_sat_pm1>
+    a brick:PM1_Level_Sensor ;
+    rdfs:label "Floor1 pm1 [ug/m3]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7ebe08e4-a7b5-5f2c-86ea-496ff738e4e8" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2_sat_pm1>
+    a brick:PM1_Level_Sensor ;
+    rdfs:label "Floor2 pm1 [ug/m3]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "327e3658-cbe4-5563-af48-2bba57db753c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3_sat_pm1>
+    a brick:PM1_Level_Sensor ;
+    rdfs:label "Floor3 pm1 [ug/m3]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "20277cde-7cca-585a-9f42-ef152851db31" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4_sat_pm1>
+    a brick:PM1_Level_Sensor ;
+    rdfs:label "Floor4 pm1 [ug/m3]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8e902a64-f5a1-506a-bc4b-4f74c0b6ab3c" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5_sat_pm1>
+    a brick:PM1_Level_Sensor ;
+    rdfs:label "Floor5 pm1 [ug/m3]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "af8a875d-8b32-5993-9cc0-e7c4fb29a75f" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .

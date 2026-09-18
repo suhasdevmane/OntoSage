@@ -87,6 +87,8 @@ RESOLVED = "resolved"
 NOT_FOUND = "not_found"
 NO_REFERENT = "no_referent"
 SKIPPED = "skipped"  # existence check could not run (e.g. GraphDB down) — fail open
+AMBIGUOUS = "ambiguous"  # the label matches several real ids and names none of them
+
 
 # ── Typed referents (BUG-103) ────────────────────────────────────────────────────
 # The original gate only knew dotted zone/room ids, so "floor 42", "the west wing",
@@ -197,9 +199,20 @@ _NON_MODIFIERS = frozenset(
         "your",
     }
 )
+# A SPACE HEAD CARRYING A HYPHEN IS AN ADJECTIVE, NOT A PLACE (BUG-740 / C20).
+#
+# "Is today's noise a brief CORRIDOR-RELATED peak or a sustained room-level problem?"
+# was refused with "'brief corridor' does not exist in this building" — a truthful
+# sentence about a subject nobody named, which is the failure this gate exists to
+# prevent, committed by the gate itself (the same shape as the "many parking" note
+# above). "corridor-related" is the first half of an attributive compound modifying
+# "peak"; the head noun of the phrase is "peak", so no space is named at all. The
+# trailing `(?!-)` is the structural tell and needs no vocabulary: a place name is
+# not immediately followed by a hyphen and another word.
+_HEAD_NOT_HYPHENATED = r"\b(?!-)"
 _SPACE_RE = re.compile(
     r"\b(?:the\s+)?(?!(?:" + "|".join(sorted(_NON_MODIFIERS)) + r")\b)"
-    r"([a-z][a-z-]{2,19})\s+(" + "|".join(_SPACE_HEADS) + r")\b",
+    r"([a-z][a-z-]{2,19})\s+(" + "|".join(_SPACE_HEADS) + r")" + _HEAD_NOT_HYPHENATED,
     re.IGNORECASE,
 )
 # The same heads standing alone behind a determiner: "in the gym", "on the rooftop".
@@ -207,7 +220,10 @@ _SPACE_RE = re.compile(
 # on the helipad?" was answered with the whole building's figures. A determiner is
 # required so an incidental mention ("pool of data") cannot trip it, and the heads
 # are generic English building words — no building's own vocabulary appears here.
-_BARE_SPACE_RE = re.compile(r"\b(?:the|a|an)\s+(" + "|".join(_SPACE_HEADS) + r")\b", re.IGNORECASE)
+_BARE_SPACE_RE = re.compile(
+    r"\b(?:the|a|an)\s+(" + "|".join(_SPACE_HEADS) + r")" + _HEAD_NOT_HYPHENATED,
+    re.IGNORECASE,
+)
 # Plant / assets. Generic equipment nouns; an optional trailing number is kept.
 _EQUIPMENT_HEADS = (
     "chiller",
@@ -374,6 +390,151 @@ _STOP_QUANTITIES = frozenset(
 )
 
 
+# ── Unbound spatial deixis: ask which room, do not pick one ──────────────────
+#
+# "I've developed a headache in this room — what are the current conditions?" named
+# no room, and three different lanes each did something worse than asking. One
+# declined outright ("I don't have that specific information on record"), one bound
+# "here" to whichever sensor a search returned first and then failed to build a
+# series for it, and one read the deixis as the WHOLE BUILDING and refused the fetch
+# as too large. Each answer is about a subject the asker never chose.
+#
+# A deictic reference is not a missing referent, it is an UNRESOLVED one: the asker
+# knows exactly which room they mean. The only correct move is to ask, and the only
+# thing that makes asking wrong is that the conversation already named a room — which
+# the caller checks, because this module cannot see the conversation.
+#
+# Generic English throughout; no building's vocabulary appears here.
+
+#: Room-type nouns a person uses deictically when they are standing in one.
+_DEICTIC_SPACE_NOUNS = (
+    "room",
+    "space",
+    "office",
+    "lab",
+    "laboratory",
+    "studio",
+    "zone",
+    "area",
+    "classroom",
+    "workspace",
+)
+
+#: Generic room TYPES that a building normally has more than one of, so "the
+#: <type> room" identifies nothing on its own. Deliberately short: a type a
+#: building plausibly has exactly one of would make the question answerable and
+#: the clarification an obstruction.
+_AMBIGUOUS_ROOM_TYPES = ("meeting", "conference", "seminar", "break", "common")
+
+#: A CONDITION INSIDE a space — the thing an instrument reads. Generic English, no
+#: building's vocabulary: warmth, noise, light and air are conditions of a room in any
+#: building, and the lay words for them are the words people actually use.
+#:
+#: This is what makes a bare "here" a room rather than a site. "Is there a café here?"
+#: plausibly means the campus; "is it stuffy in here?" cannot mean anything but the room
+#: the asker is standing in, and answering it about a different room is the failure the
+#: clarification exists to prevent. Measured 2026-09-18: "is it stuffy in here?", "how
+#: warm is it here?" and "what is the air quality here?" all fell straight through the
+#: presence-verb branch below and were answered about whichever space a search returned.
+_SENSED_CONDITION_RE = re.compile(
+    r"\b(?:warm|warmer|warmth|hot|hotter|cold|colder|cool|cooler|chilly|freezing|"
+    r"stuffy|stuffiness|airless|stale|muggy|humid|humidity|damp|dry|"
+    r"noisy|noise|loud|louder|quiet|quieter|bright|brighter|dark|darker|dim|glare|"
+    r"draught\w*|draft\w*|smell\w*|temperature|temp|co2|co₂|carbon\s+dioxide|"
+    r"air\s+quality|aqi|iaq|illuminance|lux|light\s+level|decibels?|"
+    r"occupancy|busy|crowded|comfortable|comfort|conditions?|ventilation)\b",
+    re.IGNORECASE,
+)
+
+#: "here" in any of its ordinary spatial uses, with no verb required.
+_BARE_HERE_RE = re.compile(r"\b(?:in\s+|right\s+|round\s+|around\s+)?here\b", re.IGNORECASE)
+
+_DEICTIC_SPACE_RE = re.compile(
+    # "in this room", "this space's usual levels", "the current room"
+    r"\b(?:this|the\s+current)\s+(" + "|".join(_DEICTIC_SPACE_NOUNS) + r")\b"
+    # "should I stay here", "while I'm sitting here" — a first-person presence verb binds
+    # "here" to the room whatever the question then asks about.
+    r"|\b(?:stay|staying|stayed|sit|sitting|sat|work|working|stand|standing|"
+    r"remain|remaining|am\s+i|i\s*'?\s*m|i\s+am|move\s+from|leave)\b[^.?!]{0,20}?"
+    r"\b(?:in\s+)?(?:right\s+)?here\b"
+    # "what systems are specific for the meeting room?"
+    r"|\bthe\s+(?:" + "|".join(_AMBIGUOUS_ROOM_TYPES) + r")\s+room\b",
+    re.IGNORECASE,
+)
+
+#: "zone 5.28", "room 1.06", "floor 3" — an identifier the building could hold.
+_NAMED_SPACE_RE = re.compile(
+    r"\b(?:zone|room|space|node|area|floor|level)\s+([A-Za-z0-9][A-Za-z0-9._-]{0,23})\b",
+    re.IGNORECASE,
+)
+
+
+def detect_space_deixis(query: str) -> Optional[str]:
+    """The deictic space phrase the question is scoped to, or ``None``.
+
+    Returns what the asker actually wrote ("this room", "here", "the meeting room")
+    so the clarification can echo it back instead of asking a generic question.
+    """
+    m = _DEICTIC_SPACE_RE.search(query or "")
+    if not m:
+        # "Is it stuffy in here?" — no presence verb, and unmistakably about this room.
+        q = query or ""
+        if _BARE_HERE_RE.search(q) and _SENSED_CONDITION_RE.search(q):
+            return "here"
+        return None
+    phrase = " ".join(m.group(0).split()).strip().lower()
+    # The presence-verb branch matches the whole clause ("stay here"); the deictic
+    # in it is the last word, and that is what the clarification should quote back.
+    if phrase.endswith("here"):
+        return "here"
+    return phrase
+
+
+def names_a_specific_space(query: str) -> bool:
+    """True when the question itself identifies a space the building could hold.
+
+    Precision-first in the opposite direction from the gate above: a false TRUE
+    only means a deictic question is answered as it is today, while a false FALSE
+    asks "which room?" of someone who already said.
+    """
+    q = query or ""
+    if not q.strip():
+        return False
+    if _DOTTED_ID_RE.search(q):
+        return True
+    for m in _NAMED_SPACE_RE.finditer(q):
+        # "this room FEELS stuffy" puts a verb where an id goes; only a token
+        # carrying a digit is an identifier in every convention seen here.
+        if _IDENTIFIER_SHAPED_RE.search(m.group(1)):
+            return True
+    if _FLOOR_RE.search(q):
+        return True
+    typed = detect_typed_referent(q)
+    return bool(typed and typed.kind in (KIND_SPACE, KIND_LOCATION))
+
+
+def ask_which_space(phrase: str) -> str:
+    """The clarification for an unbound deictic — one question, no guessing.
+
+    Worded to avoid the words the dialogue node treats as a *spurious* location
+    clarification ("location", "city", "region", "where are you"): this one is
+    genuine, and must not be converted into a reading of somewhere else.
+    """
+    phrase = (phrase or "this room").strip()
+    if phrase.startswith("the ") and phrase.endswith(" room"):
+        kind = phrase[len("the ") :]
+        return (
+            f"Which {kind} do you mean? There is more than one here, and I would rather "
+            f"ask than answer about the wrong one — give me its number or its name and "
+            f"I will tell you what it has."
+        )
+    return (
+        f'Which room do you mean by "{phrase}"? I cannot tell which one you are in, and '
+        "answering about a different one would look right and be wrong. Give me its "
+        "number or name — or name the floor and I will narrow it down."
+    )
+
+
 class ReferentResolver:
     """Validate a named referent against a building's ontology namespace."""
 
@@ -386,11 +547,16 @@ class ReferentResolver:
         entities: Optional[List[str]],
         namespace: str,
         building_name: str = "this building",
+        for_admin: bool = False,
     ) -> ReferentResolution:
         """Resolve the query's spatial referent (if any) against ``namespace``.
 
         Never raises: on any SPARQL error returns ``SKIPPED`` so the caller proceeds
         exactly as it did before this gate existed (fail open).
+
+        ``for_admin`` — pass ``reader_is_admin_in(state)`` — adds to a NOT_FOUND message how
+        to make the referent answerable. Every other reader gets the decline and what the
+        building does have; the default is that plain form.
         """
         token = detect_referent(query, entities)
         if not token:
@@ -398,7 +564,9 @@ class ReferentResolver:
             # a named space, a piece of equipment, or a measured quantity.
             typed = detect_typed_referent(query)
             if typed:
-                return await self._resolve_typed(typed, namespace, building_name)
+                return await self._resolve_typed(
+                    typed, namespace, building_name, for_admin=for_admin
+                )
             return ReferentResolution(status=NO_REFERENT)
 
         try:
@@ -408,6 +576,37 @@ class ReferentResolver:
             return ReferentResolution(status=SKIPPED, referent=token)
 
         if exists:
+            # EXISTS IS NOT THE SAME AS NAMES ONE THING (BUG-526). `_exists` runs two
+            # LIMIT 1 lookups with CONTAINS, and ids share prefixes: "5.1" is contained in
+            # Room5.10, Room5.11 and Room5.12, so the gate reported RESOLVED and a
+            # downstream lane answered about whichever the store returned first — with the
+            # user's own words in the answer, which is what makes it convincing.
+            #
+            # Only an IDENTIFIER-shaped token is checked. A word like "kitchen" matching
+            # several rooms is ordinary language, and the lanes below already handle a set;
+            # a dotted id that names none of the ids it matches is a typo or a half-typed
+            # room, and saying so is the whole point of this gate.
+            if _IDENTIFIER_SHAPED_RE.search(token):
+                try:
+                    matches = await self._matching_ids(token, namespace)
+                except Exception as exc:  # never turn a resolved referent into a failure
+                    logger.debug(f"[referent_resolver] ambiguity check skipped: {exc}")
+                    matches = set()
+                if len(matches) > 1 and token.lower() not in {m.lower() for m in matches}:
+                    shown = sorted(matches)[:5]
+                    logger.info(
+                        f"[referent_resolver] {token!r} matches {len(matches)} ids "
+                        f"({', '.join(shown)}) and names none of them"
+                    )
+                    return ReferentResolution(
+                        status=AMBIGUOUS,
+                        referent=token,
+                        suggestions=shown,
+                        message=(
+                            f"'{token}' matches {len(matches)} places in this building and "
+                            f"names none of them exactly. Which did you mean?"
+                        ),
+                    )
             return ReferentResolution(status=RESOLVED, referent=token)
 
         # BUG-232: a word-shaped token that the graph does not know was almost certainly
@@ -471,7 +670,11 @@ class ReferentResolver:
         )
 
     async def _resolve_typed(
-        self, typed: TypedReferent, namespace: str, building_name: str
+        self,
+        typed: TypedReferent,
+        namespace: str,
+        building_name: str,
+        for_admin: bool = False,
     ) -> ReferentResolution:
         """Validate a floor / space / equipment / measurand against the live graph."""
         if typed.head in self._BUILDING_FAMILY:
@@ -502,7 +705,9 @@ class ReferentResolver:
             status=NOT_FOUND,
             referent=typed.phrase,
             suggestions=suggestions,
-            message=self._typed_clarification(typed, suggestions, building_name),
+            message=self._typed_clarification(
+                typed, suggestions, building_name, for_admin=for_admin
+            ),
         )
 
     async def _exists_terms(self, terms: List[str], namespace: str) -> bool:
@@ -558,9 +763,7 @@ class ReferentResolver:
         KIND_EQUIPMENT: "https://brickschema.org/schema/Brick#Equipment",
     }
 
-    async def _suggest_terms(
-        self, terms: List[str], namespace: str, kind: str = ""
-    ) -> List[str]:
+    async def _suggest_terms(self, terms: List[str], namespace: str, kind: str = "") -> List[str]:
         """Up to 5 real entity names of the same kind (e.g. the floors that DO exist).
 
         KIND-FILTERED. Without it this matched any entity whose name merely CONTAINS the
@@ -582,9 +785,7 @@ class ReferentResolver:
         if not t:
             return []
         root = self._SUGGEST_ROOT.get(kind, "")
-        kind_clause = (
-            f"  ?cls rdfs:subClassOf* <{root}> .\n" if root else ""
-        )
+        kind_clause = f"  ?cls rdfs:subClassOf* <{root}> .\n" if root else ""
         q = (
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
             "SELECT DISTINCT ?s WHERE {\n"
@@ -609,9 +810,13 @@ class ReferentResolver:
 
     @staticmethod
     def _typed_clarification(
-        typed: TypedReferent, suggestions: List[str], building_name: str
+        typed: TypedReferent,
+        suggestions: List[str],
+        building_name: str,
+        for_admin: bool = False,
     ) -> str:
-        """Honest refusal + how to make the question answerable (connect-data contract)."""
+        """Honest refusal + what the building does have, for everyone; plus how to make the
+        question answerable (connect-data contract) for an administrator only."""
         from orchestrator.services.grounding_guard import (
             SUBJECT_EQUIPMENT,
             SUBJECT_SENSOR,
@@ -648,7 +853,7 @@ class ReferentResolver:
         if suggestions:
             head += f"\n\nWhat this building does have: **{', '.join(suggestions)}**."
 
-        return head + enablement_hint(subject_kind, typed.phrase)
+        return head + enablement_hint(subject_kind, typed.phrase, for_admin=for_admin)
 
     # ------------------------------------------------------------------ helpers
 
@@ -678,6 +883,32 @@ class ReferentResolver:
             "} LIMIT 1"
         )
         return len(_bindings(await self._exec(by_iri))) > 0
+
+    async def _matching_ids(self, token: str, namespace: str) -> set:
+        """The DISTINCT dotted ids whose subjects contain ``token``.
+
+        Distinct IDS, never a count of subjects: every sensor in Room5.01 has "5.01" in its
+        URI, so counting subjects would call an unambiguous room ambiguous twenty times over.
+        The set is what decides — "5.1" matching {5.10, 5.11, 5.12} is three places, and
+        "5.01" matching {5.01} is one however many points sit in it.
+        """
+        t = token.lower()
+        query = (
+            "SELECT DISTINCT ?s WHERE {\n"
+            "  ?s a ?type .\n"
+            f'  FILTER(STRSTARTS(STR(?s), "{namespace}") && CONTAINS(LCASE(STR(?s)), "{t}"))\n'
+            "} LIMIT 200"
+        )
+        ids: set = set()
+        for b in _bindings(await self._exec(query)):
+            uri = b.get("s", {}).get("value", "")
+            # EVERY dotted id in the subject, and only those containing the token. Taking
+            # the FIRST one offered "2.5" as a candidate for "5.1" — a subject can carry
+            # more than one number, and the one that matched is the one worth suggesting.
+            for m in _DOTTED_ID_RE.finditer(uri):
+                if t in m.group(0).lower():
+                    ids.add(m.group(0))
+        return ids
 
     async def _suggest(self, token: str, namespace: str) -> List[str]:
         """Return up to 5 real dotted-id locations closest to ``token``."""

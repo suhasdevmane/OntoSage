@@ -1,0 +1,85 @@
+# SATURATE (V4-T08): simulated carbon_monoxide sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'iaq_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data>
+    a ref:Database ;
+    rdfs:label "Iaq Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0_sat_carbon_monoxide>
+    a brick:CO_Level_Sensor ;
+    rdfs:label "Floor0 carbon_monoxide [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6609b38e-e7f1-56d0-b4b0-ec3d862fa2cc" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1_sat_carbon_monoxide>
+    a brick:CO_Level_Sensor ;
+    rdfs:label "Floor1 carbon_monoxide [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "6fb8d173-646c-5c0b-b869-14e59828635b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2_sat_carbon_monoxide>
+    a brick:CO_Level_Sensor ;
+    rdfs:label "Floor2 carbon_monoxide [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e86636c0-801c-5f1b-9b9e-37e7b5978a4b" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3_sat_carbon_monoxide>
+    a brick:CO_Level_Sensor ;
+    rdfs:label "Floor3 carbon_monoxide [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "dc67a35d-a879-57a0-9cec-c40e95270865" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4_sat_carbon_monoxide>
+    a brick:CO_Level_Sensor ;
+    rdfs:label "Floor4 carbon_monoxide [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "514c4c5a-c6e3-5616-8edb-c9d3bd1f7aa1" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5_sat_carbon_monoxide>
+    a brick:CO_Level_Sensor ;
+    rdfs:label "Floor5 carbon_monoxide [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "8143f591-0408-5a0c-af5e-cbd0dc13b6d0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .

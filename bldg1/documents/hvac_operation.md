@@ -14,8 +14,6 @@ tables:
 
 # Operating Regime Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional setpoints, not a live BMS export._
-
 ## What this makes answerable
 
 > *"Which HVAC assets operate beyond approved service windows, and is each exception

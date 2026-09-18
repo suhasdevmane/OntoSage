@@ -1,4 +1,4 @@
-# The building's passenger lift, declared as the asset it is.
+# The building's passenger lifts, declared as the assets they are.
 #
 # WHY THIS FILE EXISTS
 # --------------------
@@ -14,11 +14,23 @@
 # false negative about data the building holds is what design contract 4 exists to
 # prevent (BUG-438).
 #
+# HOW MANY LIFTS THERE ARE (BUG-497, settled by the building owner 2026-09-17)
+# ---------------------------------------------------------------------------
+# TWO, one at each side of the building: `bldg:Lift_1` and `bldg:Lift_2`, both already
+# declared in bldg1_abacws_metadata.ttl and typed brick:Elevator there. `bldg:Lift_Main`
+# was a THIRD name for the same fabric, invented here so the status lane had a subject of
+# type ontosage:Lift to match -- and the lane then answered "1 of 1 lift(s)" about a
+# building with two. A vocabulary added to satisfy a query became a wrong count.
+#
+# So the two real assets carry the ontosage:Lift type (additively -- they keep
+# brick:Elevator, which is what Brick-aware readers look for), and `Lift_Main` is gone as
+# an asset. Its published accessibility description moves onto Lift_1, which is the lift
+# that survey describes: "left from the front entrance".
+#
 # NOTHING HERE IS SIMULATED. Every fact below is transcribed from the same published
-# accessibility survey that `Cap_lift_accessibility_detail` cites, so the lift carries no
-# ontosage:isSimulated flag -- only its live STATUS record does, and that lives in the
-# generated status file. Declaring a real asset as simulated would relabel the building's
-# own fabric as a demo fixture.
+# accessibility survey that `Cap_lift_accessibility_detail` cites, so the lifts carry no
+# ontosage:isSimulated flag -- only their live STATUS records do, and those live in the
+# generated status file.
 
 @prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
 @prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
@@ -26,16 +38,24 @@
 @prefix ontosage: <http://ontosage.org/capabilities#> .
 @prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
 
-bldg:Lift_Main a ontosage:Lift , ontosage:Amenity ;
-    rdfs:label "Main passenger lift"@en ;
+bldg:Lift_1 a ontosage:Lift , ontosage:Amenity ;
+    rdfs:label "Passenger Lift 1"@en ;
     ontosage:capabilityCategory "Accessibility" ;
-    ontosage:layTerms "lift, elevator, main lift, passenger lift, left lift, is the lift working, lift status, is the elevator working" ;
-    ontosage:locationText "Main passenger lift, left from the front entrance, approximately 25 m from the entrance; serves floors G, 1, 2, 3, 4 and 5." ;
-    ontosage:answerText "The main passenger lift is located to the left of the front entrance, about 25 m in, and serves floors G, 1, 2, 3, 4 and 5. It has automatic double doors onto a lift lobby on every floor." ;
+    ontosage:layTerms "lift, elevator, main lift, passenger lift, left lift, lift 1, is the lift working, lift status, is the elevator working" ;
+    ontosage:locationText "Passenger Lift 1, left from the front entrance, approximately 25 m from the entrance; serves floors G, 1, 2, 3, 4 and 5." ;
+    ontosage:answerText "Passenger Lift 1 is located to the left of the front entrance, about 25 m in, and serves floors G, 1, 2, 3, 4 and 5. It has automatic double doors onto a lift lobby on every floor." ;
+    ontosage:note "cardiff_university_accessibility_page" .
+
+bldg:Lift_2 a ontosage:Lift , ontosage:Amenity ;
+    rdfs:label "Passenger Lift 2 / Goods Lift"@en ;
+    ontosage:capabilityCategory "Accessibility" ;
+    ontosage:layTerms "second lift, goods lift, right lift, lift 2, other lift, service lift" ;
+    ontosage:locationText "Passenger Lift 2, on the opposite side of the building from Lift 1; serves floors G, 1, 2, 3, 4 and 5 and takes goods as well as passengers." ;
+    ontosage:answerText "Passenger Lift 2 is on the opposite side of the building from Lift 1 and serves floors G, 1, 2, 3, 4 and 5. It is the goods lift and is also sized for wheelchair use." ;
     ontosage:note "cardiff_university_accessibility_page" .
 
 # The floors served are stated in the answer text above and NOT as ontosage:servesSpace
 # triples: that property's declared domain is ontosage:ServedZone, so asserting it here
-# would infer the lift into a class it does not belong to. An undefined or misapplied
+# would infer the lifts into a class they do not belong to. An undefined or misapplied
 # predicate is how this project has previously acquired 56 mistyped instances -- the
 # triple must be right, not merely present.

@@ -14,8 +14,6 @@ tables:
 
 # Department Directory — Abacws Building
 
-_**Synthetic demonstration record** — fictional contact routes, not a live directory._
-
 ## What this register records, and what it deliberately does not
 
 Each row is a **function**, not a person. The register answers *who is accountable for this*,

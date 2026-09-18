@@ -1,7 +1,5 @@
 # Building Policies and House Rules — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## Scented products
 
 The building operates a **scent-aware policy**. Occupants are asked to avoid strong

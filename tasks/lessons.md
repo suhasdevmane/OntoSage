@@ -1538,3 +1538,303 @@ old; the night's nine uncommitted rows had to be re-applied from the script that
   re-run rather than a reconstruction.
 * Verify after writing: row count, no duplicate ids, and the audit. The truncation announced
   itself as "0 rows" only because the next command counted them.
+
+## 110. A fix for a cause you have not measured buys a new defect at full price (2026-09-16)
+
+A register's narration kept failing. The register was 23 columns wide, the prompt was large,
+and oversized prompts had caused empty completions twice before (BUG-433, BUG-474). The
+inference was immediate and wrong: I capped the handover at 12 columns, watched the log say
+`projected to 12 of 23`, and watched it fail again.
+
+Measurement, when it finally happened, took ten minutes and said something else entirely. The
+provider's own log:
+
+```
+new prompt, n_ctx_slot = 16384, task.n_tokens = 155
+ggml_cuda_compute_forward: ADD_ID failed
+CUDA error: an illegal memory access was encountered
+llama-server terminated  error="exit status 0xc0000409"
+```
+
+**A 155-token prompt crashed it.** Direct calls at 14k, 47k, 117k, 211k and 351k characters —
+same `num_ctx`, same `keep_alive` — all answered normally, as did concurrent pairs. Prompt
+width had nothing to do with it. The runner was dying of a CUDA fault upstream of this project
+and recovering on its own ten minutes later.
+
+The cap then caused a **worse** defect than the one it was invented for. Asked which spaces
+suit quiet focused work, the projection dropped `noiseProfile`, `quietestPeriod` and
+`seatCount`, and the answer said the records "do not contain any field that records whether a
+space is quiet" — a building denying its own data, confidently, because of a fix for a cause
+that was never there (BUG-622). And the rows counted in code were taken AFTER the projection,
+so the system's most authoritative figures were computed from data it had just discarded.
+
+**Rules.**
+* Before fixing a failure, get the failing component's OWN log. Three layers of our logging
+  said "LLM formatting failed"; only Ollama's said why, and it said something no amount of
+  reasoning about our code would have produced.
+* A plausible cause with prior form is the easiest thing in the world to confirm by accident.
+  Falsify it instead: if width were the cause, a wider prompt would fail — so send one.
+* When a fix survives its own cause being disproved, re-derive its justification from scratch
+  or take it out. The cap stayed, at a width that trims nothing real, for a reason it can now
+  actually support: provenance stamps are not content.
+* Never compute a figure from data narrowed for a different purpose. Trim what you SHOW; count
+  from everything.
+
+## 111. `-p no:logging` removes `caplog`, and eight tests "error" (2026-09-16)
+
+A full-suite run reported `6180 passed, 8 errors`, and the eight looked alarming until read:
+`fixture 'caplog' not found`. I had passed `-p no:logging` to keep the output readable. The
+same files pass 92/92 with logging enabled. The suite was green; the flag was not.
+
+**Rule.** Quieting the harness changes what the harness provides. Before reporting a failure
+count, re-run the failures WITHOUT the convenience flags — this is the measurement apparatus
+being wrong again (#20-22), in its cheapest possible form.
+
+## 112. A query that does not parse becomes a confident answer about something else (2026-09-16)
+
+"What is the air quality on floor 3?" was answered from sensors labelled 5.02 and 5.03, with a
+figure and a spread, and nothing in the answer or the logs said the floor had been lost. The
+cause was four words in a comment:
+
+```python
+# ref: prefix is not in the standard block — declare it explicitly.
+```
+
+It had been true. The prefix was later added to the shared block, so the floor-scoped template
+emitted it twice and GraphDB rejected the whole query — `MALFORMED QUERY: Multiple prefix
+declarations for prefix 'ref'`. Every floor-scoped question had been failing since, and the
+fallback takes the first 40 instances of the class **with no spatial constraint**, which on
+this building are the densely instrumented floor's.
+
+**Rules.**
+* **Ask the shared thing what it contains; do not remember what it used to contain.** The code
+  now reads `if "PREFIX ref:" not in block`. A comment asserting the state of another module is
+  a fact with no test behind it, and it rots silently.
+* **A failed query must not be answerable.** The damage was not the malformed SPARQL — it was a
+  fallback willing to substitute an unconstrained instance list for a constrained query and
+  narrate the result as though the constraint had held. When a specific query fails, the honest
+  answers are "no data" or a stated widening, never a silent one.
+* **The offline parser is not the store.** rdflib ACCEPTS a duplicated prefix; GraphDB rejects
+  it. A green `prepareQuery` proves the grammar, not that any server will run it — so the test
+  that has teeth here is the explicit duplicate check, and that asymmetry is now written into
+  the test file rather than assumed.
+* Three verification layers passed throughout: unit suite green, probe 59-60/60, and the
+  per-floor answers *looked* right because a plausible number came back. It took asking a
+  question whose answer I could check by eye — floor 3, sensors named 5.x — to see it.
+
+## 113. A repair may widen the CLASS it looks for, never the PLACE it looks in (2026-09-16)
+
+"What is the air quality on floor 3?" was answered from sensors labelled 5.27 and 5.32. The
+retrieval was correct — 107 rows, every one on floor 3 — and a later stage threw them away:
+
+```
+[modality_repair] want=air_quality rows=107 miss=True under_populated=False
+[modality_repair] no air_quality sensors from retrieval (107 rows); replaced with 400
+```
+
+Two faults in one log line, and both are general.
+
+**A concept with two definitions.** The saturation catalogue said air quality is
+`Air_Quality_Sensor`; the HBCO concept said it is CO2 + PM2.5 + TVOC + that. So 107 genuine
+air-quality readings registered as a *total miss*. Whenever two structures define the same
+word, one of them will eventually be consulted by code that does not know about the other.
+
+**A repair that changes the question.** `build_modality_query` is building-wide by
+construction, and it REPLACES the result — so the fix for "wrong modality" silently became
+"wrong floor". Widening the class you look for is a repair. Widening the *place* is a
+different question, answered confidently.
+
+**Rules.**
+* A stage that replaces another stage's result must preserve every constraint the question
+  carried. If it cannot, it must decline rather than substitute.
+* When you generalise a catalogue term, pass what the *resolver actually resolved to* rather
+  than teaching a second module the same vocabulary. Generosity scoped to a deliberate
+  resolution can only prevent a wrongful replacement; generosity in the general matcher would
+  let "air" from `Air_Quality_Sensor` match every air temperature sensor.
+* The same day, the same shape twice more: a fallback with no floor filter (#112) and a
+  publisher band taken from a shallow class (BUG-638, where a 69 °C boiler flow was published
+  at 22.5 °C because `Temperature_Sensor` describes a *room*). **Ask the most specific
+  declaring class, and keep the scope you were given.**
+
+## 114. Describing the shape of an answer is not the same as writing it (2026-09-17)
+
+CAVEAT-604 gave the narration a clear instruction: where a question's word is also a recorded
+status, *"answer with the total and give the split; never report the status count alone as the
+total."* It held overnight, and the next probe answered *"There are 6 scheduled sessions
+recorded for this room"* — from a room holding 23.
+
+The counted facts were right both times. `Records held: 23. By recorded status: completed 17,
+scheduled 6.` Only the wording moved, and the wording was the part left open.
+
+The fix was to stop describing and start dictating: *OPEN with this sentence, filled in from
+the counts above: "The room holds 23 records in total — completed 17, scheduled 6."* Same
+facts, no new computation. Three consecutive asks then opened with it.
+
+**Rules.**
+* Where an answer must contain a specific figure, hand the model the SENTENCE, not a
+  description of the sentence. BUG-581 moved the *counting* into code; this moves the
+  *claim* into code and leaves the model only the prose around it.
+* A defect that appears in one run of three is not fixed by one passing run. Ask it three
+  times before believing it, and say so in the evidence.
+* This is the third time a question with two defensible readings has been settled by whichever
+  reading the model reached for first. When both readings are defensible, the answer carries
+  both — and "carries both" has to be literal.
+
+## 115. Four "open" defects were already fixed, and one was fixed except for the part that mattered (2026-09-17)
+
+Working the open list one row at a time, four of the first five had already been repaired in
+earlier sessions and nobody had gone back to close them:
+
+* **BUG-487** — the vocabulary is 43 classes discovered from the ontology, not the 20-odd
+  hardcoded tuple the row describes.
+* **TODO-494** — "79 undocumented settings" was 26 by the time it was measured, and 0 of them
+  were `Settings` fields.
+* **TODO-490** — both code changes it specifies were in place.
+* **CAVEAT-593** — three pairs still "disagreed", and every one is complementary.
+
+A status column is not evidence. Re-measuring cost minutes per row and changed the answer
+every time; two of the four would have been "fixed" a second time by anyone who trusted the
+description.
+
+**But TODO-490 is the one to remember.** Both of its code changes were done, the lay terms
+were declared, the tie-break worked — and the question it was written for still failed:
+*"Have there been any alarms this week?"* was answered by the alert-CREATION lane with a
+configuration form. **The row described two changes; the defect was a third thing nobody had
+asked about.** Closing it on the strength of "both changes are present" would have been
+literally true and completely wrong.
+
+**Rules.**
+* Re-measure before repairing. The row tells you what someone believed months ago.
+* Close a row on the QUESTION it was written about, asked live, not on the diff it proposed.
+  A fix that is present and does not fix the question is not a fix.
+* When an audit reports a number nobody can act on, make the audit say what the number is
+  made of. `2,114 disagreements` was unusable for months; `label x2,093` settles it in a
+  second — and a real conflict on `ontosage:area` would now stand out instead of hiding in
+  the same total.
+
+## 116. Two type systems, one crash, and a gate that failed open into silence (2026-09-17)
+
+**What happened.** `SPARQLAgent.answer_semantically` returns `results` as a **list** —
+`[{"answer": "..."}]`, annotated in its own source as *"Mock results for compatibility"*.
+The verifier's two binding readers dug `result["results"]["results"]["bindings"]` behind an
+`isinstance(result, dict)` guard on the **outer** value only. The outer value *is* a dict, so
+the guard passed; the second `.get` then ran against the list and raised `AttributeError`.
+
+The exception escaped `verify()` into `logger.debug(f"Verifier skipped: {_ve}")`. No
+verification record was attached, and `publication_gate` — which fails open by design —
+reads a missing record as *"the check did not run"* and publishes.
+
+So the one lane whose output is ungrounded LLM prose over retrieved text was the **only**
+lane with no grounding check, on every turn it fired, invisibly (BUG-643).
+
+**Rules.**
+* **A type hint two levels down is not a guard.** `Dict[str, Any]` says nothing about
+  `result["results"]`. Guard the level you actually dereference, or write one reader that
+  returns the empty value for every shape that is not the one you want.
+* **"Mock results for compatibility" is a promise to readers you have not enumerated.** If
+  a lane fakes another lane's envelope, something must fail loudly when the fake diverges.
+  Here a test now reads `answer_semantically`'s source and fails if it stops returning a
+  list — otherwise a later tidy-up leaves the guard passing while guarding nothing.
+* **A fail-open gate must be loud when its input is missing.** Failing open is right —
+  a verifier outage must not become a system outage — but `DEBUG` turned "the gate was
+  removed" into "the gate decided to allow it". The same file already logs the evidence
+  record's failure at `WARNING` with a traceback, twelve lines earlier, for exactly this
+  reason. Two swallows in one function, one loud and one silent, and only the silent one
+  hid a defect for months.
+* **Find the FIRST crash, not the reported one.** The audit named `_sparql_returned_data`;
+  `_extract_sensor_ids` ran first and raised first. Same consequence, but a fix applied only
+  to the named line would have left the bug intact and the tests green.
+
+## 117. A comma in the Edit tool is a column in the CSV (2026-09-17)
+
+**What happened.** `tasks/FIX_TRACKER.csv` holds prose fields. BUG-497's `Verification` read
+`PENDING live re-ask after restart (the probe is mid-run).` — no commas, so it was stored
+**unquoted**. Replacing it with a sentence containing commas, through the Edit tool, split
+one field into three: the row went to 14 columns against a 12-column header. Nothing
+complained. It was caught only because the next script asserted every row's width before
+writing.
+
+**Rules.**
+* **Edit tool for code; `csv` module for CSV.** A text edit does not know about quoting.
+  Write the change through `csv.writer`, which quotes what needs quoting, then `os.replace`
+  (#109).
+* **Assert the shape after every tracker write.** `len(row) == len(header)` for every row,
+  every time. It costs two lines and it is the only thing that catches this.
+* A ragged CSV does not raise — `csv.reader` returns the wrong number of cells happily, and
+  the damage surfaces later as a field that has silently lost its tail.
+
+## 118. An inference hazard is a claim about the reasoner, so measure the reasoner (2026-09-17)
+
+**What happened.** An agent reported a P2 load-blocker: the alarm data used `ontosage:priority`,
+whose `rdfs:domain` is `MaintenanceIssue`, so "under the repository's RDFS reasoning" all 271
+alarms would be inferred maintenance issues and leak into amenity answers. The reasoning was
+textbook RDFS, the fix was cheap, and I started widening it — a general test then found the same
+pattern in `effectiveFrom`, `effectiveTo` and `aboutEquipment`, apparently graph-wide.
+
+Then I counted. 1,321 subjects already use `effectiveFrom` without being `ConfigurationPeriod`,
+and `ConfigurationPeriod` counts 2,175 with inference and 2,175 in the explicit graph. The bldg
+repository runs `rdfsplus-optimized`, which does not derive types from domain axioms. Nothing was
+mis-typed. The "P2 load-blocker" was a prediction about a reasoner nobody had checked.
+
+**Rules.**
+* **Compare inferred and explicit before believing an inference effect.** In GraphDB, count the
+  class with and without `FROM <http://www.ontotext.com/explicit>`. Equal counts mean the axiom
+  is not firing, whatever the textbook says.
+* **Name the ruleset in the claim.** "Under RDFS" and "under this repository's ruleset" are
+  different statements; only the second is a defect report.
+* **A general test that fails everywhere is telling you about the test first.** When a check
+  written for one bug fails on 1,321 pre-existing subjects, either the whole graph is broken or the
+  premise is — find out which before fixing either.
+* **Keep what is true at its true size.** The domains ARE too narrow for how the predicates are
+  used, and a full-RDFS deployment would suffer — that stays recorded, as a strict xfail and a P3
+  modelling note, not as a P2 blocking tonight's load.
+
+
+## 119. A slow case is a claim about the provider until its log says otherwise (2026-09-17)
+
+**What happened.** Probe v17 was green but its slowest case took 167.9 s, and the unit suite had
+been running alongside it. The tempting reading was load: CLAUDE.md itself says a doubling in
+wall-clock is a load question first. The orchestrator log only showed an LLM call that took
+161 s and came back empty. The host Ollama log said what it was: a 136-token prompt generated
+16,248 tokens at 101 tok/s until the context was full (`truncated = 1`). Not load, not a hang,
+a runaway, and the runner being single-slot put the next request 2m46s behind it. Nothing
+capped local generation, while every hosted client had carried `max_tokens` for months.
+
+**Rules.**
+* **Read the provider's own log for any single slow call.** The orchestrator sees duration; only
+  the runner sees tokens generated and why it stopped.
+* **Size a cap from the distribution, not from the incident.** 7,167 completions in the same log
+  gave p99 3,880 and 6 above 8,192, so 8,192 cuts almost nothing real and halves the stall.
+* **A setting in one client and not its sibling is a defect in the sibling.**
+* **Check the template for a key assigned twice.** `.env.example` set OLLAMA_NUM_CTX to 16384 and
+  then to 8192; the last one wins, so the documented fix was undone for every fresh clone.
+
+
+## 120. The guard that blanks an honest answer, and a stash inside a compound command (2026-09-18)
+
+**What happened.** Two unrelated slips on the same afternoon, both worth keeping.
+
+The deliberation lane had just gained a sentence naming values it had EXCLUDED as physically
+impossible — minus seven people, minus 261 ppm of CO2. That sentence necessarily quotes numbers
+that are, by construction, not in the ranking: they were popped out of it. `numeric_guard`
+requires every number in the prose to exist in the dossier, and its remedy on violation is to
+replace the entire answer with "I computed a ranking but its narration failed the evidence
+check". So the ranking that was honest about a broken reading was the one that could not ship,
+and the silent one passed. The new out-of-band sentence would have done the same. Both lists are
+now in the guard's allowed text.
+
+Separately, a `git diff` was appended to a test command with `&&` and a `git stash push -q`
+slipped in with it. The rule in force said no stash. The routing rules written that afternoon
+went into a stash silently — `-q` means no output, and the test command's output scrolled past.
+
+**Rules.**
+* **A guard whose remedy is to discard the whole answer must be taught every sentence that
+  exists to be honest.** Otherwise it punishes exactly the disclosure it was built to protect,
+  and the failure looks like a narration bug rather than a policy one.
+* **Any number a system prints ABOUT a value it rejected is still dossier content.** Excluded
+  values, band edges, thresholds not met — all of them, or the disclosure cannot be written.
+* **Never put a state-changing git command in a compound shell line.** It runs whether or not
+  you meant it to, and `-q` hides that it did. Check `git stash list` immediately if one does.
+* **Verify a restore by looking for the work, not for the absence of an error.** `git stash pop`
+  printed a two-hundred-line status; the only lines that mattered were a grep for the two rule
+  names and an empty `git stash list`.

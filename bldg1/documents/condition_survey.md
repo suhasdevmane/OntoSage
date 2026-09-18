@@ -14,8 +14,6 @@ tables:
 
 # Asset Condition Survey — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## Grades
 
 **A** as new · **B** satisfactory · **C** poor · **D** end of life. Remaining life is the

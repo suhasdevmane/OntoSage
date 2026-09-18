@@ -137,10 +137,27 @@ def test_every_record_class_in_the_tbox_has_a_discoverable_parent():
         return any(reaches_a_root(p, seen) for p in g.objects(cls, RDFS.subClassOf))
 
     lay = URIRef(NS + "layTerms")
+    capability = URIRef(NS + "Capability")
+
+    def is_amenity_kind(cls, seen=None):
+        """An amenity kind is reached by the capability resolver, not by record discovery.
+
+        Since 2026-09-17 amenity CLASSES carry lay terms (TODO-696) so the words transfer to any
+        building; before that only bldg1's instances did. They are not registers and must not
+        be required to reach Record — the capability resolver reads them through Capability.
+        """
+        seen = seen or set()
+        if cls == capability:
+            return True
+        if cls in seen:
+            return False
+        seen.add(cls)
+        return any(is_amenity_kind(p, seen) for p in g.objects(cls, RDFS.subClassOf))
+
     orphans = sorted(
         str(c).rsplit("#", 1)[-1]
         for c in {s for s, _, _ in g.triples((None, lay, None))}
-        if str(c).startswith(NS) and not reaches_a_root(c)
+        if str(c).startswith(NS) and not reaches_a_root(c) and not is_amenity_kind(c)
     )
     assert not orphans, (
         "these carry lay terms but no path to Record or IntervalRecord, so record "

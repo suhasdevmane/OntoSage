@@ -182,7 +182,13 @@ def build_saturation_ttl(namespace: str, modality: str, items: List[SaturationIt
         parts += [
             f"<{item.sensor_iri}>",
             f"    a {_qualify_class(item.brick_class)} ;",
-            f'    rdfs:label "{item.space_label} {modality} (simulated){unit_suffix}"@en ;',
+            # THE LABEL NAMES THE POINT, not the stage of the deployment (user decision,
+            # 2026-09-16). "Floor 3 carbon_monoxide (simulated) [ppm]" put the word into
+            # every answer that cited the sensor, and these readings are placeholder data
+            # for the building's own feed — replaced wholesale at connection time, at which
+            # point 1,611 labels would each have been wrong. The `isSimulated` triple below
+            # still records the provenance for anyone auditing the store.
+            f'    rdfs:label "{item.space_label} {modality}{unit_suffix}"@en ;',
             f"    brick:hasLocation <{item.space_iri}> ;",
             '    ontosage:isSimulated "true"^^xsd:boolean ;',
             f'    rdfs:comment "{_COMMENT_MARKER}" ;',

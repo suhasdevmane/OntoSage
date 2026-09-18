@@ -235,7 +235,11 @@ class ReportAgent:
             # because the query was wrong is not knowable from a row count — and only the
             # graph can answer the second. Narrating here is guessing with a house style.
             if not (sections.get("overview", {}).get("data_points") or 0):
-                narrative = self._no_data_narrative(user_query, sections)
+                from orchestrator.services.grounding_guard import reader_is_admin_in
+
+                narrative = self._no_data_narrative(
+                    user_query, sections, for_admin=reader_is_admin_in(state)
+                )
                 logger.info("[report] no rows retrieved — reporting that, not explaining it")
             else:
                 narrative = await self._narrate(user_query, report_type, sections)
@@ -528,8 +532,11 @@ class ReportAgent:
         return highlights[:15]
 
     @staticmethod
-    def _no_data_narrative(query: str, sections: Dict) -> str:
+    def _no_data_narrative(query: str, sections: Dict, for_admin: bool = False) -> str:
         """What a report says when the retrieval came back empty.
+
+        ``for_admin`` selects the retrieval outcome's remedy over its reader next step
+        (``retrieval_outcome.describe``); the default is the plain form.
 
         Deterministic on purpose. There is no LLM call here because there is nothing to
         narrate: every sentence a model could add about WHY the rows are missing is a
@@ -575,7 +582,7 @@ class ReportAgent:
         lines = [
             "**No data was retrieved for this request, so there is no report to give.**",
             "",
-            describe(outcome),
+            describe(outcome, for_admin=for_admin),
             "",
             "That is a statement about this query, not about the building. It does not "
             "mean the sensor is missing, that the readings are not collected, or that "

@@ -25,13 +25,49 @@ import re
 import time
 from dataclasses import dataclass, replace
 from datetime import date
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, FrozenSet, Iterable, List, Optional, Pattern, Set, Tuple
 
 from shared.utils import describe_exception, get_logger
 
 logger = get_logger(__name__)
 
 ONTOSAGE = "http://ontosage.org/capabilities#"
+
+#: CamelCase class name -> spaced words. Compiled once: it runs for every class on every load.
+_CAMEL_RE = re.compile(r"(?<!^)(?=[A-Z])")
+
+#: One compiled word-bounded pattern per declared term (BUG-694).
+#:
+#: The scorer used to hand ``re`` a pattern STRING per term per question. The vocabulary is
+#: about 900 terms and Python's pattern cache holds 512, so on every register lookup most
+#: patterns had been evicted and were compiled again — measured, 88% of the offline harness's
+#: time, and the live router pays it on every lookup, several per turn. The pattern text is
+#: exactly what was built inline before, so matching is unchanged; only when it is compiled
+#: moves. Filled as the vocabulary loads (``_warm_patterns``) and emptied by ``clear_cache``.
+_TERM_PATTERNS: Dict[str, Pattern[str]] = {}
+
+#: A bound, not a tuning knob: the vocabulary is ~900 terms, so reaching this means something
+#: is feeding the cache terms that are not vocabulary. Dropping it costs a recompile, never a
+#: wrong match.
+_MAX_TERM_PATTERNS = 8192
+
+
+def _term_pattern(term: str) -> Pattern[str]:
+    """The compiled ``\\b<term>\\b`` pattern for one declared term."""
+    pattern = _TERM_PATTERNS.get(term)
+    if pattern is None:
+        if len(_TERM_PATTERNS) >= _MAX_TERM_PATTERNS:
+            _TERM_PATTERNS.clear()
+        pattern = re.compile(rf"\b{re.escape(term)}\b")
+        _TERM_PATTERNS[term] = pattern
+    return pattern
+
+
+def _warm_patterns(terms) -> None:
+    """Compile every term of a freshly loaded vocabulary before the first question needs it."""
+    for term in terms:
+        _term_pattern(term)
+
 
 #: Refreshed rather than pinned: a document lifted mid-session should become routable
 #: without a restart, and a register that was dropped should stop being claimed.
@@ -189,7 +225,7 @@ def _terms_for(
 
     words: set = set()
 
-    for seed in (label.lower().strip(), re.sub(r"(?<!^)(?=[A-Z])", " ", local_name).lower()):
+    for seed in (label.lower().strip(), _CAMEL_RE.sub(" ", local_name).lower()):
         seed = seed.strip()
         if not seed:
             continue
@@ -245,7 +281,13 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
             quals = await run_sparql_select(_QUALIFIER_QUERY % values, limit=len(known) + 1)
             by_class = {
                 str(r.get("cls") or "").rsplit("#", 1)[-1]: tuple(
-                    sorted({q.strip().lower() for q in str(r.get("quals") or "").split("|") if q.strip()})
+                    sorted(
+                        {
+                            q.strip().lower()
+                            for q in str(r.get("quals") or "").split("|")
+                            if q.strip()
+                        }
+                    )
                 )
                 for r in (quals.get("rows") or [] if quals.get("ok") else [])
             }
@@ -260,6 +302,7 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
         return hit[1] if hit else []
 
     _CACHE[key] = (time.monotonic(), found)
+    _warm_patterns(term for record in found for term in record.terms)
     logger.info(
         "[record_registry] %s",
         ", ".join(f"{r.local_name}={r.instances}" for r in found) or "no record classes held",
@@ -283,7 +326,7 @@ def _term_score(term: str, low: str) -> float:
     landing together is far less likely to be coincidence than one common noun.
     """
     best = 0.0
-    for m in re.finditer(rf"\b{re.escape(term)}\b", low):
+    for m in _term_pattern(term).finditer(low):
         weight = float(len(term)) * (2.0 if " " in term else 1.0)
         before = low[m.start() - 1] if m.start() else " "
         after = low[m.end()] if m.end() < len(low) else " "
@@ -304,6 +347,9 @@ _FUNCTION_WORDS = frozenset(
     "and or but so if when yet now today already still recently".split()
 )
 
+#: The word after a qualifier, skipping spaces, quotes and an opening bracket.
+_FOLLOWING_WORD_RE = re.compile(r"[\s\"'(]*([a-z][a-z0-9]*)")
+
 
 def _qualifier_score(term: str, low: str) -> float:
     """`_term_score` for a declared qualifier: nothing when it describes another noun (BUG-545).
@@ -316,8 +362,8 @@ def _qualifier_score(term: str, low: str) -> float:
     have coverage", an absence in the wrong register stated as a fact about fire safety.
     """
     best = 0.0
-    for m in re.finditer(rf"\b{re.escape(term)}\b", low):
-        following = re.match(r"[\s\"'(]*([a-z][a-z0-9]*)", low[m.end():])
+    for m in _term_pattern(term).finditer(low):
+        following = _FOLLOWING_WORD_RE.match(low[m.end() :])
         if following and following.group(1) not in _FUNCTION_WORDS:
             continue  # attributive: it describes the next word, not this class
         best = max(best, _term_score(term, low[m.start() - 1 : m.end() + 1]))
@@ -354,6 +400,38 @@ def held_record_class(query: str, classes: List[RecordClass]) -> Optional[Record
 SECOND_REGISTER_SHARE = 0.5
 
 
+def _only_modifies(term: str, low: str) -> bool:
+    """True when every occurrence of `term` is the FIRST element of a hyphenated compound.
+
+    The minimum evidence a register needs (BUG-693). In English a compound's head is its
+    LAST element — the rule `_terms_for` already states for phrases — so a term that opens a
+    compound is describing the word after it: "post-work test" is a test, "lecture-capture
+    endpoint" is AV kit, "warranty-return parts" are parts, "permission-controlled evidence
+    package" is a report. As the head it still names a kind of the thing: "clinical-waste
+    points" are waste points, "student-bookable room" is a bookable room.
+
+    The score is untouched — `_COMPOUND_WEIGHT` still counts such a hit, discounted, when
+    other evidence names the same class. It just cannot select a register on its own.
+
+    MEASURED, and the trade-off is the reason this rule is this narrow (2,960 catalogue
+    questions, scripts/register_reach.py, guard set 0 violations):
+
+    * this rule removes 21 of 1,140 selections; read, all 21: 1 right, 6 partial, 14 wrong;
+    * every blunter floor removed more right answers than it was worth. A score floor of 5
+      (no 4-letter bare word or compound-only hit alone) removed 80: 16 right, 24 partial,
+      40 wrong. A floor relative to question length (0.055/char) removed 245, the 165 beyond
+      the floor reading 8 right, 13 partial, 19 wrong of 40. Refusing any single bare word
+      would remove 724 and breaks 11 guard questions; a sample of those read 19 right, 16
+      partial, 24 wrong of 59.
+
+    Bare single words are not separable by length or score: "talk", "skip" and "bins" are
+    right far more often than "cost", "seat" and "post", which are the same length. That
+    separation is vocabulary, and belongs in the TBox, not in a threshold here.
+    """
+    ends = [m.end() for m in _term_pattern(term).finditer(low)]
+    return bool(ends) and all(end < len(low) and low[end] == "-" for end in ends)
+
+
 def rank_record_classes(query: str, classes: List[RecordClass]) -> List[Tuple[float, RecordClass]]:
     """Every class this question scores against, strongest first.
 
@@ -365,11 +443,16 @@ def rank_record_classes(query: str, classes: List[RecordClass]) -> List[Tuple[fl
     scored: List[Tuple[float, RecordClass]] = []
     for record in classes:
         quals = set(getattr(record, "qualifiers", ()) or ())
-        total = sum(
-            _qualifier_score(term, low) if term in quals else _term_score(term, low)
-            for term in record.terms
-        )
-        if total > 0:
+        total = 0
+        named = False
+        for term in record.terms:
+            score = _qualifier_score(term, low) if term in quals else _term_score(term, low)
+            total += score
+            if score > 0 and not named:
+                named = not _only_modifies(term, low)
+        # BUG-693: a class is ranked only when at least one of its terms NAMES something in
+        # the question. See `_only_modifies` for what that excludes and what it measured.
+        if total > 0 and named:
             scored.append((total, record))
     return sorted(scored, key=lambda pair: (-pair[0], pair[1].local_name))
 
@@ -415,10 +498,80 @@ def second_record_class(
 #: contributed a bare "work", and "what is the procedure for hot works?" was declined as a
 #: missing work-order register when the permit document answers it.
 _ALL_CLASS_TERMS: Dict[str, Tuple[str, ...]] = {
-    name: _terms_for(name, re.sub(r"(?<!^)(?=[A-Z])", " ", name), include_head_words=False)
+    name: _terms_for(name, _CAMEL_RE.sub(" ", name), include_head_words=False)
     for name in _FALLBACK_RECORD_CLASSES
 }
 _LAY_LOADED = False
+
+#: Record classes whose records live in a REGISTERED EVENTS STORE rather than in the graph
+#: (BUG-670). Refreshed by `load_lay_terms` on every call; empty until then, and empty when
+#: no events store is registered — which is exactly the old behaviour.
+#:
+#: The TBox says so in as many words (Module J): instances of IntervalRecord subclasses "live
+#: in each building's events store, NOT as per-event triples". Counting graph instances alone
+#: therefore told users "this building holds no anomaly event records" while the store held
+#: ~185,600 scanner episodes, the latest dated that day. The graph was only half the question.
+_EVENT_STORE_CLASSES: FrozenSet[str] = frozenset()
+
+
+def _name_forms(name: str) -> Set[str]:
+    """Lowercase forms a class name or an event kind is written in, for joining the two.
+
+    The events store names its kinds in lowercase without the class suffix ("anomaly",
+    "workorder", "access", "booking" — see mysql_events_adapter), and the query service names
+    what it answers after them ("anomaly_summary", "bookings_list"). Both vocabularies are
+    derived from the class names, so the join is on the name, never on a list kept here.
+    """
+    base = name.lower().split("_", 1)[0]
+    forms = {base}
+    if base.endswith("event") and len(base) > len("event"):
+        forms.add(base[: -len("event")])
+    if base.endswith("s") and not base.endswith("ss"):
+        forms.add(base[:-1])
+    return forms
+
+
+def event_store_record_classes(class_names, event_kinds) -> FrozenSet[str]:
+    """The record classes an events store's declared kinds name.
+
+    ``event_kinds`` are the kinds the events query service can ANSWER. A class the store
+    merely has rows for, but that nothing answers, stays absent: telling a user "no such
+    records" is closer to the truth than routing them to a lane that cannot read the rows.
+    """
+    kind_forms: Set[str] = set()
+    for kind in event_kinds or ():
+        kind_forms |= _name_forms(str(kind))
+    return frozenset(name for name in class_names or () if _name_forms(name) & kind_forms)
+
+
+def _refresh_event_store_classes() -> None:
+    """Re-read which record classes the registered events store answers (BUG-670).
+
+    Configuration decides it: the adapter registry is built from building.yaml's storage list
+    and database_registry.yaml, and the kinds from the events query service's own
+    classifier. A registry lookup falls back to the DEFAULT adapter for an unregistered key,
+    so a store counts as registered only when the adapter it returns can build an events query.
+    """
+    global _EVENT_STORE_CLASSES
+    try:
+        from orchestrator.services.adapters.registry import adapter_registry
+        from orchestrator.services.event_query_service import (
+            _KIND_RES,
+            EVENTS_STORE_KEY,
+        )
+
+        adapter = adapter_registry.get(EVENTS_STORE_KEY)
+        registered = adapter is not None and callable(
+            getattr(adapter, "build_overlap_window", None)
+        )
+        _EVENT_STORE_CLASSES = (
+            event_store_record_classes(tuple(_ALL_CLASS_TERMS), [kind for kind, _ in _KIND_RES])
+            if registered
+            else frozenset()
+        )
+    except Exception as exc:  # pragma: no cover - an unreadable registry keeps the old rule
+        logger.debug(f"[record_registry] events store unavailable: {describe_exception(exc)}")
+        _EVENT_STORE_CLASSES = frozenset()
 
 
 async def load_lay_terms() -> None:
@@ -445,6 +598,9 @@ async def load_lay_terms() -> None:
     """
     global _LAY_LOADED
     if _LAY_LOADED:
+        # The vocabulary is loaded once; whether an events store answers a kind is re-read
+        # every time, because the adapter registry may still be connecting on the first turn.
+        _refresh_event_store_classes()
         return
     try:
         from orchestrator.services.ontology_manager import run_sparql_select
@@ -458,7 +614,7 @@ async def load_lay_terms() -> None:
                 _name,
                 _terms_for(
                     _name,
-                    re.sub(r"(?<!^)(?=[A-Z])", " ", _name),
+                    _CAMEL_RE.sub(" ", _name),
                     include_head_words=False,
                 ),
             )
@@ -472,16 +628,20 @@ async def load_lay_terms() -> None:
                 continue
             _ALL_CLASS_TERMS[local] = _terms_for(
                 local,
-                re.sub(r"(?<!^)(?=[A-Z])", " ", local),
+                _CAMEL_RE.sub(" ", local),
                 str(row.get("lays") or ""),
                 include_head_words=False,
             )
+        _warm_patterns(term for terms in _ALL_CLASS_TERMS.values() for term in terms)
         _LAY_LOADED = True
     except Exception as exc:
         logger.debug(f"[record_registry] lay terms unavailable: {exc}")
+    _refresh_event_store_classes()
 
 
-def absent_record_class(query: str, held: List[RecordClass]) -> Optional[str]:
+def absent_record_class(
+    query: str, held: List[RecordClass], stored_elsewhere: Optional[Iterable[str]] = None
+) -> Optional[str]:
     """A record class the ONTOLOGY defines and this building does NOT hold.
 
     This is what turns one decline into a useful one. "Which contracts expire in the next
@@ -489,17 +649,22 @@ def absent_record_class(query: str, held: List[RecordClass]) -> Optional[str]:
     — measured: it returned the PERMIT register for a contracts question. The building
     holds no contracts, and saying so, by name, is both true and actionable.
 
+    A class whose records a registered events store holds is NOT absent (BUG-670), and like
+    a held class it outranks a shorter absent match. ``stored_elsewhere`` names those classes;
+    left as None it is what `load_lay_terms` last read from configuration.
+
     Returns the class's local name, or None when the question is not about a record class
     at all — in which case nothing here should interfere with normal routing.
     """
-    held_names = {r.local_name for r in held}
+    elsewhere = set(_EVENT_STORE_CLASSES if stored_elsewhere is None else stored_elsewhere)
+    held_names = {r.local_name for r in held} | elsewhere
     low = f" {(query or '').lower()} "
 
     def _longest_hit(terms) -> int:
         """Length of the longest declared term this question contains, or 0."""
         best = 0
         for term in terms:
-            if len(term) > best and re.search(rf"\b{re.escape(term)}\b", low):
+            if len(term) > best and _term_pattern(term).search(low):
                 best = len(term)
         return best
 
@@ -519,7 +684,11 @@ def absent_record_class(query: str, held: List[RecordClass]) -> Optional[str]:
     # the held class keeps its question and the absent one keeps its own. Ties go to held,
     # because a decline costs a real answer while a held class merely routes to data that
     # exists and is checkable — the same asymmetry `_ALL_CLASS_TERMS` documents.
-    best_held = max((_longest_hit(r.terms) for r in held), default=0)
+    best_held = max(
+        [_longest_hit(r.terms) for r in held]
+        + [_longest_hit(_ALL_CLASS_TERMS.get(name, ())) for name in sorted(elsewhere)],
+        default=0,
+    )
 
     best_name, best_len = None, 0
     for name, terms in _ALL_CLASS_TERMS.items():
@@ -660,4 +829,5 @@ def clear_cache() -> None:
     """Drop the cache — used by tests and after a re-ingest."""
     global _LAY_LOADED
     _CACHE.clear()
+    _TERM_PATTERNS.clear()
     _LAY_LOADED = False

@@ -254,9 +254,17 @@ def test_precedence_order_is_pinned():
         "compare_two_referents",
         "sensor_trend_not_compliance",
         "vague_complaint_clarify",
+        # Its sibling, and directly beside it: both hand back a question rather than
+        # answer a different one. Run-3 row 90 planned a day around specific timetabled
+        # sessions as though it knew which were the asker's; nothing records that.
+        "plan_around_my_own_commitments",
         "correlation_is_analytics",
         "floor_plan_navigation",
         "countable_metadata",
+        # A room count is geometry, and countable_metadata only DECLINES it — which left
+        # it wherever the classifier had put it (sensor_data), answering that the building
+        # keeps no record of its rooms (BUG-628).
+        "room_count_is_spatial",
         # Sits directly after countable_metadata so a COUNT question keeps its
         # historical route and only the open "what kinds of X" shape is claimed.
         "inventory_to_discovery",
@@ -283,6 +291,9 @@ def test_precedence_order_is_pinned():
         "building_profile_question",
         "history_question_not_report",
         "comfort_question_not_report",
+        # TODO-490: an alarm that already happened is a record to read. Immediately before
+        # standing_alert_request, which owns the opposite shape — the future one.
+        "alarm_history_is_a_record",
         "standing_alert_request",
         "automation_capability_question",
         # V4 ARBITER: appended LAST so every earlier claim (reports, control,
@@ -291,9 +302,18 @@ def test_precedence_order_is_pinned():
         # BUG-163: room-superlatives that the LLM classes analytics/sensor_data
         # (which cannot rank rooms) — lowest precedence of all.
         "superlative_room_takeover",
+        # TODO-629: the same question without a space noun in it — "is it stuffy
+        # anywhere?" — which fell to a lane that reads 274 sensors and gives up.
+        "existential_comfort_is_deliberate",
         # V5-T24: pure event-store questions (bookings/tickets/footfall); sits
         # below the deliberate rules so comfort+availability stays deliberate.
         "event_store_query",
+        # C19: a compliance question with no measurand, no space and no named standard
+        # has nothing to check, and the lane's own template said so by asking for a zone
+        # — to a question about whether two sets of documents agree. It sits DIRECTLY
+        # BEFORE compliance_register because this contract is last-wins: the register
+        # rule must still be able to take back a dated register question.
+        "compliance_without_a_measurable_check",
         # V5-T26: dated compliance-register questions; after events so
         # workorder aging keeps the events lane.
         "compliance_register",
@@ -324,6 +344,11 @@ def test_precedence_order_is_pinned():
         # them. It precedes the wayfinding rule, which only declines to claim these.
         "route_comparison_is_recorded_data",
         "wayfinding_spatial",
+        # BUG-744: an accessibility ROUTE question belongs to the journeys somebody has
+        # walked and recorded, not to a path computed from a drawing and not to a ranking
+        # of rooms. Directly after wayfinding_spatial because this contract is last-wins
+        # and it takes exactly those questions back from it.
+        "accessible_route_is_a_surveyed_record",
         # Sits beside wayfinding_spatial: both take a question the classifier
         # read as capability and hand it to the agent that actually holds the
         # geometry. After it, because a route question and a size question can
@@ -557,13 +582,111 @@ def test_diagnosis_rule_does_not_poach(query, intent, expected):
         ("route to 3.01 from 5.20", "general"),
         ("Where is the nearest toilet to RM119?", "general_knowledge"),
         ("how do I get to the nearest lift?", "floor_plan"),
-        ("is there a step-free route to the lecture theatre?", "general"),
     ],
 )
 def test_route_questions_reach_the_spatial_route_finder(query, intent):
     n, applied = _apply(query, intent=intent)
     assert n["intent"] == "spatial_query"
     assert "wayfinding_spatial" in applied
+
+
+# ── BUG-744: an accessible route is a journey somebody walked and recorded ────
+
+
+@pytest.mark.parametrize(
+    "query,intent",
+    [
+        # Run-3 row 61: the ranking lane took this, then honestly declined — while the
+        # building held sixteen surveyed routes with their lifts, doors and rest stops.
+        (
+            "I need a step-free route to supervision that avoids the busiest and noisiest "
+            "areas around class changeover. Which verified route should I take?",
+            "capability",
+        ),
+        # Taken back from the route finder on purpose. It computes a path from a drawing;
+        # the register records who walked the route, when, and whether its lift is in
+        # service today — and a step-free way inferred from geometry is a guess about
+        # somebody's journey that costs them the journey when it is wrong.
+        ("is there a step-free route to the lecture theatre?", "general"),
+        ("What is the step-free route from reception to level 3?", "spatial_query"),
+        ("I need a wheelchair accessible route to the atrium.", "general"),
+    ],
+)
+def test_an_accessible_route_question_reaches_the_surveyed_records(query, intent):
+    n, applied = _apply(query, intent=intent)
+    assert n["intent"] == "metadata"
+    assert "accessible_route_is_a_surveyed_record" in applied
+
+
+@pytest.mark.parametrize(
+    "query,intent",
+    [
+        # No accessibility word: ordinary wayfinding keeps the route finder.
+        ("how do I get to room 5.02?", "capability"),
+        ("Where is the nearest toilet to RM119?", "general_knowledge"),
+        ("Directions to RM125 from RM101", "floor_plan"),
+    ],
+)
+def test_ordinary_wayfinding_keeps_the_route_finder(query, intent):
+    n, applied = _apply(query, intent=intent)
+    assert n["intent"] == "spatial_query"
+    assert "accessible_route_is_a_surveyed_record" not in applied
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        # A PLACE, not a way through. These name an amenity and must keep the lanes that
+        # locate one — the accessibility word alone must never claim a question.
+        "take me to the nearest accessible toilet",
+        "where is the accessible entrance?",
+        "which rooms are step-free accessible?",
+    ],
+)
+def test_naming_a_place_is_not_naming_a_route(query):
+    assert not rc.ACCESSIBLE_ROUTE_RE.search(query)
+
+
+# ── run-3 row 90: a plan may not guess whose sessions these are ──────────────
+
+
+ROW_90 = (
+    "I am on campus for only one day this week. Can you plan a practical sequence for "
+    "study, an online call, printing and a group meeting around my classes?"
+)
+
+
+@pytest.mark.parametrize("start", ["capability", "general", "events", "recommend", "metadata"])
+def test_a_day_plan_around_my_classes_asks_which_sessions_are_mine(start):
+    """The answer it replaced named real rooms and real timetabled sessions and asserted
+    they were the asker's. Nothing records that, and every other fact in it was true —
+    which is exactly why a reader could not see the one that was not."""
+    n, applied = _apply(ROW_90, intent=start)
+    assert n["intent"] == "clarification"
+    assert "plan_around_my_own_commitments" in applied
+    question = n["clarification_question"]
+    assert "?" in question and "Which of the building's sessions are yours?" in question
+    # the reader is told what to supply, not what the system is made of
+    assert "lane" not in question and "register" not in question
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        # Needs no knowledge of WHOSE appointments these are — it needs a figure.
+        "I have appointments on different floors with a short gap. What conservative "
+        "travel and setup buffer should I allow?",
+        # A plan with no personal commitment in it.
+        "Plan a route from reception to level 3",
+        # A commitment with no plan request in it.
+        "When is my next class?",
+        "Which space has the best conditions for focused work this afternoon?",
+    ],
+)
+def test_the_plan_rule_needs_both_halves(query):
+    n, applied = _apply(query, intent="capability")
+    assert "plan_around_my_own_commitments" not in applied
+    assert n["intent"] != "clarification" or "vague_complaint_clarify" in applied
 
 
 @pytest.mark.parametrize(

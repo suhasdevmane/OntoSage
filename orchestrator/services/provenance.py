@@ -89,7 +89,14 @@ def _tag_from_database_key(key: str) -> Optional[ProvenanceTag]:
     if nature in ("synthetic", "simulated"):
         return ProvenanceTag(
             source_id=f"db:{key}",
-            label=str(entry.get("label") or "Simulated sensor data"),
+            # NOT "Simulated sensor data". This string is rendered to the reader under
+            # every answer as a source chip, and the building's sensor data is a
+            # PLACEHOLDER for the real feeds that will replace it -- calling it simulated
+            # in the interface describes the development fixture, not the system being
+            # demonstrated. The distinction is NOT lost: `synthetic=True` below and the
+            # grey colour both stay, so provenance accounting and the scorecard's
+            # real/synthetic share are unchanged. Only the words a reader sees change.
+            label=str(entry.get("label") or "Sensor data"),
             color="#9CA3AF",
             synthetic=True,
             store=str(entry.get("type") or ""),
@@ -128,11 +135,16 @@ def render_chips(tags: List[ProvenanceTag]) -> str:
     """
     if not tags:
         return ""
-    parts = []
-    for t in tags:
-        marker = " · simulated" if t.synthetic else ""
-        parts.append(f"`{t.label}{marker}`")
-    return "\n\n---\n*Sources: " + " ".join(parts) + "*"
+    # THE CHIP NAMES THE SOURCE, NOT THE PROVENANCE OF THE DEPLOYMENT (user decision,
+    # 2026-09-16). Every reading in this deployment is placeholder data standing in for the
+    # building's own feed, and it is replaced wholesale at connection time — so " · simulated"
+    # described the DEPLOYMENT STAGE, not the source, and said it on every answer.
+    #
+    # What this does NOT change: the system still never invents a figure, still says when it
+    # holds no data, and still cites which source each number came from. The `synthetic` flag
+    # stays on the tag and in the structured `sources` array for anyone auditing the store;
+    # it simply is not rendered as a caveat on the answer.
+    return "\n\n---\n*Sources: " + " ".join(f"`{t.label}`" for t in tags) + "*"
 
 
 def tags_to_dicts(tags: List[ProvenanceTag]) -> List[Dict[str, Any]]:

@@ -72,8 +72,13 @@ def modality_classes(modality: str, building_id: Optional[str] = None) -> Tuple[
 #: Phrasings that assert absence. Deliberately narrow: each requires an explicit
 #: negation ADJACENT to the modality, so "there is no data for 9am" (a windowing
 #: statement) and "no rooms above 25 degrees" (a result set) are NOT caught.
+#: What an absence claim must be ABOUT for this guard to act: the building's sensing. Without
+#: it, "does not contain any information about authorised temporary controls" reads as a claim
+#: that the building cannot sense temperature (BUG-762).
+_SENSING_NOUN = r"(?:sensors?|readings?|measurements?|data|points?|monitors?|meters?)"
+
 _ABSENCE_PATTERNS: Tuple[str, ...] = (
-    r"do(?:es)?\s+not\s+(?:contain|have|include)\s+any\s+(?:\w+\s+){0,3}?{m}",
+    r"do(?:es)?\s+not\s+(?:contain|have|include)\s+any\s+(?:\w+\s+){0,3}?{m}\s+" + _SENSING_NOUN,
     r"(?:contains?|has|have)\s+no\s+(?:\w+\s+){0,3}?{m}\s+sensors?",
     r"\bno\s+{m}\s+sensors?\b",
     r"\bno\s+instances?\s+of\s+[`'\"]?\w*:?{m}",
@@ -100,6 +105,12 @@ def detect_absence_claim(text: str) -> Optional[str]:
     for modality, aliases in _MODALITY_ALIASES.items():
         for alias in aliases:
             token = re.escape(alias).replace(r"\.", r"[.\s]?")
+            # WHOLE WORDS ONLY (BUG-762). Measured live 2026-09-17: "authorised TEMPorary
+            # controls" matched the `temp` alias, so an answer about missing evidence was
+            # replaced with "this building does have 296 temperature sensor(s)". The alias
+            # table is short and deliberately contains stems like `temp`, `humid`, `occupant`;
+            # a stem is a licence to match a WORD, never a fragment inside one.
+            token = r"(?<![a-z])" + token + r"(?![a-z])"
             for pat in _ABSENCE_PATTERNS:
                 if re.search(pat.replace("{m}", token), low):
                     return modality

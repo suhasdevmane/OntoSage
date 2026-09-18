@@ -251,16 +251,23 @@ def test_wayfinding_no_path_honest_fallback(linear_manifests):
 # ─── _answer dispatch priority ───────────────────────────────────────────────
 
 
-def test_wayfinding_takes_priority_over_adjacency(linear_manifests):
+# `_answer` became a coroutine, and these two kept calling it as a function. A coroutine
+# is truthy and `in` on one raises, so both tests failed with a TypeError about a type
+# nobody wrote — a red pair that says nothing about the dispatch they exist to pin.
+
+
+@pytest.mark.asyncio
+async def test_wayfinding_takes_priority_over_adjacency(linear_manifests):
     """'how do I get to X' should not be dispatched to _answer_adjacency."""
     agent = SpatialAgent()
-    result = agent._answer("how do I get to 5.02 from main reception", linear_manifests)
+    result = await agent._answer("how do I get to 5.02 from main reception", linear_manifests)
     # Adjacency response header is "## Rooms adjacent to"
     assert "Rooms adjacent to" not in result
 
 
-def test_adjacency_still_works_for_non_wayfinding(linear_manifests):
+@pytest.mark.asyncio
+async def test_adjacency_still_works_for_non_wayfinding(linear_manifests):
     """Normal adjacency query still routes to _answer_adjacency."""
     agent = SpatialAgent()
-    result = agent._answer("rooms adjacent to 5.00", linear_manifests)
+    result = await agent._answer("rooms adjacent to 5.00", linear_manifests)
     assert "adjacent to" in result.lower() or "neighbour" in result.lower() or "5.01" in result

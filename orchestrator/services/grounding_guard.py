@@ -17,15 +17,17 @@ retrieved passage may only be presented if it actually *mentions* what was asked
 about. No thresholds to re-tune per model, no building literals, nothing to keep in
 sync with a particular corpus.
 
-Second responsibility: when we honestly decline, tell the user **how to make the
-question answerable** — the connect-data → get-answers contract. A refusal that ends
-the conversation is a dead end; a refusal that names the missing source is onboarding.
+Second responsibility: when we honestly decline, tell an **administrator** how to make the
+question answerable — the connect-data → get-answers contract. A refusal that names the
+missing source is onboarding for the person who can onboard it; for anyone else it is an
+instruction they cannot follow, so ``enablement_hint`` returns nothing unless the reader's
+role holds ``system:admin`` (2026-09-17).
 """
 
 from __future__ import annotations
 
 import re
-from typing import Iterable, List, Optional, Sequence, Set
+from typing import Any, Iterable, List, Optional, Sequence, Set
 
 from shared.utils import get_logger
 
@@ -487,7 +489,7 @@ def is_building_specific(query: str, concepts: Optional[Sequence] = None) -> boo
 # ANSWERS the question. "When was chiller 7 last serviced?" returns HVAC prose that
 # genuinely discusses chillers and contains no date at all — presented plainly, that
 # reads as the answer. Naming what is missing turns a misleading reply into an honest
-# partial one, and tells the user what to go and add.
+# partial one.
 
 _ASKS_DATE_RE = re.compile(
     r"\b(?:when|what date|which date|how long ago|how old)\b"
@@ -538,13 +540,59 @@ SUBJECT_EQUIPMENT = "equipment"  # a plant/asset (chiller, lift, charger)
 SUBJECT_DOCUMENT = "document"  # policy / manual / procedural knowledge
 
 
-def enablement_hint(subject_kind: str, subject: str = "") -> str:
-    """Return a short, actionable 'how to make this answerable' block.
+#: The permission that entitles a reader to see HOW to make a decline answerable.
+#:
+#: Decided on a permission, never on a role string or a persona. A persona biases framing
+#: only (design contract 5) and a role name is one entry in ROLE_PERMISSIONS: if an operator
+#: role is later granted system:admin, it should see the remediation without a code change.
+REMEDIATION_PERMISSION = "system:admin"
+
+
+def reader_is_admin(role: Optional[str]) -> bool:
+    """True only when the authenticated ``role`` holds ``REMEDIATION_PERMISSION``.
+
+    Every other case — no role, an unknown role, a malformed value, the permission
+    catalogue failing to import — is False. A decline that shows the remediation to the
+    wrong reader tells a supervisor to "upload a TTL"; one that withholds it from an
+    administrator costs them a click into the admin console. Those costs are not
+    symmetrical, so the default is the plain message.
+    """
+    if not isinstance(role, str) or not role.strip():
+        return False
+    try:
+        from orchestrator.middleware.rbac import ROLE_PERMISSIONS
+    except Exception:  # pragma: no cover - the catalogue is a plain module
+        return False
+    return REMEDIATION_PERMISSION in ROLE_PERMISSIONS.get(role.strip().lower(), set())
+
+
+def reader_is_admin_in(state: Any) -> bool:
+    """``reader_is_admin`` for the role the endpoint put on this turn's state.
+
+    Every chat endpoint writes ``intermediate_results["user_role"]`` from the authenticated
+    session before the workflow runs (``/chat``, ``/chat/stream``, ``/stream``, ``/v1``).
+    """
+    results = getattr(state, "intermediate_results", None)
+    if not isinstance(results, dict):
+        return False
+    return reader_is_admin(results.get("user_role"))
+
+
+def enablement_hint(subject_kind: str, subject: str = "", for_admin: bool = False) -> str:
+    """Return the 'how to make this answerable' block — for an administrator only.
 
     Mirrors the two-halves rule: a question is answerable when the thing is a triple
     in the ontology AND (for live values) its readings are rows in a registered
     database. Onboarding a source is config + data — never a code change.
+
+    **Every other reader gets the empty string.** The decline itself belongs to the caller
+    and is shown to everyone; this block tells the reader to upload TTL, link timeseries
+    references and register databases, which an occupant or a supervisor cannot do and
+    which makes an honest answer read as a broken one. ``for_admin`` defaults to False so a
+    caller that does not know who is reading fails toward the plain decline.
     """
+    if not for_admin:
+        return ""
     name = f"**{subject}**" if subject else "this"
     common = (
         "\n\nYou can add it — no code changes needed:\n"
@@ -587,6 +635,7 @@ def enablement_hint(subject_kind: str, subject: str = "") -> str:
             f"questions about {name} are answered from your own document."
         )
     return common
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Meta-answers: prose ABOUT the pipeline, delivered instead of an answer
@@ -689,11 +738,11 @@ _META_ANSWER_RES = (
 #: are the system's own decline vocabulary and must never be treated as meta-narration:
 #: catching them would suppress the behaviour this whole project is built around.
 _HONEST_DECLINE_RES = (
-    re.compile(
-        r"\bthis building (?:has no|does not have|is not|has not)\b", re.IGNORECASE
-    ),
+    re.compile(r"\bthis building (?:has no|does not have|is not|has not)\b", re.IGNORECASE),
     re.compile(r"\bnot (?:recorded|described|declared) in (?:this|the) building\b", re.IGNORECASE),
-    re.compile(r"\bno (?:such )?(?:room|space|floor|zone|sensor|asset) (?:called|named)\b", re.IGNORECASE),
+    re.compile(
+        r"\bno (?:such )?(?:room|space|floor|zone|sensor|asset) (?:called|named)\b", re.IGNORECASE
+    ),
     re.compile(r"\byou can add it\b|\bno code changes? needed\b", re.IGNORECASE),
 )
 
@@ -777,3 +826,165 @@ def is_meta_answer(text: str) -> bool:
     """True when the prose describes the pipeline rather than the building."""
     return meta_answer_reason(text) is not None
 
+
+# ── What the reader may not be shown ─────────────────────────────────────────
+#
+# Two families, both measured in the 147-answer hand read of 2026-09-17.
+#
+# 1. OUR OWN COMPONENT NAMES. "The ontology lane, the time-series lane ran, but returned
+#    nothing to report" was on six answers. A lane is a thing inside this program; to a
+#    facility manager it names nothing, so the sentence carries no information and reads
+#    as a fault report. The same is true of "that is a gap on my side".
+# 2. INSTRUCTIONS TO EDIT THE MODEL. "You would need to extend the ontology with
+#    properties…", "you might consider adding a new sensor type to the ontology" — the
+#    LLM's own version of `enablement_hint`, which is already withheld from non-admins.
+#    A rule enforced on our deterministic text and not on generated text is enforced on
+#    the half that never broke it.
+
+#: Internal component vocabulary. A user-visible string containing any of these is naming
+#: machinery the reader cannot see.
+_INTERNAL_VOCABULARY_RES = (
+    re.compile(
+        r"\bthe\s+(?:ontology|time[- ]series|sparql|sql|analytics|document|records?|"
+        r"spatial|floor[- ]plan|events?|diagnosis|forecast|capability|register|"
+        r"deliberation|retrieval|data)\s+lanes?\b",
+        re.IGNORECASE,
+    ),
+    re.compile(r"\bno data lane\b|\blane that can answer\b", re.IGNORECASE),
+    re.compile(r"\ba gap on my side\b", re.IGNORECASE),
+    re.compile(r"\b(?:intermediate_results|formatted_response|sparql_result)\b"),
+)
+
+
+#: Markdown emphasis, which a model sprinkles mid-phrase: "does **not contain any
+#: information**". Every pattern in this file is written in prose, so a phrase wearing
+#: asterisks slips past it — measured, that is exactly how row 57's false absence survived
+#: the first version of this guard. Underscores are NOT stripped: `intermediate_results` is
+#: one of the strings being looked for.
+_EMPHASIS_RE = re.compile(r"\*{1,3}|`")
+
+
+def plain_prose(text: str) -> str:
+    """Model prose with typography and markdown emphasis normalised away, for matching."""
+    return _EMPHASIS_RE.sub("", normalise_typography(text or ""))
+
+
+def names_internal_vocabulary(text: str) -> Optional[str]:
+    """The phrase naming one of this system's own components, or None.
+
+    Returns the matched text so a caller — or a failing test — can say WHICH phrase, not
+    merely that something matched.
+    """
+    body = plain_prose(text)
+    for bad in _INTERNAL_VOCABULARY_RES:
+        m = bad.search(body)
+        if m:
+            return m.group(0).strip()
+    return None
+
+
+#: A sentence telling the reader to change the building's model. Remediation, for admins.
+_SCHEMA_REMEDIATION_RE = re.compile(
+    r"(?:extend(?:ing)?|add(?:ing)?|update|upload|enrich)\b[^.!?\n]{0,60}?"
+    r"\b(?:the |a |an |this |your )?(?:ontology|tbox|ttl|turtle file|schema|"
+    r"(?:new )?(?:sensor|record|entity) types?|building model)\b",
+    re.IGNORECASE,
+)
+#: Sentence boundary that survives "e.g." and decimals well enough for prose.
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def schema_remediation_reason(text: str) -> Optional[str]:
+    """The phrase that instructs the reader to change the ontology, or None."""
+    m = _SCHEMA_REMEDIATION_RE.search(plain_prose(text))
+    return m.group(0).strip() if m else None
+
+
+def strip_schema_remediation(text: str) -> str:
+    """``text`` with every sentence that tells the reader to edit the model removed.
+
+    Sentence-level, and line-level for bullets: an instruction is a whole clause, and
+    deleting the verb alone leaves a fragment that reads worse than the original. Returns
+    the text unchanged when nothing matches, so the common case costs one regex.
+    """
+    if not _SCHEMA_REMEDIATION_RE.search(plain_prose(text or "")):
+        return text
+    kept_lines: List[str] = []
+    for line in (text or "").split("\n"):
+        stripped = line.strip()
+        is_bullet = bool(re.match(r"^(?:[-*•+]\s+|\d+[.)]\s+)", stripped))
+        if is_bullet and _SCHEMA_REMEDIATION_RE.search(plain_prose(line)):
+            continue
+        sentences = _SENTENCE_SPLIT_RE.split(line)
+        kept = [s for s in sentences if not _SCHEMA_REMEDIATION_RE.search(plain_prose(s))]
+        if len(kept) != len(sentences):
+            line = " ".join(s for s in kept if s.strip())
+            if not line.strip():
+                continue
+        kept_lines.append(line)
+    # Collapse the blank runs the removals leave behind.
+    out = re.sub(r"\n{3,}", "\n\n", "\n".join(kept_lines))
+    return out.strip("\n")
+
+
+#: Words that talk ABOUT the exchange rather than about anything a building could hold.
+#: Naming one of these back at the reader — "nothing here is called *question*" — makes the
+#: system look as though it did not understand English. Generic English only, four words,
+#: no building's vocabulary and no domain term: "evidence", "route" and "schedule" are all
+#: things a building genuinely records and are deliberately absent.
+_DISCOURSE_WORDS = frozenset({"question", "answer", "request", "example"})
+
+#: Manner adverbs ("responsibly", "adequately") qualify a verb; they never name a thing a
+#: building records, so an unmatched one is never the part worth asking about.
+_ADVERB_RE = re.compile(r"ly$")
+
+
+def unmatched_terms(question: str, vocabulary: Iterable[str], *, limit: int = 2) -> List[str]:
+    """Words of ``question`` that nothing in ``vocabulary`` covers, spelled as the user wrote.
+
+    ``vocabulary`` is what the building itself declares — the modalities it measures and
+    the terms its record classes carry — so this names the part of a request the building
+    has no vocabulary for, without a list of anything in this file. It is the deterministic
+    equivalent of the deliberation compiler's *"I couldn't map part of your request (…)"*,
+    available to lanes that never reach that compiler.
+
+    Returns [] when the question is entirely covered, and when the vocabulary could not be
+    read at all — an empty vocabulary means we know nothing, not that nothing matched.
+
+    Three rules keep the result worth showing a reader:
+
+    * the SURFACE form is returned, never the stem. ``content_terms`` folds "authorised" to
+      "authoris", and printing that back at someone is worse than printing nothing;
+    * manner adverbs and words about the conversation are dropped, because neither can name
+      something a building records;
+    * what remains is ordered LONGEST FIRST — the longest unmatched word is the most
+      distinctive — with ties broken on position, so one question always yields one pair.
+    """
+    vocab = [v for v in (vocabulary or []) if v and str(v).strip()]
+    if not vocab:
+        return []
+    known: Set[str] = set()
+    for phrase in vocab:
+        known |= content_terms(str(phrase))
+
+    #: stem -> the first spelling the question used for it.
+    surface: dict = {}
+    for raw in _WORD_RE.findall((question or "").lower()):
+        word = raw.strip(".-")
+        surface.setdefault(_singular(word), word)
+
+    low = (question or "").lower()
+    out: List[str] = []
+    for term in distinctive_terms(question):
+        # Containment only between words long enough for it to mean something: "co2" inside
+        # "co2e" is a real relation, "ice" inside "service" is not.
+        if term in known or any(
+            (term in k or k in term) and min(len(term), len(k)) >= 4 for k in known
+        ):
+            continue
+        word = surface.get(term, term)
+        if len(word) < 5 or word in _DISCOURSE_WORDS or _ADVERB_RE.search(word):
+            continue
+        out.append(word)
+    out.sort(key=lambda w: (-len(w), low.find(w)))
+    return out[:limit]

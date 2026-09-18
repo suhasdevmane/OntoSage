@@ -428,27 +428,37 @@ class EventQueryService:
         return {
             "success": True,
             "kind": "unrecognised",
+            # NAME WHAT IS KEPT, NOT WHERE IT IS KEPT (run-3 row 80, 2026-09-17). "The
+            # building's events store" is this system's word for a table; a reader has no
+            # idea what an events store is, and the sentence that follows already lists
+            # exactly what the building records. The list was the answer all along.
             "formatted_response": (
-                "**The building's events store doesn't record that.** It holds room bookings, "
-                "work orders, aggregate entrance counts and detected anomaly episodes, and your "
+                "**This building doesn't keep a record of that.** What it does keep is room "
+                "bookings, work orders, entrance counts and detected anomalies, and your "
                 "question matches none of them, so any list I gave would be about something "
-                "else.\n\nTry, for example: \"any anomalies this week?\", \"how many open work "
-                "orders are there?\" or \"is that room booked this afternoon?\"."
+                'else.\n\nTry, for example: "any anomalies this week?", "how many open work '
+                'orders are there?" or "is that room booked this afternoon?".'
             ),
         }
 
-    def _decline(self, kind: str) -> Dict[str, Any]:
-        return {
-            "success": False,
-            "kind": kind,
-            "formatted_response": (
-                "**This building has no events source registered**, so I can't answer "
-                "booking, work-order or entrance questions from data. Register an "
-                "`events_data` source (see the onboarding contract) and this unlocks."
-            ),
-        }
+    def _decline(self, kind: str, for_admin: bool = False) -> Dict[str, Any]:
+        text = (
+            "**This building doesn't keep records of bookings, work orders, entrance counts "
+            "or detected anomalies that I can read**, so I can't answer that from data — and "
+            "I won't guess. I can still look through the faults people have reported, if you "
+            "ask what keeps going wrong."
+        )
+        if for_admin:
+            text += (
+                "\n\nRegister an `events_data` source (see the onboarding contract) and "
+                "this unlocks."
+            )
+        return {"success": False, "kind": kind, "formatted_response": text}
 
-    async def answer(self, question: str, now: Optional[datetime] = None) -> Dict[str, Any]:
+    async def answer(
+        self, question: str, now: Optional[datetime] = None, for_admin: bool = False
+    ) -> Dict[str, Any]:
+        """Answer an events question. ``for_admin`` adds how to connect a missing source."""
         now = now or datetime.utcnow()
         # A "who" question about entering or using a space asks about INDIVIDUALS (BUG-505):
         # "Who accessed the server room?" was answered with 193 unfiltered building bookings.
@@ -465,7 +475,7 @@ class EventQueryService:
         # people reporting faults, and "what keeps going wrong here" is exactly the
         # question such a building most needs answered.
         if self._adapter is None and kind != "recurrence":
-            return self._decline(kind)
+            return self._decline(kind, for_admin=for_admin)
         # Parse on the building's clock, query on the store's (BUG-539/540). `now` stays the
         # store clock for the comparisons handlers make ("open for more than 7 days").
         local_start, local_end, label = parse_window(question, to_local(now, self._tz))
@@ -486,7 +496,9 @@ class EventQueryService:
             return {
                 "success": False,
                 "kind": kind,
-                "formatted_response": "I couldn't read the events store just now — please try again.",
+                "formatted_response": (
+                    "I couldn't read the building's records just now — please try again."
+                ),
             }
 
     # ── handlers ─────────────────────────────────────────────────────────────

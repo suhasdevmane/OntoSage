@@ -135,8 +135,12 @@ def test_honest_decline_when_source_absent():
     svc = EventQueryService("tb", None, ROOMS)
     r = asyncio.run(svc.answer("Which rooms are free today?", now=NOW))
     assert not r["success"]
-    assert "no events source registered" in r["formatted_response"]
-    assert "unlocks" in r["formatted_response"]
+    assert "doesn't keep records of bookings" in r["formatted_response"]
+    # How to connect the source is for an administrator only.
+    assert "events_data" not in r["formatted_response"]
+    admin = asyncio.run(svc.answer("Which rooms are free today?", now=NOW, for_admin=True))
+    assert "doesn't keep records of bookings" in admin["formatted_response"]
+    assert "unlocks" in admin["formatted_response"]
 
 
 def test_room_resolution_tolerant():
@@ -262,4 +266,7 @@ def test_an_unrecognised_events_question_is_not_a_booking_list():
 
     res = asyncio.run(_bare_svc().answer("Have there been any alarms this week?"))
     assert res["kind"] == "unrecognised"
-    assert "doesn't record that" in res["formatted_response"]
+    # Reworded 2026-09-18 (run-3 row 80): it used to open "The building's events store
+    # doesn't record that", which names a table at a reader who has never heard of one.
+    assert "doesn't keep a record of that" in res["formatted_response"]
+    assert "events store" not in res["formatted_response"].lower()

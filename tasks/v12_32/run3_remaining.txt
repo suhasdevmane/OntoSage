@@ -1,0 +1,4 @@
+How do observed route lengths, waits and hand-offs compare with the workflow and adjacency assumptions used in the design?
+If the primary server room, communications room or core-network area is unavailable, which services have a verified alternative location, path and operating capacity?
+Which M&E asset-register records must be reconciled before they can support design, maintenance or lifecycle decisions?
+Find a room for 12 with a projector, free 2-4pm today, near the cafe.

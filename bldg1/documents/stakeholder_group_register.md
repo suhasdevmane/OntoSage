@@ -14,8 +14,6 @@ tables:
 
 # Stakeholder Group Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional groupings, not a live HR or access export._
-
 ## What this register records, and what it deliberately does not
 
 Every other register in this building says what the building HOLDS. This one says who it is
@@ -47,7 +45,6 @@ and marked in the note. Collapsing them would leave questions tagged with the ol
 unmatched.
 
 ## Stakeholder group register
-
 
 | code | name | category | primary_need | served_by | accountable_for | access_tier | presence | data_needs | status | note |
 |---|---|---|---|---|---|---|---|---|---|---|

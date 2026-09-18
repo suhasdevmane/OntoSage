@@ -14,8 +14,6 @@ tables:
 
 # Emergency Coordination Function Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional readiness data, not a live incident file._
-
 ## Operational period
 
 This register covers **operational period 2026-09-04 day shift (07:00–19:00)**. A new period

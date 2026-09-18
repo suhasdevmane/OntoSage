@@ -14,8 +14,6 @@ tables:
 
 # Public Event Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional events, not a real programme._
-
 ## What a visitor needs to know
 
 A visitor's questions are not a room booking's questions. A booking says a room is held; it

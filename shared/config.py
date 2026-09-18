@@ -687,6 +687,18 @@ class Settings(BaseSettings):
         ),
     )
 
+    STRUCTURED_PLAN_ENABLED: bool = Field(
+        default=False,
+        description=(
+            "Ask the model to FILL A JSON SCHEMA instead of writing free-text JSON "
+            "that code then slices and repairs (ARCH-A1). Covers the CQ-IR compile and "
+            "the dialogue intent/entity extraction: the schema is passed to the provider, "
+            "the response is validated against it, one retry carries the validation error "
+            "back, and a second failure is a typed error rather than a silent repair. "
+            "OFF restores the current text parse byte-for-byte."
+        ),
+    )
+
     REFERENT_VALIDATION_ENABLED: bool = Field(
         default=True,
         description=(
@@ -946,8 +958,13 @@ class Settings(BaseSettings):
         MEASURED 2026-09-07. Every `.env` in this repo carried `LLM_TIMEOUT_S=180` and no
         `WORKFLOW_TIMEOUT_S` at all, so the workflow deadline sat at its 120s default: one
         legal LLM call was allowed SIXTY SECONDS LONGER than the entire workflow containing
-        it, and `llm_manager` retries each call up to MAX_RETRY_ATTEMPTS times on top of
-        that. The planner-driven report lane makes roughly four sequential calls and so
+        it. (This sentence used to continue "and `llm_manager` retries each call up to
+        MAX_RETRY_ATTEMPTS times on top of that". THAT WAS FALSE and is corrected here,
+        2026-09-17: `MAX_RETRY_ATTEMPTS` is declared in this file and read by NOTHING --
+        `llm_manager` does not mention it. The deadline arithmetic above stands on its own
+        and never depended on the retry claim, but a setting documented as governing
+        behaviour it does not govern is how a reader tunes the wrong knob.) The
+        planner-driven report lane makes roughly four sequential calls and so
         could never finish — "Give me a report on energy use last week" was killed at 120s
         on every attempt, narrowing it to one sensor and one day changed nothing, and what
         came back was a degraded turn rather than an error naming the deadline.

@@ -111,7 +111,9 @@ def test_the_reason_names_the_phrase_that_fired():
         "sensors in each.",
         # The fallback the guard itself routes to. Catching this would loop.
         "I understood the question but could not put an answer together for it. "
-        "Sparql ran, but returned nothing to report.",
+        "I could not match **convert** to anything this building records. What this "
+        "building does hold, closest to what you asked: it measures CO2 and temperature "
+        "and keeps Work order records.",
     ],
 )
 def test_an_honest_decline_or_a_real_answer_survives(prose):
@@ -140,7 +142,7 @@ def test_the_response_node_runs_the_guard():
     assert "meta_answer_reason(final_response)" in src, (
         "the meta-answer guard is defined and never applied to the final response"
     )
-    assert "final_response = _unanswered_response(state, ctx)" in src
+    assert "final_response = await _unanswered_response(state, ctx)" in src
 
 
 def test_the_guard_runs_after_the_whole_dispatch_not_inside_one_lane():

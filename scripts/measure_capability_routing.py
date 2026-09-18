@@ -51,9 +51,14 @@ def _classify(ans: str) -> str:
     # "Building Ontology" in a source footer, so match the SPECIFIC capability markers.
     if "floor-plans/" in a or "floor plan (pdf)" in a:
         return "floor_plan"
-    if "ontology (triples)" in a:  # CapabilityGraphResolver's exact phrase
+    # CapabilityGraphResolver's exact phrase — old and current wording (TODO-692, 2026-09-17).
+    if "ontology (triples)" in a or "answered live from the building's own records" in a:
         return "triples"
-    if "live building figures" in a or "instrumented points" in a:
+    if (
+        "live building figures" in a
+        or "instrumented points" in a
+        or "readings and settings described in the building model" in a
+    ):
         return "metrics"
     if "documentation:" in a or "policy documents" in a or "**from:" in a:
         return "documents"

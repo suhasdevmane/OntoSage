@@ -152,10 +152,15 @@ def test_compiler_fold_makes_the_rule_table_the_authority():
     spec = TimeSpec(basis=TimeBasis.FORECAST, horizon_hours=3.0)
     _fold_deterministic_horizon(spec, "later on")
     assert spec.horizon_hours == pytest.approx(3.0)
-    # nothing at all defaults to 24h
+    # NOTHING AT ALL IS LEFT AS NOTHING (BUG-716). This used to write 24.0 in, which made
+    # an unparsed phrase indistinguishable from one the table had recognised — so
+    # "next Wednesday after 2 p.m." was reported to its reader as "forecast 24h ahead from
+    # recent history", a sentence claiming next Wednesday had been projected. The executor
+    # still runs on 24 hours when no horizon is given, so the computation is unchanged;
+    # what changes is that the answer can now say so.
     spec = TimeSpec(basis=TimeBasis.FORECAST, horizon_hours=None)
     _fold_deterministic_horizon(spec, "sometime soon-ish")
-    assert spec.horizon_hours == pytest.approx(24.0)
+    assert spec.horizon_hours is None
     # non-forecast bases are untouched
     spec = TimeSpec(basis=TimeBasis.NOW, horizon_hours=None)
     _fold_deterministic_horizon(spec, "tomorrow")

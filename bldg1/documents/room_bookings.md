@@ -14,8 +14,6 @@ tables:
 
 # Room Booking Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## What this register decides
 
 The booking register is the AUTHORITATIVE source for whether a room is available. A room

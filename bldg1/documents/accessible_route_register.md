@@ -14,8 +14,6 @@ tables:
 
 # Accessible Route Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional survey, not a real access audit._
-
 ## Why every row carries a survey date
 
 The questions this register answers all use the same word: *verified*. A route inferred

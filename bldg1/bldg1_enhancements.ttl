@@ -706,8 +706,23 @@ bldg:Lift_2_Power_Sensor
         ref:storedAt bldg:database1_synth
     ] .
 
+# WHY TWO STATUS CLASSES (2026-09-17).
+# This point was typed brick:Occupancy_Status alone, and the lift_state modality in
+# config/saturation_modalities.yaml asks for brick:Availability_Status -- so the modality
+# resolved to ZERO points and every lift-availability question fell through it. Measured:
+# no point in the graph carried Availability_Status, and the config's other declared class,
+# brick:Elevator_Status, DOES NOT EXIST in the loaded Brick TBox at all.
+#
+# The fix is TTL-first rather than a config widening: brick:Availability_Status is a real
+# Brick class and is what this point MEANS -- whether the lift is in service. Occupancy_Status
+# is kept because a lift car genuinely reports occupancy-like state (idle / travelling /
+# door-open) and Brick-aware readers already relying on it must not break.
+#
+# The two classes now name two different populations of one point, so occupancy_status in
+# saturation_modalities.yaml excludes lift labels; otherwise a lift door-open state would be
+# counted as a room's occupancy.
 bldg:Lift_1_Status_Sensor
-    rdf:type owl:NamedIndividual , brick:Occupancy_Status ;
+    rdf:type owl:NamedIndividual , brick:Occupancy_Status , brick:Availability_Status ;
     rdfs:label "Status Sensor - Lift 1 (idle/travelling/door-open)" ;
     brick:isPartOf bldg:Lift_1 ;
     ashrae:hasExternalReference [

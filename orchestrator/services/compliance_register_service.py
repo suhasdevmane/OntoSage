@@ -105,7 +105,14 @@ class ComplianceRegisterService:
             f'  FILTER(STRSTARTS(STR(?c), "{self._ns}"))\n' + extra
         )
 
-    async def answer(self, question: str, now: Optional[datetime] = None) -> Dict[str, Any]:
+    async def answer(
+        self, question: str, now: Optional[datetime] = None, for_admin: bool = False
+    ) -> Dict[str, Any]:
+        """Answer a register question. ``for_admin`` adds how to load a missing register.
+
+        Every reader is told the register is not held; only an administrator is told how
+        to load one, because a supervisor cannot and the instruction reads as a fault.
+        """
         now = now or datetime.utcnow()
         kind = classify_register_question(question)
         try:
@@ -116,15 +123,17 @@ class ComplianceRegisterService:
             }[kind]
             result = await handler(question, now)
             if result.get("register_empty"):
-                return {
-                    "success": False,
-                    "kind": kind,
-                    "formatted_response": (
-                        "**No compliance register is loaded for this building.** Upload the "
-                        "register as ComplianceCheck triples (admin portal → Ontology → upload) "
-                        "and these questions unlock."
-                    ),
-                }
+                text = (
+                    "**No compliance register is held for this building**, so I can't say "
+                    "which inspections are overdue, due soon or were last done — and I won't "
+                    "guess."
+                )
+                if for_admin:
+                    text += (
+                        " Upload the register as ComplianceCheck triples (admin portal → "
+                        "Ontology → upload) and these questions unlock."
+                    )
+                return {"success": False, "kind": kind, "formatted_response": text}
             return result
         except Exception as exc:
             logger.error(f"[register] {kind} failed: {exc}", exc_info=True)

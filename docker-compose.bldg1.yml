@@ -621,6 +621,12 @@ services:
       # Read-only: the publisher reads input/bldg1_timeseries_extension_uuids.json
       # to also publish live rows into the narrow per-modality tables.
       - ./input:/app/input:ro
+      # Read-only: the events generators, so the publisher continues the SAME event
+      # history the backfill wrote (access footfall, bookings, work orders, asset outages)
+      # instead of a second copy of the logic. Its build context holds only
+      # mysql-dummy-publish-dev, and importing from the orchestrator package would load the
+      # whole application, so the two generator modules are mounted, not copied (CAVEAT-672).
+      - ./orchestrator/services/deliberation:/app/generators:ro
     # depends_on:          # ← uncomment if using mysql container
     #   mysql:
     #     condition: service_healthy

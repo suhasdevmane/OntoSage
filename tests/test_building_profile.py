@@ -123,7 +123,11 @@ async def test_a_building_that_declares_nothing_is_declined_not_invented():
     plausible year that no one can falsify."""
     prof = await bp.resolve("http://example.org/x#", _exec([]))
     assert bp.render(prof, "age", "T") is None  # caller then declines
-    hint = bp.enablement_hint("T")
+    # Everyone is told it is not recorded; only an administrator is told what to add.
+    plain = bp.enablement_hint("T")
+    assert "doesn't record" in plain and "won't guess" in plain
+    assert "yearBuilt" not in plain and "ttl" not in plain.lower()
+    hint = bp.enablement_hint("T", for_admin=True)
     assert "yearBuilt" in hint and "no code changes" in hint.lower()
 
 
@@ -132,7 +136,7 @@ async def test_a_building_declaring_OTHER_facts_says_which_it_has():
     shows people re-ask the same question differently when it does."""
     prof = await bp.resolve("http://example.org/x#", _exec([(O + "buildingOwner", "Acme")]))
     out = bp.render(prof, "age", "T")
-    assert "doesn't state that" in out and "Owner" in out
+    assert "doesn't record that" in out and "Owner" in out
 
 
 async def test_the_whole_profile_lists_everything_declared():

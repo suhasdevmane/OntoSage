@@ -37,11 +37,17 @@ class GateVerdict:
     passed: bool
     mode: GateMode = GateMode.ADVISORY
     reason: str = ""
+    #: What changes the data so the gate passes. For an administrator: "connect the stream",
+    #: "install a sensor" are instructions only someone who edits the building can act on.
     remedy: str = ""
     #: Status the answer must fall back to when this gate is enforcing and failed.
     downgrade_to: Optional[AnswerStatus] = None
     #: The policy figure the verdict was measured against, so an answer can cite it.
     threshold: Optional[str] = None
+    #: What ANY reader can know or do — how the evidence is still reported, or how to ask
+    #: differently. Empty when nothing but a data change would help, in which case the
+    #: reason alone is the honest answer for a non-administrator (2026-09-17 user decision).
+    next_step: str = ""
 
     @property
     def blocks(self) -> bool:
@@ -57,10 +63,14 @@ class GateVerdict:
         """Would have blocked, but is not enforcing yet. This is what T55 counts."""
         return not self.passed and self.mode is GateMode.ADVISORY
 
-    def describe(self) -> str:
+    def describe(self, for_admin: bool = False) -> str:
+        """The failure as a sentence: the reason for everyone, plus the remedy for an
+        administrator or the reader-safe next step for anyone else. Defaults to the plain
+        form so a caller that does not know who is reading fails toward it."""
         if self.passed:
             return ""
-        tail = f" {self.remedy}" if self.remedy else ""
+        follow = self.remedy if for_admin else self.next_step
+        tail = f" {follow}" if follow else ""
         return f"{self.reason}.{tail}".strip()
 
 
@@ -120,6 +130,9 @@ def freshness_gate(
             "The value is reported as a past observation rather than as current conditions; "
             "check whether the publisher for this stream is still running."
         ),
+        next_step=(
+            "The value is reported as a past observation rather than as current conditions."
+        ),
         # INFERRED, not NOT_ASSESSABLE: the reading is real and still informative about the
         # recent past. Refusing outright would discard usable evidence, which the
         # non-substitution rule never asks for.
@@ -172,6 +185,9 @@ def completeness_gate(
         (detail or f"only {coverage:.0%} of the requested window was observed")
         + f", below the {floor:.0%} needed for an aggregate",
         remedy="Narrow the window to a covered period, or restore the missing data.",
+        next_step=(
+            "Narrowing the question to a period that was fully observed would let it be answered."
+        ),
         downgrade_to=AnswerStatus.NOT_ASSESSABLE,
         threshold=f"{floor:.0%}",
     )
@@ -205,6 +221,10 @@ def spatial_gate(
         mode,
         proxy_reason or f"only {grade.value} evidence is available for this {scope}",
         remedy=(
+            "The nearby reading is reported as context, but it cannot carry a claim about "
+            "this space itself."
+        ),
+        next_step=(
             "The nearby reading is reported as context, but it cannot carry a claim about "
             "this space itself."
         ),
@@ -247,6 +267,7 @@ def calibration_gate(
             "The raw reading is still reported as an observation; record the calibration "
             "date and method for these points to enable a standards verdict."
         ),
+        next_step="The raw reading is still reported as an observation.",
         downgrade_to=AnswerStatus.NOT_ASSESSABLE,
         threshold=consequence_class,
     )

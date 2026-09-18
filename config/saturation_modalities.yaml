@@ -60,9 +60,15 @@ modalities:
       table: co2_data
       unit: ppm
   occupancy:
+    # People_Count_Sensor WAS listed here and is declared in neither Brick 1.4 nor OCBV
+    # (BUG-676, checked 2026-09-17: zero owl:Class declarations in input/Brick_v1.4.ttl,
+    # ontology/ontosage_schema.ttl and the live brick and bldg repositories; zero instances
+    # in the active building; no committed building TTL uses it). Brick's nearest name,
+    # People_Count_Sensor_Equipment, is EQUIPMENT, not a reading. The real reading class,
+    # Occupancy_Count_Sensor (257 points there), is already the first entry. Removing the
+    # name changed no point's membership of any modality.
     brick_classes:
       - Occupancy_Count_Sensor
-      - People_Count_Sensor
       - Occupancy_Sensor
       - Motion_Sensor
     sat:
@@ -197,7 +203,11 @@ modalities:
       brick_class: Electric_Power_Sensor
       table: submeter_data
       unit: kW
-      scope: building
+      # PER FLOOR, not per building (2026-09-16). One building-wide power point left
+      # "how much power is floor 3 drawing?" unanswerable while energy_submeter already
+      # reported energy per floor — the same question in two units, answerable in one of
+      # them. Floor-scoped matches how the building meters its energy.
+      scope: floor
   motion:
     brick_classes:
       - Motion_Sensor
@@ -210,6 +220,14 @@ modalities:
   occupancy_status:
     brick_classes:
       - Occupancy_Status
+    # A lift car reports idle/travelling/door-open and is typed Occupancy_Status for
+    # that reason — but it is not a room's occupancy, and counting it as one puts a
+    # lift's door state into a space's coverage. This is the CAVEAT-207 split: one
+    # Brick class, two populations, separated by label rather than by class because
+    # the class genuinely applies to both. lift_state claims the other side.
+    label_excludes:
+      - lift
+      - elevator
     sat:
       brick_class: Occupancy_Status
       table: occupancy_data
@@ -230,7 +248,9 @@ modalities:
       brick_class: Water_Level_Sensor
       table: water_data
       unit: percent
-      scope: building
+      # Per floor (2026-09-16): a level was recorded on four of the six floors, so the same
+      # question answered on some and not others with nothing to say why.
+      scope: floor
   water_usage:
     brick_classes:
       - Water_Usage_Sensor
@@ -267,16 +287,25 @@ modalities:
       unit: index
       scope: room
   soil_moisture:
+    # BARE local name, not `ontosage:Soil_Moisture_Sensor` (BUG-676, 2026-09-17). brick_classes
+    # are compared to a point's class LOCAL name (coverage_audit.ModalitySpec.matches) and
+    # appended to "#" (modality_repair.build_modality_query), so the prefixed form could never
+    # match: measured 2026-09-17, this modality held 0 points before and 1 after (the active
+    # building's one soil-moisture point, which has a timeseries reference). The class is
+    # declared in OCBV; sat.brick_class keeps the prefix because that field is what the
+    # provisioner MINTS (BUG-179).
     brick_classes:
-      - ontosage:Soil_Moisture_Sensor
+      - Soil_Moisture_Sensor
     sat:
       brick_class: ontosage:Soil_Moisture_Sensor
       table: iaq_data
       unit: percent
       scope: building
   rainfall:
+    # Bare local name for the same reason as soil_moisture above (BUG-676): the prefixed
+    # form matched nothing, including the active building's one rainfall point.
     brick_classes:
-      - ontosage:Rainfall_Sensor
+      - Rainfall_Sensor
     sat:
       brick_class: ontosage:Rainfall_Sensor
       table: iaq_data
@@ -313,9 +342,16 @@ modalities:
     # brick:Availability_Status is a real Brick class (verified against the loaded
     # TBox), but it is generic, so the label filter is what makes it lift-specific
     # — the same split used for door vs window contact.
+    # brick:Elevator_Status WAS listed here and DOES NOT EXIST in the loaded Brick TBox
+    # (checked 2026-09-17 against both the brick and bldg repositories: zero owl:Class
+    # declarations, zero instances). A declared class that cannot match anything is worse
+    # than an absent one — it makes the modality look like it covers lifts while it
+    # resolves to nothing, which is exactly what happened: lift_state matched ZERO points
+    # until Lift_1_Status_Sensor was additively typed brick:Availability_Status.
+    # Occupancy_Status is deliberately NOT added here; the point carries both classes and
+    # this modality claims the availability side, occupancy_status the other.
     brick_classes:
       - Availability_Status
-      - Elevator_Status
     label_contains:
       - lift
       - elevator
@@ -336,13 +372,34 @@ modalities:
   # question with a live answer), weight says "how much did we throw away"
   # (a reporting question that needs history). A single "waste" modality would
   # force one to stand in for the other.
+  #
+  # PROVISIONED 2026-09-17 (BUG-649), after a day of resolving to ZERO points while this
+  # entry read as though the domain were handled. DECLARING A MODALITY IS NOT COVERING A
+  # DOMAIN — the entry above records that the gap was FOUND, and for as long as nothing
+  # closed it a reader skimming this file would have concluded otherwise.
+  #
+  # Now: a general-waste and a mixed-recycling bin on every floor, each with BOTH a fill
+  # level and a weight, in that floor's own kitchen / break room / common area. Fill answers
+  # "does this need emptying", weight answers "how much did we throw away", and neither
+  # stands in for the other. Written by scripts/provision_damper_and_waste_points.py, which
+  # discovers the rooms rather than naming them, so it runs for another building unchanged.
+  #
+  # The publisher treats a bin as a SAWTOOTH, not a walk: it accumulates while the building
+  # is occupied and drops to near-empty on collection, and weight follows fill through that
+  # stream's own capacity (general waste is denser than mixed dry recycling, so one constant
+  # would make every recycling weight wrong). tests/test_a_bin_fills_and_is_emptied.py.
   waste_fill:
     # Matching stays on the LOCAL name so both minted ontosage: instances and any
     # legacy brick:-namespaced ones are found.
+    #
+    # Level_Sensor and Fill_Level_Sensor WERE listed here and neither exists (BUG-676, checked
+    # 2026-09-17): no owl:Class declaration in input/Brick_v1.4.ttl, OCBV, or the live brick
+    # and bldg repositories, zero instances in the active building, and no committed building
+    # TTL uses either. Brick 1.4 has only substance-specific level sensors (Water_Level_Sensor,
+    # CO2_Level_...) and a Level_Status point, none of which means how full a bin is. All 12
+    # bin-fill points are ontosage:Waste_Fill_Sensor, so removing both changed no membership.
     brick_classes:
       - Waste_Fill_Sensor
-      - Level_Sensor
-      - Fill_Level_Sensor
     label_contains:
       - waste
       - bin
@@ -356,9 +413,13 @@ modalities:
       unit: percent
       scope: room
   waste_weight:
+    # Weight_Sensor WAS listed here and does not exist (BUG-676, checked 2026-09-17): no
+    # owl:Class in Brick 1.4, OCBV or the live repositories, zero instances in the active
+    # building, no committed building TTL uses it. Brick 1.4 defines no mass or weight sensor.
+    # All 12 bin-weight points are ontosage:Waste_Weight_Sensor, so removing it changed no
+    # membership.
     brick_classes:
       - Waste_Weight_Sensor
-      - Weight_Sensor
     label_contains:
       - waste
       - bin
@@ -463,3 +524,101 @@ modalities:
       table: plant_data
       unit: m3h
       scope: equipment
+  # ── The gases the building could only answer for on one floor ────────────────
+  #
+  # Measured 2026-09-16 from the graph's own topology (sensor -> space -> floor,
+  # not parsed out of sensor names): CO, NO2, PM1, PM10, formaldehyde and TVOC
+  # existed ONLY on the floor carrying the real instrumentation snapshot. So
+  # "what is the NO2 on floor 2?" answered honestly that there was no data while
+  # the same question about floor 5 answered with a figure -- an asymmetry the
+  # user cannot see and has no way to predict.
+  #
+  # scope: floor, deliberately. Per room these six would add ~1,400 points, which
+  # slows every query for no gain in what can be answered; one node per floor is
+  # also how a multi-gas IAQ unit is actually deployed -- and how the existing
+  # dense floor models it, as a single "installed-node" per room carrying every
+  # gas at once. The dense floor keeps its per-room detail; the rest of the
+  # building gains a floor-level reading that is honest about being one.
+  #
+  # Units and bands are NOT invented here: each matches the measurand's declared
+  # physicalUnit in ontology/measurand_kinds.ttl (BUG-609 -- a reading judged
+  # against another quantity's band is reported as physically impossible).
+  carbon_monoxide:
+    brick_classes:
+      - CO_Level_Sensor
+      - CO_Sensor
+    sat:
+      brick_class: CO_Level_Sensor
+      table: iaq_data
+      unit: ppm
+      scope: floor
+  nitrogen_dioxide:
+    brick_classes:
+      - NO2_Level_Sensor
+    sat:
+      brick_class: NO2_Level_Sensor
+      table: iaq_data
+      unit: ppb
+      scope: floor
+  formaldehyde:
+    brick_classes:
+      - Formaldehyde_Level_Sensor
+    sat:
+      brick_class: Formaldehyde_Level_Sensor
+      table: iaq_data
+      unit: ppb
+      scope: floor
+  tvoc:
+    brick_classes:
+      - TVOC_Level_Sensor
+      - TVOC_Sensor
+    sat:
+      brick_class: TVOC_Level_Sensor
+      table: iaq_data
+      unit: ppb
+      scope: floor
+  pm10:
+    brick_classes:
+      - PM10_Level_Sensor
+      - PM10_Sensor
+    label_excludes:
+      - pm1_
+      - pm2
+    sat:
+      brick_class: PM10_Level_Sensor
+      table: iaq_data
+      unit: ug/m3
+      scope: floor
+  pm1:
+    brick_classes:
+      - PM1_Level_Sensor
+      - PM1_Sensor
+    label_excludes:
+      - pm10
+      - pm2
+    sat:
+      brick_class: PM1_Level_Sensor
+      table: iaq_data
+      unit: ug/m3
+      scope: floor
+  # Multi-gas detection was present on one floor only. Same reasoning as the six gases
+  # above: a question about combustible gas on floor 2 could not be answered while the
+  # same question about floor 5 could, and nothing in either answer said why.
+  gas:
+    brick_classes:
+      - Gas_Sensor
+    sat:
+      brick_class: Gas_Sensor
+      table: iaq_data
+      unit: ppm
+      scope: floor
+  # Flow RATE per floor. water_flow above records VOLUME through a meter (WaterVolume);
+  # this is the rate a floor is drawing (WaterFlow), which existed on two floors only.
+  water_flow_rate:
+    brick_classes:
+      - Water_Flow_Sensor
+    sat:
+      brick_class: Water_Flow_Sensor
+      table: waterflow_data
+      unit: L/s
+      scope: floor

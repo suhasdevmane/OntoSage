@@ -1,0 +1,85 @@
+# SATURATE (V4-T08): simulated gas sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'iaq_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data>
+    a ref:Database ;
+    rdfs:label "Iaq Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0_sat_gas>
+    a brick:Gas_Sensor ;
+    rdfs:label "Floor0 gas [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "39d81910-bc23-5002-8f7d-537ddeefffc3" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1_sat_gas>
+    a brick:Gas_Sensor ;
+    rdfs:label "Floor1 gas [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "e57810e1-15c0-5594-8be4-789cd0e29554" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2_sat_gas>
+    a brick:Gas_Sensor ;
+    rdfs:label "Floor2 gas [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "3a0ae4a3-8a02-57e1-950b-68b17fb09489" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3_sat_gas>
+    a brick:Gas_Sensor ;
+    rdfs:label "Floor3 gas [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "d53da06e-30b7-5785-9045-c17755f08739" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4_sat_gas>
+    a brick:Gas_Sensor ;
+    rdfs:label "Floor4 gas [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "24878180-9dc3-53f2-81e3-f1db174e5394" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5_sat_gas>
+    a brick:Gas_Sensor ;
+    rdfs:label "Floor5 gas [ppm]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "7cf15e3b-7d8a-5475-a028-7c343033170a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#iaq_data> ;
+    ] .

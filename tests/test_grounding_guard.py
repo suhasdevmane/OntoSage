@@ -72,12 +72,13 @@ def test_filter_on_topic_drops_only_unrelated_hits():
 
 
 def test_enablement_hint_is_actionable_per_subject():
-    sensor = gg.enablement_hint(gg.SUBJECT_SENSOR, "methane")
+    # Actionable for the reader who can act on it: an administrator (2026-09-17).
+    sensor = gg.enablement_hint(gg.SUBJECT_SENSOR, "methane", for_admin=True)
     assert "ref:hasTimeseriesId" in sensor and "ref:storedAt" in sensor
     assert "no code changes" in sensor.lower()
-    space = gg.enablement_hint(gg.SUBJECT_SPACE, "west wing")
+    space = gg.enablement_hint(gg.SUBJECT_SPACE, "west wing", for_admin=True)
     assert "ontosage:Amenity" in space or "hasPart" in space
-    doc = gg.enablement_hint(gg.SUBJECT_DOCUMENT)
+    doc = gg.enablement_hint(gg.SUBJECT_DOCUMENT, for_admin=True)
     assert "documents" in doc.lower()
 
 
@@ -161,7 +162,10 @@ async def test_absent_floor_is_refused_with_real_floors_and_guidance():
     assert res.status == rr.NOT_FOUND
     assert "floor 42" in res.message
     assert "Floor2" in res.message or "Floor3" in res.message  # suggests what DOES exist
-    assert "no code changes" in res.message.lower()  # enablement guidance present
+    # The resolver does not know who is reading, so the TTL remediation is withheld
+    # (2026-09-17: only a reader holding system:admin is told how to add data).
+    assert "no code changes" not in res.message.lower()
+    assert "TTL" not in res.message
 
 
 @pytest.mark.asyncio

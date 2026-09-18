@@ -14,8 +14,6 @@ tables:
 
 # Event Activity Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional agendas, not a real programme._
-
 ## Why activities are rows and not a paragraph
 
 `Public Event Register` answers a visitor's arrival questions. This one answers what happens

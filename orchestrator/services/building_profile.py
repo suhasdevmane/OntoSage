@@ -239,15 +239,20 @@ def render(
     facet: str,
     building_name: str,
     storeys_live: Optional[int] = None,
+    for_admin: bool = False,
 ) -> Optional[str]:
     """Compose the answer, or None when the building states nothing relevant.
 
     Returning None is deliberate: the caller then runs its normal honest-decline
     path, so an absent fact is reported the same way an absent sensor is.
+
+    ``for_admin`` adds how to record a missing fact. Every other reader gets the decline
+    and what the building does record, never an instruction to edit its data; the default
+    is the plain message so a caller that does not know who is reading fails toward it.
     """
     if not profile.resolved:
         return (
-            f"I couldn't look up **{building_name}**'s own details just now — the ontology "
+            f"I couldn't look up **{building_name}**'s own details just now — the lookup "
             "didn't answer in time. I'd rather tell you that than guess at them."
         )
 
@@ -278,11 +283,16 @@ def render(
     if value is None:
         # The building describes itself, but not in the way this question asked.
         known = ", ".join(profile.facts.keys())
-        return (
-            f"**{building_name}** doesn't state that in its model. It does record: "
-            f"{known}. Adding the missing fact to the building's TTL — or via the admin "
-            "console — makes this question answerable with no code change."
+        answer = (
+            f"**{building_name}** doesn't record that about itself, so I can't answer it "
+            f"without guessing. What it does record: {known}."
         )
+        if for_admin:
+            answer += (
+                " Adding the missing fact to the building's TTL — or via the admin "
+                "console — makes this question answerable with no code change."
+            )
+        return answer
 
     label = next((lbl for f, _i, lbl in _FACTS if f == facet), facet.title())
     if facet == "size":
@@ -303,12 +313,23 @@ def render(
     return f"**{building_name}** — {label.lower()}: **{value}**."
 
 
-def enablement_hint(building_name: str) -> str:
-    """What to add so the building can describe itself — the same
-    connect-data → get-answers contract the sensor path states."""
+def enablement_hint(building_name: str, for_admin: bool = False) -> str:
+    """The decline for a building that states nothing about itself.
+
+    Everyone is told the fact is not recorded and that no figure will be guessed. Only an
+    administrator (``for_admin``) is also told what to add — the same connect-data →
+    get-answers contract the sensor path states. A supervisor asked "how old is this
+    building?" cannot edit its TTL, and an answer telling them to reads as a broken system.
+    """
+    decline = (
+        f"**{building_name}** doesn't record details about itself — such as when it was "
+        "built, how big it is or who owns it — so I can't answer that without guessing, "
+        "and I won't guess."
+    )
+    if not for_admin:
+        return decline
     return (
-        f"**{building_name}** doesn't yet describe itself in its model, so I can't answer "
-        "that from data rather than guesswork.\n\n"
+        f"{decline}\n\n"
         "You can add it — no code changes needed. On the building's own node in its TTL "
         "(the one typed `brick:Building`), assert what you know:\n"
         "- `brick:yearBuilt`, `brick:grossArea`, `brick:buildingPrimaryFunction` — Brick's own terms\n"

@@ -16,7 +16,11 @@ def test_scenario_mode_is_a_fallback_only_when_provenance_emptied_the_ranking():
     i = src.index('evidence_mode="scenario"')
     guard = src[src.rindex("if not score.ranked", 0, i) : i]
     assert "score.excluded_for_provenance" in guard
-    assert "**Simulated readings.**" in src
+    # The basis is stated, and never in words the owner has ruled out for user-visible text.
+    assert "**Ranking basis.**" in src
+    note = src[src.index("**Ranking basis.**") : src.index("] + list(event_notes)")]
+    for banned in ("simulated", "synthetic", "fake"):
+        assert banned not in note.lower()
 
 
 def test_a_successful_ranking_prints_its_guidance_notes():
@@ -75,7 +79,10 @@ def test_a_place_to_work_excludes_restrooms_and_plant():
     cqir.raw_query = "Which room has the best air quality right now?"
     cands, ledger = enumerate_candidates(cqir, admission, schema)
     assert [c.label for c in cands] == ["Office"]
-    assert any("name it to include it" in e.reason for e in ledger.excluded)
+    assert any("ask about it by name to include it" in e.reason for e in ledger.excluded)
+    # BUG-716: the reason is printed to the reader — under a ranking and as the whole
+    # "Why:" of a decline — so it may not carry the name of a class in a schema.
+    assert not any("_" in e.reason for e in ledger.excluded)
     # naming the kind asks about exactly those spaces
     cqir.raw_query = "Which restroom has the highest temperature?"
     cands, _ = enumerate_candidates(cqir, admission, schema)

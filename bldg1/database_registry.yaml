@@ -240,6 +240,26 @@ databases:
   # TTL: ref:storedAt bldg:database1_floors04 (re-pointed from database1, which is
   # column-capped and cannot hold these as wide columns).
   # V5-T09 scalar expansion - narrow tables (room pm25; floor submeter/water; building parking)
+  wastefill_data:
+    type: mysql_narrow
+    table: wastefill_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "BUG-649 - bin fill level, percent full, per bin"
+  wasteweight_data:
+    type: mysql_narrow
+    table: wasteweight_data
+    host: "${MYSQL_HOST:-mysql}"
+    port: "${MYSQL_PORT:-3306}"
+    user: "${MYSQL_USER:-root}"
+    password: "${MYSQL_PASSWORD:-mysql}"
+    database: "${MYSQL_DATABASE:-sensordb}"
+    nature: synthetic
+    note: "BUG-649 - bin weight in kg, per bin"
   pm25_data:
     type: mysql_narrow
     table: pm25_data

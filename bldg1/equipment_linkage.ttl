@@ -8,10 +8,27 @@
 
 # ── Equipment assets ─────────────────────────────────────────────────────────
 
-bldg:LIFT-01 a brick:Elevator ;
-    rdfs:label "Main Passenger Lift"^^xsd:string ;
+# bldg:LIFT-01 WAS A THIRD NAME FOR A TWO-LIFT BUILDING (BUG-497, second instance).
+#
+# It was declared here as `a brick:Elevator` with the comment "SINGLE passenger lift serving
+# all 6 floors" -- a statement the building owner's correction of 2026-09-17 makes false:
+# there are TWO lifts, one at each side. Retiring bldg:Lift_Main from bldg1_lifts.ttl left
+# this one standing, so the graph still answered brick:Elevator with THREE subjects for two
+# real lifts, and the regression probe's lift case was still asserting this subject's label.
+#
+# The maintenance fact and the vibration point are real and are kept; they move onto
+# bldg:Lift_1, which is the lift this entry describes -- "Main", located from the building
+# entrance, the same lift the published accessibility survey calls "left from the front
+# entrance". Lift_1 is typed brick:Elevator and ontosage:Lift in bldg1_lifts.ttl, so nothing
+# is lost by removing the duplicate subject: the class, the location and the point all still
+# resolve, and the COUNT becomes the building's own.
+#
+# WHY NOT owl:sameAs: it would leave two subjects in every COUNT that does not reason over
+# sameAs, which is most of them, and the count is the thing that was wrong.
+
+bldg:Lift_1
     brick:hasLocation bldg:AbacwsBuilding ;
-    rdfs:comment "Single passenger lift serving all 6 floors. Last major service: 2026-04-15."^^xsd:string .
+    rdfs:comment "Last major service: 2026-04-15."^^xsd:string .
 
 bldg:PUMP-CH1 a brick:Pump ;
     rdfs:label "Chiller Pump 1"^^xsd:string ;
@@ -24,7 +41,7 @@ bldg:PUMP-CH1 a brick:Pump ;
 
 bldg:feed_lift_vibration_floor0 a brick:Vibration_Sensor_Equipment ;
     rdfs:label "Lift Vibration Monitor"^^xsd:string ;
-    brick:isPointOf bldg:LIFT-01 ;
+    brick:isPointOf bldg:Lift_1 ;
     brick:hasLocation bldg:Floor0 ;
     brick:hasExternalReference [
         ref:hasTimeseriesId "76fa0eed-da96-2ea5-b9ec-447fa7ae3989"^^xsd:string ;

@@ -239,5 +239,13 @@ def test_dossier_carries_applied_policies_and_survives_guard():
         applied_policies=["p_occ (restrict: resolution clamped to 300s for data 30 min old)"],
     )
     prose = render_answer(dossier)
-    assert "Privacy:" in prose and "clamped to 300s" in prose
+    # The FACT that an access rule shaped the answer is the reader's business; the rule's
+    # identifier and its clamp are not. Row 58 of the 2026-09-17 stakeholder read printed
+    # "policy_facility_manager_any: resolution clamped to 5s for data 0 min old" to someone
+    # asking where they could sit. The rule itself stays on the dossier, for audit.
+    assert "Privacy:" in prose
+    assert "clamped" not in prose and "p_occ" not in prose
+    assert dossier.applied_policies == [
+        "p_occ (restrict: resolution clamped to 300s for data 30 min old)"
+    ]
     assert numeric_guard(prose, dossier) == []

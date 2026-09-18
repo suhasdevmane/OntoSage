@@ -14,8 +14,6 @@ tables:
 
 # Access Permission Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional configuration, not a live security export._
-
 ## What this register records, and what it deliberately does not
 
 Each row is a **permission group**: a named grant, over one controlled opening, to a **role

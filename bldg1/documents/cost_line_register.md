@@ -14,8 +14,6 @@ tables:
 
 # Building Cost Line Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional ledger, not a real financial extract._
-
 ## How a balance is read here
 
 **Free balance = budget − actual − committed − accrued.** Those are four separate columns

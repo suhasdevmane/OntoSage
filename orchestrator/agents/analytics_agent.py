@@ -206,15 +206,41 @@ class AnalyticsAgent:
             # 17,160 rows to recompute it took ~95 s and pushed "Which floor is the warmest
             # right now?" past the 150 s pipeline timeout. When the rows span floors and
             # aggregate cleanly, narrate from those figures and skip code generation.
+            # A QUESTION ABOUT TIME NEEDS A SHAPE OVER TIME (BUG-626). The per-floor summary
+            # above is a mean per floor across the WHOLE window, and "how has the temperature
+            # on floor 3 changed over the last week?" was answered "No change data available"
+            # from a week of readings that had been fetched and handed over — because a mean
+            # over a week cannot show a change within it. Same rows, bucketed by period.
+            _period_summary = None
             try:
-                from orchestrator.services.series_summary import summarise_groups
+                from orchestrator.services.series_summary import (
+                    asks_how_it_changed,
+                    summarise_groups,
+                    summarise_periods,
+                )
 
                 _floor_summary = summarise_groups(
                     data.get("data", []), sensor_metadata or {}, key="floor"
                 )
+                if asks_how_it_changed(user_query):
+                    _period_summary = summarise_periods(
+                        data.get("data", []), sensor_metadata or {}, user_query
+                    )
+                    if _period_summary:
+                        logger.info("[analytics] per-period figures computed in code")
             except Exception as _fs_err:  # never cost the answer
-                logger.debug(f"[analytics] per-floor shortcut skipped: {_fs_err}")
+                logger.debug(f"[analytics] deterministic summary skipped: {_fs_err}")
                 _floor_summary = None
+            # Both, when the question spans floors AND asks how they changed: "which floor
+            # rose most this week" needs the per-floor split and the per-period shape, and
+            # dropping either answers half the question.
+            if _period_summary and not _period_summary.startswith("Per-period aggregates were NOT"):
+                _floor_summary = (
+                    f"{_floor_summary}\n\n{_period_summary}"
+                    if _floor_summary
+                    and not _floor_summary.startswith("Per-floor aggregates were NOT")
+                    else _period_summary
+                )
             if _floor_summary and not _floor_summary.startswith("Per-floor aggregates were NOT"):
                 logger.info("[analytics] per-floor figures computed in code — no code generation")
                 result = {"success": True, "code": None, "output": _floor_summary, "error": None}

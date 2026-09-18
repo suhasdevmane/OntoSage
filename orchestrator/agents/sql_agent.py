@@ -77,6 +77,26 @@ MAX_FETCH_ROWS = 200_000
 NOW_ROWS_PER_UUID = 60
 DEFAULT_ROWS_PER_UUID = 1000
 
+#: The window a question with no stated bounds is read over.
+#:
+#: Named once because it is stated twice: `_build_uuid_union_query` puts it in the WHERE
+#: clause, and the substitution disclosure has to tell the user which period came back
+#: empty. Two copies of this number would let the answer name a window the query did not
+#: use — the same drift that let a truncated set be reported as a count (BUG-479).
+DEFAULT_LOOKBACK_DAYS = 30
+
+#: Rows per sensor read by the empty-window fallback: a recent sample, never a whole history.
+FALLBACK_ROWS_PER_UUID = 200
+
+#: The lower bound the empty-window fallback hands the store's own query builder (BUG-660).
+#:
+#: Every builder applies its OWN default lookback when it is given no bounds at all, so asking
+#: again with (None, None) re-asks the question that just came back empty. A floor before any
+#: store's first reading lifts that lookback without removing the bound, and keeps the store's
+#: newest-first, per-sensor limit doing the work. It is a sentinel, not a date any building owns:
+#: the day after the epoch, so it stays inside a TIMESTAMP column's range.
+_FALLBACK_FLOOR = "1970-01-02 00:00:00"
+
 _NOW_RE = re.compile(
     r"\b(?:right now|now|currently|current|at the moment|latest|live|at present)\b", re.IGNORECASE
 )
@@ -90,7 +110,59 @@ _PERIOD_RE = re.compile(
 def rows_per_uuid_for(query: str) -> int:
     """How many recent rows per sensor a question needs: few for 'now', the default otherwise."""
     q = query or ""
-    return NOW_ROWS_PER_UUID if _NOW_RE.search(q) and not _PERIOD_RE.search(q) else DEFAULT_ROWS_PER_UUID
+    return (
+        NOW_ROWS_PER_UUID
+        if _NOW_RE.search(q) and not _PERIOD_RE.search(q)
+        else DEFAULT_ROWS_PER_UUID
+    )
+
+
+#: Bare period words that neither regex above carries. Kept as a set rather than folded into
+#: `_PERIOD_RE` because these are substring tests on purpose ("hour" inside "hourly").
+_PERIOD_WORDS = frozenset(
+    {
+        "hour",
+        "day",
+        "week",
+        "month",
+        "year",
+        "before",
+        "after",
+        "from",
+        "until",
+    }
+)
+
+
+def _widen(current: str, candidate: str, pick) -> str:
+    """Extend a span bound with another, ignoring bounds that could not be read."""
+    known = [s for s in (current, candidate) if s]
+    return pick(known) if known else ""
+
+
+def names_a_period(query: str) -> bool:
+    """Does this question name a period — past OR present — that an answer must honour?
+
+    THE LIST IS THE WEAK PART, AND IT IS NOT THE PROTECTION.
+
+    This guard used to be a bare keyword list of fourteen past-tense words. It had no
+    present tense in it at all, so "what is the CO2 in this room right now" was treated as a
+    question that named no period, and the lane was free to answer it from whatever rows it
+    could find — on this building, potentially months behind the question, with nothing in
+    the answer saying so.
+
+    Adding the present tense closes that hole and creates the next one, because every list
+    like this decays. So the list is no longer load-bearing: a substitution is DISCLOSED
+    whether or not this returns True (see the marker written in `fetch_data_for_uuids`).
+    A word this misses now costs a visible sentence, not a silent lie.
+
+    Reuses `_NOW_RE` and `_PERIOD_RE`, which already carry this vocabulary for the row
+    budget, so the two readings of a question cannot disagree about whether it said "now".
+    """
+    q = (query or "").lower()
+    if _NOW_RE.search(q) or _PERIOD_RE.search(q):
+        return True
+    return any(word in q for word in _PERIOD_WORDS)
 
 
 class SQLAgent:
@@ -309,7 +381,10 @@ class SQLAgent:
                     "error": "database_unavailable",
                     "query": None,
                     "results": {"data": []},
-                    "formatted_response": "The time-series database is currently unavailable. I can still answer questions about the building ontology and metadata.",
+                    "formatted_response": (
+                        "The sensor readings are unavailable right now. I can still answer "
+                        "questions about the building's spaces, equipment and sensors."
+                    ),
                     "analytics_required": False,
                 }
 
@@ -332,14 +407,22 @@ class SQLAgent:
             # of the building, which is the failure this project guards hardest against.
             _rows_per_uuid = rows_per_uuid_for(user_query)
             if len(uuids) > MAX_FETCH_UUIDS or len(uuids) * _rows_per_uuid > MAX_FETCH_ROWS:
+                # THE ADVICE HAS TO BE TRUE OF THIS SYSTEM. The narrowing offered here used
+                # to be a single modality per question; four questions in the 2026-09-17
+                # stakeholder read were turned away by it, each inherently about several
+                # measurements at once. The comparison lane weighs several together across
+                # the whole building. The budget is real; that narrowing was not.
                 msg = (
                     f"That question reaches **{len(uuids)} sensors** — more than I can read "
-                    "and summarise in one request without either timing out or quietly "
-                    "answering from a fraction of them.\n\n"
-                    "Narrow it and I can answer directly:\n"
-                    "- one floor, or one room\n"
-                    "- one measurement at a time (temperature, or CO₂ — not both)\n"
-                    "- a shorter period\n\n"
+                    "row by row and summarise in one request without either timing out or "
+                    "quietly answering from a fraction of them.\n\n"
+                    "Two ways round it:\n"
+                    "- **Ask it as a comparison.** Put as *which place is best for…* — "
+                    "naming everything that matters to you — I weigh those measurements "
+                    "against each other across the building and rank the spaces, without "
+                    "reading every reading.\n"
+                    "- **Narrow the read.** One floor, one room, or a shorter period, and "
+                    "I'll give you the values themselves.\n\n"
                     "I would rather say this than report a figure without telling you which "
                     "part of the building it came from."
                 )
@@ -390,13 +473,16 @@ class SQLAgent:
                     }
                 )
                 _where = f" ({', '.join(_stores)})" if _stores else ""
+                # Every reader sees this, and this function does not know who is reading, so
+                # it is worded for the least technical of them (2026-09-17 user decision):
+                # no "ontology", no "registered", no store keys, nothing to go and load. The
+                # store names stay in the log, where the person who can act on them looks.
                 msg = (
-                    f"I found {len(uuids)} sensor(s) in the ontology, but none of their "
-                    f"identifiers appear in the store they are registered to{_where}. "
-                    "That usually means the readings have not been loaded yet, rather than "
-                    "that the sensors are missing."
+                    f"I found {len(uuids)} sensor(s) for this in the building's records, but "
+                    "no readings from any of them are available to me. The sensors are on "
+                    "record, so this is missing readings rather than missing sensors."
                 )
-                logger.warning(f"❌ {msg}")
+                logger.warning(f"❌ {msg} stores checked{_where or ': none resolved'}")
                 return {
                     "success": True,
                     "query": "Metadata Check (No Columns)",
@@ -504,6 +590,10 @@ class SQLAgent:
             #: Did any group come back exactly full? Then `all_data` is a TRUNCATED sample
             #: and its length is not a count of what exists.
             rows_capped = False
+            #: Set when the requested window held nothing and the lane answered from the
+            #: most recent rows on record instead. None means the answer covers the period
+            #: that was asked for — the ONLY state in which saying nothing is honest.
+            window_substituted: Optional[Dict[str, Any]] = None
 
             # V6-T40: a recurring-window question ("overnight", "at the weekend", "around
             # lunchtime") filters by HOUR, not by date range. Detected once, applied twice:
@@ -630,6 +720,9 @@ Return ONLY the SQL query, no markdown, no explanations.
                     logger.error("No adapter available for storage: " + storage_key)
                     results = []
 
+                #: The per-read limit these rows were fetched under; the fallback reads fewer.
+                _group_limit = _row_limit
+
                 # AUTO-EXPAND: If 0 rows and user didn't specify an explicit time range,
                 # fall back to fetching the most recent available data regardless of date.
                 # Treat relative defaults like 'now-1d' as non-explicit
@@ -641,52 +734,66 @@ Return ONLY the SQL query, no markdown, no explanations.
                     "now-24h",
                 )
                 if not results and _is_default_range:
-                    has_explicit_time = any(
-                        kw in user_query.lower()
-                        for kw in [
-                            "today",
-                            "yesterday",
-                            "last week",
-                            "last month",
-                            "hour",
-                            "day",
-                            "week",
-                            "month",
-                            "year",
-                            "since",
-                            "before",
-                            "after",
-                            "between",
-                            "from",
-                            "until",
-                        ]
-                    )
+                    # THE SUBSTITUTION THIS GUARDS IS THE DANGEROUS KIND (BUG-658).
+                    #
+                    # Below, the lane drops every date bound and answers from the most
+                    # recent rows on record. That is defensible ONLY when the question named
+                    # no period and the answer says which period it did use. Neither held:
+                    # the guard was a past-tense keyword list with no present tense in it, so
+                    # "…right now" walked through it, and nothing anywhere recorded that a
+                    # substitution had occurred — two log lines and no marker, so no
+                    # downstream gate, disclosure or evidence record could know.
+                    has_explicit_time = names_a_period(user_query)
                     if not has_explicit_time:
                         logger.warning(
                             "⚠️  0 rows with default time window. Retrying with latest available data..."
                         )
-                        # Build a simple fallback query that fetches the most recent rows
-                        fallback_parts = []
-                        for uuid in group_uuids:
-                            fallback_parts.append(
-                                f"SELECT Datetime AS timestamp, '{uuid}' AS uuid, "
-                                f"`{uuid}` AS value FROM sensor_data "
-                                f"WHERE `{uuid}` IS NOT NULL "
-                                f"ORDER BY Datetime DESC LIMIT 200"
-                            )
-                        if len(fallback_parts) == 1:
-                            fallback_sql = fallback_parts[0] + ";"
-                        else:
-                            fallback_sql = (
-                                "("
-                                + ") UNION ALL (".join(fallback_parts)
-                                + ") ORDER BY timestamp DESC LIMIT 1000;"
-                            )
-                        logger.info(f"📝 Fallback SQL: {fallback_sql[:200]}...")
-                        results = await self._execute_query(fallback_sql)
+                        # BUG-660: through THIS group's adapter and its own query builder. The
+                        # fallback used to be hand-written wide-table SQL run on the DEFAULT
+                        # adapter, so a narrow-table point was read as a column of the wrong
+                        # store, and an adapter error escaped the lane as a failed turn.
+                        _fallback_limit = FALLBACK_ROWS_PER_UUID
+                        results = await self._latest_rows_from_store(
+                            adapter, storage_key, group_uuids, ts_col, _fallback_limit
+                        )
                         if results:
-                            logger.info(
-                                f"✅ Fallback query returned {len(results)} rows (latest available data)"
+                            _group_limit = _fallback_limit
+                            # RECORDED, not merely logged. The span is the honest part:
+                            # "we substituted" is a process note, "these readings end on
+                            # <date>" is a fact the reader can act on. Recorded for the
+                            # FIRST group that substitutes — one disclosure per answer,
+                            # and the span widens below as further groups substitute.
+                            _earliest, _latest = self._row_span(results)
+                            if window_substituted is None:
+                                window_substituted = {
+                                    "substituted": True,
+                                    "requested_start": str(start_date or ""),
+                                    "requested_end": str(end_date or ""),
+                                    "requested_label": self._requested_window_label(
+                                        start_date, end_date
+                                    ),
+                                    "actual_earliest": _earliest,
+                                    "actual_latest": _latest,
+                                    "rows": len(results),
+                                    "stores": [storage_key],
+                                }
+                            else:
+                                window_substituted["rows"] += len(results)
+                                window_substituted["stores"].append(storage_key)
+                                window_substituted["actual_earliest"] = _widen(
+                                    window_substituted["actual_earliest"], _earliest, min
+                                )
+                                window_substituted["actual_latest"] = _widen(
+                                    window_substituted["actual_latest"], _latest, max
+                                )
+                            logger.warning(
+                                "[sql] WINDOW SUBSTITUTED for store %s: the requested "
+                                "window held no rows, answering from %s rows spanning "
+                                "%s..%s — the answer will say so",
+                                storage_key,
+                                len(results),
+                                _earliest or "unknown",
+                                _latest or "unknown",
                             )
 
                 if results:
@@ -702,13 +809,13 @@ Return ONLY the SQL query, no markdown, no explanations.
                     # 1,000 rows were right; the sentence was a false claim about the
                     # building. "A cap on an exhaustive query does not fail, it
                     # under-reports" — and in prose it stops looking like a cap at all.
-                    if len(results) >= _row_limit:
+                    if len(results) >= _group_limit:
                         rows_capped = True
                         logger.info(
                             "[sql] group %s returned exactly its %s-row limit — the set is "
                             "TRUNCATED and its size is not a count of what exists",
                             storage_key,
-                            _row_limit,
+                            _group_limit,
                         )
                     all_data.extend(results)
                 else:
@@ -778,6 +885,20 @@ Return ONLY the SQL query, no markdown, no explanations.
                     f"\n\n_Window applied: {_hour_mask.label} — "
                     f"{len(all_data)} reading(s) inside it._"
                 )
+
+            # THE PERIOD THESE FIGURES ARE ACTUALLY FROM (BUG-658).
+            #
+            # Emitted HERE, deterministically, for the same reason as the resolution clamp
+            # two blocks down: the narration is given rows, not provenance, and left to
+            # itself it echoes the period the QUESTION named. An answer to "right now" that
+            # was computed from readings months older reads exactly like one that was not.
+            #
+            # The WORDING lives in `disclosure_gate` and the MARKER on the bus below, so the
+            # sentence a reader sees and the record a later gate reads cannot drift apart.
+            if window_substituted:
+                from orchestrator.services.disclosure_gate import substitution_note
+
+                formatted += substitution_note(window_substituted)
 
             if aggregate_across_sensors:
                 # Disclosed, like the resolution clamp: an answer that silently became a
@@ -854,6 +975,12 @@ Return ONLY the SQL query, no markdown, no explanations.
                 # V6-T40: which recurring window shaped these rows, "" when none did. The
                 # evidence record reads it so requested_period can state the real basis.
                 "window_mask": _hour_mask.label if _hour_mask is not None else "",
+                # BUG-658: did this answer come from a period OTHER than the one requested?
+                # None when it did not. Read by `disclosure_gate.window_substitution_in`,
+                # which is the single place any downstream gate, dossier or evidence record
+                # should ask — the previous answer to that question was two log lines, which
+                # no gate can read and no record can cite.
+                "window_substituted": window_substituted,
             }
         except Exception as e:
             logger.error(f"Fetch data for UUIDs failed: {e}")
@@ -924,6 +1051,68 @@ Return ONLY the SQL query, no markdown, no explanations.
                 f"{sorted(reasons.values())[:2]}"
             )
         return kept, reasons
+
+    async def _latest_rows_from_store(
+        self,
+        adapter: Any,
+        storage_key: str,
+        group_uuids: List[str],
+        ts_col: str,
+        limit: int,
+    ) -> List[Dict[str, Any]]:
+        """The most recent rows for one storage group, read through that group's adapter.
+
+        The empty-window fallback (BUG-660). Built by the adapter's own
+        `build_timeseries_query`, so the store decides its table and shape — the agent names
+        neither (design contract 9). Bounded newest-first, `limit` rows per sensor.
+
+        Never raises. No adapter, a builder that declines or throws, an unsuccessful result
+        and an exception all come back as [] with a WARNING naming the store: a fallback that
+        cannot run leaves the honest "no data" answer standing, instead of failing the turn.
+        """
+        if adapter is None:
+            logger.warning(
+                "[sql] latest-rows fallback skipped for store %s: no adapter is registered",
+                storage_key,
+            )
+            return []
+        try:
+            query = adapter.build_timeseries_query(
+                uuids=list(group_uuids),
+                ts_col=ts_col,
+                start_date=_FALLBACK_FLOOR,
+                end_date=None,
+                limit=limit,
+            )
+        except Exception as exc:
+            logger.warning(
+                "[sql] latest-rows fallback for store %s could not be built: %r",
+                storage_key,
+                exc,
+            )
+            return []
+        if not query:
+            logger.warning(
+                "[sql] latest-rows fallback skipped for store %s: its adapter builds no "
+                "timeseries query for these %d point(s)",
+                storage_key,
+                len(group_uuids),
+            )
+            return []
+        logger.info(f"📝 Fallback query ({storage_key}): {str(query)[:200]}...")
+        try:
+            result = await adapter.execute_query(query)
+        except Exception as exc:
+            logger.warning("[sql] latest-rows fallback for store %s failed: %r", storage_key, exc)
+            return []
+        if not getattr(result, "success", False):
+            logger.warning(
+                "[sql] latest-rows fallback for store %s failed: %s",
+                storage_key,
+                getattr(result, "error", None) or "unsuccessful result",
+            )
+            return []
+        return list(getattr(result, "data", None) or [])
 
     async def _get_all_db_columns(self) -> set:
         """Get all column names from the default adapter (for UUID validation)."""
@@ -1091,9 +1280,7 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
                 continue
             _bounds = _day_bounds(_word, now)
             if _bounds:
-                time_info += (
-                    f"{_caption} runs {_bounds[0]} to {_bounds[1]} inclusive, in stored (UTC) time\n"
-                )
+                time_info += f"{_caption} runs {_bounds[0]} to {_bounds[1]} inclusive, in stored (UTC) time\n"
 
         if "last week" in query_lower:
             week_ago = now - timedelta(days=7)
@@ -1127,6 +1314,53 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
             sql = response.strip()
 
         return sql
+
+    @staticmethod
+    def _row_span(rows: List[Dict[str, Any]]) -> Tuple[str, str]:
+        """Earliest and latest timestamp actually present in these rows, as text.
+
+        ("", "") when no row carries a readable timestamp. That is reported as an unknown
+        span rather than silently omitted: a substitution whose period cannot be stated is
+        MORE alarming than one whose period can, not less, and the reader has to be told
+        which of the two they are looking at.
+        """
+        stamps: List[str] = []
+        for row in rows or []:
+            if not isinstance(row, dict):
+                continue
+            raw = row.get("timestamp")
+            if raw is None:
+                raw = row.get("Datetime") or row.get("datetime")
+            if raw is None:
+                continue
+            if isinstance(raw, datetime):
+                stamps.append(raw.isoformat(sep=" ", timespec="seconds"))
+                continue
+            text = str(raw).strip().replace("T", " ")
+            if text:
+                # Normalised so a store returning strings and one returning datetimes sort
+                # against each other rather than into two disjoint orderings.
+                stamps.append(text[:19])
+        if not stamps:
+            return "", ""
+        return min(stamps), max(stamps)
+
+    def _requested_window_label(self, start_date: Optional[str], end_date: Optional[str]) -> str:
+        """The period the query actually asked for, in words.
+
+        Derived through `_sanitize_datetime` — the same filter `_build_uuid_union_query`
+        applies — so a bound the query DISCARDED (an unresolved relative phrase, say) is not
+        named here as though it had been honoured.
+        """
+        start = self._sanitize_datetime(start_date if isinstance(start_date, str) else None)
+        end = self._sanitize_datetime(end_date if isinstance(end_date, str) else None)
+        if start and end:
+            return f"{start} to {end}"
+        if start:
+            return f"the period from {start} onwards"
+        if end:
+            return f"the period up to {end}"
+        return f"the last {DEFAULT_LOOKBACK_DAYS} days"
 
     def _sanitize_datetime(self, value: Optional[str]) -> Optional[str]:
         """Sanitize datetime strings to avoid SQL injection in deterministic queries."""
@@ -1171,8 +1405,12 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         if start:
             time_clauses.append(f"{ts_safe} >= '{start}'")
         elif not end:
-            # No bounds at all — default to last 30 days to prevent full table scans
-            time_clauses.append(f"{ts_safe} >= DATE_SUB(NOW(), INTERVAL 30 DAY)")
+            # No bounds at all — default to a recent lookback to prevent full table scans.
+            # The SAME constant the substitution disclosure names, so the period the answer
+            # says came back empty is the period the query actually asked for.
+            time_clauses.append(
+                f"{ts_safe} >= DATE_SUB(NOW(), INTERVAL {DEFAULT_LOOKBACK_DAYS} DAY)"
+            )
         if end:
             time_clauses.append(f"{ts_safe} <= '{end}'")
         time_filter = " AND ".join(time_clauses)
@@ -1319,13 +1557,17 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
         from orchestrator.services.requested_interval import building_tz, to_local
 
         _tz = building_tz(getattr(settings, "BUILDING_ID", None))
-        result_text = f"Found {len(results)} record(s)" + (
-            f" (times are building local time, {_tz}):\n\n" if _tz else ":\n\n"
+        header = f"Found {len(results)} record(s)" + (
+            f" (times are building local time, {_tz})" if _tz else ""
         )
 
         def _local(value: Any) -> Any:
             stamp = value if isinstance(value, datetime) else None
-            if stamp is None and isinstance(value, str) and re.match(r"^\d{4}-\d\d-\d\d[T ]\d\d:\d\d", value):
+            if (
+                stamp is None
+                and isinstance(value, str)
+                and re.match(r"^\d{4}-\d\d-\d\d[T ]\d\d:\d\d", value)
+            ):
                 try:
                     stamp = datetime.strptime(value.replace("T", " ")[:19], "%Y-%m-%d %H:%M:%S")
                 except ValueError:
@@ -1334,11 +1576,50 @@ Respond with ONLY the SQL query, no markdown, no explanations."""
                 return value
             return to_local(stamp.replace(tzinfo=None), _tz).strftime("%Y-%m-%d %H:%M:%S")
 
-        for i, row in enumerate(results[:10], 1):  # Limit to 10 rows
+        # NEWEST FIRST, PROVED HERE RATHER THAN ASSUMED (run-3 row 120, 2026-09-17).
+        #
+        # The prompt below tells the model these rows are "the newest", and the slice below
+        # took whatever order the rows arrived in. That holds while the lane's own
+        # `ORDER BY timestamp DESC` survives — and it does not: `_coarsen` rebuckets the
+        # readings when a privacy policy clamps resolution and emits them OLDEST FIRST.
+        # A delta-T answer served at clamped resolution therefore opened "Latest snapshot
+        # (2026-09-12 17:50:00)" over the FIRST reading of a window it then described as
+        # running to 17 Sep, and called the circuit healthy on a five-day-old number.
+        #
+        # This is the BUG-520 shape at a second site: that one was fixed in the report
+        # lane's `_summarize_readings`, which this lane does not use. Sorted by the row's
+        # own timestamp, so the ten shown are the ten newest whatever produced them, and
+        # rows whose time cannot be read keep their relative order at the end rather than
+        # being promoted to "latest" by a failed comparison.
+        def _sort_key(stamp: datetime) -> datetime:
+            # Mixed naive/aware stamps raise on comparison. Every store here is UTC
+            # (BUG-403), so dropping the offset orders them and changes no instant.
+            return stamp.replace(tzinfo=None)
+
+        _timed = [(self._row_time(r), r) for r in results]
+        newest_at = ""
+        if any(t is not None for t, _ in _timed):
+            _with = [(t, r) for t, r in _timed if t is not None]
+            _without = [r for t, r in _timed if t is None]
+            _with.sort(key=lambda tr: _sort_key(tr[0]), reverse=True)
+            results = [r for _, r in _with] + _without
+            newest_at = str(_local(_with[0][0]))
+        # SAY WHICH ROW IS THE LATEST; do not leave it to be inferred from position.
+        if newest_at:
+            header += (
+                f", listed NEWEST FIRST — the most recent reading below is the one at {newest_at}"
+            )
+        result_text = header + ":\n\n"
+        shown = results[:10]
+        for i, row in enumerate(shown, 1):  # Limit to 10 rows
             result_text += f"{i}. "
             for key, value in row.items():
                 if isinstance(value, datetime) or str(key).lower() in (
-                    "timestamp", "datetime", "time", "latest", "latest_at"
+                    "timestamp",
+                    "datetime",
+                    "time",
+                    "latest",
+                    "latest_at",
                 ):
                     value = _local(value)
                 result_text += f"{key}: {value} | "
@@ -1388,6 +1669,10 @@ Generate a concise, natural response that:
    there, say the unit is not recorded - never invent one.
 6. States times exactly as given above, which are already the building's local time -
    never convert them and never label them UTC.
+6b. Calls a reading "latest", "current", "most recent" or "a snapshot" ONLY for the
+   timestamp the header names as the most recent. The timestamp you print must be the
+   one belonging to the value you print. If you are not showing that reading, do not
+   use any of those words.
 7. When statistics over all records are given above, every average, minimum, maximum,
    range and period comes from them, and the period is the one they state (from - to),
    not the question's wording.

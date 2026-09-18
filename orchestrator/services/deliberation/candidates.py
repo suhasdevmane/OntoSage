@@ -49,6 +49,61 @@ _FOR_PEOPLE_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: Brick room classes that belong to somebody. A person may not simply walk into one and
+#: sit down, however well it reads on the day's measurements.
+#:
+#: Run-3 row 99 (2026-09-17) answered an undergraduate asking where to find "a calm,
+#: relatively quiet place" with "Best match: Room 4.03 — Research Laboratory", and row 58
+#: answered "which authorised seating area" with an academic office. Both numbers were
+#: real; both rooms were somebody else's, and nothing in the answer said so.
+#:
+#: Mapped to the word a reader uses, because the Brick class name is the pipeline's
+#: vocabulary and not the reader's. Keyed on the space's own class, so it holds in any
+#: building that types its rooms — no building's names appear here.
+ACCESS_CONTROLLED_KINDS: Dict[str, str] = {
+    "Laboratory": "laboratory",
+    "Wet_Laboratory": "laboratory",
+    "Dry_Laboratory": "laboratory",
+    "Office": "office",
+    "Private_Office": "office",
+    "Enclosed_Office": "office",
+    "Workshop": "workshop",
+    "Security_Room": "security room",
+    "Medical_Room": "medical room",
+    "First_Aid_Room": "first-aid room",
+}
+
+#: Asking where the ASKER may go, as against surveying which room reads best. The first is
+#: a request the answer has to be usable for; the second is a question about the building.
+#: "Which space has the best conditions for focused work?" is a survey and keeps its plain
+#: ranking; "where can I sit for two hours" is a request, and a room its asker cannot enter
+#: is not an answer to it.
+_MAY_I_GO_RE = re.compile(
+    r"\bwhere\s+(?:can|could|should|might|do|am)\s+i\b"
+    r"|\bwhere'?s\s+(?:the\s+)?(?:best|nearest|closest|quietest|coolest|calmest)\b"
+    r"|\b(?:can|could|may|am)\s+i\s+(?:sit|work|study|wait|go|use|stay|find)\b"
+    r"|\bi\s+(?:need|want|am looking for|'m looking for)\b"
+    r"|\b(?:lets?|let)\s+me\b"
+    r"|\bauthorised\b|\bauthorized\b|\ballowed\s+to\s+use\b"
+    r"|\bfor\s+me\s+to\b|\bsomewhere\s+(?:i|to)\b",
+    re.IGNORECASE,
+)
+
+
+def asks_where_i_may_go(query: str) -> bool:
+    """True when the asker wants somewhere THEY can use, not a survey of the building."""
+    return bool(_MAY_I_GO_RE.search(query or ""))
+
+
+def access_word(kinds) -> str:
+    """The reader's word for an access-controlled space kind, or "" when it is open."""
+    for kind in sorted(set(kinds or ())):
+        word = ACCESS_CONTROLLED_KINDS.get(kind)
+        if word:
+            return word
+    return ""
+
+
 #: F-02: a question that NAMES a space people do not occupy is asking about exactly those
 #: spaces ("is the server room too hot?", "which plant room is warmest?"), so the default
 #: exclusion below must not remove them. Words derived from the kinds plus common synonyms.
@@ -97,6 +152,10 @@ class Candidate:
     )  # modality -> {uuid, stored_at}
     geometry: Optional[GeometryInfo] = None
     distance_to_anchor_m: Optional[float] = None
+    #: The space's own Brick classes, carried so the answer can say whether a room it
+    #: recommends is one the asker may simply walk into. Never rendered as-is: the class
+    #: name is the pipeline's vocabulary, and `access_word` turns it into the reader's.
+    kinds: Tuple[str, ...] = ()
 
 
 @dataclass
@@ -177,12 +236,19 @@ def enumerate_candidates(
                 LedgerEntry(
                     s.space_iri,
                     s.label or _local(s.space_iri),
+                    # NO BRICK CLASS TOKEN. This used to append "(Mechanical_Room)" — and
+                    # the reason is printed to the reader, both under a ranking and as the
+                    # whole "Why:" of a decline. Run-3 row 119 read: "not an occupied space
+                    # — name it to include it (Mechanical_Room); … (Storage_Room); …
+                    # (Telecom_Room)". Those are the names of classes in a schema, and they
+                    # tell a person what the system is made of instead of what the building
+                    # is like. The classes are still on the candidate and in the structured
+                    # payload, which is what audit reads.
                     (
                         "not a place to work or sit"
                         if _for_work
-                        else "not an occupied space — name it to include it"
-                    )
-                    + f" ({', '.join(sorted(_kinds & NON_OCCUPIABLE_KINDS))})",
+                        else "not a space people occupy — ask about it by name to include it"
+                    ),
                 )
             )
             continue
@@ -204,6 +270,7 @@ def enumerate_candidates(
                 floor=s.floor,
                 sensors=sensors,
                 geometry=geometry.get(s.space_iri),
+                kinds=tuple(sorted(_kinds)),
             )
         )
 

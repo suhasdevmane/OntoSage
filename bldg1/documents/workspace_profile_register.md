@@ -14,8 +14,6 @@ tables:
 
 # Workspace Profile Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional survey values, not a live space audit._
-
 ## What this register records, and why geometry could not
 
 The building already knew every room's area, floor and adjacency. None of that answers the
@@ -48,7 +46,6 @@ room would be precisely the fabrication the referent gate exists to prevent, arr
 the data instead of through the model.
 
 ## Workspace profile register
-
 
 | code | name | room | floor | kind | seats | bookable | power | network | daylight | noise | calls_ok | group_ok | access | hours | busiest | quietest | setup_minutes | recovery_minutes | vertical_route | status | note |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|

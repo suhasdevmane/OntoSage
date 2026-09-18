@@ -150,10 +150,14 @@ class SpatialAgent:
         query: str,
         building_id: str,
         floor: Optional[int] = None,
+        for_admin: bool = False,
     ) -> str:
         """
         Return a markdown-formatted answer to a spatial query.
         Never raises — errors produce a descriptive fallback string.
+
+        ``for_admin`` adds how to supply missing floor-plan geometry. Every other reader gets
+        the decline and what the plans do hold; the default is that plain form.
         """
         try:
             # Resolve the target floor: caller-pinned (floor_context, which may
@@ -174,18 +178,33 @@ class SpatialAgent:
             # floors; filtering here is robust and floor-type-agnostic.
             manifests = self._load_manifests(building_id, None)
             if not manifests:
-                return (
-                    f"No floor plan data is available for **{building_id}**"
-                    ". Make sure the DWG files have been ingested."
+                text = (
+                    f"No floor plan data is available for **{building_id}**, so I can't "
+                    "answer questions about room sizes, layout or routes from it."
                 )
+                if for_admin:
+                    text += " Make sure the DWG files have been ingested."
+                return text
 
             has_geometry = any(any(s.area_m2 is not None for s in m.spaces) for m in manifests)
             if not has_geometry:
-                return (
-                    "Geometry data (room areas, polygons) is not yet available — "
-                    "this requires DWG source files in `/app/input/`. "
-                    "Currently only PDF text extraction is active."
+                named = sum(len(m.spaces) for m in manifests)
+                held = (
+                    f"The floor plans name {named} space(s) across {len(manifests)} floor(s), "
+                    "but their"
+                    if named
+                    else "The floor plans'"
                 )
+                text = (
+                    f"{held} areas and shapes are not available, so I can't answer size, "
+                    "distance or layout questions from them."
+                )
+                if for_admin:
+                    text += (
+                        " This requires DWG source files in `/app/input/`. "
+                        "Currently only PDF text extraction is active."
+                    )
+                return text
 
             # Narrow to the target floor; fall back to the full set if that
             # floor has no manifest loaded (better an all-floors answer than
@@ -389,8 +408,8 @@ class SpatialAgent:
                     # the building total, which would read as its answer.
                     return (
                         f"**{s.label}** (`{s.zone_id}`, floor {m.floor}) is in the floor "
-                        "plan, but no area is recorded for it — area comes from the DWG "
-                        "geometry, and this space has none."
+                        "plan, but no area is recorded for it, so I can't give its size — "
+                        "and I won't estimate one."
                     )
                 lines = [
                     f"**{s.label}** (`{s.zone_id}`, floor {m.floor}) is "
@@ -452,7 +471,8 @@ class SpatialAgent:
         if not adj_ids:
             return (
                 f"**{target_space.label}** (`{ref_zone}`, floor {fl}) "
-                "has no recorded adjacencies — adjacency data requires DWG source files."
+                "has no neighbouring rooms recorded in the floor plans, so I can't say which "
+                "rooms border it."
             )
 
         # Resolve adjacent zone IDs to spaces
@@ -786,13 +806,14 @@ class SpatialAgent:
                 return (
                     f"**{dest_space.label}** (`{dest_zone}`) is on floor {dest_floor}. "
                     f"{hint} follow the corridor signs. "
-                    "(Full route adjacency data requires DWG source files.)"
+                    "(The floor plans don't record a connected route between the two, so "
+                    "these directions are general.)"
                 )
             return (
                 f"I could not find a connected route from "
                 f"**{src_space.label if src_space else src_zone}** "
-                f"to **{dest_space.label}** — adjacency data may be incomplete. "
-                "(Full route data requires DWG source files.)"
+                f"to **{dest_space.label}** — the floor plans don't record every connection "
+                "between rooms, so I won't guess at one."
             )
 
         lines = [
@@ -914,8 +935,8 @@ class SpatialAgent:
         type_label = btype or "all blocks"
         if not matched:
             return (
-                f"No **{type_label}** entities found in the floor plan data. "
-                "Block data requires DWG source files."
+                f"No **{type_label}** entities are marked in the floor plan data, so I can't "
+                "count them from the plans."
             )
 
         by_floor: Dict[int, int] = {}

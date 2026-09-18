@@ -379,6 +379,65 @@ def _vague_complaint_extras(c: _Ctx) -> Dict[str, Any]:
     }
 
 
+#: Asking for a DAY to be arranged — an order of activities, not a fact about the building.
+_PLAN_MY_TIME_RE = re.compile(
+    r"\bplan\s+(?:me\s+)?(?:a|an|my|the|out)\b"
+    r"|\bplan\s+(?:a\s+)?(?:practical\s+)?(?:sequence|order|route|day|visit|itinerary)\b"
+    r"|\b(?:work\s+out|map\s+out|lay\s+out|sort\s+out|organise|organize|schedule)\s+"
+    r"(?:me\s+)?(?:a|an|my|the)\b.{0,30}\b(?:day|visit|sequence|order|itinerary|time)\b"
+    r"|\bitinerary\b",
+    re.IGNORECASE,
+)
+
+#: The asker's OWN commitments, which no record in the building ties to a person. A
+#: timetable says a session happens in a room at a time; it does not say whose it is.
+_MY_OWN_COMMITMENTS_RE = re.compile(
+    r"\bmy\s+(?:own\s+)?(?:class|classes|lecture|lectures|seminar|seminars|session|sessions|"
+    r"tutorial|tutorials|lab|labs|teaching|timetable|schedule|diary|calendar|meetings?|"
+    r"appointments?|bookings?|commitments?|deadlines?)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_plan_around_my_own_commitments(c: _Ctx) -> Optional[str]:
+    """ "Plan my day around my classes" → ask which sessions are yours.
+
+    Run-3 row 90 (2026-09-17) answered this with a four-line plan naming specific rooms
+    and specific timetabled sessions — "Study in Room 4.55 before 15:00 (TS-0670 Advanced
+    Computer Science 15:00-17:00)" — as though it knew which of them the asker had to be
+    at. It cannot: a timetable records that a session happens in a room at a time, and
+    nothing in it ties a session to a person. Every room and every time in that answer was
+    real, which is what makes it dangerous — a reader has no way to see that the one fact
+    holding the plan together was invented.
+
+    Asking costs one turn and the asker already knows the answer. Deliberately narrow:
+    both halves must be present, so "what conservative travel buffer should I allow
+    between appointments on different floors?" — which needs no knowledge of whose
+    appointments they are — keeps the lane that can give it a figure.
+    """
+    if c.intent in ("maintenance", "complaint", "report", "safety_report", "suggestion"):
+        return None
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None
+    q = c.query or ""
+    if _PLAN_MY_TIME_RE.search(q) and _MY_OWN_COMMITMENTS_RE.search(q):
+        return "clarification"
+    return None
+
+
+def _plan_around_my_own_commitments_extras(c: _Ctx) -> Dict[str, Any]:
+    return {
+        "clarification_question": (
+            "Which of the building's sessions are yours? I can build a sequence around "
+            "fixed times, but the timetable records that a session happens in a room at a "
+            "time, not whose it is — so a plan built around somebody else's class would "
+            "look right and put you in the wrong place. Give me the times you have to be "
+            "somewhere, with the rooms if you know them, and I will fit the rest of what "
+            "you asked for around them."
+        )
+    }
+
+
 def _r_correlation(c: _Ctx) -> Optional[str]:
     if c.intent == "clarification" and _any(c.ql, CORRELATION_KWS):
         return "analytics"
@@ -430,6 +489,44 @@ def _r_countable_metadata(c: _Ctx) -> Optional[str]:
     return "metadata" if _is_countable_meta(c.ql) else None
 
 
+def _r_room_count_is_spatial(c: _Ctx) -> Optional[str]:
+    """ "How many rooms are on floor 2?" → spatial_query (BUG-628).
+
+    `countable_metadata` correctly DECLINES this one — a room count is geometry, not a
+    SPARQL census — but declining only leaves the classifier's own answer in place, and it
+    called this `sensor_data`. The building then said it "doesn't keep a record of how many
+    rooms are on a specific floor", seconds after another answer reported floor 4's 57 rooms
+    from the same manifests. Declining to force the wrong lane is not the same as naming the
+    right one.
+
+    A device count stays where it was ("how many sensors on floor 2" is a graph census); this
+    claims only counts whose subject is a room or a space.
+    """
+    if c.intent not in ("sensor_data", "general", "metadata", "discovery", "capability"):
+        return None
+    if not _any(c.ql, COUNT_TRIGGER_KWS):
+        return None
+    if _any(c.ql, COUNTABLE_DEVICE_KWS):
+        return None
+    return "spatial_query" if _any(c.ql, ROOM_GEOMETRY_KWS) else None
+
+
+#: The predicate that makes a question a CENSUS: it asks what exists, or asks to be
+#: shown it. Generic English; no building's vocabulary and no Brick class list.
+_INVENTORY_EXISTENTIAL_RE = re.compile(
+    r"\b(?:are|is)\s+there\b"
+    r"|\bdo(?:es)?\s+(?:\w+\s+){0,3}?have\b"
+    r"|\bhave\s+(?:we|you)\b"
+    r"|\b(?:are|is)\s+(?:there\s+)?(?:any\s+)?"
+    r"(?:installed|available|present|fitted|deployed|in\s+use|in\s+place|connected)\b"
+    r"|\b(?:are|is)\s+(?:in|inside|on|at)\s+(?:the|this)\b"
+    r"|\b(?:what|which)\s+(?:kinds?|types?|sorts?)\s+of\b"
+    r"|\b(?:list|show|tell\s+me\s+about|give\s+me\s+a\s+list)\b"
+    r"|\b(?:exist|exists)\b",
+    re.IGNORECASE,
+)
+
+
 def _r_inventory_to_discovery(c: _Ctx) -> Optional[str]:
     """ "What/which X does this building have?" → discovery (BUG-122).
 
@@ -450,7 +547,29 @@ def _r_inventory_to_discovery(c: _Ctx) -> Optional[str]:
         return None
     from orchestrator.services.ontology_inventory import is_inventory_question
 
-    return "discovery" if is_inventory_question(c.query) else None
+    if not is_inventory_question(c.query):
+        return None
+    # A CENSUS ANSWERS "WHAT IS HERE", NOTHING ELSE (C19).
+    #
+    # The inventory test pairs an interrogative anywhere in the sentence with an
+    # inventory noun anywhere else, so two questions that are not about what the
+    # building contains were answered with a list of its sensor classes:
+    #
+    #   "Which approved plant, sensor … endpoints have LOST expected connectivity,
+    #    and is the fault local, segment-wide or upstream?"
+    #   "For each local, shared or inherited control, WHO OPERATES, monitors and
+    #    evidences each component, and what must be tested within this UNIT?"
+    #
+    # Both name inventory nouns; neither asks which of them exist. The first asks
+    # which are in a fault state, the second who is accountable for them — and a
+    # census of 3,248 sensors is the wrong answer to each in the same way.
+    #
+    # The discriminator is the PREDICATE, not more nouns: a census question puts an
+    # existential verb on the things ("are there", "do we have", "is installed",
+    # "are available"), or simply asks to be shown them. Requiring that is a
+    # positive test and does not need a list of every way a question can be about
+    # something else, which is the list that never finishes.
+    return "discovery" if _INVENTORY_EXISTENTIAL_RE.search(c.query) else None
 
 
 def _r_forecast_skill(c: _Ctx) -> Optional[str]:
@@ -672,6 +791,36 @@ _WEAK_INTENTS = (
 )
 
 
+#: A question about alarms that have ALREADY HAPPENED. "Have there been any alarms this
+#: week?" was answered by the alert-CREATION lane — "I haven't created an alert yet. I need
+#: what to measure … and the value that should trigger it" — a configuration form, in answer
+#: to a question about what occurred (TODO-490).
+#:
+#: The two shapes are opposites: a standing alert is about the future and is created; an
+#: alarm history is about the past and is read. Only the past is claimed here.
+ALARM_HISTORY_RE = re.compile(
+    r"\b(?:have|has|had|were|was|did)\b[^?]{0,40}\b(?:alarm|alarms|alert|alerts)\b"
+    r"|\b(?:alarm|alarms|alert|alerts)\b[^?]{0,30}\b(?:went off|sounded|triggered|fired"
+    r"|activated|raised|logged|recorded)\b"
+    r"|\b(?:any|which|what|how many|list the)\b[^?]{0,20}\b(?:alarms|alerts)\b"
+    r"[^?]{0,40}\b(?:this|last|past|today|yesterday|recently|so far)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_alarm_history_is_a_record(c: _Ctx) -> Optional[str]:
+    """An alarm that already happened is a RECORD, not an alert to create (TODO-490).
+
+    Guarded against the opposite shape: "alert me when CO2 goes high" is a standing request
+    and keeps its lane, because this fires only when STANDING_ALERT_RE does not.
+    """
+    if c.intent != "alert":
+        return None
+    if STANDING_ALERT_RE.search(c.query):
+        return None
+    return "metadata" if ALARM_HISTORY_RE.search(c.query) else None
+
+
 def _r_standing_alert(c: _Ctx) -> Optional[str]:
     """'notify me when X' / 'alert me if X' → alert (standing personal alert)."""
     if c.intent not in _WEAK_INTENTS:
@@ -694,6 +843,36 @@ def _r_automation_question(c: _Ctx) -> Optional[str]:
 # comfort constraints. Conservative from-set: weak intents + 'recommend' (which
 # has no dedicated logic and collapses to generic analytics today); analytics/
 # spatial_query classifications keep their proven routes.
+#: Words that describe how a space FEELS — the vocabulary a person uses when they are not
+#: naming a measurand. Each one resolves to a quantity through the concept resolver ("stuffy"
+#: → CO2); none of them names a building, a room or a sensor.
+_CONDITION_ADJECTIVES = (
+    r"stuffy|noisy|loud|humid|damp|dry|dark|bright|cold|chilly|warm|hot|cool|quiet|"
+    r"crowded|busy|smelly|draughty|drafty|muggy|stale"
+)
+
+#: "Is it stuffy ANYWHERE in the building?" — the existential shape of a comfort question,
+#: with no space noun to hang a superlative on (TODO-629).
+#:
+#: It reached the capability lane, which probed 274 sensors and returned the row-budget
+#: refusal: honest, and useless to someone who cannot be expected to know which floor to ask
+#: about. The building can already rank every room on that quantity — "which room is the
+#: warmest" answers in one step — and the only thing standing between the two questions was
+#: a pattern that required the word "room".
+#:
+#: Both orders, because people write it both ways: "is it stuffy anywhere" and "is there
+#: anywhere stuffy". A question that names neither a condition nor an existential scope is
+#: untouched.
+_EXISTENTIAL_SCOPE = r"anywhere|somewhere|any\s+(?:room|rooms|space|spaces|zone|zones|area|areas)"
+
+EXISTENTIAL_COMFORT_RE = re.compile(
+    r"\b(?:is|are|does|do|has|have)\b[^?]{0,40}?\b(?:" + _CONDITION_ADJECTIVES + r")\b"
+    r"[^?]{0,40}?\b(?:" + _EXISTENTIAL_SCOPE + r")\b"
+    r"|\b(?:is|are|does|do|has|have)\b[^?]{0,40}?\b(?:" + _EXISTENTIAL_SCOPE + r")\b"
+    r"[^?]{0,40}?\b(?:" + _CONDITION_ADJECTIVES + r")\b",
+    re.IGNORECASE,
+)
+
 DELIBERATE_RE = re.compile(
     r"(?:\bfind\s+(?:me\s+)?an?\s+[\w,\- ]{0,30}(?:room|space|spot|desk|place)\b"
     r"|\bwhere\s+(?:can|should|could)\s+i\s+(?:sit|work|study|go|be|stay)\b"
@@ -913,6 +1092,50 @@ def _r_asset_state_query(c: _Ctx) -> Optional[str]:
     if register_question(c.query or ""):
         return None  # a dated compliance question belongs to the register
     return "asset_state" if is_asset_state_question(c.query) else None
+
+
+#: A named standard or scheme the compliance lane can actually check a reading against.
+#: International standards, not any building's own vocabulary.
+_NAMED_STANDARD_RE = re.compile(
+    r"\bashrae\b|\bwell\s*(?:v\d|standard|building)\b|\bbreeam\b|\bleed\b|\bcibse\b"
+    r"|\biso\s*\d{3,}\b|\ben\s*\d{3,}\b|\bbs\s*\d{3,}\b|\bwcag\b|\bpart\s+[a-l]\b",
+    re.IGNORECASE,
+)
+
+
+def _r_compliance_without_a_measurable_check(c: _Ctx) -> Optional[str]:
+    """A compliance question with nothing measurable in it is not a compliance check.
+
+    The compliance lane reads sensors and compares them against a standard. Asked "do
+    local procedures and work instructions implement the current institutional policies
+    without omissions, contradictions or unauthorised local variation?" it had neither a
+    reading nor a standard, and emitted its own template — "**Compliance Check — Zone or
+    Sensor Required**", followed by three worked examples about a zone's temperature. A
+    question about whether two sets of DOCUMENTS agree was answered with an instruction
+    to ask about a thermometer (C19).
+
+    Three conditions, all required, keep it narrow: the question must name no measurand
+    (so "is the temperature within limits?" stays), no space (so "check zone 5.28"
+    stays), and no standard (so "are we compliant with ASHRAE 55?" keeps the template,
+    whose ask is exactly right for it). What is left is a policy question, and the
+    capability lane holds the documents — or says honestly that it holds none.
+
+    Sits BEFORE compliance_register on purpose: this contract is last-wins, so a dated
+    register question ("when was the fire alarm last tested?") is still taken back by
+    the rule that owns it.
+    """
+    if c.intent != "compliance":
+        return None
+    if _NAMED_STANDARD_RE.search(c.query or ""):
+        return None
+    from orchestrator.services.plausibility import measurand_of
+    from orchestrator.services.referent_resolver import names_a_specific_space
+
+    if measurand_of(c.query or ""):
+        return None
+    if names_a_specific_space(c.query or ""):
+        return None
+    return "capability"
 
 
 def _r_compliance_register(c: _Ctx) -> Optional[str]:
@@ -1172,7 +1395,7 @@ def _r_plant_point_query(c: _Ctx) -> Optional[str]:
 
 
 def _r_route_comparison_is_data(c: _Ctx) -> Optional[str]:
-    """"Is the step-free route slower than the stairs?" → metadata (the register holds it).
+    """ "Is the step-free route slower than the stairs?" → metadata (the register holds it).
 
     BUG-597 stopped the route finder claiming these ("No staircase spaces found"). The
     classifier then read the comparison as `compare`, whose canned template asked for zone ids
@@ -1203,6 +1426,57 @@ def _r_wayfinding_spatial(c: _Ctx) -> Optional[str]:
     if ROUTE_COMPARISON_RE.search(c.query):
         return None
     return "spatial_query" if WAYFIND_RE.search(c.query) else None
+
+
+#: A journey somebody has WALKED AND RECORDED, as against one computed from a drawing.
+#:
+#: The building publishes surveyed routes: which entrance, whether the way is step-free,
+#: how many places there are to sit, how the doors operate, which lift and whether it is
+#: in service, how much time to allow and how busy it is. The record spec says plainly why
+#: that is the source for these questions — a route inferred from geometry is a guess about
+#: somebody's journey, and a wrong guess costs them the journey.
+#:
+#: Deliberately narrow: an accessibility word must sit beside a JOURNEY noun. "Take me to
+#: the nearest accessible toilet" and "where is the accessible entrance" name a place, not
+#: a way through, and keep the route finder and the amenity lanes they already reach.
+ACCESSIBLE_ROUTE_RE = re.compile(
+    r"\b(?:step[-\s]?free|barrier[-\s]?free|wheelchair(?:[-\s]accessible)?|push[-\s]?chair|"
+    r"pushchair|buggy|pram|level[-\s]access|accessible|mobility)\b"
+    r"(?:\s+\w+){0,2}\s+\b(?:routes?|ways?|paths?|journeys?|access)\b"
+    r"|\b(?:routes?|ways?|paths?|journeys?)\b[^.?!]{0,40}?"
+    r"\b(?:step[-\s]?free|barrier[-\s]?free|wheelchair|push[-\s]?chair|pushchair|"
+    r"level[-\s]access)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_accessible_route_is_a_surveyed_record(c: _Ctx) -> Optional[str]:
+    """ "Which verified step-free route should I take?" → the surveyed route records.
+
+    Run-3 row 61 (2026-09-17): "I need a step-free route to supervision that avoids the
+    busiest and noisiest areas around class changeover. Which verified route should I
+    take?" was classified as a request to rank spaces, so the ranking lane took it and
+    then honestly declined — a decline that cost the reader the answer the building holds.
+    Rows 72 and 111 of the same run, whose wording missed the route patterns by accident,
+    reached the surveyed records and answered with the route, its lift, its doors and its
+    rest stops.
+
+    Claims from `deliberate` and `spatial_query` as well as the weak intents, because both
+    of those are exactly where this shape was going wrong: one ranks rooms, the other
+    computes a path from a drawing, and neither can say when the way was last walked or
+    whether its lift is in service today.
+    """
+    if c.intent not in _WEAK_INTENTS + (
+        "deliberate",
+        "spatial_query",
+        "floor_plan",
+        "recommend",
+        "compare",
+    ):
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    return "metadata" if ACCESSIBLE_ROUTE_RE.search(c.query or "") else None
 
 
 def _r_room_geometry_spatial(c: _Ctx) -> Optional[str]:
@@ -1291,6 +1565,46 @@ def _r_superlative_room_takeover(c: _Ctx) -> Optional[str]:
     return "deliberate" if DELIBERATE_RE.search(c.query) else None
 
 
+#: Intents an existential comfort question is observed to land in. `capability` leads, which
+#: is where "is it stuffy anywhere in the building?" actually went — the classifier reads it
+#: as asking whether the building CAN tell you, and the honest capability answer ("that
+#: reaches 274 sensors") is not the answer the person wanted.
+_EXISTENTIAL_COMFORT_INTENTS = (
+    "capability",
+    "general",
+    "general_knowledge",
+    "sensor_data",
+    "analytics",
+    "metadata",
+    "discovery",
+    "observability",
+    # "Is it too warm anywhere right now?" was classified `compliance`, and the compliance
+    # lane handed the model a prompt with no question in it — the answer came back "No
+    # question was provided." after 116 seconds (BUG-630 owns that prompt). A comfort
+    # condition over an existential scope is a ranking question whichever lane the
+    # classifier guessed, so the shape is claimed here rather than chased lane by lane.
+    "compliance",
+)
+
+
+def _r_existential_comfort_is_deliberate(c: _Ctx) -> Optional[str]:
+    """ "Is it stuffy anywhere?" → deliberate: rank the rooms and name the worst (TODO-629).
+
+    The same question with a space noun in it — "which room is the stuffiest" — has been
+    ARBITER's since BUG-163. Without one it fell to a lane that reads 274 sensors and gives
+    up, so the building's ability to answer depended on the questioner already knowing to
+    phrase it as a superlative over rooms. A person who has never seen this building does
+    not know that, and they are the people this has to serve.
+
+    Guarded twice over: the question must carry BOTH a condition word and an existential
+    scope, so "is there a cafe anywhere?" (no condition) and "is it raining?" (no scope)
+    are untouched.
+    """
+    if c.intent not in _EXISTENTIAL_COMFORT_INTENTS:
+        return None
+    return "deliberate" if EXISTENTIAL_COMFORT_RE.search(c.query) else None
+
+
 def _r_data_query_promotion(c: _Ctx) -> Optional[str]:
     """A value/reading question naming a place + measurable → sensor_data (post stage).
 
@@ -1327,6 +1641,30 @@ def _r_building_not_general(c: _Ctx) -> Optional[str]:
     the open-domain answerer, which has no data and invents plausible values.
     """
     if c.intent not in ("general", "general_knowledge", "clarification", "greeting"):
+        return None
+    # "WHICH ROOM?" IS NOT AN OPEN-DOMAIN GUESS (BUG-735).
+    #
+    # This rule rescues a clarification the CLASSIFIER produced because it could not
+    # ground the question. A clarification the system RAISED — because the question is
+    # scoped to a room nobody has named — is the opposite: it is the grounded answer.
+    # Converted to analytics it becomes exactly the failure it was raised to prevent:
+    # "are CO2 and temperature back near this room's usual levels?" was answered by a
+    # data lane with "that question reaches 296 sensors", about a question that names
+    # one room and two measurands.
+    #
+    # It cannot read the marker the gate sets — the concept stage is handed a fresh
+    # three-key dict — so it re-derives the condition from the query, using the same
+    # detector the gate used. One definition, no second opinion.
+    from orchestrator.services.referent_resolver import (
+        detect_space_deixis,
+        names_a_specific_space,
+    )
+
+    if (
+        c.intent == "clarification"
+        and detect_space_deixis(c.query)
+        and not names_a_specific_space(c.query)
+    ):
         return None
     from orchestrator.services.grounding_guard import is_building_specific
 
@@ -1483,6 +1821,15 @@ def _r_capability_measurand_is_data(c: _Ctx) -> Optional[str]:
     if is_why_question(c.query):
         return None
 
+    # "Is it stuffy ANYWHERE?" resolves a measurand through its lay term, so the test above
+    # says yes — but the answer is a ranking across every room, not a reading (TODO-629).
+    # Converted to a data lane it reached 274 sensors and returned the row-budget refusal:
+    # honest, and useless to someone who cannot be expected to know which floor to ask
+    # about. The parse-stage rule of the same name cannot catch this one, because the
+    # capability intent is assigned AFTER that stage runs.
+    if EXISTENTIAL_COMFORT_RE.search(c.query):
+        return "deliberate"
+
     # An ANOMALY-shaped question goes to the detector, not to a reading lookup (BUG-395).
     #
     # This rule could previously return only `sensor_data` or `analytics`, so "any energy
@@ -1632,9 +1979,25 @@ def _r_instrument_metrology(c: _Ctx) -> Optional[str]:
 #:
 #: Deliberately narrow. "Is the projector working?" is an AV register question and stays
 #: one; this fires on the shape that means *before something happens here*.
+#: What a space is made ready FOR. The readiness lane joins the timetable, the AV
+#: register, the network survey and the setup time — every one of those is about a
+#: room being USED BY PEOPLE for a booked occasion.
+_READINESS_OCCASION = (
+    r"class|lecture|seminar|session|lesson|teaching|meeting|tutorial|workshop|exam|"
+    r"practical|presentation|talk|lab|event|booking|students?|use"
+)
+
 _READINESS_RE = re.compile(
     r"\breadiness\s+check"
-    r"|\bready\s+for\s+(?:my|the|a|this|our)\b"
+    # "ready for the next confirmed collection" is not a readiness check (C19). The
+    # branch below used to accept ANY object after "ready for the", so a waste
+    # exchange area awaiting a lorry reached the lane that reports what a room's
+    # teaching technology last tested at — a lane that then asked which room to
+    # check, about a question that was never about a teaching room. Naming the
+    # occasions this lane can actually evidence keeps it honest, and costs nothing:
+    # every phrasing it was built for names one.
+    r"|\bready\s+for\s+(?:my|the|a|this|our|its)?\s*(?:next\s+|first\s+|\w+\s+){0,2}"
+    r"(?:" + _READINESS_OCCASION + r")\b"
     r"|\b(?:before|ahead\s+of)\s+(?:my|the|our|each)\s+"
     r"(?:class|lecture|seminar|session|lesson|teaching|meeting)\b"
     r"|\bis\s+\S+\s+set\s+up\s+for\b"
@@ -1698,6 +2061,15 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         extras=_vague_complaint_extras,
     ),
     Rule(
+        "plan_around_my_own_commitments",
+        "'plan my day around my classes' → clarification: no record says which sessions "
+        "are the asker's, and a plan that guesses is wrong in a way nobody can see "
+        "(BUG-716 family, run-3 row 90). Beside vague_complaint_clarify, its sibling: "
+        "both hand back a question rather than answer a different one",
+        _r_plan_around_my_own_commitments,
+        extras=_plan_around_my_own_commitments_extras,
+    ),
+    Rule(
         "correlation_is_analytics",
         "correlation/relationship phrasing → analytics, not clarification",
         _r_correlation,
@@ -1713,6 +2085,13 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "COUNT of devices/structure or building identity → metadata (SPARQL COUNT), "
         "not spatial geometry / reading / capability (BUG-045)",
         _r_countable_metadata,
+    ),
+    Rule(
+        "room_count_is_spatial",
+        "COUNT of rooms/spaces → spatial_query (the floor-plan manifests hold room "
+        "geometry). Directly after countable_metadata, which declines this shape without "
+        "naming a lane, leaving a room count on sensor_data (BUG-628)",
+        _r_room_count_is_spatial,
     ),
     Rule(
         "inventory_to_discovery",
@@ -1775,6 +2154,12 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         sets_analytics=True,
     ),
     Rule(
+        "alarm_history_is_a_record",
+        "an alarm that ALREADY happened is a record to read, not an alert to create "
+        "(TODO-490). Sits before standing_alert_request, which owns the opposite shape",
+        _r_alarm_history_is_a_record,
+    ),
+    Rule(
         "standing_alert_request",
         "'notify me when X' standing request → alert",
         _r_standing_alert,
@@ -1795,9 +2180,23 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         _r_superlative_room_takeover,
     ),
     Rule(
+        "existential_comfort_is_deliberate",
+        "'is it stuffy anywhere?' → deliberate: the same ranking as 'which room is "
+        "stuffiest', for a questioner who does not know to phrase it that way (TODO-629). "
+        "Directly after superlative_room_takeover, whose shape it completes",
+        _r_existential_comfort_is_deliberate,
+    ),
+    Rule(
         "event_store_query",
         "bookings / work orders / footfall → events lane (V5-T24)",
         _r_event_store_query,
+    ),
+    Rule(
+        "compliance_without_a_measurable_check",
+        "a compliance question naming no measurand, space or standard → capability, "
+        "which holds the documents or says it holds none — never the zone-required "
+        "template (C19)",
+        _r_compliance_without_a_measurable_check,
     ),
     Rule(
         "compliance_register",
@@ -1839,6 +2238,13 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "wayfinding_spatial",
         "route / nearest-facility questions → spatial route finder (V5-T27)",
         _r_wayfinding_spatial,
+    ),
+    Rule(
+        "accessible_route_is_a_surveyed_record",
+        "step-free / wheelchair / pushchair ROUTE questions → the surveyed route records, "
+        "never a ranking of rooms and never a path computed from a drawing (BUG-744). "
+        "Directly after wayfinding_spatial, which it takes these back from",
+        _r_accessible_route_is_a_surveyed_record,
     ),
     Rule(
         "room_geometry_spatial",

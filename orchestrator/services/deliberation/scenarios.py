@@ -199,8 +199,13 @@ def render_scenario_answer(
     return "\n".join(lines)
 
 
-def decline_reason(modality: str, sens: Optional[Sensitivity]) -> str:
-    """Honest decline when the counterfactual cannot be grounded."""
+def decline_reason(modality: str, sens: Optional[Sensitivity], for_admin: bool = False) -> str:
+    """Honest decline when the counterfactual cannot be grounded.
+
+    ``for_admin`` adds the instrumentation remedy. Every reader is offered what they can do
+    themselves (ask about a space that has the history); only an administrator is told to
+    add sensing, which no other reader can act on.
+    """
     if modality not in OCCUPANCY_DRIVEN:
         return (
             f"**I can't answer that as a what-if.** Occupancy has no measured "
@@ -209,12 +214,15 @@ def decline_reason(modality: str, sens: Optional[Sensitivity]) -> str:
             f"forecast {modality} instead."
         )
     if sens is None:
-        return (
+        text = (
             "**I can't answer that as a what-if.** This space has no paired "
             "occupancy history to measure a per-person effect from — without it any "
-            "figure would be a textbook constant dressed up as this building. Add "
-            "occupancy sensing (or ask about a space that has it) and this unlocks."
+            "figure would be a textbook constant dressed up as this building. The same "
+            "question can be answered for a space that does record occupancy alongside it."
         )
+        if for_admin:
+            text += " Adding occupancy sensing to this space unlocks it here."
+        return text
     return (
         "**I can't answer that as a what-if.** I measured the occupancy effect here "
         f"and the relationship is too weak to use (R² {sens.r2:g} over {sens.n_points} "

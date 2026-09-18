@@ -41,13 +41,125 @@ LlmCall = Callable[[str], Awaitable[str]]
 _LAY_HINTS: Dict[str, str] = {
     "noise": "quiet, silent, loud, noisy, sound level",
     "co2": "stuffy, fresh air, air quality, ventilation, CO2",
-    "temperature": "warm, cold, hot, chilly, temperature, cosy",
+    "temperature": "warm, cold, cool, hot, chilly, temperature, cosy",
     "humidity": "humid, damp, dry, muggy",
     "occupancy": "busy, crowded, empty, free, people, occupancy, quiet in terms of people",
     "illuminance": "bright, dark, well-lit, light levels, daylight",
     "door_contact": "door open, door closed, door activity",
     "window_contact": "window open, window closed",
 }
+
+
+def _base_form(word: str) -> str:
+    """Reduce a comparative or superlative to the form a lay-term table lists.
+
+    "Which rooms are the STUFFIEST right now?" compiled to modality "stuffiest", which is not
+    a modality name and not in the hint list either, so the whole query became unexecutable:
+    "I couldn't map part of your request (stuffiest)". The plain form mapped cleanly to co2.
+    People ask for the extreme far more often than the plain adjective, and listing every
+    inflection of every lay term is a losing game (BUG-640).
+    """
+    w = (word or "").strip().lower()
+    for suffix, replacement in (("iest", "y"), ("ier", "y"), ("est", ""), ("er", "")):
+        # The stem must survive with at least two letters: "driest" -> "dry" is a word,
+        # "est" -> "" is not. An earlier bound of len(suffix) + 2 was one character too
+        # strict and dropped exactly that case.
+        if w.endswith(suffix) and len(w) - len(suffix) >= 2:
+            return w[: -len(suffix)] + replacement
+    return w
+
+
+def _modality_from_lay_term(term: str) -> Optional[str]:
+    """Map a lay word — in any inflection — to the modality it describes, or None."""
+    wanted = _base_form(term)
+    if not wanted:
+        return None
+    for name, hint in _LAY_HINTS.items():
+        for phrase in hint.split(","):
+            for token in phrase.strip().lower().split():
+                if _base_form(token) == wanted:
+                    return name
+    return None
+
+
+#: Lay words whose GOOD END is in the word itself: "coolest" can only mean the low end of
+#: temperature. Only words that carry their own polarity are listed — "temperature" and
+#: "occupancy" are not here, because there the better end really is a preference and
+#: `_infer_direction` already refuses to invent one.
+_LAY_POLARITY: Dict[str, Direction] = {
+    "cool": Direction.MINIMIZE,
+    "cold": Direction.MINIMIZE,
+    "chilly": Direction.MINIMIZE,
+    "warm": Direction.MAXIMIZE,
+    "hot": Direction.MAXIMIZE,
+    "cosy": Direction.MAXIMIZE,
+    "quiet": Direction.MINIMIZE,
+    "silent": Direction.MINIMIZE,
+    "loud": Direction.MAXIMIZE,
+    "noisy": Direction.MAXIMIZE,
+    "stuffy": Direction.MAXIMIZE,
+    "busy": Direction.MAXIMIZE,
+    "crowded": Direction.MAXIMIZE,
+    "empty": Direction.MINIMIZE,
+    "humid": Direction.MAXIMIZE,
+    "damp": Direction.MAXIMIZE,
+    "muggy": Direction.MAXIMIZE,
+    "dry": Direction.MINIMIZE,
+    "bright": Direction.MAXIMIZE,
+    "dark": Direction.MINIMIZE,
+}
+
+#: A phrase that asks to AVOID something states the opposite preference from the word it
+#: contains ("avoids the noisiest areas" is minimize, not maximize). Rather than guess which
+#: way round, a phrase carrying one of these is left unmapped — the salvage below only runs
+#: on plainly-worded phrases.
+_AVOIDANCE_RE = re.compile(
+    r"\b(?:avoid|avoids|avoiding|without|away from|free of|free from|less|least|"
+    r"no|not|never|except|excluding|other than)\b",
+    re.IGNORECASE,
+)
+
+_WORD_RE = re.compile(r"[a-zA-Z][a-zA-Z\-]*")
+
+
+def _constraint_from_phrase(phrase: str, known: set, decision: DecisionKind):
+    """A lay word inside an UNMAPPED phrase, turned into the constraint it names — or None.
+
+    BUG (row 117 of the 2026-09-17 stakeholder read): "I'm pregnant and overheating — where's
+    the coolest place to work today?" came back as "I couldn't map part of your request
+    (coolest place to work today; pregnant)". The compile had put the whole clause in
+    `unmapped`, so nothing at all mapped and the question was declared unexecutable — a
+    question whose every room this lane can rank on temperature.
+
+    `_modality_from_lay_term` already translates a lay word the compile step mis-emitted as a
+    MODALITY NAME; it was never applied to the phrases in `unmapped`, which is where a failed
+    mapping actually lands. This is the same translation, one field over, and it is not a
+    guess: it only succeeds when a word in the phrase is a lay term for a modality this
+    building has, and when the direction comes either from the word itself or from a standard
+    (`_infer_direction`). Anything phrased as an avoidance is left alone, because "avoids the
+    noisiest areas" and "the noisiest areas" name the same modality and opposite ends.
+    """
+    text = (phrase or "").strip()
+    if not text or _AVOIDANCE_RE.search(text):
+        return None
+    for token in _WORD_RE.findall(text):
+        base = _base_form(token)
+        modality = _modality_from_lay_term(token)
+        if not modality or modality not in known:
+            continue
+        direction = _LAY_POLARITY.get(base) or _infer_direction(modality, decision, None)
+        if direction is None:
+            continue
+        return Constraint(
+            modality=modality,
+            direction=direction,
+            hardness=Hardness.SOFT,
+            threshold=None,
+            threshold_source=ThresholdSource.RECIPE,
+            source_phrase=text,
+        )
+    return None
+
 
 _DECISIONS = {d.value for d in DecisionKind}
 _DIRECTIONS = {d.value for d in Direction}
@@ -77,6 +189,79 @@ Return ONLY JSON:
  "spatial": [{{"relation": "...", "anchor": "...", "phrase": "..."}}],
  "time": {{"basis": "now", "horizon_hours": null, "window_hours": null, "phrase": ""}},
  "time_phrase_unclear": "", "unmapped": ["..."]}}"""
+
+
+#: The shape `_parse_compiled` reads, as a JSON schema the provider can enforce (ARCH-A1).
+#:
+#: DERIVED FROM THE PARSER, NOT FROM `_PROMPT`. The prose above and the code below drifted
+#: apart once already; a schema copied from the prose would preserve the drift and call it a
+#: contract. Every enum here comes from the same `_DECISIONS` / `_DIRECTIONS` / `_RELATIONS` /
+#: `_BASES` sets the parser validates against, which come in turn from the CQ-IR enums — so
+#: the schema cannot fall behind the IR without the IR moving too.
+#:
+#: What is deliberately NOT constrained:
+#:   * `modality` and `anchor` are free strings. They are BUILDING-SPECIFIC — the closed list
+#:     is the active building's modality set, which belongs in the prompt and in the parser's
+#:     `known` check, never in a schema literal. `unmapped` is the model's escape hatch and
+#:     an enum would take it away.
+#:   * Nothing but `decision` is required, and no object is closed. The flag may only ADD
+#:     guarantees: a response this schema rejects must not be one the current path accepts.
+#:
+#: What IS constrained is exactly the set of fields whose bad values the parser currently
+#: turns into an AmbiguitySignal — an unknown direction, an unknown relation, an unknown
+#: basis. Those are the compile failures a user experiences as "I couldn't map part of
+#: your request".
+def _cqir_schema() -> Dict[str, object]:
+    """The CQ-IR compile contract as a JSON schema (built fresh; callers may bind it)."""
+    _nullable_number = {"type": ["number", "null"]}
+    return {
+        "type": "object",
+        "properties": {
+            "decision": {"type": "string", "enum": sorted(_DECISIONS)},
+            "constraints": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "phrase": {"type": "string"},
+                        "modality": {"type": "string"},
+                        "direction": {"type": "string", "enum": sorted(_DIRECTIONS)},
+                        "hardness": {"type": "string", "enum": ["hard", "soft"]},
+                        "threshold": _nullable_number,
+                    },
+                    "required": ["modality", "direction"],
+                },
+            },
+            "spatial": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "relation": {"type": "string", "enum": sorted(_RELATIONS)},
+                        "anchor": {"type": "string"},
+                        "phrase": {"type": "string"},
+                    },
+                    "required": ["relation"],
+                },
+            },
+            "time": {
+                "type": "object",
+                "properties": {
+                    "basis": {"type": "string", "enum": sorted(_BASES)},
+                    "horizon_hours": _nullable_number,
+                    "window_hours": _nullable_number,
+                    "phrase": {"type": "string"},
+                },
+                "required": ["basis"],
+            },
+            "time_phrase_unclear": {"type": "string"},
+            "unmapped": {"type": "array", "items": {"type": "string"}},
+        },
+        "required": ["decision"],
+    }
+
+
+CQIR_SCHEMA_NAME = "cqir_compile"
 
 
 def _modality_lines(modalities: List[ModalitySpec]) -> str:
@@ -115,15 +300,20 @@ def _compile_cache_key(query: str, modalities: List[ModalitySpec]) -> str:
     else:
         model = str(getattr(settings, "OLLAMA_MODEL", "") or "")
 
-    material = "␟".join(
-        [
-            _normalise_question(query),
-            ",".join(sorted(m.name for m in modalities)),
-            provider,
-            model,
-            hashlib.sha256(_PROMPT.encode("utf-8")).hexdigest()[:16],
-        ]
-    )
+    parts = [
+        _normalise_question(query),
+        ",".join(sorted(m.name for m in modalities)),
+        provider,
+        model,
+        hashlib.sha256(_PROMPT.encode("utf-8")).hexdigest()[:16],
+    ]
+    # A schema-constrained compile and a free-text one are different compilers and must not
+    # share a cache entry — otherwise turning the flag on replays the plans the old path
+    # produced and the acceptance run measures the cache. Appended only when the flag is ON,
+    # so every key in a flag-OFF tree is byte-for-byte what it was.
+    if getattr(settings, "STRUCTURED_PLAN_ENABLED", False):
+        parts.append("structured")
+    material = "␟".join(parts)
     return f"cqir_compile:{hashlib.sha256(material.encode('utf-8')).hexdigest()}"
 
 
@@ -194,6 +384,14 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
         modality = str(c.get("modality", "")).strip().lower()
         phrase = str(c.get("phrase", "")).strip()
         if modality not in known:
+            # An unknown modality may be a lay word the compile step failed to translate.
+            # Translating it here is not a guess: it only succeeds when the word maps to a
+            # modality this building actually has.
+            _mapped = _modality_from_lay_term(modality)
+            if _mapped and _mapped in known:
+                logger.info(f"[compiler] '{modality}' resolved to modality '{_mapped}'")
+                modality = _mapped
+        if modality not in known:
             signals.append(
                 AmbiguitySignal(
                     kind="unmapped_term",
@@ -238,11 +436,10 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
     _fold_unbounded_threshold_direction(constraints, decision)
     constraints = _fold_air_quality(constraints)
 
-    _whole_building = re.compile(
-        r"^(?:(?:in\s+)?the\s+)?(?:whole|entire|full)?\s*building(?:\s*-?\s*wide)?$"
-        r"|^anywhere$|^overall$|^all\s+floors?$",
-        re.IGNORECASE,
-    )
+    # This was a local pattern anchoring on `^anywhere$`, so it matched the bare word and not
+    # "anywhere IN THE BUILDING" — the ordinary way of saying it. One decision, one owner:
+    # `_is_whole_building_scope` now answers it for the spatial anchor and the unmapped list
+    # alike, and knows the building's own name from its config (TODO-629).
     spatial: List[SpatialQualifier] = []
     for s in data.get("spatial", []) or []:
         # normalize before validating: models write "on floor" / "on-floor" /
@@ -253,7 +450,7 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
         anchor = str(s.get("anchor", "")).strip()
         # whole-building scope is the DEFAULT scope, not a qualifier — 'in the
         # whole building' must never become an unresolved anchor (BUG-163 tail)
-        if _whole_building.match(anchor) or _whole_building.match(
+        if _is_whole_building_scope(anchor) or _is_whole_building_scope(
             re.sub(
                 r"^(?:in|across|of|for)\s+",
                 "",
@@ -268,10 +465,36 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
             if m:
                 anchor = m.group(1)
         if relation_raw not in _RELATIONS or not anchor:
+            # AN EMPTY ANCHOR IS NO ANCHOR, NOT AN AMBIGUOUS ONE (BUG-755).
+            #
+            # Measured live 2026-09-17: "I'm pregnant and overheating — where's the coolest
+            # place to work today?" compiled PERFECTLY (temperature, minimize) and was still
+            # refused with "I couldn't map part of your request". The model had emitted
+            # `in_space` with anchor "" for the phrase "coolest place to work today" — it
+            # named no space, because the question names no space — and that became an
+            # `unresolved_anchor` signal. Two things then followed: `is_executable()` is false
+            # while ANY signal stands, and `clarify_policy.absorb_unmapped`, which exists to
+            # drop an unsensable extra like "pregnant" when real constraints mapped, returns
+            # early whenever a non-unmapped signal remains. One phantom anchor therefore
+            # blocked a ranking this lane can do over every room in the building.
+            #
+            # A phrase that names no space at all is the DEFAULT scope, exactly as
+            # "in the whole building" is. A phrase that does look like a named space
+            # (a digit, as in "2.01", or a capitalised proper name) still raises the signal,
+            # so a real "which room did you mean?" is never silently widened to the building.
+            # Only for a relation this lane understands: an unknown relation ("teleport") is a
+            # compile fault and stays a signal whatever its anchor.
+            _phrase = str(s.get("phrase", ""))
+            if relation_raw in _RELATIONS and not anchor and not _looks_like_a_named_space(_phrase):
+                logger.info(
+                    f"[compiler] '{_phrase}' names no space — whole-building scope, not an "
+                    "unresolved anchor"
+                )
+                continue
             signals.append(
                 AmbiguitySignal(
                     kind="unresolved_anchor",
-                    phrase=str(s.get("phrase", "")),
+                    phrase=_phrase,
                     note=f"relation='{relation_raw}' anchor='{anchor}'",
                 )
             )
@@ -308,8 +531,46 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
     if unclear and not (resolved_day or resolved_past):
         signals.append(AmbiguitySignal(kind="unparseable_time", phrase=unclear))
     for u in data.get("unmapped", []) or []:
-        if str(u).strip():
-            signals.append(AmbiguitySignal(kind="unmapped_term", phrase=str(u).strip()))
+        phrase = str(u).strip()
+        if not phrase:
+            continue
+        # "ANYWHERE in the building" is not a place this compiler failed to resolve — it is
+        # the ABSENCE of a place, which is already this lane's default scope (TODO-629).
+        # Recorded as unmapped it made the whole query unexecutable, and the building
+        # answered "I couldn't map part of your request (anywhere in the building) — could
+        # you rephrase or drop that part?" to a question whose every room it could rank.
+        # Asking someone to drop the only word that said "look everywhere" is the wrong
+        # half to drop.
+        if _is_whole_building_scope(phrase):
+            logger.info(f"[compiler] '{phrase}' means the whole building — no spatial anchor")
+            continue
+        signals.append(AmbiguitySignal(kind="unmapped_term", phrase=phrase))
+
+    # NOTHING MAPPED IS THE ONLY CASE THIS RUNS IN.
+    #
+    # When something else mapped, the unmapped extras are already dropped and DECLARED by
+    # `clarify_policy.absorb_unmapped`, and a ranking that works today must not silently gain
+    # a criterion. It is the all-unmapped case that is a wrongful denial: the question is
+    # rejected whole although one of its words names a modality this building measures.
+    if not constraints:
+        _kept: List[AmbiguitySignal] = []
+        for s in signals:
+            salvaged = (
+                _constraint_from_phrase(s.phrase, known, decision)
+                if s.kind == "unmapped_term"
+                else None
+            )
+            if salvaged is not None and not any(
+                c.modality == salvaged.modality for c in constraints
+            ):
+                logger.info(
+                    f"[compiler] '{s.phrase}' names {salvaged.modality} "
+                    f"({salvaged.direction.value}) — mapped rather than refused"
+                )
+                constraints.append(salvaged)
+            else:
+                _kept.append(s)
+        signals = _kept
 
     if not constraints and not any(s.kind == "unmapped_term" for s in signals):
         signals.append(AmbiguitySignal(kind="vague", phrase=query, note="no mappable criteria"))
@@ -329,6 +590,42 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
 # (like the horizon fold): the closed-vocabulary LLM prompt stays untouched and
 
 
+def _default_llm_call() -> LlmCall:
+    """The compiler's own LLM call — schema-constrained when `STRUCTURED_PLAN_ENABLED`.
+
+    Both branches return TEXT, and that is the point: everything downstream of the call
+    (the raw-text compile cache, `_parse_compiled`, every deterministic fold) is untouched
+    by the flag. The structured branch changes only WHERE the JSON's shape is enforced —
+    at the provider and at a validator, rather than at a regex over free text.
+
+    A structured failure propagates as `StructuredGenerationError`, which `compile_query`
+    catches like any other LLM error and turns into a `vague` AmbiguitySignal: the question
+    goes to clarify. It never becomes a half-read plan.
+    """
+    from orchestrator.llm_manager import llm_manager
+    from shared.config import settings
+
+    if not getattr(settings, "STRUCTURED_PLAN_ENABLED", False):
+
+        async def _free_text(prompt: str) -> str:
+            return await llm_manager.generate(prompt, temperature=0.0)
+
+        return _free_text
+
+    schema = _cqir_schema()
+
+    async def _structured(prompt: str) -> str:
+        obj = await llm_manager.generate_structured(
+            prompt,
+            schema,
+            schema_name=CQIR_SCHEMA_NAME,
+            temperature=0.0,
+        )
+        return json.dumps(obj)
+
+    return _structured
+
+
 async def compile_query(
     query: str,
     modalities: List[ModalitySpec],
@@ -342,10 +639,7 @@ async def compile_query(
     with the cache on, a repeat measures the cache, not the compiler (CAVEAT-327).
     """
     if llm_call is None:  # pragma: no cover - live wiring
-        from orchestrator.llm_manager import llm_manager
-
-        async def llm_call(prompt: str) -> str:
-            return await llm_manager.generate(prompt, temperature=0.0)
+        llm_call = _default_llm_call()
 
     known = {m.name for m in modalities}
     prompt = _PROMPT.format(modality_lines=_modality_lines(modalities), query=query)
@@ -574,6 +868,74 @@ def _fold_unbounded_threshold_direction(
             )
 
 
+#: Phrases that scope a question to the WHOLE building rather than naming a place inside it.
+#: Generic English only — the building's own name is stripped separately, from its config, so
+#: nothing here has to know what this building is called.
+_WHOLE_BUILDING_SCOPE_RE = re.compile(
+    r"^(?:in|at|across|throughout|within|around|over)?\s*"
+    r"(?:anywhere|somewhere|everywhere|any\s*(?:room|rooms|space|spaces|zone|zones|area|areas)"
+    r"|(?:the\s+)?(?:whole|entire|complete)\s+(?:building|site|premises|place)"
+    r"|(?:the\s+)?building\s*-?\s*wide"
+    r"|(?:the\s+)?(?:building|site|premises)"
+    # Carried over from the pattern this replaced — "all floors" scopes to everywhere too,
+    # and dropping it while consolidating would have been a silent regression.
+    r"|(?:all|every|each)\s+(?:floor|floors|level|levels|room|rooms|space|spaces|zone|zones)"
+    # A bare PLURAL space noun names no particular place: "which rooms in the building are
+    # the stuffiest" compiled "rooms in the building" as a spatial anchor and could not
+    # resolve it, so the question became unexecutable after "stuffiest" had been fixed. The
+    # singular is deliberately absent — "room 5.01" and "the room" DO name somewhere.
+    r"|(?:rooms|spaces|zones|areas|floors|levels)"
+    r"|overall|in\s+general)"
+    r"(?:\s*(?:in|of|at|across|within|throughout)?\s*(?:the\s+)?"
+    r"(?:building|site|premises|place))?\s*$",
+    re.IGNORECASE,
+)
+
+
+#: A digit ("2.01", "floor 3") or a Capitalised word that is not the sentence's first — the two
+#: shapes a NAMED space takes in a stakeholder's words, in any building. A phrase with neither
+#: names no particular space.
+_NAMED_SPACE_RE = re.compile(r"\d|(?<=\s)[A-Z][a-zA-Z]")
+
+
+def _looks_like_a_named_space(phrase: str) -> bool:
+    """True when the phrase could be naming one space (BUG-755).
+
+    Deliberately generous: this decides whether an EMPTY anchor is treated as the default
+    whole-building scope or kept as an ambiguity to ask about, and widening a question the
+    user scoped to one room is the worse error of the two.
+    """
+    text = (phrase or "").strip()
+    if not text:
+        return False
+    return bool(_NAMED_SPACE_RE.search(text))
+
+
+def _is_whole_building_scope(phrase: str) -> bool:
+    """True when the phrase says 'everywhere' rather than naming somewhere.
+
+    A question scoped to the whole building carries no spatial anchor, which is this lane's
+    default — so treating the phrase as an unresolved term denies a question the building can
+    answer completely.
+    """
+    text = (phrase or "").strip().lower().strip(".,!?")
+    if not text:
+        return False
+    # The building may be named rather than called "the building": "anywhere in <name>".
+    # Taken from the active building's own config, never written in here.
+    try:
+        from shared.config import settings
+
+        name = (getattr(settings, "BUILDING_NAME", "") or "").strip().lower()
+        if name:
+            text = text.replace(name, "building")
+            # A name that already ends in the word "building" leaves it doubled.
+            text = re.sub(r"\bbuilding(\s+building)+\b", "building", text)
+    except Exception:  # the compiler must not depend on a booted stack
+        pass
+    return bool(_WHOLE_BUILDING_SCOPE_RE.match(text))
+
+
 def _infer_direction(modality: str, decision: DecisionKind, threshold) -> Optional[Direction]:
     """Supply the missing end of a ranking when a STANDARD names it (BUG-196).
 
@@ -627,7 +989,10 @@ def _fold_named_calendar_day(
     Tuesday, not UTC's.
     """
     from orchestrator.services.deliberation.cqir import TimeBasis as _TB
-    from orchestrator.services.requested_interval import calendar_day_bounds, interval_hours
+    from orchestrator.services.requested_interval import (
+        calendar_day_bounds,
+        interval_hours,
+    )
 
     if time_spec.basis == _TB.FORECAST:
         return False
@@ -693,8 +1058,16 @@ def _fold_deterministic_horizon(time_spec, query: str) -> None:
     For FORECAST-basis queries, a phrase the trend lane's rule table
     recognizes ("tomorrow", "next week") overrides whatever hours the compiler
     LLM guessed, so ARBITER and the trend lane report identical horizons for
-    identical phrases. Unrecognized phrases keep the LLM's number; a missing
-    number defaults to 24 h.
+    identical phrases. Unrecognized phrases keep the LLM's number.
+
+    AN UNPARSED PHRASE IS LEFT UNPARSED. This used to write 24.0 in when nothing had
+    resolved the phrase, which made the horizon indistinguishable from one the table had
+    actually recognised — so row 99's "next Wednesday after 2 p.m." was reported as
+    "forecast 24h ahead from recent history", a sentence claiming next Wednesday had been
+    projected. The executor still runs on 24 hours when no horizon is given, so the
+    computation is unchanged; what changes is that the answer can now say the time it was
+    asked about was not the time it projected (clarify_policy owns that sentence, and its
+    honest branch was unreachable while this line ran).
     """
     from orchestrator.services.deliberation.cqir import TimeBasis as _TB
     from orchestrator.services.forecasting.horizon_parser import match_horizon
@@ -704,5 +1077,3 @@ def _fold_deterministic_horizon(time_spec, query: str) -> None:
     matched = match_horizon(query)
     if matched is not None:
         time_spec.horizon_hours = matched.total.total_seconds() / 3600.0
-    elif time_spec.horizon_hours is None:
-        time_spec.horizon_hours = 24.0

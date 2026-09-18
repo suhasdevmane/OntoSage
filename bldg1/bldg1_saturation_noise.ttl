@@ -14,7 +14,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.01 — Main Reception noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.01 — Main Reception noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -26,7 +26,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.04 — Mechanical Plant Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.04 — Mechanical Plant Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -38,7 +38,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.05 — Mechanical Plant Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.05 — Mechanical Plant Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -50,7 +50,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.06 — Loading and Goods Storage noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.06 — Loading and Goods Storage noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -62,7 +62,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.07 — Service Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.07 — Service Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -74,7 +74,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.08 — Service Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.08 — Service Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -86,7 +86,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.10 — Building Management Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.10 — Building Management Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -98,7 +98,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.17 — Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.17 — Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -110,7 +110,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.18 — Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.18 — Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -122,7 +122,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.19 — Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.19 — Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -134,7 +134,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.20 — Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.20 — Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -146,7 +146,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.29 — Storage Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.29 — Storage Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -158,7 +158,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.31 — Mechanical/Service Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.31 — Mechanical/Service Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -170,7 +170,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.32 — Mechanical/Service Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.32 — Mechanical/Service Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -182,7 +182,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.33 — Mechanical/Service Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.33 — Mechanical/Service Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -194,7 +194,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 0.34 — Building Telecommunications Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 0.34 — Building Telecommunications Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -206,7 +206,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.06 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.06 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -218,7 +218,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.07 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.07 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -230,7 +230,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.08 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.08 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -242,7 +242,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.09 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.09 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -254,7 +254,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.25 — Conference/Seminar Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.25 — Conference/Seminar Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -266,7 +266,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.26 — Conference/Seminar Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.26 — Conference/Seminar Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -278,7 +278,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.34 — Telecommunications Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.34 — Telecommunications Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -290,7 +290,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.37 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.37 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -302,7 +302,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.38 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.38 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -314,7 +314,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.39 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.39 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -326,7 +326,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.40 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.40 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -338,7 +338,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 1.41 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 1.41 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -350,7 +350,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.01 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.01 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -362,7 +362,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.02 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.02 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -374,7 +374,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.03 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.03 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -386,7 +386,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.04 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.04 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -398,7 +398,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.05 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.05 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -410,7 +410,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.06 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.06 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -422,7 +422,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.07 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.07 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -434,7 +434,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.08 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.08 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -446,7 +446,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.09 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.09 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -458,7 +458,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.10 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.10 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -470,7 +470,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.11 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.11 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -482,7 +482,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.12 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.12 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -494,7 +494,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.13 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.13 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -506,7 +506,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.14 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.14 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -518,7 +518,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.15 — Seminar Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.15 — Seminar Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -530,7 +530,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.17 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.17 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -542,7 +542,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.18 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.18 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -554,7 +554,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.19 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.19 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -566,7 +566,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.20 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.20 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -578,7 +578,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.21 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.21 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -590,7 +590,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.22 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.22 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -602,7 +602,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.24 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.24 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -614,7 +614,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.26 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.26 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -626,7 +626,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.34 — Telecommunications Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.34 — Telecommunications Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -638,7 +638,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.35 — Restroom (Male) noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.35 — Restroom (Male) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -650,7 +650,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.36 — Restroom (Female) noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.36 — Restroom (Female) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -662,7 +662,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.44 — Server Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.44 — Server Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -674,7 +674,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.47 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.47 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -686,7 +686,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.48 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.48 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -698,7 +698,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.49 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.49 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -710,7 +710,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.50 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.50 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -722,7 +722,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.52 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.52 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -734,7 +734,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.53 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.53 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -746,7 +746,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.54 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.54 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -758,7 +758,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.55 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.55 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -770,7 +770,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.56 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.56 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -782,7 +782,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.57 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.57 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -794,7 +794,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.58 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.58 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -806,7 +806,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.59 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.59 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -818,7 +818,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.60 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.60 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -830,7 +830,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.61 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.61 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -842,7 +842,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.62 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.62 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -854,7 +854,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.63 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.63 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -866,7 +866,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.64 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.64 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -878,7 +878,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.65 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.65 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -890,7 +890,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.66 — Staff Break Room / Kitchen noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.66 — Staff Break Room / Kitchen noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -902,7 +902,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 2.67 — Storage Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 2.67 — Storage Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -914,7 +914,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.01 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.01 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -926,7 +926,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.02 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.02 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -938,7 +938,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.03 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.03 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -950,7 +950,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.04 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.04 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -962,7 +962,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.05 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.05 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -974,7 +974,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.06 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.06 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -986,7 +986,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.07 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.07 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -998,7 +998,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.08 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.08 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1010,7 +1010,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.09 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.09 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1022,7 +1022,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.10 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.10 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1034,7 +1034,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.11 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.11 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1046,7 +1046,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.12 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.12 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1058,7 +1058,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.13 — Seminar Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.13 — Seminar Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1070,7 +1070,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.14 — Seminar Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.14 — Seminar Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1082,7 +1082,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.15 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.15 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1094,7 +1094,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.16 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.16 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1106,7 +1106,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.17 — Staff Common Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.17 — Staff Common Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1118,7 +1118,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.18 — Kitchen noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.18 — Kitchen noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1130,7 +1130,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.20 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.20 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1142,7 +1142,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.22 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.22 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1154,7 +1154,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.26 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.26 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1166,7 +1166,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.27 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.27 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1178,7 +1178,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.36 — Restroom (Male) noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.36 — Restroom (Male) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1190,7 +1190,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.37 — Restroom (Female) noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.37 — Restroom (Female) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1202,7 +1202,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.38 — Telecommunications Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.38 — Telecommunications Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1214,7 +1214,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.46 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.46 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1226,7 +1226,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.48 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.48 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1238,7 +1238,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.50 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.50 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1250,7 +1250,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.51 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.51 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1262,7 +1262,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.52 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.52 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1274,7 +1274,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.53 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.53 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1286,7 +1286,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.54 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.54 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1298,7 +1298,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.56 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.56 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1310,7 +1310,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.57 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.57 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1322,7 +1322,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.58 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.58 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1334,7 +1334,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.59 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.59 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1346,7 +1346,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.60 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.60 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1358,7 +1358,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.61 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.61 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1370,7 +1370,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.62 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.62 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1382,7 +1382,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.63 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.63 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1394,7 +1394,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.64 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.64 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1406,7 +1406,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.65 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.65 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1418,7 +1418,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.66 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.66 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1430,7 +1430,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.67 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.67 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1442,7 +1442,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.68 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.68 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1454,7 +1454,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.69 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.69 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1466,7 +1466,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.70 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.70 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1478,7 +1478,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 3.71 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 3.71 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1490,7 +1490,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.01 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.01 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1502,7 +1502,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.02 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.02 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1514,7 +1514,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.03 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.03 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1526,7 +1526,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.05 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.05 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1538,7 +1538,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.06 — Computer Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.06 — Computer Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1550,7 +1550,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.07 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.07 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1562,7 +1562,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.08 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.08 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1574,7 +1574,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.09 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.09 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1586,7 +1586,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.10 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.10 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1598,7 +1598,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.11 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.11 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1610,7 +1610,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.12 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.12 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1622,7 +1622,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.13 — Seminar Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.13 — Seminar Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1634,7 +1634,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.14 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.14 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1646,7 +1646,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.15 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.15 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1658,7 +1658,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.16 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.16 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1670,7 +1670,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.18 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.18 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1682,7 +1682,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.19 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.19 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1694,7 +1694,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.20 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.20 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1706,7 +1706,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.21 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.21 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1718,7 +1718,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.22 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.22 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1730,7 +1730,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.23 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.23 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1742,7 +1742,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.24 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.24 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1754,7 +1754,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.34 — Telecommunications Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.34 — Telecommunications Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1766,7 +1766,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.35 — Restroom (Male) noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.35 — Restroom (Male) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1778,7 +1778,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.36 — Restroom (Female) noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.36 — Restroom (Female) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1790,7 +1790,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.38 — Mechanical/Service Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.38 — Mechanical/Service Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1802,7 +1802,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.44 — Server Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.44 — Server Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1814,7 +1814,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.47 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.47 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1826,7 +1826,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.49 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.49 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1838,7 +1838,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.50 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.50 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1850,7 +1850,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.51 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.51 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1862,7 +1862,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.52 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.52 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1874,7 +1874,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.53 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.53 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1886,7 +1886,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.55 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.55 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1898,7 +1898,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.56 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.56 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1910,7 +1910,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.57 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.57 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1922,7 +1922,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.58 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.58 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1934,7 +1934,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.59 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.59 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1946,7 +1946,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.60 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.60 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1958,7 +1958,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.61 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.61 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1970,7 +1970,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.62 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.62 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1982,7 +1982,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.63 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.63 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -1994,7 +1994,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.64 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.64 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2006,7 +2006,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.65 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.65 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2018,7 +2018,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.66 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.66 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2030,7 +2030,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.67 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.67 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2042,7 +2042,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.68 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.68 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2054,7 +2054,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.69 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.69 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2066,7 +2066,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.70 — Staff Break Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.70 — Staff Break Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2078,7 +2078,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 4.71 — Storage Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 4.71 — Storage Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2090,7 +2090,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.01 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.01 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2102,7 +2102,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.02 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.02 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2114,7 +2114,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.03 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.03 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2126,7 +2126,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.04 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.04 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2138,7 +2138,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.05 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.05 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2150,7 +2150,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.06 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.06 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2162,7 +2162,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.07 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.07 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2174,7 +2174,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.08 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.08 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2186,7 +2186,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.09 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.09 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2198,7 +2198,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.10 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.10 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2210,7 +2210,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.11 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.11 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2222,7 +2222,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.12 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.12 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2234,7 +2234,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.13 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.13 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2246,7 +2246,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.14 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.14 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2258,7 +2258,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.15 — Seminar / Conference Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.15 — Seminar / Conference Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2270,7 +2270,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.16 — Seminar / Conference Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.16 — Seminar / Conference Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2282,7 +2282,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.17 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.17 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2294,7 +2294,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.18 — Meeting Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.18 — Meeting Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2306,7 +2306,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.20 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.20 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2318,7 +2318,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.21 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.21 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2330,7 +2330,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.22 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.22 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2342,7 +2342,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.23 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.23 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2354,7 +2354,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.26 — Staff Break Room / Kitchen noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.26 — Staff Break Room / Kitchen noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2366,7 +2366,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.34 — Telecommunications Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.34 — Telecommunications Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2378,7 +2378,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.35 — Restroom (Male) noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.35 — Restroom (Male) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2390,7 +2390,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.36 — Restroom (Female) noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.36 — Restroom (Female) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2402,7 +2402,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.44 — Server Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.44 — Server Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2414,7 +2414,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.45 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.45 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2426,7 +2426,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.48 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.48 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2438,7 +2438,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.49 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.49 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2450,7 +2450,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.50 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.50 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2462,7 +2462,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.51 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.51 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2474,7 +2474,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.52 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.52 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2486,7 +2486,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.53 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.53 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2498,7 +2498,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.54 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.54 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2510,7 +2510,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.56 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.56 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2522,7 +2522,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.57 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.57 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2534,7 +2534,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.58 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.58 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2546,7 +2546,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.59 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.59 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2558,7 +2558,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.60 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.60 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2570,7 +2570,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.61 — Research Laboratory noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.61 — Research Laboratory noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2582,7 +2582,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.62 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.62 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2594,7 +2594,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.63 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.63 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2606,7 +2606,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.64 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.64 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2618,7 +2618,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.65 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.65 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2630,7 +2630,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.66 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.66 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2642,7 +2642,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.67 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.67 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2654,7 +2654,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.68 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.68 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2666,7 +2666,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.69 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.69 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2678,7 +2678,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.70 — Academic Office noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.70 — Academic Office noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2690,7 +2690,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Room 5.71 — Storage Room noise (simulated) [dB]"@en ;
+    rdfs:label "Room 5.71 — Storage Room noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2702,7 +2702,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Server Room — Floor 2 (Room 2.44) noise (simulated) [dB]"@en ;
+    rdfs:label "Server Room — Floor 2 (Room 2.44) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2714,7 +2714,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Server Room — Floor 4 (Room 4.44) noise (simulated) [dB]"@en ;
+    rdfs:label "Server Room — Floor 4 (Room 4.44) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2726,7 +2726,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Server Room — Floor 5 (Room 5.44) noise (simulated) [dB]"@en ;
+    rdfs:label "Server Room — Floor 5 (Room 5.44) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2738,7 +2738,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) noise (simulated) [dB]"@en ;
+    rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2750,7 +2750,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) noise (simulated) [dB]"@en ;
+    rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2762,7 +2762,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) noise (simulated) [dB]"@en ;
+    rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2774,7 +2774,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) noise (simulated) [dB]"@en ;
+    rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2786,7 +2786,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) noise (simulated) [dB]"@en ;
+    rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
@@ -2798,7 +2798,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5_sat_noise>
     a ontosage:Sound_Level_Sensor ;
-    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) noise (simulated) [dB]"@en ;
+    rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) noise [dB]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
     ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;

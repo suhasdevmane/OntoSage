@@ -187,7 +187,28 @@ def test_a_question_word_that_is_also_a_status_gets_both_readings():
     facts = register_facts(SESSIONS, "Which teaching sessions are scheduled in Room 1.06?")
     line = next(l for l in facts.splitlines() if l.startswith("- CAREFUL"))
     assert "'scheduled' is also a recorded STATUS" in line
-    assert "23 in total" in line
+    # The wording changed when the instruction stopped DESCRIBING the shape and started
+    # writing the sentence out: reporting the status count alone happened about one run in
+    # three otherwise. What must hold is that both numbers are present and the total is
+    # named as the total.
+    assert "23 records in total" in line
+    # The sentence it dictates must not assume WHAT holds the rows. It said "The room holds",
+    # right for this timetable and wrong for every other register the same rule fires on —
+    # washroom and server-room answers opened by calling their register a room.
+    assert "room holds" not in line.lower()
+
+
+def test_the_opening_sentence_does_not_call_a_non_room_register_a_room():
+    """The same rule, fired by a register that has nothing to do with rooms."""
+    permits = [
+        {"recordStatus": "open" if i % 3 else "closed", "id": f"PTW-{i:03d}"}
+        for i in range(1, 10)
+    ]
+    facts = register_facts(permits, "Which permits are open?")
+    careful = [l for l in facts.splitlines() if l.startswith("- CAREFUL")]
+    assert careful, "the status-word rule was expected to fire for 'open'"
+    assert "room" not in careful[0].lower()
+    assert "9 records in total" in careful[0]
 
 
 def test_a_question_that_does_not_use_a_status_word_gets_no_warning():

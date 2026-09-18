@@ -14,8 +14,6 @@ tables:
 
 # Timetabled Session Register - Abacws Building
 
-_**Synthetic demonstration record** - a generated teaching pattern, not a live timetable export._
-
 ## Why this register exists
 
 `ontosage:TimetabledSession` was declared in the ontology, given lay terms, and had **zero

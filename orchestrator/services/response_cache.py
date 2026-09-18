@@ -10,8 +10,11 @@ Cache layers:
   2. Fuzzy-match cache:  Trigram-based similarity (optional, configurable threshold)
 
 Key schema:
-  resp_cache:exact:<hash>     → JSON {response, intent, media, timestamp, hit_count}
-  resp_cache:fuzzy:<trigram>   → list of exact hashes (for fuzzy lookup)
+  resp_cache:exact:<partition>:<hash>         → JSON {response, intent, media, timestamp, hit_count}
+  resp_cache:fuzzy:<partition>[|c<context>]  → hash of exact hashes → normalised question
+
+  <hash> is the normalised question alone for an OPENING question, and the question plus
+  the preceding user questions for any later turn (BUG-668, see CONTEXT_TURNS).
 
 Configuration (env vars):
   RESPONSE_CACHE_TTL=3600       — TTL for cached responses (seconds, default 1 hour)
@@ -46,7 +49,7 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Sequence
 
 logger = logging.getLogger(__name__)
 
@@ -193,6 +196,60 @@ def query_hash(query: str) -> str:
     return hashlib.sha256(normalised.encode("utf-8")).hexdigest()[:24]
 
 
+#: How many preceding USER questions a follow-up's cache entry is bound to (BUG-668).
+#:
+#: A follow-up's meaning lives in the turns before it: "How has that changed over the last
+#: week?" is a different question after "CO2 in room 5.01" than after "temperature on floor
+#: 3", and a key holding only its own words served one conversation's answer to the other.
+#:
+#: Three, because the co-reference rewrite -- the step that turns a follow-up's words into a
+#: definite question -- reads the last six messages, three user/assistant exchanges
+#: (`dialogue_agent.rewrite_to_standalone`, `format_conversation_history(max_messages=6)`).
+#: Two turns that share a key were therefore rewritten from the same user-side history.
+#: A longer bound buys nothing that rewrite can see, and costs reuse: turn five of a scripted
+#: conversation could no longer share an entry with the same script opened differently.
+#:
+#: Assistant replies are NOT in the key. They are a function of the user turns, the partition
+#: and the revision (all already keyed) plus the clock, so including them would make every
+#: follow-up a miss without making any hit more correct.
+#:
+#: Residual, stated rather than discovered: state carried from OLDER turns -- a forecast or
+#: analytics result kept by carry-forward since before the last three questions -- is not in
+#: the key.
+CONTEXT_TURNS = 3
+
+
+def context_turns(context: Optional[Sequence[str]]) -> List[str]:
+    """The normalised preceding user questions that bind a cache entry, oldest first."""
+    turns = [normalise_query(str(t)) for t in (context or []) if str(t or "").strip()]
+    return turns[-CONTEXT_TURNS:]
+
+
+def context_fingerprint(context: Optional[Sequence[str]]) -> str:
+    """A stable id for the preceding questions; the empty string for an opening question."""
+    turns = context_turns(context)
+    if not turns:
+        return ""
+    joined = f"{len(turns)}\x1d" + "\x1e".join(turns)
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:16]
+
+
+def cache_hash(question: str, context: Optional[Sequence[str]] = None) -> str:
+    """The entry id for a question asked after ``context`` (earlier user questions).
+
+    An opening question -- no preceding question -- keeps exactly ``query_hash``, so a
+    standalone question still reuses the cache across conversations. Any later turn only
+    matches an entry made after the same preceding questions. There is no anaphora word list:
+    a standalone question asked second merely loses cross-conversation reuse, which costs
+    time and never correctness.
+    """
+    fingerprint = context_fingerprint(context)
+    if not fingerprint:
+        return query_hash(question)
+    joined = f"{normalise_query(question)}\x1f{fingerprint}"
+    return hashlib.sha256(joined.encode("utf-8")).hexdigest()[:24]
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Trigram similarity (for fuzzy matching)
 # ─────────────────────────────────────────────────────────────────────────────
@@ -311,9 +368,14 @@ class ResponseCacheService:
         building_id: str = "default",
         user_id: str = "",
         role: str = "",
+        context: Optional[Sequence[str]] = None,
     ) -> Optional[Dict]:
         """
         Look up a cached response for the given question.
+
+        ``context`` is the conversation's earlier USER questions, oldest first (BUG-668). A
+        follow-up only matches an entry stored after the same ones; an opening question passes
+        none and matches entries from any conversation.
 
         Returns:
             Dict with keys: response, intent, media, cached_at, hit_count
@@ -322,7 +384,7 @@ class ResponseCacheService:
         if not self._enabled:
             return None
 
-        qhash = query_hash(question)
+        qhash = cache_hash(question, context)
         partition = self._partition(building_id, role, user_id)
         cache_key = f"{self.PREFIX_EXACT}{partition}:{qhash}"
 
@@ -343,7 +405,7 @@ class ResponseCacheService:
 
         # 2. Fuzzy match (if enabled)
         if self._fuzzy:
-            fuzzy_result = await self._fuzzy_lookup(question, partition)
+            fuzzy_result = await self._fuzzy_lookup(question, partition, context)
             if fuzzy_result:
                 fuzzy_result["cache_type"] = "fuzzy"
                 await self._increment_stats("fuzzy_hits")
@@ -369,9 +431,13 @@ class ResponseCacheService:
         metadata: Optional[Dict] = None,
         user_id: str = "",
         role: str = "",
+        context: Optional[Sequence[str]] = None,
     ):
         """
         Store a response in the cache.
+
+        ``context`` must be what the matching ``get`` passed -- the earlier user questions --
+        or the entry is unreachable (BUG-668).
 
         Non-cacheable intents (clarification, discovery, control) are skipped.
         """
@@ -382,12 +448,13 @@ class ResponseCacheService:
             logger.debug(f"Response cache SKIP: intent '{intent}' is not cacheable")
             return
 
-        qhash = query_hash(question)
+        qhash = cache_hash(question, context)
         partition = self._partition(building_id, role, user_id)
         cache_key = f"{self.PREFIX_EXACT}{partition}:{qhash}"
 
         entry = {
             "question": question,
+            "context": context_turns(context),
             "normalised": normalise_query(question),
             "response": response,
             "intent": intent,
@@ -405,7 +472,7 @@ class ResponseCacheService:
         # Store fuzzy index entry
         if self._fuzzy:
             normalised = normalise_query(question)
-            fuzzy_key = f"{self.PREFIX_FUZZY}{partition}"
+            fuzzy_key = self._fuzzy_index_key(partition, context)
             await self._redis_hset(fuzzy_key, qhash, normalised)
 
     # ─────────────────────────────────────────────────────────────────────────
@@ -422,6 +489,10 @@ class ResponseCacheService:
         so a flush that matched only ``building_id:`` would leave every partition
         untouched and the stale answer would keep being served to the one requester who
         could still reach it.
+
+        A single ``question`` reaches only its OPENING-question entries: an entry stored as a
+        follow-up is keyed on the questions before it too (BUG-668), which a bare question
+        cannot name. Nothing calls it that way today; use ``flush_all`` to be sure.
         """
         if flush_all:
             pattern = f"{self.PREFIX_EXACT}{building_id}|*"
@@ -477,15 +548,31 @@ class ResponseCacheService:
     # Fuzzy logic
     # ─────────────────────────────────────────────────────────────────────────
 
-    async def _fuzzy_lookup(self, question: str, partition: str) -> Optional[Dict]:
+    @classmethod
+    def _fuzzy_index_key(cls, partition: str, context: Optional[Sequence[str]] = None) -> str:
+        """The fuzzy index a question is filed in: one per partition AND preceding questions.
+
+        Similarity is only ever scored between questions asked after the SAME earlier
+        questions (BUG-668), so a near-identical follow-up in another conversation is never
+        a candidate. An opening question keeps the original per-partition index. The context
+        rides after the partition, so `invalidate`'s `{building_id}|*` pattern still reaches it.
+        """
+        fingerprint = context_fingerprint(context)
+        base = f"{cls.PREFIX_FUZZY}{partition}"
+        return f"{base}|c{fingerprint}" if fingerprint else base
+
+    async def _fuzzy_lookup(
+        self, question: str, partition: str, context: Optional[Sequence[str]] = None
+    ) -> Optional[Dict]:
         """Find the best fuzzy match for a question WITHIN the caller's partition.
 
         Takes a partition, not a building: a fuzzy match that crossed partitions would
         reintroduce the cross-role leak by the back door, and less visibly, since the
-        served answer would not even be to the same question.
+        served answer would not even be to the same question. For the same reason it takes
+        the preceding questions: only entries made after the same ones are scored.
         """
         normalised = normalise_query(question)
-        fuzzy_key = f"{self.PREFIX_FUZZY}{partition}"
+        fuzzy_key = self._fuzzy_index_key(partition, context)
         all_entries = await self._redis_hgetall(fuzzy_key)
 
         best_sim = 0.0

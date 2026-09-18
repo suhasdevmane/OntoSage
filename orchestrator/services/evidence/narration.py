@@ -90,18 +90,28 @@ def label_proxy(
     return f"{head} {reason.capitalize()}."
 
 
-def describe_not_assessable(reason: str, remedy: str = "") -> str:
+def describe_not_assessable(
+    reason: str, remedy: str = "", for_admin: bool = False, next_step: str = ""
+) -> str:
     """A refusal that is an ANSWER (T35).
 
-    Reason plus remedy, always. Without them a refusal is indistinguishable from the system
-    giving up, and a grader cannot tell a justified refusal from an unjustified one -- which
-    is the distinction the whole scoring approach rests on.
+    The reason, always. Without it a refusal is indistinguishable from the system giving up,
+    and a grader cannot tell a justified refusal from an unjustified one -- which is the
+    distinction the whole scoring approach rests on.
+
+    The remedy is shown to an administrator only (``for_admin``): "connect a sensor" or
+    "restart the publisher for co2_data" is a data change nobody else can make, and a
+    supervisor told to make one reads a broken system. Any other reader gets ``next_step``
+    -- what they can know or do themselves -- when the caller has one. The default is the
+    plain form, so a caller that does not know who is reading fails toward it.
     """
     if not reason:
         reason = "the available evidence does not support an answer to this question"
     text = f"**Not assessable.** {reason[0].upper()}{reason[1:]}."
-    if remedy:
+    if for_admin and remedy:
         text += f"\n\n**What would make this answerable:** {remedy}"
+    elif not for_admin and next_step:
+        text += f"\n\n{next_step}"
     return text
 
 

@@ -13,14 +13,23 @@ YAML schema example:
         enabled: true
         trigger:
           sensor_uuid: "abc123-..."       # direct UUID, OR
-          concept: stuffy                 # HBCO concept (resolved -> Brick class -> UUID)
+          concept: stuffy                 # HBCO concept (resolved -> Brick class -> UUIDs)
+          scope: all                      # REQUIRED on a concept rule: all | first_reporting
+          floor: "3"                      # optional spatial scope (TODO-528) — either or
+          space: "5.01"                   # both; resolved through the graph's hierarchy
           op: ">"                         # >, <, >=, <=, ==, !=
           threshold: 1000.0
           duration_min: 10               # 0 = single sample; N = sustained for N minutes
         action:
           type: notify                   # only type in Phase F
           message: "CO2 {value:.0f} ppm in room 5.01 (threshold {threshold:.0f})"
-          severity: warning              # info | warning | critical
+          severity: warning
+
+Spatial scope (TODO-528): `floor` / `space` narrow a CONCEPT rule to the points that are
+located there, via sensor -> brick:hasLocation -> (brick:isPartOf|^brick:hasPart)* ->
+brick:Floor — the same traversal the spatial lane uses. Never by parsing a floor number out
+of a sensor's name. A scope that matches no point makes the rule watch NOTHING and say so;
+it never falls back to a point elsewhere in the building.              # info | warning | critical
 
 Duration window: Redis key rules:breach_start:<rule_id>:<uuid> = ISO timestamp
   First breach: key written.  Subsequent checks: fire if (now - start) >= duration_min.
@@ -34,7 +43,7 @@ from __future__ import annotations
 import asyncio
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional, Tuple
 
 import yaml
 from pydantic import BaseModel, Field
@@ -77,6 +86,83 @@ SCOPE_ALL = "all"
 SCOPE_FIRST = "first_reporting"
 _SCOPES = (SCOPE_ALL, SCOPE_FIRST)
 
+#: What a place name may contain (TODO-528).
+#:
+#: These strings are interpolated into a SPARQL FILTER, so the grammar is the guard: a
+#: floor or space identifier is a short name — digits, letters, a dot, a dash, a space —
+#: and anything carrying a quote, a brace or a backslash is not a place, it is an attempt
+#: to end the literal. Rejected by the MODEL, so a malformed rule never reaches the query
+#: builder and the refusal is visible at load time rather than as an empty result later.
+_PLACE_PATTERN = r"^[A-Za-z0-9][A-Za-z0-9 ._\-]{0,63}$"
+
+#: How many points a spatially scoped query may return.
+#:
+#: Far larger than CLASS_CANDIDATES because the scope is the bound: "every humidity point
+#: on floor 3" is a finite, intended set, where "every humidity point" is not. Still
+#: bounded — and the engine reports when the bound was reached, so a truncated set is
+#: never mistaken for a complete one.
+SCOPE_POINT_LIMIT = 200
+
+
+class RulePlace(NamedTuple):
+    """The place a rule declares it covers. Both parts optional; at least one present."""
+
+    floor: Optional[str] = None
+    space: Optional[str] = None
+
+    def describe(self) -> str:
+        bits = []
+        if self.floor:
+            bits.append(f"floor {self.floor}")
+        if self.space:
+            bits.append(f"space {self.space}")
+        return " and ".join(bits) if bits else "the whole building"
+
+
+class RuleCoverage(BaseModel):
+    """What a rule actually watches, as opposed to what its name suggests (BUG-482).
+
+    The defect both TODO-528 and BUG-482 describe is not that the engine picked badly — it
+    is that nothing anywhere said what had been picked. A rule named `humidity_damp_floor3`
+    watching one arbitrary humidity sensor somewhere in the building is indistinguishable,
+    from outside, from a rule covering floor 3. So the engine now records its coverage per
+    rule and can be asked.
+    """
+
+    rule_id: str
+    concept: Optional[str] = None
+    scope: Optional[str] = None
+    floor: Optional[str] = None
+    space: Optional[str] = None
+    #: Points of the concept's class(es) LOCATED in the declared place, reporting or not.
+    in_scope: int = 0
+    #: The uuids this rule will actually evaluate this cycle.
+    watched: List[str] = Field(default_factory=list)
+    #: Those points' sensor IRIs, so a log names a sensor rather than a uuid prefix.
+    sensors: List[str] = Field(default_factory=list)
+    #: True when the scoped query hit SCOPE_POINT_LIMIT — the set is a prefix, not the set.
+    truncated: bool = False
+
+    @property
+    def place(self) -> str:
+        return RulePlace(self.floor, self.space).describe()
+
+    def describe(self) -> str:
+        if not self.watched:
+            return (
+                f"rule={self.rule_id} covers NO reporting point in {self.place} "
+                f"({self.in_scope} point(s) of its class are located there) — it cannot fire"
+            )
+        shown = ", ".join(self.sensors[:8])
+        if len(self.sensors) > 8:
+            shown += f", … ({len(self.sensors) - 8} more)"
+        return (
+            f"rule={self.rule_id} scope={self.scope} covers {len(self.watched)} point(s) "
+            f"of {self.in_scope} in {self.place}"
+            + (" [TRUNCATED at the query limit]" if self.truncated else "")
+            + f": {shown}"
+        )
+
 
 class RuleTrigger(BaseModel):
     sensor_uuid: Optional[str] = None
@@ -87,6 +173,10 @@ class RuleTrigger(BaseModel):
     #: Required on a CONCEPT rule; meaningless on a direct-uuid rule, which watches exactly
     #: the point it names.
     scope: Optional[str] = Field(default=None, pattern=r"^(all|first_reporting)$")
+    #: WHERE the rule applies (TODO-528). Optional, and absent means exactly what it meant
+    #: before this existed: the concept's class across the whole building.
+    floor: Optional[str] = Field(default=None, pattern=_PLACE_PATTERN)
+    space: Optional[str] = Field(default=None, pattern=_PLACE_PATTERN)
 
 
 class RuleAction(BaseModel):
@@ -127,7 +217,19 @@ class RulesEngine:
         #: uuid -> ref:storedAt, so a value is read from the store that holds it
         #: rather than from one table named in this file.
         self._storage_of: Dict[str, str] = {}
+        #: rule_id -> what that rule watched on its most recent resolution (TODO-528).
+        self._coverage: Dict[str, RuleCoverage] = {}
         self._notifier = notifier or self._default_notifier
+
+    # ── Coverage: what a rule actually watches ───────────────────────────────
+
+    def coverage(self, rule_id: str) -> Optional[RuleCoverage]:
+        """What `rule_id` watched on its last resolution, or None if never resolved."""
+        return self._coverage.get(rule_id)
+
+    def coverage_report(self) -> List[RuleCoverage]:
+        """Every rule's coverage, for an operator asking what the engine is watching."""
+        return [self._coverage[r.id] for r in self._rules if r.id in self._coverage]
 
     # ── Loading ───────────────────────────────────────────────────────────────
 
@@ -155,6 +257,8 @@ class RulesEngine:
             if not rule.enabled:
                 continue
             if not self._scope_is_declared(rule):
+                continue
+            if not self._place_is_meaningful(rule):
                 continue
             self._rules.append(rule)
             loaded += 1
@@ -189,6 +293,42 @@ class RulesEngine:
             rule.trigger.concept,
             SCOPE_ALL,
             SCOPE_FIRST,
+        )
+        return False
+
+    @staticmethod
+    def _place_of(rule: EcaRule) -> Optional[RulePlace]:
+        """The place a rule declares, or None when it declares none (TODO-528).
+
+        None is the whole point of this method: it is the switch that keeps every rule
+        written before this feature existed on exactly the code path it was on.
+        """
+        t = rule.trigger
+        if t.floor or t.space:
+            return RulePlace(floor=t.floor or None, space=t.space or None)
+        return None
+
+    @staticmethod
+    def _place_is_meaningful(rule: EcaRule) -> bool:
+        """A place must be able to narrow something, or the rule does not load (TODO-528).
+
+        A direct-uuid rule names one point. A floor cannot narrow one point: either the
+        point is there, in which case the qualifier does nothing, or it is not, in which
+        case the rule as written is self-contradictory. Either way the rule would READ as
+        scoped while the scope changed nothing — which is the same class of quiet lie this
+        row exists to remove. Refused, loudly, instead.
+        """
+        if RulesEngine._place_of(rule) is None:
+            return True
+        if not rule.trigger.sensor_uuid:
+            return True
+        logger.warning(
+            "[rules_engine] rule=%s is DISABLED: it names sensor_uuid %s AND declares %s. "
+            "A direct-uuid rule watches exactly the point it names, so a place cannot "
+            "narrow it — drop one of the two.",
+            rule.id,
+            str(rule.trigger.sensor_uuid)[:16] + "…",
+            RulesEngine._place_of(rule).describe(),  # type: ignore[union-attr]
         )
         return False
 
@@ -307,6 +447,34 @@ class RulesEngine:
         return True
 
     async def _resolve_uuids(self, rule: EcaRule) -> List[str]:
+        """Every point this rule watches, per its declared scope and place.
+
+        Two paths, and the branch is the guarantee: a rule that declares no place goes
+        through `_resolve_uuids_anywhere`, which is the pre-TODO-528 code unchanged. The
+        spatial work cannot alter what an existing rule watches, because an existing rule
+        never reaches it.
+        """
+        place = self._place_of(rule)
+        # A direct uuid wins over a place even here, though `load()` refuses that pairing:
+        # user-tier rules arrive from Redis without passing the loader's guards, and a rule
+        # naming a point must watch that point rather than silently resolve a class.
+        if place is not None and rule.trigger.concept and not rule.trigger.sensor_uuid:
+            return await self._resolve_uuids_in_place(rule, place)
+
+        uuids = await self._resolve_uuids_anywhere(rule)
+        self._coverage[rule.id] = RuleCoverage(
+            rule_id=rule.id,
+            concept=rule.trigger.concept,
+            scope=rule.trigger.scope,
+            # No place was declared, so the engine never asked how many points of the class
+            # exist — it is not entitled to report one. What it watches is what it knows.
+            in_scope=len(uuids),
+            watched=list(uuids),
+            sensors=[self._sensor_of.get(u, u) for u in uuids],
+        )
+        return uuids
+
+    async def _resolve_uuids_anywhere(self, rule: EcaRule) -> List[str]:
         """Every point this rule watches, per its declared scope (V12-20).
 
         `all` returns every point of the concept's classes that is reporting a value.
@@ -351,6 +519,223 @@ class RulesEngine:
                 rule.trigger.concept,
             )
         return out
+
+    # ── Spatially scoped resolution (TODO-528) ───────────────────────────────
+
+    async def _resolve_uuids_in_place(self, rule: EcaRule, place: RulePlace) -> List[str]:
+        """Every point of the rule's concept LOCATED in the place the rule declares.
+
+        The whole value of this path is that it does not fall back. `humidity_damp_floor3`
+        used to watch a humidity sensor that could have been on any floor; a scope that
+        resolves to nothing must therefore leave the rule watching nothing and SAY so,
+        because a rule quietly re-widened to the building is the defect wearing the fix's
+        clothes.
+        """
+        classes = await self._concept_classes(rule)
+        if not classes:
+            self._record_coverage(rule, place, [], [], truncated=False)
+            return []
+
+        in_scope: List[str] = []
+        seen = set()
+        truncated = False
+        for cls in classes:
+            found, hit_limit = await self._uuids_for_class_in_place(cls, place)
+            truncated = truncated or hit_limit
+            for uuid in found:
+                if uuid not in seen:
+                    seen.add(uuid)
+                    in_scope.append(uuid)
+
+        if not in_scope:
+            logger.warning(
+                "[rules_engine] rule=%s concept %r: NO point of %s is located in %s. This "
+                "rule watches nothing and cannot fire — it is NOT falling back to a point "
+                "elsewhere in the building. Check the place name against the graph's own "
+                "floors/spaces.",
+                rule.id,
+                rule.trigger.concept,
+                ", ".join(classes),
+                place.describe(),
+            )
+            self._record_coverage(rule, place, [], [], truncated=truncated)
+            return []
+
+        reporting = [u for u in in_scope if await self._value_fetcher(u) is not None]
+        if not reporting:
+            logger.warning(
+                "[rules_engine] rule=%s concept %r: %d point(s) in %s carry this concept "
+                "and NONE is reporting a value — this rule cannot fire",
+                rule.id,
+                rule.trigger.concept,
+                len(in_scope),
+                place.describe(),
+            )
+            self._record_coverage(rule, place, in_scope, [], truncated=truncated)
+            return []
+
+        watched = reporting[:1] if rule.trigger.scope == SCOPE_FIRST else reporting
+        cov = self._record_coverage(rule, place, in_scope, watched, truncated=truncated)
+        logger.info("[rules_engine] %s", cov.describe())
+        if truncated:
+            logger.warning(
+                "[rules_engine] rule=%s hit the %d-point query limit in %s — it covers a "
+                "PREFIX of the matching points, not all of them",
+                rule.id,
+                SCOPE_POINT_LIMIT,
+                place.describe(),
+            )
+        return watched
+
+    def _record_coverage(
+        self,
+        rule: EcaRule,
+        place: Optional[RulePlace],
+        in_scope: List[str],
+        watched: List[str],
+        *,
+        truncated: bool,
+    ) -> RuleCoverage:
+        cov = RuleCoverage(
+            rule_id=rule.id,
+            concept=rule.trigger.concept,
+            scope=rule.trigger.scope,
+            floor=place.floor if place else None,
+            space=place.space if place else None,
+            in_scope=len(in_scope),
+            watched=list(watched),
+            sensors=[self._sensor_of.get(u, u) for u in watched],
+            truncated=truncated,
+        )
+        self._coverage[rule.id] = cov
+        return cov
+
+    async def _concept_classes(self, rule: EcaRule) -> List[str]:
+        """The Brick classes a rule's concept resolves to. [] — and a reason — on failure."""
+        if not rule.trigger.concept:
+            return []
+        try:
+            from orchestrator.services.concept_resolver import concept_resolver
+
+            matches = await concept_resolver.resolve(rule.trigger.concept)
+        except Exception as e:
+            logger.warning(
+                "[rules_engine] rule=%s could not resolve a sensor for concept %r: %s: %s "
+                "— this rule cannot fire until it does",
+                rule.id,
+                rule.trigger.concept,
+                type(e).__name__,
+                e,
+            )
+            return []
+        if not matches:
+            logger.warning(
+                "[rules_engine] rule=%s concept %r maps to no Brick class — this rule "
+                "cannot fire",
+                rule.id,
+                rule.trigger.concept,
+            )
+            return []
+        return list(matches[0].brick_classes or [])
+
+    async def _uuids_for_class_in_place(
+        self, brick_class: str, place: RulePlace
+    ) -> Tuple[List[str], bool]:
+        """Timeseries ids for a class, restricted to a place. (uuids, hit_the_limit)."""
+        q = self._place_sparql(brick_class, place)
+        if q is None:
+            return [], False
+        rows = await self._select(q)
+        out: List[str] = []
+        for b in rows:
+            if not b.get("uuid"):
+                continue
+            uuid = b["uuid"]["value"]
+            self._sensor_of[uuid] = b.get("sensor", {}).get("value", "?")
+            self._storage_of[uuid] = b.get("storage", {}).get("value", "")
+            out.append(uuid)
+        if not out:
+            logger.debug(
+                "[rules_engine] no point of class %s is located in %s",
+                brick_class,
+                place.describe(),
+            )
+        return out, len(rows) >= SCOPE_POINT_LIMIT
+
+    def _place_sparql(self, brick_class: str, place: RulePlace) -> Optional[str]:
+        """Points of `brick_class` located in `place`, resolved through the graph.
+
+        THE FLOOR COMES FROM THE SPATIAL HIERARCHY, NOT FROM A NAME.
+
+        The tempting version of this reads a floor number out of the sensor's IRI or label,
+        and it is wrong for the same reason `scripts/floor_modality_matrix.py` records: a
+        point's name is a convention, not a fact, and a building that names its points any
+        other way silently gets an empty — or worse, a partly right — answer. So the query
+        walks sensor -> brick:hasLocation -> (brick:isPartOf|^brick:hasPart)* -> brick:Floor,
+        exactly as `sparql_agent._floor_scoped_sparql` does.
+
+        The place NAME is matched against the floor/space entity's own identity — its IRI
+        local name and its rdfs:label — in several equivalent spellings, because "3",
+        "Floor3" and "Floor 3 (Third Floor)" are the same floor and a rule author should
+        not have to know which spelling this building chose. That is matching a PLACE by
+        its name, which is what a name is for; it is not inferring a place from a SENSOR's
+        name, which is what the docstring above forbids.
+
+        DISTINCT because a point typed as `Zone_Air_Humidity_Sensor`, `Humidity_Sensor` and
+        `Relative_Humidity_Sensor` at once satisfies `a/rdfs:subClassOf*` by three separate
+        paths and would otherwise consume three rows of the limit.
+        """
+        import re as _re
+
+        for value in (place.floor, place.space):
+            if value is not None and not _re.match(_PLACE_PATTERN, value):
+                logger.warning(
+                    "[rules_engine] refusing to build a scope query for place %r: a floor "
+                    "or space name may contain only letters, digits, spaces, '.', '_' "
+                    "and '-'",
+                    value,
+                )
+                return None
+
+        bldg_ns = self._namespace()
+        blocks: List[str] = []
+        if place.space:
+            key = place.space.lower()
+            blocks.append(
+                f"""  OPTIONAL {{ ?loc rdfs:label ?spaceLabel }}
+  BIND(LCASE(REPLACE(STR(?loc), "^.*[#/]", "")) AS ?spaceLocal)
+  BIND(LCASE(STR(COALESCE(?spaceLabel, ""))) AS ?spaceText)
+  BIND(REPLACE(?spaceLocal, "^(room|space|zone|rm)[^a-z0-9]*", "") AS ?spaceKey)
+  BIND(REPLACE(?spaceText, "^(room|space|zone|rm)[^a-z0-9]*", "") AS ?spaceTextKey)
+  FILTER(?spaceLocal = "{key}" || ?spaceKey = "{key}"
+         || ?spaceText = "{key}" || ?spaceTextKey = "{key}")"""
+            )
+        if place.floor:
+            key = place.floor.lower()
+            blocks.append(
+                f"""  ?loc (brick:isPartOf|^brick:hasPart)* ?floor .
+  ?floor a brick:Floor .
+  OPTIONAL {{ ?floor rdfs:label ?floorLabel }}
+  BIND(LCASE(REPLACE(STR(?floor), "^.*[#/]", "")) AS ?floorLocal)
+  BIND(LCASE(STR(COALESCE(?floorLabel, ""))) AS ?floorText)
+  BIND(REPLACE(?floorLocal, "^(floor|level|storey|story)[^a-z0-9]*", "") AS ?floorKey)
+  BIND(REPLACE(?floorText, "^[^0-9]*([0-9]+).*$", "$1") AS ?floorNum)
+  FILTER(?floorLocal = "{key}" || ?floorKey = "{key}"
+         || ?floorText = "{key}" || ?floorNum = "{key}")"""
+            )
+
+        return f"""PREFIX brick: <https://brickschema.org/schema/Brick#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX ref:   <https://brickschema.org/schema/Brick/ref#>
+SELECT DISTINCT ?sensor ?uuid ?storage WHERE {{
+  ?sensor a/rdfs:subClassOf* {brick_class} .
+  ?sensor ref:hasExternalReference ?ref .
+  ?ref ref:hasTimeseriesId ?uuid .
+  OPTIONAL {{ ?ref ref:storedAt ?storage }}
+  FILTER(STRSTARTS(STR(?sensor), "{bldg_ns}"))
+  ?sensor brick:hasLocation ?loc .
+{chr(10).join(blocks)}
+}} ORDER BY ?sensor LIMIT {SCOPE_POINT_LIMIT}"""
 
     async def _resolve_uuid(self, rule: EcaRule) -> Optional[str]:
         """Return the sensor UUID for a rule trigger (direct UUID or concept resolution)."""
@@ -703,6 +1088,14 @@ SELECT ?sensor ?uuid ?storage WHERE {{
                 value=value,
                 threshold=rule.trigger.threshold,
                 duration_min=rule.trigger.duration_min,
+                # WHICH point raised this (TODO-528). A rule scoped to a floor can now fire
+                # for several points in one cycle, and without this every one of those
+                # alerts reads identically apart from its number. Unused by the messages
+                # shipped today — `str.format` ignores a field a template does not name —
+                # so adding it changes no existing alert's text.
+                sensor=self._sensor_of.get(uuid, uuid),
+                floor=rule.trigger.floor or "",
+                space=rule.trigger.space or "",
             )
         except Exception:
             pass

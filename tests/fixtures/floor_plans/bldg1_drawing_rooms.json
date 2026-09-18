@@ -1,0 +1,1613 @@
+{
+ "_about": "Room outlines measured from the architect's DXF drawings, 2026-09-17 (BUG-671). One entry per closed A-AREA-ROOM / A-AREA-IDEN outline that contains exactly ONE room number of its own floor; an outline enclosing several numbers is left out, because the drawing does not say where the line between those rooms falls. area_m2 is the outline's area (drawing units mm). label is the A-AREA-IDEN text inside the outline other than the number, verbatim. ontology_iri is the link the floor-plan manifest makes for that number, or null. Read by scripts/provision_event_and_capacity_data.py and tests/test_declared_capacities_are_physical.py. If a source sha256 no longer matches the drawing, re-measure rather than edit.",
+ "building_id": "bldg1",
+ "sources": [
+  {
+   "file": "Abacws floor 0.dxf",
+   "sha256": "6b6dcd5ae7ac8bcbd3041b167a966eb3ea08d10a7e73baaf2fb1ec3e067bafed",
+   "floor": 0
+  },
+  {
+   "file": "Abacws floor 1.dxf",
+   "sha256": "88ae4197b6a5e2afd4131d8ce2d1a7fb61c26943413efb13054c9577ba3b3a48",
+   "floor": 1
+  },
+  {
+   "file": "Abacws floor 2.dxf",
+   "sha256": "6fc44ea309ccdc3791d964122713e177740140f053efa7aeaf68641c0b37e3a1",
+   "floor": 2
+  },
+  {
+   "file": "Abacws floor 3.dxf",
+   "sha256": "3f34ee7641b25233aa4c97e1df0c1bd97e4d36a49d5134f6edcfe29fbe5d4415",
+   "floor": 3
+  },
+  {
+   "file": "Abacws floor 4.dxf",
+   "sha256": "d39673e5828dea91a11fb100a6095e5afc57d5180a13074fb503dd0e1ba08849",
+   "floor": 4
+  },
+  {
+   "file": "Abacws floor 5.dxf",
+   "sha256": "5c2fd28fe44da0383335e7a048179ca57ae0da5922418c344fa0aec7926c3de2",
+   "floor": 5
+  }
+ ],
+ "rooms": [
+  {
+   "zone_id": "0.01",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01",
+   "area_m2": 184.46,
+   "label": "120 Person Lecture Theatre"
+  },
+  {
+   "zone_id": "0.04",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04",
+   "area_m2": 69.35,
+   "label": "30 P Seminar"
+  },
+  {
+   "zone_id": "0.05",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05",
+   "area_m2": 10.18,
+   "label": "Records Storage"
+  },
+  {
+   "zone_id": "0.06",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06",
+   "area_m2": 6.18,
+   "label": "Store"
+  },
+  {
+   "zone_id": "0.07",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07",
+   "area_m2": 17.17,
+   "label": "Main UPS & Batt"
+  },
+  {
+   "zone_id": "0.08",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08",
+   "area_m2": 21.11,
+   "label": "Switch Room"
+  },
+  {
+   "zone_id": "0.10",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10",
+   "area_m2": 68.01,
+   "label": "Gas Meter & Tank"
+  },
+  {
+   "zone_id": "0.17",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17",
+   "area_m2": 8.87,
+   "label": "Meeting Room"
+  },
+  {
+   "zone_id": "0.18",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18",
+   "area_m2": 52.56,
+   "label": "9 Person Prof Serv"
+  },
+  {
+   "zone_id": "0.19",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19",
+   "area_m2": 35.71,
+   "label": "3 Person Prof Serv & Post"
+  },
+  {
+   "zone_id": "0.20",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20",
+   "area_m2": 16.35,
+   "label": "2 Person Prof Serv"
+  },
+  {
+   "zone_id": "0.29",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29",
+   "area_m2": 19.94,
+   "label": "Refuse Store"
+  },
+  {
+   "zone_id": "0.31",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31",
+   "area_m2": 8.05,
+   "label": "Records Storage"
+  },
+  {
+   "zone_id": "0.32",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32",
+   "area_m2": 24.72,
+   "label": "4 P Prof Serv"
+  },
+  {
+   "zone_id": "0.33",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33",
+   "area_m2": 17.1,
+   "label": "3 P Prof Serv"
+  },
+  {
+   "zone_id": "0.34",
+   "floor": 0,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34",
+   "area_m2": 195.0,
+   "label": "96P Lecture"
+  },
+  {
+   "zone_id": "1.04",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.04",
+   "area_m2": 74.03,
+   "label": "30P Seminar Room"
+  },
+  {
+   "zone_id": "1.06",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06",
+   "area_m2": 11.94,
+   "label": "Office"
+  },
+  {
+   "zone_id": "1.07",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07",
+   "area_m2": 10.9,
+   "label": "Office"
+  },
+  {
+   "zone_id": "1.08",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08",
+   "area_m2": 10.94,
+   "label": "Office"
+  },
+  {
+   "zone_id": "1.09",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09",
+   "area_m2": 10.87,
+   "label": "Office"
+  },
+  {
+   "zone_id": "1.25",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25",
+   "area_m2": 56.76,
+   "label": "8P Research Office"
+  },
+  {
+   "zone_id": "1.26",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26",
+   "area_m2": 33.94,
+   "label": "6P Research Office"
+  },
+  {
+   "zone_id": "1.34",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34",
+   "area_m2": 165.88,
+   "label": "60P Computer Room 16 SD Cap."
+  },
+  {
+   "zone_id": "1.37",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37",
+   "area_m2": 15.45,
+   "label": "DB Room"
+  },
+  {
+   "zone_id": "1.38",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38",
+   "area_m2": 14.6,
+   "label": "IT Hub"
+  },
+  {
+   "zone_id": "1.39",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39",
+   "area_m2": 115.52,
+   "label": "42P Computer Room 14SD cap."
+  },
+  {
+   "zone_id": "1.40",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40",
+   "area_m2": 22.45,
+   "label": "8-12P Meet Rm"
+  },
+  {
+   "zone_id": "1.41",
+   "floor": 1,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41",
+   "area_m2": 29.71,
+   "label": "5P Research Office (root 2)"
+  },
+  {
+   "zone_id": "2.01",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01",
+   "area_m2": 35.39,
+   "label": "8P PHD Students"
+  },
+  {
+   "zone_id": "2.02",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02",
+   "area_m2": 22.66,
+   "label": "4P Research"
+  },
+  {
+   "zone_id": "2.03",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03",
+   "area_m2": 10.53,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.04",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04",
+   "area_m2": 10.98,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.05",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05",
+   "area_m2": 10.47,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.06",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06",
+   "area_m2": 10.48,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.07",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07",
+   "area_m2": 10.47,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.08",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08",
+   "area_m2": 10.88,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.09",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09",
+   "area_m2": 10.38,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.10",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10",
+   "area_m2": 10.1,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.11",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11",
+   "area_m2": 10.89,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.12",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12",
+   "area_m2": 11.69,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.13",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13",
+   "area_m2": 11.21,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.14",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14",
+   "area_m2": 18.48,
+   "label": "Project Rm - 1"
+  },
+  {
+   "zone_id": "2.15",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15",
+   "area_m2": 7.83,
+   "label": "DB Room"
+  },
+  {
+   "zone_id": "2.17",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17",
+   "area_m2": 10.77,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.18",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18",
+   "area_m2": 11.35,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.19",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19",
+   "area_m2": 11.62,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.20",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20",
+   "area_m2": 11.21,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.21",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21",
+   "area_m2": 10.48,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.22",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22",
+   "area_m2": 10.87,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.24",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24",
+   "area_m2": 10.98,
+   "label": "ICT LAN"
+  },
+  {
+   "zone_id": "2.26",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26",
+   "area_m2": 27.44,
+   "label": "120S Lecture Theatre - Group Bench seating style 30SD Cap."
+  },
+  {
+   "zone_id": "2.34",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34",
+   "area_m2": 35.11,
+   "label": "8P PHD Students"
+  },
+  {
+   "zone_id": "2.35",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35",
+   "area_m2": 125.13,
+   "label": "48P Computer Room 14 SD Cap."
+  },
+  {
+   "zone_id": "2.36",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36",
+   "area_m2": 34.87,
+   "label": "8P PHD Students"
+  },
+  {
+   "zone_id": "2.44",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44",
+   "area_m2": 21.26,
+   "label": "5P PHD Research"
+  },
+  {
+   "zone_id": "2.47",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47",
+   "area_m2": 10.43,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.48",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48",
+   "area_m2": 10.79,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.49",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49",
+   "area_m2": 10.56,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.50",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50",
+   "area_m2": 11.94,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.52",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52",
+   "area_m2": 11.03,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.53",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53",
+   "area_m2": 59.12,
+   "label": "Research Lab"
+  },
+  {
+   "zone_id": "2.54",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54",
+   "area_m2": 11.03,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.55",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55",
+   "area_m2": 11.14,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.56",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56",
+   "area_m2": 11.24,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.57",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57",
+   "area_m2": 10.65,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.58",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58",
+   "area_m2": 10.75,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.59",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59",
+   "area_m2": 10.94,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.60",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60",
+   "area_m2": 10.68,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.61",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61",
+   "area_m2": 10.75,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.62",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62",
+   "area_m2": 21.25,
+   "label": "5P PHD Research"
+  },
+  {
+   "zone_id": "2.63",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63",
+   "area_m2": 10.75,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.64",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64",
+   "area_m2": 10.94,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.65",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65",
+   "area_m2": 10.46,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.66",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66",
+   "area_m2": 10.37,
+   "label": "Office"
+  },
+  {
+   "zone_id": "2.67",
+   "floor": 2,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67",
+   "area_m2": 22.89,
+   "label": "5P PHD Students"
+  },
+  {
+   "zone_id": "3.01",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01",
+   "area_m2": 41.69,
+   "label": "16-20P Meeting"
+  },
+  {
+   "zone_id": "3.02",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02",
+   "area_m2": 106.81,
+   "label": "64P Seminar Room"
+  },
+  {
+   "zone_id": "3.03",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03",
+   "area_m2": 25.66,
+   "label": "6P PHD Research"
+  },
+  {
+   "zone_id": "3.04",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04",
+   "area_m2": 10.62,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.05",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05",
+   "area_m2": 10.75,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.06",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06",
+   "area_m2": 10.62,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.07",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07",
+   "area_m2": 26.92,
+   "label": "Visiting Staff"
+  },
+  {
+   "zone_id": "3.08",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08",
+   "area_m2": 10.5,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.09",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09",
+   "area_m2": 10.73,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.10",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10",
+   "area_m2": 25.39,
+   "label": "Visiting Staff"
+  },
+  {
+   "zone_id": "3.11",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11",
+   "area_m2": 37.54,
+   "label": "6P Finance"
+  },
+  {
+   "zone_id": "3.12",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12",
+   "area_m2": 13.67,
+   "label": "2P Research"
+  },
+  {
+   "zone_id": "3.13",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13",
+   "area_m2": 10.97,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.14",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14",
+   "area_m2": 20.53,
+   "label": "Exec PA"
+  },
+  {
+   "zone_id": "3.15",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15",
+   "area_m2": 14.88,
+   "label": "8-12 Exec Meeting"
+  },
+  {
+   "zone_id": "3.16",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16",
+   "area_m2": 9.77,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.17",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17",
+   "area_m2": 11.66,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.18",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18",
+   "area_m2": 10.99,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.20",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20",
+   "area_m2": 10.46,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.22",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22",
+   "area_m2": 10.29,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.26",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26",
+   "area_m2": 27.11,
+   "label": "6P PHD Research"
+  },
+  {
+   "zone_id": "3.27",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27",
+   "area_m2": 31.01,
+   "label": "Magic Room"
+  },
+  {
+   "zone_id": "3.36",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36",
+   "area_m2": 84.77,
+   "label": "Staff Room"
+  },
+  {
+   "zone_id": "3.37",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37",
+   "area_m2": 33.37,
+   "label": "5P Research"
+  },
+  {
+   "zone_id": "3.38",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38",
+   "area_m2": 97.45,
+   "label": "48P Seminar Room"
+  },
+  {
+   "zone_id": "3.46",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46",
+   "area_m2": 32.31,
+   "label": "8P PHD Research"
+  },
+  {
+   "zone_id": "3.48",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48",
+   "area_m2": 32.31,
+   "label": "8P PHD Research"
+  },
+  {
+   "zone_id": "3.50",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50",
+   "area_m2": 8.87,
+   "label": "DB Room"
+  },
+  {
+   "zone_id": "3.51",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51",
+   "area_m2": 10.4,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.52",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52",
+   "area_m2": 10.81,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.53",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53",
+   "area_m2": 10.57,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.54",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54",
+   "area_m2": 11.94,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.56",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56",
+   "area_m2": 11.05,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.57",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57",
+   "area_m2": 10.02,
+   "label": "ICT LAN"
+  },
+  {
+   "zone_id": "3.58",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58",
+   "area_m2": 11.03,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.59",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59",
+   "area_m2": 10.65,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.60",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60",
+   "area_m2": 11.19,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.61",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61",
+   "area_m2": 9.96,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.62",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62",
+   "area_m2": 10.7,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.63",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63",
+   "area_m2": 10.65,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.64",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64",
+   "area_m2": 10.46,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.65",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65",
+   "area_m2": 17.72,
+   "label": "Project Rm - 2"
+  },
+  {
+   "zone_id": "3.66",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66",
+   "area_m2": 10.54,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.67",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67",
+   "area_m2": 10.57,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.68",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68",
+   "area_m2": 36.89,
+   "label": "8P PHD Research"
+  },
+  {
+   "zone_id": "3.69",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69",
+   "area_m2": 10.29,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.70",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70",
+   "area_m2": 10.94,
+   "label": "Office"
+  },
+  {
+   "zone_id": "3.71",
+   "floor": 3,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71",
+   "area_m2": 31.43,
+   "label": "7P PHD Research"
+  },
+  {
+   "zone_id": "4.01",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01",
+   "area_m2": 30.79,
+   "label": "7P PHD Research"
+  },
+  {
+   "zone_id": "4.02",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02",
+   "area_m2": 36.26,
+   "label": "8P PHD Research"
+  },
+  {
+   "zone_id": "4.03",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03",
+   "area_m2": 10.84,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.05",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05",
+   "area_m2": 10.36,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.06",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06",
+   "area_m2": 10.6,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.07",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07",
+   "area_m2": 163.95,
+   "label": "Cyber Security"
+  },
+  {
+   "zone_id": "4.08",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08",
+   "area_m2": 10.6,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.09",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09",
+   "area_m2": 10.6,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.10",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10",
+   "area_m2": 10.1,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.11",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11",
+   "area_m2": 41.79,
+   "label": "6P Research"
+  },
+  {
+   "zone_id": "4.12",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12",
+   "area_m2": 10.75,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.13",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13",
+   "area_m2": 10.12,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.14",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14",
+   "area_m2": 11.51,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.15",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15",
+   "area_m2": 10.86,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.16",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16",
+   "area_m2": 8.24,
+   "label": "DB Room"
+  },
+  {
+   "zone_id": "4.18",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18",
+   "area_m2": 11.14,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.19",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19",
+   "area_m2": 10.47,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.20",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20",
+   "area_m2": 11.96,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.21",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21",
+   "area_m2": 11.32,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.22",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22",
+   "area_m2": 10.84,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.23",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23",
+   "area_m2": 10.22,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.24",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24",
+   "area_m2": 18.13,
+   "label": "ICT LAN"
+  },
+  {
+   "zone_id": "4.34",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34",
+   "area_m2": 33.7,
+   "label": "8P PHD Research"
+  },
+  {
+   "zone_id": "4.35",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35",
+   "area_m2": 50.08,
+   "label": "20 P Seminar"
+  },
+  {
+   "zone_id": "4.36",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36",
+   "area_m2": 33.39,
+   "label": "5P Research"
+  },
+  {
+   "zone_id": "4.38",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38",
+   "area_m2": 56.03,
+   "label": "Financial Lab"
+  },
+  {
+   "zone_id": "4.44",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44",
+   "area_m2": 20.09,
+   "label": "Server Rm"
+  },
+  {
+   "zone_id": "4.47",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47",
+   "area_m2": 18.55,
+   "label": "I.T Workshop"
+  },
+  {
+   "zone_id": "4.49",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49",
+   "area_m2": 10.46,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.50",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50",
+   "area_m2": 10.42,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.51",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51",
+   "area_m2": 10.99,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.52",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52",
+   "area_m2": 11.44,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.53",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53",
+   "area_m2": 30.14,
+   "label": "4P Research"
+  },
+  {
+   "zone_id": "4.55",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55",
+   "area_m2": 11.14,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.56",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56",
+   "area_m2": 10.92,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.57",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57",
+   "area_m2": 25.17,
+   "label": "Visiting Staff"
+  },
+  {
+   "zone_id": "4.58",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58",
+   "area_m2": 10.77,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.59",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59",
+   "area_m2": 11.13,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.60",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60",
+   "area_m2": 10.02,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.61",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61",
+   "area_m2": 10.53,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.62",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62",
+   "area_m2": 10.53,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.63",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63",
+   "area_m2": 10.34,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.64",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64",
+   "area_m2": 10.53,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.65",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65",
+   "area_m2": 24.78,
+   "label": "Visiting Staff"
+  },
+  {
+   "zone_id": "4.66",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66",
+   "area_m2": 10.53,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.67",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67",
+   "area_m2": 36.39,
+   "label": "I.T. Store"
+  },
+  {
+   "zone_id": "4.68",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68",
+   "area_m2": 10.34,
+   "label": "Office"
+  },
+  {
+   "zone_id": "4.69",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69",
+   "area_m2": 13.23,
+   "label": "2P Office"
+  },
+  {
+   "zone_id": "4.70",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70",
+   "area_m2": 33.82,
+   "label": "6P Prof Serv- IT"
+  },
+  {
+   "zone_id": "4.71",
+   "floor": 4,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71",
+   "area_m2": 21.1,
+   "label": "Maker Rm"
+  },
+  {
+   "zone_id": "5.01",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01",
+   "area_m2": 32.96,
+   "label": "8P PHD Research"
+  },
+  {
+   "zone_id": "5.02",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02",
+   "area_m2": 35.76,
+   "label": "8P PHD Research"
+  },
+  {
+   "zone_id": "5.03",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03",
+   "area_m2": 10.88,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.04",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04",
+   "area_m2": 10.4,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.05",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05",
+   "area_m2": 187.55,
+   "label": "90P Lecture"
+  },
+  {
+   "zone_id": "5.06",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06",
+   "area_m2": 10.49,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.07",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07",
+   "area_m2": 10.4,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.08",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08",
+   "area_m2": 24.73,
+   "label": "Small Research"
+  },
+  {
+   "zone_id": "5.09",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09",
+   "area_m2": 10.98,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.10",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10",
+   "area_m2": 10.59,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.11",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11",
+   "area_m2": 22.29,
+   "label": "5P PHD Research"
+  },
+  {
+   "zone_id": "5.12",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12",
+   "area_m2": 10.6,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.13",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13",
+   "area_m2": 10.39,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.14",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14",
+   "area_m2": 11.43,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.15",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15",
+   "area_m2": 11.0,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.16",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16",
+   "area_m2": 11.27,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.17",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17",
+   "area_m2": 11.0,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.18",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18",
+   "area_m2": 23.63,
+   "label": "5P PHD Research"
+  },
+  {
+   "zone_id": "5.20",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20",
+   "area_m2": 11.21,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.21",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21",
+   "area_m2": 10.91,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.22",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22",
+   "area_m2": 10.88,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.23",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23",
+   "area_m2": 11.34,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.26",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26",
+   "area_m2": 22.58,
+   "label": "Small Research"
+  },
+  {
+   "zone_id": "5.34",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34",
+   "area_m2": 33.39,
+   "label": "8P PHD Research"
+  },
+  {
+   "zone_id": "5.35",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35",
+   "area_m2": 46.89,
+   "label": "10P PHD Students"
+  },
+  {
+   "zone_id": "5.36",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36",
+   "area_m2": 33.49,
+   "label": "6P Research"
+  },
+  {
+   "zone_id": "5.44",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44",
+   "area_m2": 168.33,
+   "label": "60P Teaching"
+  },
+  {
+   "zone_id": "5.45",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45",
+   "area_m2": 20.26,
+   "label": "Project Rm - 3"
+  },
+  {
+   "zone_id": "5.48",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48",
+   "area_m2": 16.77,
+   "label": "4P PHD Research"
+  },
+  {
+   "zone_id": "5.49",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49",
+   "area_m2": 8.85,
+   "label": "DB Room"
+  },
+  {
+   "zone_id": "5.50",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50",
+   "area_m2": 10.98,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.51",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51",
+   "area_m2": 10.92,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.52",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52",
+   "area_m2": 10.33,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.53",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53",
+   "area_m2": 10.91,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.54",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54",
+   "area_m2": 10.55,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.56",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56",
+   "area_m2": 11.0,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.57",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57",
+   "area_m2": 11.32,
+   "label": "ICT LAN"
+  },
+  {
+   "zone_id": "5.58",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58",
+   "area_m2": 10.63,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.59",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59",
+   "area_m2": 11.34,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.60",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60",
+   "area_m2": 10.39,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.61",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61",
+   "area_m2": 10.62,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.62",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62",
+   "area_m2": 10.94,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.63",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63",
+   "area_m2": 24.41,
+   "label": "Visiting Staff"
+  },
+  {
+   "zone_id": "5.64",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64",
+   "area_m2": 10.65,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.65",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65",
+   "area_m2": 24.75,
+   "label": "7P PHD Research"
+  },
+  {
+   "zone_id": "5.66",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66",
+   "area_m2": 10.84,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.67",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67",
+   "area_m2": 10.31,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.68",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68",
+   "area_m2": 10.39,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.69",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69",
+   "area_m2": 10.38,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.70",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70",
+   "area_m2": 10.75,
+   "label": "Office"
+  },
+  {
+   "zone_id": "5.71",
+   "floor": 5,
+   "ontology_iri": "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71",
+   "area_m2": 24.39,
+   "label": "4P Research"
+  }
+ ]
+}

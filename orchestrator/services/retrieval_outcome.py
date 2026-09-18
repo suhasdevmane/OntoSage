@@ -80,19 +80,29 @@ class RetrievalOutcome(str, Enum):
 #:
 #: `{subject}` is substituted with what was asked about. Nothing else is interpolated —
 #: a wording that can absorb arbitrary text is one that can absorb a fabrication.
+#:
+#: Each entry is (internal, external, next_step, admin_remedy):
+#:
+#: * ``next_step`` is something ANY reader can do — ask again, widen the period. Shown to
+#:   everyone.
+#: * ``admin_remedy`` changes the building's data or configuration — add a sensor to the
+#:   ontology, link a timeseries reference. Shown only to a reader holding ``system:admin``
+#:   (2026-09-17, user decision): told to an occupant or a supervisor, it is an instruction
+#:   they cannot follow and it makes an honest decline read as a broken system.
 _WORDING = {
     RetrievalOutcome.NOT_DECLARED: (
         "no matching sensor is declared in the authorised graph scope",
         "There is no {subject} recorded for this building, so I have nothing to read. "
-        "This describes what the building's model declares — not a fault.",
-        "Add the sensor to the ontology and register its readings, and this becomes "
-        "answerable.",
+        "This reflects what is recorded for the building — not a fault.",
+        "",
+        "Add the sensor to the ontology and register its readings to make this answerable.",
     ),
     RetrievalOutcome.REFERENCE_MISSING: (
         "a declared sensor lacks the reference that routes its readings",
-        "The building's model declares {subject}, but I could not retrieve its readings "
-        "because the link to its data store is incomplete. I cannot tell you its values, "
-        "and I am NOT telling you the sensor is absent.",
+        "{subject} is recorded for this building, but I could not retrieve its readings "
+        "because the link to where they are stored is incomplete. I cannot tell you its "
+        "values, and I am NOT telling you the sensor is absent.",
+        "",
         "The sensor needs a timeseries reference (ref:hasTimeseriesId and ref:storedAt) "
         "before its readings can be read.",
     ),
@@ -101,28 +111,33 @@ _WORDING = {
         "I could not establish whether readings for {subject} exist. The store did not "
         "return any, and it cannot tell me whether that means the identifier is wrong or "
         "the period was simply quiet — so I will not guess either way.",
+        "",
         "An operator can confirm the identifier against the store's series list.",
     ),
     RetrievalOutcome.BACKEND_UNAVAILABLE: (
         "retrieval did not complete because of a store or connection failure",
         "I could not reach the store that holds {subject}'s readings just now. This is a "
         "temporary retrieval problem on my side, not a statement about the building.",
-        "Ask again shortly; if it persists an operator should check the data source.",
+        "Ask again shortly.",
+        "If it persists, check the data source connection.",
     ),
     RetrievalOutcome.NO_OBSERVATIONS: (
         "query succeeded and returned no rows; series identity is confirmed",
         "{subject} is connected and working, but recorded nothing in the period you "
         "asked about.",
         "Widening the period usually finds readings.",
+        "",
     ),
     RetrievalOutcome.INSUFFICIENT_QUALITY: (
         "data exist but are too stale, invalid or incomplete for the claim",
         "I have readings for {subject}, but not of a quality I can base this answer on.",
         "A narrower claim, or a period with better coverage, may be answerable.",
+        "",
     ),
     RetrievalOutcome.ACCESS_RESTRICTED: (
         "policy prevents access at the requested resolution",
         "I cannot share {subject} at that level of detail.",
+        "",
         "",
     ),
 }
@@ -137,8 +152,19 @@ class RetrievalResult:
     internal: str
     #: For the user. The ONLY wording authorised for this state.
     external: str
-    #: What would make the question answerable, or "" when nothing would.
-    remedy: str
+    #: What any reader can do next, or "".
+    next_step: str = ""
+    #: What an administrator can change in the building's data or config, or "".
+    admin_remedy: str = ""
+
+    @property
+    def remedy(self) -> str:
+        """Everything that would make the question answerable, or "" when nothing would.
+
+        The full picture, as an administrator sees it. ``describe`` decides how much of it
+        a given reader is shown.
+        """
+        return " ".join(part for part in (self.next_step, self.admin_remedy) if part)
 
     @property
     def is_absence_of_data(self) -> bool:
@@ -211,25 +237,31 @@ def classify(
     return _result(RetrievalOutcome.SERIES_UNRESOLVED, subject)
 
 
-def _result(
-    outcome: RetrievalOutcome, subject: str, internal_suffix: str = ""
-) -> RetrievalResult:
-    internal, external, remedy = _WORDING[outcome]
+def _result(outcome: RetrievalOutcome, subject: str, internal_suffix: str = "") -> RetrievalResult:
+    internal, external, next_step, admin_remedy = _WORDING[outcome]
     subject = (subject or "that").strip() or "that"
+    external = external.format(subject=subject)
     return RetrievalResult(
         outcome=outcome,
         internal=internal + internal_suffix,
-        external=external.format(subject=subject),
-        remedy=remedy,
+        # A subject can open the sentence ("{subject} is connected ..."); a lower-case
+        # subject there reads as a typo.
+        external=external[:1].upper() + external[1:],
+        next_step=next_step,
+        admin_remedy=admin_remedy,
     )
 
 
-def describe(result: RetrievalResult) -> str:
-    """The user-facing sentence, with its remedy when there is one.
+def describe(result: RetrievalResult, for_admin: bool = False) -> str:
+    """The user-facing sentence, with the remedy this reader can act on.
 
-    A refusal that knows the remedy and withholds it was already a defect in this project,
-    so the remedy is part of the rendering rather than an optional extra.
+    A refusal that knows the remedy and withholds it from the person who can apply it was
+    already a defect in this project. So an administrator sees all of it; every other
+    reader sees the decline and any step THEY can take, and never an instruction to edit
+    the building's ontology or storage references. ``for_admin`` defaults to False so a
+    caller that does not know who is reading fails toward the plain message.
     """
-    if result.remedy:
-        return f"{result.external}\n\n{result.remedy}"
+    remedy = result.remedy if for_admin else result.next_step
+    if remedy:
+        return f"{result.external}\n\n{remedy}"
     return result.external

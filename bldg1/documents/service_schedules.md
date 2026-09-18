@@ -14,8 +14,6 @@ tables:
 
 # Planned Maintenance and Service Schedules - Abacws Building
 
-_**Synthetic demonstration record** - fictional history, not a real compliance document._
-
 ## What changed, and why
 
 `ontosage:ServiceSchedule` was declared in the TBox and had no mapping and no instances: the
@@ -39,11 +37,10 @@ not have.
 
 ## Planned service schedule
 
-
 | code | task | category | scope | frequency | last_completed | next_due | statutory | owner | provider | status | note |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| SVC-01 | Office and corridor cleaning | Cleaning | All occupied floors | daily, overnight | 2026-08-28 | 2026-08-30 | false | Caretaking Supervisor | In-house | Overdue |  |
-| SVC-02 | Washroom servicing | Cleaning | All washrooms | twice daily | 2026-08-28 | 2026-08-30 | false | Caretaking Supervisor | In-house | Overdue |  |
+| SVC-01 | Office and corridor cleaning | Cleaning | All occupied floors | daily, overnight | 2026-09-15 | 2026-09-17 | false | Caretaking Supervisor | In-house | Overdue |  |
+| SVC-02 | Washroom servicing | Cleaning | All washrooms | twice daily | 2026-09-15 | 2026-09-17 | false | Caretaking Supervisor | In-house | Overdue |  |
 | SVC-03 | Carpet deep clean - Levels 1 and 2 | Cleaning | Levels 1 and 2 | 6 monthly | 2026-03-08 | 2026-09-06 | false | Caretaking Supervisor | Specialist contractor | Due | Due within the week |
 | SVC-04 | Carpet deep clean - Levels 3 and 4 | Cleaning | Levels 3 and 4 | 6 monthly | 2026-05-25 | 2026-11-23 | false | Caretaking Supervisor | Specialist contractor | Active |  |
 | SVC-05 | Carpet deep clean - Level 5 | Cleaning | Level 5 | 6 monthly | 2026-07-19 | 2027-01-17 | false | Caretaking Supervisor | Specialist contractor | Active |  |
@@ -57,7 +54,7 @@ not have.
 | SVC-13 | Chiller service | Building services | Chiller 1 - Building Central Cooling Plant | annual | 2026-04-01 | 2027-04-01 | true | M and E Maintenance Supervisor | F-Gas contractor | Active | F-Gas leak check is statutory for this refrigerant charge |
 | SVC-14 | Lift LOLER examination | Building services | Main passenger lift | 6 monthly | 2026-06-16 | 2026-12-16 | true | M and E Maintenance Supervisor | Insurance inspector | Active | Statutory thorough examination; the lift may not run without it |
 | SVC-15 | Emergency lighting duration test | Building services | All escape routes | annual | 2026-02-14 | 2027-02-14 | true | Building Fire Warden Coordinator | In-house | Active | Three-hour duration test |
-| SVC-16 | Fire alarm weekly test | Building services | Building Fire Alarm Control Panel | weekly | 2026-08-26 | 2026-09-02 | true | Building Fire Warden Coordinator | In-house | Overdue | OVERDUE: the last recorded test was 2026-08-26 and the next was due 2026-09-02. A missed weekly test is reportable |
+| SVC-16 | Fire alarm weekly test | Building services | Building Fire Alarm Control Panel | weekly | 2026-09-09 | 2026-09-16 | true | Building Fire Warden Coordinator | In-house | Overdue | OVERDUE: the last recorded test was 2026-08-26 and the next was due 2026-09-02. A missed weekly test is reportable |
 | SVC-17 | PAT testing | Building services | Portable appliances, all floors | annual | 2025-12-09 | 2026-12-09 | false | Estates Operations Manager | In-house | Active |  |
 
 **17 scheduled services. 3 overdue and 2 due within a fortnight. 1 of the overdue items is statutory - the weekly fire alarm test, due 2026-09-02 and unrecorded since - and a missed weekly test is reportable rather than merely late.**

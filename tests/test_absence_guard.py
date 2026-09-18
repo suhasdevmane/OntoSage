@@ -130,3 +130,36 @@ def test_the_correction_does_not_invent_a_reason():
     assert "isn't a lack of sensing" in out
     for invented in ("policy", "permission", "privacy", "not allowed"):
         assert invented not in out.lower()
+
+
+# ── BUG-762: a stem alias may match a WORD, never a fragment inside one ──────
+
+
+def test_temporary_is_not_temperature():
+    """Measured live 2026-09-17 (run 3, three answers): 'does not contain any information
+    about active impairments or authorised TEMPorary controls' was rewritten to
+    'this building **does** have 296 temperature sensor(s)'. The answer was about missing
+    evidence; the guard turned it into a non-answer about sensing."""
+    text = (
+        "The handover records do not contain any information about active impairments "
+        "or authorised temporary controls that lack evidence of placement."
+    )
+    assert detect_absence_claim(text) is None
+
+
+def test_an_absence_claim_must_be_about_sensing():
+    """'no information about X' is not 'this building cannot sense X'."""
+    assert detect_absence_claim("It does not contain any information about waste handovers") is None
+    assert detect_absence_claim("It does not contain any waste readings") == "waste_fill"
+
+
+def test_the_real_false_absence_is_still_caught():
+    """The defect this guard exists for (BUG-192) must survive the narrowing."""
+    assert (
+        detect_absence_claim(
+            "The ontology data you provided does **not** contain any temperature sensors"
+        )
+        == "temperature"
+    )
+    assert detect_absence_claim("There are no humidity sensors on floor 3.") == "humidity"
+    assert detect_absence_claim("This building lacks any water flow sensors.") == "water_flow"

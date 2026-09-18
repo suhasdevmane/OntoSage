@@ -14,8 +14,6 @@ tables:
 
 # Risk Assessment Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## Review
 
 An assessment is **due** within 30 days of its review date and **overdue** after it. Status

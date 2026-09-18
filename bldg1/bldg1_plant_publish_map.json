@@ -1,0 +1,503 @@
+{
+  "table": "plant_data",
+  "groups": [
+    {
+      "group": "AHU_F0",
+      "roles": {
+        "fan_status": {
+          "uuid": "48aa21f5-027c-557b-b743-0d9f165350c7",
+          "point": "AHU_F0_Fan_Status",
+          "lo": 0.0,
+          "hi": 1.0,
+          "mid": 0.404,
+          "n": 10780
+        },
+        "filter_dp": {
+          "uuid": "5b261770-40ea-5bd3-9751-1dae509d9b1f",
+          "point": "AHU_F0_Filter_DP",
+          "lo": 0.419,
+          "hi": 139.7,
+          "mid": 70.2,
+          "n": 10780
+        },
+        "return_air_temp": {
+          "uuid": "8d5c457f-302a-56c9-907a-929770e0f629",
+          "point": "AHU_F0_Return_Air_Temperature",
+          "lo": 21.76,
+          "hi": 24.28,
+          "mid": 22.91,
+          "n": 6870
+        },
+        "supply_air_flow": {
+          "uuid": "1a19397c-afa3-594d-b3ce-f163b8318e2e",
+          "point": "AHU_F0_Supply_Air_Flow",
+          "lo": 0.414,
+          "hi": 910.0,
+          "mid": 107.3,
+          "n": 10780
+        },
+        "supply_air_temp": {
+          "uuid": "dddcf316-8ca6-5449-84b9-9240d7581b02",
+          "point": "AHU_F0_Supply_Air_Temperature",
+          "lo": 15.21,
+          "hi": 21.44,
+          "mid": 19.94,
+          "n": 6866
+        },
+        "damper_position": {
+          "uuid": "5bd06ccc-3c08-5691-8ef8-fa3fcd763dbc",
+          "point": "AHU_F0_Outside_Air_Damper_Position",
+          "fan_conditioned": true,
+          "lo": 12.0,
+          "hi": 58.6,
+          "mid": 34.5,
+          "n": 2235
+        }
+      },
+      "delta": {
+        "lead": "supply_air_temp",
+        "follow": "return_air_temp",
+        "lo": -8.82,
+        "hi": -1.13,
+        "mid": -2.99,
+        "n": 6512,
+        "n_all": 6864
+      }
+    },
+    {
+      "group": "AHU_F1",
+      "roles": {
+        "fan_status": {
+          "uuid": "6b5a4cf6-1093-5ef4-90a0-d3270527dda4",
+          "point": "AHU_F1_Fan_Status",
+          "lo": 0.0,
+          "hi": 1.0,
+          "mid": 0.412,
+          "n": 10780
+        },
+        "filter_dp": {
+          "uuid": "ffcc86e9-47ef-5aee-a29e-51005c0a620c",
+          "point": "AHU_F1_Filter_DP",
+          "lo": 0.386,
+          "hi": 136.0,
+          "mid": 66.0,
+          "n": 10777
+        },
+        "return_air_temp": {
+          "uuid": "ac1df45e-6632-59c4-991a-5621625b8415",
+          "point": "AHU_F1_Return_Air_Temperature",
+          "lo": 21.78,
+          "hi": 24.23,
+          "mid": 22.88,
+          "n": 6856
+        },
+        "supply_air_flow": {
+          "uuid": "d30d6e52-4cfa-5bc3-90d2-89c1bb9d1ece",
+          "point": "AHU_F1_Supply_Air_Flow",
+          "lo": 0.392,
+          "hi": 914.3,
+          "mid": 109.4,
+          "n": 10778
+        },
+        "supply_air_temp": {
+          "uuid": "a4bd832f-598a-55e5-91d5-1d00748aa23e",
+          "point": "AHU_F1_Supply_Air_Temperature",
+          "lo": 15.18,
+          "hi": 21.49,
+          "mid": 19.91,
+          "n": 6866
+        },
+        "damper_position": {
+          "uuid": "0e106dd4-c4d1-5450-a8af-0861f270696c",
+          "point": "AHU_F1_Outside_Air_Damper_Position",
+          "fan_conditioned": true,
+          "lo": 12.2,
+          "hi": 59.2,
+          "mid": 33.4,
+          "n": 2311
+        }
+      },
+      "delta": {
+        "lead": "supply_air_temp",
+        "follow": "return_air_temp",
+        "lo": -8.71,
+        "hi": -1.04,
+        "mid": -2.9,
+        "n": 6484,
+        "n_all": 6852
+      }
+    },
+    {
+      "group": "AHU_F2",
+      "roles": {
+        "fan_status": {
+          "uuid": "d308dbda-ab09-5219-952f-9da95f059a97",
+          "point": "AHU_F2_Fan_Status",
+          "lo": 0.0,
+          "hi": 1.0,
+          "mid": 0.405,
+          "n": 10778
+        },
+        "filter_dp": {
+          "uuid": "382737cb-632c-5830-97e3-40f72c1e7d64",
+          "point": "AHU_F2_Filter_DP",
+          "lo": 0.42,
+          "hi": 143.6,
+          "mid": 73.7,
+          "n": 10780
+        },
+        "return_air_temp": {
+          "uuid": "bdcd23c3-6997-5c28-b865-8f05ab324f59",
+          "point": "AHU_F2_Return_Air_Temperature",
+          "lo": 21.78,
+          "hi": 24.25,
+          "mid": 22.92,
+          "n": 6859
+        },
+        "supply_air_flow": {
+          "uuid": "f50a4d70-3f2f-5397-ba74-5eb0965d285b",
+          "point": "AHU_F2_Supply_Air_Flow",
+          "lo": 0.402,
+          "hi": 911.5,
+          "mid": 107.1,
+          "n": 10777
+        },
+        "supply_air_temp": {
+          "uuid": "56954c7f-cbf4-53a3-8b7e-e1fac63c8c1c",
+          "point": "AHU_F2_Supply_Air_Temperature",
+          "lo": 15.2,
+          "hi": 21.39,
+          "mid": 19.97,
+          "n": 6861
+        },
+        "damper_position": {
+          "uuid": "4a4a40ff-ec63-5c56-bdfb-8c7b3ae7e17e",
+          "point": "AHU_F2_Outside_Air_Damper_Position",
+          "fan_conditioned": true,
+          "lo": 12.0,
+          "hi": 58.0,
+          "mid": 34.2,
+          "n": 2262
+        }
+      },
+      "delta": {
+        "lead": "supply_air_temp",
+        "follow": "return_air_temp",
+        "lo": -8.76,
+        "hi": -1.16,
+        "mid": -2.89,
+        "n": 6568,
+        "n_all": 6852
+      }
+    },
+    {
+      "group": "AHU_F3",
+      "roles": {
+        "fan_status": {
+          "uuid": "a7eefba6-9fe3-52c6-bc1e-e0324b878760",
+          "point": "AHU_F3_Fan_Status",
+          "lo": 0.0,
+          "hi": 1.0,
+          "mid": 0.382,
+          "n": 10779
+        },
+        "filter_dp": {
+          "uuid": "43fc3670-4128-5a43-b9de-3940e458bc47",
+          "point": "AHU_F3_Filter_DP",
+          "lo": 0.425,
+          "hi": 153.2,
+          "mid": 82.8,
+          "n": 10780
+        },
+        "return_air_temp": {
+          "uuid": "af997d36-1a2c-5715-ae0d-de0c521c1e30",
+          "point": "AHU_F3_Return_Air_Temperature",
+          "lo": 21.77,
+          "hi": 24.23,
+          "mid": 22.89,
+          "n": 6864
+        },
+        "supply_air_flow": {
+          "uuid": "b67369fb-2335-5650-873d-a3d12b417cdc",
+          "point": "AHU_F3_Supply_Air_Flow",
+          "lo": 0.402,
+          "hi": 916.7,
+          "mid": 107.7,
+          "n": 10778
+        },
+        "supply_air_temp": {
+          "uuid": "0009b465-e9ee-551c-b5de-0e54c855fe18",
+          "point": "AHU_F3_Supply_Air_Temperature",
+          "lo": 15.16,
+          "hi": 21.39,
+          "mid": 19.89,
+          "n": 6857
+        },
+        "damper_position": {
+          "uuid": "6984cc2c-1eee-539e-8db7-6f5d17599795",
+          "point": "AHU_F3_Outside_Air_Damper_Position",
+          "fan_conditioned": true,
+          "lo": 12.0,
+          "hi": 57.5,
+          "mid": 31.2,
+          "n": 2053
+        }
+      },
+      "delta": {
+        "lead": "supply_air_temp",
+        "follow": "return_air_temp",
+        "lo": -8.86,
+        "hi": -1.08,
+        "mid": -3.01,
+        "n": 6598,
+        "n_all": 6850
+      }
+    },
+    {
+      "group": "AHU_F4",
+      "roles": {
+        "fan_status": {
+          "uuid": "c34cf47c-8139-5782-963f-10348012de31",
+          "point": "AHU_F4_Fan_Status",
+          "lo": 0.0,
+          "hi": 1.0,
+          "mid": 0.396,
+          "n": 10778
+        },
+        "filter_dp": {
+          "uuid": "f6cf20e2-d81d-5857-b779-641e26fcb2fa",
+          "point": "AHU_F4_Filter_DP",
+          "lo": 0.4,
+          "hi": 150.6,
+          "mid": 79.7,
+          "n": 10777
+        },
+        "return_air_temp": {
+          "uuid": "1e7b33b7-739d-5139-9bf8-5c8744b6e450",
+          "point": "AHU_F4_Return_Air_Temperature",
+          "lo": 21.82,
+          "hi": 24.25,
+          "mid": 22.9,
+          "n": 6856
+        },
+        "supply_air_flow": {
+          "uuid": "ce8292f7-2212-5b0a-9986-1185860fdbe4",
+          "point": "AHU_F4_Supply_Air_Flow",
+          "lo": 0.405,
+          "hi": 916.1,
+          "mid": 107.2,
+          "n": 10778
+        },
+        "supply_air_temp": {
+          "uuid": "9175adfe-6acb-566c-a9a3-62c966dc0052",
+          "point": "AHU_F4_Supply_Air_Temperature",
+          "lo": 15.17,
+          "hi": 21.5,
+          "mid": 20.0,
+          "n": 6872
+        },
+        "damper_position": {
+          "uuid": "2f78dd54-e4d2-542f-a4cc-81c5ccfef815",
+          "point": "AHU_F4_Outside_Air_Damper_Position",
+          "fan_conditioned": true,
+          "lo": 12.0,
+          "hi": 59.2,
+          "mid": 33.7,
+          "n": 2146
+        }
+      },
+      "delta": {
+        "lead": "supply_air_temp",
+        "follow": "return_air_temp",
+        "lo": -8.74,
+        "hi": -1.06,
+        "mid": -2.82,
+        "n": 6541,
+        "n_all": 6851
+      }
+    },
+    {
+      "group": "AHU_F5",
+      "roles": {
+        "fan_status": {
+          "uuid": "2532e981-aceb-5fb2-8c3d-eeecfc5acfcc",
+          "point": "AHU_F5_Fan_Status",
+          "lo": 0.0,
+          "hi": 1.0,
+          "mid": 0.4,
+          "n": 10780
+        },
+        "filter_dp": {
+          "uuid": "32907a6d-ecf2-55d2-b6f3-dc56b5cbd0cf",
+          "point": "AHU_F5_Filter_DP",
+          "lo": 0.423,
+          "hi": 138.0,
+          "mid": 67.9,
+          "n": 10780
+        },
+        "return_air_temp": {
+          "uuid": "394c931c-bb24-53f5-aeed-ea3dcc04a5d3",
+          "point": "AHU_F5_Return_Air_Temperature",
+          "lo": 21.74,
+          "hi": 24.28,
+          "mid": 22.89,
+          "n": 6858
+        },
+        "supply_air_flow": {
+          "uuid": "2fafd9ff-b04a-56db-9495-473aca404f45",
+          "point": "AHU_F5_Supply_Air_Flow",
+          "lo": 0.412,
+          "hi": 912.6,
+          "mid": 110.1,
+          "n": 10780
+        },
+        "supply_air_temp": {
+          "uuid": "9ccf5685-f12d-5b0a-92ad-5a4e0ba233b7",
+          "point": "AHU_F5_Supply_Air_Temperature",
+          "lo": 15.17,
+          "hi": 21.38,
+          "mid": 19.93,
+          "n": 6869
+        },
+        "damper_position": {
+          "uuid": "7d1ec9ca-b071-5812-8643-1d7852eba981",
+          "point": "AHU_F5_Outside_Air_Damper_Position",
+          "fan_conditioned": true,
+          "lo": 12.3,
+          "hi": 58.2,
+          "mid": 34.8,
+          "n": 2227
+        }
+      },
+      "delta": {
+        "lead": "supply_air_temp",
+        "follow": "return_air_temp",
+        "lo": -8.7,
+        "hi": -1.02,
+        "mid": -2.84,
+        "n": 6571,
+        "n_all": 6854
+      }
+    },
+    {
+      "group": "Boiler_1",
+      "roles": {
+        "entering_water_temp": {
+          "uuid": "d01cb867-704d-549b-b479-c0b299334bc0",
+          "point": "Boiler_1_Entering_Water_Temperature",
+          "lo": 55.83,
+          "hi": 61.37,
+          "mid": 58.2,
+          "n": 2647
+        },
+        "leaving_water_temp": {
+          "uuid": "f3befa81-7de7-5484-ba15-fefa200f8655",
+          "point": "Boiler_1_Leaving_Water_Temperature",
+          "lo": 66.77,
+          "hi": 72.41,
+          "mid": 69.24,
+          "n": 2647
+        }
+      },
+      "delta": {
+        "lead": "leaving_water_temp",
+        "follow": "entering_water_temp",
+        "lo": 10.09,
+        "hi": 11.88,
+        "mid": 10.99,
+        "n": 2647,
+        "n_all": 2647
+      }
+    },
+    {
+      "group": "Boiler_2",
+      "roles": {
+        "entering_water_temp": {
+          "uuid": "9fdfca22-d653-5173-93e1-aad381732c76",
+          "point": "Boiler_2_Entering_Water_Temperature",
+          "lo": 55.81,
+          "hi": 61.37,
+          "mid": 58.18,
+          "n": 2647
+        },
+        "leaving_water_temp": {
+          "uuid": "8691b1f1-7dc0-5e7f-90d3-d5fe295a92be",
+          "point": "Boiler_2_Leaving_Water_Temperature",
+          "lo": 66.82,
+          "hi": 72.38,
+          "mid": 69.18,
+          "n": 2647
+        }
+      },
+      "delta": {
+        "lead": "leaving_water_temp",
+        "follow": "entering_water_temp",
+        "lo": 10.12,
+        "hi": 11.93,
+        "mid": 11.0,
+        "n": 2647,
+        "n_all": 2647
+      }
+    },
+    {
+      "group": "Chiller_1",
+      "roles": {
+        "entering_water_temp": {
+          "uuid": "f3fab327-f4ae-501d-b635-356e64441a39",
+          "point": "Chiller_1_Entering_Water_Temperature",
+          "lo": 10.82,
+          "hi": 14.94,
+          "mid": 13.08,
+          "n": 2647
+        },
+        "leaving_water_temp": {
+          "uuid": "7089555f-4f70-5fac-b78d-9c28c7395efe",
+          "point": "Chiller_1_Leaving_Water_Temperature",
+          "lo": 5.34,
+          "hi": 9.42,
+          "mid": 7.56,
+          "n": 2647
+        }
+      },
+      "delta": {
+        "lead": "leaving_water_temp",
+        "follow": "entering_water_temp",
+        "lo": -6.37,
+        "hi": -4.65,
+        "mid": -5.51,
+        "n": 2647,
+        "n_all": 2647
+      }
+    },
+    {
+      "group": "Heat_Pump_1",
+      "roles": {
+        "entering_water_temp": {
+          "uuid": "aa2dac34-0510-5ac8-afc0-282493f644d9",
+          "point": "Heat_Pump_1_Entering_Water_Temperature",
+          "lo": 55.77,
+          "hi": 61.37,
+          "mid": 58.24,
+          "n": 2647
+        },
+        "leaving_water_temp": {
+          "uuid": "271c53fd-ea0a-5db9-9842-44f79d8a7351",
+          "point": "Heat_Pump_1_Leaving_Water_Temperature",
+          "lo": 66.86,
+          "hi": 72.33,
+          "mid": 69.2,
+          "n": 2647
+        }
+      },
+      "delta": {
+        "lead": "leaving_water_temp",
+        "follow": "entering_water_temp",
+        "lo": 10.05,
+        "hi": 11.92,
+        "mid": 11.02,
+        "n": 2647,
+        "n_all": 2647
+      }
+    }
+  ]
+}

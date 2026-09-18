@@ -23,6 +23,8 @@ hbco:too_warm rdf:type hbco:Concept ,
     hbco:layTerm "sweltering"^^xsd:string ;
     hbco:layTerm "stuffy heat"^^xsd:string ;
     hbco:layTerm "warm in here"^^xsd:string ;
+    hbco:layTerm "warmest"^^xsd:string ;
+    hbco:layTerm "hottest"^^xsd:string ;
     hbco:mapsToBrickClass brick:Temperature_Sensor ;
     hbco:mapsToBrickClass brick:Zone_Air_Temperature_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
@@ -40,6 +42,7 @@ hbco:too_cold rdf:type hbco:Concept ,
     hbco:layTerm "uncomfortably cold"^^xsd:string ;
     hbco:layTerm "cold in here"^^xsd:string ;
     hbco:layTerm "feels cold"^^xsd:string ;
+    hbco:layTerm "coldest"^^xsd:string ;
     hbco:mapsToBrickClass brick:Temperature_Sensor ;
     hbco:mapsToBrickClass brick:Zone_Air_Temperature_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
@@ -89,6 +92,8 @@ hbco:stuffiness rdf:type hbco:Concept ,
     hbco:layTerm "needs fresh air"^^xsd:string ;
     hbco:layTerm "poor ventilation"^^xsd:string ;
     hbco:layTerm "stifling"^^xsd:string ;
+    hbco:layTerm "stuffiest"^^xsd:string ;
+    hbco:layTerm "stuffier"^^xsd:string ;
     hbco:mapsToBrickClass brick:CO2_Level_Sensor ;
     hbco:mapsToBrickClass brick:CO2_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
@@ -104,6 +109,7 @@ hbco:co2_level rdf:type hbco:CompositeConcept ,
     hbco:layTerm "co2 level"^^xsd:string ;
     hbco:layTerm "co2 concentration"^^xsd:string ;
     hbco:layTerm "carbon dioxide level"^^xsd:string ;
+    hbco:layTerm "co₂"^^xsd:string ;
     hbco:mapsToBrickClass brick:CO2_Level_Sensor ;
     hbco:mapsToBrickClass brick:CO2_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
@@ -118,6 +124,7 @@ hbco:ventilation_quality rdf:type hbco:Concept ,
     hbco:layTerm "air circulation"^^xsd:string ;
     hbco:layTerm "fresh air"^^xsd:string ;
     hbco:layTerm "air exchange"^^xsd:string ;
+    hbco:layTerm "freshest air"^^xsd:string ;
     hbco:mapsToBrickClass brick:CO2_Level_Sensor ;
     hbco:mapsToBrickClass brick:Damper_Position_Sensor ;
     hbco:mapsToBrickClass brick:Supply_Air_Flow_Sensor ;
@@ -134,13 +141,6 @@ hbco:too_humid rdf:type hbco:Concept ,
     hbco:layTerm "muggy air"^^xsd:string ;
     hbco:layTerm "moist air"^^xsd:string ;
     hbco:layTerm "damp feeling"^^xsd:string ;
-    # "damp" on its own. `input/rules.yaml` ships a rule triggering on this exact concept
-    # name and it could never bind: only the two-word "damp feeling" was here, so
-    # `concept_resolver.resolve("damp")` returned nothing and the rule was inert
-    # (TODO-483, found while fixing BUG-481). It is the ordinary English word for the
-    # condition a humidity sensor reports, so it belongs in the core mapping rather than
-    # a per-building overlay.
-    hbco:layTerm "damp"^^xsd:string ;
     hbco:layTerm "clammy"^^xsd:string ;
     hbco:layTerm "sticky air"^^xsd:string ;
     hbco:layTerm "high humidity"^^xsd:string ;
@@ -158,6 +158,7 @@ hbco:too_dry rdf:type hbco:Concept ,
     hbco:layTerm "low humidity"^^xsd:string ;
     hbco:layTerm "dry"^^xsd:string ;
     hbco:layTerm "dryness"^^xsd:string ;
+    hbco:layTerm "driest"^^xsd:string ;
     hbco:mapsToBrickClass brick:Humidity_Sensor ;
     hbco:mapsToBrickClass brick:Relative_Humidity_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
@@ -253,8 +254,17 @@ hbco:noisy rdf:type hbco:Concept ,
     hbco:layTerm "disruptive noise"^^xsd:string ;
     hbco:layTerm "disturbing sounds"^^xsd:string ;
     hbco:layTerm "high noise level"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Noise_Level_Sensor ;
-    hbco:mapsToBrickClass brick:Sound_Level_Sensor ;
+    hbco:layTerm "noisiest"^^xsd:string ;
+    hbco:layTerm "noisier"^^xsd:string ;
+    hbco:layTerm "loudest"^^xsd:string ;
+    hbco:layTerm "louder"^^xsd:string ;
+    hbco:layTerm "how loud"^^xsd:string ;
+    hbco:layTerm "sound level"^^xsd:string ;
+    hbco:layTerm "sound levels"^^xsd:string ;
+    hbco:layTerm "decibels"^^xsd:string ;
+    hbco:layTerm "decibel"^^xsd:string ;
+    hbco:layTerm "db(a)"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Sound_Level_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:acoustic_comfort ;
     hbco:confidence "high"^^xsd:string .
@@ -270,9 +280,7 @@ hbco:quiet_zone rdf:type hbco:Concept ,
     hbco:layTerm "low noise"^^xsd:string ;
     hbco:layTerm "peaceful"^^xsd:string ;
     hbco:layTerm "quiet for study"^^xsd:string ;
-    hbco:layTerm "acoustic comfort"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Noise_Level_Sensor ;
-    hbco:mapsToBrickClass brick:Sound_Level_Sensor ;
+    hbco:mapsToBrickClass ontosage:Sound_Level_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:acoustic_comfort ;
     hbco:confidence "high"^^xsd:string .
@@ -286,7 +294,8 @@ hbco:acoustic_comfort rdf:type hbco:CompositeConcept ,
     hbco:layTerm "noise environment"^^xsd:string ;
     hbco:layTerm "comfortable for focus"^^xsd:string ;
     hbco:layTerm "noise level"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Noise_Level_Sensor ;
+    hbco:layTerm "noise levels"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Sound_Level_Sensor ;
     hbco:requiresRecipe "range"^^xsd:string ;
     hbco:confidence "high"^^xsd:string .
 
@@ -332,6 +341,9 @@ hbco:lighting_comfort rdf:type hbco:CompositeConcept ,
     hbco:layTerm "brightness"^^xsd:string ;
     hbco:layTerm "adequate lighting"^^xsd:string ;
     hbco:layTerm "lighting conditions"^^xsd:string ;
+    hbco:layTerm "brightest"^^xsd:string ;
+    hbco:layTerm "darkest"^^xsd:string ;
+    hbco:layTerm "dimmest"^^xsd:string ;
     hbco:mapsToBrickClass brick:Illuminance_Sensor ;
     hbco:mapsToBrickClass brick:Luminance_Sensor ;
     hbco:requiresRecipe "range"^^xsd:string ;
@@ -347,7 +359,7 @@ hbco:natural_light rdf:type hbco:Concept ,
     hbco:layTerm "daylit"^^xsd:string ;
     hbco:layTerm "sunlit"^^xsd:string ;
     hbco:layTerm "daylighting"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Daylight_Sensor ;
+    hbco:layTerm "sunniest"^^xsd:string ;
     hbco:mapsToBrickClass brick:Illuminance_Sensor ;
     hbco:requiresRecipe "range"^^xsd:string ;
     hbco:componentOf hbco:lighting_comfort ;
@@ -359,13 +371,13 @@ hbco:crowded rdf:type hbco:Concept ,
     skos:prefLabel "crowded"@en ;
     hbco:layTerm "crowded"^^xsd:string ;
     hbco:layTerm "packed"^^xsd:string ;
-    hbco:layTerm "full"^^xsd:string ;
     hbco:layTerm "too many people"^^xsd:string ;
     hbco:layTerm "congested"^^xsd:string ;
     hbco:layTerm "over capacity"^^xsd:string ;
     hbco:layTerm "no space"^^xsd:string ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
     hbco:mapsToBrickClass brick:Motion_Sensor ;
+    hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:busyness ;
     hbco:confidence "high"^^xsd:string .
@@ -379,9 +391,10 @@ hbco:busy rdf:type hbco:Concept ,
     hbco:layTerm "how busy"^^xsd:string ;
     hbco:layTerm "how many people"^^xsd:string ;
     hbco:layTerm "high occupancy"^^xsd:string ;
+    hbco:layTerm "busiest"^^xsd:string ;
+    hbco:layTerm "busier"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
-    hbco:mapsToBrickClass brick:Motion_Sensor ;
-    hbco:mapsToBrickClass brick:People_Counter_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:componentOf hbco:busyness ;
     hbco:confidence "high"^^xsd:string .
@@ -397,8 +410,11 @@ hbco:empty_space rdf:type hbco:Concept ,
     hbco:layTerm "nobody there"^^xsd:string ;
     hbco:layTerm "unoccupied"^^xsd:string ;
     hbco:layTerm "available desk"^^xsd:string ;
+    hbco:layTerm "emptiest"^^xsd:string ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
     hbco:mapsToBrickClass brick:Motion_Sensor ;
+    hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
+    hbco:mapsToBrickClass brick:Occupancy_Status ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:busyness ;
     hbco:confidence "high"^^xsd:string .
@@ -413,8 +429,8 @@ hbco:busyness rdf:type hbco:CompositeConcept ,
     hbco:layTerm "room utilization"^^xsd:string ;
     hbco:layTerm "occupancy rate"^^xsd:string ;
     hbco:layTerm "how occupied"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
-    hbco:mapsToBrickClass brick:People_Counter_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "high"^^xsd:string .
 
@@ -429,6 +445,7 @@ hbco:quiet_time rdf:type hbco:Concept ,
     hbco:layTerm "off-peak"^^xsd:string ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
     hbco:mapsToBrickClass brick:Motion_Sensor ;
+    hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
     hbco:requiresRecipe "trend"^^xsd:string ;
     hbco:componentOf hbco:busyness ;
     hbco:confidence "high"^^xsd:string .
@@ -442,7 +459,7 @@ hbco:energy_waste rdf:type hbco:Concept ,
     hbco:layTerm "inefficient energy"^^xsd:string ;
     hbco:layTerm "energy inefficiency"^^xsd:string ;
     hbco:layTerm "high energy use"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "high"^^xsd:string .
@@ -457,22 +474,12 @@ hbco:energy_consumption rdf:type hbco:CompositeConcept ,
     hbco:layTerm "power consumption"^^xsd:string ;
     hbco:layTerm "kWh"^^xsd:string ;
     hbco:layTerm "energy usage"^^xsd:string ;
-    # Added 2026-09-02 (BUG-395). "energy use" resolved and bare "energy" did not, so
-    # "any energy spikes" carried no measurand concept, the routing rule that would have
-    # sent it to the detector never fired, and it fell to the capability lane's "contact
-    # your facilities team" — while all 8 energy sensors were live and the scanner had
-    # found 24,317 spike findings that hour. A lay-term gap, fixed in the ontology rather
-    # than by another code path.
-    hbco:layTerm "energy"^^xsd:string ;
-    hbco:layTerm "electricity"^^xsd:string ;
-    hbco:layTerm "power"^^xsd:string ;
-    hbco:layTerm "energy spike"^^xsd:string ;
-    hbco:layTerm "energy spikes"^^xsd:string ;
-    hbco:layTerm "power spike"^^xsd:string ;
-    hbco:layTerm "energy anomaly"^^xsd:string ;
-    hbco:layTerm "energy anomalies"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
-    hbco:mapsToBrickClass brick:Electrical_Power_Sensor ;
+    hbco:layTerm "electricity usage"^^xsd:string ;
+    hbco:layTerm "electricity consumption"^^xsd:string ;
+    hbco:layTerm "energy used"^^xsd:string ;
+    hbco:layTerm "kilowatt hours"^^xsd:string ;
+    hbco:layTerm "kilowatt-hours"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "high"^^xsd:string .
 
@@ -486,7 +493,7 @@ hbco:energy_cost rdf:type hbco:Concept ,
     hbco:layTerm "tariff"^^xsd:string ;
     hbco:layTerm "cost of electricity"^^xsd:string ;
     hbco:layTerm "electricity cost"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "high"^^xsd:string .
@@ -500,8 +507,8 @@ hbco:peak_demand rdf:type hbco:Concept ,
     hbco:layTerm "peak hours"^^xsd:string ;
     hbco:layTerm "peak load"^^xsd:string ;
     hbco:layTerm "demand charges"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
-    hbco:mapsToBrickClass brick:Electrical_Power_Sensor ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
+    hbco:mapsToBrickClass brick:Electric_Power_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "high"^^xsd:string .
@@ -517,7 +524,7 @@ hbco:carbon_footprint rdf:type hbco:Concept ,
     hbco:layTerm "greenhouse gas"^^xsd:string ;
     hbco:layTerm "eco-friendly"^^xsd:string ;
     hbco:layTerm "green"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "medium"^^xsd:string .
@@ -561,7 +568,6 @@ hbco:emergency_exit rdf:type hbco:Concept ,
     skos:prefLabel "emergency exit"@en ;
     hbco:layTerm "emergency exit"^^xsd:string ;
     hbco:layTerm "evacuation route"^^xsd:string ;
-    hbco:layTerm "fire exit"^^xsd:string ;
     hbco:layTerm "safe exit"^^xsd:string ;
     hbco:layTerm "exit"^^xsd:string ;
     hbco:mapsToBrickClass brick:Smoke_Detector ;
@@ -580,6 +586,8 @@ hbco:water_usage rdf:type hbco:CompositeConcept ,
     hbco:layTerm "water efficiency"^^xsd:string ;
     hbco:mapsToBrickClass brick:Water_Flow_Sensor ;
     hbco:mapsToBrickClass brick:Water_Level_Sensor ;
+    hbco:mapsToBrickClass brick:Water_Meter ;
+    hbco:mapsToBrickClass brick:Water_Usage_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "medium"^^xsd:string .
 
@@ -594,7 +602,7 @@ hbco:water_leak rdf:type hbco:Concept ,
     hbco:layTerm "water running"^^xsd:string ;
     hbco:layTerm "pipe leak"^^xsd:string ;
     hbco:mapsToBrickClass brick:Water_Flow_Sensor ;
-    hbco:mapsToBrickClass brick:Leak_Detector ;
+    hbco:mapsToBrickClass brick:Leak_Alarm ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:water_usage ;
     hbco:confidence "medium"^^xsd:string .
@@ -607,7 +615,6 @@ hbco:water_quality rdf:type hbco:Concept ,
     hbco:layTerm "drinking water"^^xsd:string ;
     hbco:layTerm "potable water"^^xsd:string ;
     hbco:layTerm "water safety"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Water_Quality_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:confidence "medium"^^xsd:string .
 
@@ -616,7 +623,6 @@ hbco:overall_comfort rdf:type hbco:CompositeConcept ,
     hbco:conceptId "overall_comfort"^^xsd:string ;
     skos:prefLabel "comfortable"@en ;
     hbco:layTerm "comfortable"^^xsd:string ;
-    hbco:layTerm "is it comfortable"^^xsd:string ;
     hbco:layTerm "comfort level"^^xsd:string ;
     hbco:layTerm "working conditions"^^xsd:string ;
     hbco:layTerm "pleasant environment"^^xsd:string ;
@@ -637,7 +643,7 @@ hbco:equipment_working rdf:type hbco:CompositeConcept ,
     hbco:layTerm "is it broken"^^xsd:string ;
     hbco:layTerm "not working"^^xsd:string ;
     hbco:layTerm "equipment fault"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Fault_Sensor ;
+    hbco:mapsToBrickClass brick:Fault_Status ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:confidence "medium"^^xsd:string .
 
@@ -650,7 +656,8 @@ hbco:lift_status rdf:type hbco:Concept ,
     hbco:layTerm "is the lift working"^^xsd:string ;
     hbco:layTerm "lift broken"^^xsd:string ;
     hbco:layTerm "elevator out of service"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Fault_Sensor ;
+    hbco:mapsToBrickClass brick:Availability_Status ;
+    hbco:mapsToBrickClass brick:Fault_Status ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:equipment_working ;
     hbco:confidence "high"^^xsd:string .
@@ -665,8 +672,7 @@ hbco:hvac_performance rdf:type hbco:Concept ,
     hbco:layTerm "air conditioning"^^xsd:string ;
     hbco:layTerm "AC working"^^xsd:string ;
     hbco:layTerm "heating working"^^xsd:string ;
-    hbco:mapsToBrickClass brick:HVAC_Zone ;
-    hbco:mapsToBrickClass brick:AHU ;
+    hbco:mapsToBrickClass brick:Air_Handling_Unit ;
     hbco:mapsToBrickClass brick:Zone_Air_Temperature_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:equipment_working ;
@@ -683,6 +689,7 @@ hbco:space_availability rdf:type hbco:Concept ,
     hbco:layTerm "room available"^^xsd:string ;
     hbco:layTerm "desk available"^^xsd:string ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
+    hbco:mapsToBrickClass brick:Occupancy_Status ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:busyness ;
     hbco:confidence "high"^^xsd:string .
@@ -735,9 +742,9 @@ hbco:focus_environment rdf:type hbco:Concept ,
     hbco:layTerm "work environment"^^xsd:string ;
     hbco:layTerm "study environment"^^xsd:string ;
     hbco:layTerm "productive space"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Noise_Level_Sensor ;
     hbco:mapsToBrickClass brick:Illuminance_Sensor ;
     hbco:mapsToBrickClass brick:CO2_Level_Sensor ;
+    hbco:mapsToBrickClass ontosage:Sound_Level_Sensor ;
     hbco:requiresRecipe "range"^^xsd:string ;
     hbco:componentOf hbco:overall_comfort ;
     hbco:confidence "medium"^^xsd:string .
@@ -777,8 +784,20 @@ hbco:unexpected_open_window rdf:type hbco:Concept ,
     hbco:layTerm "window left open"^^xsd:string ;
     hbco:layTerm "open window"^^xsd:string ;
     hbco:layTerm "door left open"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Window_Position_Sensor ;
-    hbco:mapsToBrickClass brick:Door_Position_Sensor ;
+    hbco:layTerm "windows left open"^^xsd:string ;
+    hbco:layTerm "window open"^^xsd:string ;
+    hbco:layTerm "windows open"^^xsd:string ;
+    hbco:layTerm "door open"^^xsd:string ;
+    hbco:layTerm "doors open"^^xsd:string ;
+    hbco:layTerm "is the window open"^^xsd:string ;
+    hbco:layTerm "are the windows open"^^xsd:string ;
+    hbco:layTerm "is the door open"^^xsd:string ;
+    hbco:layTerm "are the doors open"^^xsd:string ;
+    hbco:layTerm "propped open"^^xsd:string ;
+    hbco:layTerm "window contact"^^xsd:string ;
+    hbco:layTerm "door contact"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Contact_Sensor ;
+    hbco:mapsToBrickClass brick:Open_Close_Status ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:confidence "medium"^^xsd:string .
 
@@ -805,7 +824,7 @@ hbco:energy_trend rdf:type hbco:Concept ,
     hbco:layTerm "energy increasing"^^xsd:string ;
     hbco:layTerm "energy pattern"^^xsd:string ;
     hbco:layTerm "energy history"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
     hbco:requiresRecipe "trend"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "high"^^xsd:string .
@@ -820,6 +839,7 @@ hbco:occupancy_trend rdf:type hbco:Concept ,
     hbco:layTerm "occupancy history"^^xsd:string ;
     hbco:layTerm "when peak occupancy"^^xsd:string ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
+    hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
     hbco:requiresRecipe "trend"^^xsd:string ;
     hbco:componentOf hbco:busyness ;
     hbco:confidence "high"^^xsd:string .
@@ -876,7 +896,7 @@ hbco:after_hours rdf:type hbco:Concept ,
     hbco:layTerm "weekend"^^xsd:string ;
     hbco:layTerm "outside business hours"^^xsd:string ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "medium"^^xsd:string .
 
@@ -914,7 +934,7 @@ hbco:energy_saving_tip rdf:type hbco:Concept ,
     hbco:layTerm "energy saving"^^xsd:string ;
     hbco:layTerm "lower energy use"^^xsd:string ;
     hbco:layTerm "efficiency improvement"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "medium"^^xsd:string .
@@ -943,6 +963,7 @@ hbco:congestion_hotspot rdf:type hbco:Concept ,
     hbco:layTerm "flow problem"^^xsd:string ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
     hbco:mapsToBrickClass brick:Motion_Sensor ;
+    hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:componentOf hbco:busyness ;
     hbco:confidence "medium"^^xsd:string .
@@ -957,7 +978,7 @@ hbco:solar_output rdf:type hbco:Concept ,
     hbco:layTerm "PV output"^^xsd:string ;
     hbco:layTerm "photovoltaic"^^xsd:string ;
     hbco:layTerm "renewable energy"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Power_Sensor ;
+    hbco:mapsToBrickClass brick:Electric_Power_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "medium"^^xsd:string .
@@ -996,7 +1017,7 @@ hbco:future_energy rdf:type hbco:Concept ,
     hbco:layTerm "predict energy"^^xsd:string ;
     hbco:layTerm "expected energy use"^^xsd:string ;
     hbco:layTerm "future energy demand"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electrical_Energy_Sensor ;
+    hbco:mapsToBrickClass brick:Energy_Sensor ;
     hbco:requiresRecipe "trend"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "medium"^^xsd:string .
@@ -1013,7 +1034,7 @@ hbco:last_service rdf:type hbco:Concept ,
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "medium"^^xsd:string .
 
-hbco:equipment_condition rdf:type hbco:Concept ,
+hbco:equipment_condition rdf:type hbco:CompositeConcept ,
                owl:NamedIndividual ;
     hbco:conceptId "equipment_condition"^^xsd:string ;
     skos:prefLabel "equipment condition"@en ;
@@ -1021,7 +1042,7 @@ hbco:equipment_condition rdf:type hbco:Concept ,
     hbco:layTerm "equipment health"^^xsd:string ;
     hbco:layTerm "needs repair"^^xsd:string ;
     hbco:layTerm "equipment status"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Fault_Sensor ;
+    hbco:mapsToBrickClass brick:Fault_Status ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:equipment_working ;
     hbco:confidence "medium"^^xsd:string .
@@ -1053,20 +1074,18 @@ hbco:system_capability rdf:type hbco:Concept ,
 hbco:quiet_space rdf:type hbco:Concept ,
                owl:NamedIndividual ;
     hbco:conceptId "quiet_space"^^xsd:string ;
-    skos:prefLabel "quiet"@en ;
-    hbco:layTerm "quiet"^^xsd:string ;
+    skos:prefLabel "quiet spot"@en ;
     hbco:layTerm "quiet spot"^^xsd:string ;
     hbco:layTerm "quiet place"^^xsd:string ;
-    hbco:layTerm "quiet area"^^xsd:string ;
     hbco:layTerm "quiet room"^^xsd:string ;
     hbco:layTerm "quiet zone"^^xsd:string ;
     hbco:layTerm "somewhere quiet"^^xsd:string ;
     hbco:layTerm "quiet place to work"^^xsd:string ;
     hbco:layTerm "quiet spot to work"^^xsd:string ;
-    hbco:layTerm "peaceful"^^xsd:string ;
-    hbco:layTerm "low noise"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Noise_Level_Sensor ;
-    hbco:mapsToBrickClass brick:Sound_Level_Sensor ;
+    hbco:layTerm "quietest"^^xsd:string ;
+    hbco:layTerm "quieter"^^xsd:string ;
+    hbco:layTerm "how quiet"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Sound_Level_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:componentOf hbco:acoustic_comfort ;
     hbco:confidence "high"^^xsd:string .
@@ -1085,6 +1104,7 @@ hbco:outdoor_wind rdf:type hbco:Concept ,
     hbco:layTerm "how strong is the wind"^^xsd:string ;
     hbco:layTerm "wind speed"^^xsd:string ;
     hbco:layTerm "gusty"^^xsd:string ;
+    hbco:layTerm "windiest"^^xsd:string ;
     hbco:mapsToBrickClass brick:Wind_Speed_Sensor ;
     hbco:requiresRecipe "threshold"^^xsd:string ;
     hbco:confidence "high"^^xsd:string .
@@ -1106,3 +1126,405 @@ hbco:parking_availability rdf:type hbco:Concept ,
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "high"^^xsd:string .
 
+hbco:damper_position rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "damper_position"^^xsd:string ;
+    skos:prefLabel "damper"@en ;
+    hbco:layTerm "damper"^^xsd:string ;
+    hbco:layTerm "dampers"^^xsd:string ;
+    hbco:layTerm "damper position"^^xsd:string ;
+    hbco:layTerm "outside air damper"^^xsd:string ;
+    hbco:layTerm "fresh air damper"^^xsd:string ;
+    hbco:layTerm "air damper"^^xsd:string ;
+    hbco:layTerm "economiser"^^xsd:string ;
+    hbco:layTerm "economizer"^^xsd:string ;
+    hbco:layTerm "louvre"^^xsd:string ;
+    hbco:layTerm "louver"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Damper_Position_Sensor ;
+    hbco:mapsToBrickClass brick:Damper_Position_Command ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:waste_fill rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "waste_fill"^^xsd:string ;
+    skos:prefLabel "bin"@en ;
+    hbco:layTerm "bin"^^xsd:string ;
+    hbco:layTerm "bins"^^xsd:string ;
+    hbco:layTerm "waste bin"^^xsd:string ;
+    hbco:layTerm "rubbish bin"^^xsd:string ;
+    hbco:layTerm "recycling bin"^^xsd:string ;
+    hbco:layTerm "bin fill"^^xsd:string ;
+    hbco:layTerm "bin level"^^xsd:string ;
+    hbco:layTerm "fill level"^^xsd:string ;
+    hbco:layTerm "needs emptying"^^xsd:string ;
+    hbco:layTerm "full bins"^^xsd:string ;
+    hbco:layTerm "bin capacity"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Waste_Fill_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:waste_weight rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "waste_weight"^^xsd:string ;
+    skos:prefLabel "bin weight"@en ;
+    hbco:layTerm "bin weight"^^xsd:string ;
+    hbco:layTerm "waste weight"^^xsd:string ;
+    hbco:layTerm "weight of waste"^^xsd:string ;
+    hbco:layTerm "how much waste"^^xsd:string ;
+    hbco:layTerm "how much rubbish"^^xsd:string ;
+    hbco:layTerm "waste produced"^^xsd:string ;
+    hbco:layTerm "waste generated"^^xsd:string ;
+    hbco:layTerm "recycling weight"^^xsd:string ;
+    hbco:layTerm "waste tonnage"^^xsd:string ;
+    hbco:layTerm "landfill weight"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Waste_Weight_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:occupancy_status rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "occupancy_status"^^xsd:string ;
+    skos:prefLabel "anyone in there"@en ;
+    hbco:layTerm "anyone in there"^^xsd:string ;
+    hbco:layTerm "anybody in there"^^xsd:string ;
+    hbco:layTerm "is the room occupied"^^xsd:string ;
+    hbco:layTerm "currently occupied"^^xsd:string ;
+    hbco:layTerm "occupied right now"^^xsd:string ;
+    hbco:layTerm "room in use"^^xsd:string ;
+    hbco:layTerm "in use right now"^^xsd:string ;
+    hbco:layTerm "occupancy status"^^xsd:string ;
+    hbco:layTerm "occupied or vacant"^^xsd:string ;
+    hbco:layTerm "occupied or free"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Occupancy_Status ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:componentOf hbco:busyness ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:light_colour_temperature rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "light_colour_temperature"^^xsd:string ;
+    skos:prefLabel "colour temperature"@en ;
+    hbco:layTerm "colour temperature"^^xsd:string ;
+    hbco:layTerm "color temperature"^^xsd:string ;
+    hbco:layTerm "correlated colour temperature"^^xsd:string ;
+    hbco:layTerm "correlated color temperature"^^xsd:string ;
+    hbco:layTerm "cct"^^xsd:string ;
+    hbco:layTerm "warm white"^^xsd:string ;
+    hbco:layTerm "cool white"^^xsd:string ;
+    hbco:layTerm "light colour"^^xsd:string ;
+    hbco:layTerm "light color"^^xsd:string ;
+    hbco:layTerm "kelvin"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Lighting_Correlated_Color_Temperature_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:componentOf hbco:lighting_comfort ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:carbon_monoxide rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "carbon_monoxide"^^xsd:string ;
+    skos:prefLabel "carbon monoxide"@en ;
+    hbco:layTerm "carbon monoxide"^^xsd:string ;
+    hbco:layTerm "co level"^^xsd:string ;
+    hbco:layTerm "co levels"^^xsd:string ;
+    hbco:layTerm "co concentration"^^xsd:string ;
+    hbco:layTerm "co alarm"^^xsd:string ;
+    hbco:layTerm "co detector"^^xsd:string ;
+    hbco:layTerm "co sensor"^^xsd:string ;
+    hbco:layTerm "co sensors"^^xsd:string ;
+    hbco:mapsToBrickClass brick:CO_Level_Sensor ;
+    hbco:mapsToBrickClass brick:CO_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:componentOf hbco:iaq_composite ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:nitrogen_dioxide rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "nitrogen_dioxide"^^xsd:string ;
+    skos:prefLabel "nitrogen dioxide"@en ;
+    hbco:layTerm "nitrogen dioxide"^^xsd:string ;
+    hbco:layTerm "no2"^^xsd:string ;
+    hbco:layTerm "no₂"^^xsd:string ;
+    hbco:layTerm "no2 level"^^xsd:string ;
+    hbco:layTerm "no2 levels"^^xsd:string ;
+    hbco:mapsToBrickClass brick:NO2_Level_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:componentOf hbco:iaq_composite ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:formaldehyde rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "formaldehyde"^^xsd:string ;
+    skos:prefLabel "formaldehyde"@en ;
+    hbco:layTerm "formaldehyde"^^xsd:string ;
+    hbco:layTerm "hcho"^^xsd:string ;
+    hbco:layTerm "formaldehyde level"^^xsd:string ;
+    hbco:layTerm "formaldehyde levels"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Formaldehyde_Level_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:componentOf hbco:iaq_composite ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:pm10_level rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "pm10_level"^^xsd:string ;
+    skos:prefLabel "pm10"@en ;
+    hbco:layTerm "pm10"^^xsd:string ;
+    hbco:layTerm "pm₁₀"^^xsd:string ;
+    hbco:layTerm "coarse particles"^^xsd:string ;
+    hbco:layTerm "coarse particulate"^^xsd:string ;
+    hbco:mapsToBrickClass brick:PM10_Level_Sensor ;
+    hbco:mapsToBrickClass brick:PM10_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:componentOf hbco:iaq_composite ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:pm1_level rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "pm1_level"^^xsd:string ;
+    skos:prefLabel "pm1"@en ;
+    hbco:layTerm "pm1"^^xsd:string ;
+    hbco:layTerm "pm1.0"^^xsd:string ;
+    hbco:layTerm "ultrafine particles"^^xsd:string ;
+    hbco:layTerm "ultrafine particulate"^^xsd:string ;
+    hbco:mapsToBrickClass brick:PM1_Level_Sensor ;
+    hbco:mapsToBrickClass brick:PM1_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:componentOf hbco:iaq_composite ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:gas_level rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "gas_level"^^xsd:string ;
+    skos:prefLabel "gas level"@en ;
+    hbco:layTerm "gas level"^^xsd:string ;
+    hbco:layTerm "gas levels"^^xsd:string ;
+    hbco:layTerm "gas concentration"^^xsd:string ;
+    hbco:layTerm "gas concentrations"^^xsd:string ;
+    hbco:layTerm "gas reading"^^xsd:string ;
+    hbco:layTerm "gas readings"^^xsd:string ;
+    hbco:layTerm "gas sensor"^^xsd:string ;
+    hbco:layTerm "gas sensors"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Gas_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:componentOf hbco:iaq_composite ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:electric_power rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "electric_power"^^xsd:string ;
+    skos:prefLabel "power draw"@en ;
+    hbco:layTerm "power draw"^^xsd:string ;
+    hbco:layTerm "power demand"^^xsd:string ;
+    hbco:layTerm "electrical load"^^xsd:string ;
+    hbco:layTerm "electric load"^^xsd:string ;
+    hbco:layTerm "electrical power"^^xsd:string ;
+    hbco:layTerm "electric power"^^xsd:string ;
+    hbco:layTerm "kilowatts"^^xsd:string ;
+    hbco:layTerm "kw"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Electric_Power_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:componentOf hbco:energy_consumption ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:water_level rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "water_level"^^xsd:string ;
+    skos:prefLabel "water level"@en ;
+    hbco:layTerm "water level"^^xsd:string ;
+    hbco:layTerm "water levels"^^xsd:string ;
+    hbco:layTerm "tank level"^^xsd:string ;
+    hbco:layTerm "tank levels"^^xsd:string ;
+    hbco:layTerm "cistern level"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Water_Level_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:outdoor_humidity rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "outdoor_humidity"^^xsd:string ;
+    skos:prefLabel "outside humidity"@en ;
+    hbco:layTerm "outside humidity"^^xsd:string ;
+    hbco:layTerm "outdoor humidity"^^xsd:string ;
+    hbco:layTerm "external humidity"^^xsd:string ;
+    hbco:layTerm "humidity outside"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Outside_Air_Humidity_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:solar_irradiance rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "solar_irradiance"^^xsd:string ;
+    skos:prefLabel "solar irradiance"@en ;
+    hbco:layTerm "solar irradiance"^^xsd:string ;
+    hbco:layTerm "irradiance"^^xsd:string ;
+    hbco:layTerm "solar radiation"^^xsd:string ;
+    hbco:layTerm "sunlight intensity"^^xsd:string ;
+    hbco:layTerm "sun intensity"^^xsd:string ;
+    hbco:layTerm "how sunny"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Solar_Irradiance_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:soil_moisture rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "soil_moisture"^^xsd:string ;
+    skos:prefLabel "soil moisture"@en ;
+    hbco:layTerm "soil moisture"^^xsd:string ;
+    hbco:layTerm "soil dryness"^^xsd:string ;
+    hbco:layTerm "how dry is the soil"^^xsd:string ;
+    hbco:layTerm "is the soil dry"^^xsd:string ;
+    hbco:layTerm "substrate moisture"^^xsd:string ;
+    hbco:layTerm "need watering"^^xsd:string ;
+    hbco:layTerm "needs watering"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Soil_Moisture_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:rainfall rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "rainfall"^^xsd:string ;
+    skos:prefLabel "rain"@en ;
+    hbco:layTerm "rain"^^xsd:string ;
+    hbco:layTerm "rainfall"^^xsd:string ;
+    hbco:layTerm "raining"^^xsd:string ;
+    hbco:layTerm "rainy"^^xsd:string ;
+    hbco:layTerm "precipitation"^^xsd:string ;
+    hbco:layTerm "how much rain"^^xsd:string ;
+    hbco:layTerm "rain gauge"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Rainfall_Sensor ;
+    hbco:mapsToBrickClass brick:Rain_Level_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:air_flow_rate rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "air_flow_rate"^^xsd:string ;
+    skos:prefLabel "airflow"@en ;
+    hbco:layTerm "airflow"^^xsd:string ;
+    hbco:layTerm "airflow rate"^^xsd:string ;
+    hbco:layTerm "air flow rate"^^xsd:string ;
+    hbco:layTerm "air flow rates"^^xsd:string ;
+    hbco:layTerm "supply airflow"^^xsd:string ;
+    hbco:layTerm "air volume"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Air_Flow_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:supply_air_temperature rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "supply_air_temperature"^^xsd:string ;
+    skos:prefLabel "supply air temperature"@en ;
+    hbco:layTerm "supply air temperature"^^xsd:string ;
+    hbco:layTerm "supply air temp"^^xsd:string ;
+    hbco:layTerm "discharge air temperature"^^xsd:string ;
+    hbco:layTerm "off-coil temperature"^^xsd:string ;
+    hbco:layTerm "off coil temperature"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Supply_Air_Temperature_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:return_air_temperature rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "return_air_temperature"^^xsd:string ;
+    skos:prefLabel "return air temperature"@en ;
+    hbco:layTerm "return air temperature"^^xsd:string ;
+    hbco:layTerm "return air temp"^^xsd:string ;
+    hbco:layTerm "extract air temperature"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Return_Air_Temperature_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:water_temperature rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "water_temperature"^^xsd:string ;
+    skos:prefLabel "water temperature"@en ;
+    hbco:layTerm "water temperature"^^xsd:string ;
+    hbco:layTerm "flow temperature"^^xsd:string ;
+    hbco:layTerm "leaving water temperature"^^xsd:string ;
+    hbco:layTerm "entering water temperature"^^xsd:string ;
+    hbco:layTerm "return water temperature"^^xsd:string ;
+    hbco:layTerm "chilled water temperature"^^xsd:string ;
+    hbco:layTerm "hot water temperature"^^xsd:string ;
+    hbco:layTerm "delta-t"^^xsd:string ;
+    hbco:layTerm "delta t"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Water_Temperature_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:filter_pressure rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "filter_pressure"^^xsd:string ;
+    skos:prefLabel "filter differential pressure"@en ;
+    hbco:layTerm "filter differential pressure"^^xsd:string ;
+    hbco:layTerm "filter pressure"^^xsd:string ;
+    hbco:layTerm "filter pressure drop"^^xsd:string ;
+    hbco:layTerm "filter dp"^^xsd:string ;
+    hbco:layTerm "dirty filter"^^xsd:string ;
+    hbco:layTerm "dirty filters"^^xsd:string ;
+    hbco:layTerm "blocked filter"^^xsd:string ;
+    hbco:layTerm "clogged filter"^^xsd:string ;
+    hbco:layTerm "filter condition"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Filter_Differential_Pressure_Sensor ;
+    hbco:requiresRecipe "threshold"^^xsd:string ;
+    hbco:componentOf hbco:equipment_condition ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:fan_status rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "fan_status"^^xsd:string ;
+    skos:prefLabel "fan status"@en ;
+    hbco:layTerm "fan status"^^xsd:string ;
+    hbco:layTerm "fan state"^^xsd:string ;
+    hbco:layTerm "fan running"^^xsd:string ;
+    hbco:layTerm "fans running"^^xsd:string ;
+    hbco:layTerm "is the fan on"^^xsd:string ;
+    hbco:layTerm "supply fan"^^xsd:string ;
+    hbco:layTerm "extract fan"^^xsd:string ;
+    hbco:layTerm "exhaust fan"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Fan_Status ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:componentOf hbco:equipment_working ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:run_time rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "run_time"^^xsd:string ;
+    skos:prefLabel "run time"@en ;
+    hbco:layTerm "run time"^^xsd:string ;
+    hbco:layTerm "runtime"^^xsd:string ;
+    hbco:layTerm "running hours"^^xsd:string ;
+    hbco:layTerm "run hours"^^xsd:string ;
+    hbco:layTerm "hours run"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Duration_Sensor ;
+    hbco:mapsToBrickClass brick:On_Timer_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:humidity_setpoint rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "humidity_setpoint"^^xsd:string ;
+    skos:prefLabel "humidity setpoint"@en ;
+    hbco:layTerm "humidity setpoint"^^xsd:string ;
+    hbco:layTerm "humidity set point"^^xsd:string ;
+    hbco:layTerm "humidity threshold"^^xsd:string ;
+    hbco:layTerm "mould risk threshold"^^xsd:string ;
+    hbco:layTerm "mold risk threshold"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Humidity_Setpoint ;
+    hbco:requiresRecipe "range"^^xsd:string ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:lighting_state rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "lighting_state"^^xsd:string ;
+    skos:prefLabel "lights left on"@en ;
+    hbco:layTerm "lights left on"^^xsd:string ;
+    hbco:layTerm "lights still on"^^xsd:string ;
+    hbco:layTerm "are the lights on"^^xsd:string ;
+    hbco:layTerm "is the light on"^^xsd:string ;
+    hbco:layTerm "lighting status"^^xsd:string ;
+    hbco:layTerm "lighting state"^^xsd:string ;
+    hbco:layTerm "lights switched on"^^xsd:string ;
+    hbco:mapsToBrickClass ontosage:Lighting_Command ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "medium"^^xsd:string .

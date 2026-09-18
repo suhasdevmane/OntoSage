@@ -1,0 +1,85 @@
+# SATURATE (V4-T08): simulated water_flow sensors for spaces the coverage
+# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.
+# Rows live in the narrow table 'waterflow_data' (database_registry.yaml key).
+@prefix brick: <https://brickschema.org/schema/Brick#> .
+@prefix ref:   <https://brickschema.org/schema/Brick/ref#> .
+@prefix rdfs:  <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:   <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:  <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data>
+    a ref:Database ;
+    rdfs:label "Waterflow Data" .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "Floor0 water_flow [L]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c74aaadb-e06a-5d4c-ac2b-ec0bb26056dd" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "Floor1 water_flow [L]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "529b3a55-2270-50e1-9a53-56c6dc7565b6" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "Floor2 water_flow [L]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "f0aaae7e-93d2-5d2d-bc3b-0e1c009579c0" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "Floor3 water_flow [L]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "26ba2dd3-79da-521e-b4f9-3ddcbffe7754" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "Floor4 water_flow [L]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "5f71adad-f600-5492-9c7e-6deb5dab2f8a" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5_sat_water_flow>
+    a brick:Water_Meter ;
+    rdfs:label "Floor5 water_flow [L]"@en ;
+    brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
+    ontosage:isSimulated "true"^^xsd:boolean ;
+    rdfs:comment "synthetic-saturation-v4" ;
+    ref:hasExternalReference [
+        a ref:TimeseriesReference ;
+        ref:hasTimeseriesId "c9f39bbd-84ac-5bf6-87b2-0d4a0ec63ceb" ;
+        ref:storedAt <http://abacwsbuilding.cardiff.ac.uk/abacws#waterflow_data> ;
+    ] .

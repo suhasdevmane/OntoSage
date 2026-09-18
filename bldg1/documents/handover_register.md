@@ -14,8 +14,6 @@ tables:
 
 # Project Handover and O&M Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## What a handover record is for
 
 A claim that a system is *commissioned* must rest on a record, not on a flag somebody

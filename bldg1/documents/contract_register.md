@@ -14,8 +14,6 @@ tables:
 
 # Contract Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## Scope
 
 Service, maintenance and supply agreements covering the building. A contract is bought;

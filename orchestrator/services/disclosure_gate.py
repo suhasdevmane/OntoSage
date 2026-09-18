@@ -72,6 +72,16 @@ DERIVED_KEYS = (
     "evidence_record",
 )
 
+#: The sub-key a data lane writes on its OWN bus result when it answered a question from a
+#: period other than the one the question asked for.
+#:
+#: A refusal and a substitution are different events with the same obligation. A refusal
+#: withholds; a substitution publishes — and publishing figures from one period under a
+#: question about another is the more dangerous of the two, because nothing about the
+#: answer looks wrong. So the detection and the wording live here, beside the refusal
+#: propagation, and a lane records the fact rather than composing the sentence itself.
+SUBSTITUTION_KEY = "window_substituted"
+
 
 @dataclass
 class DisclosureDecision:
@@ -144,6 +154,81 @@ def evaluate(results: Optional[Dict[str, Any]]) -> DisclosureDecision:
                 "derived surfaces are withheld because it cannot be shown that no policy "
                 "refusal applies"
             ),
+        )
+
+
+def window_substitution_in(results: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """The window substitution a lane recorded on this turn's bus, or None.
+
+    Reads the structured marker, never the prose — the same rule as `_refusal_in`, and for
+    the same reason: a gate that guessed from wording would be wrong in exactly the cases
+    that matter, where the wording is confident and the period is not the one asked for.
+    """
+    if not isinstance(results, dict):
+        return None
+    for key in LANE_RESULT_KEYS:
+        payload = results.get(key)
+        if not isinstance(payload, dict):
+            continue
+        marker = payload.get(SUBSTITUTION_KEY)
+        if isinstance(marker, dict) and marker.get("substituted"):
+            return marker
+    return None
+
+
+def _describe_requested(marker: Dict[str, Any]) -> str:
+    """What the question asked for, in words. Never empty — silence here reads as agreement."""
+    label = str(marker.get("requested_label") or "").strip()
+    if label:
+        return label
+    start = str(marker.get("requested_start") or "").strip()
+    end = str(marker.get("requested_end") or "").strip()
+    if start and end:
+        return f"{start} to {end}"
+    if start:
+        return f"on or after {start}"
+    if end:
+        return f"on or before {end}"
+    return "the period this question asked about"
+
+
+def substitution_note(marker: Optional[Dict[str, Any]]) -> str:
+    """The sentence that tells the user the figures are not from the period they asked for.
+
+    "We substituted" is the weak half of this. The strong half is the SPAN — a reader who is
+    told the readings run to a date months behind the question can judge the answer; a reader
+    told only that a fallback occurred cannot. So the span is stated whenever the rows carry
+    one, and when they do not, that is itself stated rather than quietly dropped.
+
+    Never raises. A disclosure that failed to render would leave the substituted figures on
+    screen with nothing beside them, which is the exact outcome this exists to prevent — so
+    the failure path still says that a substitution happened.
+    """
+    if not isinstance(marker, dict) or not marker.get("substituted"):
+        return ""
+    try:
+        requested = _describe_requested(marker)
+        earliest = str(marker.get("actual_earliest") or "").strip()
+        latest = str(marker.get("actual_latest") or "").strip()
+        rows = marker.get("rows")
+        if earliest and latest and earliest != latest:
+            span = f"readings recorded between {earliest} and {latest}"
+        elif latest or earliest:
+            span = f"the reading recorded at {latest or earliest}"
+        else:
+            span = "the most recent readings on record, whose timestamps could not be read"
+        counted = f" ({rows} reading(s))" if isinstance(rows, int) and rows > 0 else ""
+        return (
+            f"\n\n_No readings were recorded for {requested}, so the figures above are not "
+            f"from that period: they come from {span}{counted}. Treat them as the latest "
+            f"available, not as current._"
+        )
+    except Exception as exc:  # the substitution is disclosed even when its detail is not
+        return (
+            f"\n\n_The figures above are not from the period this question asked about — "
+            f"the requested period held no readings, and the detail of the period they do "
+            f"come from could not be read ({exc}). Treat them as the latest available, not "
+            f"as current._"
         )
 
 

@@ -263,6 +263,27 @@ _FOLLOWUP_START_PREFIXES = (
 )
 
 
+def _conversation_named_a_space(messages: Optional[List[Message]]) -> bool:
+    """Did the USER name a concrete space earlier in this conversation?
+
+    Only the user's own turns count. An assistant reply routinely lists room ids —
+    a floor's room list, a ranking, a register — and treating those as "the room we
+    are talking about" would silently bind a deictic to whichever id happened to
+    appear in the last answer. That is the guess this check exists to prevent.
+
+    The latest message is excluded: it is the question being classified, and the
+    caller tests it separately.
+    """
+    from orchestrator.services.referent_resolver import names_a_specific_space
+
+    for msg in (messages or [])[:-1]:
+        if getattr(msg, "role", "") != "user":
+            continue
+        if names_a_specific_space(getattr(msg, "content", "") or ""):
+            return True
+    return False
+
+
 def _is_followup_query(query: str) -> bool:
     """Heuristic: does this query likely depend on prior-turn context?
 
@@ -278,6 +299,18 @@ def _is_followup_query(query: str) -> bool:
     if any(q.startswith(p) for p in _FOLLOWUP_START_PREFIXES):
         return True
     if any(p in q for p in _FOLLOWUP_MARKER_PHRASES):
+        return True
+    # SPATIAL DEIXIS IS THE MARKER THIS LIST WAS MISSING.
+    #
+    # "Are CO2 and temperature back near this room's usual pre-class levels?" is
+    # fourteen words with none of the markers above, so no rewrite was attempted
+    # even in a conversation whose previous turn had named the room. The rewrite
+    # exists for exactly this reference; it was simply never asked to do it. One
+    # definition, shared with the gate that asks "which room?" when nothing has
+    # named one, so the two cannot disagree about what a deictic reference is.
+    from orchestrator.services.referent_resolver import detect_space_deixis
+
+    if detect_space_deixis(q):
         return True
     return bool(_FOLLOWUP_MARKER_WORDS.intersection(words))
 
@@ -781,6 +814,56 @@ class DialogueAgent:
                 "routing_rules_applied": ["self_description_early"],
             }
 
+        # ── "This room" with no room named: ASK, never pick one ─────────────────
+        #
+        # Four measured answers, four different wrong moves, one missing question.
+        # "I've developed a headache in this room — what are the current measured
+        # conditions?" was declined outright; "should I stay here?" was bound to
+        # whichever sound sensor a search returned first and then failed to build a
+        # series for it; "are CO2 and temperature back near this room's usual levels?"
+        # was read as the WHOLE building and refused as too large a fetch; "what
+        # systems are specific for the meeting room?" was declined for a building
+        # whose meeting rooms are instrumented. Every one of those answers is about a
+        # subject the asker never chose.
+        #
+        # THIS RUNS BEFORE EVERY SHORT-CIRCUIT BELOW, and that placement is the fix.
+        # Two of the four were answered in under 1.5 s by a probe that decides before
+        # classification, so a routing rule could not have reached them however it was
+        # ordered — the same lesson as BUG-440.
+        #
+        # It asks only when NOTHING has named a room: not the question itself, and not
+        # the asker in an earlier turn. A conversation that already said "room 5.01"
+        # keeps resolving "this room" to it through the co-reference rewrite, which is
+        # what that rewrite is for.
+        from orchestrator.services.referent_resolver import (
+            ask_which_space,
+            detect_space_deixis,
+            names_a_specific_space,
+        )
+
+        _deixis = detect_space_deixis(user_query)
+        if (
+            _deixis
+            and not names_a_specific_space(user_query)
+            and not _conversation_named_a_space(state.messages)
+        ):
+            logger.info(f"[dialogue] unbound spatial deixis {_deixis!r} — asking which space")
+            return {
+                "intent": "clarification",
+                "entities": [],
+                "required_analytics": [],
+                "time_range": {"start": None, "end": None},
+                "general": False,
+                "analytics": False,
+                "sparql_query": "",
+                "start_date": None,
+                "end_date": None,
+                "response": "",
+                "clarification_question": ask_which_space(_deixis),
+                "explanation": f"The question is scoped to {_deixis!r}, which nothing has named.",
+                "routing_rules_applied": ["unbound_spatial_deixis"],
+            }
+
         # ── Capability routing — TTL-first, SINGLE path (TODO-012) ──────────────
         # Capabilities are ontosage:Amenity / ontosage:KnowledgeTopic TRIPLES, authored via the
         # admin Capabilities GUI or the OCBV TBox. A query routes to the capability intent when it
@@ -848,7 +931,6 @@ class DialogueAgent:
         # the routing contract, so the contract's readiness rule never gets a turn
         # unless the question is let through here first.
         from orchestrator.services.privacy.inference_classes import classify_inference
-        from orchestrator.services.routing_contract import _READINESS_RE
 
         # A PRIVACY question is not a register question either (BUG-553). This short-circuit
         # runs before the routing contract, so the contract's privacy rule — which the
@@ -862,7 +944,11 @@ class DialogueAgent:
         # temperature data for a building with 288 temperature sensors. Only thermal and
         # air-quality words hand over: power, Wi-Fi, noise profile and daylight are
         # attributes the register records, and those questions stay with it.
-        from orchestrator.services.routing_contract import DELIBERATE_RE, WAYFIND_RE
+        from orchestrator.services.routing_contract import (
+            _READINESS_RE,
+            DELIBERATE_RE,
+            WAYFIND_RE,
+        )
 
         # A ROUTE request is not a register question either (BUG-559): "How do I get to the
         # seminar room from reception?" matched PublicEvent on "seminar" and was answered
@@ -1113,7 +1199,9 @@ class DialogueAgent:
         # Call LLM to detect intent
         logger.info("🧠 Calling LLM for intent detection and query generation...")
         try:
-            llm_response = await llm_manager.generate(prompt, task_type=TaskType.INTENT)
+            llm_response = await self._classify_llm_call(
+                prompt, building_id=getattr(state, "building_id", None)
+            )
             logger.info(f"📤 LLM Response received (length: {len(llm_response)} chars)")
 
             # Parse JSON response
@@ -1200,6 +1288,91 @@ class DialogueAgent:
             await self._promote_to_capability_from_documents(user_query, fallback, state)
             fallback["general"] = fallback.get("intent") == "general"
             return fallback
+
+    #: The name the structured-output tallies file this call under.
+    INTENT_SCHEMA_NAME = "dialogue_intent"
+
+    @staticmethod
+    def _intent_schema(building_id: Optional[str] = None) -> Dict[str, Any]:
+        """The classification contract as a JSON schema (ARCH-A1).
+
+        DERIVED FROM `_parse_llm_response`, NOT FROM THE PROMPT PROSE. The prompt already
+        describes twelve fields; the parser reads nine of them and drops the rest on the
+        floor. A schema copied from the prose would enshrine three fields nothing consumes
+        and tell the model they matter. So this lists what the parser actually reads.
+
+        `intent` is enumerated FROM THE ACTIVE BUILDING'S REGISTRY — the same registry the
+        parser then checks the answer against, demoting an unknown name to "general". That
+        check exists because the model once answered with the literal string "failure",
+        which routed nowhere and fell through to the default data lane. Enumerating the
+        names moves that check from after the generation to during it. Building-agnostic by
+        construction: the list is resolved from the building, never written here. If the
+        registry cannot be read the field degrades to a plain string and the parser's own
+        check still runs.
+
+        Only `intent` is required and no object is closed: the parser supplies a default for
+        every other field, so the flag can only ADD guarantees.
+        """
+        intent_field: Dict[str, Any] = {"type": "string"}
+        try:
+            from orchestrator.intents.registry import get_intent_registry
+
+            names = sorted(get_intent_registry(building_id).names())
+            if names:
+                intent_field = {"type": "string", "enum": names}
+        except Exception as exc:  # a schema is never worth failing a turn for
+            logger.warning(f"[dialogue] intent enum unavailable, using free string: {exc}")
+
+        _nullable_string = {"type": ["string", "null"]}
+        return {
+            "type": "object",
+            "properties": {
+                "intent": intent_field,
+                "entities": {"type": "array", "items": {"type": "string"}},
+                "required_analytics": {"type": "array", "items": {"type": "string"}},
+                "time_range": {
+                    "type": ["object", "null"],
+                    "properties": {"start": _nullable_string, "end": _nullable_string},
+                },
+                "response": {"type": "string"},
+                "clarification_question": {"type": "string"},
+                "discovery_filter": _nullable_string,
+                "explanation": {"type": "string"},
+                "live_data": {
+                    "type": ["object", "null"],
+                    "properties": {
+                        "type": {"type": "string"},
+                        "location": {"type": "string"},
+                        "query": {"type": "string"},
+                    },
+                },
+            },
+            "required": ["intent"],
+        }
+
+    async def _classify_llm_call(self, prompt: str, building_id: Optional[str] = None) -> str:
+        """The classification call — schema-constrained when `STRUCTURED_PLAN_ENABLED`.
+
+        Returns TEXT in both states, so `_parse_llm_response` and every routing-contract
+        stage behind it are untouched by the flag. What changes is only where the JSON's
+        shape is enforced: at the provider and a validator, instead of at a
+        find("{")/rfind("}") slice over free text.
+
+        A structured failure raises, and `detect_intent`'s existing handler turns that into
+        the `classification_failed` fallback — which still runs the deterministic routing
+        contract and the document probe, and is deliberately NOT cached. A malformed
+        generation therefore costs this turn its classifier, not its honesty.
+        """
+        if not getattr(settings, "STRUCTURED_PLAN_ENABLED", False):
+            return await llm_manager.generate(prompt, task_type=TaskType.INTENT)
+
+        obj = await llm_manager.generate_structured(
+            prompt,
+            self._intent_schema(building_id),
+            schema_name=self.INTENT_SCHEMA_NAME,
+            task_type=TaskType.INTENT,
+        )
+        return json.dumps(obj)
 
     def _build_intent_detection_prompt(
         self,

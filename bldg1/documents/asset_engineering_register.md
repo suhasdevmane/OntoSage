@@ -14,8 +14,6 @@ tables:
 
 # Asset Engineering Profile Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional commissioning figures, not a real O&M file._
-
 ## What this register records, and what the building recorded before it
 
 The building already recorded that an air handling unit **exists**. It never recorded what it

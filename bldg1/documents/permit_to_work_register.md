@@ -14,8 +14,6 @@ tables:
 
 # Permit to Work Register — Abacws Building
 
-_**Synthetic demonstration record** — fictional history, not a real compliance document._
-
 ## When a permit is required
 
 A permit to work is required for: **hot works**, **roof access**, **confined space

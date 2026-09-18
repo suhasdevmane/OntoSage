@@ -14,8 +14,6 @@ tables:
 
 # Incident and Near-Miss Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional events, not a real safety log._
-
 ## What this register records, and the one decision that shapes it
 
 **Two severity columns, not one.** `severity` is what actually happened. `potential_severity`
@@ -42,7 +40,6 @@ with the overdue collection at WCP-024; and INC-2026-015 depends on an interlock
 AEP-017, the asset with the longest blind interval in the building.
 
 ## Incident and near-miss register
-
 
 | ref | summary | occurred_on | location | category | severity | potential_severity | immediate_action | investigation_finding | reportable | actions_outstanding | reported_by_role | owner | closed_on | status | note |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|

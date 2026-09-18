@@ -29,6 +29,7 @@ metering only part of it. Where the graph does not say, the answer says the grap
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
@@ -121,32 +122,47 @@ def method_phrase(method: str) -> str:
     )
 
 
-def statement(boundaries: List[MeterBoundary], subject: str = "") -> str:
+#: How an administrator makes an undeclared boundary answerable. Shown ONLY to a reader holding
+#: system:admin (2026-09-17 user decision): a supervisor asking which floor used the most energy
+#: cannot edit the building's data, and an instruction to do so reads as a broken system.
+_ADMIN_REMEDY = (
+    " To state it on every energy answer, give the meter `ontosage:meterServes` (what it covers) "
+    "and `ontosage:allocationMethod` in the building's TTL — no code change."
+)
+
+
+def statement(boundaries: List[MeterBoundary], subject: str = "", for_admin: bool = False) -> str:
     """The boundary sentence that must accompany an energy figure.
 
     Three cases, deliberately worded differently, because they are three different claims:
 
     * one declared meter        -> what it covers, and whether the figure is measured or estimated
     * several meters summed     -> the sum's boundary is the UNION, and that is stated as a sum
-    * nothing declared          -> say so, and name what would fix it
+    * nothing declared          -> say so; an administrator is also told what would fix it
 
     Never returns "" for a non-empty input: an energy figure with no boundary line is the state
-    this module exists to end.
+    this module exists to end. ``for_admin`` defaults to False so a caller that does not know
+    who is reading gets the plain verdict, never the remediation.
+
+    ``subject`` is accepted for compatibility and deliberately NOT interpolated: the caller
+    passes the first 60 characters of the QUESTION, which produced "whether it is the whole
+    Which floor used the most energy yeste or one circuit within it".
     """
+    remedy = _ADMIN_REMEDY if for_admin else ""
     if not boundaries:
         return (
-            "**Boundary: not declared.** I can't say what this figure covers — the meter behind "
-            "it has no `ontosage:meterServes` in the ontology. Declaring the meter's boundary "
-            "and allocation method would let every energy answer state it."
+            "**Boundary: not declared.** I can't say what this figure covers — the building's "
+            "records don't say what the meter behind it measures, so read it as that meter's "
+            "figure rather than a confirmed total for the area you asked about." + remedy
         )
 
     declared = [b for b in boundaries if b.declared]
     if not declared:
         names = ", ".join(sorted({b.meter_name for b in boundaries}))
         return (
-            f"**Boundary: not declared.** The figure comes from {names}, but the ontology does "
-            f"not say what that meter covers, so I can't tell you whether it is the whole "
-            f"{subject or 'space'} or one circuit within it."
+            f"**Boundary: not declared.** The figure comes from {names}, but the building's "
+            f"records don't say what that meter covers, so I can't tell you whether it is the "
+            f"whole area you asked about or one circuit within it." + remedy
         )
 
     if len(declared) == 1:
@@ -241,6 +257,38 @@ def from_rows(rows: Any) -> Dict[str, MeterBoundary]:
     return out
 
 
+#: Units that make a number a METERED QUANTITY (C6a). A boundary describes a figure, and "any
+#: digit" is not a figure: "Room 2.15", a date and a record id all carry digits, and each of them
+#: collected "Boundary: not declared" on answers that stated no consumption at all — a room
+#: withdrawal, a decline, a tariff decline. Generic units only, no building literals.
+#: Multi-letter units match case-insensitively; the bare single letters are exact, because "2 w"
+#: in prose is not a wattage.
+ENERGY_QUANTITY_UNITS = (
+    r"(?i:[kmg]w\s?h|wh|kva\s?h|kva|[kmg]w|mj|gj|kbtu|btu|therms?|"
+    r"(?:kilo|mega|giga)?watt(?:[- ]?hours?|s)?|m³|m3|cubic\s+met(?:re|er)s?)"
+    r"|W"
+)
+#: Volume units that are a metered quantity only for a WATER meter — "5 L" means nothing on an
+#: electricity answer.
+WATER_VOLUME_UNITS = r"(?i:(?:kilo|mega)?lit(?:re|er)s?|ml)|L"
+
+_NUMBER = r"(?<![\w.])\d[\d,]*(?:\.\d+)?\s?"
+_UNIT_END = r"(?![A-Za-z0-9])"
+_ENERGY_QUANTITY_RE = re.compile(_NUMBER + r"(?:" + ENERGY_QUANTITY_UNITS + r")" + _UNIT_END)
+_WATER_QUANTITY_RE = re.compile(_NUMBER + r"(?:" + WATER_VOLUME_UNITS + r")" + _UNIT_END)
+
+
+def states_a_metered_quantity(answer: str, water: bool = False) -> bool:
+    """True when the answer states a number WITH an energy, power or volume unit.
+
+    ``water`` admits litre volumes, which are a quantity only when the meter measures water.
+    """
+    text = answer or ""
+    if _ENERGY_QUANTITY_RE.search(text):
+        return True
+    return bool(water and _WATER_QUANTITY_RE.search(text))
+
+
 def match(boundaries: Dict[str, MeterBoundary], uuids: List[str], names: List[str]):
     """The boundaries behind a figure, matched by timeseries uuid first, then by meter name.
 
@@ -271,7 +319,9 @@ async def for_building(namespace: str, run_select) -> Dict[str, MeterBoundary]:
 
 __all__ = [
     "ALLOCATION_METHODS",
+    "ENERGY_QUANTITY_UNITS",
     "ESTIMATED_METHODS",
+    "WATER_VOLUME_UNITS",
     "MeterBoundary",
     "boundary_query",
     "for_building",
@@ -279,4 +329,5 @@ __all__ = [
     "match",
     "method_phrase",
     "statement",
+    "states_a_metered_quantity",
 ]

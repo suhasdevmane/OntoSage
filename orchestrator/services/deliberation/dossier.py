@@ -67,6 +67,10 @@ class DossierRanked(BaseModel):
     proximity_m: Optional[float] = None
     criteria: Dict[str, Optional[float]] = Field(default_factory=dict)  # modality -> value
     data_gaps: List[str] = Field(default_factory=list)
+    #: The reader's word for this space's kind when it is one somebody holds — "laboratory",
+    #: "office". Empty when anyone may walk in. Set from the space's own class, never shown
+    #: as a class name.
+    access_controlled_as: str = ""
 
 
 class DossierExcluded(BaseModel):
@@ -124,6 +128,37 @@ class EvidenceDossier(BaseModel):
     #: "I couldn't rank any spaces for this request" and stopped there. The advice was
     #: written, tested and unreachable, which is the shape this project keeps paying for.
     guidance_notes: List[str] = Field(default_factory=list)
+    #: Values the executor refused to rank on because they cannot be a reading of the
+    #: quantity they were filed under. Shown, never hidden: a ranking computed over the
+    #: survivors and presented bare reads as a ranking over everything.
+    impossible_readings: List[str] = Field(default_factory=list)
+    #: Criteria whose readings run past the end of the range this answer scores them
+    #: against, so the ranking cannot separate the spaces on them. Shown next to the list,
+    #: because the band is quoted in the same answer and the reader can otherwise see a
+    #: figure of 24 sitting under a stated 0-8 range with nothing said about it.
+    band_notes: List[str] = Field(default_factory=list)
+    #: Set when this lane must not answer at all (a route question). The renderer ships this
+    #: sentence and nothing else — no ranking, no evidence table.
+    refusal: str = ""
+
+
+def readable_space(name: str) -> str:
+    """A space's own name, never its IRI.
+
+    Row 99 of the 2026-09-17 stakeholder read showed a visitor an evidence table whose every
+    row began `http://…#Room0.01`. The IRI is the key the pipeline joins on; it is not a
+    place, and a reader has no use for it. The label is used wherever one is known and the
+    local part of the IRI stands in where one is not — so an unlabelled space still reads as
+    a room number rather than as a URL.
+    """
+    text = str(name or "").strip()
+    if not text:
+        return ""
+    if "#" in text:
+        text = text.rsplit("#", 1)[-1]
+    elif text.startswith("http://") or text.startswith("https://"):
+        text = text.rstrip("/").rsplit("/", 1)[-1]
+    return text
 
 
 def build_dossier(
@@ -135,7 +170,10 @@ def build_dossier(
     applied_policies: Optional[List[str]] = None,
 ) -> EvidenceDossier:
     """Assemble the dossier from the executed outcome. Pure re-shaping — no new numbers."""
+    from orchestrator.services.deliberation.candidates import access_word
+
     label_by_iri = {c.space_iri: c.label for c in outcome.candidates}
+    kinds_by_iri = {c.space_iri: tuple(getattr(c, "kinds", ()) or ()) for c in outcome.candidates}
     ranked = [
         DossierRanked(
             rank=s.rank or 0,
@@ -145,6 +183,7 @@ def build_dossier(
             proximity_m=None if s.proximity_m is None else round(s.proximity_m, 1),
             criteria={c.modality: c.value for c in s.criteria},
             data_gaps=list(s.data_gaps),
+            access_controlled_as=access_word(kinds_by_iri.get(s.space_iri, ())),
         )
         for s in outcome.score.ranked
     ]
@@ -179,7 +218,7 @@ def build_dossier(
         coverage_excluded=excluded,
         evidence=[
             DossierEvidenceRow(
-                space=label_by_iri.get(e.space_iri, e.space_iri),
+                space=label_by_iri.get(e.space_iri) or readable_space(e.space_iri),
                 modality=e.modality,
                 value=e.value,
                 basis=e.basis,
@@ -198,7 +237,7 @@ def build_dossier(
         top1_stable=outcome.score.top1_stable_under_weight_perturbation,
         forecasts=[
             DossierForecast(
-                space=label_by_iri.get(f.space_iri, f.space_iri),
+                space=label_by_iri.get(f.space_iri) or readable_space(f.space_iri),
                 modality=f.modality,
                 model=f.model,
                 horizon_hours=f.horizon_hours,
@@ -213,7 +252,7 @@ def build_dossier(
         ],
         event_checks=[
             DossierEventCheck(
-                space=label_by_iri.get(ec.space_iri, ec.space_iri.rsplit("#", 1)[-1]),
+                space=label_by_iri.get(ec.space_iri) or readable_space(ec.space_iri),
                 kind=ec.kind,
                 free=ec.free,
                 detail=ec.detail,
@@ -224,13 +263,75 @@ def build_dossier(
         applied_policies=list(applied_policies or []),
         plan_hash=outcome.plan_hash,
         plan_fingerprint=getattr(outcome, "plan_fingerprint", ""),
+        refusal=str(getattr(outcome, "refusal", "") or ""),
         timings_ms=dict(outcome.timings_ms),
         guidance_notes=[str(n) for n in (getattr(outcome, "event_notes", None) or [])],
+        impossible_readings=[
+            str(n) for n in (getattr(outcome, "impossible_readings", None) or []) if n
+        ],
+        band_notes=[str(n) for n in (getattr(outcome, "band_notes", None) or []) if n],
     )
+
+
+def _join(words: List[str]) -> str:
+    """An English list — "a, b and c" — never a bare comma-joined one."""
+    if not words:
+        return ""
+    if len(words) == 1:
+        return words[0]
+    return ", ".join(words[:-1]) + " and " + words[-1]
+
+
+def _access_note(dossier: "EvidenceDossier", top: List[DossierRanked]) -> str:
+    """One sentence when the rooms offered are ones somebody holds.
+
+    Run-3 row 99 (2026-09-17) answered an undergraduate asking where to find "a calm,
+    relatively quiet place ... close to my 4 p.m. class" with three research laboratories,
+    and row 58 answered "which authorised seating area" with an academic office. The
+    readings were right and the recommendation was unusable: a person cannot act on a room
+    they may not enter, and the answer said nothing about it either way.
+
+    Only for a question that asks where the ASKER may go. "Which space has the best
+    conditions for focused work this afternoon?" is a survey of the building and an office
+    is a perfectly good answer to it, so that ranking is left alone.
+    """
+    from orchestrator.services.deliberation.candidates import asks_where_i_may_go
+
+    if not asks_where_i_may_go(dossier.raw_query):
+        return ""
+    held = [s for s in top if s.access_controlled_as]
+    if not held:
+        return ""
+    rooms = _join([s.space for s in held])
+    words = sorted({s.access_controlled_as for s in held})
+    kinds = " or ".join(("an " if w[0] in "aeiou" else "a ") + w for w in words)
+    every = "each of those is" if len(held) > 1 else "that is"
+    return (
+        f"**Check you can use it first.** {rooms} — {every} {kinds} someone else holds, "
+        "not a room anyone may walk into. Readings describe what a room is like; they do "
+        "not say who may be in it, and the building's records do not show you having the "
+        "use of one. If you want somewhere you can simply go, ask me for a room that is "
+        "open to everyone and I will rank only those."
+    )
+
+
+def _score_phrase(total: Optional[float], explain: bool = False) -> str:
+    """A score with its meaning attached, at least once per answer.
+
+    "score 0" told row 58's reader nothing: not the scale, not the direction, not whether 0
+    was bad or simply the bottom of a band. The number is a weighted fit to the request on a
+    0-to-1 scale, and one clause says so.
+    """
+    value = f"score {float(total or 0.0):g}"
+    return f"{value} out of 1, where 1 fits everything you asked for" if explain else value
 
 
 def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
     """Deterministic prose: every number is substituted from the dossier itself."""
+    if dossier.refusal:
+        # The lane declined to answer at all. Nothing was fetched, so there is no ranking,
+        # no coverage and no evidence to qualify — the sentence IS the answer.
+        return dossier.refusal
     if not dossier.ranked:
         # SAY WHY, AND WHAT WOULD WORK. "I couldn't rank any spaces for this request" is
         # true and useless: the reader cannot tell a building with no such space from a
@@ -263,7 +364,25 @@ def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
     lines: List[str] = []
     top = dossier.ranked[: max(1, top_k)]
     best = top[0]
-    lines.append(f"**Best match: {best.space}** (floor {best.floor}, score {best.total:g}).")
+    # A RANKING NOBODY CAN ACT ON MUST NOT BE PRESENTED AS ONE.
+    #
+    # Row 58 of the 2026-09-17 stakeholder read: three rooms offered as "Best match ... score
+    # 0", "score 0", "score 0", every one reading about 24 against the 0-8 band the answer
+    # itself quoted. Each utility had saturated at the bottom of its band, so the order came
+    # from the tie-break and meant nothing — but "Best match" is a recommendation, and the
+    # reader has no way to see that it was a coin toss. Saying so costs one sentence.
+    _flat = all((s.total or 0.0) <= 0.0 for s in dossier.ranked)
+    if _flat:
+        lines.append(
+            "**The readings don't separate these spaces.** On what you asked for, every "
+            "space I could measure sits at the same end of the range, so picking a best one "
+            "would be arbitrary. Here is what they read:"
+        )
+    else:
+        lines.append(
+            f"**Best match: {best.space}** (floor {best.floor}, "
+            f"{_score_phrase(best.total, explain=True)})."
+        )
     # WB-05: a note about the EVIDENCE (e.g. "Simulated readings.") belongs above the list it
     # qualifies. Guidance notes reached declines only, so a scenario ranking read as measured.
     for note in dossier.guidance_notes[:2]:
@@ -274,7 +393,27 @@ def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
             f", {s.proximity_m:g} m to the requested amenity" if s.proximity_m is not None else ""
         )
         gaps = f" (no data: {', '.join(s.data_gaps)})" if s.data_gaps else ""
-        lines.append(f"{s.rank}. **{s.space}** — score {s.total:g} ({crits}{prox}){gaps}")
+        if _flat:
+            lines.append(f"- **{s.space}** ({crits}{prox}){gaps}")
+        else:
+            lines.append(
+                f"{s.rank}. **{s.space}** — {_score_phrase(s.total)} ({crits}{prox}){gaps}"
+            )
+    if _flat:
+        lines.append("")  # a bullet list runs into the next line without one
+    # Directly under the list it qualifies, not in a footer. Row 99's reader saw
+    # "occupancy: -7.719" inside the recommendation itself; a note three blocks below
+    # would not have reached them either.
+    for note in dossier.impossible_readings:
+        lines.append("")
+        lines.append(str(note))
+    access_note = _access_note(dossier, top)
+    if access_note:
+        lines.append("")
+        lines.append(access_note)
+    if dossier.band_notes:
+        lines.append("")
+        lines.append(" ".join(str(n) for n in dossier.band_notes))
     if dossier.assumptions:
         lines.append("")
         lines.append("**Assumptions:** " + "; ".join(a.text for a in dossier.assumptions) + ".")
@@ -298,8 +437,17 @@ def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
             f"{free_checks[0].window_hours:g}h (booked spaces are listed under exclusions)."
         )
     if dossier.applied_policies:
+        # THE POLICY'S NAME IS NOT THE READER'S BUSINESS, AND ITS MECHANISM IS NOT EITHER.
+        #
+        # This line used to print the rule verbatim: "policy_facility_manager_any: resolution
+        # clamped to 5s for data 0 min old". Three internal facts — a policy identifier, a
+        # sampling resolution and a data age — none of which a person asking where to sit can
+        # do anything with. What they can act on is the fact itself: an access rule applied.
+        # The rule, its identifier and its reason stay on `applied_policies` in the structured
+        # payload, which is what provenance and audit read.
         lines.append(
-            "**Privacy:** computed under access policy — " + "; ".join(dossier.applied_policies)
+            "**Privacy:** computed under this building's access rules for your role, which "
+            "limit how finely individual readings can be shown."
         )
     if dossier.top1_stable is not None:
         lines.append(
@@ -315,6 +463,11 @@ def render_dossier_details(dossier: EvidenceDossier, max_rows: int = 12) -> str:
     """Collapsible 'How I worked this out' markdown block (Open WebUI renders
     <details>). Every number comes from the dossier, so the numeric guard holds
     over the full message."""
+    # An empty working-out is not working-out. A decline fetched nothing, so this block was
+    # an empty table under a heading promising evidence — it read as a failure of the answer
+    # rather than as the answer it was.
+    if not dossier.evidence and not dossier.ranked:
+        return ""
     lines: List[str] = [
         "",
         "<details>",
@@ -325,17 +478,23 @@ def render_dossier_details(dossier: EvidenceDossier, max_rows: int = 12) -> str:
         f"*Decision: {dossier.decision} over {len(dossier.ranked)} ranked candidates; "
         "plan fingerprint in the evidence payload.*",
         "",
-        "| space | modality | value | basis | points | source table | simulated |",
-        "|---|---|---|---|---|---|---|",
+        # NO "simulated" COLUMN. This table is rendered to the reader inside every ranking
+        # answer, and the building's readings are placeholder data standing in for its real
+        # feeds - the owner's standing instruction is that nothing a user sees calls them
+        # simulated, synthetic or fake. Found live in the 2026-09-17 stakeholder baseline:
+        # workspace and wayfinding answers carried a column headed `simulated`. The
+        # declaration itself is unchanged and stays on each evidence item in the structured
+        # payload (e.simulated), which is what provenance accounting reads.
+        "| space | modality | value | basis | points | source table |",
+        "|---|---|---|---|---|---|",
     ]
     for e in dossier.evidence[:max_rows]:
-        simulated = "yes" if e.simulated else ("no" if e.simulated is False else "undeclared")
         lines.append(
             f"| {e.space} | {e.modality} | {e.value:g} | {e.basis} "
-            f"| {e.n_points} | {e.stored_at} | {simulated} |"
+            f"| {e.n_points} | {e.stored_at} |"
         )
     if len(dossier.evidence) > max_rows:
-        lines.append("| … | | | further rows in the evidence payload | | | |")
+        lines.append("| … | | | further rows in the evidence payload | | |")
     if dossier.coverage_excluded:
         lines.append("")
         lines.append(
@@ -412,6 +571,14 @@ def _allowed_numbers(dossier: EvidenceDossier) -> set:
         + [ec.detail for ec in dossier.event_checks]
         + [ec.space for ec in dossier.event_checks]
         + list(dossier.applied_policies)
+        # The excluded-reading and out-of-band sentences are dossier content too, and both
+        # quote figures that are deliberately NOT in the ranking: a value is named here
+        # precisely because it was dropped from `values`, and a band's edges are named to
+        # say what the value ran past. Without these two lines the guard fired on the very
+        # sentences that exist to be honest about a number, and its remedy is to replace
+        # the entire answer — so the honest ranking was the one that could not ship.
+        + list(dossier.impossible_readings)
+        + list(dossier.band_notes)
     )
     for blob in text_blobs:
         for tok in _NUM_RE.findall(blob or ""):

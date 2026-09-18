@@ -14,8 +14,6 @@ tables:
 
 # Fire Safety Asset Register - Abacws Building
 
-_**Synthetic demonstration record** - fictional test history, not a real fire log book._
-
 ## Why this register exists, and the premise behind every column
 
 The building held a fire safety document of fifty-one lines of prose with no tables. It could
@@ -55,10 +53,9 @@ Fire Safety Officer fire.safety@example.ac.uk
 
 ## Fire safety asset register
 
-
 | code | name | kind | location | floor | standard | last_tested_on | next_test_due | evidence_ref | open_defect | owner | status | note |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|
-| FSA-001 | Fire alarm control panel | alarm | Room 0.10 - Building Management Office | 0 | BS 5839-1 weekly test | 2026-08-26 | 2026-09-02 | FA-WK-2026-34 |  | Building Fire Warden Coordinator | Overdue | Weekly test not recorded since 2026-08-26; a missed weekly test is reportable |
+| FSA-001 | Fire alarm control panel | alarm | Room 0.10 - Building Management Office | 0 | BS 5839-1 weekly test | 2026-09-09 | 2026-09-16 | FA-WK-2026-34 |  | Building Fire Warden Coordinator | Overdue | Weekly test not recorded since 2026-08-26; a missed weekly test is reportable |
 | FSA-002 | Fire alarm zone - Floor 0 | detection | Ground floor | 0 | BS 5839-1 L1, six-monthly service | 2026-06-16 | 2026-12-16 | FA-SVC-2026-06 |  | Building Fire Warden Coordinator | Active |  |
 | FSA-003 | Fire alarm zone - Floor 1 | detection | Level 1 | 1 | BS 5839-1 L1, six-monthly service | 2026-06-16 | 2026-12-16 | FA-SVC-2026-06 |  | Building Fire Warden Coordinator | Active |  |
 | FSA-004 | Fire alarm zone - Floor 2 | detection | Level 2 | 2 | BS 5839-1 L1, six-monthly service | 2026-06-16 | 2026-12-16 | FA-SVC-2026-06 |  | Building Fire Warden Coordinator | Active |  |
@@ -67,12 +64,12 @@ Fire Safety Officer fire.safety@example.ac.uk
 | FSA-007 | Fire alarm zone - Floor 5 | detection | Level 5 | 5 | BS 5839-1 L1, six-monthly service | 2026-06-16 | 2026-12-16 | FA-SVC-2026-06 |  | Building Fire Warden Coordinator | Active |  |
 | FSA-008 | Emergency lighting - north stairwell | escape provision | North Stairwell - Fire Escape Route | 0 | BS 5266-1 annual duration test | 2026-02-14 | 2027-02-14 | EL-DUR-2026-02 | Battery pack failed in service on 2026-08-04 despite passing the February duration test | M and E Maintenance Supervisor | Defective | The failure mode is not caught by the current test regime - see INC-2026-012 |
 | FSA-009 | Emergency lighting - main lift core escape route | escape provision | Main lift core | 0 | BS 5266-1 annual duration test | 2026-02-14 | 2027-02-14 | EL-DUR-2026-02 |  | M and E Maintenance Supervisor | Active |  |
-| FSA-010 | Fire exit - Ground Floor North | escape provision | Fire Exit - Ground Floor North | 0 | Monthly escape route inspection | 2026-08-14 | 2026-09-14 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
-| FSA-011 | Fire exit - Floor 1 North | escape provision | Fire Exit - Floor 1 North | 1 | Monthly escape route inspection | 2026-08-14 | 2026-09-14 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
-| FSA-012 | Fire exit - Floor 2 North | escape provision | Fire Exit - Floor 2 North | 2 | Monthly escape route inspection | 2026-08-14 | 2026-09-14 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
-| FSA-013 | Fire exit - Floor 3 North | escape provision | Fire Exit - Floor 3 North | 3 | Monthly escape route inspection | 2026-08-14 | 2026-09-14 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
-| FSA-014 | Fire exit - Floor 4 North | escape provision | Fire Exit - Floor 4 North | 4 | Monthly escape route inspection | 2026-08-14 | 2026-09-14 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
-| FSA-015 | Fire exit - Floor 5 North | escape provision | Fire Exit - Floor 5 North | 5 | Monthly escape route inspection | 2026-08-14 | 2026-09-14 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
+| FSA-010 | Fire exit - Ground Floor North | escape provision | Fire Exit - Ground Floor North | 0 | Monthly escape route inspection | 2026-09-14 | 2026-10-15 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
+| FSA-011 | Fire exit - Floor 1 North | escape provision | Fire Exit - Floor 1 North | 1 | Monthly escape route inspection | 2026-09-14 | 2026-10-15 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
+| FSA-012 | Fire exit - Floor 2 North | escape provision | Fire Exit - Floor 2 North | 2 | Monthly escape route inspection | 2026-09-14 | 2026-10-15 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
+| FSA-013 | Fire exit - Floor 3 North | escape provision | Fire Exit - Floor 3 North | 3 | Monthly escape route inspection | 2026-09-14 | 2026-10-15 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
+| FSA-014 | Fire exit - Floor 4 North | escape provision | Fire Exit - Floor 4 North | 4 | Monthly escape route inspection | 2026-09-14 | 2026-10-15 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
+| FSA-015 | Fire exit - Floor 5 North | escape provision | Fire Exit - Floor 5 North | 5 | Monthly escape route inspection | 2026-09-14 | 2026-10-15 | ESC-2026-08 |  | Building Fire Warden Coordinator | Active |  |
 | FSA-016 | Fire doorset - Level 3 riser cupboard | fire door | Level 3 riser cupboard | 3 | BS 8214 six-monthly doorset inspection | 2026-04-02 | 2026-10-02 | FD-2026-04 |  | Building Fire Warden Coordinator | Active | Closer adjusted after INC-2026-003, when this door was found wedged open |
 | FSA-017 | Fire doorset - Level 1 computer laboratory suite | fire door | Room 1.06 - Computer Laboratory | 1 | BS 8214 six-monthly doorset inspection | 2026-04-02 | 2026-10-02 | FD-2026-04 |  | Building Fire Warden Coordinator | Active |  |
 | FSA-018 | Fire doorset - Level 2 laboratory corridor | fire door | Room 2.03 - Research Laboratory | 2 | BS 8214 six-monthly doorset inspection | 2026-04-02 | 2026-10-02 | FD-2026-04 | Intumescent strip damaged on the leading edge | Building Fire Warden Coordinator | Defective |  |

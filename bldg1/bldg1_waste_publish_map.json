@@ -1,0 +1,190 @@
+{
+  "fill_table": "wastefill_data",
+  "weight_table": "wasteweight_data",
+  "capacity_kg": {
+    "General": 55.0,
+    "Recycling": 28.0
+  },
+  "bins": [
+    {
+      "bin": "Floor0_General_Waste_Bin",
+      "stream": "General",
+      "room": "Room0.01",
+      "roles": {
+        "fill": {
+          "uuid": "67d1a32f-2e7f-50f8-9baa-26ec9f028e96",
+          "point": "Floor0_General_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "3ff44357-1893-5df3-9689-0c598bd570b3",
+          "point": "Floor0_General_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor0_Recycling_Waste_Bin",
+      "stream": "Recycling",
+      "room": "Room0.01",
+      "roles": {
+        "fill": {
+          "uuid": "aed50cf7-5ca3-5046-965f-3e15810de4ea",
+          "point": "Floor0_Recycling_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "b617c155-86ab-57f6-87f8-a36c75a58c7c",
+          "point": "Floor0_Recycling_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor1_General_Waste_Bin",
+      "stream": "General",
+      "room": "Room1.04",
+      "roles": {
+        "fill": {
+          "uuid": "42d1cf98-61e4-548d-82a9-a6662dbd7b68",
+          "point": "Floor1_General_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "a3774a96-7758-507d-9c4a-e90e4ed58afe",
+          "point": "Floor1_General_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor1_Recycling_Waste_Bin",
+      "stream": "Recycling",
+      "room": "Room1.04",
+      "roles": {
+        "fill": {
+          "uuid": "51236426-b20d-57a5-8dd8-9b7a4ecb3e49",
+          "point": "Floor1_Recycling_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "7a1b5a9b-18d4-5900-946d-87e68f924389",
+          "point": "Floor1_Recycling_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor2_General_Waste_Bin",
+      "stream": "General",
+      "room": "Room2.66",
+      "roles": {
+        "fill": {
+          "uuid": "ff77ac8e-c356-5888-94d9-88a3c6e0431a",
+          "point": "Floor2_General_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "f4b22fb8-5104-58f3-b036-e5701b4bcf0b",
+          "point": "Floor2_General_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor2_Recycling_Waste_Bin",
+      "stream": "Recycling",
+      "room": "Room2.66",
+      "roles": {
+        "fill": {
+          "uuid": "11df609b-0da8-5c79-bf1c-8ae01f1d5703",
+          "point": "Floor2_Recycling_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "a9973cd0-9b39-533f-9d70-d33997134fce",
+          "point": "Floor2_Recycling_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor3_General_Waste_Bin",
+      "stream": "General",
+      "room": "Room3.18",
+      "roles": {
+        "fill": {
+          "uuid": "44e943c4-08ce-591b-b0f5-a7bb5039dee7",
+          "point": "Floor3_General_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "23b1d144-a931-5fb4-bd58-1fd530bfc028",
+          "point": "Floor3_General_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor3_Recycling_Waste_Bin",
+      "stream": "Recycling",
+      "room": "Room3.18",
+      "roles": {
+        "fill": {
+          "uuid": "5325a3b5-12c8-53d2-9d9d-822ae8d20bd4",
+          "point": "Floor3_Recycling_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "7528ca25-6526-5335-9fc5-6497f33f550b",
+          "point": "Floor3_Recycling_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor4_General_Waste_Bin",
+      "stream": "General",
+      "room": "Room4.70",
+      "roles": {
+        "fill": {
+          "uuid": "b102398a-4e3e-5407-95d9-6156c69eea4e",
+          "point": "Floor4_General_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "f75cf383-5fc4-5c07-bce5-3d31ed6587a0",
+          "point": "Floor4_General_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor4_Recycling_Waste_Bin",
+      "stream": "Recycling",
+      "room": "Room4.70",
+      "roles": {
+        "fill": {
+          "uuid": "2faac07e-761a-5c91-9055-756994db6b4e",
+          "point": "Floor4_Recycling_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "f93ec94d-b6d3-550b-b00d-94d4b5af9c54",
+          "point": "Floor4_Recycling_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor5_General_Waste_Bin",
+      "stream": "General",
+      "room": "Room5.26",
+      "roles": {
+        "fill": {
+          "uuid": "a1959bb1-a0ac-509d-9a03-4c02e98e80ba",
+          "point": "Floor5_General_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "6b5b798d-c10a-5e38-b668-e94a9d65a053",
+          "point": "Floor5_General_Waste_Bin_Weight"
+        }
+      }
+    },
+    {
+      "bin": "Floor5_Recycling_Waste_Bin",
+      "stream": "Recycling",
+      "room": "Room5.26",
+      "roles": {
+        "fill": {
+          "uuid": "e06e7eb1-6a11-534c-8163-4d8f9159de01",
+          "point": "Floor5_Recycling_Waste_Bin_Fill"
+        },
+        "weight": {
+          "uuid": "8940deca-dd07-51a0-8851-538718778644",
+          "point": "Floor5_Recycling_Waste_Bin_Weight"
+        }
+      }
+    }
+  ]
+}

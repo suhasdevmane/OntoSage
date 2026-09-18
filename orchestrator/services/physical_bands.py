@@ -40,7 +40,10 @@ must then say it could not check -- which is a true statement, and different fro
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Tuple
 
 from shared.utils import get_logger
@@ -48,6 +51,9 @@ from shared.utils import get_logger
 logger = get_logger(__name__)
 
 _ONTOSAGE = "http://ontosage.org/capabilities#"
+
+_REPO = Path(__file__).resolve().parents[2]
+_KINDS_TTL = _REPO / "ontology" / "measurand_kinds.ttl"
 
 #: One query, resolved per UUID, because that is how every reading arrives: the caller has
 #: a uuid and a number, not a class. Joining in the lane would make each lane re-derive it.
@@ -208,6 +214,149 @@ class PhysicalBands:
             else:
                 bad.append(Implausible(uuid=uuid, value=v, band=band, label=labels.get(uuid, "")))
         return keep, bad
+
+
+# ── THE SAME BANDS, REACHABLE WITHOUT A GRAPH HANDLE ─────────────────────────
+#
+# `PhysicalBands` above resolves a band per UUID, which is right for every lane that
+# starts from a uuid and a number. The RANKING lane does not: it works in MODALITIES
+# ("co2", "occupancy"), it has no SPARQL executor in its signature, and it is the lane
+# that printed `occupancy: -7.719` and `co2: -260.986` as the evidence behind a
+# recommendation on 2026-09-17 (run-3 row 99). Those were FORECASTS -- a linear trend
+# extrapolated straight through zero -- so nothing was wrong with the readings and
+# everything was wrong with the projection presented as one.
+#
+# Rather than thread a graph handle through the executor, the declarations are read from
+# the shared TBox file they live in. It is the same source `_BANDS_BY_UUID` queries; the
+# join from a modality to a measurand goes through the building's own modality config, so
+# no quantity, class or number appears here either.
+
+
+def _statements(text: str) -> List[str]:
+    """Turtle statements, comments stripped. Split on a '.' that ENDS a line.
+
+    A period inside a decimal (`41.5`) never ends a line in valid Turtle, and the
+    lookbehind requires whitespace, a quote or '>' before the terminator, so `2000 .`
+    splits and `20.95 ;` does not.
+    """
+    body = "\n".join(ln for ln in text.splitlines() if not ln.lstrip().startswith("#"))
+    return re.split(r'(?<=[\s>"])\.\s*(?:\n|$)', body)
+
+
+_SUBJECT_RE = re.compile(r"^\s*(?:ontosage|o):([\w.\-]+)", re.M)
+_MIN_RE = re.compile(r"ontosage:physicalMin\s+(-?\d+(?:\.\d+)?)")
+_MAX_RE = re.compile(r"ontosage:physicalMax\s+(-?\d+(?:\.\d+)?)")
+_UNIT_RE = re.compile(r'ontosage:physicalUnit\s+"([^"]*)"')
+
+
+@lru_cache(maxsize=1)
+def declared_bands() -> Dict[str, Band]:
+    """{measurand local name: Band} from `ontology/measurand_kinds.ttl`.
+
+    `{}` when the file is missing or unreadable -- which makes every lookup return None
+    and every caller say it could not check, the same failure mode as an empty graph.
+    """
+    if not _KINDS_TTL.is_file():
+        logger.debug("[physical_bands] no measurand_kinds.ttl; declared bands unavailable")
+        return {}
+    try:
+        text = _KINDS_TTL.read_text(encoding="utf-8")
+    except OSError as exc:  # pragma: no cover - unreadable file
+        logger.warning(f"[physical_bands] measurand_kinds.ttl unreadable: {exc}")
+        return {}
+    out: Dict[str, Band] = {}
+    for stmt in _statements(text):
+        subject = _SUBJECT_RE.search(stmt)
+        lo, hi = _MIN_RE.search(stmt), _MAX_RE.search(stmt)
+        if not (subject and lo and hi):
+            continue
+        unit = _UNIT_RE.search(stmt)
+        out[subject.group(1)] = Band(
+            kind=subject.group(1),
+            low=float(lo.group(1)),
+            high=float(hi.group(1)),
+            unit=unit.group(1) if unit else "",
+        )
+    return out
+
+
+def band_for_measurand(kind: str) -> Optional[Band]:
+    """The declared band for a measurand local name, or None when undeclared."""
+    return declared_bands().get((kind or "").strip())
+
+
+def _class_local(name: str) -> str:
+    s = str(name or "").strip()
+    for sep in ("#", "/", ":"):
+        s = s.rsplit(sep, 1)[-1]
+    return s
+
+
+@lru_cache(maxsize=256)
+def band_for_modality(modality: str, building_id: Optional[str] = None) -> Optional[Band]:
+    """The widest declared band across the Brick classes this modality is made of.
+
+    WIDEST, not narrowest, and deliberately. A modality may span classes with different
+    bands -- `occupancy` covers a counting sensor (0..10000 people) and a motion contact
+    (0..1) -- and a guard that took the narrower one would announce every ordinary
+    headcount as impossible. The union still rejects a negative, which is the whole of
+    what this catches.
+
+    None when the modality is unknown or no class under it declares a band. Absence of a
+    band is never evidence of implausibility.
+    """
+    try:
+        from orchestrator.services.deliberation.coverage_audit import load_modalities
+        from orchestrator.services.measurand_kinds import measurand_of
+    except Exception as exc:  # pragma: no cover - config is optional
+        logger.debug(f"[physical_bands] modality config unavailable: {exc}")
+        return None
+    try:
+        specs = load_modalities(building_id)
+    except Exception as exc:  # pragma: no cover
+        logger.debug(f"[physical_bands] modality config unreadable: {exc}")
+        return None
+    spec = next((s for s in specs if s.name == modality), None)
+    if spec is None:
+        return None
+    classes = list(spec.brick_classes) + [str((spec.sat or {}).get("brick_class") or "")]
+    bands = [
+        b
+        for b in (band_for_measurand(measurand_of(_class_local(c))) for c in classes if c)
+        if b is not None
+    ]
+    if not bands:
+        return None
+    kinds = sorted({b.kind for b in bands})
+    units = {b.unit for b in bands if b.unit}
+    return Band(
+        kind=kinds[0] if len(kinds) == 1 else "/".join(kinds),
+        low=min(b.low for b in bands),
+        high=max(b.high for b in bands),
+        unit=units.pop() if len(units) == 1 else "",
+    )
+
+
+def excluded_sentence(implausible: Sequence[Implausible], limit: int = 3) -> str:
+    """One sentence COUNTING what was excluded and naming it. Empty when nothing was.
+
+    A reading outside its quantity's possible range is not a low reading; it is a broken
+    one. It must not be averaged, ranked or recommended on -- and it must not vanish
+    either, because an answer computed over the survivors and presented bare reads as an
+    answer computed over everything.
+    """
+    n = len(implausible)
+    if not n:
+        return ""
+    shown = "; ".join(i.render() for i in implausible[:limit])
+    more = f", and {n - limit} more" if n > limit else ""
+    noun = "reading was" if n == 1 else "readings were"
+    return (
+        f"**{n} {noun} outside the physically possible range and {'was' if n == 1 else 'were'} "
+        f"excluded** from the figures above: {shown}{more}. A value outside what a quantity "
+        f"can be is a stream or a projection that has gone wrong, not a measurement of the "
+        f"building."
+    )
 
 
 def caveat(implausible: Sequence[Implausible], limit: int = 3) -> str:
