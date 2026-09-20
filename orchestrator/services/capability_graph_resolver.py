@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 import time
 from dataclasses import dataclass
-from typing import Awaitable, Callable, List, Optional
+from typing import Awaitable, Callable, Dict, List, Optional
 
 from shared.utils import describe_exception, get_logger
 
@@ -42,7 +42,14 @@ _MIN_SCORE = 2  # a single distinctive term (2) or a multi-word phrase (3) clear
 #: bottle, and the building answered that it had no information about a thing it
 #: has twelve of. Truncating before filtering is the defect; the tie was only what
 #: exposed it.
-_MAX_FACTS = 12
+#:
+#: 12 became too few on 2026-09-19 (BUG-827): a building with more than twelve amenities of ONE
+#: kind -- bldg1 has fifteen toilets -- ties them all on score, the cut kept the first twelve in
+#: graph order, and a question naming a floor could lose the very rooms on that floor before the
+#: caller's floor answer ever saw them. Forty leaves room for the largest kind the buildings
+#: measured so far (13 drinking-water points, 15 toilets) with a margin, and the caller still
+#: presents three.
+_MAX_FACTS = 40
 
 
 @dataclass
@@ -82,6 +89,11 @@ class CapabilityFact:
     #: amenities for). NOT rendered into the answer -- it is matching surface,
     #: not prose.
     lay_terms: str = ""
+    #: The service state the building records for this amenity; "" when it records none.
+    service_status: str = ""
+    #: True for a position somebody filled in (ontosage:isSimulated) rather than one taken from
+    #: something the building itself states. Lets a floor answer prefer the second kind.
+    placeholder: bool = False
 
     def render(self) -> str:
         head = f"**{self.label}**"
@@ -212,6 +224,7 @@ class _Amenity:
     potability_authority: str = ""
     potability_issued_on: str = ""
     on_floor: str = ""
+    placeholder: bool = False
 
 
 #: Status values that mean an amenity cannot be used right now. Anything else --
@@ -226,6 +239,32 @@ _OUT_OF_SERVICE = frozenset({"out_of_service", "out of service", "broken", "clos
 #: fountain, where walking to a broken one merely wastes a trip. For these, the answer
 #: names the amenity AND its state, so the reader can decide.
 _NEVER_SILENTLY_EXCLUDE = frozenset({"emergency", "safety", "accessibility", "security"})
+
+
+def _to_fact(am: "_Amenity") -> CapabilityFact:
+    """The caller-facing fact for an amenity; one place, so a withheld fact and a kept one agree."""
+    return CapabilityFact(
+        label=am.label,
+        location=am.location,
+        note=am.note,
+        category=am.category,
+        answer=am.answer,
+        url=am.url,
+        email=am.email,
+        phone=am.phone,
+        report_to=am.report_to,
+        steps=am.steps,
+        document_ref=am.document_ref,
+        effective_date=am.effective_date,
+        owner=am.owner,
+        potability=am.potability,
+        potability_authority=am.potability_authority,
+        potability_issued_on=am.potability_issued_on,
+        on_floor=am.on_floor,
+        lay_terms=", ".join(am.lay_phrases),
+        service_status=am.service_status,
+        placeholder=am.placeholder,
+    )
 
 
 def _is_safety_critical(category: str) -> bool:
@@ -244,8 +283,15 @@ class CapabilityGraphResolver:
         self._cache: Optional[List[_Amenity]] = None
         self._cache_ts: float = 0.0
 
-    async def resolve(self, query: str) -> List[CapabilityFact]:
-        """Return structured amenity facts matching ``query`` (empty if no strong match)."""
+    async def resolve(
+        self, query: str, withheld_out: Optional[List[CapabilityFact]] = None
+    ) -> List[CapabilityFact]:
+        """Return structured amenity facts matching ``query`` (empty if no strong match).
+
+        ``withheld_out``, when given, receives the matching amenities that were left out for being
+        out of service, so a caller can SAY so (BUG-827) instead of leaving the reader to infer a
+        gap from what is missing.
+        """
         q = (query or "").lower()
         if not q.strip():
             return []
@@ -270,16 +316,11 @@ class CapabilityGraphResolver:
                 # however well hedged. Nothing read amenityStatus until 2026-08-26, so an
                 # out-of-service amenity was offered exactly as if it worked.
                 withheld.append(am.label or "an amenity")
+                if withheld_out is not None:
+                    withheld_out.append(_to_fact(am))
                 continue
             scored.append((score, am))
         scored.sort(key=lambda x: -x[0])
-        # A safety-critical amenity that is out of service is REPORTED, never hidden:
-        # its note carries the state so the answer says "this one is out of service"
-        # rather than pretending it works or pretending it is not there.
-        for _s, am in scored:
-            if _is_out_of_service(am.service_status):
-                flag = "**Currently out of service.**"
-                am.note = f"{flag} {am.note}".strip() if am.note else flag
         if withheld and not scored:
             # Everything that matched is out of service. "No drinking fountains here" is
             # a different and worse answer than "the ones here are not working" — the
@@ -297,29 +338,26 @@ class CapabilityGraphResolver:
                     ),
                 )
             ]
-        return [
-            CapabilityFact(
-                label=am.label,
-                location=am.location,
-                note=am.note,
-                category=am.category,
-                answer=am.answer,
-                url=am.url,
-                email=am.email,
-                phone=am.phone,
-                report_to=am.report_to,
-                steps=am.steps,
-                document_ref=am.document_ref,
-                effective_date=am.effective_date,
-                owner=am.owner,
-                potability=am.potability,
-                potability_authority=am.potability_authority,
-                potability_issued_on=am.potability_issued_on,
-                on_floor=am.on_floor,
-                lay_terms=", ".join(am.lay_phrases),
-            )
-            for _, am in scored[:_MAX_FACTS]
-        ]
+        facts: List[CapabilityFact] = []
+        for _, am in scored[:_MAX_FACTS]:
+            fact = _to_fact(am)
+            # A safety-critical amenity that is out of service is REPORTED, never hidden:
+            # its note carries the state so the answer says "this one is out of service"
+            # rather than pretending it works or pretending it is not there. Set on the fact,
+            # not the cached amenity: mutating the cache stacked one more flag onto the note on
+            # every call for the next five minutes.
+            if _is_out_of_service(am.service_status):
+                flag = "**Currently out of service.**"
+                fact.note = f"{flag} {am.note}".strip() if am.note else flag
+            facts.append(fact)
+        return facts
+
+    async def resolve_with_withheld(
+        self, query: str
+    ) -> "tuple[List[CapabilityFact], List[CapabilityFact]]":
+        """`resolve`, plus the matches left out for being out of service (BUG-827)."""
+        withheld: List[CapabilityFact] = []
+        return await self.resolve(query, withheld), withheld
 
     async def _amenities(self) -> List[_Amenity]:
         if self._cache is not None and (time.monotonic() - self._cache_ts) < _CACHE_TTL_S:
@@ -329,7 +367,7 @@ class CapabilityGraphResolver:
         q = (
             f"{_ONTO}{_RDFS}"
             "SELECT ?a ?label ?loc ?note ?cat ?lay ?answer ?url ?email ?phone ?report ?steps "
-            "?docref ?effective ?owner ?svc ?pot ?potauth ?potdate ?floor WHERE { "
+            "?docref ?effective ?owner ?svc ?pot ?potauth ?potdate ?floor ?sim WHERE { "
             "{ ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } "
             "OPTIONAL { ?a rdfs:label ?label } "
             "OPTIONAL { ?a ontosage:locationText ?loc } "
@@ -357,7 +395,9 @@ class CapabilityGraphResolver:
             # which is the unattributable health claim the module exists to prevent.
             "OPTIONAL { ?a ontosage:potabilityValue ?pot } "
             "OPTIONAL { ?a ontosage:potabilityAuthority ?potauth } "
-            "OPTIONAL { ?a ontosage:potabilityIssuedOn ?potdate } }"
+            "OPTIONAL { ?a ontosage:potabilityIssuedOn ?potdate } "
+            # A placeholder position, as against one taken from something the building states.
+            "OPTIONAL { ?a ontosage:isSimulated ?sim } }"
         )
         # Kind vocabulary first, in its own query: a failure here must cost only the inherited
         # terms, never the amenities themselves.
@@ -372,6 +412,7 @@ class CapabilityGraphResolver:
             logger.debug(f"[capability_graph] kind lay terms unavailable: {describe_exception(e)}")
         data = await self._exec(q)
         out: List[_Amenity] = []
+        by_iri: Dict[str, _Amenity] = {}
         for b in _bindings(data):
             lay = b.get("lay", {}).get("value", "")
 
@@ -380,6 +421,13 @@ class CapabilityGraphResolver:
 
             own = _phrases(lay)
             inherited = [p for p in kind_terms.get(_v("a"), []) if p not in own]
+            seen = by_iri.get(_v("a")) if _v("a") else None
+            if seen is not None:
+                # The same amenity again: a second status row, or a second lay-term literal. One
+                # amenity is one answer -- "Where are the lifts?" printed the first lift twice.
+                seen.lay_phrases += [p for p in own + inherited if p not in seen.lay_phrases]
+                seen.service_status = seen.service_status or _v("svc")
+                continue
             out.append(
                 _Amenity(
                     label=_v("label"),
@@ -401,8 +449,11 @@ class CapabilityGraphResolver:
                     potability_authority=_v("potauth"),
                     potability_issued_on=_v("potdate")[:10],
                     on_floor=_v("floor"),
+                    placeholder=_v("sim").lower() in ("true", "1"),
                 )
             )
+            if _v("a"):
+                by_iri[_v("a")] = out[-1]
         self._cache = out
         self._cache_ts = time.monotonic()
         return out
@@ -464,6 +515,11 @@ def _score(query_lc: str, lay_phrases: List[str]) -> int:
         elif re.search(rf"\b{re.escape(phrase)}\b", query_lc):
             score += 2
     return score
+    # NOT plural-tolerant, and measured: a plural tail ("shower" also matching "showers") moved 1
+    # of 2,960 corpus questions and broke THREE guard questions — "Are the lifts working?" (the
+    # asset-state lane owns lift status; the amenity lane must not claim it) and the demo question
+    # "Which hazard controls are overdue for test?" twice. A lay term is a corpus-wide change
+    # (lessons.md #38). A missing plural is fixed where it is missing: on the topic's own terms.
 
 
 async def _default_sparql_exec(sparql: str) -> dict:

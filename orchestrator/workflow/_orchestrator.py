@@ -509,6 +509,9 @@ _CARRIED_FORWARD_ON_PURPOSE = ("forecast_result", "analytics_result")
 _PER_TURN_LANE_KEYS = (
     "sparql_result",
     "sql_result",
+    # 2D-10. Routing reads it to end the turn at the response, so a stale one would send the NEXT
+    # question straight to last turn's aggregate answer.
+    "aggregate_result",
     "capability_result",
     "document_result",
     "register_result",
@@ -601,6 +604,14 @@ def _record_lane_outcome(
         logger.debug("[turn_outcome] could not record %s: %s", lane, describe_exception(exc))
 
 
+def _referent_absence_reason(resolution) -> str:
+    """'X does not exist' for a place or thing; 'X is not something this building measures' for a
+    quantity — a measured-quantity word is not an absent room (tail J, "efficiency")."""
+    from orchestrator.services.referent_resolver import absence_reason
+
+    return absence_reason(resolution)
+
+
 async def apply_referent_gate(state, question: str, sparql_exec, *, lane: str) -> bool:
     """Refuse a question naming something this building does not have. True when it refused.
 
@@ -650,13 +661,24 @@ async def apply_referent_gate(state, question: str, sparql_exec, *, lane: str) -
     state.intermediate_results["evidence"] = {
         **partial,
         "status": "not_assessable",
-        "not_assessable_reason": (
-            f"'{resolution.referent}' does not exist in this building, so there is nothing "
-            "to report about it"
-        ),
+        "not_assessable_reason": _referent_absence_reason(resolution),
         "gates_applied": sorted(set(partial.get("gates_applied") or []) | {"referent_existence"}),
     }
     return True
+
+
+def _is_storage_variable(name: str) -> bool:
+    """Is this SPARQL variable the one carrying a sensor's ``ref:storedAt`` (its store)?
+
+    2026-09-18, unscripted: "How many people are in the building at the moment?" found 250 occupancy
+    sensors and answered "no readings from any of them are available to me". Every one showed
+    `(Storage: N/A)`. The SPARQL prompt tells the model to bind the store as ``?database``
+    (`ref:storedAt ?database`) while this map recognised only a name containing "storage", so any
+    model-written query lost its routing and the SQL step looked in the wrong store. Only queries that
+    happened to use ``?storage`` — our own repair template — routed correctly.
+    """
+    n = (name or "").lower()
+    return "storage" in n or n == "database"
 
 
 def _resolved_point_count(state) -> int:
@@ -1095,58 +1117,41 @@ async def _unanswered_response(state, ctx) -> str:
     unmatched = unmatched_terms(question, list(measured) + _record_vocabulary(records))
     building = str(getattr(settings, "BUILDING_NAME", "") or "").strip() or "this building"
 
-    lines = ["I understood the question but could not put an answer together for it."]
-    detail = []
-    if intent:
-        detail.append(f"read it as a question about **{_intent_in_plain_words(intent)}**")
-    if entities:
-        detail.append(f"about **{', '.join(entities[:3])}**")
-    if detail:
-        lines.append("")
-        lines.append(f"- I {' '.join(detail)}.")
-    if unmatched:
-        lines.append(
-            f"- I could not match **{'** or **'.join(unmatched)}** to anything this "
-            f"building records, so I had nothing to build the answer on."
-        )
+    # The wording lives in `clarification`, which takes the SHAPE the question had (2D-16 wave 2).
+    # An abstract multi-part question gets no question back and the nearest things the building can
+    # answer; a question that points at one thing ("the incident") is asked which one, naming the
+    # record kinds held; a present-tense weather question gets the outdoor readings the building
+    # records, with their times. No intent, lane or classifier vocabulary is ever shown (defect C5),
+    # and no bare word from the question is quoted as though it were a field. The step error stays
+    # admin-only (design contract 7).
+    from orchestrator.services import clarification as _clar
+
+    outdoor = None
+    if _clar.is_current_weather_question(question):
+        try:
+            from orchestrator.services.outdoor_readings import fetch_outdoor_readings
+            from orchestrator.services.requested_interval import building_tz
+
+            outdoor = await fetch_outdoor_readings(
+                tz_name=building_tz(getattr(state, "building_id", None))
+            )
+        except Exception as exc:  # unread sensors are said to be unread, never guessed
+            logger.debug(f"[response] outdoor readings unavailable: {describe_exception(exc)}")
+            outdoor = []
+
+    _kind, text = _clar.compose(
+        building=building,
+        question=question,
+        unmatched=unmatched,
+        measured=measured,
+        records=records,
+        outdoor=outdoor,
+        entities=entities,
+    )
+    logger.info(f"[response] clarification shape={_kind}")
     if error and reader_is_admin_in(state):
-        # Remediation and internals are for the reader who can act on them (design
-        # contract 7): a facility manager cannot do anything with a stack trace.
-        lines.append(f"- A step reported: {error[:160]}")
-
-    holds = []
-    if measured:
-        holds.append(f"measures {_and_list(measured, 4)}")
-    if records:
-        holds.append(f"keeps {_and_list([r.label for r in records[:3]])} records")
-    if holds:
-        lines.append("")
-        lines.append(
-            f"What {building} does hold, closest to what you asked: it {_and_list(holds)}."
-        )
-
-    # ONE question back, and only when part of the request could not be mapped — which is
-    # the deliberation compiler's rule ("I couldn't map part of your request (…) — could
-    # you rephrase or drop that part?") applied where that compiler never runs.
-    if unmatched:
-        about = f" for {entities[0]}" if entities else ""
-        if records:
-            offer = f"the {records[0].label.lower()} records{about}"
-        elif measured:
-            offer = f"what is measured{about}"
-        else:
-            offer = ""
-        lines.append("")
-        lines.append(
-            f"Shall I answer from {offer} instead — or tell me where **{unmatched[0]}** "
-            "is written down and I will read it there?"
-            if offer
-            else f"Where is **{unmatched[0]}** written down?"
-        )
-    else:
-        lines.append("")
-        lines.append("Naming one room, floor or date usually gives me enough to answer from those.")
-    return "\n".join(lines)
+        text += f"\n\n- A step reported: {error[:160]}"
+    return text
 
 
 #: An answer declaring that the building holds nothing of the kind asked about. Read only on
@@ -1162,6 +1167,123 @@ _ABSENCE_CLAIM_RE = re.compile(
 def _spaced(local_name: str) -> str:
     """'ConditionSurvey' -> 'condition survey'."""
     return re.sub(r"(?<!^)(?=[A-Z])", " ", str(local_name or "")).lower().strip()
+
+
+async def _false_absence_from_a_held_register(state, text: str) -> str:
+    """``text``, or a note naming the register the building holds when the absence is false.
+
+    Only the wide narration phrases, only when nothing but an absence is left, and only when the
+    registry ITSELF names a class for the question (`absence_wording.false_absence_note`), which
+    replayed over 1,845 recorded answers changed none the hand read called good. Never raises.
+    """
+    try:
+        from orchestrator.services.absence_wording import (
+            describes_retrieval_wide,
+            false_absence_note,
+        )
+
+        if not describes_retrieval_wide(text):
+            return text  # the common case costs one regex, not a graph read
+        question = str(getattr(state, "user_message", "") or "")
+        if not question:
+            messages = getattr(state, "messages", None) or []
+            question = str(getattr(messages[-1], "content", "")) if messages else ""
+        _, records = await _closest_holdings(state)
+        building = str(getattr(settings, "BUILDING_NAME", "") or "").strip() or "this building"
+        note = false_absence_note(text, question, records, building)
+        if note:
+            logger.info("[response] a narrated absence named a register the building holds")
+            results = getattr(state, "intermediate_results", None)
+            if isinstance(results, dict):
+                results["false_absence_named_register"] = True
+            return note
+    except Exception as exc:  # a wording pass must never cost an answer
+        logger.warning(f"[response] false-absence check skipped: {describe_exception(exc)}")
+    return text
+
+
+async def _relevance_gated(state, ctx, text: str) -> str:
+    """``text``, or the honest decline when the model judges it does not respond (2D-16 wave 8).
+
+    Runs BEFORE the text is emitted on both paths: /chat and the /v1 stream both send
+    `final_state.messages[-1].content`, which is set by this node, so a replaced answer is never
+    streamed first. Fails open on every error; never applied to a lane that wrote state or a file.
+    The verdict is recorded on the bus and logged at INFO whether or not it replaced anything.
+    """
+    try:
+        if not getattr(settings, "ANSWER_RELEVANCE_GATE", True):
+            return text
+        from orchestrator.services import answer_relevance_gate as gate
+
+        lane = str(getattr(state, "current_intent", "") or "")
+        if not gate.judges_lane(lane, getattr(settings, "ANSWER_RELEVANCE_GATE_LANES", None)):
+            return text
+        question = str(getattr(state, "user_message", "") or "")
+        verdict = await gate.relevance_verdict(question, text, lane)
+        if not verdict.judged:
+            return text
+        results = getattr(state, "intermediate_results", None)
+        if isinstance(results, dict):
+            results["relevance_gate"] = {
+                "label": verdict.label,
+                "reason": verdict.reason,
+                "replaced": verdict.replace,
+                "lane": lane,
+            }
+        if not verdict.replace:
+            return text
+        logger.info(
+            f"[response] relevance gate replaced a {lane} answer: {verdict.label} "
+            f"({verdict.reason})"
+        )
+        return await _unanswered_response(state, ctx)
+    except Exception as exc:  # the gate must never cost an answer
+        logger.warning(f"[response] relevance gate skipped: {describe_exception(exc)}")
+        return text
+
+
+def _without_retrieval_narration(state, text: str) -> str:
+    """``text`` with any sentence that describes the retrieval removed (2D-16 wave 2).
+
+    Never raises and never empties an answer: `rewrite_semantic_absence` returns None when there is
+    nothing to strip, and when the narration was the whole substance it returns the one honest
+    sentence instead. The correction is recorded on the bus so a run can be counted.
+    """
+    try:
+        from orchestrator.services.absence_wording import rewrite_semantic_absence
+        from orchestrator.services.register_facts import strip_query_instructions
+
+        if text and "ontosage" in text.lower():  # never tell a reader to query an IRI (2D-06)
+            text = strip_query_instructions(text) or (
+                "I could not read that from the building's records directly."
+            )
+        question = str(getattr(state, "user_message", "") or "")
+        if not question:
+            messages = getattr(state, "messages", None) or []
+            question = str(getattr(messages[-1], "content", "")) if messages else ""
+        building = str(getattr(settings, "BUILDING_NAME", "") or "").strip() or "this building"
+        rewritten = rewrite_semantic_absence(text, question, building)
+        if not rewritten or not rewritten.strip():
+            # A decline is the whole answer: an unrelated listing after it reads as though it
+            # were the answer after all (wave 4, the sustainability-tips question).
+            from orchestrator.services.absence_wording import strip_unrelated_body_after_decline
+
+            trimmed = strip_unrelated_body_after_decline(text, question)
+            if trimmed != text and trimmed.strip():
+                logger.info("[response] dropped an unrelated body after a decline")
+                results = getattr(state, "intermediate_results", None)
+                if isinstance(results, dict):
+                    results["unrelated_body_after_decline_removed"] = True
+                return trimmed
+            return text
+        logger.info("[response] removed prose describing the retrieval from the answer")
+        results = getattr(state, "intermediate_results", None)
+        if isinstance(results, dict):
+            results["retrieval_narration_removed"] = True
+        return rewritten
+    except Exception as exc:  # a wording pass must never cost an answer
+        logger.warning(f"[response] retrieval-narration pass skipped: {exc}")
+        return text
 
 
 async def _ground_semantic_fallback(state, text: str) -> str:
@@ -2050,7 +2172,18 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             r")\b"
         )
         _cur_intent = state.intermediate_results.get("intent", "")
-        if _AUTOMATE_CAP_RE.search(_wq) and _cur_intent not in ("alert",):
+        # "How does it monitor for people using temperature or co2 or motion?" matched "does it
+        # monitor" and got the alerts answer ("No notification channel is set up"): a how-does-it-
+        # work question about SENSING is not about automation. The contract's own test decides,
+        # so the two places cannot disagree (tail H, 2026-09-20).
+        from orchestrator.services.routing_contract import _acts_on_a_building_system
+
+        if (
+            _AUTOMATE_CAP_RE.search(_wq)
+            and _cur_intent not in ("alert",)
+            and _acts_on_a_building_system(_wq)
+            and not _re_whatif.match(r"\s*how\s+(?:does|do|is|are)\b", _wq)
+        ):
             state.intermediate_results["is_automation_capability_query"] = True
             state.intermediate_results["intent"] = "automation_capability"
             logger.info(
@@ -2545,6 +2678,8 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         if _is_typed_absence(result):
             logger.info("[modality_repair] typed absence from the sparql lane -- not repaired")
             return
+        if isinstance(result, dict) and result.get("method") == "sensor_binder":
+            return  # bound to the named place by class and location: a wider repair would undo it
         # CAVEAT-148 — repair a retrieval that returned the WRONG modality.
         # Measured: "building-wide average humidity" generated SPARQL binding
         # bldg:Building_Air_Static_Pressure_Sensor.01 — a PRESSURE sensor — so the
@@ -2586,7 +2721,10 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             )
             if _miss or _under:
                 _q = _mr.build_modality_query(
-                    _want, settings.BUILDING_NAMESPACE, floors=_asked_floors
+                    _want,
+                    settings.BUILDING_NAMESPACE,
+                    floors=_asked_floors,
+                    extra_classes=_resolved_classes,
                 )
                 if _q:
                     from orchestrator.services.deliberation.live import (
@@ -2774,10 +2912,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                         state.intermediate_results["evidence"] = {
                             **_partial,
                             "status": "not_assessable",
-                            "not_assessable_reason": (
-                                f"'{_resolution.referent}' does not exist in this building, so "
-                                "there is nothing to report about it"
-                            ),
+                            "not_assessable_reason": _referent_absence_reason(_resolution),
                             "gates_applied": sorted(
                                 set(_partial.get("gates_applied") or []) | {"referent_existence"}
                             ),
@@ -2834,6 +2969,12 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         finally:
             reset_request_bctx(_bctx_token)
 
+        # 2D-05: a quantity at a named place binds to that place's own series (or declines
+        # honestly), whatever the retrieval returned. Steps aside for every other question.
+        from orchestrator.services import sensor_binder as _sensor_binder
+
+        result = await _sensor_binder.apply_to_result(state, result, _sparql_query)
+
         # CAVEAT-148 repair of a wrong-modality or under-populated retrieval. Never after a
         # typed absence: see _repair_retrieved_modality.
         await self._repair_retrieved_modality(state, result, _sparql_query)
@@ -2872,7 +3013,13 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         _original_intent = state.intermediate_results.get("intent", "")
         # "recommend" is excluded: _recommend_node can answer without sensor UUIDs
         _contextual_intents = {"compliance", "compare", "trend"}
-        if _original_intent in _contextual_intents and not _sparql_has_uuids:
+        # 2D-05: the sensor binder's own typed absence is the answer, not a "no UUIDs" miss.
+        _binder_absence = _is_typed_absence(result) and bool(result.get("binder"))
+        if (
+            _original_intent in _contextual_intents
+            and not _sparql_has_uuids
+            and not _binder_absence
+        ):
             # SPARQL returned ontology vocabulary or empty results — no sensor data.
             # Check if the previous SQL turn left sensor readings in state.query_results.
             _saved_qr = state.intermediate_results.get("_saved_query_results")
@@ -3175,8 +3322,9 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                             if val and _UUID_RE.match(val):
                                 current_uuid = val
 
-                        # Look for 'storage' variable
-                        if "storage" in var.lower():
+                        # `ref:storedAt` arrives as ?storage from our own templates and as
+                        # ?database from the pattern the SPARQL prompt tells the model to use.
+                        if _is_storage_variable(var):
                             current_storage = binding[var]["value"]
 
                     if current_uuid:
@@ -3234,6 +3382,12 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             logger.info("=" * 80)
             start_date = state.intermediate_results.get("start_date")
             end_date = state.intermediate_results.get("end_date")
+            # 2D-05: a forecast reads history; a window in the future selects rows not yet there.
+            from orchestrator.services.sensor_binder import history_window as _history_window
+
+            start_date, end_date = _history_window(
+                latest_message, state.current_intent, start_date, end_date
+            )
 
             # V5-T39 — PROTECT chokepoint: the PDP is consulted BEFORE any row
             # leaves the database. shadow = log only; on = a denial returns a
@@ -3263,10 +3417,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     try:
                         _age_min = max(
                             0.0,
-                            (
-                                store_now()
-                                - _dt.fromisoformat(str(start_date)[:19])
-                            ).total_seconds()
+                            (store_now() - _dt.fromisoformat(str(start_date)[:19])).total_seconds()
                             / 60.0,
                         )
                     except ValueError:
@@ -3543,6 +3694,13 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         )
 
         state.intermediate_results["sql_result"] = result
+        if result.get("aggregate_lane"):
+            # 2D-10: the store answered (GROUP BY), so no later lane re-reads or rewrites it.
+            state.analytics_required = False
+            state.intermediate_results["aggregate_result"] = {
+                "formatted_response": result.get("formatted_response", ""),
+                **(result.get("aggregate") or {}),
+            }
 
         # Handle SQL failures properly
         if result.get("success"):
@@ -4264,11 +4422,10 @@ Instructions:
         # there's nothing to chart yet, fetch the series via sparql -> sql first
         # (otherwise the chart is empty and the turn fails with a generic error).
         def _has_series(d) -> bool:
-            if not d:
-                return False
-            if isinstance(d, dict):
-                return bool(d.get("data"))
-            return bool(d)
+            # Rows that carry no measured value (graph bindings) are not a series (C19).
+            from orchestrator.services.viz_honesty import has_plottable_series
+
+            return has_plottable_series(d)
 
         if not _has_series(data):
             logger.info("[viz_node] no prior data — fetching via sparql -> sql before charting")
@@ -4293,8 +4450,53 @@ Instructions:
             }
             return state
 
+        # A chart is drawn only when one was asked for, AND of the quantity asked for. The
+        # wave-1 read found a floor-5 noise chart answering a question about notification
+        # provisions: "visual" read as a picture request, "audible" resolved to noise sensors.
+        # Where the policy refuses, the turn falls through to the lane that owns the subject
+        # rather than showing a picture of something else (2D-16 wave 2).
+        _decision = None
+        try:
+            from orchestrator.services.chart_policy import decide as _chart_decide
+
+            _rows = data.get("data") if isinstance(data, dict) else data
+            _decision = _chart_decide(
+                latest_message,
+                _rows if isinstance(_rows, list) else [],
+                state.intermediate_results.get("sensor_metadata") or {},
+                follow_up=bool(state.intermediate_results.get("use_existing_query_results")),
+            )
+        except Exception as exc:  # the policy must never cost a chart that was asked for
+            logger.warning(f"[viz_node] chart policy skipped: {exc}")
+        if _decision is not None and not _decision.draw:
+            logger.info(f"[viz_node] no chart drawn: {_decision.reason}")
+            state.intermediate_results["viz_result"] = {
+                "success": False,
+                "skipped": _decision.reason,
+                "error": f"visualization: {_decision.reason}",
+            }
+            if _decision.reason == "not_a_chart_request":
+                # Nobody asked for a picture, so the question still wants an answer: hand it to
+                # the lane that owns its subject rather than leaving the turn with nothing.
+                await self._answer_without_a_chart(state)
+            return state
+
         result = await self.viz_agent.create_visualization(state, latest_message, data)
         state.intermediate_results["viz_result"] = result
+        return state
+
+    async def _answer_without_a_chart(self, state: ConversationState) -> ConversationState:
+        """Hand a turn that asked for no picture to the lane that owns its subject (2D-16 wave 2).
+
+        Best-effort and silent on failure: the response node's own dispatch is the backstop, and a
+        recovery that raises would cost the turn the answer it is trying to rescue.
+        """
+        if state.intermediate_results.get("dialogue_response"):
+            return state
+        try:
+            await self._capability_node(state)
+        except Exception as exc:
+            logger.warning(f"[viz_node] fallback to the capability lane failed: {exc}")
         return state
 
     async def _render_forecast_chart(
@@ -4567,6 +4769,22 @@ SELECT ?l WHERE {
         state.current_intent = "self_description"
         return state
 
+    async def _scope_boundary_node(self, state: ConversationState) -> ConversationState:
+        """A weather forecast, an investment or another non-building request: a brief scope statement."""
+        from orchestrator.services.scope_policy import scope_boundary_node
+
+        state = await scope_boundary_node(state)
+        state.current_intent = "scope_boundary"
+        return state
+
+    async def _general_guidance_node(self, state: ConversationState) -> ConversationState:
+        """A building-knowledge question needing no building data: labelled general guidance."""
+        from orchestrator.services.guidance_node import general_guidance_node
+
+        state = await general_guidance_node(state)
+        state.current_intent = "general_guidance"
+        return state
+
     async def _general_knowledge_node(self, state: ConversationState) -> ConversationState:
         """Answer an open-domain general-knowledge question directly via the LLM.
 
@@ -4694,6 +4912,20 @@ SELECT ?l WHERE {
             prompt_parts.append(f"\n{live_context}")
         prompt = "\n".join(prompt_parts)
 
+        # THE BUILDING'S OWN RECORDS GO FIRST (2D-16 wave 2). "What kind of vechicles park?" was
+        # answered from model knowledge — compact cars, SUVs, "dedicated charging stalls" — while
+        # this building declares a transport-and-parking topic naming its motorcycle bays, EV
+        # chargers and cycle parking. The match is typo-tolerant against the building's OWN
+        # vocabulary, so nothing here knows what any building has.
+        from orchestrator.services import general_knowledge_gate as _gk
+
+        _from_records = await _gk.records_answer(user_query, bctx_name)
+        if _from_records:
+            logger.info("[general_knowledge] answered from the building's own records instead")
+            state.intermediate_results["dialogue_response"] = _from_records
+            state.intermediate_results["general_knowledge_from_records"] = True
+            return state
+
         try:
             answer = await llm_manager.generate(
                 prompt,
@@ -4703,15 +4935,21 @@ SELECT ?l WHERE {
             answer = (answer or "").strip()
             if not answer:
                 raise ValueError("empty LLM answer")
+            # Anything taken from the model is LABELLED, by code and once: a reader must never be
+            # able to take it for something this building's records say (2D-16 wave 2).
+            answer = _gk.labelled(answer)
             state.intermediate_results["dialogue_response"] = answer
             state.intermediate_results["general_knowledge_answer"] = answer
             state.intermediate_results["answer_length_used"] = length
         except Exception as e:
             logger.error(f"[general_knowledge] LLM call failed: {e}", exc_info=True)
-            # Fall back to any draft the classifier produced, else a graceful note.
+            # Fall back to any draft the classifier produced, else a graceful note. The draft came
+            # from the model too, so it carries the same label.
             fallback = state.intermediate_results.get("general_knowledge_draft")
-            state.intermediate_results["dialogue_response"] = fallback or (
-                "I wasn't able to generate an answer just now. Please try asking "
+            state.intermediate_results["dialogue_response"] = (
+                _gk.labelled(fallback)
+                if fallback
+                else "I wasn't able to generate an answer just now. Please try asking "
                 "again in a moment."
             )
             state.intermediate_results["error"] = f"general_knowledge: {e}"
@@ -4900,7 +5138,9 @@ SELECT ?l WHERE {
             # made this return at the first guard on every question.
             uuids = contributing_uuids(results)
             entities = [e for e in (results.get("entities") or []) if isinstance(e, str)]
-            if not uuids or not entities:
+            # 2D-05: the sensor binder already resolved the space the question named.
+            binder_target = str((results.get("binder_scope") or {}).get("iri") or "")
+            if not uuids or not (entities or binder_target):
                 # SAY WHY. This early return also skips the cadence and calibration fetches
                 # that ride the same graph pass, so a silent exit here makes the
                 # completeness gate report "coverage could not be established" and the
@@ -4952,8 +5192,8 @@ SELECT ?l WHERE {
             # already returns "" for both no match and an ambiguous match, so this cannot
             # silently pick a coin-flip candidate; it only stops looking once something
             # resolved unambiguously.
-            target = ""
-            for _entity in entities:
+            target = binder_target
+            for _entity in [] if target else entities:
                 target = await resolve_space_iri(_entity, ns, default_run_select)
                 if target:
                     break
@@ -5136,12 +5376,7 @@ SELECT ?l WHERE {
                 # The building's clock: the observation stamps are local, and against
                 # `utcnow()` every reading reported itself an hour fresher than it was
                 # under BST — in the freshness advice, that is the unsafe direction.
-                observed = (
-                    _observations_by_source(
-                        results, store_now()
-                    )
-                    or {}
-                )
+                observed = _observations_by_source(results, store_now()) or {}
                 mine = set(contributing_uuids(results) or [])
                 seen = [t for k, t in observed.items() if not mine or k in mine]
                 if seen:
@@ -5372,7 +5607,9 @@ SELECT ?l WHERE {
             # run" and publishes. So a crash here silently REMOVES a grounding gate rather
             # than failing loudly, and at DEBUG nobody would ever see it. One did exactly
             # that on every semantic-RAG turn until 2026-09-17 (BUG-643).
-            logger.warning(f"verification record skipped: {type(_ve).__name__}: {_ve}", exc_info=True)
+            logger.warning(
+                f"verification record skipped: {type(_ve).__name__}: {_ve}", exc_info=True
+            )
 
         # Phase 7B — typed snapshot of the pipeline state.  Subsequent reads
         # benefit from IDE autocomplete + mypy safety.  The snapshot is taken
@@ -5425,6 +5662,9 @@ SELECT ?l WHERE {
             # V5-T24: event lane (bookings / work orders / access) — deterministic
             # template over adapter numbers, same trust class as deliberate
             final_response = _events_result["formatted_response"]
+        elif (state.intermediate_results.get("aggregate_result") or {}).get("formatted_response"):
+            # 2D-10: per-floor / whole-building aggregate computed in the store, written in code
+            final_response = state.intermediate_results["aggregate_result"]["formatted_response"]
         elif _readiness_result.get("formatted_response"):
             # A lane that computes an answer nothing collects produces "I processed your
             # request, but couldn't generate a response". That is step 3 of the three-step
@@ -5655,6 +5895,52 @@ SELECT ?l WHERE {
         except Exception as exc:
             logger.warning(f"[response] could not attach the substitution note: {exc}")
 
+        # ── No answer describes the retrieval (2D-16 wave 2) ──────────────────
+        #
+        # "The data you received only lists how many sensors are installed in each room",
+        # "the 100 query results you received", "the ontology data you provided": five
+        # spellings across the recorded runs, all telling the reader what the SYSTEM got
+        # back. It is the same fault as the meta-answer below and it runs FIRST, because an
+        # answer whose only flaw is that sentence should lose the sentence rather than be
+        # discarded whole — which is what the meta guard would do, and what BUG-550 already
+        # paid for once. Where nothing of substance is left, the honest one-liner replaces it.
+        # FIRST, though, a narrated absence about something the building HOLDS a register for is
+        # not merely badly worded, it is false ("the information returned only lists the
+        # building's floors" for a question the circulation register answers). That is named as a
+        # register to read, and never as an absence (wave 5).
+        _before_hygiene = final_response
+        final_response = await _false_absence_from_a_held_register(state, final_response)
+        final_response = _without_retrieval_narration(state, final_response)
+
+        # ── Is it an answer at all? (2D-16 wave 3) ────────────────────────────
+        #
+        # The last line of defence. A hand read of 62 unscripted questions found five answers that
+        # were not answers, from five different lanes: "**Not met**" in full; a register's file name
+        # `continuity_provision_register`; an ontology class comment ("A sensor that measures the
+        # difference of a quantity between any two points"); a why-question answered as though its
+        # words named a measurand; and the question's own phrase quoted twice as a sensor name.
+        #
+        # Replaced by the SAME honest decline the meta guard uses, which names what this building
+        # can answer instead — so the reader gets a way forward rather than a fragment. The rules
+        # are precision-first and were replayed over all 1,521 recorded answers: none changed.
+        try:
+            from orchestrator.services.answer_shape import non_answer_reason
+
+            _shape = non_answer_reason(final_response, state.user_message or "")
+            if _shape:
+                logger.warning(f"[response] not an answer ({_shape}) — replacing with a decline")
+                state.intermediate_results["non_answer_replaced"] = _shape
+                final_response = await _unanswered_response(state, ctx)
+        except Exception as exc:  # a shape check must never cost an answer
+            logger.warning(f"[response] answer-shape check skipped: {exc}")
+
+        # ── Does it respond to the question? (2D-16 wave 8) ──────────────────
+        #
+        # After the shape guard (a fragment needs no model to condemn it) and before the meta
+        # guard. Lane-limited to where a measurement showed it accurate, fail-open, and never on a
+        # lane that has already written state or a file. See services/answer_relevance_gate.
+        final_response = await _relevance_gated(state, ctx, final_response)
+
         # ── Meta-answer guard (BUG-443) ───────────────────────────────────────
         #
         # Prose ABOUT the pipeline is not an answer about the building. Measured live,
@@ -5728,21 +6014,44 @@ SELECT ?l WHERE {
         except Exception as exc:  # never let the guard cost an answer
             logger.warning(f"[response] meta-answer check skipped: {exc}")
 
+        # ── No answer opens in the middle of a thought (2D-16 wave 7) ─────────
+        #
+        # Every pass above that removes a sentence can leave the NEXT one first, and "They only
+        # record scheduled closure periods" or "None of those sensor entries contain ..." then
+        # opens the answer, pointing at something the reader was never shown. ONE shared helper,
+        # called once after all of them, so a new pass cannot forget it.
+        try:
+            from orchestrator.services.absence_wording import mend_opening
+
+            _mended = mend_opening(
+                final_response,
+                _before_hygiene,
+                str(state.user_message or ""),
+                str(getattr(settings, "BUILDING_NAME", "") or "").strip() or "this building",
+            )
+            if _mended != final_response and _mended.strip():
+                logger.info("[response] removed an opening sentence that had lost its antecedent")
+                state.intermediate_results["orphan_opening_removed"] = True
+                final_response = _mended
+        except Exception as exc:  # a wording pass must never cost an answer
+            logger.warning(f"[response] opening check skipped: {exc}")
+
         # ── Visualization honesty guard ───────────────────────────────────────
         # If the user explicitly asked for a chart but no image was produced,
         # say so plainly.  Previously the response node fell back to the analytics
         # stats text silently (it requires viz_result.media to use the viz path),
         # leaving users with a summary that *offered* a graph but never showed one.
         _latest_msg = state.messages[-1].content if state.messages else ""
-        if (
-            self._user_wants_visualization(_latest_msg)
-            and not media_payload
-            and state.current_intent not in ("clarification", "greeting", "general_knowledge")
-        ):
-            final_response += (
-                "\n\n---\n*⚠️ I summarised the data above but couldn't render the "
-                "chart this time. Please try again, or rephrase the request as e.g. "
-                '"plot sensor 5.27 temperature for the last 24 hours as a line chart".*'
+        if state.current_intent not in ("clarification", "greeting", "general_knowledge"):
+            # Said once, only when a chart was asked for, and never as "I summarised the data
+            # above" over an answer that holds no data (defect C19, services/viz_honesty).
+            from orchestrator.services.viz_honesty import chart_note
+
+            final_response += chart_note(
+                wants_chart=self._user_wants_visualization(_latest_msg),
+                has_media=bool(media_payload),
+                viz_result=viz_result,
+                answer=final_response,
             )
 
         # ── CAP-04: Append auto-compliance block (if produced by analytics node)
@@ -5922,7 +6231,7 @@ SELECT ?l WHERE {
         suggestions = self._get_follow_up_suggestions(state.current_intent)
         # CAVEAT-584: a register answer is about records, not sensors — "Show current
         # readings for these sensors?" under a list of work orders offers nothing.
-        _sr_method = (state.intermediate_results.get("sparql_result") or {})
+        _sr_method = state.intermediate_results.get("sparql_result") or {}
         if isinstance(_sr_method, dict) and _sr_method.get("method") == "whole_register":
             suggestions = self._FOLLOW_UP_MAP.get("register_records", "")
         if suggestions:
@@ -6024,6 +6333,19 @@ SELECT ?l WHERE {
                 state.intermediate_results["unmodelled_correction"] = _unmodelled
         except Exception as _ag_err:
             logger.debug(f"absence guard skipped: {_ag_err}")
+
+        # ── 2D-18: an answer that says the building holds nothing gets ONE second look ──
+        # The absence guard above checks a sensing claim against a COUNT; this checks a claim about
+        # the building's RECORDS against the registers and prose the failing lane never read.
+        from orchestrator.services.absence_second_chance import apply_to_answer as _second_chance
+
+        final_response = await _second_chance(
+            state,
+            final_response,
+            lane=state.current_intent,
+            sparql_exec=self.sparql_agent._execute_query,
+            namespace=settings.BUILDING_NAMESPACE,
+        )
 
         # ── The ontology RAG fallback answers about CLASSES, not about the building ──
         try:
@@ -6159,9 +6481,7 @@ SELECT ?l WHERE {
                     "withheld": list(_d.withhold),
                     "reason": _d.reason,
                 }
-                logger.warning(
-                    "[disclosure_gate] WITHHELD %s — %s", _d.withhold, _d.reason
-                )
+                logger.warning("[disclosure_gate] WITHHELD %s — %s", _d.withhold, _d.reason)
         except Exception as _dg_err:  # pragma: no cover - the gate itself fails closed
             logger.error(f"[disclosure_gate] failed: {_dg_err}", exc_info=True)
 
@@ -7464,7 +7784,19 @@ SELECT ?l WHERE {
             )
             pattern = re.compile(rf"(?<![a-z0-9])(?:{alternation})(?![a-z0-9])")
             cls._VIZ_KEYWORD_RE = pattern
-        return bool(pattern.search(msg))
+        if not pattern.search(msg):
+            return False
+        # The keyword list carries picture NOUNS ("image", "display", "map", "panel") and the
+        # adjective in "visual alerts", so it claimed "I may not see visual alerts. Which verified
+        # audible or staff-assisted notification provision is available?" and a noise chart was
+        # drawn for it. `chart_policy` requires a request for a picture OF a measured quantity, so
+        # it can only ever NARROW this list, never widen it (2D-16 wave 2).
+        try:
+            from orchestrator.services.chart_policy import asks_for_chart
+
+            return asks_for_chart(message)
+        except Exception:  # pragma: no cover - the keyword list is the fallback
+            return True
 
     # Phase 17B (2026-05-29) — `_route_from_data_node`, `_route_from_analytics_node`,
     # `_route_from_sql`, and `_route_from_report` were extracted to
@@ -7767,7 +8099,11 @@ SELECT ?l WHERE {
             # the template should never invent a number — if it somehow did,
             # ship the dossier-backed table only, never the violating prose
             logger.error(f"[deliberate] numeric guard tripped: {violations}")
-            text = "I computed a ranking but its narration failed the evidence check — see the dossier."
+            # Plain words (wave 5): "narration", "the evidence check" and "the dossier" are the
+            # pipeline's vocabulary, and answer_shape treats the old wording as a non-answer.
+            from orchestrator.services.numeric_guard import SUPPRESSION_TEXT as _SUPPRESSED
+
+            text = _SUPPRESSED
         state.intermediate_results["deliberate_result"] = {
             "success": True,
             "formatted_response": text,
@@ -8030,7 +8366,27 @@ SELECT ?l WHERE {
             modality, lay = await self._observability_modality(question, state)
 
             _named = named_quantity(question) or _quantity_asked_about(question)
-            if space is None and modality is None and _named:
+            from orchestrator.services.observability import recorded_elsewhere
+
+            _elsewhere = (
+                await recorded_elsewhere(_named)
+                if (space is None and modality is None and _named)
+                else ""
+            )
+            if _elsewhere:
+                # NOT "not measured": another store records it (tail J, "foot traffic").
+                reach = Reach(
+                    modality=_named,
+                    space_label="this building",
+                    status="observable",
+                    lay_term=_named,
+                )
+                text = (
+                    f"**Yes — {_named} is recorded, as {_elsewhere}.** It is not a sensor "
+                    f"reading in one room; ask for it directly, for example over a day or a "
+                    f"week, and I will read it from that record."
+                )
+            elif space is None and modality is None and _named:
                 # A quantity this building instruments NOWHERE needs no space (CAVEAT-396).
                 #
                 # "Is there a voltage fluctuation that could put our hardware at risk?" named
@@ -8074,9 +8430,7 @@ SELECT ?l WHERE {
                         {
                             name
                             for _sp in (schema.spaces or [])
-                            for name in present_modalities(
-                                getattr(_sp, "modalities", None) or {}
-                            )
+                            for name in present_modalities(getattr(_sp, "modalities", None) or {})
                         }
                     ),
                 )
@@ -8342,11 +8696,16 @@ SELECT ?l WHERE {
             except Exception:
                 adapter = None
             rooms: list = []
+            room_kinds: dict = {}
             point_map: dict = {}
             if adapter is not None:
                 auditor = CoverageAuditor(sparql_exec, load_modalities(building_id))
                 spaces = await auditor.discover_spaces(namespace)
                 rooms = sorted(s.space_iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1] for s in spaces)
+                # each room's Brick classes narrow "which MEETING rooms are booked?" (BUG-828, B11)
+                room_kinds = {
+                    s.space_iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]: set(s.kinds) for s in spaces
+                }
                 # V5-T21: sensor uuid -> (room, modality) so anomaly episodes
                 # narrate WHERE they happened, not bare uuids
                 try:
@@ -8369,11 +8728,20 @@ SELECT ?l WHERE {
             from orchestrator.services.requested_interval import building_tz
 
             service = EventQueryService(
-                building_id, adapter, rooms, point_map=point_map, tz_name=building_tz(building_id)
+                building_id,
+                adapter,
+                rooms,
+                point_map=point_map,
+                tz_name=building_tz(building_id),
+                room_kinds=room_kinds,
             )
             from orchestrator.services.grounding_guard import reader_is_admin_in
 
-            result = await service.answer(question, for_admin=reader_is_admin_in(state))
+            result = await service.answer(
+                question,
+                for_admin=reader_is_admin_in(state),
+                reader_role=state.intermediate_results.get("user_role"),
+            )
             state.intermediate_results["events_result"] = guard_payload(result, "events")
         except Exception as exc:
             logger.error(f"[events] node failed: {exc}", exc_info=True)
@@ -8967,6 +9335,41 @@ SELECT ?l WHERE {
         except Exception:
             return False
 
+    @classmethod
+    def _stated_place(cls, text: str) -> Optional[str]:
+        """The place the reporter's own words name, for the record: "floor 2", "RM101", "gym".
+
+        `_message_names_a_place` decides not to ASK where; this keeps what was said. Without it
+        "The toilet on floor 2 is leaking" was filed with no location and answered "I couldn't
+        tell where this is" — to someone who had just said (BUG-822).
+        """
+        if not text:
+            return None
+        code = re.search(
+            r"\b(?:rm|room|office|lab|zone)\s*[-_. ]?\d{1,4}(?:\.\d{1,3})?[a-z]?\b"
+            r"|\b\d{1,2}\.\d{1,3}[a-z]?\b",
+            text,
+            re.IGNORECASE,
+        )
+        if code:
+            return code.group(0).strip()
+        try:
+            from orchestrator.services.referent_resolver import (
+                _FLOOR_RE,
+                KIND_SPACE,
+                detect_typed_referent,
+            )
+
+            floor = _FLOOR_RE.search(text)
+            if floor:
+                return f"floor {floor.group(1) or floor.group(2)}"
+            referent = detect_typed_referent(text)
+            if referent is not None and referent.kind == KIND_SPACE:
+                return referent.phrase
+        except Exception:
+            return None
+        return None
+
     @staticmethod
     def _already_asked_where(state: ConversationState) -> bool:
         """True when the previous assistant turn was this same clarification.
@@ -9025,6 +9428,44 @@ SELECT ?l WHERE {
                 state.intermediate_results["report_intake_skipped"] = "information_question"
                 await self._sparql_node(state)
                 return state
+            # A HEDGED MESSAGE THAT STATES NOTHING IS NOT A REPORT (2026-09-19, serious). "if the
+            # building are safe or not" filed a HIGH-priority ticket (REP-051956): no place, no
+            # hazard, no fault. The routing contract sends it to a clarification; this refuses to
+            # file it even if a route changes, because a bogus ticket sends someone looking for a
+            # problem nobody described.
+            from orchestrator.services.report_statement import (
+                QUESTION_REPLY,
+                clarification_for,
+                is_question_not_a_fault,
+            )
+
+            _not_a_report = (
+                clarification_for(user_message or "")
+                if action == "create" and intent not in ("suggestion", "feedback")
+                else None
+            )
+            # An interrogative that states no fault, names no place and asks for no action is a
+            # question, whatever `is_information_question` made of its subject ("Is EACH specialist
+            # test instrument correctly ranged ...?" filed REP-8AC1A1). A suggestion or feedback
+            # may legitimately be phrased as a question, so those intents are left alone.
+            if (
+                not _not_a_report
+                and action == "create"
+                and intent not in ("suggestion", "feedback")
+                and is_question_not_a_fault(user_message or "")
+            ):
+                # Same treatment as the BUG-548 guard above: answer it from the records.
+                logger.info("[report_intake] a question that states no fault — answering, not filing")
+                state.current_intent = "metadata"
+                state.intermediate_results["intent"] = "metadata"
+                state.intermediate_results["report_intake_skipped"] = "question_states_no_fault"
+                await self._sparql_node(state)
+                return state
+            if _not_a_report:
+                logger.info("[report_intake] hedged, states no fault/hazard/place — not filing")
+                state.intermediate_results["report_intake_skipped"] = "not_a_statement"
+                state.intermediate_results["dialogue_response"] = _not_a_report
+                return state
             reporter_id = (
                 getattr(state, "user_id", None)
                 or state.intermediate_results.get("user_id")
@@ -9061,6 +9502,7 @@ SELECT ?l WHERE {
                     ),
                     None,
                 )
+                location = location or self._stated_place(user_message or "")
                 device = next(
                     (
                         e.get("value")
@@ -9404,10 +9846,14 @@ SELECT ?l WHERE {
                 _missing = [
                     part
                     for part, absent in (
-                        ("what to measure (for example CO2, temperature or humidity)",
-                         trigger.get("concept") == "sensor"),
-                        ("the value that should trigger it (for example 'above 1000')",
-                         thresh_match is None),
+                        (
+                            "what to measure (for example CO2, temperature or humidity)",
+                            trigger.get("concept") == "sensor",
+                        ),
+                        (
+                            "the value that should trigger it (for example 'above 1000')",
+                            thresh_match is None,
+                        ),
                     )
                     if absent
                 ]
@@ -9760,6 +10206,22 @@ SELECT ?l WHERE {
                 answer_parts += ["", _no_channel]
 
         response = "\n".join(answer_parts)
+        # An override, or alerting a PERSON to a task, is answered as asked; so is a question
+        # whose quantity could not be identified (a quantity that WAS identified and could not
+        # be checked keeps the "couldn't check" answer above). Defect C19: services/automation_answer.
+        from orchestrator.services import automation_answer as _auto
+
+        _auto_kind = _auto.question_kind(question)
+        if _auto_kind != _auto.KIND_QUANTITY or (sensor_available is None and not modality):
+            _building_label = str(getattr(settings, "BUILDING_NAME", "") or "").strip()
+            response = await _auto.compose_for(
+                question,
+                building_id=building_id,
+                building=_building_label or "this building",
+                measured=_measured,
+                delivers=notify_available,
+                for_admin=_for_admin,
+            )
         logger.info(
             f"[automation_capability] concept={concept_label!r} "
             f"sensor_available={sensor_available} notify={notify_available} "
@@ -9772,6 +10234,7 @@ SELECT ?l WHERE {
             "sensor_available": sensor_available,
             "notify_available": notify_available,
             "actuation_available": actuation_available,
+            "kind": _auto_kind,
         }
         state.intermediate_results["dialogue_response"] = response
         return state

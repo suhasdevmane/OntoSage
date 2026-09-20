@@ -32,6 +32,9 @@ Status is the owner's assessment, recorded here and not re-derived from consumpt
 | SUS-WATER-2028 | Mains water consumption | 20.0 | % reduction | 9600.0 | 2022/23 academic year | 2028-12-29 | Estates Energy Board | On track |
 | SUS-WASTE-2027 | Waste diverted from landfill | 95.0 | % diverted | 78.0 | 2023/24 academic year | 2027-12-30 | University Environmental Strategy | On track |
 | SUS-GAS-2026 | Gas consumption | 10.0 | % reduction | 742000.0 | 2024/25 academic year | 2026-12-30 | Estates Energy Board | At risk |
+| SUS-RECYCLE-2027 | Waste recycled rather than energy-recovered or landfilled | 60.0 | % recycled | 44.0 | 2023/24 academic year | 2027-12-30 | University Environmental Strategy | At risk |
+| SUS-TRAVEL-2030 | Commuting and business travel emissions, Scope 3 (tCO2e) | 30.0 | % reduction | 260.0 | 2019/20 academic year | 2029-12-29 | University Environmental Strategy | On track |
+| SUS-PAPER-2027 | Paper purchased (reams) | 40.0 | % reduction | 18500.0 | 2022/23 academic year | 2027-12-30 | University Environmental Strategy | On track |
 
 ## Authority
 

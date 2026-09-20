@@ -38,7 +38,16 @@ def _class_listing_projection() -> str:
 def test_the_reader_still_matches_by_name():
     """If this changes, the rest of this file is testing the wrong contract."""
     assert '"uuid" in var.lower() or "id" in var.lower()' in READER
-    assert '"storage" in var.lower()' in READER
+    # 2026-09-18: the reader goes through `_is_storage_variable`, which ALSO accepts `?database` —
+    # the name the SPARQL prompt itself teaches the model to bind `ref:storedAt` to. Model-written
+    # queries lost their store routing ("Storage: N/A" for all 250 occupancy sensors) because only
+    # a name containing "storage" was recognised. The contract this file defends is unchanged: the
+    # reader recognises a store BY NAME, so a projection alias that names it neither way is invisible.
+    assert "_is_storage_variable(var)" in READER
+    from orchestrator.workflow._orchestrator import _is_storage_variable
+
+    assert _is_storage_variable("storage") and _is_storage_variable("database")
+    assert not _is_storage_variable("store"), "the original regression: ?store is still not a store"
 
 
 def test_the_storage_alias_contains_the_substring_the_reader_looks_for():

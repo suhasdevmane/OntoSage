@@ -270,7 +270,11 @@ def test_the_fallback_runs_after_the_adjacency_search_not_instead_of_it():
     from orchestrator.agents.spatial_agent import SpatialAgent
 
     src = inspect.getsource(SpatialAgent._answer_nearest)
-    assert src.index("rf.nearest(") < src.index("_nearest_from_amenities"), (
+    # The floor-only branch ("nearest toilet on floor 1") has no room to search from, so it asks
+    # the catalogue directly; the FALLBACK is the call made after the adjacency search failed.
+    assert src.index("rf.nearest(") < src.index(
+        "fallback = await self._nearest_from_amenities("
+    ), (
         "the catalogue is consulted before the floor plan, so a real adjacency route "
         "would be replaced by a floor count"
     )

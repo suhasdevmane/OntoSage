@@ -56,6 +56,8 @@ class DocIndexResult:
     #: it silently loses the half a question actually needs to compute over.
     lifted_records: int = 0
     lift_failures: List[str] = field(default_factory=list)
+    #: Indexed documents whose file no longer exists on disk, removed from the index this run.
+    pruned_files: List[str] = field(default_factory=list)
 
 
 def _chunk_text(text: str, chunk_words: int = _CHUNK_WORDS) -> List[str]:
@@ -72,6 +74,27 @@ def _chunk_text(text: str, chunk_words: int = _CHUNK_WORDS) -> List[str]:
             chunks.append(chunk.strip())
         i += step
     return chunks
+
+
+#: Bump when what gets EMBEDDED from a document changes, so an index built before rebuilds.
+_INDEX_REV = "2-no-authoring-commentary"
+
+
+def _index_revision_sha(path: Path, file_sha: str) -> str:
+    """The file's SHA, tagged with the index revision when the indexed text differs from the file.
+
+    A document whose embedded text equals its file keeps the plain SHA (nothing to rebuild); one
+    that now loses its front matter or authoring sections gets a tagged SHA once, which makes the
+    boot-time SHA check see it as changed and re-embed it.
+    """
+    text = _read_document(path)
+    if text is None:
+        return file_sha
+    from orchestrator.services.passage_relevance import indexable_text
+
+    if indexable_text(text) == text:
+        return file_sha
+    return hashlib.sha256(f"{file_sha}|{_INDEX_REV}".encode("utf-8")).hexdigest()
 
 
 def _read_document(path: Path) -> Optional[str]:
@@ -297,6 +320,33 @@ class DocumentIndexer:
         # ── Load existing SHA map from Qdrant ────────────────────────────────
         existing_shas = await self._load_existing_shas(collection_name)
 
+        # ── Reconcile DELETIONS ──────────────────────────────────────────────
+        #
+        # Indexing added and updated; nothing ever removed. Measured 2026-09-18: the index held
+        # `water_hygiene_legionella.md` and `asbestos_register.md`, neither of which exists in
+        # `input/documents/`, and "Are there any showers in the building?" was answered from
+        # the first — "shower outlets serve the ground-floor changing area" — contradicting the
+        # building's own authored data (showers on Floor 1). A deleted document kept answering.
+        #
+        # This is the deployment case, not a curiosity: replacing placeholder documents with the
+        # real ones means deleting files, and without this the placeholders stay searchable
+        # beside the real ones for ever.
+        #
+        # SAFE BY CONSTRUCTION. This point is reached only when the folder exists AND holds at
+        # least one supported file (both cases above return early). A volume that failed to mount
+        # yields no directory, and an emptied one returns "no_documents", so neither can wipe
+        # the index. Only documents THIS building indexed are considered.
+        on_disk = {p.name for p in doc_paths}
+        pruned_files = sorted(name for name in existing_shas if name not in on_disk)
+        if pruned_files:
+            logger.warning(
+                f"[document_indexer] {building_id}: {len(pruned_files)} indexed document(s) have "
+                f"no file on disk and are being removed from the index: {pruned_files}"
+            )
+            await self._delete_docs(collection_name, pruned_files, building_id)
+            for name in pruned_files:
+                existing_shas.pop(name, None)
+
         new_points: List[Any] = []
         indexed_files: List[str] = []
         skipped_files: List[str] = []
@@ -305,7 +355,8 @@ class DocumentIndexer:
         lift_failures: List[str] = []
 
         for doc_path in doc_paths:
-            file_sha = hashlib.sha256(doc_path.read_bytes()).hexdigest()
+            raw_sha = hashlib.sha256(doc_path.read_bytes()).hexdigest()
+            file_sha = _index_revision_sha(doc_path, raw_sha)
             if existing_shas.get(doc_path.name) == file_sha:
                 logger.info(f"[document_indexer] {building_id}/{doc_path.name}: sha match — skip")
                 skipped_files.append(doc_path.name)
@@ -333,7 +384,11 @@ class DocumentIndexer:
             if text is None:
                 continue
 
-            chunks = _chunk_text(text)
+            # Front matter is lifted into triples above; authoring commentary is developer prose
+            # about how a register was designed. Neither is a fact a stakeholder can be answered from.
+            from orchestrator.services.passage_relevance import indexable_text
+
+            chunks = _chunk_text(indexable_text(text))
             if not chunks:
                 continue
 
@@ -380,6 +435,7 @@ class DocumentIndexer:
                 reason="all files sha-match — no rebuild needed",
                 skipped_files=skipped_files,
                 duration_ms=(time.monotonic() - t0) * 1000,
+                pruned_files=pruned_files,
             )
 
         # ── Rebuild collection when new_points exist ─────────────────────────
@@ -421,6 +477,7 @@ class DocumentIndexer:
             duration_ms=duration_ms,
             lifted_records=lifted_records,
             lift_failures=lift_failures,
+            pruned_files=pruned_files,
         )
 
     # ── internal helpers ─────────────────────────────────────────────────────

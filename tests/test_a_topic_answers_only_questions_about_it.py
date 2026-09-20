@@ -45,7 +45,7 @@ def test_a_question_that_only_names_the_amenity_is_not_about_it(q, phrases):
 def test_the_capability_lane_answers_only_from_subject_topics():
     from orchestrator.agents import capability_agent
 
-    src = inspect.getsource(capability_agent.CapabilityAgent.answer)
+    src = inspect.getsource(capability_agent.CapabilityAgent._answer_unchecked)
     assert "leftover_content_words" in src
     assert "_subject = [f for f in _facts if _is_subject(f)]" in src
     # the filter must apply to what ANSWERS, before the answer is assembled

@@ -177,12 +177,35 @@ def results_match_modality(
     return False
 
 
+def classes_for(
+    modality: str, building_id: Optional[str] = None, extra_classes: Sequence[str] = ()
+) -> Tuple[str, ...]:
+    """The class local names to look for: the catalogue's, else the ones the concept resolved.
+
+    2026-09-18, unscripted: "How much electricity did the building use yesterday?" resolved the
+    concept `energy_consumption` -> `brick:Energy_Sensor` (six floor meters, all with readings) and
+    then fetched eight AIR QUALITY sensors, so the analytics ran over the strings "low/medium/high"
+    and reported "No valid data". The wanted modality is INFERRED from the generated query text
+    ("energy"); the building's catalogue has no key by that name (its key is `energy_submeter`), so
+    `needs_repair` took its "unknown modality: never guess" exit and the retrieval was left alone.
+    The guess it refused to make was already made, by the one component whose job is to make it.
+
+    The catalogue still wins whenever it knows the name, so every modality that repairs today
+    repairs identically. This only opens the case that used to do nothing.
+    """
+    known = modality_classes(modality, building_id)
+    if known:
+        return known
+    return tuple(str(c).rsplit(":", 1)[-1] for c in extra_classes if c)
+
+
 def build_modality_query(
     modality: str,
     namespace: str,
     limit: int = MAX_SENSORS,
     building_id: Optional[str] = None,
     floors: Sequence[str] = (),
+    extra_classes: Sequence[str] = (),
 ) -> Optional[str]:
     """A deterministic SPARQL for every sensor of this modality that HAS readings.
 
@@ -195,7 +218,7 @@ def build_modality_query(
     from the whole building, which the answer then reported as floor 3. A repair that widens
     the scope is not a repair: it answers a different question, confidently.
     """
-    classes = modality_classes(modality, building_id)
+    classes = classes_for(modality, building_id, extra_classes)
     if not classes or not namespace:
         return None
     values = " ".join(f'"{c}"' for c in classes)
@@ -238,8 +261,8 @@ def needs_repair(
     """Should the deterministic query replace what retrieval returned?"""
     if not modality:
         return False  # no clear modality — the LLM path owns these shapes
-    if not modality_classes(modality, building_id):
-        return False  # unknown modality for THIS building: never guess
+    if not classes_for(modality, building_id, extra_classes):
+        return False  # unknown modality for THIS building and no resolved class: never guess
     return not results_match_modality(bindings, modality, building_id, extra_classes)
 
 

@@ -92,11 +92,17 @@ def test_the_sql_budget_declines_before_fetching():
 
 
 def test_the_sql_decline_says_what_to_ask_instead():
-    from orchestrator.agents import sql_agent
+    """Unchanged in substance; the sentence moved to `too_broad_reply` in wave 2 of 2D-10.
 
-    source = inspect.getsource(sql_agent.SQLAgent)
-    for hint in ("One floor, one room", "as a comparison"):
-        assert hint in source
+    It used to be a literal in this agent, and this test grepped the agent for two phrases of it.
+    The refusal now names the reader's own quantity, so the phrases are built rather than written
+    down, and the property is checked on the finished sentence instead of on the source.
+    """
+    from orchestrator.services.too_broad_reply import too_broad_reply
+
+    text = too_broad_reply("Show me CO2 for every sensor this week.", 280, ["Room 5.01 co2 [ppm]"])
+    assert "Which floor had the highest CO2 this week?" in text  # the cheap whole-building ask
+    assert "Room 5.01" in text  # and the cheap narrow one, in a room that exists
 
 
 def test_the_sql_decline_does_not_tell_the_reader_to_drop_a_measurement():

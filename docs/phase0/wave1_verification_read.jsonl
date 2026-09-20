@@ -1,0 +1,59 @@
+{"row": 0, "id": "V01", "question": "How stuffy is Room 1.06 at the moment?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 1, "id": "V02", "question": "Which rooms are occupied at the moment?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Occupied rooms named with their counts from the occupancy series (97 s)."}
+{"row": 2, "id": "V03", "question": "How many people are in Room 1.06 right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 3, "id": "V04", "question": "What will the temperature be tomorrow in Room 2.01?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 4, "id": "V05", "question": "What is the current temperature of the heat pump water loop?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 5, "id": "V06", "question": "What is the CO2 level in the atrium right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 6, "id": "V07", "question": "What is the CO2 level in room 5.01 right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 7, "id": "V08", "question": "What is the noise level in the atrium?", "verdict": "GOOD_DECLINE", "confidence": "high", "evidence": "No noise measurement in the atrium; says what Room 1.04 does record."}
+{"row": 8, "id": "V09", "question": "What is the radiation level in the atrium?", "verdict": "GOOD_DECLINE", "confidence": "high", "evidence": "Radiation not measured (unchanged)."}
+{"row": 9, "id": "V10", "question": "What is the temperature in Room 9.99?", "verdict": "GOOD_DECLINE", "confidence": "high", "evidence": "Room 9.99 does not exist (unchanged)."}
+{"row": 10, "id": "V11", "question": "When was the CO2 sensor in Room 5.01 last calibrated?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 11, "id": "V12", "question": "Which floor is the warmest right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 12, "id": "V13", "question": "What's the delta-T across the heating circuit, and is it healthy?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 13, "id": "V14", "question": "What is the average CO2 on each floor right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 14, "id": "V15", "question": "How many people are in the building at the moment?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 15, "id": "V16", "question": "Give me a report on the CO2 in room 5.01 yesterday.", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 16, "id": "V17", "question": "Which HVAC systems run outside normal hours, and is each exception approved?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 17, "id": "V18", "question": "What should I do to cut energy use on floor 3?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Advice kept because it was asked for."}
+{"row": 18, "id": "V19", "question": "Recommend ways to improve air quality on floor 5.", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Advice kept because it was asked for."}
+{"row": 19, "id": "V20", "question": "Is there a swimming pool?", "verdict": "GOOD_DECLINE", "confidence": "high", "evidence": "No swimming pool (unchanged)."}
+{"row": 20, "id": "V21", "question": "Compare this week's electricity use with last week.", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 21, "id": "V22", "question": "Which floor had the highest CO2 this week?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 22, "id": "V23", "question": "Has CO2 been high anywhere this week?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 23, "id": "V24", "question": "Has CO2 exceeded the WELL limit anywhere this week?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 24, "id": "V25", "question": "How much water did floor 3 use yesterday?", "verdict": "GOOD_ANSWER", "confidence": "low", "evidence": "2,058,048 L = mean flow x 86,400 s; correct arithmetic but the method is not stated and the aggregate lane did not fire."}
+{"row": 25, "id": "V26", "question": "Which floor has the most people in it right now?", "verdict": "WEIRD", "confidence": "med", "evidence": "Five floors listed (Floor 1 missing) with 47 people, while the building total three minutes earlier was 23."}
+{"row": 26, "id": "V27", "question": "How much gas did we use this week?", "verdict": "WEIRD", "confidence": "low", "evidence": "'No usage data available' followed by unrelated ppm concentrations from gas-leak sensors."}
+{"row": 27, "id": "V28", "question": "Which floor had the lowest temperature this week?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 28, "id": "V29", "question": "Show me CO2 for every sensor this week.", "verdict": "GOOD_DECLINE", "confidence": "med", "evidence": "Refused as too broad, as designed."}
+{"row": 29, "id": "V30", "question": "Which floor will have the highest CO2 tomorrow?", "verdict": "WEIRD", "confidence": "low", "evidence": "A forecast question refused with the 'reaches N sensors' text."}
+{"row": 30, "id": "V31", "question": "Where are the toilets on floor 2?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 31, "id": "V32", "question": "Where is the nearest lift to Room 4.01?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 32, "id": "V33", "question": "Which floor is the server room on?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 33, "id": "V34", "question": "What's the biggest room in the building?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 34, "id": "V35", "question": "Which rooms are computer laboratories?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 35, "id": "V36", "question": "Where is the nearest accessible toilet on floor 1?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 36, "id": "V37", "question": "Is there step-free access to the first floor?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 37, "id": "V38", "question": "How do I get to the lifts from the entrance?", "verdict": "WEIRD", "confidence": "med", "evidence": "'Passenger Lift 1 and 2 serve Reception's floor (floor 4)': Reception is on floor 0."}
+{"row": 38, "id": "V39", "question": "Where are the toilets on floor 7?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 39, "id": "V40", "question": "Which rooms are computer laboratories on floor 5?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 40, "id": "V41", "question": "Which rooms are swimming pools?", "verdict": "WEIRD", "confidence": "low", "evidence": "Declines, but with 'the 100 query results you received' and an add-a-field instruction."}
+{"row": 41, "id": "V42", "question": "Which refuge points are defective, and who owns them?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 42, "id": "V43", "question": "Who owns the evacuation chairs?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 43, "id": "V44", "question": "How many open work orders are there, and which are overdue?", "verdict": "WEIRD", "confidence": "med", "evidence": "Classifier sent it to the events store: '62 work orders open for more than 7 days ... 1017 issues'; the maintenance-log register says 24 records, 3 open. Two stores, two answers."}
+{"row": 44, "id": "V45", "question": "Is the building up to date with its fire safety inspections?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 45, "id": "V46", "question": "Which fire safety assets are overdue or cannot be evidenced?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 46, "id": "V47", "question": "Which hazard controls are overdue for test?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 47, "id": "V48", "question": "Which permits are open?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 48, "id": "V49", "question": "Is there a quiet room I can use?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "26 quiet or silent rooms by floor from the workspace register."}
+{"row": 49, "id": "V50", "question": "When was the lift last serviced?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 50, "id": "V51", "question": "Which refuge points have a working communication unit?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 51, "id": "V52", "question": "Which provisions have no owner?", "verdict": "WEIRD", "confidence": "high", "evidence": "'None of the approval provisions have an owner recorded': every approval record carries an accountable role."}
+{"row": 52, "id": "V53", "question": "Who owns the building data?", "verdict": "GOOD_ANSWER", "confidence": "low", "evidence": "Lists the accountable roles per approval record as the owners."}
+{"row": 53, "id": "V54", "question": "When is the next planned maintenance?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 54, "id": "V55", "question": "Which consumables are running low?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 55, "id": "V56", "question": "How much waste did we produce last month?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 56, "id": "V57", "question": "Is tap water free somewhere, or do I have to buy bottles?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 57, "id": "V58", "question": "The toilet on floor 2 is leaking.", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}
+{"row": 58, "id": "V59", "question": "Is Room 1.06 free for the next two hours?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Grounded and on the question."}

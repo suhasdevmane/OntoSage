@@ -520,3 +520,36 @@ intents:
     pipeline_group: meta
     route_target: self_description
     node_method: _self_description_node
+
+  # A request the assistant cannot ground or should not advise on (BUG-812). Rule-only, like
+  # privacy_refusal: the routing contract decides, the classifier is not asked to.
+  - name: scope_boundary
+    description: |-
+      INTERNAL lane (deterministic rule only — do not classify into this): a request that is not
+      about this building and that the assistant cannot ground or should not advise on — a weather
+      forecast, an investment decision, a joke, trivia, coding help. Answered with a brief, honest
+      statement of what the assistant CAN answer from, never with guesswork.
+    examples:
+      - '"What is the weather forecast for tomorrow?"'
+      - '"Should I buy Bitcoin?"'
+    pipeline_group: standalone
+    route_target: scope_boundary
+    node_method: _scope_boundary_node
+    cacheable: false
+
+  # Building KNOWLEDGE that needs no building data (owner policy 2026-09-19). Rule-only.
+  - name: general_guidance
+    description: |-
+      INTERNAL lane (deterministic rule only — do not classify into this): a building-KNOWLEDGE
+      question that needs no data from this building and names no place, time window, record or
+      "this building" — "how do I control CO2?", "what does a delta-T mean?", "how do BREEAM and LEED
+      differ?". Answered as general guidance, labelled as not coming from this building's records.
+      Never reads a sensor.
+    examples:
+      - '"How do I control CO2?"'
+      - '"What does a delta-T mean?"'
+      - '"Does humidity affect CO2 sensor accuracy?"'
+    pipeline_group: standalone
+    route_target: general_guidance
+    node_method: _general_guidance_node
+    cacheable: false

@@ -1294,9 +1294,12 @@ Your Answer:"""
         # of its lay terms — and was answered with eighteen patrol checkpoints. The dialogue
         # short-circuit already refuses these; this path resolves the record class again, so
         # the same rule has to hold here or the guard only moves the wrong answer one lane.
-        from orchestrator.services.routing_contract import PLANT_READING_RE
+        from orchestrator.services.routing_contract import (
+            PLANT_READING_RE,
+            measured_reading_question,
+        )
 
-        if PLANT_READING_RE.search(user_query or ""):
+        if PLANT_READING_RE.search(user_query or "") or measured_reading_question(user_query):
             logger.info(
                 f"[sparql] {record.local_name} matches, but the question asks what a plant "
                 f"circuit READS — leaving it to the data lanes"
@@ -1390,6 +1393,24 @@ Your Answer:"""
         # names a department code that narrows it to three records, and the answer was
         # still "no such records appear in the triples supplied".
         oversized = record.instances > self.MAX_RECORD_ROWS
+        # "WHICH ROOMS HAVE TEACHING SESSIONS?" IS A GROUPING, AND THE GRAPH CAN DO IT (2D-06
+        # wave 2). Counting per value is an aggregate, so it is asked of GraphDB rather than of a
+        # narration holding no rows.
+        #
+        # BEFORE THE SCOPING, not after it, and that placement is the whole of the fix. `tokens`
+        # falls back to the question's content words, so "rooms", "teaching" and "sessions"
+        # counted as a scope: the register was re-fetched filtered on those words as TEXT,
+        # measured over budget, and declined — and the generated query then answered "the
+        # building's records do not contain any information about teaching sessions … consult the
+        # timetable system", from a building holding 675 of them. A word like "rooms" scopes
+        # nothing in a register of sessions; it names what to group BY.
+        if oversized:
+            grouped = await self._register_grouping(record, user_query, state)
+            if grouped is not None:
+                return grouped
+            projected = await self._register_projected_whole(record, user_query, state)
+            if projected is not None:
+                return projected
         if oversized and not tokens:
             logger.info(
                 f"[sparql] {record.local_name} is too large to hand over whole and the "
@@ -1698,7 +1719,25 @@ Your Answer:"""
             strip_leaked_code_line,
         )
 
-        _narration = strip_leaked_code_line(
+        _rows_answer = ""
+        try:  # 2D-06: a lookup the rows settle (or a whole-subject state question) skips the model
+            from orchestrator.services import register_projection as _rp
+            from orchestrator.services.record_registry import record_classes as _rc0
+            from orchestrator.services.requested_interval import building_local_now as _bln0
+
+            _rows_answer = await _rp.answer_before_narration(
+                user_query,
+                _primary_rows,
+                record.label or record.local_name,
+                record.local_name,
+                await _rc0(),
+                lambda cls: self._register_rows(cls, _build_for),
+                _bln0(getattr(state, "building_id", None)).date(),
+                bool(second_label) or len(_primary_rows) < record.instances,
+            )
+        except Exception as exc:  # pragma: no cover - the narration still answers
+            logger.warning(f"[sparql] projected answer skipped: {type(exc).__name__}: {exc}")
+        _narration = _rows_answer or strip_leaked_code_line(
             await self._format_results(
                 results, guidance, query, True, row_limit=self.MAX_RECORD_ROWS * 2
             )
@@ -1708,14 +1747,29 @@ Your Answer:"""
                 building_local_now as _bln,
             )
 
-            _narration += completeness_line(
-                _narration,
-                passed_due_not_marked(
-                    _primary_rows, user_query, _bln(getattr(state, "building_id", None)).date()
-                ),
-            )
+            if not _rows_answer:
+                _narration += completeness_line(
+                    _narration,
+                    passed_due_not_marked(
+                        _primary_rows, user_query, _bln(getattr(state, "building_id", None)).date()
+                    ),
+                )
         except Exception as exc:  # pragma: no cover - the narration still answers
             logger.warning(f"[sparql] completeness line skipped: {type(exc).__name__}: {exc}")
+        try:  # W19 + 2D-06: a denial of a field the rows hold is REPLACED by its values.
+            from orchestrator.services import register_projection as _rp
+            from orchestrator.services.requested_interval import building_local_now as _bln
+
+            if not _rows_answer:
+                _narration = _rp.guard_narration(
+                    _narration,
+                    _primary_rows,
+                    user_query,
+                    record.label or record.local_name,
+                    _bln(getattr(state, "building_id", None)).date(),
+                )
+        except Exception as exc:  # pragma: no cover - the narration still answers
+            logger.warning(f"[sparql] false-absence check skipped: {type(exc).__name__}: {exc}")
 
         return {
             "success": True,
@@ -1727,6 +1781,157 @@ Your Answer:"""
             "context": [],
             "analytics_required": False,
             "llm_reasoning": "Deterministic whole-register fetch (V7-T18)",
+            "method": "whole_register",
+        }
+
+    #: The most records read whole to answer one question deterministically. Counting and
+    #: filtering 675 timetable sessions is cheap once they are rows; the limit exists so a
+    #: register of a million records is never pulled into the process to answer "how many".
+    MAX_PROJECTED_RECORDS = 3000
+
+    async def _register_projected_whole(
+        self, record: Any, user_query: str, state: ConversationState
+    ) -> Optional[Dict[str, Any]]:
+        """A count / exists / list-by-facet question over a register too large to narrate.
+
+        Measured live 2026-09-19 on the timetable (675 sessions): "How many timetabled sessions
+        on floor 1 are scheduled?" was DECLINED and "Are any timetabled sessions with weekday
+        Thursday scheduled?" was answered "I did not find any weekday". The register was too big
+        to hand to a model, so the lane refused it — but counting and filtering are not a model's
+        job, and the same projection that answers the small registers answers this one from the
+        rows (16 on floor 1, 36 on Thursdays). The narration is never asked: this returns an
+        answer or None, and None leaves the scoped path exactly as it was.
+        """
+        from orchestrator.services import register_projection as rp
+        from orchestrator.services.requested_interval import building_local_now
+
+        if not (0 < record.instances <= self.MAX_PROJECTED_RECORDS):
+            return None
+        prep = rp.prepare(user_query)
+        if prep.reader or not rp.question_shape(prep.core, prep.list_hint):
+            return None  # a question no lookup answers: do not pay for the fetch
+        limit = record.instances * 40  # a lifted record carries ~15-25 predicates
+        query = (
+            "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+            "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+            "SELECT ?record ?p ?v WHERE {\n"
+            f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
+            "  FILTER(?p != rdf:type)\n"
+            f"}} ORDER BY ?record LIMIT {limit}"
+        )
+        try:
+            raw = await self._execute_query(query)
+            bindings = (raw or {}).get("results", {}).get("bindings", [])
+            pivoted, _cols = self._pivot_by_subject(bindings)
+            rows = pivoted["results"]["bindings"]
+            text = rp.deterministic_answer(
+                rows,
+                user_query,
+                record.label or record.local_name,
+                building_local_now(getattr(state, "building_id", None)).date(),
+                len(rows) < record.instances,  # a truncated read is never presented as the whole
+                record.terms,
+            )
+        except Exception as exc:
+            logger.warning(
+                f"[sparql] projected whole-register skipped: {type(exc).__name__}: {exc}"
+            )
+            return None
+        if not text:
+            return None
+        logger.info(
+            f"[sparql] {record.local_name}: {len(rows)} records read whole and answered by "
+            "projection — the register was too large to narrate"
+        )
+        return {
+            "success": True,
+            "query": query,
+            "results": {"results": {"bindings": []}},
+            "error": None,
+            "formatted_response": text,
+            "context": [],
+            "analytics_required": False,
+            "llm_reasoning": "Deterministic register projection over a large register (2D-06)",
+            "method": "whole_register",
+        }
+
+    async def _register_rows(self, cls: Any, build: Any) -> List[Dict[str, Any]]:
+        """Every row of one register, one binding per record (2D-06, BUG-829)."""
+        raw = await self._execute_query(build(cls, ""))
+        pivoted, _cols = self._pivot_by_subject((raw or {}).get("results", {}).get("bindings", []))
+        return pivoted["results"]["bindings"]
+
+    async def _register_grouping(
+        self, record: Any, user_query: str, state: ConversationState
+    ) -> Optional[Dict[str, Any]]:
+        """ "Which rooms have teaching sessions?" over a register too large to hand over.
+
+        The grouping is COUNTED BY THE GRAPH — one row per distinct value — so a register of any
+        size can answer it. Returns None unless the question is a grouping one and exactly one
+        predicate is named by the word it groups by: grouping by the wrong column would file every
+        record under a heading it does not belong to, which is worse than the fallback.
+        """
+        from orchestrator.services import register_projection as rp
+
+        words = rp.grouping_words(user_query)
+        if not words:
+            return None
+        clauses = " || ".join(
+            f'CONTAINS(LCASE(STR(?p)), "{self._escape_literal(w.lower())}")' for w in words
+        )
+        query = (
+            "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+            "SELECT ?p ?v (COUNT(DISTINCT ?record) AS ?n) WHERE {\n"
+            f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
+            f"  FILTER({clauses})\n"
+            "} GROUP BY ?p ?v ORDER BY DESC(?n) LIMIT 400"
+        )
+        try:
+            raw = await self._execute_query(query)
+        except Exception as exc:
+            logger.warning(f"[sparql] register grouping failed: {type(exc).__name__}: {exc}")
+            return None
+        by_predicate: Dict[str, List[Tuple[str, int]]] = {}
+        for binding in (raw or {}).get("results", {}).get("bindings", []):
+            predicate = (binding.get("p") or {}).get("value", "").rsplit("#", 1)[-1]
+            value = (binding.get("v") or {}).get("value", "")
+            try:
+                count = int((binding.get("n") or {}).get("value", "0"))
+            except ValueError:
+                continue
+            if predicate and value:
+                by_predicate.setdefault(predicate, []).append((value, count))
+        if len(by_predicate) != 1:
+            logger.info(
+                f"[sparql] {record.local_name} grouping by {words} matched "
+                f"{sorted(by_predicate)} — not exactly one field, leaving it"
+            )
+            return None
+        pairs = next(iter(by_predicate.values()))
+        text = "\n".join(
+            rp.grouping_lines(
+                pairs,
+                record.label or record.local_name,
+                rp.grouping_label(user_query),
+                # the register's own size, never the sum of the groups: a record carrying the
+                # field twice would be counted twice and the total would overstate the register
+                record.instances,
+                rp.unfiltered_periods(user_query),
+            )
+        )
+        logger.info(
+            f"[sparql] {record.local_name} grouped by {next(iter(by_predicate))}: "
+            f"{len(pairs)} distinct value(s) — counted by the graph"
+        )
+        return {
+            "success": True,
+            "query": query,
+            "results": {"results": {"bindings": []}},
+            "error": None,
+            "formatted_response": text,
+            "context": [],
+            "analytics_required": False,
+            "llm_reasoning": "Deterministic register grouping (2D-06)",
             "method": "whole_register",
         }
 

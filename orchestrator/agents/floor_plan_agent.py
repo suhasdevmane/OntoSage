@@ -151,6 +151,13 @@ class FloorPlanAgent:
         if any(kw in q_lower for kw in _OVERVIEW_KEYWORDS):
             return self._build_overview_result(pipeline, building_id, building_name)
 
+        # 4a. "Which floor is the server room on?" -> the room records name the floors (BUG-827).
+        from orchestrator.services.room_type_lookup import answer_live as _floors_of_kind
+
+        _on_floors = await _floors_of_kind(query, only="floors")
+        if _on_floors:
+            return FloorPlanResult(building_id=building_id, markdown=_on_floors, interactive=False)
+
         # 4b. Zone ID detected but no floor stated → infer floor from zone prefix (e.g. "3.12" → floor 3)
         if floor is None and zone_id:
             try:

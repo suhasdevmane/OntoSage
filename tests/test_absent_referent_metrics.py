@@ -228,7 +228,7 @@ def test_the_gate_is_reached_for_measurement_questions_not_only_metrics_ones():
     for a measurement, not only when it asks for a count or an area."""
     import inspect
 
-    src = inspect.getsource(cap.CapabilityAgent.answer)
+    src = inspect.getsource(cap.CapabilityAgent._answer_unchecked)
     assert "measurand_of" in src, "a reading question must reach the referent gate"
     gate = src.index("_absent_referent_decline")
     first_source = src.index("_is_metrics_question")

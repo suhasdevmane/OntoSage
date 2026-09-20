@@ -219,29 +219,45 @@ def test_event_questions_bypass_the_pre_llm_capability_probe():
     lane and never got a say.
 
     Third member of this family after BUG-231's wayfinding and deliberation cases. The bypass
-    reuses the contract's own EVENTS_RE rather than a second pattern, because two definitions
-    of "is this an event question" is the drift this codebase keeps paying for.
+    reuses the contract's own predicate rather than a second pattern, because two definitions
+    of "is this an event question" is the drift this codebase keeps paying for. It used to
+    import the raw EVENTS_RE, which lacks the no-cost sense of "free"; since BUG-818 it imports
+    ``events_question``, the one predicate the events rule uses too.
     """
     from pathlib import Path
 
     src = Path("orchestrator/agents/dialogue_agent.py").read_text(encoding="utf-8")
-    assert "EVENTS_RE as _EVENTS_RE" in src, "the probe does not import the contract's pattern"
-    assert "not _EVENTS_RE.search(user_query)" in src, (
+    assert "events_question as _events_question" in src, (
+        "the probe does not import the contract's predicate"
+    )
+    assert "not _events_question(user_query)" in src, (
         "event questions still have no bypass; they will be answered from a document before "
         "the router sees them"
     )
 
 
-def test_the_contract_itself_routes_work_order_questions_to_events():
-    """The half that already worked — pinned so a regression here is distinguishable from a
-    regression in the bypass above."""
+def test_the_contract_itself_keeps_work_order_questions_off_the_capability_lane():
+    """Pinned so a regression here is distinguishable from a regression in the bypass above.
+
+    The DESTINATION changed on 2026-09-19 (BUG-846). "How many work orders are open?" used to be
+    pinned to the events lane; that lane answered it from 520 generated rows while the register it
+    is measured against holds 24 with ids a person can act on (WO-008, WO-013, WO-015), so
+    `register_owns_work_orders_and_timetable` now sends the QUESTION shape to the register. The
+    backlog shape stays with the events store, which is the only source that tracks ageing. What
+    this test protects either way is that neither reaches the capability lane, which would answer
+    from prose.
+    """
     from orchestrator.services.routing_contract import apply_contract
 
-    for q in ("How many work orders are open?", "Show me the maintenance backlog"):
+    expected = {
+        "How many work orders are open?": "metadata",
+        "Show me the maintenance backlog": "events",
+    }
+    for q, want in expected.items():
         st = {"intent": "capability", "concepts": [], "entities": []}
         apply_contract(q, st, stage="parse")
         apply_contract(q, st, stage="post")
-        assert st["intent"] == "events", f"{q!r} routed to {st['intent']}"
+        assert st["intent"] == want, f"{q!r} routed to {st['intent']}, expected {want}"
 
 
 def test_the_intake_singleton_does_not_depend_on_call_order():

@@ -163,6 +163,12 @@ ontosage:Service        rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:la
 # shared vocabulary rather than in a building's own file.
 ontosage:VendingMachine rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Vending machine"@en ; rdfs:comment "Vending for snacks or drinks. Asked for constantly by occupants and visitors, and answerable only if the building says so — nothing in the sensor model implies it."@en ; skos:example "\"is there a vending machine in here?\"" .
 ontosage:DrinkingWater  rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Drinking water"@en ; rdfs:comment "Drinking fountain, water cooler or bottle-filling point."@en ; skos:example "\"water available?\" / \"where can I fill my bottle?\"" .
+ontosage:AssemblyPoint  rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Fire assembly point"@en ; rdfs:comment "Where people gather after evacuating. An Amenity subclass so 'where is the muster point' is located like any other place — but a SAFETY place, so an instance is only ever a transcription of what the building itself publishes. A position nobody published must be left unrecorded: sending people to the wrong side of a building during an evacuation is the worst answer this vocabulary could produce."@en ;
+    skos:example "\"where do we assemble?\" -> the assembly point the building's evacuation procedure names." .
+
+ontosage:ParkingArea    rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "Parking area"@en ; rdfs:comment "A car park or parking level. Separate from ontosage:BikeStorage (cycles) and from the accessible bays an AccessibilityFeature declares. Holding it as an Amenity lets 'where can I park' be located; how many bays are FREE is a measurement, and belongs to whatever point the building records it at, never to this record."@en ;
+    skos:example "\"where can I park?\" -> the parking area; \"how many bays are free?\" -> the parking occupancy point." .
+
 ontosage:FirstAidPoint  rdfs:subClassOf ontosage:Amenity ; a owl:Class ; rdfs:label "First aid / defibrillator"@en ; rdfs:comment "First-aid point or defibrillator (AED). Where the building models AED devices as equipment, the amenity should name their locations so the question is answered from the building's own graph."@en ; skos:example "\"where is the nearest defibrillator?\"" .
 
 # ── A.1b Lay terms for the amenity KINDS (2026-09-17) ─────────────────────────────────────────
@@ -227,6 +233,19 @@ ontosage:Lift ontosage:layTerms "passenger lift", "passenger lifts", "platform l
     "platform lifts", "nearest lift", "nearest elevator", "where is the lift",
     "where is the elevator", "where are the lifts", "where are the elevators" .
 
+# NARROW ON PURPOSE. "evacuation", "fire" and "emergency" belong to the procedure topics, which
+# answer what to DO; these phrases ask only WHERE, and a reader asking where must not be handed a
+# procedure instead (nor the reverse).
+ontosage:AssemblyPoint ontosage:layTerms "assembly point", "assembly points", "muster point",
+    "muster points", "muster station", "fire assembly point", "where do we assemble",
+    "where do i assemble" .
+
+# NO BARE "parking": it appears in questions about cameras in the car park, parking permits and
+# bike parking, none of which asks where to leave a car. Multi-word phrases only.
+ontosage:ParkingArea ontosage:layTerms "car park", "car parks", "car parking", "parking space",
+    "parking spaces", "parking bay", "parking bays", "free parking", "park my car",
+    "where can i park", "visitor parking", "staff parking" .
+
 ontosage:Locker ontosage:layTerms "locker", "lockers", "locker bank", "locker banks",
     "storage locker", "storage lockers", "day locker", "day lockers" .
 
@@ -243,7 +262,9 @@ ontosage:DrinkingWater ontosage:layTerms "water fountain", "water fountains",
     "drinking fountain", "drinking fountains", "water cooler", "water coolers",
     "water dispenser", "water dispensers", "water refill", "refill station", "refill stations",
     "refill point", "bottle refill", "bottle filling", "bottle filler", "fill my bottle",
-    "fill my water bottle", "tap water", "water point" .
+    "fill my water bottle", "tap water", "water point",
+    "free water", "free drinking water", "free tap water", "bottled water", "buy water",
+    "buy bottled water", "buy bottles" .
 
 ontosage:FirstAidPoint ontosage:layTerms "first aid", "first-aid", "first aid kit",
     "first aid kits", "first aid box", "first aid point", "first aid room", "defibrillator",
@@ -404,6 +425,12 @@ ontosage:openingHours a owl:DatatypeProperty ;
     rdfs:comment "Free-text opening hours for an amenity or service."@en ;
     rdfs:domain ontosage:Capability ; rdfs:range xsd:string ;
     skos:example "\"Mon-Fri 09:00-16:30; closed weekends\"" .
+
+ontosage:usageFee a owl:DatatypeProperty ;
+    rdfs:label "usage fee"@en ;
+    rdfs:comment "What it costs to use an amenity, in the building's own words: 'free', 'GBP 2.50 per day'. ABSENT MEANS NOT RECORDED, which is a different fact from free -- an answer must never turn an empty field into 'it is free'."@en ;
+    rdfs:domain ontosage:Capability ; rdfs:range xsd:string ;
+    skos:example "\"free for card holders; visitors GBP 3 per day\"" .
 
 ontosage:documentRef a owl:DatatypeProperty ;
     rdfs:label "backing document"@en ;
@@ -1663,7 +1690,7 @@ ontosage:accessibilityVerifiedOn a owl:DatatypeProperty ;
 
 ontosage:ServiceSchedule a owl:Class ;
     rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
-    rdfs:label "Service schedule entry"@en ;
+    rdfs:label "Planned service schedule entry"@en ;
     rdfs:comment "A planned recurring operation on a space: cleaning, waste collection, planned maintenance, planned shutdown. Distinct from a WorkOrder, which is reactive: 'when is this room next cleaned' and 'who is fixing the broken tap' are different questions with different sources."@en .
 
 ontosage:scheduleKind a owl:DatatypeProperty ;
@@ -2138,6 +2165,13 @@ ontosage:spendCategory a owl:DatatypeProperty ;
 ontosage:financialPeriod a owl:DatatypeProperty ; rdfs:range xsd:string ;
     rdfs:label "financial period"@en .
 
+#: The period a coordination function was operating over — a date and a shift ("2026-09-04 day").
+#: It was lifted as ontosage:financialPeriod, so an answer about emergency coordination read
+#: "14 records for the financial period 2026-09-04 day" (2026-09-19). A cost line has a financial
+#: period; a duty roster has an operational one, and the two must not share a name.
+ontosage:operationalPeriod a owl:DatatypeProperty ; rdfs:range xsd:string ;
+    rdfs:label "operational period"@en .
+
 ontosage:budgetAmount a owl:DatatypeProperty ;
     rdfs:domain ontosage:CostLine ; rdfs:range xsd:decimal ;
     rdfs:label "budget amount"@en .
@@ -2441,10 +2475,18 @@ ontosage:CoordinationFunction ontosage:layTerms "coordination", "coordination fu
     "operational period", "manual fallback", "evacuation control",
     "roll call", "who is on call", "are we ready for an incident" .
 
+# A REGISTER NAMED IN THE QUESTION OUTRANKS A STATUS WORD (2D-06 wave 9, held-out run). "Has the
+# authorised AV service confirmed readiness for the next booking after the previous event?" went
+# to the booking register on the word booking, which scores its own length (seven) against two
+# for "av"; the register that holds AV readiness was named in the question and lost. The phrases
+# below are whole and long, so naming the register scores above a noun the question merely uses.
+# The comment sits above the statement because the guard test that reads lay terms cannot parse
+# a full stop inside the list.
 ontosage:AVReadiness ontosage:layTerms "av", "audio visual", "audiovisual",
     "projector", "display", "microphone", "hearing loop", "amplifier", "camera",
     "audio path", "teaching room ready", "room ready for teaching", "av evidence",
-    "av check", "is the room ready" .
+    "av check", "is the room ready",
+    "av readiness", "confirmed readiness", "readiness for the next" .
 
 # No bare "activity"/"activities" (BUG-545): in a building those are usually work, safety or
 # continuity activities, and 43 of the 4,060 corpus questions reached the event agenda on that
@@ -2540,10 +2582,19 @@ ontosage:PatrolCheckpoint ontosage:layTerms "patrol", "patrols", "checkpoint",
 # twice ontosage:ClosurePeriod's, which dropped the three floor closures that the same
 # question names and that the run-3 answer reported correctly. A register that knocks
 # out the second register a question equally names has not helped the question.
+#
+# "step-free access to" (below): "Is there step-free access to the first floor?" named none of
+# the phrases before it, and the SPARQL lane answered from an access READER (a security sensor)
+# that it found by the word "access" (BUG-830). Only "access TO" a place is the register's
+# subject: the bare phrase also moved eleven catalogue questions that ask for a bookable room
+# WITH step-free access, nine of them away from the register that chooses rooms (measured,
+# register_reach --compare). This comment sits ABOVE the subject on purpose: a full stop inside
+# the list ends it for tests/test_every_record_class_is_reachable_by_words.py.
 ontosage:AccessibleRoute ontosage:layTerms "accessible route", "step free route",
     "step-free route", "step-free routes", "step free routes", "step-free path",
     "step-free journey", "step-free entrance", "step-free alternative",
     "step free alternative", "step-free constraints",
+    "step-free access to", "step free access to",
     "wheelchair", "wheelchair access", "accessible entrance", "level access", "ramp",
     "seated rest", "somewhere to sit", "how long should i allow", "assistance",
     "assistance dog", "carer", "personal assistant", "low vision", "quiet route",
@@ -2715,8 +2766,30 @@ ontosage:ComplianceCheck ontosage:layTerms "compliance check", "compliance check
 # consequence word: it appears wherever anything is imperfect, including in data, in cost
 # positions and in security records. The work raised against one is what this register holds,
 # so the work is what it is named by. Row 49 reaches it on "remedial scope" without it.
+#
+# THE MAINTENANCE LOG BY THE WORDS A PERSON USES FOR IT (2D-06, 2026-09-19). "When was the lift
+# last serviced?", "Which maintenance tasks are overdue?" and "Which maintenance is overdue?"
+# selected NO register: none of these words was declared, so the question went to a generated
+# query that answered from the patrol checkpoints ("the only asset type listed is patrol
+# checkpoints") or denied the building holds maintenance information at all, while 24 work
+# orders sit here with a raised date, a completion date and a status. The whole phrases below
+# are what a person calls this log. There is deliberately NO due date on a work order, so
+# "overdue" put to this register is answered from its statuses and says so, never invented.
+# THE PAST TENSE AND THE ASSIGNED TASK (2D-06 wave 8, held-out run). "When was the last time that
+# the furnace was serviced?" selected no register and was answered with the FILE NAME
+# maintenance_log.md in backticks and no date; "Which assigned tasks are now at real risk of
+# missing their required completion time?" was answered with an instruction to query the
+# system by IRI. The register holds both the service history and the assigned tasks with their
+# status. Whole phrases only, screened against the guard set (comment above the statement
+# because the guard test that reads lay terms cannot parse a full stop inside the list).
 ontosage:WorkOrder ontosage:layTerms "work order", "work orders", "job", "jobs",
     "maintenance job", "reactive job", "ticket", "tickets",
+    "maintenance tasks are overdue", "maintenance tasks overdue", "overdue maintenance tasks",
+    "maintenance history", "maintenance log",
+    "last serviced", "last maintained",
+    "last time that", "get serviced", "gets serviced", "been serviced",
+    "assigned task", "assigned tasks",
+    "task at risk", "tasks at risk",
     "remedial", "remedial work", "remedial scope", "rectification",
     "jetting", "drain jetting", "drain clearance", "blocked drain", "drain blockage" .
 
@@ -2730,9 +2803,17 @@ ontosage:TimetabledSession ontosage:layTerms "timetabled session", "timetabled s
 # against the corpus first — none takes three or more answers away from a lane that
 # already answers them, which is the failure mode a bare head word like "room" caused.
 
+# RETURN TO USE (2D-06 wave 5, live held-out run). "Which evidence-based prerequisites remain
+# before each area, asset or service can return to authorised use?" selected no register and was
+# answered from the ONTOLOGY's property definitions: the words "prerequisite" and "authorised
+# use" matched schema comments rather than a record. What is out of service, and what stands
+# between it and use again, is asset status. The comment sits ABOVE the statement because the
+# guard test that reads lay terms cannot parse a full stop inside the list.
 ontosage:AssetStatus ontosage:layTerms "asset status", "equipment status",
     "out of service", "in service", "operational status", "serviceable",
-    "unserviceable", "is it working", "condition of the equipment" .
+    "unserviceable", "is it working", "condition of the equipment",
+    "return to use", "return to authorised use", "return to service", "returned to service",
+    "back in service", "back into service", "return to operation", "back into use" .
 
 # NARROWED 2026-09-17: bare "closure"/"closures" (34 captures) was the closure of an ACTION, of
 # fieldwork or of evidence at least as often as a closed space. The named closures remain.
@@ -3177,7 +3258,18 @@ ontosage:FireSafetyAsset ontosage:layTerms "fire door", "fire doors", "fire alar
 ontosage:ServiceSchedule ontosage:layTerms "service schedule", "service schedules",
     "planned maintenance", "planned preventive maintenance", "ppm", "maintenance schedule",
     "next due", "last completed", "servicing schedule", "scheduled service",
-    "when is it next serviced", "due for service" .
+    "when is it next serviced", "due for service",
+    "overdue maintenance", "maintenance overdue", "maintenance is overdue",
+    "overdue for maintenance", "overdue for servicing", "overdue for service",
+    # WHAT IS COMING, not only what has lapsed (2D-06 wave 2, measured offline 2026-09-19).
+    # "Is any maintenance scheduled today?", "What maintenance is planned this week?" and "are
+    # there any maintenance tasks scheduled for today?" selected NO register at all, so each fell
+    # to a generated query — while this register holds 17 planned services with a last-completed
+    # and a next-due date, which is exactly what they ask for. The overdue phrases above were
+    # added for the same class of miss and only cover the past half of the question.
+    "maintenance scheduled", "scheduled maintenance", "maintenance is scheduled",
+    "maintenance task scheduled", "maintenance tasks scheduled",
+    "maintenance planned", "maintenance is planned", "maintenance due" .
 
 
 ontosage:HazardControl rdfs:subClassOf ontosage:Record ; a owl:Class ;
@@ -3327,13 +3419,37 @@ ontosage:dependsOnLift a owl:DatatypeProperty ;
 # their own comments that the lift WAIT dominates the short climbs. Hand-offs are NOT
 # recorded here and no term claims them: naming the register that holds two of the three
 # is the answer, claiming the third would be the defect one level down.
+# A ROUTE TO ANOTHER FLOOR IS A FLOOR-PAIR QUESTION (2D-06 wave 5, live held-out run).
+# "I need to carry approved service or event materials to another floor. Which authorised route
+# is currently suitable?" selected no register and was answered "the information returned only
+# lists the building's floors", while this register holds 21 floor-to-floor routes with the lift
+# each depends on and whether the route is Active. Whole phrases naming the floor CHANGE only: a
+# bare "route" belongs to the accessible-route and evacuation registers and is left alone.
+# A DURATION WORD NEEDS THE REGISTER'S SUBJECT (2D-06 wave 9, held-out run). "Is there a way that I
+# will be notified when systems are down and how long they will take to get back up?" selected
+# this register on "take to get": a question about notifications and outages, with no register at
+# all. The phrases now name where the journey goes (to, from, between); a bare "take to get"
+# belongs to nothing here.
 ontosage:CirculationTime ontosage:layTerms "travel time", "travel times", "how long to get",
     "walking time", "transition time", "between floors", "floor to floor",
     "back to back", "back-to-back", "get from one room to another",
     "time between rooms", "changeover", "changeover time",
-    "how long does it take", "take to get", "stairs", "by the stairs",
+    "how long does it take", "take to get to", "take to get from", "take to get between",
+    "stairs", "by the stairs",
     "floor pairs", "slower than the stairs", "journey time", "vertical travel",
-    "route length", "route lengths", "lift wait", "lift waits" .
+    "route length", "route lengths", "lift wait", "lift waits",
+    "to another floor", "to a different floor", "to the other floor", "another floor",
+    "vertical route", "vertical routes", "route between floors", "routes between floors" .
+
+ontosage:DisclosureRule rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Data disclosure rule"@en ;
+    rdfs:comment "A rule saying which fields of a view of the building may be shown as they stand, which must be suppressed or aggregated before sharing, which need a caveat and which must be confirmed by their owner first. Declared so that a question about those rules is recognised as one about a register the building may not hold, and is answered by naming what is and is not recorded — instead of by describing a different view of the building that happens to share the words 'space' and 'fields'."@en ;
+    skos:example "which fields must be suppressed before this view is shared? -> DisclosureRule where appliesTo matches; none held means the rules are not recorded." .
+
+ontosage:DisclosureRule ontosage:layTerms "must be suppressed", "fields must be suppressed",
+    "fields to suppress", "suppression rule", "suppression rules", "suppressed, aggregated",
+    "aggregated, caveated", "caveated or confirmed", "confirmed by an owner",
+    "disclosure rule", "disclosure rules", "data sharing rule", "data sharing rules" .
 
 
 ontosage:setupMinutes a owl:DatatypeProperty ;
@@ -3465,3 +3581,151 @@ ontosage:lastProvedOn a owl:DatatypeProperty ;
     rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:date ;
     rdfs:label "last proved on"@en ;
     rdfs:comment "When the arrangement was last exercised end to end. Without a date and an evidence reference the row is unverified, whatever the plan says."@en .
+
+####################################################################################################
+#  Module R.9 — Stores and waste returns  (2D-11: data completeness from the stakeholder questions)
+#  ------------------------------------------------------------------------------------------------
+#  Two systems of record the 2,960 stakeholder questions ask for and no register held:
+#
+#    StockItem   — spares, consumables, loan equipment and surplus stock, by store. Asked for by
+#                  contractors ("which spares and consumables are confirmed available, where are
+#                  they held"), caretakers ("what supplies need replenishing before the next
+#                  shift"), AV support ("which approved spares should be staged"), IT and waste
+#                  teams. The asset register says what plant exists and the service schedule says
+#                  when it is serviced; neither says whether the part is on the shelf.
+#
+#    WasteReturn — the waste contractor's monthly return, in tonnes, by stream. The collection
+#                  point register records bins and fill percentages, which are not weights, so
+#                  "how much waste did we produce this month" could only be declined — and was
+#                  answered instead with a table of bins "belonging to the month" (tail B, item 31).
+#
+#  Both are declared here rather than in Modules R and R.4 above so that this addition is one
+#  self-contained block. Nothing safety-critical is modelled: fire, first-aid and hazardous-
+#  chemical stock are deliberately outside StockItem, and a question about them is declined.
+####################################################################################################
+
+ontosage:StockItem rdfs:subClassOf ontosage:Record ; a owl:Class ;
+    rdfs:label "Stock item"@en ;
+    rdfs:comment "One stock line: a kind of item held in one store, with the quantity on hand, the level below which it is reordered, who is accountable for it and when it was last counted. FOUR KINDS ARE KEPT APART because they answer different questions: a consumable is used up, a spare is held against a named asset, loan equipment is lent and returned, and surplus is withdrawn stock available for reuse. Quantity on hand is what is on the shelf now -- anything out on loan is stated in the note and never counted as stock, and a loan line never says who has an item. STATUS FOLLOWS THE NUMBERS: a line is in stock only when quantity on hand is at or above its minimum, so a shortage is a comparison the reader can check rather than an adjective. Safety-critical stock (fire extinguishers, emergency lighting parts, first-aid supplies, hazardous chemicals) is deliberately not held here."@en ;
+    skos:example "which consumables are running low? -> StockItem where stockKind = consumable and quantityOnHand < minimumLevel; read nextDue for the delivery or reorder date." .
+
+ontosage:WasteReturn rdfs:subClassOf ontosage:IntervalRecord ; a owl:Class ;
+    rdfs:label "Waste return"@en ;
+    rdfs:comment "One line of the waste contractor's monthly return: the weight collected from the building in one month for one stream, how it was weighed, how it was treated and what share of it was diverted from landfill. TONNES, NOT BINS: the collection point register records containers and their fill percentage, which is not a weight. A MONTH IS NOT A FIGURE UNTIL ITS RETURN IS ISSUED -- the current month is held as pending with no weight, so a question about this month has no issued answer and the honest reply is the latest complete month, dated. HOW A WEIGHT WAS OBTAINED MATTERS: a weight estimated from container volume is an estimate and must be reported as one. The building's diverted share is weighted by tonnage, never the average of the stream percentages. Weights are for the whole building: nothing here is per floor, per room or per day."@en ;
+    skos:example "how much waste did we produce last month? -> WasteReturn where reportingMonth is the latest month whose status is not pending; sum wasteTonnes across streams." .
+
+ontosage:stockKind a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StockItem ; rdfs:range xsd:string ;
+    rdfs:label "stock kind"@en ;
+    rdfs:comment "Consumable, spare, loan or surplus. Kept as its own field because 'are we running low' means something different for each: a consumable is reordered, a spare is held against an asset, a loan line is about availability, and surplus has no minimum."@en .
+
+ontosage:stockCategory a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StockItem ; rdfs:range xsd:string ;
+    rdfs:label "stock category"@en ;
+    rdfs:comment "The trade or service the item supports: cleaning, waste, HVAC, controls, lighting, audio-visual, IT, reception or furniture."@en .
+
+ontosage:quantityOnHand a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StockItem ; rdfs:range xsd:integer ;
+    rdfs:label "quantity on hand"@en ;
+    rdfs:comment "What was counted on the shelf on lastCounted. Loan equipment that is out on loan is not on hand."@en .
+
+ontosage:minimumLevel a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StockItem ; rdfs:range xsd:integer ;
+    rdfs:label "minimum level"@en ;
+    rdfs:comment "The quantity below which the line is reordered. For loan equipment, the number needed to keep every timetabled teaching room covered. Always zero for surplus."@en .
+
+ontosage:stockUnit a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StockItem ; rdfs:range xsd:string ;
+    rdfs:label "stock unit"@en ;
+    rdfs:comment "What one counted unit is: cartridges, cases, sets, receivers. A quantity without its unit cannot be compared with a delivery."@en .
+
+ontosage:usedFor a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StockItem ; rdfs:range xsd:string ;
+    rdfs:label "used for"@en ;
+    rdfs:comment "The asset, system or task the stock supports, by the name the asset register or service schedule uses."@en .
+
+ontosage:leadTimeDays a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StockItem ; rdfs:range xsd:integer ;
+    rdfs:label "lead time (days)"@en ;
+    rdfs:comment "How long a reorder normally takes to arrive. Left blank where nothing has been agreed rather than guessed."@en .
+
+ontosage:lastCounted a owl:DatatypeProperty ;
+    rdfs:domain ontosage:StockItem ; rdfs:range xsd:date ;
+    rdfs:label "last counted"@en ;
+    rdfs:comment "When somebody counted the shelf. Stock not counted this month is a claim, not a count."@en .
+
+ontosage:reportingMonth a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WasteReturn ; rdfs:range xsd:string ;
+    rdfs:label "reporting month"@en ;
+    rdfs:comment "The calendar month a return covers, as year-month. The join key for 'last month' and 'August'."@en .
+
+ontosage:wasteTonnes a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WasteReturn ; rdfs:range xsd:decimal ;
+    rdfs:label "waste tonnes"@en ;
+    rdfs:comment "The weight collected in the month, in tonnes. Absent while the return is pending: a blank is the finding, not a zero."@en .
+
+ontosage:divertedPercent a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WasteReturn ; rdfs:range xsd:decimal ;
+    rdfs:label "diverted percent"@en ;
+    rdfs:comment "The share of this stream's tonnage the contractor reports as not sent to landfill. The building's share is the tonnage-weighted figure, not the mean of these."@en .
+
+ontosage:treatmentRoute a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WasteReturn ; rdfs:range xsd:string ;
+    rdfs:label "treatment route"@en ;
+    rdfs:comment "Where the stream goes: energy from waste, materials recovery, paper mill, anaerobic digestion, WEEE recycler."@en .
+
+ontosage:weighingMethod a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WasteReturn ; rdfs:range xsd:string ;
+    rdfs:label "weighing method"@en ;
+    rdfs:comment "How the weight was obtained: bin-lift scale, weighbridge ticket, delivery note, or estimated from container volume. An estimate is reported as one."@en .
+
+ontosage:StockItem ontosage:layTerms "spare parts", "spare part", "spares and consumables", "critical spares",
+    "which spares", "what spares", "any spares", "have spares", "spares available", "spares staged",
+    "spares should", "consumables", "consumable", "stock level", "stock levels", "stock count", "stock take",
+    "stocktake", "in stock", "out of stock", "low stock", "low on stock", "running low on", "restock",
+    "re-stock", "reorder", "re-order", "reorder level", "cleaning supplies", "washroom supplies",
+    "central stores", "caretaker store", "goods store", "loan equipment", "equipment loan", "loan pool",
+    "loan stock", "on loan", "borrow equipment", "borrow an adapter", "listening receivers",
+    "presenter adapters", "hdmi adapter", "hdmi adapters", "surplus furniture", "surplus stock",
+    "surplus items", "surplus equipment", "available for reuse", "available for redeployment",
+    "toilet tissue", "toilet rolls", "hand soap", "paper towels", "bin liners" .
+
+ontosage:WasteReturn ontosage:layTerms "waste return", "waste returns", "waste tonnage", "tonnes of waste",
+    "how much waste", "how much food waste", "how much general waste", "how much did we recycle",
+    "how much do we recycle", "how much recycling", "amount of waste", "waste produced", "waste generated",
+    "waste figures", "waste weight", "waste weights", "weight of waste", "weight of general waste",
+    "weight of food waste", "weight of recycling", "waste per month", "waste by month", "waste each month",
+    "waste last month", "waste this month", "waste over time", "waste trend", "monthly waste",
+    "most general waste", "least general waste", "most food waste", "least food waste", "waste by stream",
+    "recycling rate", "recycling rates", "recycling percentage", "diversion rate", "waste diversion",
+    "diverted from landfill", "waste diverted", "waste to landfill", "landfill", "tonnes recycled",
+    "tonnes diverted", "waste contractor return", "weighbridge" .
+
+####################################################################################################
+#  Module R.10 — Fields named for what they hold  (2D-11 follow-up: two mapping defects)
+#  ------------------------------------------------------------------------------------------------
+#  The register lane reads a field by the WORDS in its name (`isStatutory` -> "statutory",
+#  `jobHours` -> "job hours") and matches each word of a question against them. A field named for
+#  something else is invisible to the question that asks for it:
+#
+#    * service_schedule.yaml lifted the document's `statutory` column into ontosage:isOptional. A
+#      statutory item therefore read as OPTIONAL (SVC-08, SVC-09, SVC-12..16 -- the fire alarm
+#      test, the lift LOLER examination, the chiller F-Gas check) and the word "statutory" matched
+#      no field at all, so a question about them fell back to narrating the note text.
+#    * work_order.yaml lifted the document's `hours` column (3.6, 0.8, 2.9 -- HOURS) into
+#      ontosage:expectedMinutes, an integer property whose comment says minutes. Every work order
+#      read as a few minutes long, and the word "hours" matched no field.
+#
+#  Both are corrected by giving the field a name that says what it holds, not by converting or
+#  guessing a value.
+####################################################################################################
+
+ontosage:isStatutory a owl:DatatypeProperty ;
+    rdfs:domain ontosage:ServiceSchedule ; rdfs:range xsd:boolean ;
+    rdfs:label "is statutory"@en ;
+    rdfs:comment "Whether missing this task is a legal failure rather than an inconvenience: a missed weekly fire alarm test is reportable, a lift without a current examination may not run, a missed carpet clean is neither. Recorded by the owner of the schedule, never judged. It is the OPPOSITE of ontosage:isOptional, which an earlier mapping wrongly used for it."@en .
+
+ontosage:jobHours a owl:DatatypeProperty ;
+    rdfs:domain ontosage:WorkOrder ; rdfs:range xsd:decimal ;
+    rdfs:label "job hours"@en ;
+    rdfs:comment "Hours of work booked to the job: the time taken on a completed order, the allowance on an open one. In HOURS -- ontosage:expectedMinutes is minutes and holds a different unit for a different class."@en .

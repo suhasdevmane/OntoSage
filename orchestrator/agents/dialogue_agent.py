@@ -702,8 +702,7 @@ class DialogueAgent:
 
         if not rewrite_is_safe(latest, rewritten):
             logger.warning(
-                "[coref] rewrite REJECTED — it changed the referent the user named: "
-                "%r -> %r",
+                "[coref] rewrite REJECTED — it changed the referent the user named: " "%r -> %r",
                 latest,
                 rewritten,
             )
@@ -885,9 +884,19 @@ class DialogueAgent:
         from orchestrator.services.observability import (
             is_observability_question as _is_observability_question,
         )
+        from orchestrator.services.emergency_procedure import (
+            is_emergency_action_question as _is_emergency_action,
+        )
+        from orchestrator.services.guidance_shape import (
+            is_general_guidance_question as _is_general_guidance,
+        )
         from orchestrator.services.routing_contract import _METROLOGY_RE, _READINESS_RE
+        from orchestrator.services.routing_contract import (
+            maintenance_record_question as _maintenance_record_question,
+        )
         from orchestrator.services.routing_contract import DELIBERATE_RE as _DELIB_RE
-        from orchestrator.services.routing_contract import EVENTS_RE as _EVENTS_RE
+        from orchestrator.services.scope_policy import out_of_scope_kind as _out_of_scope_kind
+        from orchestrator.services.routing_contract import events_question as _events_question
         from orchestrator.services.routing_contract import WAYFIND_RE as _WAYFIND_RE
         from orchestrator.services.routing_contract import (
             consumption_question as _consumption_question,
@@ -960,10 +969,16 @@ class DialogueAgent:
         # terms include "circuit", and was answered with eighteen patrol checkpoints. The
         # building's boilers, chiller and heat pump carry flow and return temperatures; a
         # question asking what a plant circuit READS belongs to the lanes that can read them.
-        from orchestrator.services.routing_contract import PLANT_READING_RE
+        from orchestrator.services.routing_contract import (
+            PLANT_READING_RE,
+            measured_reading_question,
+        )
 
-        _asks_a_plant_reading = bool(_plant_point_question(user_query or "")) or bool(
-            PLANT_READING_RE.search(user_query or "")
+        # also a sensor VALUE asked for by name: "are VOC levels safe in my workspace?" (wave 9)
+        _asks_a_plant_reading = (
+            bool(_plant_point_question(user_query or ""))
+            or bool(PLANT_READING_RE.search(user_query or ""))
+            or measured_reading_question(user_query)
         )
         _ranks_by_measurement = bool(
             DELIBERATE_RE.search(user_query or "")
@@ -977,6 +992,17 @@ class DialogueAgent:
             and not _ranks_by_measurement
             and not _asks_for_a_route
             and not _asks_a_plant_reading
+            # A booking or "what was reported" question is answered by the events lane, which reads
+            # the live stores, not by the six-record register that shares its vocabulary: "Which
+            # meeting rooms are booked this afternoon?" reported "none" from six August-September
+            # bookings (BUG-828, B11). This return also skips the routing contract, so the rule
+            # that owns the shape never got a turn.
+            and not _events_question(user_query)
+            # SAFETY (2026-09-19): "what should I do if the fire alarm goes off?" matched the
+            # fire-safety ASSET register and was answered "FSA-001 - Fire alarm control panel".
+            # A register holds equipment, not actions; the building's evacuation procedure is
+            # what that question wants, and this return would skip the rule that says so.
+            and not _is_emergency_action(user_query)
         ):
             # The building holds this class as DATA, so the question is answerable by
             # SPARQL and must not be handed to a lane that can only quote prose. A
@@ -1033,10 +1059,35 @@ class DialogueAgent:
             # orders are open?" matched the building-hours document on "open" and was
             # answered from prose before the LLM classified anything -- the routing
             # contract sends all four probe phrasings to the events lane and never got
-            # a say. Same remedy and same reasoning as WAYFIND_RE above: EVENTS_RE is
+            # a say. Same remedy and same reasoning as WAYFIND_RE above: `events_question` is
             # the contract's own definition of an event-store question, so reusing it
-            # keeps one definition instead of two that drift.
-            and not _EVENTS_RE.search(user_query)
+            # keeps one definition instead of two that drift. (It USED to import the raw
+            # regex, which lacks the cost-sense exclusion the rule applies: "Is tap water
+            # free somewhere, or do I have to buy bottles?" was vetoed as a booking
+            # question and never reached the amenity route — BUG-549's second half.)
+            and not _events_question(user_query)
+            # Scope and guidance are decided by the contract, which this pre-classification return
+            # skips: a weather forecast, an investment question or a joke (BUG-812) and a
+            # building-knowledge question that needs no building data (owner policy 2026-09-19).
+            and not _out_of_scope_kind(user_query)
+            and not _is_general_guidance(user_query)
+            # Wave 8 (tail J): "what kind of tasks can I automate?" belongs to the automation lane,
+            # a polite request to change the environment to the control lane, and a wish put as a
+            # question to a suggestion. The contract decides all three, and this pre-classification
+            # return would skip it, answering "I don't have that specific information".
+            and not __import__(
+                "orchestrator.services.routing_contract", fromlist=["_WHAT_TO_AUTOMATE_RE"]
+            )._WHAT_TO_AUTOMATE_RE.search(user_query or "")
+            and not __import__(
+                "orchestrator.services.routing_contract", fromlist=["_ENV_REQUEST_RE"]
+            )._ENV_REQUEST_RE.search(user_query or "")
+            and not __import__(
+                "orchestrator.services.routing_contract", fromlist=["_WAY_TO_TELL_A_SYSTEM_RE"]
+            )._WAY_TO_TELL_A_SYSTEM_RE.search(user_query or "")
+            # "When was the lift last serviced?" matches the lift amenity's lay terms and was
+            # answered from prose: a question about DATED RECORDS reaches the register lane
+            # through the contract, which this pre-classification return would skip.
+            and not _maintenance_record_question(user_query)
             # V6-T26: plant/BMS point questions had no bypass. Measured with the points
             # connected and readable: "is the supply fan running on floor 5?" returned a
             # maintenance-log excerpt and "what is the filter differential pressure on
@@ -1614,6 +1665,12 @@ Return ONLY the JSON object.
         """
         if result.get("intent") not in self._DOC_OVERRIDABLE:
             return
+        # "if the building are safe or not" was deliberately turned into a clarification that says
+        # nothing was filed; a document must not win it back and answer "no information".
+        if "a_report_needs_a_statement" in (result.get("routing_rules_applied") or []):
+            return
+        if result.get("clarification_locked"):
+            return
         if not (user_query or "").strip():
             return
         try:
@@ -1972,7 +2029,9 @@ Rewritten response:"""
 #: BUG-592: an elliptical follow-up ("what about room 2.01?") inherits the ACTION of the turn it
 #: continues. The rewrite kept the room and the period and dropped "plot", so a chart request
 #: came back as a text reading.
-_ELLIPTICAL_RE = re.compile(r"^\s*(?:and\s+)?(?:what|how)\s+about\b|^\s*and\s+(?:for|in|on)\b", re.I)
+_ELLIPTICAL_RE = re.compile(
+    r"^\s*(?:and\s+)?(?:what|how)\s+about\b|^\s*and\s+(?:for|in|on)\b", re.I
+)
 _CHART_RE = re.compile(r"\b(plot|chart|graph|visuali[sz]e|draw)\b", re.I)
 
 

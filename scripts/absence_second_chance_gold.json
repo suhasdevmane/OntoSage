@@ -1,0 +1,33 @@
+{
+  "_note": "Hand-assigned ground truth for false-absence answers in the DEVELOPMENT reads (docs/phase0, never tail_D). Each key is a substring of the question; 'holds' lists where the building's own data answers it, read from that row's evidence line and checked against the graph. 'sensor:*' and 'semantic' entries are not reachable by the register or text probe and are counted as such.",
+  "cases": [
+    {"key": "Which locks or secure doors", "holds": ["register:DoorHardware"], "why": "door register lists DR-010 defective and DR-015 overdue"},
+    {"key": "how quickly is it flagged and signed", "holds": ["register:CleaningTask", "register:CoordinationFunction", "register:IncidentRecord", "semantic"], "why": "cleaning register records spill checks; no word 'slip' is recorded"},
+    {"key": "warden arrangement depend on a single person", "holds": ["register:CoordinationFunction", "register:EvacuationProvision", "register:ContinuityProvision"], "why": "continuity and coordination registers name wardens"},
+    {"key": "are there any maintenance task scheduled for today", "holds": ["register:ServiceSchedule"], "why": "service schedules hold planned maintenance with next-due dates"},
+    {"key": "Which WEEE or data-bearing items", "holds": ["register:WasteCollectionPoint", "register:WasteReturn"], "why": "waste register holds a WEEE point and monthly WEEE returns"},
+    {"key": "weight limit on the elevators", "holds": ["text:MainLift"], "why": "MainLift comment states 'Weight limit 1000 kg' (hand label said good decline; the graph disagrees)"},
+    {"key": "which metered HVAC systems are using substantial energy", "holds": ["sensor:energy"], "why": "plant energy submeters exist"},
+    {"key": "how do weekends compare to weekdays for ennergy use", "holds": ["sensor:energy"], "why": "hourly energy readings exist"},
+    {"key": "entrances or route segments need a facilities inspection", "holds": ["register:ComplianceCheck"], "why": "82 compliance checks with due dates incl. a fire-door quarterly inspection"},
+    {"key": "authorised role must witness, accept or close each hold point", "holds": ["register:Permit", "register:HandoverRecord"], "why": "15 permits and the handover records name the roles"},
+    {"key": "M&E asset-register records must be reconciled", "holds": ["register:AssetEngineeringProfile"], "why": "AEP-009/016 lack isolation proven-on date; AEP-004/013 degraded"},
+    {"key": "Find a room for 12 with a projector", "holds": ["register:Booking", "register:AVReadiness"], "why": "16 bookings with rooms and times; an AV record names a room"},
+    {"key": "Which drains have needed jetting", "holds": ["register:WorkOrder"], "why": "WO-015 condensate drain clearance"},
+    {"key": "temporary exposure is created by active construction", "holds": ["register:Permit"], "why": "15 permits hold exactly the temporary works asked"},
+    {"key": "enough suitable bookable and informal settings", "holds": ["register:WorkspaceProfile"], "why": "28 workspace profiles hold kinds, seat counts, classifications"},
+    {"key": "What mix of desks, focus rooms", "holds": ["register:WorkspaceProfile"], "why": "workspace profile holds kinds and seat counts"},
+    {"key": "If the preferred room becomes unavailable", "holds": ["register:WorkspaceProfile", "register:Booking"], "why": "28 workspace records and bookings"},
+    {"key": "If my assigned room is withdrawn", "holds": ["register:WorkspaceProfile", "register:Booking"], "why": "18 bookable active rooms in the workspace register"},
+    {"key": "Which current Security records are incomplete", "holds": ["register:CoordinationFunction", "register:PatrolCheckpoint"], "why": "three overdue checkpoints and a controller/maintainer conflict"},
+    {"key": "independent evidence is unavailable", "holds": ["register:ApprovalRecord"], "why": "82 records with evidence status live in the approval register"},
+    {"key": "For each active impairment", "holds": ["register:HazardControl", "register:FireSafetyAsset"], "why": "two defective and two overdue hazard controls"},
+    {"key": "collection point for batteries, WEEE", "holds": ["register:WasteCollectionPoint"], "why": "six special-waste points incl. WCP-008, WCP-010, WCP-016"},
+    {"key": "shared desk officially available", "holds": ["register:WorkspaceProfile"], "why": "28 workspace records"},
+    {"key": "Which systems started late or stopped late", "holds": ["register:OperatingRegime"], "why": "approved windows for ten regimes"},
+    {"key": "Which rooms have lighting levels or control states", "holds": ["sensor:illuminance"], "why": "269 illuminance sensors"},
+    {"key": "Which workplace peaks and troughs are stable", "holds": ["sensor:occupancy"], "why": "257 occupancy count sensors"},
+    {"key": "Is my next course talk likely to be crowded", "holds": ["sensor:occupancy", "sensor:co2"], "why": "occupancy and CO2 for the room"},
+    {"key": "Which refuge points are defective, and who owns them", "holds": ["register:EvacuationProvision"], "why": "the register holds the owner (Building Fire Warden Coordinator)"}
+  ]
+}

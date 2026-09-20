@@ -4,10 +4,10 @@
 
 OntoSage monitors the following building systems in **Abacws, Cardiff University**:
 
-- **Environmental sensors** (Floor 5): temperature, humidity, CO2 concentration, air quality index, TVOC, noise levels, illuminance
+- **Environmental sensors** (every floor, 0 to 5): temperature, humidity, CO2 concentration, air quality index, TVOC, noise levels, illuminance
 - **Infrastructure status**: lift/elevator status, HVAC operation mode
 - **Occupancy indicators**: aggregate motion/presence detection per zone (no individual tracking)
-- **Energy meters**: electrical consumption at floor and building level (planned Phase C onward)
+- **Energy meters**: electrical consumption at floor and building level
 
 ## What the System Does NOT Infer
 
@@ -16,7 +16,7 @@ OntoSage is designed around strict data minimisation principles:
 - **No individual tracking**: The system cannot identify specific people. Occupancy data is aggregate counts, not identities.
 - **No behavioural profiling**: The system does not track individual movement patterns, work habits, or personal preferences without explicit opt-in.
 - **No inference of personal characteristics**: Health, productivity, emotional state, or any protected characteristics are never inferred from sensor data.
-- **No access control records**: Badge/access logs are not connected to this system.
+- **No individual access records**: door events are held at role level only (which role group presented at which opening, and whether access was denied, held open or forced). No person, card number or badge identity is connected to this system.
 
 ## Who Reviews the System
 

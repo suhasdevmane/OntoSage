@@ -22,6 +22,7 @@ Survey justification:
   grounded path in SPARQL/SQL. Fire Safety (#3 Borda) and Security (#4 Borda) live here.
 """
 
+import os
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -49,6 +50,66 @@ _METRICS_RE = re.compile(
 
 def _is_metrics_question(query: str) -> bool:
     return bool(_METRICS_RE.search(query or ""))
+
+
+# What the building HAS, in general terms: the only other shape the live-figures block answers.
+_WHAT_BUILDING_HAS_RE = re.compile(
+    r"\bwhat\b[^?.!]{0,40}\b(?:does|do)\b[^?.!]{0,30}\b(?:have|hold|contain|monitor|measure)\b",
+    re.IGNORECASE,
+)
+
+
+def _asks_for_building_figures(query: str) -> bool:
+    """True only for counts, size and 'what does it have' -- the questions the live block answers.
+
+    A MEASURAND alone ("is the sound insulation good?") names a quantity, not a census. Answering
+    it with the sensor and room counts was measured as an irrelevant fragment on the held-out read.
+    """
+    q = query or ""
+    return _is_metrics_question(q) or bool(_WHAT_BUILDING_HAS_RE.search(q))
+
+
+# A question about the QUALITY or an ATTRIBUTE of the things a building holds ("are there
+# duplicate assets?", "which meters are inconsistent?") is not answered by counting classes.
+_INVENTORY_ATTRIBUTE_RE = re.compile(
+    r"\b(?:duplicat\w*|inconsisten\w*|consisten\w*|mismatch\w*|conflict\w*|reconcil\w*|"
+    r"accura\w*|stale|outdated|out[- ]of[- ]date|overdue|missing|orphan\w*|unlinked|unmapped|"
+    r"misclassif\w*|complete(?:ness)?|up[- ]to[- ]date|agree\w*|differ\w*|same (?:name|tag|id)|"
+    r"warrant\w*|oldest|newest|cost|price|who|why|when)\b",
+    re.IGNORECASE,
+)
+
+
+def _census_can_answer(query: str) -> bool:
+    """False when the question asks about an attribute a class census cannot supply."""
+    return not _INVENTORY_ATTRIBUTE_RE.search(query or "")
+
+
+#: Words that describe the building as an entity. What is left of a question once these and its
+#: framing are removed is what the question is actually ABOUT.
+_PROFILE_VOCABULARY = (
+    "old age year built build construct constructed design designed architect owner own owned "
+    "operator operate operated run runs manage managed address postcode locate located location "
+    "type kind purpose visitor visitors public occupy occupied residence residential commercial "
+    "tall big large size storey storeys function contractor name called use uses used access "
+    "allowed allow check open education educational university campus "
+    "capacity people persons occupants hold fit accommodate house host maximum max time"
+)
+
+
+def _profile_is_the_subject(query: str) -> bool:
+    """True when the building itself is what the question is about, not a passing word in it.
+
+    "Who built it?" is a profile question. "How fresh is the data from the access-control feeds,
+    and who built the system?" contains the same words and is about feeds; answering it with the
+    building's architect was measured as an irrelevant fragment. The profile answers only when at
+    most one content word of the question falls outside the profile vocabulary.
+    """
+    from orchestrator.services.grounding_guard import content_terms
+    from orchestrator.services.passage_relevance import question_topic_terms
+
+    known = content_terms(_PROFILE_VOCABULARY)
+    return len({t for t in question_topic_terms(query or "") if t not in known}) <= 1
 
 
 # Where building-specific input files live (inside the container); repo input/ for local dev.
@@ -127,17 +188,34 @@ async def _search_documents(
             _doc_embedding_service,
             query,
             building_id,
-            top_k=top_k,
+            # Headroom: commentary passages are dropped below and must not crowd out the table.
+            top_k=top_k + 3,
             score_threshold=0.0,
             only_document=only_document or None,
         )
         kept = [h for h in raw if float(h.get("score") or 0.0) >= threshold]
+        # Authoring commentary ("Three duty columns, not one ...") is developer prose about how a
+        # register was designed, not a fact about the building; front matter goes with it.
+        from orchestrator.services.passage_relevance import drop_commentary_hits
+
+        kept = drop_commentary_hits(kept, building_id)[:top_k]
         if stats is not None:
             stats.update({"retrieved": len(raw), "kept": len(kept), "floor": threshold})
         return kept
     except Exception as e:
         logger.debug(f"[capability] document search unavailable: {e}")
         return []
+
+
+def _boundary_pointer(building_name: str, query: str, held: List[Any]) -> str:
+    """What the building's records CAN answer that is near the question, or '' (never raises)."""
+    try:
+        from orchestrator.services.fallback_wording import compose_boundary_pointer
+
+        return compose_boundary_pointer(building_name, query, held)
+    except Exception as exc:  # a pointer is a courtesy, never a reason to lose the decline
+        logger.debug(f"[capability] boundary pointer unavailable: {exc}")
+        return ""
 
 
 def _held_register_note(query: str, held: List[Any]) -> Optional[str]:
@@ -388,6 +466,9 @@ class CapabilityAgent:
             facet = bp.detect_facet(query)
             if facet is None:
                 return None
+            if not _profile_is_the_subject(query):
+                logger.info("[capability] profile words present, question is about another subject")
+                return None
 
             from orchestrator.agents.sparql_agent import SPARQLAgent, _active_namespace
 
@@ -416,6 +497,27 @@ class CapabilityAgent:
             return None
 
     async def answer(self, state: ConversationState) -> ConversationState:
+        """Run the chain, then refuse to present coded status rows as evidence of health."""
+        state = await self._answer_unchecked(state)
+        try:
+            from orchestrator.services import terse_status_answer as _terse
+
+            _res = state.intermediate_results.get("capability_result")
+            if isinstance(_res, dict) and _res.get("response"):
+                _repl = _terse.apply(
+                    state.user_message or "",
+                    str(_res.get("response")),
+                    str(_res.get("building_name") or "this building"),
+                )
+                if _repl:
+                    logger.info("[capability] coded status rows are not evidence — declining")
+                    _res["response"] = _repl
+                    _res["provenance"] = "terse_status_declined"
+        except Exception as exc:  # never let the guard cost the turn its answer
+            logger.debug(f"[capability] terse-status guard skipped: {exc}")
+        return state
+
+    async def _answer_unchecked(self, state: ConversationState) -> ConversationState:
         """Node function — called by the LangGraph workflow capability node.
 
         Single TTL-first chain: metrics → ontology triples → uploaded documents →
@@ -455,6 +557,27 @@ class CapabilityAgent:
             state.intermediate_results["capability_result"] = _profile_answer
             return state
 
+        # "Which rooms are computer laboratories?" / "which floor is the server room on?" are
+        # answered from the room records, not from a topic that mentions them (BUG-810, 827).
+        from orchestrator.services import room_type_lookup as _rooms
+
+        _kind_answer = await _rooms.answer_live(state.user_message or "")
+        if _kind_answer:
+            state.intermediate_results["capability_result"] = _rooms.capability_result(
+                _kind_answer, building_name
+            )
+            return state
+
+        # "Is the parking free or is there a fee?" asks for a FIELD of an amenity's record: the
+        # record answers it, or the answer says the field is not recorded (never a document
+        # passage that merely mentions parking).
+        from orchestrator.services import amenity_attribute_answer as _attrs
+
+        _attr = await _attrs.answer_live(state.user_message or "", building_name)
+        if _attr:
+            state.intermediate_results["capability_result"] = _attr
+            return state
+
         # A metrology question is not a census (BUG-427). "How many sensors are overdue for
         # calibration?" is a count of sensors, so it reads as a metrics question and was
         # answered with the building's live figures — instrumented points, zones, floors —
@@ -478,26 +601,32 @@ class CapabilityAgent:
             if _decline:
                 state.intermediate_results["capability_result"] = _decline
                 return state
+            # The census answers counts and size only. A measurand ("sound insulation") that
+            # asks for neither must not be answered with sensor and room totals.
+            _wants_figures = _asks_for_building_figures(state.user_message or "")
+            if not _wants_figures:
+                logger.info("[capability] measurand named but no count asked — figures withheld")
             try:
-                from orchestrator.services.building_metrics import (
-                    get_building_metrics,
-                    render_metrics_block,
-                )
+                if _wants_figures:
+                    from orchestrator.services.building_metrics import (
+                        get_building_metrics,
+                        render_metrics_block,
+                    )
 
-                snap = await get_building_metrics().snapshot(building_id)
-                if snap.has_counts() or snap.has_area():
-                    block = render_metrics_block(snap, building_name)
-                    state.intermediate_results["capability_result"] = {
-                        "success": True,
-                        "response": (
-                            block + "\n\n*These figures are computed live from the "
-                            "building's ontology and floor plans.*"
-                        ),
-                        "provenance": "live_metrics",
-                        "building_name": building_name,
-                    }
-                    logger.info("[capability] answered metrics question from live graph")
-                    return state
+                    snap = await get_building_metrics().snapshot(building_id)
+                    if snap.has_counts() or snap.has_area():
+                        block = render_metrics_block(snap, building_name)
+                        state.intermediate_results["capability_result"] = {
+                            "success": True,
+                            "response": (
+                                block + "\n\n*These figures are computed live from the "
+                                "building's ontology and floor plans.*"
+                            ),
+                            "provenance": "live_metrics",
+                            "building_name": building_name,
+                        }
+                        logger.info("[capability] answered metrics question from live graph")
+                        return state
             except Exception as e:
                 logger.warning(f"[capability] live metrics grounding failed: {e}")
 
@@ -510,7 +639,12 @@ class CapabilityAgent:
                 get_capability_graph_resolver,
             )
 
-            _facts = await get_capability_graph_resolver().resolve(state.user_message or "")
+            _resolver = get_capability_graph_resolver()
+            _withheld: list = []  # matched but out of service: named, never dropped silently
+            if hasattr(_resolver, "resolve_with_withheld"):  # a duck-typed resolver may lack it
+                _facts, _withheld = await _resolver.resolve_with_withheld(state.user_message or "")
+            else:
+                _facts = await _resolver.resolve(state.user_message or "")
             # BUG-103: lay-term matching can land on a loosely-related amenity — a
             # question about a swimming pool or a water tank's pH was answered with
             # "Catering Amenities". An amenity may only answer if it actually mentions
@@ -631,6 +765,19 @@ class CapabilityAgent:
                         [f.label for f in _facts][:3],
                     )
                 _facts = _subject
+                # A floor named in the question is answered FOR THAT FLOOR, or the gap is stated
+                # (BUG-827): "toilets on floor 2" never said the one there was out of service.
+                from orchestrator.services import amenity_floor_answer as _floors
+
+                _by_floor = _floors.capability_answer(
+                    state.user_message or "",
+                    [f for f, _ in _pairs if _is_subject(f)],
+                    [w for w in _withheld if _is_subject(w)],
+                    building_name,
+                )
+                if _by_floor:
+                    state.intermediate_results["capability_result"] = _by_floor
+                    return state
             if _facts:
                 _parts = [f"Here is what I found for **{building_name}**:\n"]
                 # Being ABOUT the subject is not the same as ANSWERING the question.
@@ -704,7 +851,11 @@ class CapabilityAgent:
                 render_census,
             )
 
-            if is_inventory_question(state.user_message or ""):
+            # "Are there duplicate assets?" asks about a QUALITY of what is held; a census of
+            # equipment classes is a different fact and was returned as though it answered.
+            if is_inventory_question(state.user_message or "") and _census_can_answer(
+                state.user_message or ""
+            ):
                 from orchestrator.agents.sparql_agent import (
                     GRAPHDB_QUERY_ENDPOINT,
                     _active_namespace,
@@ -947,7 +1098,29 @@ class CapabilityAgent:
                         f"[capability] on-topic guard suppressed all {_before_guard} "
                         "retrieved passage(s)"
                     )
-        if doc_hits:
+        # One shared word is not an answer. A passage must cover a fair share of what the
+        # question is about, name the document the question is about, or clear the retrieval
+        # floor by a margin; otherwise the lane declines instead of quoting it.
+        # Passages the gate removes were still SEARCHED: they stay on the evidence record and the
+        # lane gives the same honest decline as when the composer read them and found no answer,
+        # naming none of them (BUG-748), rather than the generic "not on record" boundary.
+        _gated_out: List[Dict[str, Any]] = []
+        if doc_hits and os.environ.get("DOCUMENT_RELEVANCE_GATE", "on").lower() != "off":
+            from orchestrator.services.passage_relevance import relevant_hits
+
+            doc_hits, _gated_out = relevant_hits(
+                state.user_message or "",
+                doc_hits,
+                floor=settings.document_score_floor,
+                extra_vocab=_concept_vocab,
+            )
+            if _gated_out and not doc_hits:
+                _ev = state.intermediate_results.setdefault("evidence", {})
+                if isinstance(_ev, dict):
+                    _applied = _ev.setdefault("gates_applied", [])
+                    if "passage_relevance" not in _applied:
+                        _applied.append("passage_relevance")
+        if doc_hits or _gated_out:
             # BUG-218: the guard above decides WHETHER a passage is shown; this decides
             # how confidently it is introduced. Measured over the golden baseline, 148 of
             # 377 document-citing answers (39.3%) came from an unrelated document sharing
@@ -1004,9 +1177,14 @@ class CapabilityAgent:
             # explicit way to say the passage does not contain one. That escape hatch is
             # what makes this safe — without it the model would fill the gap from its own
             # knowledge, which is the fabrication this project guards against hardest.
-            composed, _decided = await self._answer_from_passages(
-                state.user_message or "", doc_hits
-            )
+            if doc_hits:
+                composed, _decided = await self._answer_from_passages(
+                    state.user_message or "", doc_hits
+                )
+            else:
+                # Every retrieved passage failed the relevance gate: nothing to compose from.
+                composed, _decided = None, True
+            _searched = doc_hits or _gated_out
             if composed is not None:
                 _cited = sorted({h["doc_name"].replace("_", " ").title() for h in doc_hits})
                 state.intermediate_results["capability_result"] = {
@@ -1023,10 +1201,18 @@ class CapabilityAgent:
                 logger.info(f"[capability] answered from documents: {_cited}")
                 return state
 
-            if _decided and doc_hits:
+            # A composer that could not run leaves the passages unjudged. Pasting them under
+            # "closest related material" when nothing in them is distinctive to the question AND
+            # no document the question names is among them is a fragment presented as an answer
+            # (defect C10), so that case declines too.
+            from orchestrator.services.passage_relevance import document_is_named
+
+            if _searched and (
+                _decided or not (_strong or document_is_named(state.user_message or "", doc_hits))
+            ):
                 from orchestrator.services.grounding_guard import reader_is_admin_in
 
-                _cited = sorted({h["doc_name"].replace("_", " ").title() for h in doc_hits})
+                _cited = sorted({h["doc_name"].replace("_", " ").title() for h in _searched})
                 # BUG-748: a decline must not recite registers that have nothing to do with
                 # the question. Measured on the 147-question live read: "which washroom
                 # should I service next" was declined with "I searched Asset Engineering
@@ -1099,13 +1285,13 @@ class CapabilityAgent:
                 )
                 return state
 
+            # Only a passage that is distinctive OR from a document the question names reaches
+            # here, and only when the composer could not run. The passage is shown under a
+            # heading that claims no more than the match does.
             seen_docs: set = set()
             if _strong:
                 parts: List[str] = [f"Here is what I found in **{building_name}** documentation:\n"]
             else:
-                # Names the match instead of claiming it. The passage is still shown --
-                # it is real content and may help -- but a reader can no longer mistake
-                # proximity for an answer.
                 parts = [
                     f"I could not find a passage in **{building_name}**'s documents that "
                     "directly addresses this. The closest related material is below, and "
@@ -1181,6 +1367,7 @@ class CapabilityAgent:
                 f"For building-specific queries please contact your building's facilities / "
                 f"estates management team."
                 f"{enablement_hint(_kind, for_admin=reader_is_admin_in(state))}"
+                f"{_boundary_pointer(building_name, state.user_message or '', _held_classes)}"
             ),
             "provenance": "no_match",
             "building_name": building_name,

@@ -7,8 +7,8 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 ## New session orientation (read this first)
 
-**Current branch:** `development` — last commit `19c4b1b` (pushed 2026-09-16; three demo-path checkpoints 2292fd7, 8061c06, 19c4b1b). **Never commit or push without
-the user's explicit approval.**
+**Current branch:** `development` — last commit `a538bf6` (2026-09-18; before it a45bf47 and the three demo-path checkpoints 2292fd7, 8061c06, 19c4b1b — check `git log`
+for what is pushed). **Everything from the 18 September evening (Stage 2 work, below) is UNCOMMITTED.** **Never commit or push without the user's explicit approval.**
 
 **Three files every session must read** (in order):
 1. `CLAUDE.md` (this file) — navigation index, debugging, workflow rules
@@ -23,6 +23,16 @@ the user's explicit approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
+- **LATEST (2026-09-20) — read [`docs/READINESS_2026-09-19.md`](./docs/READINESS_2026-09-19.md) first.**
+  Committed 2026-09-20 with bldg1 PARKED. `-m unit` **12,314 pass / 0 fail** building active;
+  **12,207 pass / 155 skip / 0 fail PARKED** (what a fresh clone and CI see — 117 tests had failed
+  parked because their fixtures read `input/documents`; they now fall back to `bldg1/documents`). Unseen-question weird rate: **61 % → 26.6 %** (tails K+L, n=124; pooled D–J was
+  41.2 %), 8.9 % confidently wrong. Register oracle **66/94 → 88/94 (93.6 %)**. Probe **59/60**.
+  A local-model **answer-relevance gate** is ON by default (`ANSWER_RELEVANCE_GATE`, data lanes only);
+  it once replaced a correct scripted answer, so `CONTRADICTORY` no longer replaces. **Draw a FRESH
+  unseen set (tail M) before any verdict** — C–L are spent. Three rules learned today: routing rules
+  ALL run and the LAST one wins (put a corrective rule AFTER the one it corrects); a bare `no` in a
+  YAML list is `False`; a fail-open component needs a count of how often it *acted*. lessons #124–126.
 - **Test suite: measured 2026-09-17 on `-m unit`, and the split depends on whether a building
   is active.** bldg1 up, late 2026-09-17 after the readiness wave: **7,394 pass / 48 skip /
   3 xfail / 1 fail** (13m50s) — the one failure was a source-string test pinning a call's old
@@ -86,6 +96,20 @@ the user's explicit approval.**
   **What would falsify this line:** adding or removing a probe case, or any change to a routing
   rule. Re-run it, do not edit the number.
   Nothing since `b80c3de` is committed.
+- **2026-09-18 evening — Stage 2 of `tasks/IMPROVEMENT_PLAN_2026-09-18.md` is done; READ
+  [`docs/READINESS_2026-09-18_STAGE2.md`](./docs/READINESS_2026-09-18_STAGE2.md) and
+  [`docs/RECORDING_RUNBOOK_2026-09-18.md`](./docs/RECORDING_RUNBOOK_2026-09-18.md) before any demo.**
+  **The verdict: a scripted recording of the 44-question demo path is safe; unscripted questioning is
+  not.** Final build, hand-read: demo script **37 good / 4 correct declines / 3 weird**; held-out
+  unscripted tail B **21 of 38 weird (55%)**, and 19 of 38 on a repeat; **11 of 14 rewordings written
+  after a failure were weird too**; regression probe **58/60**. One scripted question is wrong
+  (BUG-835: refuge-point "who owns them" says there is no owner field; there is one). Unit suite
+  (bldg1 active): **8,206 pass / 1 fail (a pinned-wording test, updated) / 48 skip / 3 xfail**; the
+  PARKED number is still owed. **"Good" counts are an upper bound**: two labels were wrong until the
+  source table was checked (`docs/phase0/demo_rehearsal_2026-09-18_corrections.md`, lessons.md #121).
+  Open defects from this session: BUG-808..835 / CAVEAT-816, 817, 833, 834 (all owned in V12 `IMP-A`).
+  Instruments added: `scripts/decompose_outcomes.py` (W03), `scripts/redis_hygiene.py` (W01),
+  `ontosage_route` on every `/v1` turn (W04), `docs/phase0/CODEBOOK.md` (W06, SHA-pinned).
 - **ACTIVE WORKSTREAM: V12 — the plan after the supervisor review.**
   Built from four sources and no others: the review
   (`docs/OntoSage_Architecture_Review_Corrected_v1.1.pdf`, 33 pp.), the V10 and V11
@@ -283,7 +307,8 @@ the user's explicit approval.**
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**43** parse-stage + 1 post-stage + 3 concept-stage ordered rules, counted FROM THE MODULE
+  (**43** parse-stage + 2 post-stage + 3 concept-stage ordered rules, counted FROM THE MODULE
+  again 2026-09-18 after `asset_state_without_a_family` joined the post stage;
   2026-09-17 — this line said 17+1+1 for weeks after it stopped being true, then 36+1+3 for
   another nine days, which is the same failure twice. Count it, do not read it: `python -c
   "from orchestrator.services import routing_contract as r; print(len(r.PARSE_STAGE_RULES),

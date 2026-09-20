@@ -106,7 +106,7 @@ bldg:Topic_BuildingManagement a ontosage:InformationTopic,
 bldg:Topic_EmergencyContacts a ontosage:InformationTopic,
         ontosage:KnowledgeTopic ;
     rdfs:label "Emergency contacts"@en ;
-    ontosage:answerText "Emergency services: 999. Cardiff University Security (24/7): 029 2087 4444 (internal x74444). First aiders are on each floor; AED units are on the Ground Floor and Floor 3. Out-of-hours building emergencies: Estates 029 2087 5555." ;
+    ontosage:answerText "Emergency services: 999. Cardiff University Security (24/7): 029 2087 4444 (internal x74444). First aiders are on each floor; AED units are at Ground Floor reception, in the Floor 3 common area and in the Floor 5 break room. Out-of-hours building emergencies: Estates 029 2087 5555." ;
     ontosage:capabilityCategory "INFORMATION" ;
     ontosage:contactPhone "029 2087 4444" ;
     ontosage:layTerms "emergency, who to call, emergency contact, first aid, medical emergency, ambulance, urgent help, emergency number, defibrillator, aed" ;

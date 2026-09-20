@@ -1,0 +1,81 @@
+# Planned closures that follow from the planned maintenance schedule and the calendar.
+#
+# ontosage:ClosurePeriod held three records, all for floors and all already past or today, so
+# "are there any planned closures coming up?" had nothing forward-looking to answer from and
+# every question that lists closures beside a route, a room or a lift (SO-013, UG-077, AO-002)
+# was reading a register that could only say "none". These records are DERIVED, not invented:
+# each floor closure is the day the planned maintenance schedule already says the work falls
+# due (documents/service_schedules.md: SVC-03, SVC-04 and SVC-05 carpet deep cleans), and the
+# building closures are the bank holiday and the Christmas closure the building's own working
+# hours topic describes ("generally closed on bank holidays except for security-monitored
+# access"). Nothing safety-related is closed here: no lift, entrance, escape route or plant.
+#
+# Every record declares ontosage:isSimulated true. Replace them by lifting the estates
+# closure calendar into the same shape; the graph shape does not change.
+#
+# Times are building-local wall clock, the convention of the lifted registers.
+
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+
+# SVC-03: carpet deep clean, Levels 1 and 2 (due 2026-09-06, not yet done).
+bldg:closure_planned_Floor1_carpet a ontosage:ClosurePeriod ;
+    rdfs:label "Planned closure - Floor 1 (First Floor) carpet deep clean"@en ;
+    ontosage:appliesTo bldg:Floor1 ;
+    ontosage:closureReason "carpet deep clean (planned maintenance SVC-03)" ;
+    ontosage:startedAt "2026-09-27T08:00:00"^^xsd:dateTime ;
+    ontosage:endedAt "2026-09-27T17:00:00"^^xsd:dateTime ;
+    ontosage:isSimulated true .
+
+bldg:closure_planned_Floor2_carpet a ontosage:ClosurePeriod ;
+    rdfs:label "Planned closure - Floor 2 (Second Floor) carpet deep clean"@en ;
+    ontosage:appliesTo bldg:Floor2 ;
+    ontosage:closureReason "carpet deep clean (planned maintenance SVC-03)" ;
+    ontosage:startedAt "2026-09-27T08:00:00"^^xsd:dateTime ;
+    ontosage:endedAt "2026-09-27T17:00:00"^^xsd:dateTime ;
+    ontosage:isSimulated true .
+
+# SVC-04: carpet deep clean, Levels 3 and 4 (due 2026-11-23), done overnight.
+bldg:closure_planned_Floor3_carpet a ontosage:ClosurePeriod ;
+    rdfs:label "Planned closure - Floor 3 (Third Floor) carpet deep clean"@en ;
+    ontosage:appliesTo bldg:Floor3 ;
+    ontosage:closureReason "carpet deep clean (planned maintenance SVC-04)" ;
+    ontosage:startedAt "2026-11-23T18:00:00"^^xsd:dateTime ;
+    ontosage:endedAt "2026-11-24T06:00:00"^^xsd:dateTime ;
+    ontosage:isSimulated true .
+
+bldg:closure_planned_Floor4_carpet a ontosage:ClosurePeriod ;
+    rdfs:label "Planned closure - Floor 4 (Fourth Floor) carpet deep clean"@en ;
+    ontosage:appliesTo bldg:Floor4 ;
+    ontosage:closureReason "carpet deep clean (planned maintenance SVC-04)" ;
+    ontosage:startedAt "2026-11-23T18:00:00"^^xsd:dateTime ;
+    ontosage:endedAt "2026-11-24T06:00:00"^^xsd:dateTime ;
+    ontosage:isSimulated true .
+
+# SVC-05: carpet deep clean, Level 5 (due 2027-01-17, a Sunday).
+bldg:closure_planned_Floor5_carpet a ontosage:ClosurePeriod ;
+    rdfs:label "Planned closure - Floor 5 (Fifth Floor) carpet deep clean"@en ;
+    ontosage:appliesTo bldg:Floor5 ;
+    ontosage:closureReason "carpet deep clean (planned maintenance SVC-05)" ;
+    ontosage:startedAt "2027-01-17T08:00:00"^^xsd:dateTime ;
+    ontosage:endedAt "2027-01-17T17:00:00"^^xsd:dateTime ;
+    ontosage:isSimulated true .
+
+# The building's working hours topic: closed on bank holidays except for security-monitored access.
+bldg:closure_planned_Building_bank_holiday a ontosage:ClosurePeriod ;
+    rdfs:label "Building closure - summer bank holiday"@en ;
+    ontosage:appliesTo bldg:Abacws ;
+    ontosage:closureReason "bank holiday; security-monitored access only" ;
+    ontosage:startedAt "2026-08-31T00:00:00"^^xsd:dateTime ;
+    ontosage:endedAt "2026-09-01T00:00:00"^^xsd:dateTime ;
+    ontosage:isSimulated true .
+
+bldg:closure_planned_Building_christmas a ontosage:ClosurePeriod ;
+    rdfs:label "Building closure - Christmas and New Year"@en ;
+    ontosage:appliesTo bldg:Abacws ;
+    ontosage:closureReason "Christmas and New Year closure; security-monitored access only" ;
+    ontosage:startedAt "2026-12-24T17:00:00"^^xsd:dateTime ;
+    ontosage:endedAt "2027-01-04T07:00:00"^^xsd:dateTime ;
+    ontosage:isSimulated true .

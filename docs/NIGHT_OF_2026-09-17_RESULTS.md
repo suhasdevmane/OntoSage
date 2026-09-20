@@ -22,6 +22,23 @@ question**, against each question's written answer boundary.
 Acceptable answers (good answer + honest decline) went from **27% to 35%**; the best measured state
 was run 5 at 39%.
 
+> **CORRECTION, 18 September, after an architecture audit.** Three statements below were wrong
+> when first written and are corrected in place, with the measurements that overturned them:
+>
+> 1. **The improvement is not statistically significant.** Paired exact McNemar over the same 147
+>    questions: run 1 → run 6 is 28 improved against 17 regressed, **p = 0.135**; run 5 → run 6 is
+>    5/11, p = 0.210. Only run 1 → run 5 is significant (28/11, **p = 0.009**). The 95% CI on a
+>    share of 147 is about ±7.7 points, wider than most wave deltas. **High-confidence weird
+>    answers are flat across the whole series: 60, 68, 65, 60, 55, 59.** The fall from 72.8% to
+>    65.3% is carried by low-confidence labels (14, 7, 1, 2, 1, 1). The defensible claim is
+>    narrower than the one this document originally made: run 5 beat the baseline; the frozen
+>    state does not.
+> 2. **The claim-binding headline is 52 of 703 claims unbound (7.4%) over the 71 answers with
+>    complete evidence**, not 58 of 709 over 441. The partition excluded from it — answers whose
+>    store read was not captured — runs **55.7% unbound**, and 55 of 147 answers are unassessable
+>    because no evidence was recorded at all.
+> 3. **Structured generation is NOT incompatible with this model.** See §2.4.
+
 **Run 6 went backwards, and the code was frozen there.** Six answers improved, eleven regressed, and
 the largest defect class grew from 19 to 27. It was the second wave in this sequence to pass its own
 tests and make the bank worse. With five hours to the demo and no time to hand-read a seventh run,
@@ -75,8 +92,11 @@ not its value. And see §3.
 Extracts three kinds of claim from a finished answer (figures, universals such as "all/none", and
 inferences introduced by "so/therefore") and binds each against that turn's own evidence.
 
-**Measured over 441 recorded answers: 58 of 709 claims unbound — 8.2% — in 31% of answers.** It
-flags 10 of the 17 answers a human marked as inventing a conclusion.
+**Measured, from the committed artifact:** 52 of 703 claims unbound — **7.4%** — over the **71
+answers that recorded complete evidence**. Two partitions sit outside that headline and matter more
+than it does: answers whose store read was not captured run **55.7% unbound**, and **55 of 147
+answers cannot be assessed at all** because no evidence reached the record. It flags 10 of the 17
+answers a human marked as inventing a conclusion.
 
 **It is switched OFF.** Enabled once, it deleted correct figures — "How many CO2 sensors are there?"
 lost its number — because lanes that *compute* a figure never recorded it, so a computed number and
@@ -104,15 +124,28 @@ three failures are logged — including one in the generator itself.
 The model fills a JSON schema and deterministic code builds the query, so a malformed generation
 becomes impossible rather than repaired. Implemented, tested (27 tests), provider-agnostic.
 
-**Measured against the provider: it cannot be used with this model.** A call carrying a JSON schema
-returns **zero characters** and stops in under a second — at 512 and 4,096 token budgets, and with
-thinking disabled — while the same prompt without a schema answers normally. In a 132-ask run the
-flag produced 223 provider-stage failures and opened the circuit breaker 286 times; **no answer
-broke**, because a structured failure falls back to deterministic routing. The system stayed up with
-its classifier disabled: good fault handling, not a passing acceptance.
+**This section originally reported a negative result. The negative was wrong, and the error is
+instructive.** The measurement was taken against Ollama's `/api/generate` endpoint, which is the one
+langchain's `OllamaLLM` client uses. Re-measured on 18 September against the same model and build:
 
-Three experiments would settle it: serve the model where grammars work (vLLM/TGI), use a
-non-reasoning model, or fall back to JSON mode plus the existing validator.
+| call | result |
+|---|---|
+| `POST /api/generate` + JSON schema | **0 characters**, 16.3 s |
+| `POST /api/chat` + the same JSON schema | **valid JSON**, 83 characters, 38.2 s |
+| `POST /api/chat` + schema + `think:false` | **0 characters** |
+
+So schema-constrained generation works on this model, on this machine, today — through the chat
+endpoint. Disabling the model's thinking, which the original row offered as a remedy, is what breaks
+it. Both other proposed remedies (serve on vLLM; use a non-reasoning model) were therefore
+unnecessary, and the fallback of JSON mode without a schema returns reasoning prose rather than
+JSON on the endpoint actually in use.
+
+**What this costs and what it teaches.** A P1 architectural conclusion rested on one endpoint being
+mistaken for the capability itself, and its acceptance artifact was written to a scratch directory
+rather than committed — so the negative could not be re-examined from the tree. A negative result
+presented in a viva needs its raw rows retained exactly like a positive one. The remedy is a
+one-line client change (`OllamaLLM` → `ChatOllama`) and a re-run of the acceptance with the compile
+cache disabled; it is now a work package rather than a dead end.
 
 ---
 

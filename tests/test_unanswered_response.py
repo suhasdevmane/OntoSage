@@ -86,12 +86,18 @@ async def test_the_opaque_placeholder_is_gone(holdings):
 
 
 @pytest.mark.asyncio
-async def test_it_names_the_intent_it_understood(holdings):
-    """In the reader's words: the internal name is mapped (`_intent_in_plain_words`)."""
-    text = await _text(_State(intent="sensor_data"))
-    assert "current readings" in text
-    text = await _text(_State(intent="floor_plan"))
-    assert "floor plan" in text
+async def test_it_never_shows_the_intent_it_classified(holdings):
+    """Defect C5: 'I read it as a question about **general** / **diagnosis** / **what to do**'.
+
+    The classification is the pipeline's own vocabulary, wrong as often as right, and it told the
+    reader nothing they could act on. It belongs in the log, which the next test pins.
+    """
+    for intent in ("sensor_data", "floor_plan", "general", "diagnosis", "recommend"):
+        text = await _text(_State("anything", intent=intent))
+        assert "I read it as" not in text
+        assert "question about" not in text
+        for shown in ("current readings", "what to do", "**general**", "**diagnosis**"):
+            assert shown not in text, f"intent {intent!r} leaked into the reader's text: {shown!r}"
 
 
 @pytest.mark.asyncio
@@ -148,24 +154,43 @@ async def test_it_claims_nothing_when_the_building_could_not_be_read(no_holdings
 
 
 @pytest.mark.asyncio
-async def test_it_asks_one_question_back_about_the_part_it_could_not_map(holdings):
-    """Row 119, verbatim — the question the deliberation compiler would have asked."""
+async def test_an_abstract_question_is_answered_with_what_the_building_can_answer(holdings):
+    """Row 119, verbatim. Superseded contract, and the reason is measured.
+
+    This used to assert ONE question back, naming the word nothing matched. On the 2026-09-19
+    development read that produced "Which measurement or record do you mean by **specialist** /
+    **whole** / **weather**?" — a parser's guess quoted at a reader as though it were a field. An
+    abstract, multi-part question is not missing a measurement, so it now gets no question back and
+    the nearest things the building CAN answer instead. The referent shape below still asks.
+    """
     text = await _text(
         _State(
             "Whats the best empty room to convert into two phone booths, by demand?",
             intent="recommend",
         )
     )
-    assert text.count("?") == 1, f"more than one question asked back:\n{text}"
-    assert "I could not match" in text
+    assert "?" not in text, f"an abstract question is not answered with a question:\n{text}"
+    assert "Which measurement or record do you mean by **" not in text
+    assert "The nearest things I can answer are" in text
+    assert "to anything this building records" not in text, "the pipeline's own phrasing"
     assert "authoris" not in text, "a stemmer artefact must never reach a reader"
+    for glue in ("convert into", "booths by"):
+        assert glue not in text, "a word was paired with glue instead of a content word"
+
+
+@pytest.mark.asyncio
+async def test_a_question_that_points_at_one_thing_still_asks_which_one(holdings):
+    """The shape that IS a missing referent keeps its single question back."""
+    text = await _text(_State("What happened during the incident?", intent="diagnosis"))
+    assert text.count("?") == 1
+    assert text.startswith("Which incident do you mean?")
 
 
 @pytest.mark.asyncio
 async def test_a_fully_mapped_question_is_not_asked_back_at(holdings):
     """Every word maps, so there is no 'part' to name; a bare re-ask would be noise."""
     text = await _text(_State("show me the work orders", intent="metadata"))
-    assert "I could not match" not in text
+    assert "Which measurement or record" not in text
     assert text.count("?") == 0
 
 

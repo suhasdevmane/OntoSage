@@ -44,6 +44,7 @@ SparqlExec = Callable[[str], Awaitable[dict]]
 
 BRICK = "https://brickschema.org/schema/Brick#"
 ONTOSAGE = "http://ontosage.org/capabilities#"
+REC = "https://w3id.org/rec#"
 
 # ── the facts a building may state about itself ──────────────────────────────
 # (facet, predicate IRI, human label). Order is the order they are reported in,
@@ -57,6 +58,7 @@ _FACTS: List[Tuple[str, str, str]] = [
     ("size", BRICK + "grossArea", "Gross area"),
     ("size", BRICK + "netArea", "Net area"),
     ("storeys", ONTOSAGE + "buildingStoreys", "Storeys"),
+    ("capacity", REC + "capacity", "Capacity"),
     ("owner", ONTOSAGE + "buildingOwner", "Owner"),
     ("operator", ONTOSAGE + "buildingOperator", "Operated by"),
     ("architect", ONTOSAGE + "buildingArchitect", "Designed / built by"),
@@ -107,6 +109,14 @@ _FACET_PATTERNS: List[Tuple[str, str]] = [
         r"\bwhat is (?:this|the) building for\b|\bpurpose of (?:this|the) building\b|\bwhat (?:is|are) (?:it|this) used for\b|\bwhat happens (?:here|in this building)\b",
     ),
     ("storeys", r"\bhow many (?:storeys|storys|stories)\b|\bnumber of storeys\b"),
+    # A CAPACITY is a fact the building records about itself, not a count of who is inside now.
+    (
+        "capacity",
+        r"\bhow many (?:people|persons|occupants|visitors|students|staff)\b[^?.!]{0,30}\b(?:can|could|does|would)\b[^?.!]{0,25}\b(?:hold|fit|accommodate|house|host|seat|take|contain)\b"
+        r"|\b(?:capacity|max(?:imum)?\s+(?:occupancy|occupants|people))\s+of\s+(?:the|this)\s+building\b"
+        r"|\b(?:building|building's)\s+(?:capacity|max(?:imum)?\s+(?:occupancy|capacity))\b"
+        r"|\bhow many\b[^?.!]{0,20}\b(?:people|occupants)\b[^?.!]{0,40}\bbuilding\b[^?.!]{0,20}\b(?:hold|fit|accommodate)\b",
+    ),
 ]
 
 # The whole profile, rather than one facet.
@@ -295,6 +305,11 @@ def render(
         return answer
 
     label = next((lbl for f, _i, lbl in _FACTS if f == facet), facet.title())
+    if facet == "capacity":
+        return (
+            f"**{building_name}** records a capacity of **{value}**. That is the recorded "
+            "design figure, not a live head-count of who is inside now."
+        )
     if facet == "size":
         value = _format_area(value)
     if facet == "age":

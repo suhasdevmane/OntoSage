@@ -240,7 +240,7 @@ def gen_hours(d: Dict, rnd: random.Random) -> str:
     ]
     b = _local(str(d["building"]))
     out.append(
-        f'bldg:{b} ontosage:openingHours "Mon-Fri 07:00-21:00; Sat 09:00-17:00; Sun closed" ;\n'
+        f'bldg:{b} ontosage:openingHours "Mon-Fri 07:00-22:00; Sat-Sun 08:00-18:00" ;\n'
     )
     out.append("    ontosage:isSimulated true .\n\n")
 

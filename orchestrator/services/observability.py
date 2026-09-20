@@ -215,6 +215,9 @@ OPEN_QUESTION_RE = re.compile(
 #: The quantity a reach question names, when it names one.
 NAMED_QUANTITY_RE = re.compile(
     r"\b(?:measure|monitor|track|sense|detect|read)\s+"
+    # "keep TRACK OF foot traffic": the "of" belongs to the idiom, not to the quantity. Captured, it
+    # produced "No — of foot traffic is not measured" (tail J), garbled and false.
+    r"(?:of\s+)?"
     # A SCOPE IS NOT A QUANTITY.
     #
     # Without this, "What can you measure in this building?" captured the words "in this
@@ -237,6 +240,48 @@ NAMED_QUANTITY_RE = re.compile(
 def is_open_question(text: str) -> bool:
     """True when the asker wants the menu rather than a verdict on one quantity."""
     return bool(OPEN_QUESTION_RE.search(text or ""))
+
+
+#: What each events-store kind records, in the words a reader would use.
+_EVENT_KIND_WORDS = {
+    "access_summary": "entrance arrival counts",
+    "anomaly_summary": "detected anomalies",
+    "workorder_summary": "work orders",
+    "bookings_list": "room bookings",
+}
+
+#: Concepts too generic to say a quantity is recorded ("can you", "available").
+_GENERIC_CONCEPTS = frozenset({"system_capability", "empty_space"})
+
+
+async def recorded_elsewhere(named: str) -> str:
+    """Where the building records a quantity no SENSOR of that name measures, or "".
+
+    Consulted BEFORE "X is not measured" is said. Measured 2026-09-20 (tail J): "How do you keep
+    track of foot traffic in the lobby?" was told "No — of foot traffic is not measured", while the
+    events store records entrance arrival counts and the events lane answers "About 3,642 arrivals
+    through the main entrance yesterday". "Not measured" is a claim about EVERY store, so it may be
+    made only after the other stores — the events kinds and the concept vocabulary — have been asked.
+    """
+    if not (named or "").strip():
+        return ""
+    try:
+        from orchestrator.services.event_query_service import classify_event_question
+
+        kind = classify_event_question(named)
+        if kind in _EVENT_KIND_WORDS:
+            return _EVENT_KIND_WORDS[kind]
+    except Exception:  # an unreadable classifier never turns a negative into a positive
+        pass
+    try:
+        from orchestrator.services.concept_resolver import concept_resolver
+
+        for match in await concept_resolver.resolve(named) or []:
+            if match.concept_id not in _GENERIC_CONCEPTS and match.brick_classes:
+                return str(match.lay_term or match.concept_id).replace("_", " ")
+    except Exception:
+        pass
+    return ""
 
 
 def named_quantity(text: str) -> str:

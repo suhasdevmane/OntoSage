@@ -140,8 +140,12 @@ def _matches(answer: str, marker: str) -> bool:
     # notation the model chose is measuring its prose, not the building's answer. Whole words
     # only, so '3' does not match inside '23'; and only when the marker is ITSELF just a
     # number, so a marker like '3 open work orders' keeps its exact wording.
+    # A WHOLE NUMBER RENDERED WITH A ZERO DECIMAL IS THE SAME FACT (2026-09-19). The register
+    # records respondsWithinHours = 8 and the answer said "Response target: 8.0 hours", which the
+    # lookahead below rejected because a digit followed by "." is usually a room number (3.15 must
+    # not match the marker 3). Only a zero-valued decimal tail is admitted, so 3.15 still does not.
     return any(
-        re.search(rf"(?<![\w.]){re.escape(form)}(?![\w.])", a)
+        re.search(rf"(?<![\w.]){re.escape(form)}(?:\.0+)?(?![\w.])", a)
         for form in (str(n), _NUMBER_WORDS[n])
     )
 

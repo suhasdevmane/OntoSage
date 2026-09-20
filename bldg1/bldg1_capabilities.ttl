@@ -107,7 +107,7 @@ bldg:Cap_complaints_feedback a ontosage:Procedure, ontosage:KnowledgeTopic ;
 bldg:Cap_sustainability a ontosage:InformationTopic, ontosage:KnowledgeTopic ;
     rdfs:label "Sustainability"@en ;
     ontosage:capabilityCategory "INFORMATION" ;
-    ontosage:layTerms "sustainability, green, environment, carbon, recycling, energy efficiency, solar, renewable, breeam, epc, environmental, eco, waste, bins, green building" ;
+    ontosage:layTerms "sustainability, green, environment, carbon, recycling, energy efficiency, solar, renewable, breeam, epc, environmental, eco, waste, bins, green building, rainwater harvesting, harvest rainwater, collect rainwater, collect rain water, rain water collection, rain water harvesting" ;
     ontosage:answerText "Abacws was designed to BREEAM 'Excellent' specification. Sustainability features: (1) High-performance building fabric with triple-glazed facades; (2) Mechanical heat recovery ventilation; (3) LED lighting with daylight harvesting throughout; (4) Electric vehicle charging points in the car park; (5) Green roof on the second-floor terrace; (6) Rainwater harvesting for toilet flushing; (7) Building energy performance is monitored in real-time. Recycling facilities (general waste, paper, glass, cans) are available on every floor.\n" ;
     ontosage:note "sustainability_report" .
 
@@ -115,7 +115,7 @@ bldg:Cap_emergency_contacts a ontosage:InformationTopic, ontosage:KnowledgeTopic
     rdfs:label "Emergency Contacts"@en ;
     ontosage:capabilityCategory "INFORMATION" ;
     ontosage:layTerms "emergency, contact, who to call, phone number, first aid, medical, ambulance, police, help, urgent, accident, incident" ;
-    ontosage:answerText "Emergency contacts for Abacws: (1) Emergency services: 999; (2) Cardiff University Security (24/7): 029 2087 4444 or internal x74444; (3) First aid: trained first aiders are on each floor (names posted on floor notice boards), or call Security; (4) Estates emergency helpdesk (out-of-hours building issues): 029 2087 5555; (5) Health & Safety: safety@cardiff.ac.uk. First aid kits are located at each floor reception point and in labs. AED (defibrillator) units are on the Ground Floor and Floor 3.\n" ;
+    ontosage:answerText "Emergency contacts for Abacws: (1) Emergency services: 999; (2) Cardiff University Security (24/7): 029 2087 4444 or internal x74444; (3) First aid: trained first aiders are on each floor (names posted on floor notice boards), or call Security; (4) Estates emergency helpdesk (out-of-hours building issues): 029 2087 5555; (5) Health & Safety: safety@cardiff.ac.uk. First aid kits are located at each floor reception point and in labs. AED (defibrillator) units are at Ground Floor reception, in the Floor 3 common area and in the Floor 5 break room.\n" ;
     ontosage:note "health_and_safety" ;
     ontosage:documentRef "fire_safety.md" .
 
@@ -244,7 +244,7 @@ bldg:Cap_lift_accessibility_detail a ontosage:Amenity, ontosage:Amenity ;
 bldg:Cap_shower_facilities_detail a ontosage:Amenity, ontosage:Amenity ;
     rdfs:label "Shower Facilities Detail"@en ;
     ontosage:capabilityCategory "Amenities" ;
-    ontosage:layTerms "shower, shower room, shower location, shower accessibility, shower facilities, accessible shower, standard shower, where is the shower, shower floor, shower door width, shower card reader, level access shower" ;
+    ontosage:layTerms "shower, shower room, shower location, shower accessibility, shower facilities, accessible shower, standard shower, where is the shower, shower floor, shower door width, shower card reader, level access shower, showers, shower rooms, shower cubicle, shower cubicles, any showers" ;
     ontosage:answerText "Shower facilities are located on Floor 1. There are both accessible and standard shower cubicles. To reach them from the main entrance: take the right-hand lift, then turn right from the lift on Floor 1. Access details: (1) Level access throughout — no steps; (2) The door to the shower cubicle lobby is a single, heavy door, push to open (opens away from you), width 87 cm; (3) Card reader entry height 115 cm; exit button height 115 cm; (4) Individual cubicle door is single, light, push to open, width 57 cm. For accessibility support or if you require a PEEP (Personal Emergency Evacuation Plan), contact Building Management or the Disability and Dyslexia Service (disability@cardiff.ac.uk).\n" ;
     ontosage:note "cardiff_university_accessibility_page" .
 

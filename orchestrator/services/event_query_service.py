@@ -61,7 +61,7 @@ _KIND_RES: List[Tuple[str, re.Pattern]] = [
     (
         "access_summary",
         re.compile(
-            r"\b(entrance|footfall|how busy (was|is) the building|people (came|come) in"
+            r"\b(entrance|footfall|foot ?traffic|how busy (was|is) the building|people (came|come) in"
             r"|visitors? (came|arrived|counted)|arrivals)\b",
             re.IGNORECASE,
         ),
@@ -122,17 +122,41 @@ def _asks_which_rooms(question: str) -> bool:
     return bool(_WHICH_ROOMS_RE.search(question or ""))
 
 
+#: An identifier with no place in it: a uuid, or a bare hex/number run. `space_iri` is a free
+#: column and some intake rows carry the sensor or report REFERENCE rather than a space, so this
+#: is data, not a bug to be fixed upstream — but it is not a place and must never be printed as
+#: one. Measured on the 2026-09-19 read: a recurrence table printed
+#: "d 7baf 689-b 028-5ba 7-91a 4-686a 66265659" in its `place` column, beside "floor 2" — the
+#: digit-separating rule below applied to a uuid, so the row read as a location nobody can find.
+_OPAQUE_REFERENCE_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$|^[0-9a-f]{16,}$|^\d+$",
+    re.IGNORECASE,
+)
+
+
+def is_opaque_reference(place: Any) -> bool:
+    """True when this 'place' is an internal reference and names nowhere a person can go."""
+    text = str(place or "").strip().rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+    return bool(text) and bool(_OPAQUE_REFERENCE_RE.match(text))
+
+
 def _place_label(place: Any) -> str:
-    """A place as a person would write it.
+    """A place as a person would write it, or "" when the value names no place at all.
 
     `space_iri` is stored as a full IRI, and printing it raw put
     "http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16" in a table where "Room 5.16"
     belongs. The local name is taken and a digit run is separated from the word before
     it, which is how these labels read everywhere else in the building.
+
+    "" is returned for an opaque reference so the CALLER decides what to do with a row whose
+    place is not recorded; printing the reference, prettified, is the one thing that is not an
+    option, because it reads as somewhere in the building.
     """
     text = str(place or "").strip()
     if not text:
         return "unspecified"
+    if is_opaque_reference(text):
+        return ""
     local = text.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
     # A CURIE ("bldg:Room2.14") keeps its prefix through the splits above, so strip a
     # leading `prefix:` too — but only when it looks like one, or a plain place written
@@ -153,6 +177,11 @@ def _floor_named(question: str) -> Optional[str]:
     if not match:
         return None
     return match.group(1) or match.group(2)
+
+
+def _room_name(local: str) -> str:
+    """A room's graph id as a person writes it: "Room1.06" -> "Room 1.06" (display only)."""
+    return re.sub(r"^(Room|Rm)(?=\d)", r"\1 ", str(local or ""))
 
 
 def _floor_of(room_label: str) -> str:
@@ -239,6 +268,18 @@ def classify_event_question(question: str) -> Optional[str]:
     # exists to prevent one layer down.
     if _RECURRENCE_RE.search(q):
         return "recurrence"
+    # "Has anything been reported broken this week?" reads the REPORT store (BUG-828, B23).
+    from orchestrator.services.report_activity import is_report_activity_question
+
+    if is_report_activity_question(q):
+        return "report_activity"
+    # A WHOLE-BUILDING "what is free" request is the list, not a lookup of one room (2026-09-19):
+    # "can i get a real time map of available spaces across the building?" names no room, and the
+    # single-room fallback below answered "I couldn't match that room name".
+    from orchestrator.services.availability_overview import asks_free_overview
+
+    if asks_free_overview(q):
+        return "availability_list"
     for kind, pat in _KIND_RES:
         if pat.search(q):
             return kind
@@ -303,9 +344,22 @@ def _part_of_day(q: str):
 
 
 _NUMBER_WORDS = {
-    "a": 1, "an": 1, "one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6,
-    "seven": 7, "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12,
-    "couple of": 2, "few": 3,
+    "a": 1,
+    "an": 1,
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "couple of": 2,
+    "few": 3,
 }
 
 
@@ -371,7 +425,9 @@ def parse_window(question: str, now: datetime) -> Tuple[datetime, datetime, str]
     if "this week" in q:
         start = day0 - timedelta(days=day0.weekday())
         return start, start + timedelta(days=7), "this week"
-    if re.search(r"\b(right now|now|currently|at the moment)\b", q):
+    # "real time" is how people ask for now (2026-09-19): "a real time map of available spaces" was
+    # answered for the whole of today, which is not what "real time" means to the asker.
+    if re.search(r"\b(right now|now|currently|at the moment)\b|\breal[-\s]?time\b", q):
         return now, now + timedelta(minutes=1), "right now"
     return day0, day0 + timedelta(days=1), "today"
 
@@ -389,8 +445,12 @@ class EventQueryService:
         room_locals: List[str],
         point_map: Optional[Dict[str, Tuple[str, str]]] = None,
         tz_name: Optional[str] = None,
+        room_kinds: Optional[Dict[str, Any]] = None,
     ):
         self._bid = building_id
+        # room_local -> its Brick classes; narrows "which meeting rooms are booked?" (BUG-828, B11)
+        self._kinds = room_kinds or {}
+        self._reader_role: Optional[str] = None  # set per answer(); gates the report store
         # The events store is UTC (BUG-403). People ask and read in the building's time —
         # "at 3pm", "today", "08:20" — so the zone converts at exactly those two edges.
         self._tz = tz_name
@@ -456,10 +516,15 @@ class EventQueryService:
         return {"success": False, "kind": kind, "formatted_response": text}
 
     async def answer(
-        self, question: str, now: Optional[datetime] = None, for_admin: bool = False
+        self,
+        question: str,
+        now: Optional[datetime] = None,
+        for_admin: bool = False,
+        reader_role: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Answer an events question. ``for_admin`` adds how to connect a missing source."""
         now = now or datetime.utcnow()
+        self._reader_role = reader_role
         # A "who" question about entering or using a space asks about INDIVIDUALS (BUG-505):
         # "Who accessed the server room?" was answered with 193 unfiltered building bookings.
         if _PERSON_ACCESS_RE.search(question or ""):
@@ -474,7 +539,7 @@ class EventQueryService:
         # it must not be gated on one. A building with no events source can still have
         # people reporting faults, and "what keeps going wrong here" is exactly the
         # question such a building most needs answered.
-        if self._adapter is None and kind != "recurrence":
+        if self._adapter is None and kind not in ("recurrence", "report_activity"):
             return self._decline(kind, for_admin=for_admin)
         # Parse on the building's clock, query on the store's (BUG-539/540). `now` stays the
         # store clock for the comparisons handlers make ("open for more than 7 days").
@@ -488,6 +553,7 @@ class EventQueryService:
             "access_summary": self._access_summary,
             "anomaly_summary": self._anomaly_summary,
             "recurrence": self._recurrence,
+            "report_activity": self._report_activity,
         }[kind]
         try:
             return await handler(question, start, end, label, now)
@@ -524,6 +590,38 @@ class EventQueryService:
                 return str(v)[11:16]
         return to_local(v, self._tz).strftime("%H:%M")
 
+    def _kind_scope(self, question: str) -> Tuple[Optional[List[str]], str]:
+        """(rooms of the kind the question names, how to say it); (None, phrase) when the graph
+        records no such rooms, (None, "") when the question names no kind (BUG-828, B11)."""
+        from orchestrator.services.room_kind_words import kinds_asked, rooms_of_kind
+
+        wanted, phrase = kinds_asked(question)
+        if not wanted:
+            return None, ""
+        return rooms_of_kind(self._rooms, self._kinds, wanted), phrase
+
+    @staticmethod
+    def _kind_note(phrase: str, scoped: Optional[List[str]]) -> str:
+        """Said when a kind was asked for and the building records none: the list is not narrowed."""
+        if phrase and scoped is None:
+            return (
+                f"\n\n_This building does not record which rooms are {phrase}, so this covers "
+                "every room, not only those._"
+            )
+        return ""
+
+    async def _report_activity(self, question, start, end, label, now):
+        """What people have REPORTED in a window, from the report store (BUG-828, B23)."""
+        from orchestrator.services.report_activity import answer_report_activity
+
+        return await answer_report_activity(
+            question,
+            building_id=self._bid,
+            now_utc=now,
+            tz_name=self._tz,
+            reader_role=self._reader_role,
+        )
+
     async def _availability_check(self, question, start, end, label, now):
         room = self.resolve_room(question)
         if not room:
@@ -550,9 +648,9 @@ class EventQueryService:
         ]
         free = not rows
         text = (
-            f"**{room} is free {label}** — no bookings overlap that window."
+            f"**{_room_name(room)} is free {label}** — no bookings overlap that window."
             if free
-            else f"**{room} is booked {label}**: " + ", ".join(clashes[:4]) + "."
+            else f"**{_room_name(room)} is booked {label}**: " + ", ".join(clashes[:4]) + "."
         )
         return {
             "success": True,
@@ -587,6 +685,39 @@ class EventQueryService:
         "suggestion": ("suggestion", "suggestions"),
     }
 
+    async def _label_opaque_places(self, rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Rows whose `place` is a sensor uuid, rewritten to the room or floor the graph gives it.
+
+        The lookup is the aggregate lane's own uuid -> (space, floor) query, not a second one: two
+        resolvers for one question is how two parts of this system come to disagree. A uuid the
+        graph does not know is left exactly as it was, for the caller to group as unrecorded — a
+        guess at a place is the failure this whole repair is about.
+        """
+        opaque = [str(r.get("place") or "") for r in rows if is_opaque_reference(r.get("place"))]
+        if not opaque:
+            return rows
+        try:
+            from orchestrator.services.aggregate_lane import (
+                build_location_query,
+                parse_locations,
+            )
+            from orchestrator.services.deliberation.live import sparql_exec
+
+            query = build_location_query(sorted(set(opaque)))
+            places = parse_locations(await sparql_exec(query)) if query else {}
+        except Exception as exc:  # an unreadable graph leaves the rows unlabelled, never guessed
+            logger.warning(f"[events] could not resolve a recorded reference: {exc}")
+            return rows
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            place = str(row.get("place") or "")
+            found = places.get(place) if is_opaque_reference(place) else None
+            named = (getattr(found, "room", "") or "") if found else ""
+            if not named and found and getattr(found, "floor", ""):
+                named = f"Floor {found.floor}"
+            out.append({**row, "place": named} if named else row)
+        return out
+
     async def _recurrence(self, question, start, end, label, now):
         """Places where the same kind of problem has been reported more than once.
 
@@ -610,6 +741,19 @@ class EventQueryService:
         svc = get_report_intake_service()
         rows = await svc.recurring_reports(self._bid, category=category)
         placeless = await svc.placeless_report_count(self._bid, category=category)
+        # A GROUP WHOSE PLACE IS AN INTERNAL REFERENCE IS NEVER SHOWN AS ONE.
+        #
+        # Measured on the 2026-09-19 read: an evidence summary asked for a facilities report came
+        # back with "d 7baf 689-b 028-5ba 7-91a 4-686a 66265659" in its `place` column beside
+        # "floor 2" — a uuid in `space_iri`, prettified by the digit-separating rule in
+        # `_place_label`. Two steps, in this order: ASK THE GRAPH what room or floor the
+        # reference belongs to, because for a sensor uuid it knows; and where it does not,
+        # collect the rows under "place not recorded" with their count. The reference itself is
+        # not printed either way.
+        rows = await self._label_opaque_places(rows)
+        unlabelled = [r for r in rows if not _place_label(r.get("place"))]
+        rows = [r for r in rows if _place_label(r.get("place"))]
+        unlabelled_reports = sum(int(r.get("n", 0) or 0) for r in unlabelled)
         scope = f"{category} " if category else ""
         gap = (
             f" {placeless} {scope}report(s) in the window carry no location and could not "
@@ -617,6 +761,12 @@ class EventQueryService:
             if placeless
             else ""
         )
+        if unlabelled:
+            gap += (
+                f" **Place not recorded**: a further {len(unlabelled)} repeat group(s), "
+                f"{unlabelled_reports} report(s) in total, store a reference the building does "
+                "not map to a room or floor, so there is nowhere to name for them."
+            )
         if not rows:
             return {
                 "success": True,
@@ -624,6 +774,8 @@ class EventQueryService:
                 "rows": [],
                 "category": category,
                 "placeless_reports": placeless,
+                "unlabelled_places": len(unlabelled),
+                "unlabelled_reports": unlabelled_reports,
                 "formatted_response": (
                     f"No place has more than one {scope}report on record for this building, "
                     f"so nothing is recurring by that measure.{gap} This counts reports "
@@ -662,8 +814,12 @@ class EventQueryService:
             # says must exist in the payload so the numeric guard can trace it. The
             # placeless count appears in the caveat sentence, and leaving it out here had
             # the guard correctly suppress the whole answer — a number in the text with no
-            # counterpart in the data is exactly what it exists to stop.
+            # counterpart in the data is exactly what it exists to stop. The same applies to the
+            # groups whose place is only an internal reference: the caveat counts them, so the
+            # payload carries that count too.
             "placeless_reports": placeless,
+            "unlabelled_places": len(unlabelled),
+            "unlabelled_reports": unlabelled_reports,
             "formatted_response": "\n".join(lines),
             "source": "user_reports",
         }
@@ -676,21 +832,31 @@ class EventQueryService:
         )
         rows = await self._rows(sql)
         busy_uuids = {self._col(r, 2, "subject_uuid") for r in rows}
-        uuid_to_room = {derive_point_uuid(self._bid, "evt_subject", r): r for r in self._rooms}
+        scoped, kind_phrase = self._kind_scope(question)
+        pool = scoped if scoped is not None else self._rooms
+        uuid_to_room = {derive_point_uuid(self._bid, "evt_subject", r): r for r in pool}
         free_rooms = sorted(r for u, r in uuid_to_room.items() if u not in busy_uuids)
         shown = free_rooms[:12]
+        noun = kind_phrase if scoped is not None else "rooms"
+        # A request for a MAP is answered honestly before the list: the building records bookings,
+        # not occupancy, so there is no live map to give (2026-09-19).
+        from orchestrator.services.availability_overview import NO_MAP_SENTENCE, asks_for_a_map
+
+        head = f"{NO_MAP_SENTENCE}\n\n" if asks_for_a_map(question) else ""
         text = (
-            f"**{len(free_rooms)} of {len(self._rooms)} rooms have no booking {label}**: "
-            + ", ".join(shown)
+            head
+            + f"**{len(free_rooms)} of {len(pool)} {noun} have no booking {label}**: "
+            + ", ".join(_room_name(r) for r in shown)
             + (" …" if len(free_rooms) > len(shown) else "")
             + "\n\n_Availability = no booking on record; walk-in use isn't tracked here._"
+            + self._kind_note(kind_phrase, scoped)
         )
         return {
             "success": True,
             "kind": "availability_list",
             "window": label,
             "free_count": len(free_rooms),
-            "total_rooms": len(self._rooms),
+            "total_rooms": len(pool),
             "free_rooms": shown,
             "source": "events_data",
             "formatted_response": text,
@@ -706,7 +872,7 @@ class EventQueryService:
             subject_uuids=subj,
         )
         rows = await self._rows(sql)
-        scope = room or "the building"
+        scope = _room_name(room) if room else "the building"
 
         # WHICH ROOMS is a different question from HOW MANY BOOKINGS, and the same
         # flat list answered both. "Which rooms have teaching sessions this week?"
@@ -718,27 +884,43 @@ class EventQueryService:
         if by_room:
             # Same reverse lookup the availability list already uses: derive each
             # room's subject uuid and invert it, rather than inventing a resolver.
-            uuid_to_room = {derive_point_uuid(self._bid, "evt_subject", r): r for r in self._rooms}
+            # "Which MEETING rooms are booked?" names a kind of room (BUG-828, B11): only rooms
+            # the graph types as that kind are counted, never every room that has a booking.
+            from orchestrator.services.room_kind_words import noun_for
+
+            scoped, kind_phrase = self._kind_scope(question)
+            pool = scoped if scoped is not None else self._rooms
+            uuid_to_room = {derive_point_uuid(self._bid, "evt_subject", r): r for r in pool}
             counts: Dict[str, int] = {}
             for r in rows:
                 subject = str(self._col(r, 2, "subject_uuid") or "")
+                if scoped is not None and subject not in uuid_to_room:
+                    continue  # a room of another kind
                 key = uuid_to_room.get(subject) or f"unknown subject {subject[:8]}"
                 counts[key] = counts.get(key, 0) + 1
+            n_rows = sum(counts.values()) if scoped is not None else len(rows)
             ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
-            room_lines = [f"- {name}: {n} session(s)" for name, n in ordered[:12]]
+            room_lines = [f"- {_room_name(name)}: {n} session(s)" for name, n in ordered[:12]]
             if len(ordered) > 12:
                 # Say what was cut. A list that silently stops at twelve reads as the
                 # whole answer (lessons.md: no silent caps).
                 room_lines.append(f"- …and {len(ordered) - 12} more room(s)")
-            text = (
-                f"**{len(ordered)} room(s) with bookings {label}** "
-                f"({len(rows)} session(s) in total):\n" + "\n".join(room_lines)
-            )
+            if scoped is not None and not ordered:
+                text = (
+                    f"**No {kind_phrase} have a booking {label}** — nothing overlaps that window."
+                )
+            else:
+                noun = noun_for(kind_phrase, len(ordered)) if scoped is not None else "room(s)"
+                text = (
+                    f"**{len(ordered)} {noun} with bookings {label}** "
+                    f"({n_rows} session(s) in total):\n" + "\n".join(room_lines)
+                )
+            text += self._kind_note(kind_phrase, scoped)
             return {
                 "success": True,
                 "kind": "bookings_by_room",
                 "window": label,
-                "count": len(rows),
+                "count": n_rows,
                 "rooms": [{"room": nm, "sessions": n} for nm, n in ordered],
                 "source": "events_data",
                 "formatted_response": text,
@@ -785,19 +967,56 @@ class EventQueryService:
         aged = None
         if re.search(r"\boverdue|older than\b", question, re.IGNORECASE):
             aged = (now - timedelta(days=7)).strftime("%Y-%m-%d %H:%M:%S")
-        sql = self._adapter.build_count_by_status("workorder", open_older_than=aged)
-        rows = await self._rows(sql)
-        counts = {str(self._col(r, 0, "status")): int(self._col(r, 1, "n")) for r in rows}
+        # The COUNTS are always by status; the aged figure is a second, narrower read. Asking for
+        # both means the answer can say how many are open AND how many have been open a long time,
+        # instead of replacing one with the other (2026-09-19).
+        all_rows = await self._rows(self._adapter.build_count_by_status("workorder"))
+        counts = {str(self._col(r, 0, "status")): int(self._col(r, 1, "n")) for r in all_rows}
         total = sum(counts.values())
+        aged_open = 0
         if aged:
-            text = (
-                f"**{counts.get('open', 0)} work order(s) open for more than 7 days.**"
-                if counts
-                else "**No work orders open beyond 7 days.**"
+            rows = await self._rows(
+                self._adapter.build_count_by_status("workorder", open_older_than=aged)
             )
-        else:
-            parts = ", ".join(f"{v} {k}" for k, v in counts.items()) or "none on record"
-            text = f"**Work orders: {parts}** ({total} total)."
+            aged_open = sum(
+                int(self._col(r, 1, "n"))
+                for r in rows
+                if str(self._col(r, 0, "status")).lower() == "open"
+            )
+        oldest: List[Dict[str, Any]] = []
+        try:
+            from orchestrator.services.work_order_lane import compose_answer, oldest_open
+
+            raw = await self._rows(
+                self._adapter.build_overlap_window(
+                    "workorder", "1970-01-01 00:00:00", "2999-01-01 00:00:00", limit=2000
+                )
+            )
+            oldest = oldest_open(
+                [
+                    (
+                        r
+                        if isinstance(r, dict)
+                        else {
+                            "status": self._col(r, 5, "status"),
+                            "start": self._col(r, 3, "start_dt"),
+                            "attrs": self._col(r, 6, "attrs"),
+                        }
+                    )
+                    for r in raw
+                ]
+            )
+        except Exception as exc:  # the counts are the answer; the list is the extra
+            logger.debug(f"[events] oldest open work orders skipped: {exc}")
+        composed = compose_answer(
+            counts,
+            aged=aged_open,
+            aged_days=7,
+            oldest=oldest,
+            asked_overdue=bool(aged),
+            local=lambda when: to_local(when, self._tz),
+        )
+        text = composed["formatted_response"]
         # V6-T24: a work-order count that ignores what people actually reported answers the
         # estate's question and not the building's. The joined view adds unlinked user
         # reports and counts a linked pair ONCE, then states how the figure reconciles with
@@ -811,7 +1030,12 @@ class EventQueryService:
             "kind": "workorder_summary",
             "counts": counts,
             "total": total,
+            "open": composed["open"],
+            "aged_open": composed["aged_open"],
             "aged_filter_days": 7 if aged else None,
+            # Every figure the composed prose states travels with it, so the numeric guard can
+            # trace the oldest-open lines as well as the counts.
+            "oldest": composed.get("oldest", []),
             "source": "events_data + user_reports",
             "formatted_response": text,
         }

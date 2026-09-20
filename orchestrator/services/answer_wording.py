@@ -17,6 +17,11 @@ act on. Only the TEXT is cleaned; the ``ontosage:isSimulated`` triples and the c
 them are untouched (tests/test_provenance_honesty.py relies on them).
 
 Neither rewrite touches fenced or inline code. Neither contains a building literal.
+
+**BUG-832 / CAVEAT-833 — the prose around a correct figure.** After both rewrites,
+``narration_validators`` removes advice nobody asked for, norms with no source, a count that
+contradicts its own list, a max-minus-min presented as a delta, and advice that moves a value the
+wrong way. Same contract: pure, never raises, leaves every other byte of the answer alone.
 """
 
 from __future__ import annotations
@@ -274,6 +279,46 @@ def strip_provenance_flags(text: str) -> str:
     return _outside_code(text, _strip_flags_prose, inline=False)
 
 
+#: A claim about where the DATA came from, in the words the owner's standing rule keeps out of every
+#: answer: "All alarms were simulated." (tail G, 2026-09-20, a metadata-lane narration of a register
+#: whose records carry isSimulated). `strip_provenance_flags` removes the `simulated: true` FIELD
+#: form; a narration can restate the same flag as a sentence, which no field pattern can see.
+_ORIGIN_CLAIM_RE = re.compile(r"\b(?:synthetic(?:ally)?|simulated|fake|dummy|mock(?:ed)?)\b", re.IGNORECASE)
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
+
+def _drop_origin_sentences(text: str) -> str:
+    kept: List[str] = []
+    for line in text.split("\n"):
+        if not _ORIGIN_CLAIM_RE.search(line):
+            kept.append(line)
+            continue
+        if line.lstrip().startswith("|"):
+            continue  # a table row that says it: the row is the claim
+        sentences = [s for s in _SENTENCE_SPLIT_RE.split(line) if not _ORIGIN_CLAIM_RE.search(s)]
+        rest = " ".join(sentences).strip()
+        if rest.strip("*_ `"):
+            kept.append(rest)
+    return "\n".join(kept)
+
+
+def strip_origin_claims(text: str, user_message: Optional[str] = None) -> str:
+    """Remove sentences that call the building's data synthetic, simulated, fake, dummy or mock.
+
+    The owner's standing rule: readings are placeholders to be replaced by real data, and no answer
+    may say otherwise. A question that itself uses one of these words is left alone, so a person who
+    asks about it is not answered with a silent gap. Never raises.
+    """
+    try:
+        if not text or not _ORIGIN_CLAIM_RE.search(text):
+            return text or ""
+        if user_message and _ORIGIN_CLAIM_RE.search(user_message):
+            return text
+        return _outside_code(text, _drop_origin_sentences, inline=False)
+    except Exception:  # pragma: no cover - a wording pass must never cost the answer
+        return text
+
+
 #: Lanes where the USER supplies the content — a fault report, feedback, a preference, a booking.
 #: "the details you provided have been logged" is true there, and rewriting it to "the
 #: building's details" would misattribute the user's own words to the building.
@@ -299,9 +344,27 @@ def polish_answer(
     content the user supplied (`_USER_SUPPLIED_INTENTS`).
     """
     try:
+        # A developer tracker id must never reach a reader, whichever lane produced it.
+        # `**BUG-606**` was once the whole of an answer to "How busy is the building?".
+        from orchestrator.services.prompt_hygiene import scrub_answer
+
+        text = scrub_answer(text)
         stripped = strip_provenance_flags(text)
         if str(intent or "").strip().lower() in _USER_SUPPLIED_INTENTS:
             return stripped
-        return attribute_to_building(stripped, user_message)
+        stripped = strip_origin_claims(stripped, user_message)
+        return _narration_hygiene(
+            attribute_to_building(stripped, user_message), user_message, intent
+        )
     except Exception:  # pragma: no cover - a wording pass must never cost the answer
+        return text
+
+
+def _narration_hygiene(text: str, question: Optional[str], intent: Optional[str]) -> str:
+    """Unasked advice, uncited norms and miscounts removed (BUG-832, CAVEAT-833); never raises."""
+    try:
+        from orchestrator.services.narration_validators import apply_validators
+
+        return apply_validators(question, text, intent)
+    except Exception:  # pragma: no cover - a hygiene pass must never cost the answer
         return text

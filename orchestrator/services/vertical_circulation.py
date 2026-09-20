@@ -163,6 +163,13 @@ async def declared_cores(
         logger.debug(f"[vertical] core lookup failed: {exc}")
         return []
     rows = res.get("rows") if isinstance(res, dict) else res
+    if not rows and isinstance(res, dict):
+        # SPARQL-JSON, which is what the spatial lane's executor returns. This function was written
+        # for the admin `run_select` shape ({"rows": [...]}) and was handed the other one, so every
+        # live lookup came back empty and the declared lifts and staircases never reached the route
+        # graph (found 2026-09-20 when "nearest staircase" declined with the graph holding two).
+        bindings = (res.get("results") or {}).get("bindings") or []
+        rows = [{k: v.get("value") for k, v in b.items()} for b in bindings]
     if not rows:
         return []
     cores = cores_from_rows(rows)

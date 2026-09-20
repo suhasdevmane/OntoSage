@@ -5,7 +5,7 @@
 The building operates a **scent-aware policy**. Occupants are asked to avoid strong
 fragrances, plug-in air fresheners and scented cleaning products in shared and
 open-plan areas, in consideration of colleagues with asthma and chemical sensitivity.
-Cleaning contractors use low-odour, fragrance-free products under contract CTR-005.
+Cleaning contractors use low-odour, fragrance-free products under contract CON-2025-003.
 Concerns are raised with the building manager, who may ask a specific product to be
 withdrawn from an area.
 
@@ -34,7 +34,7 @@ languages can be arranged with notice through the reception team.
 
 ## Working alone
 
-Lone working on Level 6 plant areas and in laboratories outside 08:00–18:00 requires
+Lone working on roof plant areas and in laboratories outside 08:00–18:00 requires
 sign-in with Security and a check-call arrangement. Security holds the check-call
 register and will escalate if a call is missed.
 

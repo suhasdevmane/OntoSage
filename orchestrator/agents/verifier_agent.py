@@ -152,6 +152,10 @@ def _count_sql_rows(sql_result: Dict[str, Any]) -> int:
     """
     if not isinstance(sql_result, dict):
         return 0
+    if sql_result.get("aggregate_lane"):
+        # 2D-10: answered by the store's own aggregates, so there are no rows to count; the
+        # sensors it summarised are the grounding, and reading zero here would call it ungrounded.
+        return int((sql_result.get("aggregate") or {}).get("sensors") or 0)
     for candidate in (
         sql_result.get("data"),
         (sql_result.get("results") or {}).get("data")

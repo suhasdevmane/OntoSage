@@ -3638,6 +3638,35 @@ def _resolved_intent(state: Any) -> Optional[str]:
     return str(intent) if intent else None
 
 
+#: Longest override list a response will carry. A routing chain is a handful of rules; a runaway
+#: one is a bug worth seeing truncated rather than a 10 KB extension field on every answer.
+_MAX_ROUTE_OVERRIDES = 12
+
+
+def _route_record(state: Any) -> Optional[Dict[str, Any]]:
+    """Which rules put a finished turn on its lane — the value /v1 returns as `ontosage_route`.
+
+    W04 (2026-09-18). `_resolved_intent` says WHERE a turn went; this says WHY. The routing
+    contract is 43 ordered parse-stage rules where the last match wins, decided at several
+    sites, and until now the reason a turn landed on a lane existed only inside the server: a
+    right answer and a wrong-lane answer read identically from outside. The record already
+    exists on every turn (`route_decision`); this only carries a bounded copy of it out.
+
+    None when no routing decision was recorded (an error before the dialogue node).
+    """
+    rd = (getattr(state, "intermediate_results", None) or {}).get("route_decision")
+    if not isinstance(rd, dict):
+        return None
+    overrides = [str(x) for x in (rd.get("overrides_applied") or [])][:_MAX_ROUTE_OVERRIDES]
+    return {
+        "decision_source": rd.get("decision_source"),
+        "intent_from_dialogue": rd.get("intent_from_dialogue"),
+        "intent_after_overrides": rd.get("intent_after_overrides"),
+        "final_node": rd.get("final_node"),
+        "overrides_applied": overrides,
+    }
+
+
 async def _rehydrate_prior_messages(
     conversation_id: str,
     prior_messages: List["Message"],
@@ -4001,7 +4030,11 @@ async def openai_chat_completions(
                 # state reconstructed above, the same state the answer text came from.
                 yield sse_chunk(
                     finish_reason="stop",
-                    extra={"ontosage_intent": _resolved_intent(final_state)},
+                    extra={
+                        "ontosage_intent": _resolved_intent(final_state),
+                        # W04: WHY it went there — the rules behind the lane above.
+                        "ontosage_route": _route_record(final_state),
+                    },
                 )
                 yield "data: [DONE]\n\n"
 
@@ -4045,6 +4078,7 @@ async def openai_chat_completions(
                 },
                 # TODO-657: present on every non-streamed body; no lane finished here.
                 "ontosage_intent": None,
+                "ontosage_route": None,
             }
 
         assistant_message = (
@@ -4106,6 +4140,8 @@ async def openai_chat_completions(
             # demo endpoint too. The same value /chat returns as `intent`; prefixed like the
             # two fields above so it cannot collide with a field OpenAI adds later.
             "ontosage_intent": _resolved_intent(updated_state),
+            # W04: the rules that produced that lane (bounded copy of `route_decision`).
+            "ontosage_route": _route_record(updated_state),
         }
 
     except Exception as e:

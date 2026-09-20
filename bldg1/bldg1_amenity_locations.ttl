@@ -284,3 +284,91 @@
     ontosage:locationText "Bottle refill point in Room 5.26 — Staff Break Room / Kitchen (floor Floor5)" ;
     ontosage:answerText "There is a bottle refill point in Room 5.26 — Staff Break Room / Kitchen on floor Floor5. Each floor has two drinking-water points." ;
     ontosage:isSimulated "true"^^xsd:boolean .
+
+# -- Toilets taken from the building's own room records (2026-09-19, BUG-827) -------------------
+# The toilet rows above put ONE toilet on every floor, in a room a generator chose -- a research
+# laboratory, a plant room -- and a status was attached to each. "Where are the toilets on floor 2?"
+# answered with floors 0, 1 and 3 and never mentioned floor 2, because that generated toilet was
+# marked out of service and left out of the list.
+#
+# The building's OWN room list (bldg1_abacws_metadata.ttl) types eight rooms brick:Restroom, one
+# male and one female on each of floors 2 to 5. Those are the toilets a person can walk to, so they
+# are recorded here as amenities in their own right. NOT flagged simulated: the position is the
+# building's own record, not a filled-in one. A floor answer prefers these to a generated row for
+# the same floor. Floors 0 and 1 have no restroom room, so their generated rows stay -- the owner
+# should confirm those two from the real plans.
+#
+# No lay term says male or female: "male toilets" is a substring of "female toilets", and a phrase
+# match would have sent each question to the other room. The gender is in the label.
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Room2_35>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 2.35 — Restroom (Male)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35> ;
+    ontosage:onFloor "Floor2" ;
+    ontosage:locationText "Toilet facility in Room 2.35 — Restroom (Male) (floor 2)" ;
+    ontosage:answerText "There is a toilet facility in Room 2.35 — Restroom (Male) on floor 2." .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Room2_36>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 2.36 — Restroom (Female)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36> ;
+    ontosage:onFloor "Floor2" ;
+    ontosage:locationText "Toilet facility in Room 2.36 — Restroom (Female) (floor 2)" ;
+    ontosage:answerText "There is a toilet facility in Room 2.36 — Restroom (Female) on floor 2." .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Room3_36>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 3.36 — Restroom (Male)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36> ;
+    ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Toilet facility in Room 3.36 — Restroom (Male) (floor 3)" ;
+    ontosage:answerText "There is a toilet facility in Room 3.36 — Restroom (Male) on floor 3." .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Room3_37>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 3.37 — Restroom (Female)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37> ;
+    ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Toilet facility in Room 3.37 — Restroom (Female) (floor 3)" ;
+    ontosage:answerText "There is a toilet facility in Room 3.37 — Restroom (Female) on floor 3." .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Room4_35>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 4.35 — Restroom (Male)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35> ;
+    ontosage:onFloor "Floor4" ;
+    ontosage:locationText "Toilet facility in Room 4.35 — Restroom (Male) (floor 4)" ;
+    ontosage:answerText "There is a toilet facility in Room 4.35 — Restroom (Male) on floor 4." .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Room4_36>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 4.36 — Restroom (Female)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36> ;
+    ontosage:onFloor "Floor4" ;
+    ontosage:locationText "Toilet facility in Room 4.36 — Restroom (Female) (floor 4)" ;
+    ontosage:answerText "There is a toilet facility in Room 4.36 — Restroom (Female) on floor 4." .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Room5_35>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 5.35 — Restroom (Male)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
+    ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Toilet facility in Room 5.35 — Restroom (Male) (floor 5)" ;
+    ontosage:answerText "There is a toilet facility in Room 5.35 — Restroom (Male) on floor 5." .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_ToiletFacility_Room5_36>
+    a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Toilet facility — Room 5.36 — Restroom (Female)"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
+    ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Toilet facility in Room 5.36 — Restroom (Female) (floor 5)" ;
+    ontosage:answerText "There is a toilet facility in Room 5.36 — Restroom (Female) on floor 5." .

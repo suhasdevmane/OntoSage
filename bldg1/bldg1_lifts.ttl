@@ -44,6 +44,7 @@ bldg:Lift_1 a ontosage:Lift , ontosage:Amenity ;
     ontosage:layTerms "lift, elevator, main lift, passenger lift, left lift, lift 1, is the lift working, lift status, is the elevator working" ;
     ontosage:locationText "Passenger Lift 1, left from the front entrance, approximately 25 m from the entrance; serves floors G, 1, 2, 3, 4 and 5." ;
     ontosage:answerText "Passenger Lift 1 is located to the left of the front entrance, about 25 m in, and serves floors G, 1, 2, 3, 4 and 5. It has automatic double doors onto a lift lobby on every floor." ;
+    ontosage:servesFloor bldg:Floor0, bldg:Floor1, bldg:Floor2, bldg:Floor3, bldg:Floor4, bldg:Floor5 ;
     ontosage:note "cardiff_university_accessibility_page" .
 
 bldg:Lift_2 a ontosage:Lift , ontosage:Amenity ;
@@ -52,10 +53,17 @@ bldg:Lift_2 a ontosage:Lift , ontosage:Amenity ;
     ontosage:layTerms "second lift, goods lift, right lift, lift 2, other lift, service lift" ;
     ontosage:locationText "Passenger Lift 2, on the opposite side of the building from Lift 1; serves floors G, 1, 2, 3, 4 and 5 and takes goods as well as passengers." ;
     ontosage:answerText "Passenger Lift 2 is on the opposite side of the building from Lift 1 and serves floors G, 1, 2, 3, 4 and 5. It is the goods lift and is also sized for wheelchair use." ;
+    ontosage:servesFloor bldg:Floor0, bldg:Floor1, bldg:Floor2, bldg:Floor3, bldg:Floor4, bldg:Floor5 ;
     ontosage:note "cardiff_university_accessibility_page" .
 
-# The floors served are stated in the answer text above and NOT as ontosage:servesSpace
-# triples: that property's declared domain is ontosage:ServedZone, so asserting it here
-# would infer the lifts into a class they do not belong to. An undefined or misapplied
-# predicate is how this project has previously acquired 56 mistyped instances -- the
+# THE FLOORS SERVED (BUG-827, 2026-09-19). Each lift's own record above says it "serves floors
+# G, 1, 2, 3, 4 and 5" (G is the ground floor, bldg:Floor0), and it is now also a triple:
+# ontosage:servesFloor, whose declared domain is ontosage:Capability and range brick:Floor -- a lift
+# is both. Until then the fact lived only in the prose, the amenity lookup read a floor from the
+# trailing digit of the lift's label, and "the nearest lift to Room 4.01" answered "Passenger Lift 1,
+# 3 floors down" about a lift that serves floor 4.
+#
+# It is deliberately NOT ontosage:servesSpace: that property's declared domain is ontosage:ServedZone,
+# so asserting it here would infer the lifts into a class they do not belong to. An undefined or
+# misapplied predicate is how this project has previously acquired 56 mistyped instances -- the
 # triple must be right, not merely present.

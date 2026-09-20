@@ -249,6 +249,40 @@ def _terms_for(
     return tuple(sorted(w for w in words if len(w) > 3))
 
 
+async def _load_id_prefixes(found: List[RecordClass]) -> None:
+    """Read which id prefix each held class uses, so an id in a question can select its register.
+
+    Best effort and non-fatal: a graph that cannot answer leaves the index as it was, and
+    selection falls back to the word scoring it used before.
+    """
+    global _ID_PREFIXES
+    if not found:
+        return
+    try:
+        from orchestrator.services.ontology_manager import run_sparql_select
+
+        values = " ".join(f"o:{r.local_name}" for r in found)
+        result = await run_sparql_select(
+            _ID_PREFIX_QUERY % {"values": values}, limit=len(found) * 4 + 8
+        )
+        if not result.get("ok"):
+            return
+        index = index_id_prefixes(
+            (str(row.get("cls") or "").rsplit("#", 1)[-1], str(row.get("prefix") or ""))
+            for row in (result.get("rows") or [])
+        )
+        if index:
+            _ID_PREFIXES = index
+            logger.info(
+                "[record_registry] id prefixes: "
+                + ", ".join(f"{p}={sorted(n)[0]}" for p, n in sorted(index.items()) if len(n) == 1)[
+                    :400
+                ]
+            )
+    except Exception as exc:  # pragma: no cover - selection still works without the index
+        logger.debug(f"[record_registry] id prefixes unavailable: {describe_exception(exc)}")
+
+
 async def record_classes(namespace: str = "") -> List[RecordClass]:
     """The record classes the active building holds instances of, cached briefly."""
     key = namespace or "_active"
@@ -302,6 +336,7 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
         return hit[1] if hit else []
 
     _CACHE[key] = (time.monotonic(), found)
+    await _load_id_prefixes(found)
     _warm_patterns(term for record in found for term in record.terms)
     logger.info(
         "[record_registry] %s",
@@ -370,8 +405,102 @@ def _qualifier_score(term: str, low: str) -> float:
     return best
 
 
+#: The id prefixes each held class uses, read from the records themselves: {"CLN": "CleaningTask"}.
+#: Refreshed with the class cache; empty until a graph read fills it, and empty for a building
+#: whose records carry no identifier — in both cases selection is exactly what it was before.
+_ID_PREFIXES: Dict[str, Set[str]] = {}
+
+#: A token shaped like a record id: letters, a separator, then more of either. CLN-0010, WS-28,
+#: PTW-2026-0416, CIRC-06, CMP-ROOF.
+#:
+#: What keeps ordinary hyphenated English out is ``_looks_like_an_id`` rather than the pattern:
+#: a token qualifies when it carries a digit or is written in capitals, so "Wi-Fi", "step-free",
+#: "out-of-hours" and "high-risk" never reach the index — and a register whose ids are words
+#: (the competency requirements are CMP-ROOF, CMP-HV) is still reachable by them.
+_RECORD_ID_RE = re.compile(r"(?<![\w-])([A-Za-z]{2,10})[-/]([A-Za-z0-9][\w-]*)")
+
+
+def _looks_like_an_id(token: str) -> bool:
+    """A record id is written with a digit in it, or in capitals. Ordinary words are neither."""
+    return any(ch.isdigit() for ch in token) or token.upper() == token
+
+
+#: The prefix of every record id a held class uses, counted by the graph. REPLACE computes the
+#: prefix there, so one row comes back per (class, prefix) instead of one per record.
+#:
+#: A PARENT CLASS IS NOT A HOLDER OF ITS CHILDREN'S IDS. The graph infers, so every warranty is also
+#: an IntervalRecord, and "?i a o:IntervalRecord" returned WTY-, INC-, PTW-, TS-, WO-, BK- and
+#: thirteen more prefixes under BOTH the specific class and its parent. Nineteen prefixes read as
+#: shared, "shared" decides nothing, and every register built on IntervalRecord silently lost its
+#: id selection while the ones built on Record kept it (measured live 2026-09-19: "Who is the
+#: recorded owner of INC-2026-011?" and "What is the asset of WTY-BMS-2024?" selected nothing,
+#: "Who owns CLN-0010?" worked). The NOT EXISTS drops a class that has a held subclass.
+_ID_PREFIX_QUERY = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX o: <http://ontosage.org/capabilities#>
+SELECT ?cls ?prefix (COUNT(?i) AS ?n) WHERE {
+  VALUES ?cls { %(values)s }
+  FILTER NOT EXISTS { VALUES ?sub { %(values)s } ?sub rdfs:subClassOf+ ?cls . FILTER(?sub != ?cls) }
+  ?i a ?cls ; o:recordId ?id .
+  BIND(REPLACE(STR(?id), "^([A-Za-z]+).*$", "$1") AS ?prefix)
+  FILTER(?prefix != STR(?id))
+} GROUP BY ?cls ?prefix
+"""
+
+
+#: The record roots the ontology declares; never the register an id belongs to.
+_ROOT_CLASSES = frozenset({"Record", "IntervalRecord"})
+
+
+def index_id_prefixes(rows: Iterable[Tuple[str, str]]) -> Dict[str, Set[str]]:
+    """{prefix: {class local names}} from (class, prefix) pairs, upper-cased."""
+    index: Dict[str, Set[str]] = {}
+    for local_name, prefix in rows:
+        clean = str(prefix or "").strip().upper()
+        if clean and local_name:
+            index.setdefault(clean, set()).add(str(local_name))
+    return index
+
+
+def class_for_record_id(
+    query: str,
+    classes: List[RecordClass],
+    prefixes: Optional[Dict[str, Set[str]]] = None,
+) -> Optional[RecordClass]:
+    """The register whose own records carry the id this question names (BUG: wave 5).
+
+    Scored live on the register oracle: 19 of 94 answers were wrong and most named a record by
+    its id. "Who owns CLN-0010?" reached the APPROVALS register — which then said, honestly and
+    uselessly, that it does not record CLN-0010 — while the cleaning-task register holds that row
+    with the owner "Caretaking Supervisor"; "What is the name of WS-28?" was answered "I don't
+    have that specific information" over a register holding WS-28 = "Meeting room 5.18".
+
+    An id is DATA, not vocabulary: the prefixes come from the records themselves, so a building
+    that names its rows differently is served without a line of configuration. A prefix two
+    registers share decides nothing and the ordinary scoring runs — as it does for CL (cost
+    lines) against CLN (cleaning tasks), which are different prefixes and must stay apart.
+    """
+    index = _ID_PREFIXES if prefixes is None else prefixes
+    if not index:
+        return None
+    by_name = {record.local_name: record for record in classes}
+    for match in _RECORD_ID_RE.finditer(query or ""):
+        if not _looks_like_an_id(match.group(0)):
+            continue
+        holders = {n for n in index.get(match.group(1).upper(), set()) if n in by_name}
+        if len(holders) > 1:
+            holders -= _ROOT_CLASSES  # a parent shares every id with its child, and names neither
+        if len(holders) == 1:
+            return by_name[next(iter(holders))]
+    return None
+
+
 def held_record_class(query: str, classes: List[RecordClass]) -> Optional[RecordClass]:
     """The record class this question is about, when the building holds one.
+
+    AN ID NAMED IN THE QUESTION WINS, before any word is scored: the register that holds
+    CLN-0010 is the one that can answer a question about CLN-0010, whatever the other words
+    happen to match (``class_for_record_id``).
 
     SCORED, not first-match. This used to return the first class whose vocabulary matched,
     in whatever order SPARQL happened to return them -- so a question naming several
@@ -384,6 +513,9 @@ def held_record_class(query: str, classes: List[RecordClass]) -> Optional[Record
     Ties break on the class name, never on row order, so the same question routes the same
     way twice.
     """
+    by_id = class_for_record_id(query, classes)
+    if by_id is not None:
+        return by_id
     ranked = rank_record_classes(query, classes)
     return ranked[0][1] if ranked else None
 
@@ -828,6 +960,7 @@ async def schema_hint(record: "RecordClass") -> str:
 def clear_cache() -> None:
     """Drop the cache — used by tests and after a re-ingest."""
     global _LAY_LOADED
+    _ID_PREFIXES.clear()
     _CACHE.clear()
     _TERM_PATTERNS.clear()
     _LAY_LOADED = False

@@ -23,34 +23,34 @@ bldg:VAV_Floor5_Central a brick:VAV ;
     rdfs:label "VAV Box Floor 5 Central / Corridor Areas" ;
     brick:isPartOf bldg:Floor5 ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+    rdfs:comment "Equipment record inferred from the labels and locations of its own measurement points." .
 
 bldg:VAV_Floor5_East a brick:VAV ;
     rdfs:label "VAV Box Floor 5 East Wing" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+    rdfs:comment "Equipment record inferred from the labels and locations of its own measurement points." .
 
 bldg:VAV_Floor5_NorthEast a brick:VAV ;
     rdfs:label "VAV Box Floor 5 North-East Wing" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+    rdfs:comment "Equipment record inferred from the labels and locations of its own measurement points." .
 
 bldg:VAV_Floor5_NorthWest a brick:VAV ;
     rdfs:label "VAV Box Floor 5 North-West Wing" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+    rdfs:comment "Equipment record inferred from the labels and locations of its own measurement points." .
 
 bldg:VAV_Floor5_South a brick:VAV ;
     rdfs:label "VAV Box Floor 5 South Wing" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+    rdfs:comment "Equipment record inferred from the labels and locations of its own measurement points." .
 
 bldg:VAV_Floor5_SouthEast a brick:VAV ;
     rdfs:label "VAV Box Floor 5 South-East Wing" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+    rdfs:comment "Equipment record inferred from the labels and locations of its own measurement points." .
 
 bldg:VAV_Floor5_West a brick:VAV ;
     rdfs:label "VAV Box Floor 5 West Wing" ;
     ontosage:isSimulated "true"^^xsd:boolean ;
-    rdfs:comment "Reconstructed from its own points' labels and location after the points were found to reference an undeclared subject (BUG-249)." .
+    rdfs:comment "Equipment record inferred from the labels and locations of its own measurement points." .

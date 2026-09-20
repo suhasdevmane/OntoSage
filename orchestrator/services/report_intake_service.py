@@ -493,7 +493,9 @@ class ReportIntakeService:
             "SELECT COALESCE(NULLIF(location, ''), space_iri) AS place, "
             "       category, COUNT(*) AS n, "
             "       MIN(created_at) AS first_seen, MAX(created_at) AS last_seen, "
-            "       COUNT(*) FILTER (WHERE status IN ('resolved', 'closed')) AS closed "
+            # Stored upper-case ('RESOLVED', 'CLOSED'); the lower-case comparison never matched, so
+            # the "closed" column of every recurrence answer read 0.
+            "       COUNT(*) FILTER (WHERE UPPER(status) IN ('RESOLVED', 'CLOSED')) AS closed "
             "FROM user_reports "
             "WHERE building_id = $1 AND created_at >= NOW() - ($2 || ' days')::interval "
             "  AND COALESCE(NULLIF(location, ''), space_iri) IS NOT NULL "

@@ -39,6 +39,10 @@ from collections import Counter, defaultdict
 from datetime import date, timedelta
 from typing import Dict, List, Optional, Tuple
 
+from shared.utils import get_logger
+
+logger = get_logger(__name__)
+
 STATUS = "recordStatus"
 ID_FIELDS = ("recordId", "label")
 MAX_KIND_VALUES = 12
@@ -443,7 +447,34 @@ def _term_matches_column(term: str, col: str) -> bool:
     for tok in _col_tokens(col):
         if tok == flat or _shared_prefix(tok, flat) >= 5:
             return True
-    return False
+    # "owns" and ``recordOwner`` share three letters and one meaning: the table says so (BUG-835).
+    try:
+        from orchestrator.services.register_vocabulary import get_vocabulary
+
+        return get_vocabulary().term_names_column(term, col)
+    except Exception:  # pragma: no cover - the letter match above still stands
+        return False
+
+
+def _readable_stamps(term: str, columns: List[str], question: str = "") -> List[str]:
+    """Provenance columns the vocabulary lets this question word read.
+
+    Only for a LOOKUP ("who owns them?"). A question about the absence of one ("which have no
+    owner", "orphaned because no owner can be evidenced") asks whether each record has its own,
+    and the register-wide stamp cannot say (BUG-709 row 3): it stays a stamp there.
+    """
+    if _ASKS_ABSENCE_RE.search(question or "") or re.search(r"orphan", question or "", re.I):
+        return []
+    try:
+        from orchestrator.services.register_vocabulary import get_vocabulary
+
+        return [c for c in get_vocabulary().readable_stamps(term, columns) if c in columns]
+    except Exception:  # pragma: no cover - no table, no synonyms
+        return []
+
+
+#: How a stamp column a question may read is named in the census (never by its internal name).
+_STAMP_WORDS = {"recordOwner": "the owner recorded for each record"}
 
 
 def _term_pattern(term: str) -> "re.Pattern":
@@ -508,6 +539,59 @@ def _question_terms(question: str, register_label: str) -> List[Tuple[str, Optio
     return out
 
 
+def _census_terms(
+    rows: List[Dict], columns: List[str], question: str, register_label: str
+) -> Tuple[Dict[str, List[str]], Dict[str, List[Dict]], List[str], List[str]]:
+    """(as_field, as_text, as_stamp, absent) for every content word the question names.
+
+    Pulled out of ``_term_census_lines`` (W19, 2026-09-18) so the same computation can be
+    checked TWICE: once to write instructions for the model, and once — after the model has
+    answered — to check whether it obeyed them. Six development waves tightened the wording of
+    those instructions and correct answering did not move (9 gained / 11 lost, p=0.82, run1-6);
+    38 of the 96 weird answers in that same run deny a term this function finds present. A
+    prompt is a request; this is a check.
+    """
+    terms = _question_terms(question, register_label)
+    as_field: Dict[str, List[str]] = {}
+    as_text: Dict[str, List[Dict]] = {}
+    as_stamp: List[str] = []
+    absent: List[str] = []
+    if not terms:
+        return as_field, as_text, as_stamp, absent
+    content = _content_columns(rows, columns)
+    prov = sorted(provenance_fields(rows))
+    # `label` and `comment` are stamped as provenance because nobody asks for them by name,
+    # but a register's record NAMES and notes are its own text, and a word that appears there
+    # has not gone unrecorded.
+    searchable = content + [c for c in ("label", "comment") if c in columns]
+    for term, parent in terms:
+        if parent is not None and parent in as_field:
+            continue  # the compound already found the field; its halves add nothing
+        cols = [c for c in content if _term_matches_column(term, c)]
+        # A stamp the term's concept may READ ("who owns" -> the record owner) is a field the
+        # register records, not a note about who keeps the register (BUG-835).
+        cols += [c for c in _readable_stamps(term, columns, question) if c not in cols]
+        if cols:
+            as_field[term] = cols
+            continue
+        if _term_is_a_status_value(rows, term):
+            as_field[term] = [f"{STATUS} (as a recorded value)"]
+            continue
+        if parent is not None:
+            continue  # half of a compound: it matched no field, and that is not a finding
+        if any(_term_matches_column(term, c) for c in prov) or _term_matches_column(term, STATUS):
+            as_stamp.append(term)
+            continue
+        hit_rows = _term_in_text(rows, searchable, term)
+        if len(hit_rows) >= len(rows) > 2:
+            continue  # a word on every record distinguishes nothing and is not a finding
+        if hit_rows:
+            as_text[term] = hit_rows
+        else:
+            absent.append(term)
+    return as_field, as_text, as_stamp, absent
+
+
 def _term_census_lines(rows, columns, question, register_label):
     """Which of the things the question names the register records, and which it does not.
 
@@ -529,41 +613,7 @@ def _term_census_lines(rows, columns, question, register_label):
     found in recorded text, gives every field in ordinary words as well, and says in terms
     that an unrecorded word is not an unanswerable question.
     """
-    terms = _question_terms(question, register_label)
-    if not terms:
-        return []
-    content = _content_columns(rows, columns)
-    prov = sorted(provenance_fields(rows))
-    # `label` and `comment` are stamped as provenance because nobody asks for them by name,
-    # but a register's record NAMES and notes are its own text, and a word that appears there
-    # has not gone unrecorded.
-    searchable = content + [c for c in ("label", "comment") if c in columns]
-    as_field: Dict[str, List[str]] = {}
-    as_text: Dict[str, List[Dict]] = {}
-    as_stamp: List[str] = []
-    absent: List[str] = []
-    for term, parent in terms:
-        if parent is not None and parent in as_field:
-            continue  # the compound already found the field; its halves add nothing
-        cols = [c for c in content if _term_matches_column(term, c)]
-        if cols:
-            as_field[term] = cols
-            continue
-        if _term_is_a_status_value(rows, term):
-            as_field[term] = [f"{STATUS} (as a recorded value)"]
-            continue
-        if parent is not None:
-            continue  # half of a compound: it matched no field, and that is not a finding
-        if any(_term_matches_column(term, c) for c in prov) or _term_matches_column(term, STATUS):
-            as_stamp.append(term)
-            continue
-        hit_rows = _term_in_text(rows, searchable, term)
-        if len(hit_rows) >= len(rows) > 2:
-            continue  # a word on every record distinguishes nothing and is not a finding
-        if hit_rows:
-            as_text[term] = hit_rows
-        else:
-            absent.append(term)
+    as_field, as_text, as_stamp, absent = _census_terms(rows, columns, question, register_label)
     if not (as_field or as_text or as_stamp or absent):
         return []
     lines = [
@@ -573,10 +623,11 @@ def _term_census_lines(rows, columns, question, register_label):
         "which part of the question the register does not reach:"
     ]
     for term, cols in list(as_field.items())[:MAX_TERMS_LISTED]:
-        lines.append(
-            f'  - "{term}": RECORDED — answer this part from {", ".join(cols[:4])}, which '
-            f'holds {", ".join(_plain(c) for c in cols[:4])}.'
-        )
+        # The register's stamp is described, not named: its internal name is not for the reader.
+        shown = [_STAMP_WORDS.get(c) or c for c in cols[:4]]
+        holds = [_STAMP_WORDS.get(c) or _plain(c) for c in cols[:4]]
+        tail = "" if holds == shown else f", which holds {', '.join(holds)}"
+        lines.append(f'  - "{term}": RECORDED — answer this part from {", ".join(shown)}{tail}.')
     if as_text:
         # The per-term instruction used to be repeated in full on every term — three terms cost
         # 1,086 characters of which 800 were the same sentence three times. Said once.
@@ -1282,6 +1333,14 @@ def register_facts(
             f"alone as though it were the total."
         )
 
+    # 2D-06: the records and values the question resolves to, worked out here (BUG-835, 811, 813).
+    try:
+        from orchestrator.services.register_projection import facts_lines
+
+        lines.extend(facts_lines(rows, question, register_label, today))
+    except Exception as exc:  # pragma: no cover - the counted facts above still stand
+        logger.warning(f"[register_facts] projection skipped: {type(exc).__name__}: {exc}")
+
     lines.extend(_elapsed_lines(rows, columns, question, today))
     lines.extend(_comparison_lines(rows, columns, question))
     # BUG-709, the twenty rows of 2026-09-17: each of these replaces a judgement the
@@ -1390,7 +1449,275 @@ def completeness_line(narration: str, missing: List[str]) -> str:
     )
 
 
+#: A sentence that ASSERTS ABSENCE. Deliberately broad — this runs against the model's OWN
+#: finished narration, not against a building fact, so a false positive only adds a true
+#: sentence rather than deleting a correct one (fails safe, unlike a rewrite).
+_ABSENCE_SENTENCE_RE = re.compile(
+    r"\b(?:do(?:es)?n?'?t|do\s+not|does\s+not)\s+(?:\w+\s+){0,2}?"
+    r"(?:record|contain|include|have|state|specify|answer|cover|track|hold|identify)\b"
+    r"|\bno\s+(?:\w+\s+){0,2}?(?:field|record|records|information|data)\b"
+    r"|\bnothing\s+(?:about|on)\s+this\s+building\s+(?:records?|holds?)\b"
+    r"|\bnone\s+of\s+(?:them|these|the\s+records)\s+contains?\b"
+    r"|\bcould\s+not\s+match\b"
+    # A denial written as a STATE rather than as a verb: "those fields are missing", "the
+    # responsibilities are currently unrecorded". Measured live 2026-09-19, where an approval
+    # answer denied the accountable role and owner in exactly these words while another answer in
+    # the same run grouped both correctly from the same register.
+    r"|\b(?:are|is|remains?|were|was)\s+(?:currently\s+|still\s+)?"
+    r"(?:unrecorded|unspecified|not\s+recorded|not\s+specified|missing|absent|blank|empty)\b"
+    r"|\bfields?\s+(?:are|is)\s+missing\b",
+    re.IGNORECASE,
+)
+
+
+def _answer_names_field(shown: str, column: str) -> bool:
+    """True when the answer already says the field, in the field's own words, in ANY order.
+
+    "Exception approved" is the field ``approved_exception`` said the other way round, and a
+    contiguous-substring test missed it: the note "exception — recorded as approved exception"
+    was appended to an answer that had just listed seven "Exception approved" bullets.
+    """
+    plain = _plain(column)
+    if plain in shown:
+        return True
+    words = [w for w in plain.split() if len(w) > 2]
+    return len(words) > 1 and all(
+        re.search(r"(?<![a-z])" + re.escape(w) + r"(?![a-z])", shown) for w in words
+    )
+
+
+def _is_a_generic_word(term: str) -> bool:
+    """A common verb is never the subject of a correction note.
+
+    Measured live 2026-09-19: "**Also recorded in this register:** *start* — recorded as started"
+    was printed under an answer about HVAC start and stop times. The register does record a start
+    time; the note claimed the WORD was the field, which reads as the system correcting itself
+    over a word every answer uses.
+    """
+    try:
+        from orchestrator.services.register_vocabulary import get_vocabulary
+
+        return term.lower() in get_vocabulary().generic_verbs
+    except Exception:  # pragma: no cover - no table, no exclusion
+        return False
+
+
+def _term_forms(term: str) -> set:
+    """The term and every question word the vocabulary says means the same ("owns" -> ownership)."""
+    forms = {term}
+    try:
+        from orchestrator.services.register_vocabulary import get_vocabulary
+
+        forms |= set(get_vocabulary().forms_of(term))
+    except Exception:  # pragma: no cover - the word itself still counts
+        pass
+    return forms
+
+
+def _paragraph_says(low: str, term: str) -> bool:
+    """Does the paragraph use this word — or a word for the same thing?
+
+    "owns" in the question and "ownership" in the narration are the same word for this purpose;
+    the exact-word test missed it and the denial went unnoticed (BUG-835).
+    """
+    if re.search(r"(?<![a-z])" + re.escape(term) + r"(?![a-z])", low):
+        return True
+    try:  # only words the vocabulary joins to the term: a stem match on every word is too wide
+        from orchestrator.services.register_vocabulary import stem
+
+        stems = {stem(t) for t in _term_forms(term) - {term}}
+        return any(stem(w) in stems for w in re.findall(r"[a-z]+", low))
+    except Exception:  # pragma: no cover
+        return False
+
+
+_NOTE_LABELS = {"recordOwner": "owner"}
+
+
+def _note_label(col: str) -> str:
+    return _NOTE_LABELS.get(col) or _plain(col)
+
+
+def _values_phrase(rows: List[Dict], cols: List[str]) -> str:
+    """The values a field holds, when there are at most three short ones across the register.
+
+    A note that names a field and not what it holds tells the reader nothing they can use:
+    "recorded as owner" was printed under a denial of the owner (BUG-835).
+    """
+    values = []
+    for col in cols:
+        for row in rows:
+            v = _value(row, col)
+            if v and v not in values:
+                values.append(v)
+    if not values or len(values) > 3 or any(len(v) > 60 for v in values):
+        return ""
+    return ": " + " / ".join(values)
+
+
+def _answer_shows_field(shown: str, column: str, rows: List[Dict]) -> bool:
+    """A field is shown when its NAME is in the answer — or, for the register's owner stamp, when
+    one of its VALUES is. ``recordOwner`` is named by any answer that mentions another register's
+    record owner, and that satisfied the old test (BUG-835)."""
+    if column in _NOTE_LABELS:
+        values = {_value(r, column).lower() for r in rows if _value(r, column)}
+        return any(v and v in shown for v in values)
+    return _answer_names_field(shown, column)
+
+
+def _split_paragraphs(text: str) -> List[str]:
+    """Blank-line-delimited blocks — the unit a reader sees as one statement.
+
+    Not sentence splitting: a denial in one prose paragraph and the table that follows it two
+    blank lines later are two different statements, and treating them as one would catch a
+    class of contradiction (BM-003's shape: denial, then a table naming what was denied) that
+    this guard deliberately does NOT claim — that is a typed-composition problem (W23), not a
+    same-block correction. Within one paragraph, sentence boundaries don't matter: a denial and
+    the field that answers it are read together whether or not a period sits between them.
+    """
+    return [p for p in re.split(r"\n\s*\n", text or "") if p.strip()]
+
+
+def false_absence_corrections(
+    narration: str,
+    rows: List[Dict],
+    columns: List[str],
+    question: str,
+    register_label: str = "",
+) -> str:
+    """A system-written correction when the narration denies a term the census FOUND (W19).
+
+    38 of 96 weird answers in the 2026-09-18 hand read denied something a register field or a
+    record's own text actually holds — "the register does not record whether a shared desk is
+    officially available" over 28 workspace rows that do; "no field ... states how the
+    consequence of a leak is minimised" printed above the isolation-point column that names it.
+    Six prompt-wording waves (`_term_census_lines`, above) asked the model not to do this and
+    measurably slowed it (23 leaks -> fewer) without stopping it, because a prompt is a request
+    and the model is free to ignore it. This is a check, run on the FINISHED narration, exactly
+    like ``completeness_line`` above: it recomputes the same census and, wherever a paragraph
+    both (a) reads as an absence claim and (b) names a term the census placed in ``as_field`` or
+    ``as_text``, it APPENDS the fact rather than editing the text — editing free text reliably
+    is the harder and riskier problem, and an appended true correction is enough for a reader to
+    act on even beside an unnecessary denial. Deliberately paragraph-scoped, not
+    narration-wide: a denial in one block and the field that answers it three blocks later
+    (BM-003's shape) is NOT caught here — that is a typed-composition problem, W23 — because
+    matching across the whole narration risks tying a denial to an unrelated field that merely
+    shares a word.
+    """
+    if not narration or not rows:
+        return ""
+    as_field, as_text, _as_stamp, _absent = _census_terms(rows, columns, question, register_label)
+    if not as_field and not as_text:
+        return ""
+    corrections: List[str] = []
+    flagged: set = set()
+    # THE NOTE FIRES ONLY WHEN THE ANSWER DOES NOT ALREADY SHOW WHAT WAS FOUND. Live, on 39
+    # unscripted answers, about half of the first version's notes repeated evidence the answer had
+    # already printed: "Where do I put batteries?" cited WCP-017 and then said "no OTHER record
+    # lists a place", and the note dutifully added "batteries — appears in WCP-017". A note that
+    # restates the answer is noise a stakeholder reads as the system arguing with itself.
+    # Non-breaking and en hyphens are folded, because the model writes "WCP‑017" and the record
+    # id is "WCP-017".
+    #
+    # Only the POSITIVE sentences count as showing it. The denial sentence names the term by
+    # construction ("no other records that identify a different collection category"), so
+    # counting it would make every note look redundant and suppress the ones that matter.
+    positive = " ".join(
+        s
+        for s in re.split(r"(?<=[.!?])\s+|\n+", narration)
+        if not _ABSENCE_SENTENCE_RE.search(re.sub(r"[*_`]+", "", s.lower()))
+    )
+    shown = positive.lower().translate({0x2011: "-", 0x2010: "-", 0x2013: "-", 0x2212: "-"})
+    for paragraph in _split_paragraphs(narration):
+        # Answers are markdown, and "does **not** contain" defeats a plain regex between
+        # "does" and "not" — strip emphasis markers before matching (same defeat noted in
+        # absence_guard.py's detect_absence_claim).
+        low = re.sub(r"[*_`]+", "", paragraph.lower())
+        if not _ABSENCE_SENTENCE_RE.search(low):
+            continue
+        for term, cols in as_field.items():
+            if term in flagged or _is_a_generic_word(term):
+                continue
+            if _paragraph_says(low, term):
+                if any(_answer_shows_field(shown, c, rows) for c in cols):
+                    continue  # the answer already names the field, in the field's own words
+                # A word that is one of the register's STATUS VALUES ("open", "overdue") is shown
+                # the moment the answer uses it outside a denial: "How many open work orders...?"
+                # listed them under "Open work orders" and was still given a note about "open".
+                is_status_value = all(str(c).startswith(STATUS) for c in cols)
+                if is_status_value and term in shown:
+                    continue
+                flagged.add(term)
+                # In the field's ordinary words, never its internal name: the first wording
+                # printed "see dependsOnLift" at a visitor — the raw-identifier leak (C3) this
+                # project's codebook names, introduced by the very guard meant to help. A status
+                # value read "recorded as record status as a recorded value"; it now says what it is.
+                if is_status_value:
+                    corrections.append(f"*{term}* — is a status this register records")
+                else:
+                    corrections.append(
+                        f"*{term}* — recorded as "
+                        f"{', '.join(_note_label(c) for c in cols[:3])}"
+                        + _values_phrase(rows, cols[:3])
+                    )
+        for term, hit_rows in as_text.items():
+            if term in flagged or _is_a_generic_word(term):
+                continue
+            if re.search(r"(?<![a-z])" + re.escape(term) + r"(?![a-z])", low):
+                # A record with no identifier is cited as "?"; "appears in ?, ?" printed under a
+                # correct lift-status answer (tail B). A note that points at nothing the reader
+                # can look up is noise, so it is not printed.
+                ids = sorted(i for i in (_ident(r) for r in hit_rows) if i != "?")
+                if not ids:
+                    continue
+                if any(i.lower() in shown for i in ids):
+                    continue  # the answer already cites a record that carries it
+                # Same rule as the status values above: a word the answer uses outside a denial
+                # has been shown. "When is the next planned maintenance?" was given a note that
+                # "planned" and "maintenance" appear in two events the answer had just tabulated.
+                if re.search(r"(?<![a-z])" + re.escape(term) + r"(?![a-z])", shown):
+                    continue
+                flagged.add(term)
+                corrections.append(f"*{term}* — appears in {', '.join(ids[:6])}")
+    if not corrections:
+        return ""
+    logger.warning(
+        f"[register_facts] narration denied {sorted(flagged)}, which the census found present "
+        f"— {len(corrections)} note(s) appended"
+    )
+    # Neutral and additive. "Correction (stated by the system, not the answer above)" was an
+    # accurate description and a poor thing to show a stakeholder: it reads as the system
+    # arguing with itself. The fact is the same either way; the reader needs the fact.
+    return "\n\n**Also recorded in this register:** " + "; ".join(corrections) + "."
+
+
 _CODE_ONLY_LINE = re.compile(r"^\s*\**\s*[A-Z]{1,8}-\d[\w.-]*(\s*,\s*[\w.-]+)*\s*\**\s*$")
+
+
+_QUERY_IRI_RE = re.compile(r"https?://\S*ontosage\S*|\bontosage:[A-Za-z]\w*", re.IGNORECASE)
+
+
+def strip_query_instructions(text: str) -> str:
+    """Remove any sentence that hands the reader a class IRI to go and query.
+
+    Measured on a held-out run: "Which assigned tasks are now at real risk of missing their
+    required completion time?" was answered "Check the WorkOrder records ... instances of
+    http://ontosage.org/capabilities#WorkOrder". That is the retrieval prompt's own working,
+    repeated to a person who cannot run it — an instruction to query the system is never an
+    answer. Returns the text without those sentences, or "" when nothing else was said.
+    """
+    if not text or not _QUERY_IRI_RE.search(text):
+        return text
+    kept: List[str] = []
+    for line in text.split("\n"):
+        if not _QUERY_IRI_RE.search(line):
+            kept.append(line)
+            continue
+        pieces = [s for s in re.split(r"(?<=[.!?])\s+", line) if not _QUERY_IRI_RE.search(s)]
+        if pieces:
+            kept.append(" ".join(pieces))
+    out = "\n".join(kept).strip()
+    return out
 
 
 def strip_leaked_code_line(text: str) -> str:

@@ -40,7 +40,7 @@ columns:
     datatype: xsd:string
     required: true
   operational_period:
-    predicate: ontosage:financialPeriod
+    predicate: ontosage:operationalPeriod
     datatype: xsd:string
     required: true
   primary_system:

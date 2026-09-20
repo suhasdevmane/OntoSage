@@ -308,7 +308,9 @@ class TestNewIntentsRouting:
             ("greeting", "response"),
             ("unknown", "response"),
             ("visualization", "visualization"),
-            ("general_knowledge", "response"),
+            # the dedicated node (Phase 13), which ends at `response`; this pinned "response" from
+            # before the node existed
+            ("general_knowledge", "general_knowledge"),
             ("analytics", "sparql"),
             ("metadata", "sparql"),
         ],

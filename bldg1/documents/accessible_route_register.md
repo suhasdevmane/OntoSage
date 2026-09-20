@@ -35,7 +35,7 @@ still have a heavy manual door on it, which is the difference between usable and
 |---|---|---|
 | Text message | 07700 900142 | 07:00–19:00, Monday–Friday |
 | Email | abacws-access@example.ac.uk | Monitored 08:00–17:00 |
-| In-person | Main Reception, Room 0.01 | 07:30–18:00 |
+| In-person | Main Reception, Room 0.01 | 09:00–16:30, Monday–Friday |
 | Intercom (text display fitted) | All controlled entrances | Continuous |
 
 A phone call is never required. The text and email routes are the official arrival contacts

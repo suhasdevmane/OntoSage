@@ -687,6 +687,29 @@ class Settings(BaseSettings):
         ),
     )
 
+    ANSWER_RELEVANCE_GATE: bool = Field(
+        default=True,
+        description=(
+            "Final check that an answer responds to the question (services/answer_relevance_gate). "
+            "A non-responsive answer from a listed lane is replaced by the honest decline. "
+            "Fails open: any error, timeout or unparsed verdict leaves the answer as it was."
+        ),
+    )
+    ANSWER_RELEVANCE_GATE_LANES: str = Field(
+        default=(
+            "sensor_data,events,automation_capability,diagnosis,compare,analytics,trend,planner,"
+            "report,deliberate,observability,discovery,floor_plan,register,asset_state,anomaly"
+        ),
+        description=(
+            "Comma list of lanes (intents) the relevance gate judges. Lanes that write state or "
+            "files are never judged, whatever this says."
+        ),
+    )
+    ANSWER_RELEVANCE_TIMEOUT_S: float = Field(
+        default=8.0,
+        description="Per-call ceiling for the relevance judge; on expiry the answer stands.",
+    )
+
     STRUCTURED_PLAN_ENABLED: bool = Field(
         default=False,
         description=(

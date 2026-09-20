@@ -142,29 +142,17 @@ def _withheld_text(reason: str, source: str, missing: List[str]) -> str:
     States what could not be established and what would change it. It never says the
     figure was wrong, because a failed check does not establish that -- and it never
     silently drops the answer, because an empty reply is indistinguishable from a crash.
+
+    THE WORDING MOVED OUT (2D-16 wave 2). This text used to print the verifier's own record at
+    the reader: *"The grounding check did not pass (grounded=False and confidence=0.20) ... What
+    the answer claimed but the data did not support: time_series_data ... Attempted via the sql
+    path."* A boolean, a score, a bus key and a lane name, none of which a facility manager can
+    act on, and "grounded=False" reads as a fault report. `reason` and `source` stay on the
+    decision, where the log and the evidence record want them; the reader gets plain words.
     """
-    lines = [
-        "**I have withheld the figures for this answer.**",
-        "",
-        f"The grounding check did not pass ({reason}), so I cannot show you numbers I am "
-        "not able to trace back to this building's data.",
-    ]
-    if missing:
-        shown = ", ".join(str(m) for m in missing[:5])
-        lines.append("")
-        lines.append(f"What the answer claimed but the data did not support: {shown}.")
-    lines += [
-        "",
-        "This is not a statement that the figures are wrong — only that the check that "
-        "would let me stand behind them did not complete.",
-        "",
-        "Asking for a narrower scope — one room, one day, one quantity — usually reaches a "
-        "path that can be verified.",
-    ]
-    if source and source != "none":
-        lines.append("")
-        lines.append(f"_Attempted via the {source} path._")
-    return "\n".join(lines)
+    from orchestrator.services.withheld_wording import withheld_text
+
+    return withheld_text(missing)
 
 
 def evaluate(

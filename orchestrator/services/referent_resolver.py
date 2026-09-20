@@ -26,7 +26,7 @@ from __future__ import annotations
 import difflib
 import re
 from dataclasses import dataclass, field
-from typing import Awaitable, Callable, List, Optional
+from typing import Awaitable, Callable, FrozenSet, Iterable, List, Optional
 
 from shared.utils import get_logger
 
@@ -37,6 +37,23 @@ SparqlExec = Callable[[str], Awaitable[dict]]
 
 # A dotted numeric location id (e.g. 5.28, 3.01, 99.99). Common Brick zone/room id shape.
 _DOTTED_ID_RE = re.compile(r"\d{1,2}\.\d{1,2}")
+
+#: English CLOSED-CLASS words: prepositions, conjunctions, pronouns, auxiliaries, wh-words and
+#: quantifiers. None of them names a place or a measured quantity in any building, yet the
+#: patterns below capture "whatever word follows" a cue: "this room IS warm", "a room FOR two",
+#: "classes ON Levels 1 and 3", "at WHAT level of VOC". Measured over the 10,339-question pool,
+#: about 3% of questions carried one of them as a bogus "place", and the gate spent two graph
+#: lookups on each. Generic English only -- no building's vocabulary appears here.
+_FUNCTION_WORDS = frozenset(
+    "a an the this that these those it its you your we our they their i me my he she his her "
+    "on at in of to from by with for into onto about over under near during without within "
+    "than as and or but if so nor either neither whether while because since until unless "
+    "what which who whom whose when where why how there here then too very not no per "
+    "is are was were be been being am do does did done can could will would shall should may "
+    "might must has have had having get gets got all any some each every both few fewer many "
+    "much more most less least other another such various several multiple different certain "
+    "specific given only just also even still yet again ever never".split()
+)
 # "zone|room|space|node|area <id>" — an explicitly location-qualified reference.
 _WORDED_REF_RE = re.compile(
     r"\b(?:zone|room|space|node|area)\s+([A-Za-z0-9][A-Za-z0-9._-]{0,23})\b",
@@ -199,6 +216,57 @@ _NON_MODIFIERS = frozenset(
         "your",
     }
 )
+#: Words that say what a place is LIKE right now, not what it is CALLED. "When is the least
+#: disruptive window for cleaning a busy corridor" and "avoid the busiest corridor" describe a
+#: corridor by its state, and the modifier group took "busy" for part of its name, so a building
+#: with corridors was told it had no "busy corridor". A name that really is "Quiet Room" still
+#: resolves as the bare head (the graph is asked for "room"), and a name is never lost by leaving
+#: one of these out: the pattern then finds no modifier and names no space at all.
+_STATE_MODIFIERS = frozenset(
+    {
+        "busy",
+        "busier",
+        "busiest",
+        "quiet",
+        "quieter",
+        "quietest",
+        "noisy",
+        "noisier",
+        "noisiest",
+        "crowded",
+        "empty",
+        "emptiest",
+        "free",
+        "available",
+        "vacant",
+        "occupied",
+        "nearest",
+        "closest",
+        "nearby",
+        "best",
+        "worst",
+        "warmest",
+        "coldest",
+        "hottest",
+        "coolest",
+        "darkest",
+        "brightest",
+        "cleanest",
+        "dirtiest",
+        "safest",
+        "largest",
+        "biggest",
+        "smallest",
+        "longest",
+        "shortest",
+        "current",
+        "usual",
+        "next",
+        "first",
+        "last",
+        "verified",
+    }
+)
 # A SPACE HEAD CARRYING A HYPHEN IS AN ADJECTIVE, NOT A PLACE (BUG-740 / C20).
 #
 # "Is today's noise a brief CORRIDOR-RELATED peak or a sustained room-level problem?"
@@ -211,7 +279,7 @@ _NON_MODIFIERS = frozenset(
 # not immediately followed by a hyphen and another word.
 _HEAD_NOT_HYPHENATED = r"\b(?!-)"
 _SPACE_RE = re.compile(
-    r"\b(?:the\s+)?(?!(?:" + "|".join(sorted(_NON_MODIFIERS)) + r")\b)"
+    r"\b(?:the\s+)?(?!(?:" + "|".join(sorted(_NON_MODIFIERS | _STATE_MODIFIERS)) + r")\b)"
     r"([a-z][a-z-]{2,19})\s+(" + "|".join(_SPACE_HEADS) + r")" + _HEAD_NOT_HYPHENATED,
     re.IGNORECASE,
 )
@@ -257,6 +325,54 @@ _OTHER_BUILDING_RE = re.compile(
 _SAFE_PHRASE_RE = re.compile(r"^[A-Za-z0-9 ._-]{1,40}$")
 
 
+#: The ontology's lay TERMS, published by the concept resolver whenever it loads the concept map.
+#: Empty until then (and in any process that never resolves a concept), which leaves the gate
+#: behaving exactly as it did without it. Whole terms, not their words: "solar radiation" is a
+#: term, and it must not make "radiation levels" a quantity the building is taken to measure.
+_CONCEPT_TERMS: FrozenSet[str] = frozenset()
+_CONCEPT_SINGLE_WORDS: FrozenSet[str] = frozenset()
+
+
+def register_concept_terms(terms: Iterable[str]) -> None:
+    """Publish the lay vocabulary to the measured-quantity check."""
+    global _CONCEPT_TERMS, _CONCEPT_SINGLE_WORDS
+    _CONCEPT_TERMS = frozenset(t.lower() for t in terms if t)
+    _CONCEPT_SINGLE_WORDS = frozenset(t for t in _CONCEPT_TERMS if t.isalpha() and len(t) >= 6)
+
+
+def _explained_by_concepts(token: str) -> bool:
+    """True if "<token> level(s)" is a lay term, or ``token`` is one (or one slip from one)."""
+    if not _CONCEPT_TERMS:
+        return False
+    if token in _CONCEPT_TERMS or any(
+        f"{token} {tail}" in _CONCEPT_TERMS for tail in ("level", "levels", "concentration")
+    ):
+        return True
+    from orchestrator.services.concept_resolver import _slip_target
+
+    return _slip_target(token, _CONCEPT_SINGLE_WORDS) is not None
+
+
+def _names_a_building(ident: str, after: str) -> bool:
+    """Is the identifier after "building"/"block"/... a NAME, not an article or a pronoun?
+
+    A single letter is an identifier ("Block C", "Building B") -- except "a" and "I". The pattern
+    is case-blind, so "how should we go about building a green roof" named a building called A
+    and "the building I can keep on my phone" a building called I, and each was declined as a site
+    this instance is not connected to. "A" needs its capital; "I" needs its capital AND nothing
+    after it but the end of the sentence, because "Building I can see" is a pronoun.
+    """
+    if len(ident) != 1 or not ident.isalpha():
+        return True
+    if ident == "a":
+        return False
+    if ident == "A":
+        return True
+    if ident.lower() == "i":
+        return ident == "I" and not after.strip(" \t").lstrip(",.;:!?)")[:1].isalnum()
+    return True
+
+
 @dataclass
 class TypedReferent:
     """A named thing the question is *about*, plus what kind of thing it is."""
@@ -275,6 +391,23 @@ class ReferentResolution:
     referent: Optional[str] = None
     suggestions: List[str] = field(default_factory=list)
     message: str = ""
+    #: What KIND of thing was looked for (a floor, a space, equipment, a measured quantity), so the
+    #: refusal can be worded as what it is. Empty for the legacy id-shaped referents.
+    kind: str = ""
+
+
+def absence_reason(resolution: "ReferentResolution") -> str:
+    """The one sentence a refused referent is reported with, worded for the KIND of thing it was.
+
+    A measured QUANTITY is not a place. Measured 2026-09-20 (tail J): "can i efficiency level of the
+    building" was answered "'efficiency' does not exist in this building" — a quantity word gated
+    and worded as an absent room. "Does not exist" is right for a space, a floor or a piece of
+    equipment; for a quantity the true statement is that the building does not measure it.
+    """
+    ref = getattr(resolution, "referent", "")
+    if getattr(resolution, "kind", "") == KIND_MEASURAND:
+        return f"'{ref}' is not something this building measures, so there is nothing to report about it"
+    return f"'{ref}' does not exist in this building, so there is nothing to report about it"
 
 
 def detect_referent(query: str, entities: Optional[List[str]] = None) -> Optional[str]:
@@ -293,14 +426,17 @@ def detect_referent(query: str, entities: Optional[List[str]] = None) -> Optiona
         if m and _SAFE_TOKEN_RE.match(m.group(0)):
             return m.group(0)
         m = _WORDED_REF_RE.search(ent)
-        if m and _SAFE_TOKEN_RE.match(m.group(1)):
+        if m and m.group(1).lower() not in _FUNCTION_WORDS and _SAFE_TOKEN_RE.match(m.group(1)):
             return m.group(1)
 
     # 2) Raw query — require an explicit location word before the id so we never trip on a
     #    threshold/value (e.g. "above 26.5 degrees" has no location word → ignored).
-    m = _WORDED_REF_RE.search(query or "")
-    if m and _SAFE_TOKEN_RE.match(m.group(1)):
-        return m.group(1)
+    #    A function word after the cue is not a name ("this room IS warm"): keep looking.
+    for m in _WORDED_REF_RE.finditer(query or ""):
+        if m.group(1).lower() in _FUNCTION_WORDS:
+            continue
+        if _SAFE_TOKEN_RE.match(m.group(1)):
+            return m.group(1)
 
     return None
 
@@ -317,9 +453,10 @@ def detect_typed_referent(query: str) -> Optional[TypedReferent]:
     # A specifically-named OTHER building is checked first: "air quality in Building
     # 47" names both a measurand and a place, and the place is what makes it
     # unanswerable — this instance is connected to one building, not 47.
-    m = _OTHER_BUILDING_RE.search(q)
-    if m:
+    for m in _OTHER_BUILDING_RE.finditer(q):
         head, ident = m.group(1).lower(), m.group(2)
+        if not _names_a_building(ident, q[m.end() :]):
+            continue
         phrase = f"{head} {ident}"
         if _SAFE_PHRASE_RE.match(phrase):
             return TypedReferent(
@@ -373,8 +510,9 @@ def detect_typed_referent(query: str) -> Optional[TypedReferent]:
                 kind=KIND_FLOOR, token=f"floor|{num}", phrase=f"floor {num}", head="floor"
             )
 
-    m = _MEASURAND_RE.search(q)
-    if m:
+    # Every "<word> level(s)" is looked at, not only the first: "classes ON Levels 1 and 3 ... and
+    # the CO2 levels" names one quantity, and the word before the first "Levels" is a preposition.
+    for m in _MEASURAND_RE.finditer(q):
         quantity = m.group(1).lower()
         if quantity not in _STOP_QUANTITIES and _SAFE_TOKEN_RE.match(quantity):
             return TypedReferent(
@@ -384,9 +522,88 @@ def detect_typed_referent(query: str) -> Optional[TypedReferent]:
     return None
 
 
-# Words that precede "level/concentration" without naming a measured quantity.
-_STOP_QUANTITIES = frozenset(
-    {"the", "a", "an", "this", "that", "high", "low", "current", "same", "acceptable", "normal"}
+# Words that precede "level/concentration" without naming a measured quantity: every function
+# word ("on Levels 1 and 3", "at what level of VOC") and the modifiers a person puts on a level
+# ("the verified levels", "an appropriate level", "a sufficient level"). Adjectives that are
+# ALSO the name of a measured quantity ("noise", "heat", "light") are deliberately not here.
+_STOP_QUANTITIES = _FUNCTION_WORDS | frozenset(
+    {
+        "high",
+        "low",
+        "current",
+        "same",
+        "acceptable",
+        "normal",
+        "appropriate",
+        "sufficient",
+        "adequate",
+        "required",
+        "necessary",
+        "relevant",
+        "verified",
+        "affected",
+        "authorised",
+        "authorized",
+        "concerning",
+        "practical",
+        "healthy",
+        "safe",
+        "unsafe",
+        "dangerous",
+        "optimal",
+        "ideal",
+        "overall",
+        "average",
+        "maximum",
+        "minimum",
+        "peak",
+        "next",
+        "previous",
+        "last",
+        "first",
+        "new",
+        "old",
+        "good",
+        "bad",
+        "better",
+        "best",
+        "worse",
+        "worst",
+        "right",
+        "wrong",
+        # size, position and period words: "wide levels", "upper levels", "daily levels"
+        "wide",
+        "broad",
+        "narrow",
+        "general",
+        "whole",
+        "entire",
+        "full",
+        "top",
+        "bottom",
+        "upper",
+        "lower",
+        "middle",
+        "large",
+        "small",
+        "big",
+        "huge",
+        "extra",
+        "extreme",
+        "particular",
+        "individual",
+        "basic",
+        "standard",
+        "typical",
+        "usual",
+        "regular",
+        "daily",
+        "weekly",
+        "monthly",
+        "hourly",
+        "yearly",
+        "annual",
+    }
 )
 
 
@@ -679,14 +896,27 @@ class ReferentResolver:
         """Validate a floor / space / equipment / measurand against the live graph."""
         if typed.head in self._BUILDING_FAMILY:
             return self._resolve_other_building(typed, namespace, building_name)
+        # A quantity the ontology's own lay vocabulary already explains ("brightness", "decibel",
+        # "pollutant") is not a referent to look for by name in the graph: the concept resolver
+        # maps it to the classes the building measures, and whether those hold data is answered
+        # honestly downstream. Declining it here said "no sensor measures pollutant" of a building
+        # with 835 air-quality sensors.
+        if typed.kind == KIND_MEASURAND and _explained_by_concepts(typed.token):
+            return ReferentResolution(status=RESOLVED, referent=typed.phrase)
         terms = typed.token.split("|")
+        # A four-letter word is a substring of far too much ("on" in "carbon"): a measured
+        # quantity that short must stand as a whole word to count as found.
+        short_quantity = (
+            typed.kind == KIND_MEASURAND and typed.token.isalpha() and len(terms[0]) <= 4
+        )
+        found = self._exists_whole_words if short_quantity else self._exists_terms
         try:
-            exists = await self._exists_terms(terms, namespace)
+            exists = await found(terms, namespace)
             # A compound referent ("west wing", "chiller 7") may fail only on the
             # modifier. If even the HEAD noun is unknown to this building, the answer
             # is a confident "we have nothing like that"; otherwise we can suggest the
             # real ones of that kind.
-            head_exists = exists or await self._exists_terms([typed.head], namespace)
+            head_exists = exists or await found([typed.head], namespace)
         except Exception as e:  # fail OPEN — never block on a degraded GraphDB
             logger.warning(f"[referent_resolver] typed existence check failed, proceeding: {e}")
             return ReferentResolution(status=SKIPPED, referent=typed.phrase)
@@ -701,6 +931,37 @@ class ReferentResolver:
             except Exception as e:
                 logger.warning(f"[referent_resolver] typed suggestion lookup failed: {e}")
 
+        # A COMPOUND WHOSE HEAD THE BUILDING HOLDS, WITH NOTHING SAME-KIND TO OFFER, IS NOT AN
+        # ABSENCE. Measured 2026-09-20 (tail G): "car parking is eligible for that building" was
+        # answered "'car parking' does not exist in this building, so there is nothing to report
+        # about it" — while the graph holds a ParkingArea (Ground Level Parking, six EV chargers).
+        # The compound failed only on its modifier ("car" is in no field beside "parking"), the
+        # head was found, and the kind-filtered suggestion query returned nothing because the
+        # amenity class sits outside the Brick roots it searches. "No suggestions" was then read as
+        # "no such thing". The gate can establish that the COMPOUND is unmatched; it cannot
+        # establish that the building lacks the KIND, so it steps aside and lets the lanes answer.
+        # A referent whose head is ALSO unknown ("swimming pool", "escalator") is untouched, and a
+        # head with same-kind suggestions still gets the "did you mean" clarification.
+        # A NUMBERED referent is never stepped aside for ("floor 42", "room 9.99"): a number is an
+        # identifier, so "the building holds floors" says nothing about whether THIS one exists —
+        # that is exactly the fabrication this gate was built to stop (BUG-189).
+        numbered = bool(re.search(r"\d", typed.phrase or ""))
+        if head_exists and not suggestions and not numbered:
+            return ReferentResolution(status=SKIPPED, referent=typed.phrase)
+
+        # AND A HEAD THAT NAMES A KIND THE BUILDING OFFERS. "car parking" DID find same-kind
+        # suggestions ("Ground Level Parking"), so it was refused with a "did you mean" instead of
+        # answered. What separates it from "west wing" (where a clarification is right, because
+        # "which wing?" is a real question) is that the building has typed something as an AMENITY
+        # of that kind (`ontosage:ParkingArea`): the graph itself says it offers this thing, and
+        # the modifier is a way of asking for it, not a different place.
+        if head_exists and not exists and not numbered:
+            try:
+                if await self._holds_amenity_kind(typed.head, namespace):
+                    return ReferentResolution(status=SKIPPED, referent=typed.phrase)
+            except Exception as e:
+                logger.warning(f"[referent_resolver] amenity-kind check failed, refusing: {e}")
+
         return ReferentResolution(
             status=NOT_FOUND,
             referent=typed.phrase,
@@ -708,7 +969,35 @@ class ReferentResolver:
             message=self._typed_clarification(
                 typed, suggestions, building_name, for_admin=for_admin
             ),
+            kind=typed.kind,
         )
+
+    async def _holds_amenity_kind(self, head: str, namespace: str) -> bool:
+        """True when some instance is typed with an ontosage class whose name says ``head``.
+
+        The class is matched as a WHOLE WORD of its CamelCase name ("ParkingArea" holds "parking";
+        "carpool" does not hold "pool"), and only ontosage classes count — the building-authored
+        amenity and record classes, not Brick's sensor vocabulary, so "carbon" is not held by a
+        carbon-monoxide sensor.
+        """
+        word = re.sub(r"[^a-z0-9]", "", (head or "").lower())
+        if len(word) < 4:
+            return False
+        q = (
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+            "PREFIX o: <http://ontosage.org/capabilities#>\n"
+            "SELECT ?s WHERE {\n"
+            "  ?s a ?cls .\n"
+            f'  FILTER(STRSTARTS(STR(?s), "{namespace}"))\n'
+            '  FILTER(STRSTARTS(STR(?cls), "http://ontosage.org/capabilities#"))\n'
+            "  FILTER NOT EXISTS { VALUES ?root { o:Record o:IntervalRecord } "
+            "?cls rdfs:subClassOf+ ?root }\n"
+            '  FILTER(!REGEX(STR(?cls), "(Sensor|Meter|Detector|Point|Status)$"))\n'
+            '  BIND(LCASE(REPLACE(REPLACE(STR(?cls), "^.*#", ""), "([a-z])([A-Z])", "$1 $2")) AS ?w)\n'
+            f'  FILTER(REGEX(?w, "(^|[^a-z0-9]){word}s?([^a-z0-9]|$)"))\n'
+            "} LIMIT 1"
+        )
+        return len(_bindings(await self._exec(q))) > 0
 
     async def _exists_terms(self, terms: List[str], namespace: str) -> bool:
         """True if ONE subject in ``namespace`` matches every term.
@@ -726,12 +1015,30 @@ class ReferentResolver:
         own words are used, and both subject and type are reduced to their local
         names so the namespace host can never supply a term.
         """
+        return await self._exists_terms_query(terms, namespace, whole_word=False)
+
+    async def _exists_whole_words(self, terms: List[str], namespace: str) -> bool:
+        """Like ``_exists_terms`` but each term must stand as a WHOLE word in the field.
+
+        A short quantity word is a substring of far too much: "on" is in "carbon", "co" in "co2"
+        and "colour", "no" in "noise". Used for measured quantities of four letters or fewer, where
+        a substring hit says nothing about whether the building measures the thing named.
+        """
+        return await self._exists_terms_query(terms, namespace, whole_word=True)
+
+    async def _exists_terms_query(self, terms: List[str], namespace: str, whole_word: bool) -> bool:
+        """The one query behind both existence tests; ``whole_word`` swaps CONTAINS for a word match."""
         cleaned = [t.lower().strip() for t in terms if t and t.strip()]
         if not cleaned:
             return True
 
+        def _holds(field: str, t: str) -> str:
+            if whole_word and t.isalnum():
+                return f'REGEX({field}, "(^|[^a-z0-9]){t}([^a-z0-9]|$)")'
+            return f'CONTAINS({field}, "{t}")'
+
         def _field_holds_all(field: str) -> str:
-            return "(" + " && ".join(f'CONTAINS({field}, "{t}")' for t in cleaned) + ")"
+            return "(" + " && ".join(_holds(field, t) for t in cleaned) + ")"
 
         # Anchor on ``?s a ?cls`` rather than ``?s ?p ?o``: every entity carries a
         # type, so this visits each entity ONCE instead of once per triple — the
