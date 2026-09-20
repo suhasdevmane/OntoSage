@@ -133,10 +133,16 @@ def test_external_action_email_routes_to_control():
     assert "actuation_control" in applied
 
 
-def test_maintenance_schedule_phrase_routes_to_maintenance():
+def test_maintenance_schedule_phrase_leaves_metadata_by_the_schedule_rule():
+    """The schedule rule still fires and still takes the question off a bare `metadata` label.
+
+    Where it ENDS changed on 2026-09-19: the register lane reads the service schedules and the
+    work orders, and the maintenance route (now the report-intake node) answers from tickets —
+    see test_scheduled_maintenance_questions_reach_the_register_that_holds_the_schedule. This test
+    keeps watch on the rule; that one keeps watch on the destination."""
     n, applied = _apply("What maintenance is scheduled this week?", intent="metadata")
-    assert n["intent"] == "maintenance"
     assert "maintenance_schedule" in applied
+    assert n["intent"] == "metadata"  # handed on by the register rule, which runs later
 
 
 def test_report_statement_beats_capability():
@@ -251,6 +257,10 @@ def test_precedence_order_is_pinned():
         # V5-T42: absolute privacy denials fire next, from any intent —
         # before clarification can ask "which professor?".
         "inference_privacy_denial",
+        # Wave 6: right after the pinned opening rules, so every later rule sees a report/planner
+        # label that was really a question. It sat FIRST for one build and displaced the two
+        # rules that are pinned to be first (provenance, scenario boundary), which is why it moved.
+        "report_or_planner_needs_its_shape",
         "compare_two_referents",
         "sensor_trend_not_compliance",
         "vague_complaint_clarify",
@@ -276,6 +286,9 @@ def test_precedence_order_is_pinned():
         "forecast_skill_to_observability",
         "forecast_to_trend",
         "actuation_control",
+        # Wave 7: a WISH ("it would be nice if the system ...") is a suggestion, not a command.
+        "environment_change_request",
+        "wish_is_a_suggestion",
         "maintenance_schedule",
         "report_intake_statement",
         # Directly after the intake statement rule, and for the same reason they
@@ -296,6 +309,10 @@ def test_precedence_order_is_pinned():
         "alarm_history_is_a_record",
         "standing_alert_request",
         "automation_capability_question",
+        # Wave 5: an automation/alert LABEL must be backed by an automate/alert/notify shape.
+        # Wave 8: what can I automate -> automation_capability, before the shape check.
+        "what_can_i_automate",
+        "automation_needs_a_shape",
         # V4 ARBITER: appended LAST so every earlier claim (reports, control,
         # floor_plan, data promotions) wins before deliberation is considered.
         "constraint_recommendation",
@@ -305,9 +322,24 @@ def test_precedence_order_is_pinned():
         # TODO-629: the same question without a space noun in it — "is it stuffy
         # anywhere?" — which fell to a lane that reads 274 sensors and gives up.
         "existential_comfort_is_deliberate",
+        # 2026-09-19: "is the temperature the same across the space?" asks for a SPREAD. Asked as a
+        # reading it reached every temperature sensor and was refused as too wide; the per-floor
+        # comparison answers it. Beside the deliberate rules because it is the same kind of
+        # correction: the question's shape, not its nouns, says which lane can answer.
+        "uniformity_is_a_comparison",
+        # BUG-828 (B12): "when is the atrium busiest?" asks for a TIME. It corrects the label
+        # the three deliberate rules above just put on it (last-wins), so it sits directly after
+        # them and claims only from `deliberate`.
+        "time_pattern_is_not_a_ranking",
         # V5-T24: pure event-store questions (bookings/tickets/footfall); sits
         # below the deliberate rules so comfort+availability stays deliberate.
         "event_store_query",
+        # 2026-09-19: the classifier sent "How many work orders are open?" and "Which teaching
+        # sessions are scheduled in Room 1.06?" straight to the events lane, which answered from
+        # generated rows and, for the timetable, claimed the building keeps no such record. The
+        # register that holds their ids answers both. It sits AFTER the events rule because every
+        # rule runs and each sets the intent: the last one to claim the question wins.
+        "register_owns_work_orders_and_timetable",
         # C19: a compliance question with no measurand, no space and no named standard
         # has nothing to check, and the lane's own template said so by asking for a zone
         # — to a question about whether two sets of documents agree. It sits DIRECTLY
@@ -323,6 +355,11 @@ def test_precedence_order_is_pinned():
         # recognises, and whichever claims a question first should be the lane whose
         # data can actually answer it.
         "asset_state_query",
+        # 2026-09-19: "when was the lift last serviced?" and "which maintenance tasks are
+        # overdue?" are questions about DATED RECORDS the building holds. They reached prose, a
+        # ticket list or the maintenance intake. After compliance_register and asset_state_query
+        # (it takes nothing from the intents they produce), before why_diagnosis.
+        "maintenance_record_is_a_register_question",
         # V5-T20: comfort why-questions; last so every earlier claim wins.
         "why_diagnosis",
         # V5-T27: route / nearest-facility questions → the spatial route finder.
@@ -366,8 +403,35 @@ def test_precedence_order_is_pinned():
         # register lanes that answer a third of them, so any rule after it would take them
         # back. The AV register legitimately matches "ready" and dates nothing.
         "readiness_check",
+        # Wave 7: provenance / verification / permission / "is an assessment required" questions
+        # are documents questions; after the register lanes, so it takes only what they left.
+        "governance_question_never_reads_data",
+        # The scope rules are last for the opposite reason: they claim only shapes that no data
+        # lane has claimed for a reason of its own (owner policy 2026-09-19), so nothing before
+        # them can be undone and a data question is never taken from the lane that can read it.
+        # SERIOUS, 2026-09-19: "if the building are safe or not" FILED a high-priority ticket
+        # (REP-051956). A hedged message that states no fault, hazard or place is a clarification.
+        "a_report_needs_a_statement",
+        # SAFETY, 2026-09-19: "what should I do if the fire alarm goes off?" was answered with the
+        # asset register's panel record (FSA-001). Late enough to survive every register rule.
+        "proactive_or_procedure_is_capability",
+        "place_vs_comparable_places_needs_a_place",
+        "emergency_action_is_a_procedure",
+        "general_guidance_question",
+        # AFTER guidance and before scope, and the order IS the decision: every rule in a stage
+        # runs and the last one wins, so a question that is both a knowledge question and a
+        # register/standard one ends at the register — the owner's order (register reach, then
+        # design standard, then guidance), 2026-09-19.
+        "ungrounded_question_never_fetches",
+        "scope_boundary",
     ]
-    assert [r.name for r in rc.POST_STAGE_RULES] == ["data_query_promotion"]
+    assert [r.name for r in rc.POST_STAGE_RULES] == [
+        "data_query_promotion",
+        # 2026-09-18: after promotion, which never touches an asset_state intent. "Is the heat
+        # pump running?" reached a lane that knows lifts, AV and network, and was refused with
+        # "I couldn't tell which asset you meant" — for a building with one heat pump.
+        "asset_state_without_a_family",
+    ]
 
 
 def test_contract_is_building_agnostic():
@@ -439,9 +503,6 @@ def test_non_inventory_questions_are_not_rerouted(query, intent):
 @pytest.mark.parametrize(
     "query",
     [
-        "When was chiller 7 last serviced?",
-        "when was the AHU last inspected?",
-        "what date was the lift last maintained?",
         "show me the service history for the boiler",
         "when was equipment last checked?",
     ],
@@ -458,6 +519,24 @@ def test_a_past_maintenance_question_does_not_file_a_ticket(query):
 @pytest.mark.parametrize(
     "query",
     [
+        "When was chiller 7 last serviced?",
+        "when was the AHU last inspected?",
+        "what date was the lift last maintained?",
+    ],
+)
+def test_a_last_serviced_question_still_files_no_ticket_and_now_reaches_the_register_lane(query):
+    """The same three questions used to stop at the capability chain, which searched prose. The
+    building holds them as DATED RECORDS (a work-order log, an asset engineering register), so
+    since 2026-09-19 they continue to the register lane (`metadata`). What did not change: they
+    are first freed from the maintenance intake, which would have filed a ticket."""
+    n, applied = _apply(query, intent="maintenance")
+    assert n["intent"] == "metadata"
+    assert applied[:2] == ["history_question_not_report", "maintenance_record_is_a_register_question"]
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
         "The lift is broken and trapped someone",
         "There is a water leak on floor 2",
         "the toilet is leaking",
@@ -469,11 +548,22 @@ def test_a_genuine_report_is_still_filed(query):
     assert "history_question_not_report" not in applied
 
 
-def test_scheduled_maintenance_questions_keep_their_own_route():
-    """'what maintenance is scheduled this week?' is about the FUTURE — the
-    maintenance node answers it and must not be diverted."""
-    n, _ = _apply("What maintenance is scheduled this week?", intent="metadata")
-    assert n["intent"] == "maintenance"
+def test_scheduled_maintenance_questions_reach_the_register_that_holds_the_schedule():
+    """'what maintenance is scheduled this week?' is answered from the RECORDS, not from tickets.
+
+    This pinned `maintenance` from when that lane was the only candidate. It is now an alias of the
+    report-intake node, whose LIST branch reads `maintenance_tickets` and replies "No open
+    maintenance tickets for this building" — a confident nothing, for a building holding 25 service
+    schedules and 24 work orders with planned dates. Live on 2026-09-19 the sibling question "are
+    there any maintenance task scheduled for today?" reached the events lane, which has no kind for
+    a schedule, and answered "this building doesn't keep a record of that".
+
+    The register lane (`metadata`) reads those records. The intake route is untouched for what it
+    owns: a STATEMENT still files a ticket (see test_a_genuine_report_is_still_filed).
+    """
+    n, applied = _apply("What maintenance is scheduled this week?", intent="metadata")
+    assert n["intent"] == "metadata"
+    assert "maintenance_record_is_a_register_question" in applied
 
 
 # ── V5-T26: compliance-register lane ─────────────────────────────────────────
@@ -502,8 +592,9 @@ def test_register_questions_reach_the_register_lane(query, intent):
         ("Any overdue tickets?", "maintenance", "events"),
         # sensor-standards checks keep the legacy compliance intent
         ("Is CO2 within safe limits?", "compliance", "compliance"),
-        # generic equipment service-history keeps the capability chain
-        ("When was chiller 7 last serviced?", "maintenance", "capability"),
+        # generic equipment service-history is a DATED RECORD: the register lane (`metadata`),
+        # not the compliance register and no longer the capability chain (2026-09-19)
+        ("When was chiller 7 last serviced?", "maintenance", "metadata"),
         # a fault STATEMENT still files a report
         ("The fire door on floor 2 is broken", "maintenance", "maintenance"),
     ],

@@ -68,7 +68,7 @@ def test_recurrence_is_answerable_without_an_events_adapter():
     from orchestrator.services.event_query_service import EventQueryService
 
     source = inspect.getsource(EventQueryService.answer)
-    assert 'kind != "recurrence"' in source
+    assert 'kind not in ("recurrence", "report_activity")' in source
 
 
 @pytest.mark.parametrize(

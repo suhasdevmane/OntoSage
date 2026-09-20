@@ -117,6 +117,15 @@ def rows_per_uuid_for(query: str) -> int:
     )
 
 
+def over_fetch_budget(n_uuids: int, rows_per_uuid: int) -> bool:
+    """True when reading this many sensors row by row would break the lane's budget.
+
+    One definition, used by the refusal and by the aggregate lane that answers in the store
+    instead (2D-10), so the two can never disagree about which questions are "too broad".
+    """
+    return n_uuids > MAX_FETCH_UUIDS or n_uuids * rows_per_uuid > MAX_FETCH_ROWS
+
+
 #: Bare period words that neither regex above carries. Kept as a set rather than folded into
 #: `_PERIOD_RE` because these are substring tests on purpose ("hour" inside "hourly").
 _PERIOD_WORDS = frozenset(
@@ -349,6 +358,60 @@ class SQLAgent:
             out.append(merged)
         return out
 
+    async def _try_aggregate_lane(
+        self,
+        uuids: List[str],
+        user_query: str,
+        storage_map: Optional[Dict[str, str]],
+        start_date: Optional[str],
+        end_date: Optional[str],
+        sensor_metadata: Optional[Dict[str, Dict[str, str]]],
+        max_resolution_s: Optional[float] = None,
+        aggregate_across_sensors: bool = False,
+    ) -> Optional[Dict[str, Any]]:
+        """The store's own aggregates for a per-floor / whole-building question, else None.
+
+        Never costs a turn: any failure is logged and the lane carries on as it did. A store the
+        registry has no adapter for is not borrowed from the default one, which reads a narrow
+        store's uuid as a column name. The policy decision's two limits ride along: a reader held
+        to a coarser resolution, or to building-wide aggregates, is not handed finer detail.
+        """
+        try:
+            from orchestrator.services import aggregate_lane
+            from orchestrator.services.deliberation.live import sparql_exec
+
+            answer = await aggregate_lane.try_answer(
+                question=user_query,
+                uuids=list(uuids),
+                storage_map=storage_map,
+                metadata=sensor_metadata,
+                start_date=start_date,
+                end_date=end_date,
+                budget_hit=over_fetch_budget(len(uuids), rows_per_uuid_for(user_query)),
+                tz_name=settings.BUILDING_TIMEZONE,
+                adapter_for=lambda uri: adapter_registry._adapters.get(
+                    adapter_registry._resolve_storage_key(uri or "")
+                ),
+                store_key=adapter_registry._resolve_storage_key,
+                sparql_exec=sparql_exec,
+                resolution_clamp_s=max_resolution_s,
+                aggregate_only=aggregate_across_sensors,
+            )
+            # SAY WHICH WORDS WERE NOT HONOURED (2026-09-19). "Which COMMISSIONED CO2-monitored
+            # zones show sustained elevated CO2 during an APPROVED occupied period?" is computable
+            # as an exceedance, and no series records commissioning or approval. The figures are
+            # given, and one sentence says what the records could not narrow by.
+            if answer and answer.get("formatted_response"):
+                from orchestrator.services.unrecorded_qualifiers import caveat
+
+                note = caveat(user_query, "every zone with readings in the window")
+                if note and note not in answer["formatted_response"]:
+                    answer["formatted_response"] += f"\n\n{note}"
+            return answer
+        except Exception as exc:  # the aggregate lane is an addition; it must not break the read
+            logger.warning(f"[sql] aggregate lane skipped: {exc}", exc_info=True)
+            return None
+
     async def fetch_data_for_uuids(
         self,
         uuids: List[str],
@@ -394,6 +457,15 @@ class SQLAgent:
             logger.info(f"User Query: {user_query}")
             logger.info(f"UUIDs to fetch: {len(uuids)}")
 
+            # A whole-building or per-floor aggregate is answered by the store itself, BEFORE the
+            # breadth refusal below (2D-10, BUG-808/814). Returns None to leave everything as it was.
+            _agg = await self._try_aggregate_lane(
+                uuids, user_query, storage_map, start_date, end_date, sensor_metadata,
+                max_resolution_s, aggregate_across_sensors,
+            )
+            if _agg is not None:
+                return _agg
+
             # Too many sensors to read inside one request (V7-T24).
             #
             # Measured 2026-08-31: "show me live setpoints versus measured temperature for
@@ -406,25 +478,32 @@ class SQLAgent:
             # Declining names the narrowing. Truncating would answer over an unnamed subset
             # of the building, which is the failure this project guards hardest against.
             _rows_per_uuid = rows_per_uuid_for(user_query)
-            if len(uuids) > MAX_FETCH_UUIDS or len(uuids) * _rows_per_uuid > MAX_FETCH_ROWS:
-                # THE ADVICE HAS TO BE TRUE OF THIS SYSTEM. The narrowing offered here used
-                # to be a single modality per question; four questions in the 2026-09-17
-                # stakeholder read were turned away by it, each inherently about several
-                # measurements at once. The comparison lane weighs several together across
-                # the whole building. The budget is real; that narrowing was not.
-                msg = (
-                    f"That question reaches **{len(uuids)} sensors** — more than I can read "
-                    "row by row and summarise in one request without either timing out or "
-                    "quietly answering from a fraction of them.\n\n"
-                    "Two ways round it:\n"
-                    "- **Ask it as a comparison.** Put as *which place is best for…* — "
-                    "naming everything that matters to you — I weigh those measurements "
-                    "against each other across the building and rank the spaces, without "
-                    "reading every reading.\n"
-                    "- **Narrow the read.** One floor, one room, or a shorter period, and "
-                    "I'll give you the values themselves.\n\n"
-                    "I would rather say this than report a figure without telling you which "
-                    "part of the building it came from."
+            if over_fetch_budget(len(uuids), _rows_per_uuid):
+                # ONE PLAIN SENTENCE, IN THE READER'S OWN WORDS (wave 2).
+                #
+                # This used to describe the mechanism: "more than I can read row by row and
+                # summarise in one request without either timing out or quietly answering from a
+                # fraction of them", two bullets, and a paragraph justifying itself. Measured in
+                # the stakeholder reads, it reached people who had asked a KNOWLEDGE question and
+                # read, to everyone, as a wall of jargon about the system's internals.
+                #
+                # The budget is unchanged and so is the refusal. What the reader gets is what was
+                # asked, and the two cheapest questions that do have an answer, built from their
+                # own quantity and period so they can be asked as they stand.
+                #
+                # Imported here, not at the top: this module is reached through the package's
+                # `__init__`, and a module-level import of another service re-enters a
+                # half-initialised `orchestrator` package (the whole test suite fails to collect
+                # with `KeyError: 'orchestrator'`, which names nothing useful).
+                from orchestrator.services.too_broad_reply import too_broad_reply
+
+                msg = too_broad_reply(
+                    user_query,
+                    len(uuids),
+                    [
+                        str((m or {}).get("label") or "")
+                        for m in (sensor_metadata or {}).values()
+                    ],
                 )
                 logger.info(f"[sql] declining as too broad: {len(uuids)} > {MAX_FETCH_UUIDS}")
                 return {

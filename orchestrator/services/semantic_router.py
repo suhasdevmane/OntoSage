@@ -490,6 +490,16 @@ _REPORT_FAULT_PHRASES: FrozenSet[str] = frozenset(
         "flickering",
         "is stuck",
         "is jammed",
+        # A bin is a fault when it is overflowing or overdue for emptying (tail L, 2026-09-20: "the
+        # waste bin of the cafe is overflowing. can you fix this pronto?" was answered by the waste
+        # REGISTER — 'cannot answer this' — and nothing was filed).
+        "is overflowing",
+        "are overflowing",
+        "overflowing",
+        "needs emptying",
+        "needs to be emptied",
+        "not been emptied",
+        "hasn't been emptied",
         "no hot water",
         "broken light",
         "light is out",
@@ -984,6 +994,19 @@ class SemanticRouter:
             return None
         q = query.lower().strip()
         is_question = q.endswith("?") or q.startswith(_REPORT_QUESTION_STARTS)
+
+        # A DECLARATIVE FAULT WITH A REQUEST ATTACHED IS A REPORT (tail L, 2026-09-20): "the waste bin
+        # of the cafe is overflowing. can you fix this pronto?" ends in "?", so the whole message was
+        # read as a question and nothing was filed. When an earlier sentence is a plain statement that
+        # itself names a fault, judge the message on that statement. A message that OPENS with a
+        # question ("is the lift broken? it seems so") is unchanged, and so is a lone question.
+        if is_question and not q.startswith(_REPORT_QUESTION_STARTS):
+            sentences = [s.strip() for s in _re.split(r"(?<=[.!])\s+", q) if s.strip()]
+            lead = " ".join(s for s in sentences[:-1] if not s.endswith("?"))
+            if len(sentences) > 1 and lead and any(
+                p in lead for p in (_REPORT_FAULT_PHRASES | _REPORT_SAFETY_PHRASES)
+            ):
+                q, is_question = lead, False
 
         # Suggestions / feedback read as statements even when phrased politely.
         if any(p in q for p in _REPORT_SUGGESTION_PHRASES):

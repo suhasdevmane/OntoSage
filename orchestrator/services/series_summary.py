@@ -18,6 +18,7 @@ literal, no sensor uuid in the text.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime
 from statistics import mean
 from typing import Any, Dict, Iterable, List, Optional, Tuple
@@ -177,6 +178,168 @@ def summarise_series(
     return "\n".join(lines), has_energy
 
 
+#: A question that asks for a TOTAL over a period ("how much electricity did we use yesterday",
+#: "the total energy use last month"). Matched on the question, never on the data.
+_TOTAL_RE = re.compile(
+    r"\b(?:how\s+much|total|in\s+total|altogether|consum\w*|"
+    r"(?:did|do|does|have|has)\s+(?:we|you|it|the\s+building)\s+us(?:e|ed))\b",
+    re.IGNORECASE,
+)
+#: Words that make it a different question: those have their own templates and lanes.
+_NOT_A_TOTAL_RE = re.compile(
+    r"\b(?:average|mean|avg|highest|lowest|peak|maximum|minimum|max|min|current|latest|now|"
+    r"recent|compare[ds]?|versus|vs|trend|forecast|predict\w*)\b",
+    re.IGNORECASE,
+)
+
+
+def asks_for_a_total(question: str) -> bool:
+    """True when the answer is a SUM over the period, not a latest, average or extreme."""
+    q = question or ""
+    return bool(_TOTAL_RE.search(q)) and not _NOT_A_TOTAL_RE.search(q)
+
+
+def summarise_energy_totals(
+    rows: Iterable[Any],
+    metadata: Optional[Dict[str, Dict[str, Any]]] = None,
+    max_series: int = 8,
+) -> Optional[str]:
+    """The TOTAL of energy series over the fetched window, computed here, not narrated.
+
+    2026-09-18, unscripted: *"How much electricity did the building use yesterday?"* fetched the
+    right six meters and the right local day (144 readings), then took the analytics lane's default
+    stats template — there is no total template; the keywords "current/latest/now" pick one and this
+    question has none — which prints the latest reading per series. The narrator then reported the
+    sum of the six LATEST readings as "17.08 kWh yesterday". A wrong figure, stated with confidence,
+    which is worse than the "no data" it replaced.
+
+    An energy reading is the energy of its own interval, so a total is the SUM of readings and the
+    latest reading is not a total. Returns None unless every series is an energy series in units
+    that may be summed together (`units.aggregation_decision`), so a power (kW) series or a mixed
+    set is never added up.
+    """
+    from orchestrator.services.units import _KIND, aggregation_decision, normalise
+
+    metadata = metadata or {}
+    per: Dict[str, List[Tuple[Optional[datetime], float]]] = {}
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        key = str(row.get("uuid") or row.get("sensor") or row.get("sensor_uuid") or "")
+        if not key:
+            continue
+        try:
+            value = float(row.get("value"))
+        except (TypeError, ValueError):
+            continue
+        ts = _parse_ts(row.get("timestamp") or row.get("datetime") or row.get("time"))
+        per.setdefault(key, []).append((ts, value))
+    if not per:
+        return None
+    if not all(_is_energy(metadata.get(k) or {}) for k in per):
+        return None
+    decision = aggregation_decision({str((metadata.get(k) or {}).get("unit") or "") for k in per})
+    if not decision.ok or _KIND.get(normalise(decision.target)) != "energy":
+        return None
+    unit = decision.target
+
+    def _label(k: str) -> str:
+        return str((metadata.get(k) or {}).get("label") or "unlabelled series")
+
+    values = [v for pts in per.values() for _, v in pts]
+    stamps = sorted(t for pts in per.values() for t, _ in pts if t is not None)
+    span = f", {stamps[0]:%d %b %H:%M} to {stamps[-1]:%d %b %H:%M} store time" if stamps else ""
+    lines = [
+        f"Total over the period, computed from the readings fetched (quote it; do not recompute it "
+        f"and never use a latest reading as a total): {_fmt(sum(values))} {unit} across "
+        f"{len(per)} series ({len(values)} readings{span}).",
+    ]
+    for key in sorted(per, key=_label)[:max_series]:
+        vals = [v for _, v in per[key]]
+        lines.append(f"- {_label(key)}: {_fmt(sum(vals))} {unit} ({len(vals)} readings)")
+    if len(per) > max_series:
+        lines.append(f"- …and {len(per) - max_series} more series not shown")
+    lines.append(
+        "Each reading is the energy of its own interval, so a total is the SUM of the readings."
+    )
+    if stamps:
+        # "What was the total energy use last month?" was answered "5,531 kWh for the period" from
+        # about eleven days of readings, and the reader took it for a month. A total means nothing
+        # without the span it covers, and a span shorter than the one asked about must be said.
+        lines.append(
+            "State in your answer the period these readings actually cover (the dates above). If "
+            "it is shorter than the period the question asked about, say so plainly, and do not "
+            "describe the total as covering more than it does."
+        )
+    return "\n".join(lines)
+
+
+def summarise_latest_overview(
+    rows: Iterable[Any],
+    metadata: Optional[Dict[str, Dict[str, Any]]] = None,
+    top_n: int = 5,
+) -> Optional[str]:
+    """An overview of the LATEST reading from each of many series, computed here, not narrated.
+
+    2026-09-18, unscripted: *"How busy is the building right now?"* fetched 250 occupancy streams
+    and built a 64,436-character narration prompt for a model with a 16,384-token context. Ollama
+    drops from the FRONT when a prompt overflows, so the model saw only the tail — the last two
+    rules and "Response:" — and answered with the ticket id in rule 9 (`**BUG-606**`), then, with
+    that stripped, "I'm ready to help". The data was fine and the analytics had run; the question
+    never reached the model. `summarise_groups` (BUG-537) solves the same size problem for series
+    that span floors and declines when they carry no floor, which is exactly this case.
+
+    Returns None for fewer than two series. Never sums: a room sensor and a floor sensor can
+    both be in the set, so a total would count the same people twice; the overview reports the
+    spread and names the extremes, which is what "how busy" needs.
+    """
+    metadata = metadata or {}
+    latest: Dict[str, Tuple[Optional[datetime], float]] = {}
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        key = str(row.get("uuid") or row.get("sensor") or row.get("sensor_uuid") or "")
+        if not key:
+            continue
+        try:
+            value = float(row.get("value"))
+        except (TypeError, ValueError):
+            continue
+        ts = _parse_ts(row.get("timestamp") or row.get("datetime") or row.get("time"))
+        held = latest.get(key)
+        # A newer timestamp wins; a row with no timestamp cannot be ordered, so the last one seen
+        # stands rather than being dropped.
+        if held is None:
+            latest[key] = (ts, value)
+        elif ts is None:
+            latest[key] = (held[0], value)
+        elif held[0] is None or ts >= held[0]:
+            latest[key] = (ts, value)
+    if len(latest) < 2:
+        return None
+
+    def _label(k: str) -> str:
+        return str((metadata.get(k) or {}).get("label") or "unlabelled series")
+
+    units = {str((metadata.get(k) or {}).get("unit") or "") for k in latest} - {""}
+    unit = f" {next(iter(units))}" if len(units) == 1 else ""
+    values = [v for _, v in latest.values()]
+    ranked = sorted(latest, key=lambda k: latest[k][1], reverse=True)
+    zero = sum(1 for v in values if v == 0)
+    lines = [
+        f"Overview of the latest reading from each of {len(latest)} series, computed from the "
+        "readings fetched (quote these; do not recompute them):",
+        f"- mean {_fmt(mean(values))}{unit}; range {_fmt(min(values))} to {_fmt(max(values))}{unit}; "
+        f"{zero} of {len(latest)} series read zero.",
+        "- Highest: " + "; ".join(f"{_label(k)} {_fmt(latest[k][1])}{unit}" for k in ranked[:top_n]),
+        "- Lowest: "
+        + "; ".join(f"{_label(k)} {_fmt(latest[k][1])}{unit}" for k in ranked[::-1][:top_n]),
+        "Each series is one sensor. Do not add readings from different sensors into a total: "
+        "a room and the floor it is on may both be in this set.",
+    ]
+    return "\n".join(lines)
+
+
 #: A question about how something CHANGED, or about one period against another. Matched on the
 #: question, never on the data: the same rows answer "what is the CO2 now" and "how has the CO2
 #: changed this week", and only the question says which.
@@ -247,6 +410,22 @@ def _bucket_size(span_hours: float, question: str = "") -> str:
     return "week"
 
 
+#: Hours in a whole bucket, and the smaller unit a partial one is compared in.
+_NOMINAL_HOURS = {"hour": 1.0, "day": 24.0, "week": 168.0}
+_RATE_UNIT = {"hour": ("hour", 1.0), "day": ("hour", 1.0), "week": ("day", 24.0)}
+#: A bucket whose readings span less than this share of it is still filling (or began mid-way).
+_WHOLE_COVERAGE = 0.9
+
+
+def _covered_hours(stamps: List[datetime]) -> Optional[float]:
+    """Hours of the bucket its readings actually span; None when three readings cannot say."""
+    distinct = sorted(set(stamps))
+    if len(distinct) < 3:
+        return None
+    span = (distinct[-1] - distinct[0]).total_seconds() / 3600.0
+    return span + span / (len(distinct) - 1)
+
+
 def _complete_buckets(ordered: List[str], per_bucket: Dict[str, List[float]]) -> List[str]:
     """Drop an edge bucket that is materially shorter than the rest — it is partial.
 
@@ -312,12 +491,17 @@ def summarise_periods(
     is_energy = _KIND.get(normalise(unit)) == "energy"
 
     per_bucket: Dict[str, List[float]] = {}
+    stamps_by: Dict[str, List[datetime]] = {}
     for when, _uid, value in stamped:
-        per_bucket.setdefault(_bucket_of(when, size), []).append(value)
+        key = _bucket_of(when, size)
+        per_bucket.setdefault(key, []).append(value)
+        stamps_by.setdefault(key, []).append(when)
     if len(per_bucket) < 2:
         return None
 
     ordered = sorted(per_bucket)
+    nominal = _NOMINAL_HOURS.get(size, 0.0)
+    covered = {b: _covered_hours(stamps_by[b]) for b in ordered} if nominal else {}
     # A long window is reported at its ends and its extremes, not as two hundred lines.
     shown = ordered if len(ordered) <= 14 else ordered[:6] + ordered[-6:]
     lines = [
@@ -328,9 +512,12 @@ def summarise_periods(
         values = per_bucket[key]
         stat = sum(values) if is_energy else mean(values)
         word = "total" if is_energy else "mean"
+        span = ""
+        if is_energy and covered.get(key) is not None and covered[key] < nominal * _WHOLE_COVERAGE:
+            span = f"; covers {covered[key]:.0f} of {nominal:.0f} hours, not a whole {size}"
         lines.append(
             f"- {key}: {word} {_fmt(stat)} {unit} "
-            f"({len(values)} readings, {_fmt(min(values))} to {_fmt(max(values))})"
+            f"({len(values)} readings, {_fmt(min(values))} to {_fmt(max(values))}{span})"
         )
     if len(ordered) > len(shown):
         lines.append(f"- … {len(ordered) - len(shown)} further {size}(s) omitted from this list")
@@ -343,15 +530,43 @@ def summarise_periods(
     # the measurement window as a change in the building (BUG-627).
     whole = _complete_buckets(ordered, per_bucket)
     partial = [b for b in ordered if b not in whole]
-    first, last = _stat(whole[0]), _stat(whole[-1])
+    # "This week against last week" on a Friday compares five days with seven: the newest
+    # bucket passes the count test above (5/7 of the readings) yet is still filling, and its
+    # total is smaller because it is shorter, not because the building used less. A SUM over
+    # an unfinished bucket is compared as a rate per smaller unit, and the narrator is told
+    # the bucket is in progress. A mean needs none of this: it is per reading already.
+    in_progress = [
+        b
+        for b in dict.fromkeys((whole[0], whole[-1]))
+        if covered.get(b) is not None and covered[b] < nominal * _WHOLE_COVERAGE
+    ]
+    by_rate = is_energy and bool(in_progress)
+    if by_rate:
+        rate_word, rate_hours = _RATE_UNIT[size]
+        cmp_unit = f"{unit} per {rate_word}"
+
+        def _cmp(key: str) -> float:
+            return sum(per_bucket[key]) / ((covered.get(key) or nominal) / rate_hours)
+
+    else:
+        cmp_unit = unit
+        _cmp = _stat
+    first, last = _cmp(whole[0]), _cmp(whole[-1])
     change = last - first
     direction = "up" if change > 0 else ("down" if change < 0 else "unchanged")
     pct = f" ({change / first * 100:+.1f}%)" if first else ""
     lines.append(
-        f"CHANGE ACROSS THE WINDOW: {_fmt(first)} {unit} in {whole[0]} to "
-        f"{_fmt(last)} {unit} in {whole[-1]} — {direction} by "
-        f"{_fmt(abs(change))} {unit}{pct}. This is the answer to how it changed; state it."
+        f"CHANGE ACROSS THE WINDOW: {_fmt(first)} {cmp_unit} in {whole[0]} to "
+        f"{_fmt(last)} {cmp_unit} in {whole[-1]} — {direction} by "
+        f"{_fmt(abs(change))} {cmp_unit}{pct}. This is the answer to how it changed; state it."
     )
+    if by_rate:
+        for b in in_progress:
+            lines.append(
+                f"IN PROGRESS: {b} covers only {covered[b]:.0f} of {nominal:.0f} hours, so its "
+                f"total is not a {size}'s worth. The change above is a rate per {rate_word}; do "
+                f"not compare the totals, and say that {b} is still in progress."
+            )
     if partial:
         lines.append(
             f"PARTIAL {size}(s) EXCLUDED from that comparison: {', '.join(partial)} — each holds "
@@ -359,10 +574,10 @@ def summarise_periods(
             f"it. Do not compare them with a whole {size}, and do not present their figure as a "
             f"{size}'s worth."
         )
-    hi = max(whole, key=_stat)
-    lo = min(whole, key=_stat)
+    hi = max(whole, key=_cmp)
+    lo = min(whole, key=_cmp)
     lines.append(
-        f"HIGHEST {size}: {hi} at {_fmt(_stat(hi))} {unit}. LOWEST: {lo} at "
-        f"{_fmt(_stat(lo))} {unit}."
+        f"HIGHEST {size}: {hi} at {_fmt(_cmp(hi))} {cmp_unit}. LOWEST: {lo} at "
+        f"{_fmt(_cmp(lo))} {cmp_unit}."
     )
     return "\n".join(lines)

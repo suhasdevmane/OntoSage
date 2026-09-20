@@ -48,6 +48,15 @@ _SELF_RE = re.compile(
     r"|\bwhat (?:kind|sort|type)s? of (?:questions?|things?) can i ask\b"
     r"|\bwhat are your (?:capabilities|features|abilities)\b"
     r"|\bwhat (?:questions?|else) can i ask\b"
+    # "What kind of user friendly features do you have?" — asked of the assistant, answered live
+    # as a general chatbot ("I can summarize long documents, translate text, generate ideas"),
+    # which is neither this system nor this building (2026-09-19). The pronoun is required, so
+    # "what kind of sensors does the building have?" is untouched.
+    r"|\bwhat (?:kind|sort|type)s? of\b[^?.!]{0,40}"
+    r"\b(?:features?|capabilit\w+|abilit\w+|functions?|tools?|options?|commands?)\b"
+    r"[^?.!]{0,20}\b(?:do|can|have)\s+you\b"
+    r"|\bwhat\b[^?.!]{0,30}\b(?:features?|capabilit\w+|abilit\w+|functions?)\b"
+    r"[^?.!]{0,15}\bdo you have\b"
     r"|\bintroduce yourself\b|\btell me about ontosage\b",
     re.IGNORECASE,
 )

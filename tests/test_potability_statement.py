@@ -122,6 +122,9 @@ def test_the_fields_survive_the_hop_from_amenity_to_fact():
 
     from orchestrator.services import capability_graph_resolver as cgr
 
-    src = inspect.getsource(cgr.CapabilityGraphResolver.resolve)
+    # The hop is one function (`_to_fact`) so a withheld fact and a kept one cannot disagree; the
+    # resolver must still go through it.
+    assert "_to_fact(" in inspect.getsource(cgr.CapabilityGraphResolver.resolve)
+    src = inspect.getsource(cgr._to_fact)
     for term in ("potability=", "potability_authority=", "potability_issued_on="):
         assert term in src, term

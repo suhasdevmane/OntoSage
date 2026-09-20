@@ -1,0 +1,214 @@
+# Live asks — 2026-09-18 21:25
+
+14 question(s) x 1; response cache flushed before every ask, so every run is a real first pass.
+
+| question | runs ok | min s | median s | max s |
+|---|---|---|---|---|
+| Which floor had the highest CO2 this week? | 1/1 | 25.0 | 25.0 | 25.0 |
+| Which floor has the most people in it right now? | 1/1 | 63.3 | 63.3 | 63.3 |
+| How many people are in Room 1.06 right now? | 1/1 | 37.3 | 37.3 | 37.3 |
+| Which rooms are occupied at the moment? | 1/1 | 19.8 | 19.8 | 19.8 |
+| Where are the lifts? | 1/1 | 0.5 | 0.5 | 0.5 |
+| Which rooms are computer laboratories? | 1/1 | 0.5 | 0.5 | 0.5 |
+| What was the total electricity use yesterday? | 1/1 | 50.3 | 50.3 | 50.3 |
+| What is the current temperature of the heat pump water loop? | 1/1 | 31.1 | 31.1 | 31.1 |
+| What is the CO2 level in the atrium right now? | 1/1 | 47.3 | 47.3 | 47.3 |
+| Plot CO2 in Room 1.04 for the last 24 hours. | 1/1 | 61.7 | 61.7 | 61.7 |
+| Who should I contact about a faulty light? | 1/1 | 14.0 | 14.0 | 14.0 |
+| Which maintenance tasks are overdue? | 1/1 | 37.0 | 37.0 | 37.0 |
+| How much water did floor 3 use yesterday? | 1/1 | 55.1 | 55.1 | 55.1 |
+| Describe this building. | 1/1 | 18.4 | 18.4 | 18.4 |
+
+## Answers
+
+### Which floor had the highest CO2 this week? — run 1 (25.0 s, OK)
+
+```
+That question reaches **276 sensors** — more than I can read row by row and summarise in one request without either timing out or quietly answering from a fraction of them.
+
+Two ways round it:
+- **Ask it as a comparison.** Put as *which place is best for…* — naming everything that matters to you — I weigh those measurements against each other across the building and rank the spaces, without reading every reading.
+- **Narrow the read.** One floor, one room, or a shorter period, and I'll give you the values themselves.
+
+I would rather say this than report a figure without telling you which part of the building it came from.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model`*
+```
+
+### Which floor has the most people in it right now? — run 1 (63.3 s, OK)
+
+```
+**The highest recorded occupancy is 13 persons, observed in several rooms (e.g., Room 4.16, Room 5.44, Room 4.06, Room 3.68, Room 3.48).**  
+The lowest recorded occupancy is 8 persons in the Seminar Room 1.26.  
+The spread between the highest and lowest readings is 5 persons.  
+
+The data set contains only room‑level counts; it does not provide aggregated floor totals, so we cannot identify which floor currently has the most people.  
+
+**Recommendation:** Deploy or enable floor‑level occupancy sensors to obtain a clear view of overall floor occupancy.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model` `Occupancy Sensing System` `Analytics Engine`*
+```
+
+### How many people are in Room 1.06 right now? — run 1 (37.3 s, OK)
+
+```
+_Served at 5-second resolution - this building's access policy sets the finest detail available to you for data this recent. The figures below are averages over each interval, not instantaneous readings._
+
+I'm sorry, but the most recent reading for **Room 1.06 - Computer Laboratory occupancy [persons]** isn't included in the building's data.
+
+---
+*Sources: `Building model` `Occupancy Sensing System`*
+```
+
+### Which rooms are occupied at the moment? — run 1 (19.8 s, OK)
+
+```
+I’m sorry, but the building’s records only show how many sensors are installed in each space (the “sensor_count” values). They do not contain any information about whether a room is currently occupied. If you need real‑time occupancy data, you would need to query the building’s live sensor feeds or the occupancy‑monitoring system.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model`*
+```
+
+### Where are the lifts? — run 1 (0.5 s, OK)
+
+```
+Here is what I found for **Abacws Building**:
+
+
+**Passenger Lift 1** — Passenger Lift 1, left from the front entrance, approximately 25 m from the entrance; serves floors G, 1, 2, 3, 4 and 5.. Passenger Lift 1 is located to the left of the front entrance, about 25 m in, and serves floors G, 1, 2, 3, 4 and 5. It has automatic double doors onto a lift lobby on every floor.
+
+**Passenger Lift 1** — Passenger Lift 1, left from the front entrance, approximately 25 m from the entrance; serves floors G, 1, 2, 3, 4 and 5.. Passenger Lift 1 is located to the left of the front entrance, about 25 m in, and serves floors G, 1, 2, 3, 4 and 5. It has automatic double doors onto a lift lobby on every floor.
+
+**Passenger Lift 2 / Goods Lift** — Passenger Lift 2, on the opposite side of the building from Lift 1; serves floors G, 1, 2, 3, 4 and 5 and takes goods as well as passengers.. Passenger Lift 2 is on the opposite side of the building from Lift 1 and serves floors G, 1, 2, 3, 4 and 5. It is the goods lift and is also sized for wheelchair use.
+
+
+*Answered live from the building's own records.*
+```
+
+### Which rooms are computer laboratories? — run 1 (0.5 s, OK)
+
+```
+Here is what I found for **Abacws Building**:
+
+
+**Schools And Key Facilities**. Abacws houses two Cardiff University schools: (1) School of Computer Science and Informatics; (2) School of Mathematics (including financial mathematics and statistics). Key named facilities: (1) Makerspace and IT Workshop — practical hardware/software project space; (2) Simulated Trading Room — for financial mathematics and data analytics teaching; (3) Cybersecurity Lab — dedicated teaching and research facility; (4) Computer labs — designed for group work, classes, and individual study; (5) Flexible lecture theatres and seminar rooms with innovative layouts to encourage interaction; (6) Dedicated student project work spaces; (7) Spaces open to industrial partners for student engagement. The ground-floor atrium has informal seating and is open to visitors. Industrial partner zones allow real-world project collaboration.
+
+
+*Answered live from the building's own records.*
+```
+
+### What was the total electricity use yesterday? — run 1 (50.3 s, OK)
+
+```
+**Total electricity use for the period 16 Sep 23:00 – 17 Sep 22:00 was 513 kWh.**  
+The highest consumption came from *Electrical Energy Meter — Floor 3* at 89 kWh, while the lowest was *Electrical Energy Meter — Floor 0* at 82.1 kWh, giving a spread of 6.9 kWh across the six floors.  
+All other floors fell between 81.2 kWh (*Floor 1*) and 88.2 kWh (*Floor 5*).  
+Because the period does not cover a full 24‑hour day, the figure should be interpreted as the energy used during those 23 hours.  
+
+**Recommendation:** Extend monitoring to include the missing hour (17 Sep 22:00 – 18 Sep 22:00) to obtain a complete daily consumption profile.
+
+**Boundary:** summed across 6 meters (Energy_Meter_Floor0, Energy_Meter_Floor1, Energy_Meter_Floor2, Energy_Meter_Floor3, Energy_Meter_Floor4, Energy_Meter_Floor5), covering Floor 0 (Ground Floor), Floor 1 (First Floor), Floor 2 (Second Floor), Floor 3 (Third Floor), Floor 4 (Fourth Floor), Floor 5 (Fifth Floor). The total is the sum of those boundaries — it is not a separate whole-site reading.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Energy Metering System` `Analytics Engine`*
+```
+
+### What is the current temperature of the heat pump water loop? — run 1 (31.1 s, OK)
+
+```
+_Served at 5-second resolution — this building's access policy sets the finest detail available to you for data this recent. The figures below are averages over each interval, not instantaneous readings._
+
+I’m sorry, but the building's most recent data does not include a current reading for the heat‑pump water loop (the “Heat Pump 1 — Building Heating/Cooling Plant entering water temperature” sensor). No value is available in the latest snapshot.
+
+---
+*Sources: `Building model` `Temperature Sensing System` `Live Sensor Data` `Sensor data` `Sensor data`*
+```
+
+### What is the CO2 level in the atrium right now? — run 1 (47.3 s, OK)
+
+```
+_Served at 5-second resolution — this building's access policy sets the finest detail available to you for data this recent. The figures below are averages over each interval, not instantaneous readings._
+
+The most recent reading from the CO₂ sensor that covers the atrium (the “CO2 — Floor 5” sensor) is **715 ppm** at **2026‑09‑18 21:21:55**.
+
+> **Spatial basis:** the reading is from Zone_5.01, which is not the space asked about
+
+---
+*Sources: `Building model` `Live Sensor Data` `Sensor data` `CO2 Sensing System` `Indoor Air Quality System`*
+```
+
+### Plot CO2 in Room 1.04 for the last 24 hours. — run 1 (61.7 s, OK)
+
+```
+The line chart shows 25 CO₂ readings taken from 17 Sep 21:00 to 18 Sep 21:00, ranging from a low of 734 ppm at 18 Sep 02:00 to a high of 896 ppm at 18 Sep 13:00, with an overall mean of 802 ppm. It reveals a clear diurnal pattern: nighttime averages hover around 740 ppm, while daytime averages climb to 858 ppm, indicating higher CO₂ levels during occupied hours.
+
+![Visualization](http://localhost:8080/static/viz_20260918_202337_772248.png)
+
+---
+*Sources: `Building model` `Sensor data`*
+```
+
+### Who should I contact about a faulty light? — run 1 (14.0 s, OK)
+
+```
+**Abacws Building's documents do not answer this.** I searched Fire Safety; they are the closest material and none of them contains the answer. That is a statement about the documents, not about the building — if you can name the record or the measurement this would be written down as, I will look there next.
+```
+
+### Which maintenance tasks are overdue? — run 1 (37.0 s, OK)
+
+```
+**Answer**
+
+The building’s records do not contain any information about maintenance tasks or their due dates.  
+There is no entry indicating that any maintenance task is overdue.  
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building model`*
+```
+
+### How much water did floor 3 use yesterday? — run 1 (55.1 s, OK)
+
+```
+**The sensor records water flow rate, not total volume, so the total water used yesterday cannot be determined from this data.**  
+The available data shows flow rates ranging from 16.54 L/s to 31.68 L/s, with a mean of 23.61 L/s.  
+To estimate total usage, integrate the flow rate over time or add a volume‑measuring sensor.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Water Flow Sensing System` `Analytics Engine`*
+```
+
+### Describe this building. — run 1 (18.4 s, OK)
+
+```
+Here is what **Abacws Building** states about itself:
+
+- **Purpose:** A university teaching and research building housing the School of Computer Science and Informatics and the School of Mathematics, with lecture theatres, teaching laboratories, research space and academic offices.
+- **Primary function:** Education
+- **Who uses it:** University staff, researchers and students; not a residential building.
+- **Year built:** 2021
+- **Owner:** Cardiff University
+- **Operated by:** Cardiff University Estates
+- **Designed / built by:** Cardiff University Estates, with the main contractor appointed under the campus development programme
+- **Address:** Senghennydd Road, Cathays, Cardiff
+- **Access:** An academic building rather than a public one. Staff and students have card access; visitors should arrange their visit with the school they are attending and report to reception on arrival.
+```

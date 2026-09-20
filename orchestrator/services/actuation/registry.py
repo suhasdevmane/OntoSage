@@ -67,7 +67,7 @@ class ActuationRegistry:
         try:
             import yaml
 
-            with open(yaml_path) as f:
+            with open(yaml_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f) or {}
         except Exception as exc:
             logger.warning(f"[ActuationRegistry] Could not read {yaml_path}: {exc}")

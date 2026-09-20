@@ -1,0 +1,81 @@
+# Waste contractor monthly returns -> ontosage:WasteReturn
+#
+# Ships with the ONTOLOGY, not with any building: a second building drops a document of this
+# shape and gets these triples with no code change.
+#
+# WHY THIS EXISTS
+# ---------------
+# "How much waste did we produce this month?" is one of the first questions anybody asks of a
+# building, and the waste collection point register cannot answer it: it records bins and
+# their fill percentage, which is a share of a container and not a weight. Asked on
+# 2026-09-18 the system said the quantity was not recorded and then listed bins "belonging to
+# the month" -- a marking that does not exist. The waste-management catalogue asks the same
+# thing in expert form ("which weight is valid for each reported figure", "which invoices,
+# credits, weight records and collection events disagree").
+#
+# TONNES, NOT BINS. One line per stream per month, from the contractor's return.
+#
+# A MONTH IS NOT A FIGURE UNTIL ITS RETURN IS ISSUED. The current month is held as Pending
+# with no weight. tonnes is therefore optional: a blank is the finding, and a zero would be a
+# false one.
+#
+# HOW A WEIGHT WAS OBTAINED is a column (weighing) because an estimated weight must be
+# reported as an estimate, and the building's diverted share is weighted by tonnage rather
+# than averaged across streams.
+record_type: waste_return
+class: ontosage:WasteReturn
+iri_template: "waste_return/{code}"
+label_column: name
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  month:
+    predicate: ontosage:reportingMonth
+    datatype: xsd:string
+    required: true
+  period_start:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  period_end:
+    predicate: ontosage:effectiveTo
+    datatype: xsd:date
+    required: true
+  stream:
+    predicate: ontosage:wasteStream
+    datatype: xsd:string
+    required: true
+  tonnes:
+    predicate: ontosage:wasteTonnes
+    datatype: xsd:decimal
+  diverted_pct:
+    predicate: ontosage:divertedPercent
+    datatype: xsd:decimal
+  treatment:
+    predicate: ontosage:treatmentRoute
+    datatype: xsd:string
+  weighing:
+    predicate: ontosage:weighingMethod
+    datatype: xsd:string
+  contractor:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      confirmed: ["Confirmed", "Final", "Issued"]
+      pending: ["Pending", "Not yet issued"]
+      query: ["Query", "Disputed", "Under review"]
+      provisional: ["Provisional", "Estimated"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

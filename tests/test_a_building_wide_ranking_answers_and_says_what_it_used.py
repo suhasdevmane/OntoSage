@@ -58,6 +58,37 @@ def test_air_quality_ranks_on_co2_and_pm25():
     assert all(x.direction == Direction.MINIMIZE for x in folded)
 
 
+@pytest.mark.parametrize(
+    "phrase, expected",
+    [
+        ("worst air quality", "MAXIMIZE"),
+        ("poorest air quality", "MAXIMIZE"),
+        ("the most polluted air", "MAXIMIZE"),
+        ("best air quality", "MINIMIZE"),
+        ("good air quality", "MINIMIZE"),
+        ("air quality", "MINIMIZE"),
+        ("", "MINIMIZE"),
+    ],
+)
+def test_the_bad_end_of_air_quality_is_the_high_end_of_both_pollutants(phrase, expected):
+    """BUG-823: 'Which rooms have the worst air quality right now?' returned the room with the
+    LOWEST CO2 — the best air in the building — because the fold always minimised."""
+    from orchestrator.services.deliberation import compiler as cp
+    from orchestrator.services.deliberation.cqir import Constraint, Direction, Hardness
+
+    # The model's own direction is not to be trusted either way, so vary it.
+    for model_direction in (Direction.MAXIMIZE, Direction.MINIMIZE):
+        c = Constraint(
+            modality="air_quality",
+            direction=model_direction,
+            hardness=Hardness.SOFT,
+            source_phrase=phrase,
+        )
+        folded = cp._fold_air_quality([c])
+        assert {x.modality for x in folded} == {"co2", "pm25"}
+        assert all(x.direction == Direction[expected] for x in folded), (phrase, model_direction)
+
+
 def test_a_place_to_work_excludes_restrooms_and_plant():
     """WB-17: 'coolest place to work in the building' ranked a male restroom first."""
     from types import SimpleNamespace

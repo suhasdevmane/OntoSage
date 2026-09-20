@@ -26,7 +26,8 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from functools import lru_cache
+from typing import AbstractSet, Any, Dict, FrozenSet, List, Optional, Pattern, Tuple
 
 from shared.config import settings
 from shared.utils import get_logger
@@ -142,8 +143,179 @@ def _parse_bindings(bindings: list) -> Dict[str, ConceptMatch]:
     return result
 
 
+# ── surface forms: plurals and one-letter slips ─────────────────────────────────────────────
+#
+# A lay term was matched as an EXACT whole word, so the vocabulary reached only the form the
+# mapping happened to list: "temperatures", "light levels", "the lifts" and "VOCs" reached no
+# concept while their singulars did, and a one-letter slip ("ennergy use") reached nothing. Both
+# repairs below act on the QUESTION's surface form and look ONLY at the concept vocabulary, never
+# at arbitrary text: a word is repaired only into a word some lay term already contains.
+
+
+@lru_cache(maxsize=8192)
+def _term_regex(term: str) -> Pattern[str]:
+    """Whole-word pattern for a lay term whose LAST word may also appear plural (s, es, y->ies)."""
+    body, tail = re.escape(term), ""
+    last = term[-1:]
+    if last.isalpha() and last != "s":
+        if last == "y" and len(term) >= 7 and term[-2] not in "aeiou":
+            body, tail = re.escape(term[:-1]), "(?:y|ies)"
+        else:
+            tail = "(?:e?s)?"
+    return re.compile(r"(?<![a-z])" + body + tail + r"(?![a-z])")
+
+
+#: The word that FOLLOWS a hyphen, when a lay term opens a compound.
+_COMPOUND_HEAD_RE = re.compile(r"-([a-z]+)")
+
+
+def term_names_the_subject(term: str, text: str, vocabulary: AbstractSet[str]) -> bool:
+    """True when ``term`` appears in ``text`` as a word about the thing, not as a modifier.
+
+    A HYPHENATED COMPOUND'S HEAD IS ITS LAST ELEMENT (measured live 2026-09-19). "Will clock drift,
+    time-zone settings or a DAYLIGHT-SAVING transition change any access window?" matched the lay
+    term "daylight" — the boundary check treats a hyphen as a word edge — so the question resolved
+    to an illuminance measurand and was refused as covering 269 illuminance sensors. It names no
+    quantity at all: "daylight-saving" is about time.
+
+    The head decides, and the vocabulary is the only judge of it. "temperature-humidity combination"
+    keeps its temperature concept because "humidity" is itself a concept word, so the compound is a
+    coordinate pair and the question does name the quantity; "privacy-safe", "emergency-access" and
+    "evacuation-assistance" lose theirs, because "safe", "access" and "assistance" are not
+    quantities and the first element is describing them. Same rule the record registry applies to
+    register terms (`_only_modifies`), in the other vocabulary.
+
+    A term that CLOSES a compound ("sub-meter") is the head and always matches.
+
+    ``vocabulary`` must be the set of WHOLE lay terms, not the words inside them: "saving", "safe"
+    and "efficient" all appear inside some multi-word term ("energy saving"), and taking the words
+    would have let "daylight-saving", "privacy-safe" and "energy-efficient" through.
+    """
+    pattern = _term_regex(term)
+    for match in pattern.finditer(text or ""):
+        tail = (text or "")[match.end() :]
+        head = _COMPOUND_HEAD_RE.match(tail)
+        if head is None:
+            return True  # not opening a compound at all
+        word = head.group(1)
+        if word in vocabulary or word.rstrip("s") in vocabulary:
+            return True  # a coordinate pair: both elements name something measured
+    return False
+
+
+#: Shortest word a slip is repaired in. Below it one edit reaches too many real words.
+_SLIP_MIN_LEN = 6
+#: Shortest vocabulary word in which a dropped or extra letter that is NOT a doubled one is
+#: repaired. Short words are one letter from too many other real words ("contract"/"contact",
+#: "portable"/"potable"); the long domain words a person actually misspells are not.
+_SLIP_INNER_EDIT_MIN_LEN = 8
+
+#: Real words one edit from a vocabulary word, which a repair must never touch. Each was found by
+#: running the repair over the question banks and reading what it changed; the test that pins this
+#: set re-derives the neighbours from the tracked bank, so a new one cannot slip in silently.
+_REAL_WORDS_NEAR_VOCABULARY: FrozenSet[str] = frozenset(
+    {
+        "binding",  # not "blinding"
+        "lightning",  # not "lighting"
+        "dipping",  # not "dripping"
+    }
+)
+
+
+def _one_slip_apart(a: str, b: str) -> bool:
+    """``a`` is ``b`` with ONE slip: adjacent letters swapped, a letter doubled or un-doubled, or
+    (in a long word) one letter dropped or added inside it. Never a changed letter, and never a
+    different ENDING: "measured" for "measure" is an inflection, not a slip, and a substitution
+    ("seating" for "heating") is the commonest way one real word becomes another."""
+    if a == b or abs(len(a) - len(b)) > 1 or a[:1] != b[:1]:
+        return False
+    if len(a) == len(b):
+        diffs = [i for i, (x, y) in enumerate(zip(a, b)) if x != y]
+        if len(diffs) == 2 and diffs[1] == diffs[0] + 1:
+            i, j = diffs
+            return a[i] == b[j] and a[j] == b[i]
+        return False
+    short, long_ = (a, b) if len(a) < len(b) else (b, a)
+    for i in range(len(long_)):
+        if long_[:i] + long_[i + 1 :] != short:
+            continue
+        if (i > 0 and long_[i] == long_[i - 1]) or (
+            i + 1 < len(long_) and long_[i] == long_[i + 1]
+        ):
+            return True  # a doubled letter: "ennergy", "controll"
+        # Any other extra letter counts only inside a long word, and never at or just before an
+        # inflection ending: "measured" is not a slip of "measure", "consumers" not of "consumes".
+        if i == len(long_) - 1 or (i == len(long_) - 2 and long_[-1] in "sd"):
+            return False
+        return len(b) >= _SLIP_INNER_EDIT_MIN_LEN
+    return False
+
+
+@lru_cache(maxsize=16384)
+def _slip_target(word: str, vocabulary: FrozenSet[str]) -> Optional[str]:
+    """The ONE vocabulary word ``word`` is a slip of, or ``None`` (none, or more than one)."""
+    if word in vocabulary or word in _REAL_WORDS_NEAR_VOCABULARY:
+        return None
+    for suffix in ("es", "s"):  # a plural of a vocabulary word is the term pattern's job
+        if word.endswith(suffix) and word[: -len(suffix)] in vocabulary:
+            return None
+    near = [v for v in vocabulary if _one_slip_apart(word, v)]
+    return near[0] if len(near) == 1 else None
+
+
+def whole_lay_terms(concept_map: Dict[str, Dict[str, Any]]) -> FrozenSet[str]:
+    """Every lay term, whole — the judge of a hyphen compound's head (see term_names_the_subject)."""
+    return frozenset(
+        (term or "").lower()
+        for entry in concept_map.values()
+        for term in entry.get("lay_terms", [])
+        if term
+    )
+
+
+def _vocabulary_words(concept_map: Dict[str, Dict[str, Any]]) -> FrozenSet[str]:
+    """Every word of ``_SLIP_MIN_LEN`` letters or more that some lay term contains."""
+    words = set()
+    for entry in concept_map.values():
+        for term in entry.get("lay_terms", []):
+            words.update(
+                w for w in re.findall(r"[a-z]+", (term or "").lower()) if len(w) >= _SLIP_MIN_LEN
+            )
+    return frozenset(words)
+
+
+def repair_slips(text: str, vocabulary: FrozenSet[str]) -> str:
+    """``text`` with each word that is one slip from a vocabulary word replaced by that word."""
+    if not vocabulary:
+        return text
+
+    def _fix(match: "re.Match[str]") -> str:
+        word = match.group(0)
+        return _slip_target(word, vocabulary) or word
+
+    return re.sub(r"(?<![a-z])[a-z]{%d,}(?![a-z])" % _SLIP_MIN_LEN, _fix, text)
+
+
 class ConceptResolver:
     """Resolve lay-language terms in a query to HBCO concept metadata."""
+
+    def __init__(self) -> None:
+        self._vocabulary_key: Tuple[int, int] = (0, -1)
+        self._vocabulary: FrozenSet[str] = frozenset()
+
+    def _vocabulary_of(self, concept_map: Dict[str, Dict[str, Any]]) -> FrozenSet[str]:
+        """The slip-repair vocabulary of ``concept_map``, rebuilt only when the map changes."""
+        # id() alone can repeat once a map is freed, so the term count rides along in the key.
+        key = (id(concept_map), sum(len(e.get("lay_terms", ())) for e in concept_map.values()))
+        if key != self._vocabulary_key:
+            self._vocabulary, self._vocabulary_key = _vocabulary_words(concept_map), key
+            # The referent gate must not decline a quantity the lay vocabulary explains.
+            try:
+                from orchestrator.services.referent_resolver import register_concept_terms
+            except (ImportError, KeyError):  # the offline reach loader has no package to import from
+                return self._vocabulary
+            register_concept_terms(t for e in concept_map.values() for t in e.get("lay_terms", []))
+        return self._vocabulary
 
     async def _load_concept_map(self) -> Dict[str, Dict[str, Any]]:
         """Fetch full concept map from Redis cache or GraphDB. Returns {concept_uri: entry}."""
@@ -210,6 +382,8 @@ class ConceptResolver:
         concept_map = await self._load_concept_map()
         if not concept_map:
             return []
+        normalized = repair_slips(normalized, self._vocabulary_of(concept_map))
+        vocabulary = whole_lay_terms(concept_map)
 
         matches: List[ConceptMatch] = []
         for entry in concept_map.values():
@@ -224,9 +398,11 @@ class ConceptResolver:
             for lay_term in entry.get("lay_terms", []):
                 if not lay_term:
                     continue
-                # Whole-word boundary check to avoid 'hot' matching 'shot'
-                pattern = r"(?<![a-z])" + re.escape(lay_term) + r"(?![a-z])"
-                if re.search(pattern, normalized) and (best is None or len(lay_term) > len(best)):
+                # Whole-word boundary check to avoid 'hot' matching 'shot'; a plural still matches,
+                # and a term that merely OPENS a hyphen compound ("daylight-saving") names nothing.
+                if term_names_the_subject(lay_term, normalized, vocabulary) and (
+                    best is None or len(lay_term) > len(best)
+                ):
                     best = lay_term
             if best is not None:
                 matches.append(

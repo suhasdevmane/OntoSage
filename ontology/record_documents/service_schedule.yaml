@@ -57,7 +57,12 @@ columns:
   statutory:
     # Whether missing it is a legal failure or an inconvenience. The two carry very
     # different consequences and a single "overdue" flag conflates them.
-    predicate: ontosage:isOptional
+    #
+    # This was lifted as ontosage:isOptional, so a STATUTORY item read as OPTIONAL and the
+    # word "statutory" matched no field. The register lane names a field by the words in its
+    # predicate, so it is now ontosage:isStatutory: "statutory" is a recorded field, and its
+    # value is true for exactly the rows the document marks true.
+    predicate: ontosage:isStatutory
     datatype: xsd:boolean
   owner:
     predicate: ontosage:recordOwner

@@ -101,3 +101,43 @@ def test_a_message_that_names_a_place_is_not_asked_where(text):
 )
 def test_a_message_naming_nowhere_is_asked(text):
     assert WorkflowOrchestrator._message_names_a_place(text) is False
+
+
+# ── BUG-822: the place a reporter names is KEPT, not just not-asked-for ──
+
+
+@pytest.mark.parametrize(
+    "text, place",
+    [
+        ("The toilet on floor 2 is leaking", "floor 2"),
+        ("The light in RM101 is broken", "RM101"),
+        ("Broken socket in room 3.15", "room 3.15"),
+        ("office 204 has a flickering light", "office 204"),
+        ("The heater in the gym is dead", "gym"),
+        ("the light on the 3rd floor is out", "floor 3"),
+    ],
+)
+def test_the_place_the_reporter_named_is_kept(text, place):
+    assert WorkflowOrchestrator._stated_place(text) == place
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["report broken light", "there is a leak", "something smells burnt", ""],
+)
+def test_no_place_is_invented_when_none_was_named(text):
+    assert WorkflowOrchestrator._stated_place(text) is None
+
+
+def test_every_message_that_is_not_asked_where_has_a_place_to_keep():
+    """The two must not drift apart: a message the ask-logic accepts as naming a place and the
+    record-keeping that stores it are one decision made twice."""
+    for text in (
+        "The light in RM101 is broken",
+        "The toilet on floor 2 is leaking",
+        "Broken socket in room 3.15",
+        "The heater in the gym is dead",
+        "office 204 has a flickering light",
+    ):
+        assert WorkflowOrchestrator._message_names_a_place(text) is True
+        assert WorkflowOrchestrator._stated_place(text), text

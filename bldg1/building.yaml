@@ -199,3 +199,9 @@ actuation:
     - urn:bldg1:VAV-501-SP         # VAV box setpoint — room 5.01
     - urn:bldg1:LIGHTING-3F-SP     # lighting scene setpoint — floor 3
     - urn:bldg1:AHU-F5-SP          # AHU supply-air temperature setpoint — floor 5
+  # point_labels: how the assistant names each point to a person (CAVEAT-817). The decline lists
+  # these, never the identifiers above, and a request may repeat one of them to name its point.
+  point_labels:
+    urn:bldg1:VAV-501-SP: "Room 5.01 VAV box setpoint"
+    urn:bldg1:LIGHTING-3F-SP: "Floor 3 lighting scene setpoint"
+    urn:bldg1:AHU-F5-SP: "Floor 5 AHU supply-air temperature setpoint"

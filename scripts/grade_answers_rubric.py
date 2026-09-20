@@ -327,7 +327,11 @@ _LANE_JARGON = [
 ]
 
 _NON_ANSWER = [
-    (r"could not put an answer together", "apology template"),
+    (
+        r"could not put an answer together|couldn'?t answer that (?:about [^.\n]{0,60})?from "
+        r"[^.\n]{0,60}records",
+        "apology template",
+    ),
     (r"\bno data was retrieved\b", "no data retrieved"),
     (r"returned no rows\b", "returned no rows"),
     (r"couldn'?t map part of your request", "refused to map part of the request"),

@@ -192,7 +192,7 @@ def _resolver(exists: bool = False):
     "query,captured",
     [
         ("This room feels stuffy even though the CO2 reading is normal.", "feels"),
-        ("Which room has the most daylight?", "has"),
+        # "has" is a function word and no longer captured (see test_the_referent_gate_...).
         ("Would a smaller approved room plausibly reduce energy use?", "plausibly"),
     ],
 )

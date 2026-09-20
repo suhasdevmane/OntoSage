@@ -48,14 +48,14 @@ separate list, because a list gets stale the moment the row is corrected.
 | CL-2026-002 | Water and wastewater | ABW-UTIL | Demand-led | 2026-08 | 8600.00 | 7420.15 | 0.00 | 640.00 | Measured quantity — higher laboratory usage | Dwr Cymru Business | false | Open | Estates Finance Business Partner |
 | CL-2026-003 | HVAC planned maintenance | ABW-MECH | Contract-fixed | 2026-08 | 24000.00 | 24000.00 | 0.00 | 0.00 | | Meridian Mechanical Ltd | false | Open | Estates Duty Manager |
 | CL-2026-004 | HVAC reactive callouts | ABW-MECH | Reactive | 2026-08 | 6000.00 | 9240.00 | 1500.00 | 0.00 | Measured quantity — three AHU-02 belt failures | Meridian Mechanical Ltd | false | Open | Estates Duty Manager |
-| CL-2026-005 | Lift maintenance | ABW-MECH | Contract-fixed | 2026-08 | 9000.00 | 9000.00 | 0.00 | 0.00 | | Cambrian Lift Services | false | Open | Estates Duty Manager |
-| CL-2026-006 | Lift B repair — out of service | ABW-MECH | Reactive | 2026-08 | 0.00 | 0.00 | 14800.00 | 0.00 | Scope — unbudgeted controller replacement | Cambrian Lift Services | false | Open | Estates Duty Manager |
+| CL-2026-005 | Lift maintenance | ABW-MECH | Contract-fixed | 2026-08 | 9000.00 | 9000.00 | 0.00 | 0.00 | | Vertical Transport Services Ltd | false | Open | Estates Duty Manager |
+| CL-2026-006 | Lift B repair — out of service | ABW-MECH | Reactive | 2026-08 | 0.00 | 0.00 | 14800.00 | 0.00 | Scope — unbudgeted controller replacement | Vertical Transport Services Ltd | false | Open | Estates Duty Manager |
 | CL-2026-007 | Legionella monitoring | ABW-COMP | Statutory | 2026-08 | 5200.00 | 5200.00 | 0.00 | 0.00 | | Severn Water Hygiene | false | Open | Estates Compliance Team |
 | CL-2026-008 | Asbestos re-inspection | ABW-COMP | Statutory | 2026-08 | 3400.00 | 0.00 | 3400.00 | 0.00 | Timing — survey moved to 2026-09 | Hywel Surveying | false | Open | Estates Compliance Team |
-| CL-2026-009 | Fire alarm servicing | ABW-COMP | Statutory | 2026-08 | 4100.00 | 4100.00 | 0.00 | 0.00 | | Caldicot Fire Systems | false | Open | Estates Compliance Team |
-| CL-2026-010 | Cleaning contract | ABW-SOFT | Contract-fixed | 2026-08 | 31000.00 | 31000.00 | 0.00 | 0.00 | | Bright Facilities Ltd | false | Open | Caretaking Supervisor |
-| CL-2026-011 | Cleaning consumables | ABW-SOFT | Demand-led | 2026-08 | 2600.00 | 3180.25 | 420.00 | 0.00 | Measured quantity — event programme | Bright Facilities Ltd | true | Query | Caretaking Supervisor |
-| CL-2026-012 | Waste and recycling | ABW-SOFT | Demand-led | 2026-08 | 4200.00 | 3960.00 | 0.00 | 310.00 | | Cardiff Waste Partners | false | Open | Caretaking Supervisor |
+| CL-2026-009 | Fire alarm servicing | ABW-COMP | Statutory | 2026-08 | 4100.00 | 4100.00 | 0.00 | 0.00 | | Cambrian Fire Systems | false | Open | Estates Compliance Team |
+| CL-2026-010 | Cleaning contract | ABW-SOFT | Contract-fixed | 2026-08 | 31000.00 | 31000.00 | 0.00 | 0.00 | | Clearview Facilities | false | Open | Caretaking Supervisor |
+| CL-2026-011 | Cleaning consumables | ABW-SOFT | Demand-led | 2026-08 | 2600.00 | 3180.25 | 420.00 | 0.00 | Measured quantity — event programme | Clearview Facilities | true | Query | Caretaking Supervisor |
+| CL-2026-012 | Waste and recycling | ABW-SOFT | Demand-led | 2026-08 | 4200.00 | 3960.00 | 0.00 | 310.00 | | Regional Waste Partners | false | Open | Caretaking Supervisor |
 | CL-2026-013 | Window cleaning | ABW-SOFT | Planned | 2026-08 | 3800.00 | 3800.00 | 0.00 | 0.00 | | Summit Access Cleaning | false | Closed | Caretaking Supervisor |
 | CL-2026-014 | Security staffing | ABW-SEC | Contract-fixed | 2026-08 | 27500.00 | 29100.00 | 0.00 | 0.00 | Measured quantity — single-crewed cover backfilled | Vigil Security Services | false | Open | Head of Security |
 | CL-2026-015 | CCTV maintenance | ABW-SEC | Contract-fixed | 2026-08 | 4600.00 | 4600.00 | 0.00 | 0.00 | | Vigil Security Services | false | Open | Head of Security |

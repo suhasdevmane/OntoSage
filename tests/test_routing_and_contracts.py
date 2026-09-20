@@ -66,8 +66,12 @@ class TestIntentRouting:
     def test_unknown_routes_to_response(self):
         assert self._route("unknown") == "response"
 
-    def test_general_knowledge_routes_to_response(self):
-        assert self._route("general_knowledge") == "response"
+    def test_general_knowledge_routes_to_its_own_node(self):
+        # Phase 13: open-domain questions have a dedicated node (`_general_knowledge_node`), which
+        # then ends at `response`. This pinned "response" from before the node existed, and has
+        # failed since; the truth is the node name, and the node's edge to response is pinned in
+        # test_workflow_wiring.py::test_registry_intent_nodes_have_response_edge.
+        assert self._route("general_knowledge") == "general_knowledge"
 
     # SPARQL-bound intents
     def test_sparql_routes_to_sparql(self):
@@ -393,7 +397,10 @@ class TestDataExportAgentContract:
         from orchestrator.agents.data_export_agent import DataExportAgent
 
         agent = DataExportAgent()
-        result = _asyncio.get_event_loop().run_until_complete(
+        # `get_event_loop()` raises "there is no current event loop" once any earlier test in the
+        # run has called `asyncio.run` (it closes the loop and clears the thread's). The failure
+        # was order-dependent and had nothing to do with exporting; `asyncio.run` makes its own.
+        result = _asyncio.run(
             agent.export([{"sensor": "s1", "value": 1.0}], label="contract_test", fmt="json")
         )
         for key in ("success", "format", "filename", "content", "size_bytes"):

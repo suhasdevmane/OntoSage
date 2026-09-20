@@ -1093,20 +1093,63 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         except Exception as _gs_err:  # never cost the answer
             logger.debug(f"[analytics] per-floor summary skipped: {_gs_err}")
 
+        # A NARRATION PROMPT THAT OVERFLOWS THE CONTEXT LOSES ITS QUESTION. A model with a 16k-token
+        # window, handed 250 sensor lines and their 30k-character output, sees only the tail of the
+        # prompt (Ollama drops from the front). Measured 2026-09-18: 64,436 characters, answered with
+        # a developer ticket id and then with "I'm ready to help". Past this many series the
+        # per-sensor block is replaced by an overview computed in code, exactly as the per-floor
+        # branch above does for series that span floors (BUG-537).
+        _MAX_SENSOR_LINES = 40
+        overview = None
+        if not group_summary and sensor_metadata and len(sensor_metadata) > _MAX_SENSOR_LINES:
+            try:
+                from orchestrator.services.series_summary import summarise_latest_overview
+
+                overview = summarise_latest_overview(rows or [], sensor_metadata or {})
+            except Exception as _ov_err:  # never cost the answer
+                logger.debug(f"[analytics] latest overview skipped: {_ov_err}")
+
         # Build sensor context for natural language generation
         sensor_context = ""
         if group_summary:
             sensor_context = "\n\n" + group_summary + "\n"
             output = str(output or "")[:1500]
+        elif overview:
+            sensor_context = "\n\n" + overview + "\n"
+            output = str(output or "")[:1500]
         elif sensor_metadata:
             sensor_context = "\n\nSensor Information:\n"
-            for uuid, meta in sensor_metadata.items():
+            # Never list more series than fit: an unbounded listing is how the prompt overflowed.
+            for uuid, meta in list(sensor_metadata.items())[:_MAX_SENSOR_LINES]:
                 unit = meta.get("unit", "")
                 kind = meta.get("kind", "")
                 unit_note = f" (unit: {unit})" if unit else ""
                 kind_note = f" [{kind}]" if kind else ""
                 sensor_context += f"  - UUID {uuid} is '{meta['label']}'{kind_note}{unit_note}\n"
+            if len(sensor_metadata) > _MAX_SENSOR_LINES:
+                sensor_context += (
+                    f"  - …and {len(sensor_metadata) - _MAX_SENSOR_LINES} more sensors not listed\n"
+                )
+                # The output would have named every one of them; cut it to the same order of size.
+                output = str(output or "")[:6000]
             sensor_context += "\nIMPORTANT: Use the human-readable sensor names (labels) in your response, NOT UUIDs. Include units when available.\n"
+
+        # A TOTAL IS COMPUTED IN CODE, NOT NARRATED. The default stats template has no total, so
+        # "How much electricity did the building use yesterday?" was answered with the sum of the
+        # six LATEST readings (17.08 kWh) over a fetched day of 144. Only energy series in units
+        # that may be summed are totalled; anything else gets no block and behaves as before.
+        try:
+            from orchestrator.services.series_summary import (
+                asks_for_a_total,
+                summarise_energy_totals,
+            )
+
+            if asks_for_a_total(user_query):
+                _energy_totals = summarise_energy_totals(rows or [], sensor_metadata or {})
+                if _energy_totals:
+                    sensor_context = "\n\n" + _energy_totals + "\n" + sensor_context
+        except Exception as _et_err:  # never cost the answer
+            logger.debug(f"[analytics] energy totals skipped: {_et_err}")
 
         # Generate natural language summary
         viz_note = (
@@ -1171,7 +1214,22 @@ Use ✅ for compliant, ⚠️ for borderline, ❌ for non-compliant.
                 "normal or typical\n"
                 "3. Uses no ✅/⚠️/❌ compliance icons"
             )
-        summary_prompt = f"""You are an expert building analytics assistant. Convert this sensor data analysis into a professional, actionable response.
+        # BUG-832: every answer used to be told to end with a recommendation, so a 0.2 C spread got
+        # "audit the HVAC airflow" and a humidity spread got "increase ventilation". Advice is
+        # written only when the question asks for it (`asks_for_advice`).
+        try:
+            from orchestrator.services.narration_validators import asks_for_advice
+
+            _advice_asked = asks_for_advice(user_query)
+        except Exception:  # pragma: no cover - wording must never cost the answer
+            _advice_asked = False
+        advice_rule = (
+            "5. Ends with ONE concrete recommendation that follows from the figures above"
+            if _advice_asked
+            else "5. Ends with the finding itself. Gives NO recommendation, audit, calibration "
+            "check, alert threshold or next step: the question did not ask for advice"
+        )
+        summary_prompt = f"""You are an expert building analytics assistant. Convert this sensor data analysis into a professional, factual response.
 
 User Query: {user_query}
 
@@ -1185,17 +1243,22 @@ Generate a response that:
 1. Opens with the key finding (the single most important number or status) — bold it. If two or more items share the top value at the precision you report, say they are TIED and name all of them
 {context_rules}
 4. Includes specific numbers with units
-5. Ends with ONE concrete actionable recommendation if relevant
+{advice_rule}
 6. Uses human-readable sensor names (from Sensor Information above), NOT UUIDs
 7. Is concise — 3–6 sentences for simple queries, up to 10 for complex ones
 8. Does NOT include caveats like "I cannot provide" or "data not shown" — if data was analysed, report it
 9. Reports ONLY the property that was measured. A value of one property is not evidence about
    another: a commissioned or design duty is not an operating schedule, a runtime is not a
-   setpoint, a flow is not a temperature, and a count of anything is not a measurement of it.
+   setpoint, a flow is not a temperature, and the NUMBER OF SENSORS or records you were given
+   is not a measurement of what they observe. A reading from a sensor whose job is to count
+   (people in a room, vehicles, bin fill) IS a measurement of that count: report it.
    If the question asks about a property these figures do not carry, say which property they
    do carry and stop (BUG-606)
 10. Is internally consistent: the item you name as highest or lowest must be the highest or
-   lowest figure you list, and every comparison you state must hold for the numbers you give
+   lowest figure you list, every comparison you state must hold for the numbers you give, and
+   every count or average you state must match the items you list beside it. A difference
+   between two paired readings (entering and leaving, supply and return) is taken at the SAME
+   instant; never subtract one series' minimum from the other's maximum and call it a difference
 
 Response:"""
 

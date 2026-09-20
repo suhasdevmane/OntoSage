@@ -129,12 +129,38 @@ _UNIT_KINDS = (
 )
 
 
+#: BUG-838: the FIRST number of a range carries no unit — the unit is written after the range's
+#: other end. "Keep CO2 between 600-800 ppm" has " ppm" after 800 and "-800 ppm" after 600, so
+#: 600 read as unitless and was judged as an impossible TEMPERATURE, opening an energy-saving
+#: answer with a warning about a value nothing had measured. The range's unit governs both ends.
+_RANGE_TAIL_RE = re.compile(r"^\s*(?:[-‐-―−]|to|and)\s*\d[\d,]*(?:\.\d+)?\s*")
+
+
 def _unit_kind(after: str) -> Optional[str]:
     """The quantity named by the unit that follows a number, or None when there is none."""
-    for pattern, kind in _UNIT_KINDS:
-        if pattern.match(after or ""):
-            return kind
+    for candidate in (after or "", _RANGE_TAIL_RE.sub("", after or "", count=1)):
+        for pattern, kind in _UNIT_KINDS:
+            if pattern.match(candidate):
+                return kind
     return None
+
+
+def _nearest_measurand(before: str) -> Optional[str]:
+    """The measurand named closest before a number, or None when none is named.
+
+    BUG-838: a value is only judged against the quantity it is actually quoted as. The guard
+    inferred one measurand for the WHOLE answer from any mention of the word, so an answer that
+    discusses five quantities had every bare number judged against whichever was named first.
+    """
+    best: Optional[str] = None
+    best_at = -1
+    low = (before or "").lower()
+    for measurand, hints in _MEASURAND_HINTS:
+        for hint in hints:
+            for m in re.finditer(rf"(?<![a-z0-9]){re.escape(hint)}(?![a-z0-9])", low):
+                if m.start() > best_at:
+                    best, best_at = measurand, m.start()
+    return best
 
 
 def _is_reading(raw: str, before: str, after: str) -> bool:
@@ -176,8 +202,23 @@ def measurand_of(text: str) -> Optional[str]:
     return None
 
 
-def implausible_values(text: str, measurand: Optional[str] = None) -> list:
-    """Numbers in ``text`` that cannot be a reading of ``measurand`` in any usual unit."""
+#: A question about a mode, a state or a schedule is answered by an ENUMERATION value ("mode 3960"
+#: is a code, not a temperature), so a bare number in its answer is never judged as a reading.
+_ENUMERATION_QUESTION_RE = re.compile(
+    r"\b(?:mode|modes|status|state|states|enabled|disabled|schedule|scheduled|occupied|"
+    r"unoccupied|running|on\s+or\s+off|active|inactive)\b",
+    re.IGNORECASE,
+)
+
+
+def implausible_values(text: str, measurand: Optional[str] = None, strict: bool = False) -> list:
+    """Numbers in ``text`` that cannot be a reading of ``measurand`` in any usual unit.
+
+    ``strict`` is for a draft whose QUESTION named no quantity: the measurand was inferred from a
+    word in the answer, so a number is judged only when the answer itself quotes it as that
+    quantity -- by its unit, or by the quantity named right before it. Without that, "3960" from a
+    mode sensor was reported as an impossible temperature because the answer mentioned one.
+    """
     kind = measurand or measurand_of(text)
     if not kind or kind not in _PLAUSIBLE:
         return []
@@ -193,6 +234,11 @@ def implausible_values(text: str, measurand: Optional[str] = None) -> list:
         _named = _unit_kind(body[m.end() : m.end() + 24])
         if _named and _named != kind:
             continue  # written as another quantity's figure (BUG-590)
+        _near = _nearest_measurand(body[max(0, m.start() - 80) : m.start()])
+        if not _named and _near not in (kind, None):
+            continue  # a bare number belongs to the quantity named nearest it (BUG-838)
+        if strict and _named != kind and _near != kind:
+            continue  # the answer never quotes this number as that quantity
         val = float(raw.replace(",", ""))
         if val < low or val > high:
             out.append(val)
@@ -211,12 +257,15 @@ def implausibility_note(question: str, draft: str) -> Optional[str]:
     outside every plausible range — a raw number reported as a raw number is fine,
     and so is a verdict over a believable one.
     """
-    kind = measurand_of(question) or measurand_of(draft)
+    asked = measurand_of(question)
+    kind = asked or measurand_of(draft)
     if not kind or kind not in _PLAUSIBLE:
         return None
+    if not asked and _ENUMERATION_QUESTION_RE.search(question or ""):
+        return None  # "what mode is the HVAC in?" is answered by a code, not a reading
     if not asserts_verdict(draft):
         return None
-    bad = implausible_values(draft, kind)
+    bad = implausible_values(draft, kind, strict=not asked)
     if not bad:
         return None
     low, high, units = _PLAUSIBLE[kind]

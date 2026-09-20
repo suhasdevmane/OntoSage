@@ -159,7 +159,7 @@ def _already_published(out_dir: Path) -> set:
     correct because something downstream corrects them.
     """
     seen: set = set()
-    for p in out_dir.glob("*_narrow_publish_map.json"):
+    for p in out_dir.glob("*_publish_map.json"):
         try:
             data = json.loads(p.read_text(encoding="utf-8"))
         except Exception:

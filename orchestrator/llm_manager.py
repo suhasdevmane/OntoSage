@@ -39,6 +39,7 @@ _FAST_TASK_TYPES = {
 }
 
 from orchestrator.services.circuit_breaker import circuit_breaker_for
+from orchestrator.services.prompt_hygiene import strip_tracker_ids
 from shared.config import get_llm_config, settings
 from shared.utils import get_logger
 
@@ -85,6 +86,51 @@ def _ollama_generation_cap() -> Dict[str, int]:
         )
         cap = _OLLAMA_NUM_PREDICT_DEFAULT
     return {"num_predict": cap} if cap > 0 else {}
+
+
+#: Characters per token used to size a prompt against the local model's window. Prose runs near
+#: 4; sensor tables, identifiers and column lists run well below. 2.75 is the point at which the
+#: one failure we measured (BUG-474: 45,573 characters against a 16k context) is caught while no
+#: prompt that is known to work is touched.
+_CHARS_PER_TOKEN = 2.75
+
+
+def prompt_char_budget(num_ctx: Optional[int] = None) -> int:
+    """The longest prompt, in characters, a local model with this window will actually read."""
+    try:
+        ctx = int(num_ctx or os.environ.get("OLLAMA_NUM_CTX", "8192") or 8192)
+    except ValueError:
+        ctx = 8192
+    return int(ctx * _CHARS_PER_TOKEN)
+
+
+def fit_prompt(prompt: Any, budget: int) -> Any:
+    """Keep a prompt inside the model's window without losing either end of it.
+
+    2026-09-18: a 64,436-character narration prompt went to a 16,384-token model. Ollama drops the
+    FRONT of an overflowing prompt, so the instructions and the question vanished and the model
+    saw only the tail — it answered with a developer ticket id, then with "I'm ready to help". An
+    overflow never produces a worse answer, it produces a different question.
+
+    Instructions sit at the start of every builder's prompt and the closing rules and "Response:"
+    at the end; the bulk in between is data. So the MIDDLE is cut, and the cut says so in plain
+    words, which is the one part of this that a model can act on. Prompts within budget — every
+    one known to work — are returned unchanged (the same object).
+    """
+    if not isinstance(prompt, str) or budget <= 0 or len(prompt) <= budget:
+        return prompt
+    head = int(budget * 0.45)
+    tail = int(budget * 0.45)
+    omitted = len(prompt) - head - tail
+    logger.warning(
+        f"LLM prompt of {len(prompt):,} characters exceeds the {budget:,}-character budget for this "
+        f"context; {omitted:,} characters of the middle are being omitted"
+    )
+    marker = (
+        f"\n\n[... {omitted:,} characters of data were left out here to fit the model's context. "
+        "Answer only from what is shown, and say the data was cut short ...]\n\n"
+    )
+    return prompt[:head] + marker + prompt[len(prompt) - tail :]
 
 
 #: "User Query:" (or "Question:") with nothing after it before the next line. The prompt
@@ -430,6 +476,12 @@ class LLMManager:
         use_fast = task_type in _FAST_TASK_TYPES
         return (self.client_fast, True) if use_fast else (self.client, False)
 
+    def _fit_to_context(self, prompt: Any) -> Any:
+        """Cap a prompt at the local model's window; a hosted provider's window is not ours to guess."""
+        if getattr(self, "provider", "") == "openai":
+            return prompt
+        return fit_prompt(prompt, prompt_char_budget())
+
     def _is_retryable(self, error: Exception) -> bool:
         """Check if an error is transient and should be retried."""
         if isinstance(error, EmptyCompletionError):
@@ -476,6 +528,13 @@ class LLMManager:
         route by which `generate_structured` hands the provider a JSON schema. Empty
         (the default) leaves every existing caller byte-for-byte unchanged.
         """
+        # A developer's pointer to the fix behind a rule ("...and stop (BUG-606)") must never
+        # reach the model: it was echoed back as the whole answer to "How busy is the building
+        # right now?". Every prompt built anywhere crosses this method, so it is stripped once,
+        # here; the source keeps its citations, the model never sees them.
+        prompt = strip_tracker_ids(prompt)
+        system_message = strip_tracker_ids(system_message)
+        prompt = self._fit_to_context(prompt)
         if not self._breaker.allow_request():
             open_err = RuntimeError(
                 f"LLM circuit breaker is OPEN — the {self.provider} provider "
@@ -685,6 +744,9 @@ class LLMManager:
         Returns the validated object. Records per call: schema name, valid-first-try,
         retried, failed (see `structured_metrics`).
         """
+        prompt = strip_tracker_ids(prompt)  # see `generate`: tracker ids never reach the model
+        system_message = strip_tracker_ids(system_message)
+        prompt = self._fit_to_context(prompt)
         provider_kwargs = self._structured_provider_kwargs(schema, schema_name)
         _record_structured(schema_name, calls=1)
 
@@ -754,6 +816,9 @@ class LLMManager:
         task_type: Optional[TaskType] = None,
     ):
         """Stream generated text. Routes to fast or complex client based on task_type."""
+        prompt = strip_tracker_ids(prompt)  # see `generate`: tracker ids never reach the model
+        system_message = strip_tracker_ids(system_message)
+        prompt = self._fit_to_context(prompt)
         try:
             active_client, _ = self._pick_client(task_type)
 

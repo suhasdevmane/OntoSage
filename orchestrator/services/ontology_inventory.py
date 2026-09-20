@@ -94,6 +94,16 @@ _INVENTORY_SHAPE = re.compile(
     re.IGNORECASE,
 )
 
+# The shapes that ask for a COUNT, a LIST or the KINDS that exist. Bare "what"/"which" is not one.
+_COUNT_OR_LIST_SHAPE = re.compile(
+    r"\bhow\s+many\b|\blist\b|\bshow\b|\bcount\b|\btell\s+me\b|\b(?:kinds?|types?|sorts?)\b"
+    r"|\bwhat\s+(?:are|were)\s+(?:the|all\s+the|our)\s+\w+s\b(?!\s+\w+\s+(?:for|to|that|which))"
+    r"|\bdo\s+(?:we|you)\s+have\b|\bdoes\s+.{0,20}\bhave\b|\bare\s+there\b|\bis\s+there\b"
+    r"|\b(?:is|are)\s+installed\b|\binstalled\b|\bexist\b|\bwhat\s+\w+(?:\s+\w+)?\s+(?:do|are)\s+"
+    r"(?:we|you|there)\b",
+    re.IGNORECASE,
+)
+
 # "what is a VAV box?" asks what the thing IS, not how many this building has —
 # it names an inventory noun and opens like a question, so without this it would
 # trigger a census and answer a vocabulary question with a count. The singular
@@ -170,6 +180,16 @@ def is_inventory_question(query: str) -> bool:
     if _DEFINITION_SHAPE.search(q):
         return False
     if not _INVENTORY_SHAPE.search(q):
+        return False
+    # A census answers HOW MANY / WHAT KINDS / LIST EVERYTHING and nothing else. "What asset and
+    # space information may be shown to this user role ...?" and "Which BMS points are physically
+    # verified against the assets ...?" have a bare what/which and an inventory noun, and were
+    # answered "Room 234, Equipment 147 ..." (tail H, 2026-09-20).
+    from orchestrator.services.governance_question import is_governance_question
+
+    if is_governance_question(query):
+        return False
+    if not _COUNT_OR_LIST_SHAPE.search(q):
         return False
     # A question about an instrument's CONDITION is not a question about what the building
     # contains (BUG-427). "How many sensors are overdue for calibration?" has an inventory

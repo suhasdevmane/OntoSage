@@ -1639,14 +1639,6 @@
   "table": "sensor_data_floors04",
   "uuid": "26c96b9c-9813-dd8c-61cb-9aa3cc443c0a"
  },
- "271c53fd-ea0a-5db9-9842-44f79d8a7351": {
-  "class": "Temperature_Sensor",
-  "dec": 2,
-  "hi": 28.0,
-  "lo": 18.0,
-  "table": "plant_data",
-  "uuid": "271c53fd-ea0a-5db9-9842-44f79d8a7351"
- },
  "2759fd8a-981f-a463-ccdb-f1efd45d850c": {
   "class": "CO2_Level_Sensor",
   "dec": 0,
@@ -4055,14 +4047,6 @@
   "table": "sensor_data_floors04",
   "uuid": "70788d6e-19ca-1f74-c106-2bdba8f06b13"
  },
- "7089555f-4f70-5fac-b78d-9c28c7395efe": {
-  "class": "Temperature_Sensor",
-  "dec": 2,
-  "hi": 28.0,
-  "lo": 18.0,
-  "table": "plant_data",
-  "uuid": "7089555f-4f70-5fac-b78d-9c28c7395efe"
- },
  "70cd3eeb-55c3-5563-83d1-3c684c7550cf": {
   "class": "Lighting_Correlated_Color_Temperature_Sensor",
   "dec": 0,
@@ -4870,14 +4854,6 @@
   "lo": 400.0,
   "table": "sensor_data_floors04",
   "uuid": "86527f12-e0f5-f65a-07c4-28e3f440306a"
- },
- "8691b1f1-7dc0-5e7f-90d3-d5fe295a92be": {
-  "class": "Temperature_Sensor",
-  "dec": 2,
-  "hi": 28.0,
-  "lo": 18.0,
-  "table": "plant_data",
-  "uuid": "8691b1f1-7dc0-5e7f-90d3-d5fe295a92be"
  },
  "86949f1d-b447-c01b-3c1e-cb652b973fda": {
   "class": "CO2_Level_Sensor",
@@ -5711,14 +5687,6 @@
   "table": "sensor_data_floors04",
   "uuid": "9f9e57d8-ba42-b5ef-8bee-7ad0b66eda3f"
  },
- "9fdfca22-d653-5173-93e1-aad381732c76": {
-  "class": "Temperature_Sensor",
-  "dec": 2,
-  "hi": 28.0,
-  "lo": 18.0,
-  "table": "plant_data",
-  "uuid": "9fdfca22-d653-5173-93e1-aad381732c76"
- },
  "9fe3d05b-3a18-6ced-23f2-91968bbb862d": {
   "class": "Air_Temperature_Sensor",
   "dec": 2,
@@ -6030,14 +5998,6 @@
   "lo": 30.0,
   "table": "sensor_data_floors04",
   "uuid": "aa1bd93d-f944-73bd-4631-9a5382eec4ef"
- },
- "aa2dac34-0510-5ac8-afc0-282493f644d9": {
-  "class": "Temperature_Sensor",
-  "dec": 2,
-  "hi": 28.0,
-  "lo": 18.0,
-  "table": "plant_data",
-  "uuid": "aa2dac34-0510-5ac8-afc0-282493f644d9"
  },
  "aa46a3c5-2ad5-59cd-9ca6-570899838e83": {
   "class": "Occupancy_Status",
@@ -7263,14 +7223,6 @@
   "table": "sensor_data_floors04",
   "uuid": "d010869d-6747-9019-34a5-5d60e943f60d"
  },
- "d01cb867-704d-549b-b479-c0b299334bc0": {
-  "class": "Temperature_Sensor",
-  "dec": 2,
-  "hi": 28.0,
-  "lo": 18.0,
-  "table": "plant_data",
-  "uuid": "d01cb867-704d-549b-b479-c0b299334bc0"
- },
  "d08bb91a-fe8b-530f-64f5-ee64eddb1f2d": {
   "class": "CO2_Level_Sensor",
   "dec": 0,
@@ -8367,14 +8319,6 @@
   "table": "sensor_data_floors04",
   "uuid": "f3bb78c1-b994-6e4d-f8ca-c1dcb4dbc15a"
  },
- "f3befa81-7de7-5484-ba15-fefa200f8655": {
-  "class": "Temperature_Sensor",
-  "dec": 2,
-  "hi": 28.0,
-  "lo": 18.0,
-  "table": "plant_data",
-  "uuid": "f3befa81-7de7-5484-ba15-fefa200f8655"
- },
  "f3d11996-7753-1b82-10d7-0e9110074b6c": {
   "class": "Relative_Humidity_Sensor",
   "dec": 2,
@@ -8382,14 +8326,6 @@
   "lo": 30.0,
   "table": "sensor_data_floors04",
   "uuid": "f3d11996-7753-1b82-10d7-0e9110074b6c"
- },
- "f3fab327-f4ae-501d-b635-356e64441a39": {
-  "class": "Temperature_Sensor",
-  "dec": 2,
-  "hi": 28.0,
-  "lo": 18.0,
-  "table": "plant_data",
-  "uuid": "f3fab327-f4ae-501d-b635-356e64441a39"
  },
  "f43c68cd-5dff-712c-1a99-dafd3bc98c75": {
   "class": "Air_Temperature_Sensor",

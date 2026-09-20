@@ -52,7 +52,14 @@ def classify_register_question(question: str) -> str:
         return "last_done"
     if re.search(r"\bdue\b|\bcoming up\b|\bupcoming\b|\bcalendar\b", q):
         return "due_soon"
-    return "overdue_list"
+    # A QUESTION THIS CANNOT PLACE IS NOT AN OVERDUE QUESTION. The default used to be
+    # "overdue_list", so anything the register lane claimed came back as a due-date verdict:
+    # measured live on the held-out run, "What minimum evidence is still missing before the
+    # responsible person can make the planned start-or-continue decision?" was answered
+    # "**Nothing is overdue** — every open compliance item is within its due date", and a
+    # lone-worker question got the identical sentence. One canned answer for two questions that
+    # asked different things is worse than saying which of them this register can answer.
+    return ""
 
 
 def match_item(question: str) -> Optional[str]:
@@ -115,6 +122,8 @@ class ComplianceRegisterService:
         """
         now = now or datetime.utcnow()
         kind = classify_register_question(question)
+        if not kind:
+            return await self._unplaced(question)
         try:
             handler = {
                 "overdue_list": self._overdue,
@@ -143,6 +152,37 @@ class ComplianceRegisterService:
                 "formatted_response": "I couldn't read the compliance register just now — please try again.",
             }
 
+    async def _unplaced(self, question: str) -> Dict[str, Any]:
+        """Say what was searched and what it holds, for a question this register cannot place.
+
+        The alternative, and what happened before, is a due-date verdict answering a question
+        nobody asked. Naming the register and its fields lets the reader see the scope of the
+        search and take the question elsewhere.
+        """
+        size = await self._register_size()
+        if not size:
+            return {
+                "success": False,
+                "kind": "unplaced",
+                "formatted_response": (
+                    "**No compliance register is held for this building**, so I can't answer "
+                    "this from one — and I won't guess."
+                ),
+            }
+        return {
+            "success": True,
+            "kind": "unplaced",
+            "count": size,
+            "source": "compliance register (graph)",
+            "formatted_response": (
+                f"I searched the building's **compliance register** ({size} checks). It records, "
+                "for each check, what it is, when it is next due, when it was last completed and "
+                "which role is responsible — and nothing else, so it cannot answer what this "
+                "question asks. Tell me which of those you need, or which register or system "
+                "holds the rest, and I will read it."
+            ),
+        }
+
     async def _register_size(self) -> int:
         rows = await self._select("SELECT (COUNT(?c) AS ?n) WHERE {\n" + self._base_where() + "}")
         try:
@@ -161,22 +201,35 @@ class ComplianceRegisterService:
             + "} ORDER BY ?due"
         )
         rows = await self._select(q)
-        if not rows and await self._register_size() == 0:
+        size = await self._register_size()
+        if not rows and size == 0:
             return {"register_empty": True}
         items = [
             f"- **{r.get('label') or r['c'].rsplit('#', 1)[-1]}** — due {self._fmt(r['due'])}"
             + (f" (responsible: {r['role']})" if r.get("role") else "")
             for r in rows[:10]
         ]
+        # THE SENTENCE NAMES WHAT IT SEARCHED. "Nothing is overdue" on its own was returned to a
+        # question about lone-worker check-ins, which this register does not record at all, and
+        # read as a verdict on them; saying which register was read, and how big it is, keeps the
+        # claim inside its own scope.
         text = (
             f"**{len(rows)} compliance item(s) overdue**:\n" + "\n".join(items)
             if rows
-            else "**Nothing is overdue** — every open compliance item is within its due date."
+            else (
+                f"**Nothing is overdue in the building's compliance register** "
+                f"({size} checks): every open item in it is within its "
+                "due date. That register covers compliance checks only."
+            )
         )
         return {
             "success": True,
             "kind": "overdue_list",
             "count": len(rows),
+            # the register's own size is quoted in the sentence, so the numeric guard must find
+            # it here: without this field the no-overdue sentence carried an "unbacked" number
+            # and was replaced by a system message
+            "register_size": size,
             # numeric-guard provenance (V5-T29): every narrated date is a field
             "items": [
                 {"label": r.get("label", ""), "due": self._fmt(r["due"]), "role": r.get("role", "")}

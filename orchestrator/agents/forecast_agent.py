@@ -25,6 +25,7 @@ Usage (from analytics node):
 from __future__ import annotations
 
 import asyncio
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
@@ -278,7 +279,8 @@ class ForecastAgent:
         Pick the single sensor UUID most relevant to the query.
 
         Priority:
-          1. Sensor whose label contains a keyword from the query
+          1. The sensor (with data) whose label holds the MOST of the question's discriminating
+             words; ties go to more records, then to the label
           2. First UUID with the most records
         """
         # Collect available UUIDs
@@ -289,12 +291,29 @@ class ForecastAgent:
 
         q_lower = query.lower()
 
-        # Try keyword match
+        # The first label to share ANY word with the question used to win, in whatever order the
+        # metadata dict happened to hold them. "What will the temperature be tomorrow in Room 2.01?"
+        # shares "room" with every sensor in the room, so the same question forecast a different
+        # sensor from run to run (B38). Words that name no quantity or place are ignored, only a
+        # sensor that HAS data can be chosen, and the choice is a score, not an arrival order.
         if sensor_metadata:
+            words = {
+                w
+                for w in re.findall(r"[a-z0-9]+", q_lower)
+                if len(w) > 3 and w not in self._NON_DISCRIMINATING_WORDS
+            }
+            scored = []
             for uuid, meta in sensor_metadata.items():
-                label = meta.get("label", "").lower()
-                if any(kw in label for kw in q_lower.split() if len(kw) > 3):
-                    return uuid, meta.get("label", uuid[:12])
+                if counts and uuid not in counts:
+                    continue
+                label = str(meta.get("label", "")).lower()
+                hits = sum(1 for w in words if w in label)
+                if hits:
+                    scored.append((-hits, -counts.get(uuid, 0), label, uuid, meta))
+            if scored:
+                scored.sort(key=lambda s: s[:4])
+                _, _, _, uuid, meta = scored[0]
+                return uuid, meta.get("label", uuid[:12])
 
         # Fallback: most-frequent UUID
         if counts:
@@ -306,6 +325,56 @@ class ForecastAgent:
             return best_uuid, label
 
         return "", "Unknown Sensor"
+
+    #: Question words that say nothing about WHICH sensor: they are in nearly every label or in
+    #: none ("room", "zone"), or they are about the request rather than the building.
+    _NON_DISCRIMINATING_WORDS = frozenset(
+        {
+            "what",
+            "will",
+            "would",
+            "when",
+            "where",
+            "which",
+            "tomorrow",
+            "today",
+            "tonight",
+            "next",
+            "last",
+            "week",
+            "hour",
+            "hours",
+            "days",
+            "forecast",
+            "predict",
+            "prediction",
+            "expected",
+            "likely",
+            "room",
+            "zone",
+            "floor",
+            "level",
+            "sensor",
+            "sensors",
+            "reading",
+            "readings",
+            "value",
+            "values",
+            "this",
+            "that",
+            "with",
+            "from",
+            "have",
+            "been",
+            "building",
+            "current",
+            "currently",
+            "please",
+            "show",
+            "tell",
+            "give",
+        }
+    )
 
     #: label/query token -> registry modality key (matches the grader's tables)
     _MODALITY_MAP = {

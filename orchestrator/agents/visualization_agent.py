@@ -45,6 +45,20 @@ class VisualizationAgent:
             Dict with 'code', 'chart_type', 'image_path', 'description'
         """
         try:
+            # A chart is only drawn from a series that was actually fetched. Rows that carry no
+            # measured value (graph bindings, an empty result) were handed to a model that wrote
+            # plotting code and a caption for nothing (defect C19, services/viz_honesty).
+            from orchestrator.services import viz_honesty as _vh
+
+            if not _vh.has_plottable_series(data):
+                logger.info("[viz] nothing plottable in the retrieved data — no chart drawn")
+                return {
+                    "success": False,
+                    "skipped": "no_data",
+                    "error": "visualization: nothing plottable in the retrieved data",
+                    "code": None,
+                    "chart_type": None,
+                }
             # Step 1+2: Prefer a DETERMINISTIC chart for standard sensor
             # time-series.  LLM-generated matplotlib code is fragile — it
             # sometimes omits the `PLOT_BASE64` marker, which left users with a
@@ -63,6 +77,16 @@ class VisualizationAgent:
                 code = await self._generate_viz_code(user_query, data, chart_type, filename)
                 # Patch any LLM-generated code that still uses the old file-save pattern
                 code = self._patch_plot_to_base64(code, filename)
+                made_up = _vh.invented_numbers(code, data)
+                if made_up:
+                    logger.warning(f"[viz] generated code invents figures {made_up[:5]} — refused")
+                    return {
+                        "success": False,
+                        "skipped": "invented_data",
+                        "error": "visualization: generated code contained figures not in the data",
+                        "code": None,
+                        "chart_type": chart_type,
+                    }
 
             # Step 3: Execute visualization code
             result = await self._execute_viz_code(code)
@@ -385,6 +409,26 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
                 logger.debug(f"[visualization_agent] series summary skipped: {exc}")
                 data_summary = "Not available"
 
+        # No computed statistics means nothing to describe beyond what was plotted. A model asked
+        # for "key insights" over no numbers writes fiction ("compares the availability of audible
+        # alerts across monitoring scenarios"), so the caption is deterministic (defect C19).
+        from orchestrator.services import viz_honesty as _vh
+
+        if not _vh.has_statistics(data_summary):
+            return _vh.plain_caption(chart_type, _vh.plottable_rows(data))
+
+        # The caption says WHICH quantity, WHERE and WHEN, from the plotted rows and the sensor
+        # metadata, before any prose the model adds. A reader who cannot tell what a picture is a
+        # picture of cannot catch the wrong picture (2D-16 wave 2).
+        header = ""
+        try:
+            from orchestrator.services.chart_policy import caption_header
+
+            meta = (getattr(state, "intermediate_results", None) or {}).get("sensor_metadata") or {}
+            header = caption_header(_vh.plottable_rows(data), meta)
+        except Exception as exc:  # a header is a courtesy, never a reason to lose the caption
+            logger.debug(f"[visualization_agent] caption header skipped: {exc}")
+
         desc_prompt = f"""Generate a brief description of a visualization.
 
 User Query: {user_query}
@@ -402,11 +446,13 @@ statistics are not available, describe the chart without figures.
 Description:"""
 
         try:
-            description = await llm_manager.generate(desc_prompt)
-            return description.strip()
+            description = (await llm_manager.generate(desc_prompt) or "").strip()
         except Exception as e:
             logger.warning(f"[visualization_agent] Description generation failed: {e}")
-            return f"Created a {chart_type.replace('_', ' ')} visualization."
+            description = ""
+        if not description:
+            return header or f"Created a {chart_type.replace('_', ' ')} visualization."
+        return f"{header} {description}".strip() if header else description
 
     async def create_report(
         self, state: ConversationState, title: str, sections: List[Dict[str, str]]

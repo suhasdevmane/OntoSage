@@ -75,12 +75,68 @@ _STEP_FREE_RE = re.compile(
 _NEAREST_TARGETS = (
     (re.compile(r"\btoilets?\b|\bwc\b|\brestrooms?\b|\bbathrooms?\b", re.I), {"toilet"}, None),
     (re.compile(r"\blifts?\b|\belevators?\b", re.I), {"lift"}, None),
-    (re.compile(r"\bstair(?:s|case|way)?\b", re.I), {"staircase"}, None),
+    (re.compile(r"\bstair(?:s|case|way)?\b|\bsteps\b", re.I), {"staircase"}, None),
     (re.compile(r"\bkitchens?\b|\bkitchenettes?\b", re.I), {"kitchen"}, None),
     (re.compile(r"\breception\b|\bfront\s+desk\b", re.I), {"reception"}, None),
     (re.compile(r"\bmeeting\s+rooms?\b", re.I), {"meeting_room"}, None),
+    # "Where is the nearest authorised store that holds the approved supplies?" fell past every
+    # branch to the floor-plan menu. The plans label these spaces (`storage`), and the building's
+    # stock register keeps what is IN them; this locates the room, which is the half a person
+    # walking there needs. "Shop" is deliberately absent: this building has none, and a shop and a
+    # supplies store are not the same place.
+    (
+        re.compile(r"\bstores?\b|\bstorerooms?\b|\bstorage\b|\bstock\s+rooms?\b", re.I),
+        {"storage"},
+        None,
+    ),
     (re.compile(r"\b(?:fire\s+)?exits?\b", re.I), None, "exit"),
 )
+
+
+def kind_words_for_target(query: str) -> set:
+    """The words for the KIND being sought in a nearest-question ('lift', 'toilet', 'exit').
+
+    Read from the same table the search itself uses, so nothing restates the vocabulary. Used to
+    keep the thing being LOOKED FOR from also being read as the place to start from.
+    """
+    words: set = set()
+    for pat, types, label_frag in _NEAREST_TARGETS:
+        m = pat.search(query or "")
+        if m:
+            words.add(m.group(0).lower())
+            words |= set(types or set())
+            if label_frag:
+                words.add(label_frag)
+            break
+    return words
+
+
+#: "Is it in service?" asked of the amenity a nearest-question found. Answered from the building's
+#: recorded state, not left implied by which amenity happened to be listed.
+_SERVICE_RE = re.compile(
+    r"\bin\s+service\b|\bout\s+of\s+(?:service|order)\b|\b(?:currently|now)\s+(?:working|open|usable)\b"
+    r"|\b(?:is|are)\b[^?]{0,30}\b(?:working|operational|usable|broken)\b|\bin\s+(?:working\s+)?order\b"
+    r"|\boperational\b|\bfunctioning\b",
+    re.I,
+)
+
+#: A comparison of DISTANCE between two kinds of place ("are the steps closer to the elevators?").
+_COMPARE_DISTANCE_RE = re.compile(
+    r"\b(?:closer|nearer|farther|further|quicker|faster|shorter)\b", re.I
+)
+
+
+def kinds_named(query: str) -> List[str]:
+    """The distinct kinds of place (from the nearest-target table) a question names, in order."""
+    found: List[str] = []
+    for pat, types, label_frag in _NEAREST_TARGETS:
+        m = pat.search(query or "")
+        if m:
+            name = sorted(types)[0] if types else (label_frag or m.group(0).lower())
+            if name not in found:
+                found.append(name)
+    return found
+
 
 _WAYFINDING_RE = re.compile(
     r"how\s+(?:do\s+I|can\s+I|would\s+I)\s+(?:get|reach|go)\s+to"
@@ -242,6 +298,22 @@ class SpatialAgent:
     ) -> str:
         q = query.lower()
 
+        # WHICH KIND IS CLOSER is not a question this lane can rank (BUG-839). "Are the steps closer
+        # to the elevators?" compares two kinds against each other with no starting point, and fell
+        # through every branch to a bare "No lift spaces found". The lane measures from a named
+        # place to the nearest of ONE kind; it can do that for either, and says so once.
+        _kinds = kinds_named(q)
+        if _COMPARE_DISTANCE_RE.search(q) and len(_kinds) >= 2:
+            _names = [k.replace("_", " ") for k in _kinds[:2]]
+            _first = "stairs" if _names[0] == "staircase" else _names[0]
+            _second = "stairs" if _names[1] == "staircase" else _names[1]
+            return (
+                f"I can tell you the nearest {_first} to a named room, or the nearest {_second}, but "
+                "not which is closer overall: that depends on where you start.\n\n"
+                f"Name a room (for example *'nearest {_first} to room 3.10'*) and I will give "
+                f"the nearest of each from there."
+            )
+
         # Nearest-facility search sits above wayfinding: "how do I get to the
         # NEAREST toilet" is a nearest question with route guidance (V5-T27)
         if _NEAREST_RE.search(q):
@@ -256,11 +328,29 @@ class SpatialAgent:
 
         # Wayfinding takes priority (before adjacency — "get to X from Y" ≠ "next to X")
         if _WAYFINDING_RE.search(q):
-            return self._answer_wayfinding(query, manifests, blocked_verticals, vertical_cores)
+            # "How do I get to the lifts from the entrance?" names a KIND of place, not a room: it
+            # is the nearest-one question with a starting point, and it asked for a room number
+            # (BUG-810).
+            if any(pat.search(q) for pat, _t, _l in _NEAREST_TARGETS) and (
+                self._extract_waypoint(query, manifests, role="destination") is None
+            ):
+                return await self._answer_nearest(query, manifests, vertical_cores)
+            _start = None
+            if self._extract_waypoint(query, manifests, role="source") is None:
+                _zones = {s.zone_id: s for m in manifests for s in m.spaces}
+                _start, _ = await self._default_start(manifests, _zones)
+            return self._answer_wayfinding(
+                query, manifests, blocked_verticals, vertical_cores, default_start=_start
+            )
 
         # Adjacency query takes priority (before area checks)
         if _ADJ_RE.search(q):
             return self._answer_adjacency(query, manifests)
+
+        # "What is the biggest room?" -> the top few by area, not the whole table (BUG-827).
+        ranked = await self._answer_superlative(query, manifests)
+        if ranked:
+            return ranked
 
         # Area — a NAMED space asks about itself, not about its building
         if _AREA_QUERY_RE.search(q) and not _AREA_GT_RE.search(q) and not _AREA_LT_RE.search(q):
@@ -281,8 +371,32 @@ class SpatialAgent:
         if _COUNT_RE.search(q):
             return self._answer_count(query, manifests)
 
+        # "Which rooms are computer laboratories?" -> the graph's own room records (BUG-810).
+        from orchestrator.services.room_type_lookup import answer_live as _rooms_of_kind
+
+        typed = await _rooms_of_kind(query)
+        if typed:
+            return typed
+
         # Default: list rooms of a given type (or all)
         return self._answer_list(query, manifests)
+
+    async def _answer_superlative(
+        self, query: str, manifests: List[FloorPlanManifest]
+    ) -> Optional[str]:
+        """The biggest / smallest spaces by floor-plan area, named as the building names them."""
+        from orchestrator.services import space_superlatives as sup
+
+        kind = next(
+            (t for k, t in _SPACE_TYPE_KEYWORDS.items() if re.search(rf"\b{k}s?\b", query, re.I)),
+            None,
+        )
+        ask = sup.parse_superlative(query, kind)
+        if ask is None:
+            return None
+        ranking = sup.rank_spaces(manifests, ask)
+        names = await sup.graph_labels([r.ontology_iri for r in ranking["top"]])
+        return sup.render(ask, ranking, names)
 
     # ── Area filter ───────────────────────────────────────────────────────────
 
@@ -547,13 +661,51 @@ class SpatialAgent:
             for s in mset.spaces:
                 zone_to_space[s.zone_id] = s
 
-        # the reference point reads like a destination in this phrasing
-        # ("nearest toilet TO room 3.01"); fall back to source-role, then default
-        src_zone = self._extract_waypoint(query, manifests, role="destination")
+        # A NUMBER FIRST, THEN THE GRAPH, THEN THE DRAWINGS' LABELS (BUG-838).
+        #
+        # "nearest toilet TO room 3.01" reads the reference point as a destination, so a numbered
+        # room is looked for in that role first and in the source role second. Only then is a NAMED
+        # place resolved -- and against the graph, not the drawings: matching "reception" against
+        # drawn labels found a "Reception" text label on the FLOOR-4 sheet, so "how do I get to the
+        # lifts from the entrance?" answered "the lifts serve Reception's floor (floor 4)" about a
+        # reception the graph puts on floor 0.
+        src_zone = self._extract_waypoint(query, manifests, role="destination", labels=False)
+        if src_zone is None or src_zone not in zone_to_space:
+            src_zone = self._extract_waypoint(query, manifests, role="source", labels=False)
+        anchor_label = ""
+        if src_zone is None or src_zone not in zone_to_space:
+            from orchestrator.services import place_anchor as _places
+
+            _anchor = await _places.locate(query, manifests, exclude=kind_words_for_target(query))
+            if _anchor is not None:
+                anchor_label = _anchor.label
+                if _anchor.zone_id in zone_to_space:
+                    src_zone = _anchor.zone_id
+                else:
+                    # The graph places it and the plans do not draw it: the catalogue can still
+                    # measure from its floor, which is the fact the answer needs.
+                    _named = await self._nearest_from_amenities(
+                        query, target_word, _anchor.label, _anchor.floor, from_is_place=True
+                    )
+                    if _named:
+                        return _named
+        if src_zone is None or src_zone not in zone_to_space:
+            src_zone = self._extract_waypoint(query, manifests, role="destination")
         if src_zone is None or src_zone not in zone_to_space:
             src_zone = self._extract_waypoint(query, manifests, role="source")
         if src_zone is None or src_zone not in zone_to_space:
-            src_zone = self._find_default_start(zone_to_space)
+            # "...on floor 1" names no room but does name where to look: the catalogue is asked
+            # about that floor BEFORE a default start (reception) is assumed, which would answer
+            # for the wrong floor (BUG-827).
+            _floor = self._infer_floor_from_query(query)
+            if _floor is not None:
+                _by_floor = await self._nearest_from_amenities(
+                    query, target_word, f"floor {_floor}", _floor, from_is_floor=True
+                )
+                if _by_floor:
+                    return _by_floor
+            src_zone, _default_label = await self._default_start(manifests, zone_to_space)
+            anchor_label = anchor_label or _default_label
         if src_zone is None:
             return (
                 f"I can look up the nearest {target_word}, but I need a starting point — "
@@ -574,7 +726,10 @@ class SpatialAgent:
         except Exception as rf_err:
             logger.warning(f"[spatial] nearest search failed: {rf_err}")
             hit = None
-        src_label = zone_to_space[src_zone].label
+        # The graph's name for the place beats the drawing's. Zone ids repeat across this
+        # building's sheets (floor 4 reprints the ground floor's room numbers), so the label found
+        # by zone id can be another sheet's copy -- and those labels are raw DWG markup.
+        src_label = anchor_label or zone_to_space[src_zone].label
         if hit is None:
             # THE FLOOR PLAN CANNOT ANSWER; THE BUILDING OFTEN CAN.
             #
@@ -603,7 +758,11 @@ class SpatialAgent:
                         _from_floor = None
                     break
             fallback = await self._nearest_from_amenities(
-                query, target_word, src_label, _from_floor
+                query,
+                target_word,
+                anchor_label or src_label,
+                _from_floor,
+                from_is_place=bool(anchor_label),
             )
             if fallback:
                 return fallback
@@ -618,7 +777,13 @@ class SpatialAgent:
         )
 
     async def _nearest_from_amenities(
-        self, query: str, target_word: str, src_label: str, from_floor
+        self,
+        query: str,
+        target_word: str,
+        src_label: str,
+        from_floor,
+        from_is_floor: bool = False,
+        from_is_place: bool = False,
     ) -> str:
         """The building's amenity catalogue, when the geometry has nothing to say.
 
@@ -637,13 +802,7 @@ class SpatialAgent:
 
             # The KIND is taken from the words the question and the target table already
             # agree on, so no amenity vocabulary is restated here.
-            kind_words = {target_word}
-            for pat, types, label_frag in _NEAREST_TARGETS:
-                if pat.search(query):
-                    kind_words |= set(types or set())
-                    if label_frag:
-                        kind_words.add(label_frag)
-                    break
+            kind_words = {target_word} | kind_words_for_target(query)
 
             # `from_floor` is given, never derived here. Deriving it from the zone id
             # read `3.10` as floor TEN, and a caller that cannot supply one passes None --
@@ -659,7 +818,19 @@ class SpatialAgent:
             )
             if not hits:
                 return ""
-            return render(hits, target_word, src_label, from_floor, accessible_only)
+            # Somebody standing at a named place (the entrance) asked how to get there, so each
+            # amenity's own description of where it stands is part of the answer; from a numbered
+            # room it describes a different starting point and is left out.
+            return render(
+                hits,
+                target_word,
+                src_label,
+                from_floor,
+                accessible_only,
+                from_is_floor,
+                describe_places=from_is_place,
+                asked_service=bool(_SERVICE_RE.search(query or "")),
+            )
         except Exception as exc:
             logger.warning(f"[spatial] amenity-catalogue fallback failed: {exc}")
             return ""
@@ -670,8 +841,14 @@ class SpatialAgent:
         manifests: List[FloorPlanManifest],
         blocked_verticals: Optional[dict] = None,
         vertical_cores: Optional[list] = None,
+        default_start: Optional[str] = None,
     ) -> str:
-        """BFS route guidance between two named spaces in the building."""
+        """BFS route guidance between two named spaces in the building.
+
+        ``default_start`` is the building's own entrance, resolved from the graph by the caller
+        (this method stays synchronous). Without it the plans' first `reception` space is used,
+        which on a building whose drawings carry a stray "Reception" label is the wrong floor.
+        """
         zone_to_space: Dict[str, Space] = {}
         zone_to_floor: Dict[str, int] = {}
         for m in manifests:
@@ -694,7 +871,7 @@ class SpatialAgent:
             return f"Destination zone `{dest_zone}` not found in the floor plan data."
 
         if src_zone is None:
-            src_zone = self._find_default_start(zone_to_space)
+            src_zone = default_start or self._find_default_start(zone_to_space)
 
         if src_zone is None or src_zone not in zone_to_space:
             dest_floor = zone_to_floor.get(dest_zone)
@@ -875,8 +1052,14 @@ class SpatialAgent:
         query: str,
         manifests: List[FloorPlanManifest],
         role: str,  # "destination" | "source"
+        labels: bool = True,
     ) -> Optional[str]:
-        """Extract destination or source zone ID from a wayfinding query."""
+        """Extract destination or source zone ID from a wayfinding query.
+
+        ``labels=False`` accepts only a zone the question gives by NUMBER. A drawing's text labels
+        are a weaker source than the graph, so a caller that intends to ask the graph next takes
+        the numbers first and leaves the labels until after (BUG-838).
+        """
         from_match = re.search(r"\bfrom\b", query, re.IGNORECASE)
 
         if role == "destination":
@@ -891,7 +1074,33 @@ class SpatialAgent:
         zone_match = _ZONE_RE.search(search_text)
         if zone_match:
             return zone_match.group(0)
-        return self._find_zone_by_label(search_text, manifests)
+        return self._find_zone_by_label(search_text, manifests) if labels else None
+
+    async def _default_start(
+        self, manifests: List[FloorPlanManifest], zone_to_space: Dict[str, Space]
+    ) -> Tuple[Optional[str], str]:
+        """Where a journey starts when the asker named no place: the BUILDING's entrance.
+
+        Returns (zone id, the name to call it). The graph is asked first: `_find_default_start`
+        below takes the first space the PLANS type `reception`, and on this building that is a text
+        label on the floor-4 drawing, so every unanchored question was measured from floor 4
+        (BUG-838). A graph entrance the plans do not draw yields no zone, and the caller then
+        declines rather than substituting another place.
+
+        The NAME comes back with it because zone ids are not unique across sheets here -- this
+        building's floor-4 drawing repeats the ground floor's room numbers, so the label found by
+        zone id can belong to another sheet's copy of it.
+        """
+        try:
+            from orchestrator.services import place_anchor as _places
+
+            anchor = await _places.entrance(manifests)
+        except Exception as exc:  # the plans' own guess is better than no answer at all
+            logger.debug(f"[spatial] entrance lookup unavailable: {exc}")
+            anchor = None
+        if anchor is not None:
+            return (anchor.zone_id if anchor.zone_id in zone_to_space else None), anchor.label
+        return self._find_default_start(zone_to_space), ""
 
     def _find_default_start(self, zone_to_space: Dict[str, Space]) -> Optional[str]:
         """Return the zone_id of the reception or entrance space, if one exists."""

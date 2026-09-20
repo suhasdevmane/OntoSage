@@ -88,6 +88,10 @@ class WorkflowRoutingMixin:
         """Route from SQL node — extended for Phase 4 anomaly/report intents."""
         intent = state.current_intent
 
+        # 2D-10: an answer computed in the store is final; no downstream lane may re-read it.
+        if state.intermediate_results.get("aggregate_result"):
+            return "response"
+
         # Phase 4: anomaly and report intents use SQL data for their agents
         if intent == "anomaly":
             return "anomaly"

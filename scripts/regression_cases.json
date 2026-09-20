@@ -646,14 +646,16 @@
     "building": "bldg1",
     "question": "Compare the average CO2 on floor 1 versus floor 3",
     "expect": [
-      "excluded as physically impossible"
+      "floor 1",
+      "floor 3",
+      "ppm"
     ],
     "forbid": [
       "157 ppm",
       "111 ppm"
     ],
     "timeout_s": 420,
-    "why": "Protects against physically impossible readings folded into an average - 157 ppm and 111 ppm are below outdoor air and were both published with an HVAC recommendation attached. The figures move continuously and are deliberately NOT asserted; what is asserted is that the exclusion happened and was DISCLOSED, the half V10 left 'verified offline, not yet live'. 420s allowance: observed 63s, 94s, 182s, and twice past a 121s client timeout, fetching ~1.8M rows across ten tables."
+    "why": "Protects against physically impossible readings folded into an average - 157 ppm and 111 ppm are below outdoor air and were both published with an HVAC recommendation attached. The figures move continuously and are deliberately NOT asserted; what is asserted is that neither impossible figure appears. It used to require the phrase 'excluded as physically impossible', which is only printed WHEN such readings exist; on 2026-09-20 the stored data held none, and a correct answer failed for lack of a note about nothing (the TODO-484 class: a marker that decays with the data). The exclusion path itself is pinned by unit tests. 420s allowance: observed 63s, 94s, 182s, and twice past a 121s client timeout, fetching ~1.8M rows across ten tables."
   },
   {
     "group": "w0",

@@ -197,6 +197,22 @@ class ControlAgent:
             device = device or named_point
             target_value = target_value if str(target_value or "").strip() else named_value
 
+        # A POINT MAY BE NAMED BY THE LABEL THE READER WAS SHOWN (CAVEAT-817). The decline used to
+        # list internal identifiers (`AHU-F5-SP`); it now lists plain labels, so a request that
+        # repeats one must select the same point. An exact match on every identifying word, or an
+        # identifier, and never a guess: two equal matches select nothing.
+        from orchestrator.services.writable_points import (
+            describe_points,
+            match_point,
+            needs_detail_message,
+            queued_target,
+        )
+
+        points = await describe_points(writable_caps, building_id)
+        matched = match_point(question, points) if question else None
+        if matched is not None:
+            device = matched.local
+
         # A NAMED POINT AND A VALUE, OR NOTHING IS QUEUED (BUG-548).
         #
         # This fell back to the FIRST writable point and to the value "as specified". So any
@@ -217,28 +233,23 @@ class ControlAgent:
                     point_uri = cap
                     break
         if point_uri is None or not str(target_value or "").strip():
-            names = ", ".join(f"`{c.rsplit(':', 1)[-1].rsplit('#', 1)[-1]}`" for c in writable_caps)
             missing = " and ".join(
                 part
                 for part, absent in (
-                    ("which writable point", point_uri is None),
+                    ("which setpoint", point_uri is None),
                     ("the value to set", not str(target_value or "").strip()),
                 )
                 if absent
             )
-            if device and point_uri is None:
-                # A named thing that is not writable ("open the windows on floor 3"). Say so,
-                # and never suggest a command for a DIFFERENT point: the demo pass showed this
-                # answering a window request with "for example: set AHU-F5-SP to 21".
-                message = (
-                    f"I can't control **{device}** — it isn't a point this building lets me "
-                    f"write, so nothing has been queued. The only writable points are: {names}."
-                )
-            else:
-                message = (
-                    f"Nothing has been queued. To request a change I need {missing}. "
-                    f"The points this building lets me write are: {names}."
-                )
+            # A named thing that is not writable ("open the windows on floor 3") is declined BY
+            # NAME, and no command is suggested for a DIFFERENT point (the demo pass showed this
+            # answering a window request with "for example: set AHU-F5-SP to 21"). The list is of
+            # plain labels, never internal identifiers (CAVEAT-817).
+            message = needs_detail_message(
+                missing=missing,
+                points=points,
+                named_device=device if (device and point_uri is None) else "",
+            )
             return {
                 "status": "needs_detail",
                 "message": message,
@@ -282,9 +293,11 @@ class ControlAgent:
             "session_id": state.conversation_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+        chosen = next((p for p in points if p.uri == point_uri), None)
+        target = queued_target(chosen) if chosen else f"`{point_uri}`"
         message = (
             f"Command queued for approval (ID: **{approval_id}**).\n"
-            f"Target: `{point_uri}` → `{target_value}`\n\n"
+            f"Target: {target} → `{target_value}`\n\n"
             "A facility manager or administrator can approve this by typing:\n"
             f"> `approve {approval_id}`\n\n"
             "The request expires in 15 minutes if not approved."

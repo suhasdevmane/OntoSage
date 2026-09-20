@@ -1838,3 +1838,134 @@ went into a stash silently — `-q` means no output, and the test command's outp
 * **Verify a restore by looking for the work, not for the absence of an error.** `git stash pop`
   printed a two-hundred-line status; the only lines that mattered were a grep for the two rule
   names and an empty `git stash list`.
+
+
+## 121. A "good" label is a claim about the data, and a plausible answer is not evidence (2026-09-18)
+
+**What happened.** Three rehearsals of the 44-question demo script were hand-read and two answers
+were labelled GOOD that were wrong. *"Which refuge points are defective, and who owns them?"* said
+the register has no ownership field, in all three runs; `evacuation_and_peeps.md` has an `owner`
+column and EV-003 reads "Building Fire Warden Coordinator". *"Compare this week's electricity use
+with last week"* reported a 34–36% fall in both rehearsals; it was a Friday, so week 38 held five
+days and week 37 seven, and the label noticed that week 36 was excluded and missed that week 38 was
+itself partial. Both were found only by opening the source table and asking which ISO week was
+partial. Six other register answers checked the same way were right, so the check is cheap.
+
+A related slip, the same evening: `pytest ...; echo "exit=$?"` inside a script whose echo also had a
+`$(date ...)` reports the substitution's status, not pytest's. The suite log said `exit=0` beside
+"1 failed".
+
+**Rules.**
+* **Check every absence claim ("the register has no X") and every comparison figure against the
+  source before labelling GOOD.** Parse the table: counts by status, the column list. Twenty lines.
+* **A label that was accepted twice is not thereby checked.** Re-reading three runs found nothing
+  because each read used the same shortcut. Change what you look at, not how many times.
+* **Report "good" counts as an upper bound** unless every answer was checked against data; keep the
+  old label in `relabelled_from` and write the reason in a corrections file. Never edit history.
+* **A workaround written after seeing a failure is a hypothesis.** Of 14 rewordings written after
+  their siblings failed, 11 failed too. Do not put an untested rewording in a runbook.
+* **Read the exit code from the command that produced it:** `cmd > out; rc=$?; echo "exit=$rc"`.
+  Never `$?` after a command substitution in the same line (see also #101, #107).
+* **A long live run needs to be resumable.** Docker Desktop restarted the whole stack at 22:09 and
+  killed the run at question 22 of 44; running only the remaining 22 and saying so was cheap
+  because the harness took a question file.
+
+
+## 122. Every routing rule runs, and the LAST one wins (2026-09-19)
+
+**What happened.** Two probe cases regressed together: "How many work orders are open?" was
+answered from the events store's 520 generated rows instead of the register's 24, and "Which
+teaching sessions are scheduled in Room 1.06?" came back "This building doesn't keep a record of
+that" while 675 session rows sat in the register. Neither lane had changed — the LLM classifier
+simply chose `events` that day, having chosen `metadata` the day before.
+
+The fix was a contract rule sending both shapes to the register. It was placed BEFORE
+`event_store_query`, on the assumption that the first matching rule wins. Deployed, it changed
+nothing at all: `apply_contract` runs EVERY rule in the stage and each one SETS the intent, so
+`event_store_query` overwrote the correction a few rules later. `apply_contract` returns the list
+of rules that fired — both names were in it, which is what made the mistake visible.
+
+**Rules.**
+* **A corrective routing rule goes AFTER the rule it corrects**, not before. Read the returned
+  rule list, not just the final intent: two names in it means both fired and the later one won.
+* **A lane's vocabulary must not claim a question the lane cannot serve.** `EVENTS_RE` claims
+  timetable questions and the events lane has no timetable kind at all, so every one of them was
+  answered "this building doesn't keep a record of that" — a false absence manufactured by routing.
+* **When two stores hold the same kind of record, name which one answers.** The events store holds
+  520 generated work orders and the register holds 24 authored ones with ids a person can act on.
+  Whichever is chosen, the answer must say — and it must not be the classifier's mood that decides.
+* **Verify a routing fix live before believing it.** The offline guard harness reported 0 moves and
+  0 violations for a rule that was doing nothing whatsoever.
+
+
+## 123. A bare `no` in a YAML list is the boolean false (2026-09-19)
+
+**What happened.** "Which departments have no out-of-hours route?" answered "None of the 20 records
+lacks a recorded out-of-hours route — every one of them has it", over a register whose own closing
+sentence reads "Eight have no out-of-hours route at all". Those eight record the VALUE "No cover,
+next working day", which is a present field that says the thing is absent.
+
+The composition handled both readings correctly. The vocabulary did not: `absent_values` began with
+a bare `no`, YAML 1.1 parses that as the boolean **false**, and the pattern built from it was
+`\s*false\b` — which matches nothing. Every other word in the list worked, so the feature looked
+implemented and tested while its most important word was silently missing.
+
+**Rules.**
+* **Quote `no`, `yes`, `on`, `off`, `y`, `n` in YAML lists**, and add a test that fails when any
+  list in a config file holds a boolean. The value looks right in the file and is wrong in memory.
+* **A predicate built from config deserves a test with the real value from the real data**, not
+  just a synthetic one: "None" passed all along, so a test using it proved nothing about "No cover".
+* **"Which X have no Y" has two readings** — the field is empty, and the field says none. Answer
+  from whichever yields records and say which reading was used; they are different facts.
+* Found by the regression probe, not by a unit test: the pinned case asserted a department name in
+  the answer, which no amount of green unit tests could have supplied.
+
+
+## 124. A gate that fails open can be dead and look healthy (2026-09-20)
+
+**What happened.** The answer-relevance gate was built, unit-tested (50 tests), documented and
+deployed. On its first live run it judged 32 answers and replaced none. It had failed open, exactly
+as designed, on every call: `llm_manager.generate_structured` sent the local reasoning model a JSON
+schema as `format`, the constrained decoder and the model's thinking shared one token budget, and
+every completion came back EMPTY. Three retries, a tripped circuit breaker, and an answer left
+untouched — indistinguishable in the output from "the judge thought everything was fine".
+
+The offline experiment that justified the gate had used the raw chat API with `think: low`, so it
+worked there. Nothing in the unit tests could see the difference: they faked the client.
+
+**Rules.**
+* **A fail-open component needs a liveness check** — a count of how often it actually *acted* — and
+  the first live run must be read for it. "0 replacements from 32 judged" is the signal; a healthy
+  gate on these lanes replaces roughly one answer in six.
+* **Test a new model call with the real model before trusting any test of it.** A one-question
+  probe inside the container (`gate_probe.py`-style) took two minutes and found the bug.
+* **Measure the thing you deploy, not its cousin.** The experiment and the product reached the model
+  by different paths; only one of them worked.
+* **A heuristic that warns is still information.** "prompt carries an EMPTY question slot" fired on
+  every gate call (the label `QUESTION:` alone on a line), and would have hidden the next real one.
+
+## 125. The heredoc trap, again: backspaces and newlines in generated source (2026-09-20)
+
+Twice in one day Python written through a shell heredoc was silently corrupted: a regex `\b` became a
+literal backspace (the lay-quantity pattern matched nothing; found only by five failing tests), and
+`"\n\n"` became real newlines inside a string literal (a SyntaxError at collection). lessons #101
+and the CLAUDE.md notes already say never to do this; the cost was two debugging detours.
+
+**Rules.** Write source with the Write or Edit tools. If a script must be generated, check
+`s.count(chr(8))` and compile it before running. `tests/test_no_source_file_contains_a_backspace_
+character.py` now fails on any 0x08 in `orchestrator/`, `shared/` or `scripts/`.
+
+## 126. Measure a model-judged change paired, on the same questions (2026-09-20)
+
+Six waves of per-answer fixes left the unseen-question weird rate near 40% because the tail is long.
+Class-level gates (an answer-shape guard, an absence rewrite, lane-misfire rules, a relevance judge,
+and replacing a machine-shaped refusal with an honest decline) finally moved it: 41.2% pooled over
+seven earlier sets against 26.6% on the last two (z = 3.2, p about 0.002).
+
+The relevance gate's own share was measured *paired*: tail K was run with the gate silently off, then
+on. It fixed 3 of 17 weird answers, replaced 0 good ones and swapped 6 declines for other declines.
+An offline estimate (−11 points) and an out-of-sample one (−11) were both larger than the live gain
+(−5), because live answers vary run to run and the estimate was selected on its own best case.
+
+**Rules.** Quote the live paired figure. Treat a lane allowlist chosen on the data it is scored on as
+an upper bound. Draw a fresh set before every verdict; brief agents on classes, never on questions.

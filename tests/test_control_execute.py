@@ -16,6 +16,19 @@ from orchestrator.agents.control_agent import ControlAgent
 from shared.models import ConversationState
 
 
+@pytest.fixture(autouse=True)
+def _no_point_labels_from_config_or_graph(monkeypatch):
+    """Point labels come from the active building's config and graph (CAVEAT-817); these tests
+    pin the decline mechanics, so they run with neither, deterministically and offline. The
+    labelled wording is pinned in test_control_lists_plain_labels_not_point_identifiers.py."""
+
+    async def _no_graph(uris, run_select=None):
+        return {}
+
+    monkeypatch.setattr("orchestrator.services.writable_points.configured_labels", lambda bid: {})
+    monkeypatch.setattr("orchestrator.services.writable_points.graph_labels", _no_graph)
+
+
 def _make_state(
     intent: str = "control",
     role: str = "admin",

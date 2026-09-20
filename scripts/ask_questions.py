@@ -58,6 +58,50 @@ def _flush_response_cache(container: str) -> bool:
         return False
 
 
+def _flush_row_cache(container: str) -> bool:
+    """Delete cache:sparql* — the query-ROW cache, which has its own key and survives the above.
+
+    CAVEAT-773: flushing only resp_cache:* serves rows read before a data or code change, so a
+    fix looks like it did nothing. Done once per run, not per ask: within a run the rows do not
+    change, and re-reading them for every question would time the store rather than the answer.
+    """
+    cmd = [
+        "docker", "exec", container, "sh", "-c",
+        'redis-cli --scan --pattern "cache:sparql*" | xargs -r redis-cli DEL >/dev/null',
+    ]
+    try:
+        return subprocess.run(cmd, capture_output=True, timeout=30).returncode == 0
+    except Exception:
+        return False
+
+
+def _purge_conversations(container: str, chat_ids: List[str]) -> int:
+    """Delete the conversation state this run created, and only that.
+
+    W01 (2026-09-18): a harness asks every question in a NEW conversation and, until now, never
+    deleted it. Redis holds conversations with no expiry by design (CONVERSATION_TTL=0), so
+    ~16,000 of them — some over 1 MB — took the store to 99.77% of its 2 GB cap under
+    `allkeys-lru`, where the next write evicts the warm answer cache. Only ids this process
+    generated are touched; a real chat's key can never match a fresh `rehearsal-<hex>`.
+    """
+    ids = sorted({c for c in chat_ids if c.startswith("rehearsal-")})
+    if not ids:
+        return 0
+    script = "n=0; for id in " + " ".join(ids) + "; do " + (
+        'for pat in "conversation:owui_${id}*" "messages:owui_${id}*"; do '
+        'for k in $(redis-cli --scan --pattern "$pat"); do redis-cli DEL "$k" >/dev/null; n=$((n+1)); done; '
+        "done; done; echo $n"
+    )
+    try:
+        out = subprocess.run(
+            ["docker", "exec", container, "sh", "-c", script],
+            capture_output=True, timeout=120, text=True,
+        )
+        return int((out.stdout or "0").strip().split()[-1])
+    except Exception:
+        return 0
+
+
 def _questions(args) -> List[str]:
     qs = list(args.questions)
     if args.file:
@@ -110,6 +154,10 @@ def _ask_v1_stream(messages: List[Dict], base_url: str, key: str, chat_id: str, 
     t0 = time.time()
     first_byte = None
     parts: List[str] = []
+    # W04: the final chunk carries the lane and the rules behind it. They used to be discarded
+    # here, which is why no replayed row could say which lane produced it.
+    lane = None
+    route = None
     try:
         with requests.post(f"{base_url.rstrip('/')}/v1/chat/completions", json=body,
                            headers=headers, timeout=timeout, stream=True) as resp:
@@ -124,9 +172,14 @@ def _ask_v1_stream(messages: List[Dict], base_url: str, key: str, chat_id: str, 
                 if data == "[DONE]":
                     break
                 try:
-                    delta = _json.loads(data)["choices"][0].get("delta") or {}
+                    chunk = _json.loads(data)
+                    delta = chunk["choices"][0].get("delta") or {}
                 except Exception:
                     continue
+                if chunk.get("ontosage_intent") is not None:
+                    lane = chunk["ontosage_intent"]
+                if chunk.get("ontosage_route") is not None:
+                    route = chunk["ontosage_route"]
                 if delta.get("content"):
                     parts.append(delta["content"])
     except requests.exceptions.Timeout:
@@ -136,7 +189,7 @@ def _ask_v1_stream(messages: List[Dict], base_url: str, key: str, chat_id: str, 
     text = _re.sub(r"<details>\s*<summary>Pipeline steps</summary>.*?</details>\s*", "",
                    "".join(parts), count=1, flags=_re.S)
     return {"answer": text, "status": "OK" if text.strip() else "EMPTY",
-            "first_byte": first_byte}
+            "first_byte": first_byte, "lane": lane, "route": route}
 
 
 def _ask_v1(messages: List[Dict], base_url: str, key: str, chat_id: str, email: str,
@@ -165,10 +218,12 @@ def _ask_v1(messages: List[Dict], base_url: str, key: str, chat_id: str, email: 
     if resp.status_code != 200:
         return {"answer": resp.text[:300], "status": f"HTTP {resp.status_code}"}
     try:
-        content = resp.json()["choices"][0]["message"]["content"]
+        payload = resp.json()
+        content = payload["choices"][0]["message"]["content"]
     except Exception:
         return {"answer": resp.text[:300], "status": "BAD_RESPONSE"}
-    return {"answer": content or "", "status": "OK"}
+    return {"answer": content or "", "status": "OK",
+            "lane": payload.get("ontosage_intent"), "route": payload.get("ontosage_route")}
 
 
 def main(argv: List[str]) -> int:
@@ -188,6 +243,9 @@ def main(argv: List[str]) -> int:
     ap.add_argument("--timeout", type=int, default=300, help="per-ask client timeout, seconds")
     ap.add_argument("--redis-container", default="redis-memory-store")
     ap.add_argument("--no-flush", action="store_true", help="measure cache hits deliberately")
+    ap.add_argument("--keep-conversations", action="store_true",
+                    help="do NOT delete the Redis conversation state this run created "
+                         "(default deletes it: W01, an un-purged bank run leaves ~150 keys)")
     ap.add_argument("--out", help="write a markdown report here")
     ap.add_argument("--show", type=int, default=400, help="characters of each answer to print")
     args = ap.parse_args(argv)
@@ -229,6 +287,20 @@ def main(argv: List[str]) -> int:
     shared_chat = f"rehearsal-{_uuid.uuid4().hex[:8]}"
     history: List[Dict] = []
     rows: List[Dict] = []
+    chat_ids: List[str] = [shared_chat]
+    if not args.no_flush:
+        _flush_row_cache(args.redis_container)  # CAVEAT-773: once per run, see the helper
+    if not args.keep_conversations:
+        import atexit
+
+        # atexit, not try/finally: it also runs when a long bank run dies part-way, which is
+        # exactly when the orphaned conversations are otherwise left behind.
+        atexit.register(
+            lambda: print(
+                f"[hygiene] purged {_purge_conversations(args.redis_container, chat_ids)} "
+                f"conversation key(s) this run created"
+            )
+        )
     for q in qs:
         for i in range(1, args.repeat + 1):
             flushed = True if args.no_flush else _flush_response_cache(args.redis_container)
@@ -241,6 +313,7 @@ def main(argv: List[str]) -> int:
                         msgs, chat_id = [{"role": "user", "content": q}], (
                             f"rehearsal-{_uuid.uuid4().hex[:8]}"
                         )
+                    chat_ids.append(chat_id)
                     asker = _ask_v1_stream if args.stream else _ask_v1
                     res = asker(msgs, args.base_url, key, chat_id, args.email, args.timeout)
                     if args.conversation and res.get("answer"):
@@ -254,7 +327,10 @@ def main(argv: List[str]) -> int:
             secs = time.time() - t0
             rows.append(
                 {"q": q, "run": i, "secs": secs, "status": status, "answer": answer,
-                 "flushed": flushed, "first_byte": res.get("first_byte") if args.v1 else None}
+                 "flushed": flushed, "first_byte": res.get("first_byte") if args.v1 else None,
+                 # W04: which lane answered, and which rules put it there (None off /v1).
+                 "lane": res.get("lane") if args.v1 else None,
+                 "route": res.get("route") if args.v1 else None}
             )
             if args.out:  # a long bank run must not lose every answer to one crash
                 import json

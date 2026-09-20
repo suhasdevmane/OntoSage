@@ -35,9 +35,9 @@ bldg:Floor4 hbco:spaceFunction  "Research labs and offices: labs, server room, k
             hbco:isQuietZone    false ;
             rdfs:comment        "Server room on this floor. Bookable lab spaces via academic staff." .
 
-bldg:Floor5 hbco:spaceFunction  "Research labs and smart-sensor demonstration floor"^^xsd:string ;
+bldg:Floor5 hbco:spaceFunction  "Research labs, server room and smart-sensor demonstration floor"^^xsd:string ;
             hbco:isQuietZone    false ;
-            rdfs:comment        "Live sensor data connected (floor 5 only at launch). Research labs and PhD study spaces." .
+            rdfs:comment        "Research labs and PhD study spaces. Server room on this floor." .
 
 # ── Room capacity estimates ────────────────────────────────────────────────────
 # Estimates based on typical Cardiff University academic building room standards.
@@ -156,4 +156,10 @@ bldg:ServerRoomFloor4 rdf:type owl:NamedIndividual ;
                       rdfs:label "Server room (Floor 4)"@en ;
                       hbco:spaceFunction "Server / data centre room"^^xsd:string ;
                       brick:hasLocation bldg:Floor4 ;
+                      rdfs:comment "Restricted access. Source: it_services." .
+
+bldg:ServerRoomFloor5 rdf:type owl:NamedIndividual ;
+                      rdfs:label "Server room (Floor 5)"@en ;
+                      hbco:spaceFunction "Server / data centre room"^^xsd:string ;
+                      brick:hasLocation bldg:Floor5 ;
                       rdfs:comment "Restricted access. Source: it_services." .

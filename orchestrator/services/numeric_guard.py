@@ -32,10 +32,19 @@ _NUM_RE = re.compile(r"-?\d+(?:\.\d+)?")
 #: numbers that carry no factual claim (list indices, tiny ordinals)
 INNOCUOUS = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "24", "25", "100"}
 
+#: What a reader is told when a figure in a drafted answer could not be traced to the data.
+#:
+#: REWORDED (2D-16 wave 5). It used to read *"I computed an answer but its narration failed the
+#: evidence check ... The structured result is still available; please try rephrasing."* -- a
+#: message about the pipeline ("narration", "the evidence check", "the structured result") that a
+#: reader cannot act on, and "try rephrasing" is wrong advice, because rephrasing does not change
+#: which figure could not be checked. It now says plainly that a figure could not be checked and
+#: what to ask instead. A payload that names its source gets the source-named form in
+#: `_plain_decline`; the figure itself is NOT echoed, because a number that failed the check is a
+#: number this system has declined to state.
 SUPPRESSION_TEXT = (
-    "I computed an answer but its narration failed the evidence check — a number in the "
-    "text could not be traced back to the underlying data, so I'm not showing it. "
-    "The structured result is still available; please try rephrasing."
+    "I worked out an answer but I'm not showing it: a figure in it could not be checked against "
+    "this building's data. Ask for one room, one day or one quantity and I can check it."
 )
 
 
@@ -132,6 +141,23 @@ def guard_payload(payload: Any, lane: str) -> Any:
     if violations:
         logger.error(f"[numeric-guard] lane={lane} unbacked numbers {violations} — suppressed")
         payload = dict(payload)
-        payload["formatted_response"] = SUPPRESSION_TEXT
+        payload["formatted_response"] = _plain_decline(payload)
         payload["guard_violations"] = violations
     return payload
+
+
+def _plain_decline(payload: dict) -> str:
+    """What the reader sees when a narration is withheld: a decline naming the source.
+
+    "I computed an answer but its narration failed the evidence check" is a system message; a
+    reader cannot act on it. When the payload says which register or store it came from, the
+    decline names it and says what to do; without a source the standard text stands.
+    """
+    source = str(payload.get("source") or "").strip()
+    if not source:
+        return SUPPRESSION_TEXT
+    return (
+        f"I read the {source}, but I could not confirm every figure in the answer I drafted "
+        "against what it holds, so I am not stating it. Try asking about one thing that source "
+        "records, or name the register or system that holds the rest."
+    )

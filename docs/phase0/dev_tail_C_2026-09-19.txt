@@ -1,0 +1,62 @@
+What is the weight limit on the elevators?
+Could some rooms be more sound proof than others?
+How stale are the HR, student, visitor, contractor and training feeds used by current access decisions?
+Has elevated CO2 recurred during occupied hours in this office over the past month, or is today unusual?
+I need to move approved equipment from the entrance to a project space. Which authorised route and time would minimise stairs, congestion and handling risk?
+What is the current load on the system?
+How much rainwater harvested is used?
+Which critical services depend on networks, gateways, cloud platforms or remote support, and what safe local function remains during each loss-of-connection mode?
+Where do scheduled teaching activities conflict with the approved capacity, layout, services, equipment or access conditions of the allocated room?
+During our project's usual hours, where is there credible evidence that heating, cooling, ventilation or lighting continues while spaces are unoccupied?
+Which isolation points and downstream dependencies are documented, and what must still be proved on site before work?
+if a slip hazard appears in the lobby, how quickly is it flagged and signed?
+will data be collected on me by the building and used or sold?
+Can temperature or humidity affect the CO2 sensor?
+Where is the incident reported or detected inside the building, and which evidence supports or conflicts with that location?
+Can the proposed event or external-access arrangement proceed without unacceptable displacement of teaching, research, work or inclusive access?
+Which approved nearby space is suitable for a brief quiet pause before my next appointment?
+how is the weather outside now?
+Which badge, key, token or other credential is required at each controlled point, and how are access failures escalated?
+Could aggregation across rooms, periods or operating states reverse, dilute or conceal the pattern in important strata?
+HOW TO CONTROLL CO2?
+We only have two hours. What should we prioritise to understand the course and see Abacws?
+Which urgent cleaning-related incidents are still open and waiting for acknowledgement or action?
+For this named service, what network and hosting path is currently evidenced, which dependencies are shared, and where does visibility stop?
+how much energy do the escalators use?
+I have back-to-back seminars in different rooms. Which transition needs the larger travel and setup buffer?
+Which modules share an authorised cohort and therefore require clash protection in the same teaching period?
+Which waste streams require specialist exclusion, access and reporting rules, and what limited aggregate sustainability evidence may safely be used?
+Which approved adapters and cables should we stage for the declared presenter devices?
+Where does the current warden arrangement depend on a single person, communication path, device, route or other fragile point?
+Which two-hour periods next week are most likely to be quiet enough for focused study in Abacws?
+Does the verified timeline support the stated root cause, what alternatives remain plausible, and which specialist evidence is still needed?
+how do we benchmark this building against BREEAM or LEED targets
+what design choices?
+What lux level is maintained for reading tasks?
+Are data collection, linkage, retention and disclosure permissions current, proportionate and limited to the stated compliance purpose?
+can i get a real time map of available spaces across the building?
+Which metered HVAC systems are using substantial energy while showing weak delivered heating or cooling effect?
+Which coordination systems are ready, degraded or unavailable, and which approved manual fallback can be used for each?
+Which postings need an owner check for cost centre, project, asset, activity or period coding, and what value could be misstated?
+are there any entrances temporarily closed  today?
+Are weather, drainage, leaves, works or surface defects creating a current barrier on external paths, ramps or entrance approaches?
+Which locks or secure doors have an owner-confirmed defect, temporary control or overdue remedial action?
+what happens if temperature spikes?
+are there any maintenance task scheduled for today?
+I may not see visual alerts. Which verified audible or staff-assisted notification provision is available?
+Can the building alert someone to remove trash?
+Which records are credible candidates for the same physical asset, and what evidence separates a duplicate from a replacement or a different unit?
+Which adjacency, construction and junction options provide the required airborne and structure-borne sound separation, including confidentiality?
+what is the security like
+With the standby mode sensor, is there a manually override where the person can select what systems are not to be completly turned off for fast boot?
+What kind of vechicles park?
+Which eligible rooms have a currently verified whole route that meets the functional requirements the requester chose to state?
+Were last week's workshop conditions unusually warm, poorly ventilated or noisy compared with other sessions of the same module?
+can the building automate a monthly health and safety dashboard
+Which WEEE or data-bearing items have an authorised release and complete chain-of-custody evidence ready for secure collection?
+After the session, what public route returns me to reception or the main exit?
+Which recurring faults create the greatest combined service disruption, callout effort and recorded cost?
+are cooling systems evenly distributing air across all zones?
+Does the governance report clearly separate controlled lookup, direct observation, calculation, estimate, forecast, comparison, recommendation, unknown and stale evidence?
+How can occupancy sensors lead to more efficient use?
+how do weekends compare to weekdays for ennergy use?

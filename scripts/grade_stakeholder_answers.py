@@ -402,12 +402,22 @@ INDIVIDUAL_Q = re.compile(
 # in the runs). Checked BEFORE the decline markers because their own wording contains
 # decline-like phrases ("not a statement that the building has no such data").
 INCOMPLETE_TEMPLATES = [
-    ("could_not_put_together", re.compile(r"could not put an answer together", _I)),
+    (
+        "could_not_put_together",
+        re.compile(
+            r"could not put an answer together|couldn'?t answer that (?:about [^.\n]{0,60})?"
+            r"from [^.\n]{0,60}records",
+            _I,
+        ),
+    ),
     ("could_not_generate", re.compile(r"could(?:n't| not) generate a response", _I)),
     ("too_long", re.compile(r"took too long to process", _I)),
     ("existence_check_timeout", re.compile(r"existence check didn't complete", _I)),
     ("cannot_complete_as_asked", re.compile(r"can't complete that request as asked", _I)),
-    ("fetch_budget", re.compile(r"more than I can read", _I)),
+    # Both wordings: the second replaced the first in wave 2 of 2D-10, and runs recorded before
+    # that are still graded from these markers. A marker that only knows the current text would
+    # reclassify every historical refusal as an ordinary answer.
+    ("fetch_budget", re.compile(r"more than I can read|too wide to answer directly", _I)),
     ("cannot_rank", re.compile(r"couldn't rank any spaces", _I)),
     ("gap_on_my_side", re.compile(r"gap on my side", _I)),
     ("compare_needs_zone", re.compile(r"requires sensors with linked time-series data", _I)),

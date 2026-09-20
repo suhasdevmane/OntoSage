@@ -316,6 +316,20 @@ class _Ctx:
     normalized: Dict[str, Any]
     sr: Any
 
+    def __post_init__(self) -> None:
+        """A rule may always call ``c.sr``.
+
+        Three separate rules shipped with an unguarded ``c.sr.is_control_command(...)`` and each
+        one crashed the moment a caller built a context without the router — always a test, never
+        production, but a rule that raises is a rule that stops routing. The field means "the
+        SemanticRouter", so an absent one is filled in here rather than defended against in every
+        rule that will ever be written.
+        """
+        if self.sr is None:
+            from orchestrator.services.semantic_router import SemanticRouter
+
+            self.sr = SemanticRouter
+
     @property
     def intent(self) -> Optional[str]:
         return self.normalized.get("intent")
@@ -677,6 +691,14 @@ SERVICE_HISTORY_RE = re.compile(
 )
 
 
+#: The explicit request to be told about the building as an entity (BUG-815).
+_TELL_ME_ABOUT_THE_BUILDING_RE = re.compile(
+    r"\b(?:tell\s+me\s+about|what\s+(?:do\s+you\s+know|can\s+you\s+tell\s+me)\s+about|describe)"
+    r"\s+(?:this|the)\s+building\b",
+    re.IGNORECASE,
+)
+
+
 def _r_building_profile(c: _Ctx) -> Optional[str]:
     """A question about the BUILDING AS AN ENTITY is not open-domain knowledge.
 
@@ -690,11 +712,33 @@ def _r_building_profile(c: _Ctx) -> Optional[str]:
     building's CONTENTS or live state ("how many sensors", "temperature right
     now"), so the metrics and sensor paths keep their questions.
     """
-    if c.intent not in ("general", "general_knowledge", "clarification", "greeting", "metadata"):
-        return None
     from orchestrator.services.building_profile import detect_facet
 
-    return "capability" if detect_facet(c.query) else None
+    facet = detect_facet(c.query)
+    # A CAPACITY question ("how many people can this building hold?") is a fact the building
+    # records, yet the classifier reads "how many people" as a count of occupants and sends it to
+    # the readings; it may take it from those lanes too.
+    _takes = (
+        "general",
+        "general_knowledge",
+        "clarification",
+        "greeting",
+        "metadata",
+        "observability",
+    )
+    if facet == "capacity":
+        _takes += ("sensor_data", "analytics", "recommend", "compare", "trend")
+    if c.intent not in _takes:
+        return None
+    # `observability` is claimable, but ONLY for the explicit request to be told about the
+    # building: "What can you tell me about this building?" matches the reach patterns on "can you
+    # ... tell me" and listed 44 measurand names (BUG-815, F34). Measured over the 4,271 known
+    # questions, letting it take every facet moved 89 out of the reach lane on words like
+    # "check-in" (the "access" facet), and letting it take every whole-profile shape moved
+    # "which questions can you NOT answer about this building yet?" -- a genuine reach question.
+    if c.intent == "observability" and not _TELL_ME_ABOUT_THE_BUILDING_RE.search(c.query or ""):
+        return None
+    return "capability" if facet else None
 
 
 def report_request_about_data(query: str) -> bool:
@@ -827,7 +871,19 @@ def _r_standing_alert(c: _Ctx) -> Optional[str]:
         return None
     if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
         return None
+    if _ASKS_WHEN_RE.search(c.query):
+        return None
     return "alert" if STANDING_ALERT_RE.search(c.query) else None
+
+
+#: "Could you tell me: when is X next due?" is a QUESTION with a polite frame, not a request to be
+#: told when something happens later. The inverted verb after when/if ("when IS", "if WAS") marks it;
+#: a standing request has a subject there ("tell me when THE CO2 …", "let me know if IT …").
+_ASKS_WHEN_RE = re.compile(
+    r"\b(?:tell|let)\s+me(?:\s+know)?\b\s*[:,]?\s*(?:when|if|whether)\s+"
+    r"(?:is|was|are|were|does|did|do|has|have|will)\b",
+    re.IGNORECASE,
+)
 
 
 def _r_automation_question(c: _Ctx) -> Optional[str]:
@@ -836,7 +892,70 @@ def _r_automation_question(c: _Ctx) -> Optional[str]:
         return None
     if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
         return None
-    return "automation_capability" if AUTOMATION_Q_RE.search(c.query) else None
+    if not (AUTOMATION_Q_RE.search(c.query) and _acts_on_a_building_system(c.query)):
+        return None
+    return "automation_capability"
+
+
+#: What a question about AUTOMATION must be about: the building's own control acting on something
+#: (lights, heating, doors, an alarm), or telling someone. "Does the system do an automatic back-up
+#: of data in case of outages?" has the word "automatic" and none of this: it asks about IT
+#: infrastructure, which the building's control does not own, and was answered "here is what this
+#: building can do about alerts" (live 2026-09-20). A topic word ("back-up", "data", "outage") never
+#: qualifies; a verb or an object the building actually controls does.
+_ACTS_ON_A_SYSTEM_RE = re.compile(
+    r"\b(?:turn(?:s|ed|ing)?\s+(?:on|off)|switch\w*|adjust\w*|dim\w*|open\w*|clos\w*|lock\w*|"
+    r"unlock\w*|start\w*|stop\w*|shut\w*|regulat\w*|control\w*|heat\w*|cool\w*|ventilat\w*|"
+    r"lights?|lighting|blinds?|shades?|thermostats?|hvac|doors?|windows?|fans?|dampers?|"
+    r"setpoints?|valves?|alarms?|sprinklers?|lifts?|elevators?|generators?|fail-?over|"
+    r"notif\w*|alert\w*|warn\w*|remind\w*|respond\w*|react\w*|optimi[sz]\w*|make\s+sure|ensure|"
+    r"trigger\w*|detect\w*|increas\w*|decreas\w*|rais\w*|lower\w*|reduc\w*|boost\w*|"
+    r"activat\w*|deactivat\w*|enabl\w*|disabl\w*|intake|exhaust|pumps?|chillers?|boilers?|"
+    r"ahus?|vavs?|cut\w*)\b",
+    re.IGNORECASE,
+)
+
+
+def _acts_on_a_building_system(query: str) -> bool:
+    """True when an automation question names an action or a controlled thing, not just a topic."""
+    return bool(_ACTS_ON_A_SYSTEM_RE.search(query or ""))
+
+
+#: What an automation/alert question must SAY: something acting by itself, or a standing request.
+_AUTOMATION_SHAPE_RE = re.compile(
+    r"\bautomat\w*|\bon\s+its\s+own\b|\bby\s+itself\b|\bself[- ]\w+|\bnotif\w*|\balert\w*|"
+    r"\bremind\w*|\bwarn\w*|\btrigger\w*|\bstanding\b|\bschedul\w*|\bwhenever\b|"
+    r"\bevery\s+time\b|\bas\s+soon\s+as\b|\b(?:tell|let|message|email|text|ping|call)\s+me\s+"
+    r"(?:know\s+)?(?:when|if|once|as|whenever)\b|\bwhen\b.{1,60}\b(?:tell|let|message|email|text|ping)\s+me\b|\bif\s+.{1,40}\b(?:let|tell|send)\s+me\b|\brules?\b",
+    re.IGNORECASE,
+)
+
+
+#: The shapes that need no controlled thing: telling, reminding, a standing rule, a trigger.
+_STRONG_SHAPE_RE = re.compile(
+    r"\bnotif\w*|\balert\w*|\bremind\w*|\bwarn\w*|\btrigger\w*|\bstanding\b|\bschedul\w*|"
+    r"\bwhenever\b|\bevery\s+time\b|\bas\s+soon\s+as\b|\brules?\b|"
+    r"\b(?:tell|let|message|email|text|ping|call)\s+me\b",
+    re.IGNORECASE,
+)
+
+
+def _r_automation_needs_a_shape(c: _Ctx) -> Optional[str]:
+    """An automation/alert label with no automate/alert/notify/standing-rule shape → capability."""
+    if c.intent not in ("automation_capability", "alert"):
+        return None
+    if _WHAT_TO_AUTOMATE_RE.search(c.query or ""):
+        return None
+    if _ENV_REQUEST_RE.search(c.query or ""):
+        return "control"  # "can you reduce noise?" is a request to act, not an automation question
+    if _ASKS_WHEN_RE.search(c.query or ""):
+        return "capability"
+    if not _AUTOMATION_SHAPE_RE.search(c.query or ""):
+        return "capability"
+    # "automatic" / "by itself" alone only count when something the building controls is acted on
+    if not _STRONG_SHAPE_RE.search(c.query or "") and not _acts_on_a_building_system(c.query):
+        return "capability"
+    return None
 
 
 # V4 ARBITER — constraint-recommendation shapes: choose/rank spaces under
@@ -938,7 +1057,13 @@ EVENTS_RE = re.compile(
     # Three is deliberate: it covers "the seminar room" without reaching across a
     # prepositional phrase, so "is the temperature in room 5.01 available" — five
     # tokens — still belongs to the data lane rather than to bookings.
-    r"(?:\bis\s+(?!there\b)(?:\S{2,}\s+){1,3}(?:free|booked|available|in use|reserved|occupied|taken)\b"
+    # The subject cannot be a PARTICIPLE or an adverb: "which authorised key ... is confirmed
+    # available" asks whether an access resource is confirmed, not whether a room is free, and it
+    # was answered "about 19 arrivals through the main entrance today" (live 2026-09-20).
+    r"(?:\bis\s+(?!there\b)(?!(?:confirmed|verified|currently|officially|formally|actually|now|still|"
+    r"also|already|not|recorded|listed|held|approved|authori[sz]ed|shown|stated|marked|noted|"
+    r"considered|deemed|reported|known|found|kept|made|being)\s)"
+    r"(?:\S{2,}\s+){1,3}(?:free|booked|available|in use|reserved|occupied|taken)\b"
     # "step-free" is an ACCESSIBILITY term, not an availability one. Without the
     # lookbehind, "which rooms are step-free accessible?" matched here and was answered
     # with "69 of 233 rooms have no booking today" — a booking answer to an
@@ -948,6 +1073,10 @@ EVENTS_RE = re.compile(
     r"|\b(?:which|what|any|list)\b.{0,40}\brooms?\b.{0,30}\b(?:(?<!-)free|available)\b"
     r"|\b(?:a|any)\s+rooms?\s+(?:(?<!-)free|available)\b"
     r"|\bbookings?\b|\breservations?\b"
+    # "Which meeting rooms are booked this afternoon?" (BUG-828, B11): booked/reserved AFTER a
+    # room noun. `bookings?` needs the noun and `is <subject> booked` needs "is", so this shape
+    # fell to the six-booking document register instead of the live store.
+    r"|\b(?:which|what|any|list|show)\b.{0,40}\brooms?\b.{0,30}\b(?:booked|reserved)\b"
     # Timetabled teaching. These land in the SAME event store as bookings (V6-T25
     # routes a timetable export there deliberately), so the vocabulary has to reach
     # the same lane — without it "what is scheduled in Room1.06 tomorrow?" and
@@ -985,11 +1114,122 @@ EVENTS_RE = re.compile(
 )
 
 
+#: A booking question about the RECORD, not the moment (2D-06 wave 7). "How many bookings are
+#: recorded in total?" and "How many bookings in Room 5.15 are confirmed?" were answered by the
+#: events lane ("32 booking(s) for the building today", "0 booking(s) for Room 5.15 today — none on
+#: record") while the room-booking register holds the whole record. The events lane is right for
+#: today / now / free / available; it is wrong for in total / recorded / confirmed / every one /
+#: giving each reference. A live-time word keeps the question with the events lane.
+_BOOKING_NOUN_RE = re.compile(r"\b(?:bookings?|reservations?)\b", re.IGNORECASE)
+_BOOKING_RECORD_SCOPE_RE = re.compile(
+    r"\bin total\b|\brecorded\b|\bconfirmed\b|\bevery one\b|\bgiving each\b|\beach reference\b"
+    r"|\bon record\b|\bprovisional\b|\bcancelled\b|\bbooking references?\b",
+    re.IGNORECASE,
+)
+_LIVE_TIME_RE = re.compile(
+    r"\b(?:today|tonight|tomorrow|now|currently|right now|free|available|vacant|"
+    r"this\s+(?:morning|afternoon|evening|hour)|next\s+hour|at\s+\d)\b",
+    re.IGNORECASE,
+)
+
+
+def booking_register_question(query: str) -> bool:
+    """A booking question that asks about the record as a whole, never about the present moment."""
+    q = query or ""
+    return bool(
+        _BOOKING_NOUN_RE.search(q)
+        and _BOOKING_RECORD_SCOPE_RE.search(q)
+        and not _LIVE_TIME_RE.search(q)
+    )
+
+
+def events_question(query: str) -> bool:
+    """A booking / availability question: EVENTS_RE, less "free" in the sense of NO COST.
+
+    ONE OWNER for a decision three places were making (BUG-549's second half, found 2026-09-18).
+    The events rule and the event service applied the cost-sense exclusion and the capability
+    route's veto did not: it imported the raw regex, so "Is tap water free somewhere, or do I have
+    to buy bottles?" was vetoed as a booking question and never reached the deterministic amenity
+    route that answers "Can I get free water in this building?" in a second. The building has
+    drinking-water points on every floor; the recommend lane said no sensor tells whether tap water
+    is free. Two consumers held the fix and one held the bug, which is what a decision with several
+    owners does.
+
+    The cost sense travels with money words; booking vocabulary overrides it, so "is the room free
+    for a meeting, I'll pay for it" (rare) still counts as a booking question.
+    """
+    q = query or ""
+    if booking_register_question(q):
+        return False  # the record as a whole belongs to the room-booking register
+    if COST_SENSE_OF_FREE_RE.search(q) and not re.search(
+        r"\b(?:bookings?|reservations?|booked|reserved)\b", q, re.IGNORECASE
+    ):
+        return False
+    # "Has anything been reported broken this week?" asks the REPORT store (BUG-828, B23); the
+    # events lane reads it, so the shape has one definition, owned by report_activity.
+    from orchestrator.services.report_activity import is_report_activity_question
+
+    return bool(EVENTS_RE.search(q)) or is_report_activity_question(q)
+
+
 _INTERROGATIVE_RE = re.compile(
     r"^\s*(?:how many|how much|any|are there|is there|what|which|when|show|list|count|do we have)\b"
     r"|\?\s*$",
     re.IGNORECASE,
 )
+
+
+#: Work orders and timetabled teaching exist in TWO places: the authored registers, whose rows carry
+#: ids, statuses and dates a person can act on (WO-008, TS-0670), and the events store, whose rows are
+#: generated operational fill. Only the register can answer "which ones" and "whose id".
+#: "tickets" is deliberately absent: a ticket question is about AGING ("any overdue tickets?"),
+#: which the events store tracks and the work-order register cannot — it records no due date.
+_WORK_ORDER_RECORD_RE = re.compile(r"\bwork\s*orders?\b", re.IGNORECASE)
+_TIMETABLE_RECORD_RE = re.compile(
+    r"\b(?:timetabled?|teaching|lecture|seminar|tutorial)\s+"
+    r"(?:session|slot|class|classes|hour)s?\b|\bteaching\s+sessions?\b",
+    re.IGNORECASE,
+)
+
+
+def register_owns_the_record(query: str) -> bool:
+    """True when an authored register, not the events store, is the source for this question.
+
+    Both regressed on the probe the same way (2026-09-19): the classifier sent "How many work
+    orders are open?" and "Which teaching sessions are scheduled in Room 1.06?" to the events lane,
+    which answered 517 generated work orders instead of the register's three open ones (WO-008,
+    WO-013, WO-015) and, for the timetable, said the building "doesn't keep a record of that" while
+    675 session rows sat in the register — the events lane has no timetable kind at all, so its
+    vocabulary claims a question it cannot serve. Which lane answers must not depend on the
+    classifier's mood, so the contract decides it here.
+
+    A statement still files a ticket: only interrogative shapes are claimed.
+    """
+    q = query or ""
+    if not (_INTERROGATIVE_RE.search(q) or q.rstrip().endswith("?")):
+        return False
+    return bool(
+        _WORK_ORDER_RECORD_RE.search(q)
+        or _TIMETABLE_RECORD_RE.search(q)
+        or booking_register_question(q)
+    )
+
+
+def _r_register_owns_work_orders_and_timetable(c: _Ctx) -> Optional[str]:
+    """Work-order and teaching-timetable questions → the register lane (`metadata`).
+
+    Claims from `events` as well as the weak intents, because the classifier reaches that lane
+    directly. Every rule in a stage runs and each one SETS the intent, so this must sit AFTER
+    `event_store_query` to survive it — placing it before merely had that rule overwrite the
+    answer, which is how the first attempt at this fix changed nothing live.
+    """
+    if c.intent not in _WEAK_INTENTS + ("events", "sensor_data", "analytics", "recommend"):
+        return None
+    if c.sr is not None and (
+        c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query)
+    ):
+        return None  # a fault statement files a ticket; a command is declined
+    return "metadata" if register_owns_the_record(c.query) else None
 
 
 def _r_event_store_query(c: _Ctx) -> Optional[str]:
@@ -1014,11 +1254,9 @@ def _r_event_store_query(c: _Ctx) -> Optional[str]:
         return None  # statement shapes stay with intake
     if DELIBERATE_RE.search(c.query):
         return None  # comfort-constrained phrasing keeps the deliberative lane
-    if COST_SENSE_OF_FREE_RE.search(c.query or "") and not re.search(
-        r"\b(?:bookings?|reservations?|booked|reserved)\b", c.query or "", re.IGNORECASE
-    ):
-        return None  # "is tap water free, or do I have to buy bottles?" is about cost (BUG-549)
-    return "events" if EVENTS_RE.search(c.query) else None
+    # "is tap water free, or do I have to buy bottles?" is about cost (BUG-549): the exclusion lives
+    # in `events_question`, which the capability route's veto uses too.
+    return "events" if events_question(c.query) else None
 
 
 # V5-T26 — compliance-REGISTER questions (dated checks), distinct from both the
@@ -1208,6 +1446,30 @@ PLANT_READING_RE = re.compile(
 )
 
 
+#: A MEASURED QUANTITY ASKED FOR AS A READING is never a register question (2D-06 wave 9).
+#: "are VOC levels safe in my workspace?" selected the workspace register on "workspace" and was
+#: answered "the building's records do not contain any information about VOC concentrations" — the
+#: building has VOC sensors. A quantity a sensor measures, plus a reading shape (levels, readings,
+#: safe, ppm, how high), belongs to the readings lane, or to a clarification about the place.
+#: Noise, light and daylight are deliberately NOT here: the registers record those as attributes.
+_MEASURED_QUANTITY_RE = re.compile(
+    r"\b(?:t?vocs?|volatile organic|particulates?|pm\s?(?:1|2\.5|10)|dust|formaldehyde|radon|"
+    r"carbon (?:mono|di)oxide|co2?|air quality|temperature|humidity|smoke|fumes?)\b",
+    re.IGNORECASE,
+)
+_READING_SHAPE_RE = re.compile(
+    r"\b(?:levels?|readings?|concentrations?|safe|unsafe|ppm|how (?:high|much|bad)|"
+    r"too (?:high|low|hot|cold|humid|dry)|is it|are they)\b",
+    re.IGNORECASE,
+)
+
+
+def measured_reading_question(query: str) -> bool:
+    """A question that asks for the value of something a sensor measures."""
+    q = query or ""
+    return bool(_MEASURED_QUANTITY_RE.search(q) and _READING_SHAPE_RE.search(q))
+
+
 ROUTE_COMPARISON_RE = re.compile(
     r"\b(?:slower|faster|quicker|longer|shorter)\s+than\b|\bfloor\s+pairs?\b"
     r"|\bcompare\s+(?:the\s+)?(?:routes?|travel\s+times?)\b",
@@ -1352,8 +1614,15 @@ def _r_observability_query(c: _Ctx) -> Optional[str]:
         return None
     if c.sr.is_control_command(c.query):
         return None
+    from orchestrator.services.building_profile import detect_facet
     from orchestrator.services.observability import is_observability_question
 
+    # A question about the BUILDING AS AN ENTITY is not about the system's reach, however the
+    # words fall: "what can you tell me about this building?" contains "can you ... tell me" and
+    # was answered with a menu of measurands (BUG-815). building_profile_question, which runs
+    # earlier, has already claimed it; without this guard THIS rule, running later, took it back.
+    if detect_facet(c.query):
+        return None
     return "observability" if is_observability_question(c.query) else None
 
 
@@ -1627,6 +1896,10 @@ def _r_data_query_promotion(c: _Ctx) -> Optional[str]:
         return None
     if _METROLOGY_RE.search(c.query or ""):
         return None
+    # "Which maintenance tasks are overdue?" names things that ARE recorded, and the register lane
+    # has just been chosen for it: promoting it back to a reading lookup would undo that.
+    if maintenance_record_question(c.query or ""):
+        return None
     return "sensor_data"
 
 
@@ -1703,8 +1976,20 @@ _ANOMALY_SHAPE_RE = re.compile(
 #: written without the "can you measure…" verb the observability lane looks for.
 _UNVERBED_QUANTITY_RE = re.compile(
     r"\b(?:is|are|any|the)\s+(?:there\s+)?(?:a|an|the)?\s*([a-z][a-z0-9 \-]{2,24}?)\s+"
-    r"(?:fluctuations?|spikes?|readings?|levels?|measurements?|anomal(?:y|ies)|"
+    # "levels?" NOT FOLLOWED BY A NUMBER: "the Level 5 general waste" names a FLOOR, not a level of
+    # something. Measured live (2D-06 wave 7): "Who is in charge of the Level 5 general waste?"
+    # read "in charge of the" as a quantity and was answered "In Room 5.01 I can measure ...".
+    r"(?:fluctuations?|spikes?|readings?|levels?(?!\s*\d)|measurements?|anomal(?:y|ies)|"
     r"concentrations?|values?)\b",
+    re.IGNORECASE,
+)
+
+#: A question that asks WHO, WHEN DUE or WHAT STATE is about a record, never about a reading, and
+#: must not be taken for a quantity question because a word like "level" sits in it.
+_RECORD_ASK_RE = re.compile(
+    r"\bin charge\b|\bwho\s+(?:owns|is\s+responsible|is\s+accountable|manages|looks after)\b"
+    r"|\b(?:owner|responsible|accountable)\b|\bnext\s+due\b|\bdue\s+(?:date|for)\b"
+    r"|\bwhen\s+is\b.{0,60}\bdue\b",
     re.IGNORECASE,
 )
 
@@ -1731,6 +2016,16 @@ _NOT_A_QUANTITY = frozenset(
         "data",
         "same",
         "last",
+        # determiners and prepositions: "in charge of THE level" captured a phrase, not a quantity
+        "the",
+        "a",
+        "an",
+        "of",
+        "in",
+        "on",
+        "at",
+        "for",
+        "to",
     }
 )
 
@@ -1753,13 +2048,22 @@ def _r_unmeasured_quantity_is_reach(c: _Ctx) -> Optional[str]:
     that names no quantity at all is excluded outright. Being wrong here costs a reach answer
     to a question that deserved a data answer; being absent costs a confident non-answer.
     """
-    if c.intent in {"observability", "control", "privacy_refusal", "clarification"}:
+    if c.intent in {
+        "observability",
+        "control",
+        "privacy_refusal",
+        "clarification",
+        "scope_boundary",
+        "general_guidance",
+    }:
         return None
 
     from orchestrator.services.grounding_guard import has_measurand_concept
 
     if has_measurand_concept(c.normalized.get("concepts")):
         return None  # the building measures it — an earlier rule owns this question
+    if _RECORD_ASK_RE.search(c.ql or ""):
+        return None  # who owns / when is it due: a record is asked for, not a reading
 
     match = _UNVERBED_QUANTITY_RE.search(c.ql)
     if not match:
@@ -1799,6 +2103,45 @@ def _r_capability_measurand_is_data(c: _Ctx) -> Optional[str]:
         return None
     # A question about what a document SAYS keeps its lane, even though it names a measurand.
     if _DOCUMENTARY_RE.search(c.ql):
+        return None
+    # A QUESTION WITH NOTHING TO READ KEEPS THE LANE THAT CAN ANSWER IT (measured live, twice).
+    #
+    # "What lux level is maintained for reading tasks?" resolves "lux" to an illuminance sensor and
+    # "Which approved nearby space is suitable for a brief quiet pause?" resolves "quiet" to a sound
+    # sensor, so this rule converted both to readings and the fetch refused them -- "that covers all
+    # 268 illuminance sensors at once", "234 sound sensors". The first asks what the lighting is
+    # DESIGNED to keep (the regimes record 300 lux); the second which spaces are approved (the
+    # workspace register). Naming a measurand is not the same as asking for its value.
+    #
+    # `ungrounded_question.handoff` already owns both shapes and names the lane, so this returns it
+    # rather than merely declining: the parse-stage rule cannot help here, because it fires only
+    # from a fetch intent and the classifier had said `capability`.
+    from orchestrator.services.ungrounded_question import handoff
+
+    lane = handoff(c.query)
+    if lane:
+        return lane
+    # And an EMERGENCY ACTION is never a reading, whatever its words resolve to: "what should I do
+    # if the fire alarm goes off?" must reach the procedure the building authored (2026-09-19).
+    from orchestrator.services.emergency_procedure import is_emergency_action_question
+
+    if is_emergency_action_question(c.query):
+        return None
+    # "How many people can this building hold?" resolves "people" to an occupancy sensor, but asks
+    # for a recorded CAPACITY, a fact about the building; converted to a reading it reached the
+    # all-sensors fetch and was refused.
+    from orchestrator.services.building_profile import detect_facet as _profile_facet
+
+    if _profile_facet(c.query) == "capacity":
+        return None
+    # Provenance / verification / permission questions name a measurand in passing and are not
+    # asking for its value.
+    from orchestrator.services.governance_question import is_governance_question
+
+    if is_governance_question(c.query):
+        return None
+    # A proactive-notice or "what can people do if ..." question names a measurand in passing.
+    if _PROACTIVE_RE.search(c.query or "") or _WHAT_CAN_I_DO_IF_RE.search(c.query or ""):
         return None
     # "How many CO2 sensors are there?" is a census, not a reading. The existing guard owns
     # that distinction; reimplementing it here would give one decision two owners.
@@ -2027,6 +2370,581 @@ def _r_readiness_check(c: _Ctx) -> Optional[str]:
     return "readiness_check" if _READINESS_RE.search(c.query or "") else None
 
 
+#: A question about WHEN something was last serviced, or WHAT is overdue for maintenance. Three
+#: questions from the 2026-09-18 hand reads -- "When was the lift last serviced?", "Which assets are
+#: overdue for maintenance?", "Which maintenance tasks are overdue?" -- landed in the capability
+#: lane, the metadata fallback or the maintenance intent (which files or lists TICKETS), while the
+#: building holds them as dated records: a work-order log, an asset engineering register, service and
+#: cleaning schedules. A dated register is answered by the register lane, which projects the answer
+#: from the rows.
+#:
+#: "inspected", "tested" and "checked" ARE here for generic equipment ("when was chiller 7 last
+#: inspected?"), and the dated COMPLIANCE items ("when was the fire alarm last tested?", "which
+#: inspections are overdue?") still reach their own register lane: `compliance_register` runs first
+#: and this rule takes nothing from the `register` intent it produces.
+#:
+#: "when" counts only as the QUESTION word ("when was ...", "when did ..."): "what information must
+#: be retained WHEN an asset is replaced" and "requirements that may change WHEN an asset is
+#: modified" contain the same verbs and ask nothing about the last service (measured: the first
+#: draft moved three such catalogue questions).
+#: A period close enough that the asker means a SCHEDULE, not a policy about schedules.
+_NEAR_PERIOD = (
+    r"(?:today|tomorrow|tonight|this\s+(?:week|month|morning|afternoon)|next\s+(?:week|month)|now)"
+)
+
+MAINTENANCE_RECORD_RE = re.compile(
+    r"\bwhen\s+(?:was|were|did|has|have)\b[^?.!]{0,50}"
+    r"\b(?:serviced|maintained|repaired|overhauled|inspected|cleaned|replaced)\b"
+    r"|\b(?:what|which)\s+date\b[^?.!]{0,60}"
+    r"\b(?:serviced|maintained|repaired|overhauled|inspected|cleaned|replaced)\b"
+    r"|\bhow\s+long\s+ago\b[^?.!]{0,60}"
+    r"\b(?:serviced|maintained|repaired|overhauled|inspected|cleaned|replaced)\b"
+    r"|\blast\s+(?:serviced|maintained|repaired|overhauled|replaced|servicing|maintenance|"
+    r"service|inspected|cleaned)\b"
+    r"|\boverdue\b[^?.!]{0,30}\b(?:for\s+)?(?:maintenance|servicing|service|repairs?|cleaning|"
+    r"replacement)\b"
+    r"|\b(?:maintenance|servicing|repair|cleaning)\s+(?:tasks?|jobs?|work|items?|visits?)\b"
+    r"[^?.!]{0,40}\b(?:overdue|outstanding|late|behind|lapsed|missed)\b"
+    r"|\b(?:overdue|outstanding|late|missed)\s+(?:maintenance|servicing|repairs?|cleaning)\b"
+    r"|\b(?:repairs?|maintenance|servicing)\b[^?.!]{0,20}\b(?:overdue|outstanding|lapsed)\b"
+    # "are there any maintenance tasks scheduled for today?" — the service schedules and the work
+    # orders hold exactly this, and the events lane (which has no kind for it) answered "this
+    # building doesn't keep a record of that" (live, 2026-09-19). A NEAR period is required, so
+    # "are planned maintenance tasks aligned with each asset type?" — a policy question — is not
+    # claimed.
+    r"|\b(?:maintenance|servicing|inspection|cleaning|repair)\s+(?:(?:tasks?|jobs?|work|visits?|"
+    rf"items?|activities|activity)\s+)?[^?.!]{{0,40}}?\b(?:scheduled|planned|due|booked|coming\s+up)\b"
+    rf"[^?.!]{{0,25}}\b{_NEAR_PERIOD}\b"
+    rf"|\bwhat\s+(?:maintenance|servicing|cleaning|inspections?)\b[^?.!]{{0,30}}"
+    rf"\b(?:scheduled|planned|due|on)\b[^?.!]{{0,25}}\b{_NEAR_PERIOD}\b"
+    rf"|\b(?:scheduled|planned)\s+(?:maintenance|servicing|inspections?)\b[^?.!]{{0,25}}"
+    rf"\b{_NEAR_PERIOD}\b",
+    re.IGNORECASE,
+)
+
+#: Work orders and tickets are the events lane's own (`workorder_summary`), not a register's.
+_TICKET_WORDS_RE = re.compile(r"\b(?:work\s*orders?|tickets?)\b", re.IGNORECASE)
+
+
+def maintenance_record_question(query: str) -> bool:
+    """True for a QUESTION about when something was last serviced or what is overdue for upkeep.
+
+    Public because the dialogue agent's capability probe returns before classification, and so
+    before any contract rule: "when was the lift last serviced?" matches the lift amenity's lay
+    terms and was answered from prose. One definition, used by the rule and by that bypass.
+    """
+    q = query or ""
+    if not q.strip() or _TICKET_WORDS_RE.search(q):
+        return False
+    if not (_INTERROGATIVE_RE.search(q) or q.rstrip().endswith("?")):
+        return False  # "the lift is overdue for maintenance" is a statement: intake owns it
+    return bool(MAINTENANCE_RECORD_RE.search(q))
+
+
+def _r_maintenance_record_is_a_register_question(c: _Ctx) -> Optional[str]:
+    """ "When was the lift last serviced?" / "which tasks are overdue?" -> the register lane.
+
+    The register lane is the `metadata` route: with a held record class it answers from that
+    register's rows (a work-order log, an asset engineering register, service and cleaning
+    schedules). Comes AFTER `maintenance_schedule` and `history_question_not_report`, whose labels
+    (`maintenance`, `capability`) it corrects, and after `compliance_register`, whose dated
+    compliance items it must not take: it claims nothing from `register`, `events` or `asset_state`.
+    """
+    if c.intent not in (
+        "maintenance",
+        "capability",
+        "general",
+        "general_knowledge",
+        "clarification",
+        "discovery",
+        "metadata",
+        # `events` is claimable (2026-09-19): "are there any maintenance task scheduled for today?"
+        # was classified `events`, and that lane has no kind for a maintenance schedule at all, so
+        # it answered "this building doesn't keep a record of that" while the service schedules and
+        # the work orders hold it. This rule runs AFTER event_store_query, so it survives it.
+        "events",
+        None,
+    ):
+        return None
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None  # a fault statement files a ticket; a command is declined
+    return "metadata" if maintenance_record_question(c.query) else None
+
+
+#: "Is the temperature the same across the space?" — a question about SPREAD, not about a value.
+#: Live 2026-09-19 it reached the reading lane and was refused as covering 296 temperature sensors,
+#: while the per-floor comparison answers it in one line ("the spread across floors is 0.4 C").
+_UNIFORMITY_RE = re.compile(
+    r"\b(?:the\s+)?same\s+(?:every|through|across|all\s+over|in\s+(?:all|every))"
+    r"|\b(?:consistent|uniform|even|equal|balanced)\s+(?:across|through(?:out)?|between|"
+    r"in\s+(?:all|every)|everywhere)\b"
+    r"|\b(?:vary|varies|varying|differ|differs|different)\s+(?:much\s+)?"
+    r"(?:across|between|from\s+(?:floor|room|zone))\b"
+    r"|\bevenly\s+(?:distributed|spread|balanced)\b"
+    r"|\b(?:spread|variation|difference)\s+(?:across|between)\s+(?:the\s+)?"
+    r"(?:floors?|rooms?|zones?|spaces?|building)\b",
+    re.IGNORECASE,
+)
+
+#: A uniformity question about ONE named room is a question about that room, and the reading lane
+#: handles it; the comparison is across the building's places.
+_NAMES_ONE_PLACE_RE = re.compile(
+    r"\b(?:room|rm|zone|level|floor)\s*[\d.]+|\b\d{1,2}\.\d{1,3}\b", re.I
+)
+
+
+def uniformity_question(query: str) -> bool:
+    """True when the question asks whether a measured quantity is EVEN across the building."""
+    q = query or ""
+    if not _UNIFORMITY_RE.search(q) or _NAMES_ONE_PLACE_RE.search(q):
+        return False
+    return _any(q.lower(), SENSOR_METRIC_KWS) or _any(q.lower(), COMFORT_SIGNAL_KWS)
+
+
+_REPORT_INTENTS = ("safety_report", "maintenance", "complaint")
+
+
+def _r_a_report_needs_a_statement(c: _Ctx) -> Optional[str]:
+    """A hedged question is not a report: it asks, it does not file (2026-09-19, SERIOUS).
+
+    *"if the building are safe or not"* was classified `safety_report` and the intake node filed a
+    HIGH-PRIORITY ticket (REP-051956, "An administrator has been notified"). The message names no
+    place, no hazard and no fault: nobody reported anything, and someone was sent to look for a
+    problem that was never described.
+
+    Two cases, decided by `report_statement`:
+
+    * the classifier said a REPORT intent and the message is hedged and states nothing (no fault, no
+      hazard, no place) -> a clarification, never a ticket. Asymmetric on purpose: anything that
+      names a thing, a place or a fault keeps filing, because a missed hazard costs more than a
+      bogus ticket;
+    * the classifier said anything else and the message asks for a VERDICT on the whole building
+      ("is the building safe?") -> the same clarification, which says what the records can show
+      (overdue checks, defective equipment) instead of a lane that cannot answer "safe".
+
+    Late in the parse stage, so nothing after it can re-label a clarification it produced.
+    """
+    from orchestrator.services.report_statement import (
+        clarification_for,
+        is_building_verdict_request,
+    )
+
+    if c.intent in _REPORT_INTENTS:
+        text = clarification_for(c.query)
+        if text:
+            c.normalized["clarification_question"] = text
+            return "clarification"
+        # (A question that states no fault is refused FILING by the intake node itself, which
+        # answers it from the records; moving it here shifted ~2,000 synthetic-label rows, so the
+        # contract deliberately leaves it.)
+        return None
+    if c.intent in _WEAK_INTENTS + (
+        "sensor_data",
+        "analytics",
+        "compliance",
+        "recommend",
+        "observability",
+        "trend",
+        "compare",
+        "anomaly",
+    ):
+        if is_building_verdict_request(c.query):
+            from orchestrator.services.report_statement import reply_for
+
+            c.normalized["clarification_question"] = reply_for(c.query)
+            return "clarification"
+    return None
+
+
+def _r_emergency_action_is_a_procedure(c: _Ctx) -> Optional[str]:
+    """ "What should I do if the fire alarm goes off?" -> the procedure, never an asset register.
+
+    Live 2026-09-19, and the worst kind of wrong answer this system can give: the fire-safety asset
+    register matched on "fire alarm" and replied "1 of the 30 records matches: FSA-001 — Fire alarm
+    control panel", to a person asking what to do while an alarm sounds. The building's own
+    evacuation text answers it — leave by the nearest marked exit, do not use the lifts, assemble
+    outside, report to the floor warden — and the capability lane reads it.
+
+    Claims from `register`/`metadata` as well as the weak intents, because the register is exactly
+    where this goes wrong, and runs late so a register rule cannot take it back. A question about
+    the EQUIPMENT ("which fire doors are overdue a test?") is excluded by the shape test itself.
+    """
+    if c.intent in ("maintenance", "complaint", "safety_report", "report", "control"):
+        return None  # reporting a fire is not asking what to do about one
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None
+    from orchestrator.services.emergency_procedure import is_emergency_action_question
+
+    return "capability" if is_emergency_action_question(c.query) else None
+
+
+def _r_uniformity_is_a_comparison(c: _Ctx) -> Optional[str]:
+    """ "Is the temperature the same across the space?" -> the per-floor comparison.
+
+    Asked as a reading it reaches every sensor of that quantity and is refused as too wide (296
+    temperature sensors, live 2026-09-19). It is not a request for a value at all: the answer is a
+    SPREAD, which the comparison lane computes per floor from aggregates and states in one line.
+
+    Narrow by construction: a uniformity phrase AND a measurable quantity, and never when one place
+    is named — "is the temperature the same across Room 5.01?" is about that room.
+    """
+    if c.intent not in _WEAK_INTENTS + (
+        "sensor_data",
+        "analytics",
+        "trend",
+        "compliance",
+        "anomaly",
+    ):
+        return None
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None
+    return "compare" if uniformity_question(c.query) else None
+
+
+def _r_time_pattern_is_not_a_ranking(c: _Ctx) -> Optional[str]:
+    """ "When is the atrium busiest?" asks for a TIME, so it is a series over history (BUG-828).
+
+    Both runs of tail B row B12 answered it from the deliberation lane — "Best match: Room 3.48 -
+    Academic Office ... occupancy: 13.867" — a ranking of rooms by CURRENT occupancy that named a
+    room, and not the one asked about. "Busiest" sits in DELIBERATE_RE because "which room is the
+    busiest?" is a ranking; what separates the two questions is the dimension asked for, decided
+    by `temporal_pattern.asks_time_pattern`.
+
+    Claims only from `deliberate`, where the wrong answer was produced, and only after the two
+    deliberate rules above have had their say (this contract is last-wins), so every question
+    that reaches ARBITER by a superlative first arrives here already labelled and is judged on
+    its shape. `trend` is the lane for how a metric varies over time; its analytics node already
+    summarises readings by period for a question containing "busiest".
+    """
+    if c.intent != "deliberate":
+        return None
+    from orchestrator.services.temporal_pattern import asks_time_pattern
+
+    return "trend" if asks_time_pattern(c.query) else None
+
+
+#: Intents a request outside the building's scope is observed to land in: the classifier's guess
+#: for "what's the weather forecast?" was `clarification` ("which city?") and, once a metric word
+#: was present, `trend` (a forecast of a sensor that has no forecast to give).
+_SCOPE_TAKES_FROM = _WEAK_INTENTS + ("trend", "analytics", "sensor_data", "recommend")
+
+
+def _r_scope_boundary(c: _Ctx) -> Optional[str]:
+    """A request the assistant cannot ground or should not advise on -> a brief scope statement.
+
+    "What's the weather forecast for tomorrow?" asked which city (BUG-812, F39) and "Should I buy
+    Bitcoin?" answered with investment guidance from general model knowledge (F40). The policy
+    lives in `scope_policy`: only those two shapes are claimed; a definition, a joke and a data
+    forecast keep their lanes. Last in the contract, and from a deliberately narrow set, so it can
+    never take a question a data lane has already claimed for a reason of its own.
+    """
+    from orchestrator.services.scope_policy import KIND_TRANSACTION, out_of_scope_kind
+
+    kind = out_of_scope_kind(c.query)
+    if not kind:
+        return None
+    # "Can you make reservations in the cafe?" lands in events/control (it names bookings, or a verb
+    # of acting); asking the ASSISTANT to transact is a scope statement, whichever label it got.
+    _EXTRA = {
+        KIND_TRANSACTION: ("events", "control"),
+        # These three are declines of a shape no lane can answer, whichever lane the classifier
+        # picked (wave 9): a fault timeline arrives as diagnosis or anomaly, a personal itinerary as
+        # recommend or spatial, a distance comparison as spatial or floor_plan.
+        "fault_timeline": ("diagnosis", "anomaly", "compliance", "events", "observability"),
+        "personal_record": ("spatial_query", "floor_plan", "events", "metadata"),
+        "distance_comparison": ("spatial_query", "floor_plan", "metadata", "discovery"),
+    }
+    takes = _SCOPE_TAKES_FROM + _EXTRA.get(kind, ())
+    if c.intent not in takes:
+        return None
+    if kind != KIND_TRANSACTION and c.sr is not None and c.sr.is_control_command(c.query):
+        return None
+    return "scope_boundary"
+
+
+#: Intents a building-knowledge question is observed to land in. `recommend` and `analytics` lead:
+#: "how do I control CO2?" reads as advice, "does humidity affect CO2 sensor accuracy?" as an
+#: analysis, and both then met the sensor fetch and were refused with "that question reaches N
+#: sensors". `control` is included because "control CO2" contains the word; the command test below
+#: keeps a genuine request out.
+_GUIDANCE_TAKES_FROM = _WEAK_INTENTS + (
+    "recommend",
+    "analytics",
+    "sensor_data",
+    "compliance",
+    "compare",
+    "trend",
+    "observability",
+    "anomaly",
+    "control",
+)
+
+
+def _r_ungrounded_never_fetches(c: _Ctx) -> Optional[str]:
+    """A question with nothing for a sensor read to be about must not reach the fetch.
+
+    Measured live 2026-09-19. *"What lux level is maintained for reading tasks?"* and *"Which
+    approved nearby space is suitable for a brief quiet pause before my next appointment?"* were
+    classified `sensor_data` and answered "that question reaches 268 sensors -- more than I can read
+    row by row", with the advice to name a floor or a room. Neither question is about a reading at
+    all: the first asks the level the lighting is DESIGNED to keep, the second which spaces are
+    approved and suitable. No narrowing the reader could do would have helped.
+
+    `ungrounded_question` decides both shapes and the lane each goes to, and it yields the moment
+    the question names a room, a floor, a time window or a record -- then the asker wants THIS
+    building's readings and the data lanes keep it.
+    """
+    from orchestrator.services.ungrounded_question import FETCH_INTENTS, handoff
+
+    if c.intent not in FETCH_INTENTS:
+        return None
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None
+    return handoff(c.query)
+
+
+def _r_general_guidance(c: _Ctx) -> Optional[str]:
+    """A building-knowledge question that needs no building data -> labelled general guidance.
+
+    Owner policy 2026-09-19 ("answer MORE, honestly"): "does humidity affect CO2 sensor
+    accuracy?", "how do I control CO2?", "how do BREEAM and LEED differ?" and "what does a delta-T
+    mean?" ask for knowledge, not a reading. Through the data pipeline they were refused as "that
+    question reaches N sensors"; from the building's records they would be invented. They are
+    answered as general guidance, labelled as not from this building's records
+    (`general_guidance.py`), and never reach the sensor fetch.
+
+    The shape test is `guidance_shape.is_general_guidance_question`, deliberately conservative: a
+    guidance frame AND a building-domain term AND no grounding (no place, time window, "this/our
+    building", record kind or sensor id). A command and a fault statement are excluded here as
+    well, so "can you reduce the temperature?" and "the heating is broken" keep their lanes.
+    """
+    if c.intent not in _GUIDANCE_TAKES_FROM:
+        return None
+    if c.sr is not None and (
+        c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query)
+    ):
+        return None
+    from orchestrator.services.guidance_shape import is_general_guidance_question
+
+    return "general_guidance" if is_general_guidance_question(c.query) else None
+
+
+#: What a REPORT request says, and what a PLANNER request says. A question with neither is a
+#: question: "Which full-day cohort patterns lack an authorised usable meal or rest break?" was
+#: labelled `report` and answered "No data was retrieved for this request, so there is no report to
+#: give" after 158 s of fetching; "A lift is officially unavailable. Which bookings no longer have a
+#: verified route?" was labelled `planner` and got the same sentence after 47 s.
+_REPORT_SHAPE_RE = re.compile(
+    r"\b(?:report|summary|summari[sz]e|breakdown|overview|write[- ]?up|digest|briefing)\b",
+    re.IGNORECASE,
+)
+_PLANNER_SHAPE_RE = re.compile(
+    r"\bthen\b|\bafter\s+that\b|\bfollowed\s+by\b|\bstep[- ]by[- ]step\b|\bplan\b|"
+    r"\band\s+(?:also\s+)?(?:export|plot|chart|graph|email|send|save|download|forecast|visuali[sz]e)\b|"
+    r"\bmake\s+(?:the|this|our)\s+building\b|\beco[- ]?friendly\b|\bsustainab\w*|\bnet[- ]zero\b|"
+    r"\bmandate\b|\bgoals?\b|\bstrategy\b",
+    re.IGNORECASE,
+)
+
+
+#: A WISH, not a request: "it would be nice for the system to adjust the lighting". Nothing is being
+#: ordered, so the control lane's "this service cannot operate equipment ... setpoints" list answers
+#: a question nobody asked (tail H, 2026-09-20). It is a suggestion, which is acknowledged and logged.
+_WISH_RE = re.compile(
+    r"\b(?:it\s+would\s+be|it'?d\s+be|would\s+be)\s+(?:very\s+|really\s+|so\s+)?(?:nice|great|good|"
+    r"helpful|useful|handy|better)\b|\bi\s+wish\b|\bwould\s+love\s+(?:it\s+)?(?:if|for)\b|"
+    r"\bi'?d\s+(?:like|love)\s+(?:it\s+)?(?:if|for)\b|\bit\s+would\s+help\s+if\b",
+    re.IGNORECASE,
+)
+
+
+def _r_wish_is_a_suggestion(c: _Ctx) -> Optional[str]:
+    """A stated wish about what the system could do is a suggestion, not a control request."""
+    if c.intent not in _WEAK_INTENTS + (
+        "control",
+        "recommend",
+        "sensor_data",
+        "analytics",
+        "automation_capability",
+    ):
+        return None
+    # "is there a way to notify the lighting system that this is occurring?" is a wish put as a
+    # question, addressed to a system that does not exist yet: a suggestion (tail J, 2026-09-20).
+    if _WAY_TO_TELL_A_SYSTEM_RE.search(c.query or ""):
+        return "suggestion"
+    if not _WISH_RE.search(c.query or ""):
+        return None
+    if _INTERROGATIVE_RE.search(c.query or "") and "?" in (c.query or ""):
+        return None  # "would it be nice to know..." asked as a question
+    return "suggestion"
+
+
+_WAY_TO_TELL_A_SYSTEM_RE = re.compile(
+    r"\bis\s+there\s+a\s+way\s+(?:to|for\s+\w+\s+to)\s+(?:notify|tell|let|inform|signal|alert|make|"
+    r"get|have)\s+(?:the\s+|my\s+|our\s+)?(?:lighting|lights?|hvac|heating|cooling|ventilation|"
+    r"blinds?|screen|projector|air\s+con\w*)\b",
+    re.IGNORECASE,
+)
+
+#: What can I AUTOMATE? A question about the building's automation capability, answered by the
+#: automation lane ("alerts on measured quantities; no actuation beyond the writable setpoints").
+_WHAT_TO_AUTOMATE_RE = re.compile(
+    r"\bwhat\s+(?:(?:kinds?|types?|sorts?)\s+of\s+)?(?:tasks?|things|jobs|actions|processes|rules)"
+    r"\s+(?:can|could|might)\s+(?:i|we|you|one)\s+(?:automate|set\s+up)\b"
+    r"|\bwhat\s+(?:can|could)\s+(?:i|we|one)\s+automate\b"
+    r"|\bwhat\s+(?:can|could)\s+(?:the\s+)?(?:building|system)\s+(?:do\s+)?"
+    r"(?:automatically|on\s+its\s+own|by\s+itself)\b",
+    re.IGNORECASE,
+)
+
+#: "could the building proactively notice ... and offer ...?": it does not act on its own
+#: initiative, which the capability lane says honestly.
+_PROACTIVE_RE = re.compile(
+    r"\b(?:could|can|would|will|does|do)\s+(?:the\s+)?(?:building|system|it|you)\s+"
+    r"(?:proactively\s+\w+|(?:automatically|on\s+its\s+own|by\s+itself)\s+"
+    r"(?:notice|suggest|offer|recommend|advise|realis\w+|realiz\w+))",
+    re.IGNORECASE,
+)
+
+#: "what can people do if they don't like ...?": a PROCEDURE question, answered from the building's
+#: own arrangements (who to ask, what needs approval), never with advice about supply air.
+_WHAT_CAN_I_DO_IF_RE = re.compile(
+    r"^\s*what\s+(?:can|could|should|do|would)\s+(?:people|occupants|users|staff|students|"
+    r"visitors|i|we|one)\s+do\s+(?:if|when|about)\b"
+    r"(?!.*\b(?:fire|smoke|gas|flood\w*|injur\w*|emergency|alarm|trapped|co2|high|low)\b)",
+    re.IGNORECASE,
+)
+
+#: A polite request to CHANGE the environment: "can you reduce noise in this workspace?"
+_ENV_REQUEST_RE = re.compile(
+    r"\b(?:can|could|would|will)\s+you\s+(?:please\s+)?(?:reduce|lower|cut|quieten|quiet|dim|"
+    r"brighten|warm|cool|heat|ventilate|increase|raise|decrease|adjust|change)\s+"
+    r"(?:the\s+|this\s+|my\s+|our\s+|some\s+)?(?:noise|temperature|heat|lights?|lighting|air|"
+    r"humidity|ventilation|draught|glare|brightness|sound|volume|music|smell|odou?r)\b",
+    re.IGNORECASE,
+)
+
+#: "Is MY office warmer than comparable offices?": a comparison against a reference set the
+#: question never names. Which office?
+_COMPARABLE_PLACES_RE = re.compile(
+    r"\b(?:is|are)\s+(?:my|our)\s+\w+(?:\s+\w+)?\s+(?:significantly\s+|much\s+|noticeably\s+|any\s+)?"
+    r"(?:warmer|cooler|hotter|colder|noisier|quieter|brighter|darker|more\s+\w+|less\s+\w+)\s+"
+    r"than\s+(?:the\s+)?(?:comparable|similar|other|typical|average|neighbouring|nearby)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_what_to_automate(c: _Ctx) -> Optional[str]:
+    """'What kind of tasks can I automate?' -> the automation-capability lane."""
+    if c.intent in ("control", "alert") or c.sr.is_control_command(c.query):
+        return None
+    return "automation_capability" if _WHAT_TO_AUTOMATE_RE.search(c.query or "") else None
+
+
+def _r_proactive_or_procedure_is_capability(c: _Ctx) -> Optional[str]:
+    """Proactive-notice and 'what can people do if ...' questions -> capability (documents)."""
+    if c.intent not in _WEAK_INTENTS + (
+        "recommend",
+        "sensor_data",
+        "analytics",
+        "automation_capability",
+        "alert",
+        "compare",
+        "trend",
+    ):
+        return None
+    if c.intent == "capability":
+        return None
+    if c.sr.is_control_command(c.query):
+        return None
+    q = c.query or ""
+    if _PROACTIVE_RE.search(q) or _WHAT_CAN_I_DO_IF_RE.search(q):
+        return "capability"
+    return None
+
+
+def _r_environment_request(c: _Ctx) -> Optional[str]:
+    """'Can you reduce noise in this workspace?' -> control, which declines with what it can do."""
+    if c.intent not in _WEAK_INTENTS + ("recommend", "sensor_data", "analytics", "compare"):
+        return None
+    return "control" if _ENV_REQUEST_RE.search(c.query or "") else None
+
+
+def _r_place_vs_comparable_places(c: _Ctx) -> Optional[str]:
+    """'Is my office warmer than comparable offices?' names no office -> ask which one."""
+    # Any data label: the classifier says compare, deliberate, anomaly or analytics for this shape.
+    if c.intent in ("control", "suggestion", "scope_boundary", "general_guidance"):
+        return None
+    q = c.query or ""
+    if not _COMPARABLE_PLACES_RE.search(q) or re.search(
+        r"\b\d{1,2}\.\d{1,3}\b|\b(?:room|floor)\s*\d", q, re.I
+    ):
+        return None
+    # The classifier often says `clarification` already, so no intent CHANGES and the rule is not
+    # recorded; this flag is what stops the document probe from flipping it back to capability.
+    c.normalized["clarification_locked"] = True
+    c.normalized["clarification_question"] = (
+        'Which office do you mean? "My office" doesn\'t tell me which room to look at, and '
+        '"comparable offices" needs a reference set. Give me the room number (for example '
+        "*is room 2.14 warmer than the other rooms on its floor today?*) and I will compare its "
+        "temperature with them."
+    )
+    return "clarification"
+
+
+def _r_governance_question(c: _Ctx) -> Optional[str]:
+    """Provenance, verification, permission and 'is an assessment required' -> the documents."""
+    from orchestrator.services.governance_question import is_governance_question
+
+    if c.intent not in _WEAK_INTENTS + (
+        "sensor_data",
+        "analytics",
+        "recommend",
+        "compare",
+        "trend",
+        "anomaly",
+        "compliance",
+        "discovery",
+        "events",
+        "observability",
+        "maintenance",
+        "complaint",
+    ):
+        return None
+    if c.intent == "capability" or not is_governance_question(c.query):
+        return None
+    if _METROLOGY_RE.search(c.query or ""):
+        return None  # a calibration question keeps the metrology lane (instrument_metrology)
+    if c.sr.is_control_command(c.query):
+        return None
+    return "capability"
+
+
+def _r_report_or_planner_needs_its_shape(c: _Ctx) -> Optional[str]:
+    """A QUESTION labelled report or planner that asks for neither -> capability, never a fetch.
+
+    Only interrogatives move: a fault statement the classifier called `report` is intake's (see
+    `_r_event_store_query`, BUG-200), and a mandate ("make the building eco-friendly") keeps the
+    planner. Runs FIRST so every later rule sees the corrected label: the bookings question then
+    reaches the events rule and the register questions reach whichever lane claims them.
+    """
+    if c.intent not in ("report", "planner"):
+        return None
+    if not _INTERROGATIVE_RE.search(c.query or ""):
+        return None
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None
+    shape = _REPORT_SHAPE_RE if c.intent == "report" else _PLANNER_SHAPE_RE
+    if shape.search(c.query or "") or (
+        c.intent == "planner" and _REPORT_SHAPE_RE.search(c.query or "")
+    ):
+        return None
+    # A question that names something MEASURED is a data question wearing the wrong label.
+    if _any(c.ql, SENSOR_METRIC_KWS):
+        return "sensor_data"
+    return "capability"
+
+
 PARSE_STAGE_RULES: Tuple[Rule, ...] = (
     Rule(
         "answer_provenance",
@@ -2042,6 +2960,12 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "inference_privacy_denial",
         "individual presence/pattern/private-content/override shapes → refusal (V5-T42)",
         _r_inference_privacy,
+    ),
+    Rule(
+        "report_or_planner_needs_its_shape",
+        "a question labelled report/planner that asks for neither a document nor a multi-step job "
+        "-> capability, so it is answered from records instead of fetching for a report",
+        _r_report_or_planner_needs_its_shape,
     ),
     Rule(
         "compare_two_referents",
@@ -2118,6 +3042,16 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         _r_control,
     ),
     Rule(
+        "environment_change_request",
+        "'can you reduce noise in this workspace?' -> control (declines with what it can do)",
+        _r_environment_request,
+    ),
+    Rule(
+        "wish_is_a_suggestion",
+        "'it would be nice if the system ...' is a suggestion to log, not a control request",
+        _r_wish_is_a_suggestion,
+    ),
+    Rule(
         "maintenance_schedule",
         "maintenance-schedule phrasing → maintenance, not metadata",
         _r_maintenance_schedule,
@@ -2170,6 +3104,16 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         _r_automation_question,
     ),
     Rule(
+        "what_can_i_automate",
+        "'what kind of tasks can I automate?' -> automation_capability",
+        _r_what_to_automate,
+    ),
+    Rule(
+        "automation_needs_a_shape",
+        "automation/alert label without an automate/alert/notify/standing shape → capability",
+        _r_automation_needs_a_shape,
+    ),
+    Rule(
         "constraint_recommendation",
         "choose/rank spaces under comfort constraints → deliberate (V4 ARBITER)",
         _r_constraint_recommendation,
@@ -2187,9 +3131,30 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         _r_existential_comfort_is_deliberate,
     ),
     Rule(
+        "uniformity_is_a_comparison",
+        "'is the temperature the same across the space?' asks for a SPREAD -> the per-floor "
+        "comparison, not every sensor of that quantity and a too-wide refusal (2026-09-19)",
+        _r_uniformity_is_a_comparison,
+    ),
+    Rule(
+        "time_pattern_is_not_a_ranking",
+        "'when is the atrium busiest?' asks for a TIME -> a series over history (trend), not "
+        "the room ranking; after the two deliberate rules, whose label it corrects (BUG-828)",
+        _r_time_pattern_is_not_a_ranking,
+        sets_analytics=True,
+    ),
+    Rule(
         "event_store_query",
         "bookings / work orders / footfall → events lane (V5-T24)",
         _r_event_store_query,
+    ),
+    Rule(
+        "register_owns_work_orders_and_timetable",
+        "work-order and teaching-timetable questions → the register that holds their ids and "
+        "statuses, never the events store's generated rows; AFTER event_store_query, whose "
+        "vocabulary claims both, because each rule sets the intent and the last one wins "
+        "(2026-09-19 probe regressions)",
+        _r_register_owns_work_orders_and_timetable,
     ),
     Rule(
         "compliance_without_a_measurable_check",
@@ -2207,6 +3172,13 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "asset_state_query",
         "lift / AV / network state, cleaning schedules, closures → asset_state (V6-T58/T60)",
         _r_asset_state_query,
+    ),
+    Rule(
+        "maintenance_record_is_a_register_question",
+        "'when was X last serviced' / 'which tasks are overdue for maintenance' -> the register "
+        "lane (metadata), not prose, a ticket list or the maintenance intake. After "
+        "compliance_register and asset_state_query, whose intents it never takes",
+        _r_maintenance_record_is_a_register_question,
     ),
     Rule(
         "why_diagnosis",
@@ -2266,13 +3238,104 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "is this space ready for what happens next -> the readiness lane, dated per line",
         _r_readiness_check,
     ),
+    Rule(
+        "governance_question_never_reads_data",
+        "a question about provenance, verification, permission or a professional judgement -> "
+        "capability (documents, or an honest decline), never a census, a listing or a reading",
+        _r_governance_question,
+    ),
+    # The last two are the scope rules and are deliberately LAST: they claim only shapes no data
+    # lane has claimed for a reason of its own, so nothing earlier can be undone by them. Owner
+    # policy 2026-09-19 -- answer building KNOWLEDGE as labelled guidance, decline what is not about
+    # buildings at all.
+    Rule(
+        "a_report_needs_a_statement",
+        "a hedged or verdict-seeking message that states no fault, hazard or place is a "
+        "clarification, never a filed ticket ('if the building are safe or not' filed REP-051956); "
+        "anything naming a thing, a place or a fault keeps filing (2026-09-19, serious)",
+        _r_a_report_needs_a_statement,
+    ),
+    Rule(
+        "proactive_or_procedure_is_capability",
+        "'could the building proactively notice ...' and 'what can people do if ...' -> capability",
+        _r_proactive_or_procedure_is_capability,
+    ),
+    Rule(
+        "place_vs_comparable_places_needs_a_place",
+        "'is my office warmer than comparable offices?' names no office -> ask which",
+        _r_place_vs_comparable_places,
+    ),
+    Rule(
+        "emergency_action_is_a_procedure",
+        "'what should I do if the fire alarm goes off?' -> the building's own emergency procedure, "
+        "never the fire-safety ASSET register that matched on the words (2026-09-19, safety). Late, "
+        "because the register rules run late and this must survive them",
+        _r_emergency_action_is_a_procedure,
+    ),
+    Rule(
+        "general_guidance_question",
+        "a building-knowledge question naming no place, time, record or 'this building' -> "
+        "labelled general guidance; never the sensor fetch (owner policy 2026-09-19)",
+        _r_general_guidance,
+    ),
+    Rule(
+        "ungrounded_question_never_fetches",
+        "a question naming no place, time, record or measured instance must not reach the "
+        "all-sensors fetch: a space-suitability question -> the register lane, a design-standard "
+        "question -> the documents and regime records. AFTER general_guidance_question, because "
+        "every rule in a stage runs and the LAST one wins, and the owner's order is register "
+        "reach, then design standard, then guidance",
+        _r_ungrounded_never_fetches,
+    ),
+    Rule(
+        "scope_boundary",
+        "a weather forecast, financial advice, a joke or other non-building request -> a brief "
+        "statement of what the assistant can answer from (BUG-812)",
+        _r_scope_boundary,
+    ),
 )
+
+
+def _r_asset_state_without_a_family(c: _Ctx) -> Optional[str]:
+    """A turn the asset-state lane cannot serve is handed to the data pipeline, not refused.
+
+    Measured live 2026-09-18, unscripted: *"Is the heat pump running?"* was answered "I couldn't
+    tell which service or asset you meant, so I'm not guessing." The building has exactly one heat
+    pump, so nothing was ambiguous. The classifier had chosen `asset_state` because the sentence
+    has the shape "is the X running", and that lane knows three asset families (lifts, AV,
+    network). Its own docstring says what a `None` classification means: "this lane should not have
+    been asked, and the caller must not invent an answer from it." The caller printed a refusal
+    that blamed the reader instead.
+
+    The pipeline is the right place to send it: it finds the equipment's points and reports what
+    they measure (the heat pump has entering and leaving water temperature and no run status), and
+    its narration rule says to name the property the figures do carry and stop.
+
+    Fires ONLY when the intent is already `asset_state` and the lane's own predicate says it cannot
+    serve the question, so every turn that gets a correct asset-state answer today is untouched.
+    """
+    if c.intent != "asset_state":
+        return None
+    from orchestrator.services.asset_state_service import is_asset_state_question
+
+    if is_asset_state_question(c.query):
+        return None
+    return "sensor_data"
+
 
 POST_STAGE_RULES: Tuple[Rule, ...] = (
     Rule(
         "data_query_promotion",
         "place + measurable reading question → sensor_data (guarded against counts)",
         _r_data_query_promotion,
+        preserve_analytics=True,
+    ),
+    # AFTER promotion, which never touches an asset_state intent, so the two cannot disagree.
+    Rule(
+        "asset_state_without_a_family",
+        "the asset-state lane was chosen but knows no family for this asset -> sensor_data "
+        "(never a refusal that blames the reader)",
+        _r_asset_state_without_a_family,
         preserve_analytics=True,
     ),
 )

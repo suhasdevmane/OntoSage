@@ -1,0 +1,185 @@
+# Register vocabulary: which question words name which register columns and recorded values.
+#
+# Read by orchestrator/services/register_vocabulary.py. Ordinary English only -- nothing here
+# names a building, a register or a column of one building. A column is matched on the WORDS
+# in its name (recordOwner -> "record", "owner"), so every register the lifter produces is
+# covered by the same table.
+#
+# WHY IT EXISTS (BUG-835). "Which refuge points are defective, and who owns them?" was
+# answered "the register does not contain an ownership field" over a register whose owner
+# column reads "Building Fire Warden Coordinator". The census compared the question's word
+# "owns" with the column's word "owner" letter by letter, and the two share only three.
+# A word for a thing and a column named for the same thing are matched here, once.
+#
+# To teach the system a new synonym, add it below; no code change.
+
+# A concept is one idea asked for in several ways.
+#   question    single words (matched on their stem) that ask for it
+#   phrases     multi-word phrases that ask for it (matched on the lower-cased question)
+#   columns     word stems a column's NAME carries when it records it (prefix match)
+#   exclude     column-name words that mean the column records something else
+#   stamps      provenance columns this concept MAY read. Provenance columns are otherwise
+#               ignored, but "who owns it" is exactly what recordOwner answers.
+#   shape       what kind of answer it asks for: who | when | where | contact
+#   pick        for a date concept, which recorded date answers: latest | earliest
+concepts:
+  owner:
+    plain: owner
+    shape: who
+    # "responsibilities" and "responsibility" do not reduce to one stem (the -y/-ies pair is not
+    # one the stemmer folds), so both forms are declared rather than derived.
+    question: [owner, owners, own, owns, owned, ownership, responsible, responsibility, responsibilities, accountable, accountability, accountabilities, custodian, steward, people, person, staff, personnel]
+    phrases: ["in charge", "look after", "looks after", "looked after", "who manages", "who runs"]
+    columns: [owner, responsible, accountable, custodian, steward]
+    exclude: [for]
+    stamps: [recordOwner]
+
+  due:
+    plain: next due date
+    shape: when
+    pick: earliest
+    question: [due, deadline, expires, expiry, expire, expiring, renewal, renews]
+    phrases: ["due date", "due for", "when is it due", "when are they due", 're:\bnext\b(?:\s+(?:\w+ed|\w+tion|service|test|visit|due|check|review|maintenance))?']
+    columns: [next, due, deadline, expir, renew]
+    exclude: []
+    stamps: []
+
+  last_done:
+    plain: last completed date
+    shape: when
+    pick: latest
+    question: []
+    phrases: ['re:\blast\b(?:\s+(?:\w+ed|done))?', 're:\bmost\s+recent(?:ly)?\b', "latest service", "latest test", "latest inspection", "last service", "last inspection", "last test", "last check"]
+    columns: [last, completed, tested, checked, visited, inspected, serviced, surveyed, calibrated, verified, cleaned, collected, done]
+    exclude: []
+    stamps: []
+
+  location:
+    plain: location
+    shape: where
+    question: [where, location, located, whereabouts]
+    phrases: ["which floor", "what floor", "which level", "what level", "which room", "what room"]
+    columns: [location, floor, level, room, area, based]
+    exclude: [verified]
+    stamps: []
+
+  contact:
+    plain: contact
+    shape: contact
+    question: [contact, phone, telephone, email]
+    phrases: ["who do i tell", "who do i call", "who do i ask", "who do i contact", "who should i tell", "who should i contact", "who should i call", "get in touch"]
+    columns: [contact, email, phone, telephone]
+    exclude: []
+    stamps: []
+
+# Question words that ask for a recorded STATE. Each group maps the words a person uses onto
+# the recorded status values (matched on the start of the value, lower-cased, underscores as
+# spaces) that they can mean. "open" is deliberately wide: the register lane already tells the
+# narration to give the count for EACH status when a word could cover several.
+statuses:
+  - words: [defective, faulty, broken, failed, failing, fault, faults, defect, defects, unserviceable]
+    phrases: ["not working", "out of order", "does not work", "doesn't work", "isn't working"]
+    values: [defective, faulty, failed, broken, out of order, unserviceable]
+  - words: [overdue, late, lapsed, expired]
+    phrases: ["past due", "out of date", "behind schedule"]
+    values: [overdue, lapsed, expired]
+  - words: [open, outstanding, incomplete, unfinished, pending, unresolved]
+    phrases: ["not complete", "not completed", "not finished", "still open", "still to do", "not closed"]
+    values: [open, pending, in progress, in_progress, unresolved, outstanding]
+  - words: [completed, complete, done, finished, closed, resolved]
+    phrases: []
+    values: [completed, closed, resolved, done]
+  - words: [active, operational]
+    phrases: ["in service", "in use"]
+    values: [active]
+  - words: [scheduled, planned, upcoming]
+    phrases: []
+    values: [scheduled, planned]
+
+# A word and the recorded VALUES it can stand for. A person who asks for a "quiet" room means
+# a room whose recorded noise level is quiet or silent, and does not mean a room that has a
+# "quietest period" field.
+value_synonyms:
+  quiet: [quiet, silent]
+  silent: [silent]
+  noisy: [busy, loud, conversational, noisy]
+  loud: [busy, loud, conversational, noisy]
+  # How a register says planned work: a schedule kind on work orders, a spend category on cost lines.
+  planned: [planned, scheduled, preventive]
+  scheduled: [scheduled, planned]
+  preventive: [preventive, planned]
+  unplanned: [reactive]
+  emergency: [reactive]
+
+# Nouns that mean "a record of this register" whatever the register is. They select nothing and
+# are not reported as words the records failed to match.
+generic_nouns: [task, job, item, entry, thing, one, piece, provision, unit, role, reference, id, briefly, headline, audit, notes, kind, type, category, component, record]
+
+# Words that say WHAT a due date or a state is about, not which records are meant: "overdue for
+# maintenance", "due for test". Beside a state or a due date they select nothing and ask for
+# no field of their own.
+topic_words: [maintenance, service, servicing, inspection, inspect, test, testing, check, checking, review, survey, calibration, renewal]
+
+# A word in a question is looked for in the recorded text of a record only where that text
+# NAMES the record: its label, its kind, its location, the asset or scope it concerns. A word
+# found inside a free-text state or note ("tested and working", "not working") says nothing
+# about what the record IS, and matching it there reads a negation as its opposite.
+naming_columns: [name, title, kind, type, category, location, scope, asset, subject, room, area, floor, system, equipment, service, route, zone, department, group, class, provider, task, function, site, building, tag]
+
+# The words for the state column itself ("with the status X", "what is the status of").
+status_words: [status, state]
+
+# A recorded value that SAYS there is none of the thing.
+#
+# "Which departments have no out-of-hours route?" was answered "every one of them has it" because
+# the column is filled on all 20 records — and eight of those values read "No cover, next working
+# day", which is the register saying there is no route (its own closing sentence: "Eight have no
+# out-of-hours route at all"). A field that is present can still say the thing is absent, so
+# "which X have no Y" reads BOTH: an empty cell, and a value like these.
+#
+# Matched at the START of a value, on a word boundary, case-insensitively: "No cover, next
+# working day" counts, "Normal hours" does not. A cell holding only a dash counts too.
+# "no" MUST stay quoted: YAML reads a bare no as the boolean false, and the pattern built from
+# it was `false`, which matches nothing — so "No cover, next working day" read as a route that
+# exists and the eight departments with no out-of-hours cover were reported as having one.
+absent_values: ["no", "none", nil, "n/a", na, nothing, without, unavailable,
+  "not available", "not provided", "not recorded", "not applicable", "not held", "not in place"]
+
+# A column's word and the other words people use for it ("level 3" asks for floor 3).
+column_aliases:
+  floor: [level, storey]
+  location: [room, rooms, space, spaces, place, places, area, areas]
+  role: [team, department, person, people]
+
+# Conditions a person states about a LEVEL: "with power", "good Wi-Fi", "a low risk of noise".
+# Each names the phrases used, a word of the column that records it, and the recorded values that
+# meet it. Only values the register actually holds are applied, so an entry that does not fit a
+# register does nothing there.
+criteria:
+  - phrases: ["with power", "power at every seat", "power at the seats", "power sockets", "plug sockets", "power", "charging"]
+    column: power
+    accepts: [at every seat, at some seats]
+  - phrases: ["good wi-fi", "reliable wi-fi", "strong wi-fi", "fast wi-fi", "decent wi-fi", "good network", "good connectivity", "good internet", "wi-fi", "wifi"]
+    column: network
+    accepts: [strong, adequate]
+  - phrases: ["low risk of noise", "low noise", "low noise level", "no noise", "noise-free", "quiet", "silent", "peaceful"]
+    column: noise
+    accepts: [quiet, silent]
+
+# Words that QUALIFY a property rather than name one: "the required competence", "an explicit and
+# current scope". A register never records "explicit" or "required", so when a multi-clause
+# question is answered in part these words are not listed among the things it does not record —
+# only the properties are ("competence", "independence").
+qualifier_words: [current, explicit, required, appropriate, adequate, correct, proper, relevant,
+  applicable, valid, full, clear, named, assigned, performed, remains, remaining, safe, temporary,
+  necessary, sufficient, acceptable, suitable, able, actual, recent, real, live, active, whole]
+
+# Common verbs and bare nouns that are never the subject of a correction note. A register may
+# hold a column whose name contains one of them ("started", "completedDate"), and the W19 note
+# then read as though the WORD were the field: "**Also recorded in this register:** *start* —
+# recorded as started" was printed under an answer about HVAC start and stop times.
+# Words that are also recorded STATUS VALUES (open, closed, working) are deliberately absent:
+# the note for those explains a value the register records, which is its job.
+generic_verbs: [start, started, starts, stop, stopped, stops, run, runs, use, used, make, made,
+  take, taken, give, given, get, got, keep, kept, hold, held, set, show, shown, tell, need,
+  want, put, come, comes, go, goes, know]

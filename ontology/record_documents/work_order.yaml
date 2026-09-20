@@ -65,7 +65,10 @@ columns:
     datatype: xsd:string
     required: true
   hours:
-    predicate: ontosage:expectedMinutes
+    # HOURS (3.6, 0.8, 2.9), which this once lifted into ontosage:expectedMinutes: every work
+    # order read as a few minutes long and the word "hours" matched no field. The property
+    # is named for what the column holds and carries its unit in its name.
+    predicate: ontosage:jobHours
     datatype: xsd:decimal
   priority:
     predicate: ontosage:priority

@@ -509,6 +509,16 @@ _HAS_DATE_RE = re.compile(
     re.IGNORECASE,
 )
 _HAS_NUMBER_RE = re.compile(r"\d")
+_ASKS_COST_RE = re.compile(
+    r"\b(?:fees?|costs?|charges?|charged|price[sd]?|tariffs?|how\s+much\s+(?:is|are|does|do)\b.{0,30}"
+    r"\b(?:cost|charge))\b|\bfree\s+or\b|\bfree\s+of\s+charge\b|\bis\s+it\s+free\b|\bfor\s+free\b"
+    r"|\bdo\s+(?:i|we|you)\s+(?:have\s+to\s+)?pay\b|\bpay\s+(?:for|to)\b",
+    re.IGNORECASE,
+)
+_HAS_COST_RE = re.compile(
+    r"[£$€]|\bpence\b|\bfree\b|\bfees?\b|\bcharges?\b|\bcharged\b|\bcosts?\b|\bpric\w+|\btariffs?\b|\bpay\w*\b",
+    re.IGNORECASE,
+)
 
 
 def missing_fact_caveat(query: str, passage: str) -> Optional[str]:
@@ -521,6 +531,13 @@ def missing_fact_caveat(query: str, passage: str) -> Optional[str]:
     q, p = query or "", passage or ""
     if not q.strip() or not p.strip():
         return None
+    # "Is the parking free or is there a fee?" was answered with the amenity's train and bus
+    # directions. A fee question about an amenity wants a tariff; say plainly that none is recorded.
+    if _ASKS_COST_RE.search(q) and not _HAS_COST_RE.search(p):
+        return (
+            "This building records the amenity itself but not what it costs (no tariff, fee or "
+            "charge is held), so I can't say whether it is free — what follows is what I do hold."
+        )
     if _ASKS_DATE_RE.search(q) and not _HAS_DATE_RE.search(p):
         return (
             "I don't hold a specific date for this — what follows is the related "

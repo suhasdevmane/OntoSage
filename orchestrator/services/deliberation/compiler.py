@@ -806,25 +806,42 @@ _UNBOUNDED_EQUIVALENT = {
 }
 
 
+#: The user asked for the BAD end of air quality. The direction the compiler model returned for an
+#: "air quality" phrase cannot be trusted either way ("best" comes back as MAXIMIZE as often as
+#: MINIMIZE, which is why the fold below ignores it), so the question's own words decide.
+_WORST_AIR_RE = re.compile(
+    r"\b(?:worst|poorest|unhealthiest|most\s+polluted|most\s+unhealthy|lowest\s+quality)\b",
+    re.IGNORECASE,
+)
+
+
 def _fold_air_quality(constraints: list) -> list:
     """'Air quality' ranks on CO2 and PM2.5, never on the unit-mixed air_quality modality (WB-16).
 
     `air_quality` gathers every Air_Quality_Sensor — CO2 in ppm next to index-scale devices —
     so no single cited band can score it, and "which room has the best air quality right now?"
     declined building-wide with "no scorable data". CO2 (ASHRAE 62.1) and PM2.5 (WHO 2021) each
-    carry a standard; better air is LOWER of both. An explicit co2/pm25 constraint is kept.
+    carry a standard; better air is LOWER of both, so "worst" is the HIGHER end of both — "Which
+    rooms have the worst air quality right now?" returned the room with the LOWEST CO2, the best
+    air in the building, because this fold always minimised (BUG-823). An explicit co2/pm25
+    constraint is kept.
     """
     if not any(c.modality == "air_quality" for c in constraints):
         return constraints
     kept = [c for c in constraints if c.modality != "air_quality"]
     template = next(c for c in constraints if c.modality == "air_quality")
     present = {c.modality for c in kept}
+    direction = (
+        Direction.MAXIMIZE
+        if _WORST_AIR_RE.search(getattr(template, "source_phrase", None) or "")
+        else Direction.MINIMIZE
+    )
     for modality in ("co2", "pm25"):
         if modality not in present:
             kept.append(
                 Constraint(
                     modality=modality,
-                    direction=Direction.MINIMIZE,
+                    direction=direction,
                     hardness=template.hardness,
                     threshold=None,
                     threshold_source=ThresholdSource.RECIPE,

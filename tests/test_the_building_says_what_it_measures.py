@@ -615,7 +615,11 @@ def test_the_sparql_node_gate_and_the_events_lane_pass_the_reader():
     gate = sparql[sparql.index("ReferentResolver(self.sparql_agent._execute_query)") :]
     assert "for_admin=reader_is_admin_in(state)" in gate[:600]
     events = inspect.getsource(mod.WorkflowOrchestrator._events_node)
-    assert "service.answer(question, for_admin=reader_is_admin_in(state))" in events
+    # the call is split over lines now that it also passes the reader's ROLE (BUG-828: the report
+    # store is shown only to a role holding report:read), so pin each argument, not the one line
+    answer_call = events[events.index("service.answer(") :]
+    assert "for_admin=reader_is_admin_in(state)" in answer_call[:300]
+    assert 'reader_role=state.intermediate_results.get("user_role")' in answer_call[:300]
 
 
 @pytest.mark.parametrize("role,expected", [("admin", True), ("facility_manager", False)])

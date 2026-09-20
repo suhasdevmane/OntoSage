@@ -18,7 +18,7 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ontosage: <http://ontosage.org/capabilities#> .
 
-bldg:Abacws ontosage:openingHours "Mon-Fri 07:00-21:00; Sat 09:00-17:00; Sun closed" ;
+bldg:Abacws ontosage:openingHours "Mon-Fri 07:00-22:00; Sat-Sun 08:00-18:00" ;
     ontosage:isSimulated true .
 
 bldg:closure_Floor0_0 a ontosage:ClosurePeriod ;

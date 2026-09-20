@@ -1,0 +1,104 @@
+# Amenities the building's OWN TEXT already states, given a place to stand (2026-09-19, wave 2).
+#
+# WHY THIS FILE EXISTS
+# --------------------
+# A stakeholder asks "is there a cafe?", "where can I pray?" and the answer came from a paragraph of
+# prose (Cap_catering_amenities, Cap_wellbeing_facilities). The prose is right, but a paragraph has no
+# floor: "is there a cafe on floor 3?" could not be answered "no, it is on the ground floor", and the
+# floor filter, the nearest-amenity lookup and the "where is" answers all read instances, not prose.
+#
+# WHAT IS AUTHORED HERE, AND WHAT IS NOT
+# --------------------------------------
+# Only kinds that (a) the building's own text states, in one place or consistently in several,
+# (b) the stakeholder questions ask about, and (c) no other record of the building contradicts.
+# Each is recorded at the FLOOR the text names and no finer: a room is not invented. Every one is
+# flagged ontosage:isSimulated -- the floor is the building's statement, the exact position is not
+# recorded -- so the replace-before-deployment query lists them.
+#
+#   Cafe        "Ground-floor cafe (Abacws Cafe) open 08:00-16:30 weekdays"   Cap_catering_amenities
+#   PrayerRoom  "A multi-faith prayer and reflection room is located on Floor 1"  Cap_wellbeing_facilities
+#
+# The prayer room's topic also says "room 1.04"; the building's room list calls Room 1.04 the
+# Common Area / Atrium. The two disagree, so the ROOM is left out and only the floor is recorded.
+#
+# DELIBERATELY NOT AUTHORED (the building contradicts itself; the owner must reconcile):
+#   * Showers: the topic says Floor 1; the floor plan draws "0.08 Male WC & Showers" and "0.15 Female
+#     WC & Showers" -- ground-floor room numbers.
+#   * Vending machines: the topic says Floor 1 and Floor 3; the floor plan draws "Vending" (0Z001) on
+#     the ground floor.
+#   * Bike storage: two topics say "secure bike storage in the basement"; the detail topic says
+#     covered racks at the rear and west side and "no indoor bicycle storage".
+# NOT AUTHORED for want of demand: printers ("multi-function devices on every floor"), the nursing
+# room (Floor 2). NOT AUTHORED because no location is stated: smoking areas, lockers, gym.
+
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+bldg:Amenity_Cafe_Floor0
+    a ontosage:Amenity , ontosage:Cafe ;
+    rdfs:label "Cafe — Abacws Cafe, ground floor"@en ;
+    ontosage:layTerms "cafe, cafes, canteen, cafeteria, coffee shop, coffee bar, get a coffee" ;
+    ontosage:onFloor "Floor0" ;
+    ontosage:openingHours "Monday–Friday 08:00–16:30" ;
+    ontosage:locationText "Abacws Cafe, on the ground floor (open 08:00–16:30 on weekdays)" ;
+    ontosage:answerText "There is a cafe on the ground floor (Abacws Cafe), open 08:00–16:30 on weekdays, serving hot drinks, food and snacks." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+bldg:Amenity_PrayerRoom_Floor1
+    a ontosage:Amenity , ontosage:PrayerRoom ;
+    rdfs:label "Prayer room — multi-faith prayer and reflection room, floor 1"@en ;
+    ontosage:layTerms "prayer room, multi-faith room, faith room, reflection room, place to pray, somewhere to pray, where can i pray" ;
+    ontosage:onFloor "Floor1" ;
+    ontosage:locationText "Multi-faith prayer and reflection room, on floor 1" ;
+    ontosage:answerText "There is a multi-faith prayer and reflection room on floor 1, available to all." ;
+    ontosage:isSimulated "true"^^xsd:boolean .
+
+# -- Two places the building states plainly, transcribed and not placed (2026-09-19, wave 4) ------
+#
+# THE ASSEMBLY POINT IS SAFETY-CRITICAL, AND IS RECORDED ANYWAY. The rule this project works to is
+# that a safety position nobody surveyed must not be invented. This one was not invented: the
+# building publishes it twice, in the same words, in its own capability text --
+#
+#   Cap_fire_safety:          "Assembly point: the open area on Senghennydd Road directly outside
+#                              the main entrance."
+#   Cap_emergency_evacuation: "Proceed to the assembly point on Senghennydd Road."
+#
+# -- so the fact exists and is consistent; what was missing was an INSTANCE, which is why
+# "is there a muster point outside the building?" was answered with the whole fire-safety
+# paragraph. The transcription adds nothing the two statements do not contain: the same street,
+# the same relation to the main entrance, no floor, no room, no coordinates, no distance. It
+# carries no ontosage:isSimulated flag BECAUSE it is not a filled-in position -- flagging it would
+# say the building had not stated it, and the building has.
+#
+# Anything the two statements do not settle stays unrecorded and is the owner's to supply: which
+# side of the road, how far from the door, where a second point is if the road is closed, and
+# where wheelchair users muster when they cannot use the stairs (the refuge points answer the
+# first half of that and no register answers the second).
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#AssemblyPoint_SenghennyddRoad>
+    a ontosage:Amenity , ontosage:AssemblyPoint ;
+    rdfs:label "Fire assembly point — Senghennydd Road"@en ;
+    ontosage:layTerms "assembly point, muster point, muster station, fire assembly point, where do we assemble" ;
+    ontosage:capabilityCategory "Emergency" ;
+    ontosage:locationText "The open area on Senghennydd Road, directly outside the main entrance" ;
+    ontosage:answerText "The assembly point is the open area on Senghennydd Road, directly outside the main entrance. It is outside the building, so it sits on no floor. Leave by the nearest marked fire exit, do not use the lifts, and report to the floor fire warden for roll call." ;
+    rdfs:comment "Transcribed word for word from the building's own fire-safety and evacuation statements; no position beyond those words is recorded." .
+
+# PARKING: the place is recorded, the free-bay count is not recorded HERE.
+#
+# "Are there free parking spaces available now?" was declined. The building does record both
+# halves, in different places: `bldg:Parking_Level_Ground` (brick:Parking_Level, six EV chargers
+# attached) is the PLACE, and `bldg:building_sat_parking_free` is a parking-occupancy point with a
+# timeseries of its own. Nothing tied the two together for a reader, so a question about free bays
+# reached neither. This instance is the place, and it says where the count comes from instead of
+# carrying a number: a count copied into a record is stale the moment it is written.
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_Parking_GroundLevel>
+    a ontosage:Amenity , ontosage:ParkingArea ;
+    rdfs:label "Ground Level Parking — Abacws"@en ;
+    ontosage:layTerms "car park, car parking, parking space, parking spaces, parking bay, parking bays, free parking, park my car, where can i park, visitor parking, staff parking" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Parking_Level_Ground> ;
+    ontosage:locationText "Ground Level Parking, at the Abacws site, with six electric-vehicle charging stations on the same level" ;
+    ontosage:answerText "The building records a ground-level parking area with six electric-vehicle charging stations. How many bays are free is measured separately, by the building's parking-occupancy point, so a current count is read from that rather than from this record." .
