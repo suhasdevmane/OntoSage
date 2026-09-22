@@ -3729,3 +3729,64 @@ ontosage:jobHours a owl:DatatypeProperty ;
     rdfs:domain ontosage:WorkOrder ; rdfs:range xsd:decimal ;
     rdfs:label "job hours"@en ;
     rdfs:comment "Hours of work booked to the job: the time taken on a completed order, the allowance on an open one. In HOURS -- ontosage:expectedMinutes is minutes and holds a different unit for a different class."@en .
+
+####################################################################################################
+#  Module S — What makes a room busy                                           added 2026-09-21
+#  ------------------------------------------------------------------------------------------------
+#  NO NEW TERMS ARE DECLARED HERE. ontosage:TimetabledSession already exists (Module R), and a first
+#  attempt at this note declared a SECOND copy of it with parallel property names -- dayOfWeek,
+#  startTime, inSpace -- beside the ontosage:timeProfile, ontosage:startsAt and ontosage:endsAt the
+#  675 existing sessions already use. Two vocabularies for one fact is how half a register becomes
+#  invisible to a query, so the duplicate was removed. This block records the reading rule instead.
+#
+#  A ROOM IS BUSY WHEN ITS TIMETABLE SAYS SO. Availability used to be read from ad-hoc booking
+#  events alone, so a room carrying a weekly lecture reported itself free. The two sources answer
+#  different questions -- a timetable is what the institution PLANNED, a booking is what somebody
+#  RESERVED -- and an availability answer must consult BOTH and say which one it found.
+#
+#  HOW A SESSION IS READ
+#    ontosage:timeProfile   the weekday the session repeats on ("Monday")
+#    ontosage:startsAt      local wall-clock start, inclusive ("09:00")
+#    ontosage:endsAt        local wall-clock end, EXCLUSIVE  -- an 11:00 end frees 11:00
+#    ontosage:locationText  the room, as the timetable names it
+#    ontosage:effectiveFrom / ontosage:reviewDue   the term the pattern runs in, where recorded
+#
+#  TIMES ARE LOCAL WALL-CLOCK, because a published timetable is written in local time and does not
+#  shift when the clocks change. The store is UTC (BUG-403), so a reader converts at its own edge.
+#
+#  ABSENCE MEANS FREE ONLY WHERE A TIMETABLE EXISTS. A building that records no session at all must
+#  be answered "no timetable is recorded", never "the room is free": the second states a gap in the
+#  records as a fact about the room. Those are different answers and a reader must be able to tell
+#  them apart.
+####################################################################################################
+
+####################################################################################################
+#  Module S.1 — Washroom and drinking-water provision                           added 2026-09-21
+#  ------------------------------------------------------------------------------------------------
+#  A count answers "are there toilets on this floor?", and a wheelchair-accessible toilet is a
+#  DIFFERENT fact from a gender-neutral one. Conflating them is why "the nearest accessible toilet"
+#  was answered from a floor that has none. These properties let a floor's provision be stated once,
+#  plainly, without inventing room numbers the survey never recorded.
+####################################################################################################
+
+# WHEELCHAIR ACCESS IS ALREADY MODELLED and is NOT redeclared here. A record states it with
+# ontosage:accessibilityVerified true, ontosage:accessibilityKind "accessible_wc" and the
+# ontosage:AccessibilityFeature type, which is what the proximity resolver reads. A first version of
+# this module invented ontosage:isWheelchairAccessible instead; six floors of accessible toilets were
+# then recorded and none of them could be found, because nothing reads that name. Gender-neutral is a
+# different fact and never implies accessibility.
+
+ontosage:genderProvision a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "gender provision"@en ;
+    rdfs:comment "Who the facility is for: male, female, gender-neutral or unisex. Kept separate from accessibility because a reader may need either, and often needs both."@en .
+
+ontosage:cubicleCount a owl:DatatypeProperty ;
+    rdfs:range xsd:integer ;
+    rdfs:label "cubicle count"@en ;
+    rdfs:comment "How many cubicles the washroom block holds. A block of five cubicles is one facility with five, not five facilities -- counting it either way without saying which is how a floor's provision gets misreported."@en .
+
+ontosage:positionOnFloor a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "position on floor"@en ;
+    rdfs:comment "Where on the floor it is, in the words the survey used ('north end', 'by the east stair'), for provision recorded by position rather than by room number. Never invent a room number to fill this: a wrong room is worse than an approximate direction."@en .

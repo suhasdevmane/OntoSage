@@ -1,0 +1,31 @@
+{
+  "_comment": "Hand-read verdict per captured question, 2026-09-21. GOOD = grounded and answers what was asked. WEAK = it completed but does not answer the question well. FLAGGED = it answered confidently and the answer must not be relied on; each FLAGGED row names its defect. A capture that merely COMPLETED is not evidence of a correct answer, so every row here was read against what the question asked.",
+  "verdicts": {
+    "1":  ["GOOD", "Live reading with its timestamp, plus the range over the last 60 records."],
+    "2":  ["GOOD", "Names the floor, the mean, the spread and the runners-up."],
+    "3":  ["GOOD", "All six floors, highest and lowest identified."],
+    "4":  ["GOOD", "Totals per floor and it names the six meters it summed."],
+    "5":  ["GOOD", "Now ranks rooms by live temperature and states how it read the question: \"'coolest place to work' scored as minimize temperature against the 20-26 band\". 'coolest' was in no lay-term list, so no measurand resolved and the workspace register answered instead; the model now resolves the word against this building's own concepts, and a resolved measurand takes a live superlative off a register lane. BUG-860 fixed."],
+    "6":  ["GOOD", "3 of 15 records, each with its id, permit kind and provider."],
+    "7":  ["GOOD", "Gives the date and distinguishes the room sensor from the general air-quality sensor."],
+    "8":  ["GOOD", "Splits fail-open from fail-locked with the device ids behind each."],
+    "9":  ["GOOD", "Lists the 9 open records AND states plainly that the register holds no due date, so 'overdue' cannot be derived from it. Refusing the second half of the question is the right answer."],
+    "10": ["GOOD", "Both overdue controls with their due dates, as at today."],
+    "11": ["GOOD", "Breaks 30 assets into active/defective/overdue and separates 'cannot be evidenced'."],
+    "12": ["GOOD", "Gives the count and the denominator it came from."],
+    "13": ["GOOD", "Now answers from the same floor. The earlier capture sent a wheelchair user one floor up because only two accessible WCs were recorded for the whole building; the surveyed provision (two per floor, every floor) is now in the graph."],
+    "14": ["GOOD", "Plan plus the spaces on the floor, grouped by kind."],
+    "15": ["GOOD", "Lists the free bottle-filling stations, two per floor. The earlier capture named single placeholder points that had been dropped into arbitrary rooms."],
+    "16": ["GOOD", "Answers 'not ready' and says which item is unevidenced, with the register and date behind each check."],
+    "17": ["GOOD", "Direct answer against the booking window."],
+    "18": ["GOOD", "Answers, and marks the answer as the last known state with the age of the check rather than implying it is live."],
+    "19": ["GOOD", "Purpose, owner, operator, year and capacity from the building's own description."],
+    "20": ["GOOD", "Declines, says a figure would be invented, and lists what IS measured there."],
+    "21": ["GOOD", "Files the report, returns its id, category, priority and location."],
+    "22": ["GOOD", "Files it and asks for the location it could not determine, explaining why that matters."],
+    "23": ["GOOD", "Refuses, states the refusal applies to every role, and offers the aggregate alternative."],
+    "24": ["WEAK", "Declines rather than guessing, which is right, but the reason reaches the reader as internal jargon ('too_sparse_after_resample') instead of plain words."],
+    "25": ["FLAGGED", "States defibrillator positions and an emergency number as fact. The record behind it says the positions are 'modelled'. Safety-critical, so it must not be relied on until the owner confirms the three positions. Logged as BUG-858 (P1)."],
+    "26": ["GOOD", "Reads the room timetable as well as the ad-hoc bookings and names the session occupying the room. Before this change availability consulted bookings only, so a room carrying a weekly lecture reported itself free."]
+  }
+}

@@ -34,6 +34,10 @@ def test_the_answer_texts_go_through_the_display_name():
 
     source = inspect.getsource(mod)
     assert "{_room_name(room)} is free" in source
-    assert "{_room_name(room)} is booked" in source
+    # The busy wording changed when the timetable joined the bookings: one room can now be "not
+    # free" for either reason, or for both. What this test is really pinning is that every branch
+    # puts the room id through the display helper, so all three are checked by name.
+    assert "{_room_name(room)} is not free" in source
+    assert "{_room_name(room)} has no bookings" in source
     assert "_room_name(r) for r in shown" in source
     assert "{_room_name(name)}: {n} session(s)" in source

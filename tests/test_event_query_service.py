@@ -65,10 +65,24 @@ def _svc(rows):
     return EventQueryService("tb", _FakeAdapter(rows), ROOMS)
 
 
+def test_a_building_with_no_timetable_is_not_told_the_room_is_free():
+    """No timetable is a gap in the records, not a fact about the room.
+
+    This fixture has no ontosage:TimetabledSession at all. The old answer was "RM101_room is
+    free", which presented a missing timetable as an assurance that nothing uses the room.
+    """
+    r = asyncio.run(_svc([]).answer("Is RM101 free at 3pm?", now=NOW))
+    said = r["formatted_response"]
+    assert r["success"] and r["free"]
+    assert "RM101_room has no bookings" in said
+    assert "records no room timetable" in said
+    assert "is free" not in said
+
+
 def test_availability_check_free_and_busy():
     svc = _svc([])
     r = asyncio.run(svc.answer("Is RM101 free at 3pm?", now=NOW))
-    assert r["success"] and r["free"] and "RM101_room is free" in r["formatted_response"]
+    assert r["success"] and r["free"] and "RM101_room has no bookings" in r["formatted_response"]
     busy_row = (
         "id1",
         "booking",
@@ -80,6 +94,7 @@ def test_availability_check_free_and_busy():
     )
     r = asyncio.run(_svc([busy_row]).answer("Is RM101 free at 3pm?", now=NOW))
     assert not r["free"] and "booked" in r["formatted_response"]
+    assert "is not free" in r["formatted_response"]
 
 
 def test_availability_list_excludes_busy_rooms():

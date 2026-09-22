@@ -1,0 +1,62 @@
+# Safety-critical facts a building must state itself, and the ontology classes that would hold them.
+#
+# WHY THIS EXISTS. The system never invents a safety-critical fact (where the defibrillator is, where to
+# muster, which route a wheelchair user takes out). It says the fact is not recorded and who to ask.
+# That is right, and it means every one of these that the building has not recorded is a question the
+# system must decline. `scripts/owner_facts_report.py` reads this file, asks the ACTIVE building's graph
+# what it holds for each, and writes a checklist of what the owner still has to supply. Nothing here
+# names a building: a new building runs the same report against its own graph.
+#
+# Fields
+#   id          stable key
+#   label       what a person would call it
+#   classes     ontology classes (any prefix-free local name in the ontosage capabilities namespace) whose
+#               instances would hold the fact; the fact counts as held when ANY has an instance
+#   must_state  what the record has to say for a reader to act on it (not enforced; printed in the checklist)
+#   note        why it is on the list
+facts:
+  - id: first_aid
+    label: First-aid point / kit / first aider
+    classes: [FirstAidPoint]
+    must_state: the room or floor, who is the first aider, and how to reach them out of hours
+    note: an injured person needs a location, not a policy
+  - id: defibrillator
+    label: Defibrillator (AED)
+    classes: [Defibrillator, AedPoint, AED]
+    must_state: the exact position on each floor that has one, and whether it is checked
+    note: minutes matter; a wrong position is worse than none
+  - id: assembly_point
+    label: Fire assembly / muster point
+    classes: [AssemblyPoint]
+    must_state: the position, the fallback if it is blocked, and where wheelchair users muster
+    note: the record may name a street but not a side of it or a distance
+  - id: refuge_point
+    label: Refuge points for people who cannot use stairs
+    classes: [RefugePoint, EvacuationProvision]
+    must_state: each floor's refuge point, whether its two-way communication unit works, and who owns it
+    note: a defective unit must be listed as defective, never omitted
+  - id: fire_exit
+    label: Fire exits and escape routes
+    classes: [FireExit, EscapeRoute, EvacuationProvision]
+    must_state: each exit, its floor, and which routes are step-free
+    note: derived from room labels is not good enough for a safety answer
+  - id: accessible_toilet
+    label: Accessible toilets
+    classes: [AccessibleToilet, ToiletFacility]
+    must_state: floor and room of each, and whether each is in service
+    note: a placeholder record must be replaced before it is relied on
+  - id: changing_places
+    label: Changing Places / adult changing facility
+    classes: [ChangingPlaces]
+    must_state: whether one exists and where
+    note: absence must be recorded as absence, so a reader is not left guessing
+  - id: emergency_contacts
+    label: Emergency and out-of-hours contacts
+    classes: [EmergencyContact, Department]
+    must_state: a number that is answered out of hours, and who answers it
+    note: the number is what a person in trouble needs
+  - id: lift_alternatives
+    label: What to do when the only step-free route (a lift) is out of service
+    classes: [AccessibleRoute, EvacuationProvision]
+    must_state: the alternative route or the assistance contact, per lift
+    note: the most common accessibility failure is a single point of failure nobody wrote down

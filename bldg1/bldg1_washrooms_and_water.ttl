@@ -1,0 +1,383 @@
+# Washroom and drinking-water provision, as the building states it.
+#
+# WHAT CHANGED AND WHY. This file replaces the placeholder toilet and drinking-water amenities that
+# used to sit in bldg1_amenity_locations.ttl. Those put one toilet per floor into whatever room came
+# first -- "toilet facility in Room 0.04 - Mechanical Plant Room" -- and recorded no accessibility at
+# all, so "the nearest accessible toilet to room 3.10" was answered from floor 4 when floor 3 has
+# two. Every entry below is what the building actually provides.
+#
+# HOW TO MAINTAIN IT
+#   Each floor has: one male washroom block (5 cubicles), one female washroom block (5 cubicles),
+#   and two gender-neutral toilets that are wheelchair-accessible. Water: two bottle-filling
+#   stations per floor, one at each end, plus the staff kitchens and common room.
+#
+#   ontosage:genderProvision        male | female | gender-neutral | unisex
+#   ontosage:accessibilityVerified  true ONLY where step-free access and accessible fittings have
+#                                  been surveyed. Gender-neutral does NOT imply it. This is the
+#                                  property the resolver actually reads, together with
+#                                  ontosage:accessibilityKind "accessible_wc" and the
+#                                  ontosage:AccessibilityFeature type -- an accessible toilet that
+#                                  omits them is recorded but will not be found.
+#   ontosage:cubicleCount           a block of five cubicles is ONE facility with five, not five.
+#   ontosage:positionOnFloor        where the survey says it is, when no room number was recorded.
+#
+# NO ROOM NUMBERS ARE INVENTED. The washrooms and the end-of-floor water stations are recorded by
+# position because that is how they were surveyed; a wrong room number is worse than an honest
+# direction. The staff water points DO carry room IRIs, because those rooms are in the model.
+#
+# A new building copies this pattern with its own floors and provision: nothing here is in code.
+
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+####################################################################################################
+#  Washrooms — every floor: 1 male block (5), 1 female block (5), 2 accessible gender-neutral
+####################################################################################################
+
+bldg:Washroom_Male_Floor0 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Male washroom — Floor 0"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, mens, gents, male toilet" ;
+    ontosage:onFloor "Floor0" ; ontosage:genderProvision "male" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Male washroom on floor Floor0, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 0 has a male washroom with 5 cubicles, by the central stair core." .
+
+bldg:Washroom_Female_Floor0 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Female washroom — Floor 0"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, ladies, womens, female toilet" ;
+    ontosage:onFloor "Floor0" ; ontosage:genderProvision "female" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Female washroom on floor Floor0, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 0 has a female washroom with 5 cubicles, by the central stair core." .
+
+bldg:Toilet_Accessible_Floor0_a a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 0 (one end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor0" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor0 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor0, at one end of the floor" ;
+    ontosage:answerText "Floor 0 has an accessible gender-neutral toilet at one end of the floor." .
+
+bldg:Toilet_Accessible_Floor0_b a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 0 (other end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor0" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor0 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor0, at the other end of the floor" ;
+    ontosage:answerText "Floor 0 has an accessible gender-neutral toilet at the other end of the floor." .
+
+bldg:Washroom_Male_Floor1 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Male washroom — Floor 1"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, mens, gents, male toilet" ;
+    ontosage:onFloor "Floor1" ; ontosage:genderProvision "male" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Male washroom on floor Floor1, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 1 has a male washroom with 5 cubicles, by the central stair core." .
+
+bldg:Washroom_Female_Floor1 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Female washroom — Floor 1"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, ladies, womens, female toilet" ;
+    ontosage:onFloor "Floor1" ; ontosage:genderProvision "female" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Female washroom on floor Floor1, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 1 has a female washroom with 5 cubicles, by the central stair core." .
+
+bldg:Toilet_Accessible_Floor1_a a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 1 (one end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor1" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor1 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor1, at one end of the floor" ;
+    ontosage:answerText "Floor 1 has an accessible gender-neutral toilet at one end of the floor." .
+
+bldg:Toilet_Accessible_Floor1_b a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 1 (other end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor1" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor1 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor1, at the other end of the floor" ;
+    ontosage:answerText "Floor 1 has an accessible gender-neutral toilet at the other end of the floor." .
+
+bldg:Washroom_Male_Floor2 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Male washroom — Floor 2"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, mens, gents, male toilet" ;
+    ontosage:onFloor "Floor2" ; ontosage:genderProvision "male" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Male washroom on floor Floor2, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 2 has a male washroom with 5 cubicles, by the central stair core." .
+
+bldg:Washroom_Female_Floor2 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Female washroom — Floor 2"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, ladies, womens, female toilet" ;
+    ontosage:onFloor "Floor2" ; ontosage:genderProvision "female" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Female washroom on floor Floor2, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 2 has a female washroom with 5 cubicles, by the central stair core." .
+
+bldg:Toilet_Accessible_Floor2_a a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 2 (one end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor2" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor2 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor2, at one end of the floor" ;
+    ontosage:answerText "Floor 2 has an accessible gender-neutral toilet at one end of the floor." .
+
+bldg:Toilet_Accessible_Floor2_b a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 2 (other end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor2" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor2 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor2, at the other end of the floor" ;
+    ontosage:answerText "Floor 2 has an accessible gender-neutral toilet at the other end of the floor." .
+
+bldg:Washroom_Male_Floor3 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Male washroom — Floor 3"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, mens, gents, male toilet" ;
+    ontosage:onFloor "Floor3" ; ontosage:genderProvision "male" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Male washroom on floor Floor3, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 3 has a male washroom with 5 cubicles, by the central stair core." .
+
+bldg:Washroom_Female_Floor3 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Female washroom — Floor 3"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, ladies, womens, female toilet" ;
+    ontosage:onFloor "Floor3" ; ontosage:genderProvision "female" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Female washroom on floor Floor3, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 3 has a female washroom with 5 cubicles, by the central stair core." .
+
+bldg:Toilet_Accessible_Floor3_a a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 3 (one end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor3" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor3 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor3, at one end of the floor" ;
+    ontosage:answerText "Floor 3 has an accessible gender-neutral toilet at one end of the floor." .
+
+bldg:Toilet_Accessible_Floor3_b a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 3 (other end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor3" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor3 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor3, at the other end of the floor" ;
+    ontosage:answerText "Floor 3 has an accessible gender-neutral toilet at the other end of the floor." .
+
+bldg:Washroom_Male_Floor4 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Male washroom — Floor 4"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, mens, gents, male toilet" ;
+    ontosage:onFloor "Floor4" ; ontosage:genderProvision "male" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Male washroom on floor Floor4, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 4 has a male washroom with 5 cubicles, by the central stair core." .
+
+bldg:Washroom_Female_Floor4 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Female washroom — Floor 4"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, ladies, womens, female toilet" ;
+    ontosage:onFloor "Floor4" ; ontosage:genderProvision "female" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Female washroom on floor Floor4, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 4 has a female washroom with 5 cubicles, by the central stair core." .
+
+bldg:Toilet_Accessible_Floor4_a a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 4 (one end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor4" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor4 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor4, at one end of the floor" ;
+    ontosage:answerText "Floor 4 has an accessible gender-neutral toilet at one end of the floor." .
+
+bldg:Toilet_Accessible_Floor4_b a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 4 (other end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor4" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor4 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor4, at the other end of the floor" ;
+    ontosage:answerText "Floor 4 has an accessible gender-neutral toilet at the other end of the floor." .
+
+bldg:Washroom_Male_Floor5 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Male washroom — Floor 5"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, mens, gents, male toilet" ;
+    ontosage:onFloor "Floor5" ; ontosage:genderProvision "male" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Male washroom on floor Floor5, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 5 has a male washroom with 5 cubicles, by the central stair core." .
+
+bldg:Washroom_Female_Floor5 a ontosage:Amenity , ontosage:ToiletFacility ;
+    rdfs:label "Female washroom — Floor 5"@en ;
+    ontosage:layTerms "toilet, toilets, washroom, restroom, bathroom, wc, ladies, womens, female toilet" ;
+    ontosage:onFloor "Floor5" ; ontosage:genderProvision "female" ; ontosage:cubicleCount 5 ;
+    ontosage:positionOnFloor "by the central stair core" ;
+    ontosage:locationText "Female washroom on floor Floor5, by the central stair core (5 cubicles)" ;
+    ontosage:answerText "Floor 5 has a female washroom with 5 cubicles, by the central stair core." .
+
+bldg:Toilet_Accessible_Floor5_a a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 5 (one end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor5" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor5 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor5, at one end of the floor" ;
+    ontosage:answerText "Floor 5 has an accessible gender-neutral toilet at one end of the floor." .
+
+bldg:Toilet_Accessible_Floor5_b a ontosage:Amenity , ontosage:ToiletFacility , ontosage:AccessibleToilet , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible gender-neutral toilet — Floor 5 (other end)"@en ;
+    ontosage:layTerms "accessible toilet, disabled toilet, wheelchair toilet, gender neutral toilet, unisex toilet, toilet, wc" ;
+    ontosage:onFloor "Floor5" ; ontosage:genderProvision "gender-neutral" ;
+    ontosage:accessibilityVerified true ;
+    ontosage:accessibilityKind "accessible_wc" ;
+    ontosage:locatedIn bldg:Floor5 ; ontosage:cubicleCount 1 ;
+    ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Accessible gender-neutral toilet on floor Floor5, at the other end of the floor" ;
+    ontosage:answerText "Floor 5 has an accessible gender-neutral toilet at the other end of the floor." .
+
+####################################################################################################
+#  Drinking water — two free bottle-filling stations per floor, one at each end, plus staff kitchens
+####################################################################################################
+
+bldg:WaterPoint_Floor0_a a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 0 (one end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor0" ; ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor0, at one end of the floor" ;
+    ontosage:answerText "Floor 0 has a free bottle-filling station at one end of the floor." .
+
+bldg:WaterPoint_Floor0_b a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 0 (other end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor0" ; ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor0, at the other end of the floor" ;
+    ontosage:answerText "Floor 0 has a free bottle-filling station at the other end of the floor." .
+
+bldg:WaterPoint_Floor1_a a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 1 (one end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor1" ; ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor1, at one end of the floor" ;
+    ontosage:answerText "Floor 1 has a free bottle-filling station at one end of the floor." .
+
+bldg:WaterPoint_Floor1_b a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 1 (other end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor1" ; ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor1, at the other end of the floor" ;
+    ontosage:answerText "Floor 1 has a free bottle-filling station at the other end of the floor." .
+
+bldg:WaterPoint_Floor2_a a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 2 (one end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor2" ; ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor2, at one end of the floor" ;
+    ontosage:answerText "Floor 2 has a free bottle-filling station at one end of the floor." .
+
+bldg:WaterPoint_Floor2_b a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 2 (other end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor2" ; ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor2, at the other end of the floor" ;
+    ontosage:answerText "Floor 2 has a free bottle-filling station at the other end of the floor." .
+
+bldg:WaterPoint_Floor3_a a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 3 (one end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor3" ; ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor3, at one end of the floor" ;
+    ontosage:answerText "Floor 3 has a free bottle-filling station at one end of the floor." .
+
+bldg:WaterPoint_Floor3_b a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 3 (other end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor3" ; ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor3, at the other end of the floor" ;
+    ontosage:answerText "Floor 3 has a free bottle-filling station at the other end of the floor." .
+
+bldg:WaterPoint_Floor4_a a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 4 (one end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor4" ; ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor4, at one end of the floor" ;
+    ontosage:answerText "Floor 4 has a free bottle-filling station at one end of the floor." .
+
+bldg:WaterPoint_Floor4_b a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 4 (other end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor4" ; ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor4, at the other end of the floor" ;
+    ontosage:answerText "Floor 4 has a free bottle-filling station at the other end of the floor." .
+
+bldg:WaterPoint_Floor5_a a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 5 (one end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor5" ; ontosage:positionOnFloor "at one end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor5, at one end of the floor" ;
+    ontosage:answerText "Floor 5 has a free bottle-filling station at one end of the floor." .
+
+bldg:WaterPoint_Floor5_b a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Bottle-filling station — Floor 5 (other end)"@en ;
+    ontosage:layTerms "water, drinking water, water fountain, water cooler, bottle filling, refill, fill my bottle, free water, tap water" ;
+    ontosage:onFloor "Floor5" ; ontosage:positionOnFloor "at the other end of the floor" ;
+    ontosage:locationText "Free bottle-filling station on floor Floor5, at the other end of the floor" ;
+    ontosage:answerText "Floor 5 has a free bottle-filling station at the other end of the floor." .
+
+# Staff kitchens and the common room — these DO have room IRIs, because the model holds those rooms.
+
+bldg:WaterPoint_Room2.66 a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water — Room 2.66, Staff Break Room / Kitchen"@en ;
+    ontosage:layTerms "water, drinking water, bottle filling, refill, fill my bottle, free water, tap water, kitchen, staff kitchen" ;
+    ontosage:locatedIn bldg:Room2.66 ; ontosage:onFloor "Floor2" ;
+    ontosage:locationText "Drinking water in Room 2.66 — Staff Break Room / Kitchen (floor Floor2)" ;
+    ontosage:answerText "Staff can fill a bottle in Room 2.66 — Staff Break Room / Kitchen on floor 2." .
+
+bldg:WaterPoint_Room3.17 a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water — Room 3.17, Staff Common Room"@en ;
+    ontosage:layTerms "water, drinking water, bottle filling, refill, fill my bottle, free water, tap water, common room, staff common room" ;
+    ontosage:locatedIn bldg:Room3.17 ; ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Drinking water in Room 3.17 — Staff Common Room (floor Floor3)" ;
+    ontosage:answerText "Staff can fill a bottle in Room 3.17 — Staff Common Room on floor 3." .
+
+bldg:WaterPoint_Room3.18 a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water — Room 3.18, Kitchen"@en ;
+    ontosage:layTerms "water, drinking water, bottle filling, refill, fill my bottle, free water, tap water, kitchen" ;
+    ontosage:locatedIn bldg:Room3.18 ; ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Drinking water in Room 3.18 — Kitchen (floor Floor3)" ;
+    ontosage:answerText "Staff can fill a bottle in Room 3.18 — Kitchen on floor 3." .
+
+bldg:WaterPoint_Room5.26 a ontosage:Amenity , ontosage:DrinkingWater ;
+    rdfs:label "Drinking water — Room 5.26, Staff Break Room / Kitchen"@en ;
+    ontosage:layTerms "water, drinking water, bottle filling, refill, fill my bottle, free water, tap water, kitchen, staff kitchen" ;
+    ontosage:locatedIn bldg:Room5.26 ; ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Drinking water in Room 5.26 — Staff Break Room / Kitchen (floor Floor5)" ;
+    ontosage:answerText "Staff can fill a bottle in Room 5.26 — Staff Break Room / Kitchen on floor 5." .

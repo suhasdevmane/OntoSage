@@ -18,100 +18,6 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ontosage: <http://ontosage.org/capabilities#> .
 
-bldg:amenity_status_0 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor0 ;
-    ontosage:statusValue "out_of_service" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-06T10:18:43"^^xsd:dateTime ;
-    ontosage:statusReason "awaiting parts" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_1 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor0_b ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T02:54:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_2 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor1 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T04:05:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_3 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor1_b ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T03:26:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_4 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor2 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T03:38:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_5 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor2_b ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T07:08:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_6 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor3 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T07:13:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_7 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor3_b ;
-    ontosage:statusValue "out_of_service" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-06T06:15:43"^^xsd:dateTime ;
-    ontosage:statusReason "supply isolated" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_8 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor4 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T03:43:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_9 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor4_b ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T10:08:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_10 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor5 ;
-    ontosage:statusValue "out_of_service" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-06T04:14:43"^^xsd:dateTime ;
-    ontosage:statusReason "reported fault" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_11 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_Floor5_b ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T08:47:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_12 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_DrinkingWater_unknown ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T04:11:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
 bldg:amenity_status_13 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_Floor0 ;
     ontosage:statusValue "out_of_service" ;
@@ -155,84 +61,11 @@ bldg:amenity_status_18 a ontosage:AssetStatus ;
     ontosage:statusObservedAt "2026-09-17T10:16:43"^^xsd:dateTime ;
     ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
     ontosage:isSimulated true .
-bldg:amenity_status_19 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_StudyArea_unknown ;
-    ontosage:statusValue "out_of_service" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-06T06:05:43"^^xsd:dateTime ;
-    ontosage:statusReason "supply isolated" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_20 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_ToiletFacility_Floor0 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T04:47:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_21 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_ToiletFacility_Floor1 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T05:27:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_22 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_ToiletFacility_Floor2 ;
-    ontosage:statusValue "out_of_service" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-06T03:30:43"^^xsd:dateTime ;
-    ontosage:statusReason "scheduled servicing" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_23 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_ToiletFacility_Floor3 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T09:23:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_24 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_ToiletFacility_Floor4 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T07:39:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_25 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_ToiletFacility_Floor5 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T09:10:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_26 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_ToiletFacility_unknown ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T04:35:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
 bldg:amenity_status_27 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Cap_first_aid ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T02:54:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_29 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:access_accessible_wc_0 ;
-    ontosage:statusValue "out_of_service" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-06T03:43:43"^^xsd:dateTime ;
-    ontosage:statusReason "supply isolated" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
-bldg:amenity_status_30 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:access_accessible_wc_4 ;
-    ontosage:statusValue "operational" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-17T09:02:43"^^xsd:dateTime ;
     ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
     ontosage:isSimulated true .
 bldg:amenity_status_31 a ontosage:AssetStatus ;

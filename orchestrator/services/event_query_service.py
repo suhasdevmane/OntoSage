@@ -458,6 +458,8 @@ class EventQueryService:
         self._rooms = room_locals
         # V5-T21: sensor uuid -> (room_local, modality), for anomaly episodes
         self._points = point_map or {}
+        # Set by a test to read the timetable from a fixture instead of the live repository.
+        self._sparql_override = None
 
     # room mention -> local name (longest match wins; case/sep tolerant)
     def resolve_room(self, question: str) -> Optional[str]:
@@ -646,22 +648,72 @@ class EventQueryService:
             f"{self._fmt_dt(self._col(r, 4, 'end_dt'))}"
             for r in rows
         ]
-        free = not rows
-        text = (
-            f"**{_room_name(room)} is free {label}** — no bookings overlap that window."
-            if free
-            else f"**{_room_name(room)} is booked {label}**: " + ", ".join(clashes[:4]) + "."
-        )
+
+        # A TEACHING ROOM IS MOSTLY OCCUPIED BY ITS TIMETABLE, NOT BY AD-HOC BOOKINGS. Consulting
+        # only the booking store reported a room free while a weekly lecture sat in it. The
+        # timetable is read from the graph and expanded over the same window, in the building's
+        # LOCAL time, because that is how a timetable is published (BUG-403: the store is UTC).
+        schedule = await self._timetable_clashes(room, start, end)
+        timetabled = [
+            f"{o.start.strftime('%a %H:%M')}–{o.end.strftime('%H:%M')}"
+            + (f" ({o.title})" if o.title else "")
+            for o in schedule.occupied
+        ]
+
+        free = not rows and not schedule.occupied
+        if not free:
+            parts = []
+            if clashes:
+                parts.append("booked " + ", ".join(clashes[:4]))
+            if timetabled:
+                parts.append("timetabled " + "; ".join(timetabled[:4]))
+            text = f"**{_room_name(room)} is not free {label}** — " + "; ".join(parts) + "."
+        elif schedule.timetable_loaded:
+            text = (
+                f"**{_room_name(room)} is free {label}** — nothing in the timetable or the "
+                "bookings overlaps that window."
+            )
+        else:
+            # No timetable is recorded at all. Saying "free" here would present a gap in the
+            # records as a fact about the room, so the gap is stated instead.
+            text = (
+                f"**{_room_name(room)} has no bookings {label}.** This building records no room "
+                "timetable, so I cannot tell you whether a class or a standing meeting uses it — "
+                "only that nothing is booked ad hoc."
+            )
         return {
             "success": True,
             "kind": "availability_check",
             "room": room,
             "window": label,
             "clashes": clashes,
+            "timetabled": timetabled,
+            "timetable_loaded": schedule.timetable_loaded,
             "free": free,
-            "source": "events_data",
+            "source": "events_data+timetable" if schedule.timetable_loaded else "events_data",
             "formatted_response": text,
         }
+
+    async def _timetable_clashes(self, room: str, start, end):
+        """Sessions from the graph overlapping a STORE window, converted to local time first."""
+        from orchestrator.services import room_schedule
+
+        try:
+            return await room_schedule.check(
+                self._sparql_exec, room, to_local(start, self._tz), to_local(end, self._tz)
+            )
+        except Exception as exc:  # a missing timetable must never fail the booking answer
+            logger.warning(f"[events] timetable lookup failed: {exc}")
+            return room_schedule.ScheduleAnswer(occupied=[], timetable_loaded=False)
+
+    @property
+    def _sparql_exec(self):
+        """The graph reader. Overridden in tests; production goes to the active repository."""
+        if self._sparql_override is not None:
+            return self._sparql_override
+        from orchestrator.services.building_metrics import _default_sparql_exec
+
+        return _default_sparql_exec
 
     #: Report categories, and the words a question uses to name each. Read from the
     #: question so "cleaning-related defects" narrows to cleaning rather than reporting

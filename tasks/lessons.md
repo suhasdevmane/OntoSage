@@ -1969,3 +1969,58 @@ An offline estimate (−11 points) and an out-of-sample one (−11) were both la
 
 **Rules.** Quote the live paired figure. Treat a lane allowlist chosen on the data it is scored on as
 an upper bound. Draw a fresh set before every verdict; brief agents on classes, never on questions.
+
+## #127 — Grep the schema and the graph before declaring a term (2026-09-21)
+
+Adding room schedules, I declared `ontosage:TimetabledSession` with `dayOfWeek`, `startTime`,
+`endTime` and `inSpace`. All of it already existed: the class was declared at schema line 1701, it
+had **675 instances across 44 rooms**, and those instances used `timeProfile`, `startsAt`, `endsAt`
+and `locationText`. The feature was not "no timetable"; it was "nothing reads the timetable".
+
+The same mistake then cost an accessibility answer. I wrote `ontosage:isWheelchairAccessible true`
+on twelve accessible toilets. `amenity_proximity` decides accessibility from
+`ontosage:accessibilityVerified`. Six floors of accessible toilets were recorded, uploaded and
+parsed — and the live answer still sent a wheelchair user one floor up, because nothing reads the
+name I invented.
+
+**A duplicate term is worse than a missing one.** A missing term fails loudly. A duplicate splits a
+register in two and each half looks complete: my query found 11 sessions and reported success while
+675 sat beside them, and the graph reported 686 `TimetabledSession` subjects, which is how I noticed.
+
+**Before declaring any class or property:** grep the schema for the name, grep it for the *concept*
+(`session`, `toilet`, `accessible`), and ask the live graph `SELECT (COUNT(DISTINCT ?s)) WHERE { ?s a
+o:<Class> }`. If instances exist, read one and use ITS property names.
+
+Corollary: deleting data has references. Removing the placeholder toilets left 22 `statusOf` triples
+pointing at nothing, which `tests/test_dangling_references.py` caught — a reasoner types an
+undeclared subject from the property's range, so the graph looks complete while the status describes
+an amenity the building does not have.
+
+## #128 — A truncated menu does not make a model cautious, it makes it wrong (2026-09-21)
+
+Building the semantic concept matcher I capped the candidate list at 40 concepts, sorted
+alphabetically. The building has 99. The menu stopped at "busy", so `too_warm` and `too_cold` were
+never offered, and the model answered NONE to "where is it coolest" — **correctly, for the menu it
+was given.** Nothing in the reply said the menu was short. I only found it by printing the menu.
+
+When a model is asked to choose from a list, the list is part of the question. A bug in it looks
+exactly like a considered refusal.
+
+**And a model asked to choose will reach.** With the full menu it mapped "what is the radiation
+level" to *solar irradiance* and "is there smoke in the lab" to an *emergency exit*: honest-sounding
+answers to a question nobody asked. Prompt hardening fixed three of five traps and left two.
+Selecting from ninety options is recall, which it is good at; declining is precision, which it is
+not. The fix was a second, narrow yes/no on the one pair it chose — *is this the quantity that was
+asked about?* — which it answers reliably. 8/8 after. **Where a model must be allowed to say no,
+split the choosing from the confirming.**
+
+## #129 — The browser does not send the apostrophe you typed (2026-09-21)
+
+"Where's the coolest place to work" reached the deliberate lane from the CLI and the workspace
+register from Open WebUI. Open WebUI sends a typographic apostrophe; every pattern in
+`routing_contract.py` is written with the ASCII one, so `DELIBERATE_RE` matched one and not the
+other. The route depended on where the question was typed, and the browser is where the users are.
+
+I found it only because I *opened the screenshot* and saw an answer the CLI had not given me
+minutes earlier. A CLI check is not a check of what the user sees. Normalising quotes once when the
+rule context is built fixes every rule at once, which is where that repair belongs.

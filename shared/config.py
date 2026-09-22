@@ -687,6 +687,21 @@ class Settings(BaseSettings):
         ),
     )
 
+    SEMANTIC_CONCEPT_MATCH: bool = Field(
+        default=True,
+        description=(
+            "When no HBCO lay term matches a question, let the model choose which of the ACTIVE "
+            "building's concepts it means (services/semantic_concept_match). It may only select a "
+            "concept the building already has, or NONE; it can never name a sensor class the "
+            "building does not hold. Fails open: any error or timeout leaves the question "
+            "unresolved, exactly as it was before this ran."
+        ),
+    )
+    SEMANTIC_CONCEPT_TIMEOUT_S: float = Field(
+        default=8.0,
+        description="Seconds to wait for the semantic concept match before giving up on it.",
+    )
+
     ANSWER_RELEVANCE_GATE: bool = Field(
         default=True,
         description=(

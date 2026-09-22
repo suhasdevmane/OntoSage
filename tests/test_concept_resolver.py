@@ -188,8 +188,13 @@ def test_to_dict_keys():
         confidence="high",
     )
     d = match.to_dict()
-    assert set(d.keys()) == {"concept_id", "lay_term", "brick_classes", "recipe_id", "confidence"}
+    # `semantic` distinguishes a lay term the ontology knows from a concept the model reasoned out
+    # when no term matched, so the two can be counted apart when the vocabulary is reviewed.
+    assert set(d.keys()) == {
+        "concept_id", "lay_term", "brick_classes", "recipe_id", "confidence", "semantic",
+    }
     assert d["brick_classes"] == ["brick:CO2_Level_Sensor"]
+    assert d["semantic"] is False
 
 
 @pytest.mark.unit

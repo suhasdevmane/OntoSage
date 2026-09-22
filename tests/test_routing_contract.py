@@ -926,6 +926,10 @@ def test_concept_stage_precedence_is_pinned():
         # exactly the case the reach lane exists to answer. Placed earlier it would
         # intercept real data questions.
         "unmeasured_quantity_is_reach",
+        # BUG-860: LAST, because every rule in the stage runs and the last one wins, so this is
+        # where a correction belongs. It rescues a live superlative about a measured condition
+        # from a lane that holds records and no readings.
+        "measured_superlative_beats_a_register",
     ]
 
 
@@ -1241,3 +1245,45 @@ def test_lanes_that_own_their_own_refusals_are_left_alone(intent):
         sr=None,
     )
     assert rc._r_unmeasured_quantity_is_reach(ctx) is None
+
+
+# ── BUG-860: a live superlative about a measured condition is not a register question ──
+
+
+_TEMP = [{"concept_id": "temperature_reading", "lay_term": "coolest",
+          "brick_classes": ["brick:Temperature_Sensor"]}]
+
+
+@pytest.mark.parametrize("intent", ["register", "metadata", "discovery", "compliance"])
+def test_a_live_superlative_leaves_a_record_lane_for_deliberate(intent):
+    """A register holds records, not readings, so it cannot say which room is coolest now."""
+    got = _concept_route(
+        "Where's the coolest place to work in the building right now?",
+        intent=intent, concepts=_TEMP,
+    )
+    assert got == "deliberate"
+
+
+def test_the_same_question_with_a_typographic_apostrophe_routes_identically():
+    """A browser sends 'Where’s'; a terminal sends "Where's". The route must not depend on it."""
+    curly = _concept_route(
+        "Where\u2019s the coolest place to work in the building right now?",
+        intent="register", concepts=_TEMP,
+    )
+    assert curly == "deliberate"
+
+
+def test_a_register_question_naming_no_measurand_keeps_its_lane():
+    got = _concept_route("Which permits are open?", intent="register", concepts=[])
+    assert got == "register"
+
+
+def test_naming_a_measurand_is_not_enough_without_a_superlative():
+    """'Which approved space is suitable for a quiet pause' is about approval, not a reading."""
+    quiet = [{"concept_id": "quiet_space", "lay_term": "quiet",
+              "brick_classes": ["ontosage:Sound_Level_Sensor"]}]
+    got = _concept_route(
+        "Which approved nearby space is suitable for a brief quiet pause?",
+        intent="register", concepts=quiet,
+    )
+    assert got == "register"

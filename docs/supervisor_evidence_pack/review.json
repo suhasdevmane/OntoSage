@@ -1,0 +1,297 @@
+{
+  "_comment": "Verdicts carried over from the source packs, keyed by the combined numbering.",
+  "verdicts": {
+    "1": [
+      "GOOD",
+      "Humidity forecast with its model comparison (SeasonalNaive, MAPE 1.9%). NOTE: this exact question declined on one of three attempts — the routing for it is not deterministic."
+    ],
+    "2": [
+      "WEAK",
+      "A 7-day building-wide electricity forecast was answered by a register decline. Per-floor electricity IS readable (see 8 and 17), so the data exists; the question did not reach the forecaster."
+    ],
+    "3": [
+      "GOOD",
+      "A real forecast: 192 hourly points of history, two candidate models scored on a 20% hold-out, and the better one (SeasonalNaive, MAPE 4.1%, R2 0.95) selected and named."
+    ],
+    "4": [
+      "GOOD",
+      "Honest decline: the atrium has no noise sensor. It says so, says this is what is recorded rather than a fault, and lists what the atrium does measure."
+    ],
+    "5": [
+      "WEAK",
+      "A floor-level temperature forecast was answered by a register decline. The single-room form of the same question forecasts correctly, so this is the floor-scoped shape failing, not the forecaster."
+    ],
+    "6": [
+      "GOOD",
+      "Answers the threshold question from the forecast rather than from the latest reading, and shows the model selection behind it."
+    ],
+    "7": [
+      "WEAK",
+      "Occupancy IS measured (511 series) and other answers use it, but this chart request found nothing to plot."
+    ],
+    "8": [
+      "GOOD",
+      "A week of temperature for one room, 160 readings. The 41.7 C peak it reports is worth asking the building about — the chart shows the system reporting what the sensor holds, not smoothing it away."
+    ],
+    "9": [
+      "GOOD",
+      "A chart drawn from the readings, with the reading in words beside it: low 508 ppm at 02:00, peak 1,030 ppm at 15:00, daytime 946 against nighttime 547."
+    ],
+    "10": [
+      "WEAK",
+      "Asked for humidity plotted AGAINST temperature; it charted temperature alone and dated the answer 2022. Two faults in one answer."
+    ],
+    "11": [
+      "GOOD",
+      "Six floors on one chart, 114 readings, with the peaks named per floor."
+    ],
+    "12": [
+      "GOOD",
+      "Ranks rooms on two constraints at once and shows the reading behind each (illuminance and noise), with a fit score."
+    ],
+    "13": [
+      "GOOD",
+      "Handles a weighted preference — noise first, daylight second — and shows both readings per candidate."
+    ],
+    "14": [
+      "GOOD",
+      "Ranks meeting rooms on CO2 AND occupancy together and shows both readings per candidate — the one cross-modal question that reaches the deliberation lane. It does not verify capacity for eight, which the workspace register holds."
+    ],
+    "15": [
+      "GOOD",
+      "Refuses to invent a \"worst\" verdict and says exactly which fields the register does hold. The right answer to a loaded question."
+    ],
+    "16": [
+      "GOOD",
+      "Live reading with its timestamp, plus the range over the last 60 records."
+    ],
+    "17": [
+      "GOOD",
+      "All six floors, highest and lowest identified."
+    ],
+    "18": [
+      "GOOD",
+      "Names the floor, the mean, the spread and the runners-up."
+    ],
+    "19": [
+      "GOOD",
+      "Now ranks rooms by live temperature and states how it read the question: \"'coolest place to work' scored as minimize temperature against the 20-26 band\". 'coolest' was in no lay-term list, so no measurand resolved and the workspace register answered instead; the model now resolves the word against this building's own concepts, and a resolved measurand takes a live superlative off a register lane. BUG-860 fixed."
+    ],
+    "20": [
+      "GOOD",
+      "Totals per floor and it names the six meters it summed."
+    ],
+    "21": [
+      "GOOD",
+      "A real comparison with its denominators stated: floor 1 over 574 readings from 14 sensors, floor 3 over 2,050 from 50."
+    ],
+    "22": [
+      "WEAK",
+      "States last week's per-floor totals are unavailable and gives this week's alone, so the comparison that was asked for is not made."
+    ],
+    "23": [
+      "WEAK",
+      "Gives per-floor means but never splits weekend from weekday, which was the whole question."
+    ],
+    "24": [
+      "WEAK",
+      "Now returns a ranking of rooms by temperature instead of declining, but the question asked for the largest WITHIN-FLOOR gap between warmest and coolest, and no gap is reported."
+    ],
+    "25": [
+      "WEAK",
+      "Comparing two modalities over time (CO2 rising while occupancy is flat) is not reachable: it declined and offered single-quantity questions instead."
+    ],
+    "26": [
+      "WEAK",
+      "Answered the outside-air half only. The delta-T across the heating circuit — the point of the question — is not in the answer."
+    ],
+    "27": [
+      "WEAK",
+      "\"No readings were found for Floor_2\" for a floor that answers elsewhere in this pack. A cross-modal question (ventilation against occupancy) reached a single-sensor lookup."
+    ],
+    "28": [
+      "WEAK",
+      "Says the building model records only how many sensors each space has and holds no current readings — which is false, and the opposite of what several other answers in this pack do."
+    ],
+    "29": [
+      "WEAK",
+      "A diagnosis question fell through to the generic capability decline."
+    ],
+    "30": [
+      "GOOD",
+      "Named anomalies with their room, modality, kind and severity."
+    ],
+    "31": [
+      "WEAK",
+      "Reports that 10 of 17 air-quality sensors appear in the recent window, which is adjacent to the question but does not say WHEN each one went quiet."
+    ],
+    "32": [
+      "GOOD",
+      "A completeness answer with the count, the number of distinct sensors, and the incomplete series named."
+    ],
+    "33": [
+      "WEAK",
+      "Says no calibration field exists. The 26-question pack answered the same fact (237 sensors overdue) from the building model, so this is a routing regression, not a missing record."
+    ],
+    "34": [
+      "WEAK",
+      "The building does distinguish measured from modelled records — this pack relies on that distinction — but the question reached the generic decline."
+    ],
+    "35": [
+      "GOOD",
+      "Correctly says it holds no evidence record for a previous answer in a fresh chat, and describes what one contains. The honest answer to a question with no antecedent."
+    ],
+    "36": [
+      "WEAK",
+      "Answers that no conflict-resolution rule is recorded and gives generic advice. The system does have precedence rules; it cannot describe them."
+    ],
+    "37": [
+      "GOOD",
+      "Re-derives the ranking with the temperature behind each candidate and a fit score, rather than asserting the earlier answer was right."
+    ],
+    "38": [
+      "WEAK",
+      "Declined on this run. The same question answered correctly on the previous run, with the freshest reading and its timestamp — one of six answers in this pack that differ between two identical runs."
+    ],
+    "39": [
+      "WEAK",
+      "Could not say which sources answered the previous turn — the provenance it publishes per answer was not reachable by asking for it."
+    ],
+    "40": [
+      "GOOD",
+      "Gives the date and distinguishes the room sensor from the general air-quality sensor."
+    ],
+    "41": [
+      "GOOD",
+      "3 of 15 records, each with its id, permit kind and provider."
+    ],
+    "42": [
+      "GOOD",
+      "Splits fail-open from fail-locked with the device ids behind each."
+    ],
+    "43": [
+      "GOOD",
+      "Lists the assessments with their due dates and identifies the next one."
+    ],
+    "44": [
+      "GOOD",
+      "Overdue assets with location, due date and evidence reference."
+    ],
+    "45": [
+      "GOOD",
+      "Both overdue controls with their owner and due date, as at today."
+    ],
+    "46": [
+      "GOOD",
+      "15 records split into closed, open and suspended, with each open permit's provider named."
+    ],
+    "47": [
+      "GOOD",
+      "Says plainly that no work order is recorded for floor 2, and that the register does hold the floor field — so absence means absence, not a gap in the query."
+    ],
+    "48": [
+      "GOOD",
+      "Lists the 9 open records AND states plainly that the register holds no due date, so 'overdue' cannot be derived from it. Refusing the second half of the question is the right answer."
+    ],
+    "49": [
+      "GOOD",
+      "Gives the count and the denominator it came from."
+    ],
+    "50": [
+      "GOOD",
+      "Both overdue controls with their due dates, as at today."
+    ],
+    "51": [
+      "GOOD",
+      "The target, its baseline, its deadline and its owner."
+    ],
+    "52": [
+      "WEAK",
+      "An energy-waste question declined, although per-floor and out-of-hours energy are both answerable here (8, 17, 40)."
+    ],
+    "53": [
+      "GOOD",
+      "Names the systems running outside published hours and gives each one's exception status."
+    ],
+    "54": [
+      "GOOD",
+      "Answers 'not ready' and says which item is unevidenced, with the register and date behind each check."
+    ],
+    "55": [
+      "GOOD",
+      "Reads the room timetable as well as the ad-hoc bookings and names the session occupying the room. Before this change availability consulted bookings only, so a room carrying a weekly lecture reported itself free."
+    ],
+    "56": [
+      "GOOD",
+      "Direct answer against the booking window."
+    ],
+    "57": [
+      "GOOD",
+      "Answers, and marks the answer as the last known state with the age of the check rather than implying it is live."
+    ],
+    "58": [
+      "GOOD",
+      "Room count and total floor area from the floor-plan geometry."
+    ],
+    "59": [
+      "GOOD",
+      "The nearest accessible toilet is on the same floor, with the alternatives listed."
+    ],
+    "60": [
+      "WEAK",
+      "Lists the temperature sensors that ARE installed on floor 2; the question asked which rooms have none. A negation over the model is still not answered."
+    ],
+    "61": [
+      "GOOD",
+      "Lists the free bottle-filling stations, two per floor. The earlier capture named single placeholder points that had been dropped into arbitrary rooms."
+    ],
+    "62": [
+      "GOOD",
+      "Plan plus the spaces on the floor, grouped by kind."
+    ],
+    "63": [
+      "GOOD",
+      "Purpose, owner, operator, year and capacity from the building's own description."
+    ],
+    "64": [
+      "GOOD",
+      "Files the report, returns its id, category, priority and location."
+    ],
+    "65": [
+      "GOOD",
+      "Files it and asks for the location it could not determine, explaining why that matters."
+    ],
+    "66": [
+      "GOOD",
+      "Refuses to answer about an individual. NOTE: it refuses on the ground that energy cannot be attributed to a person, which is not quite the question asked; the refusal is right, its stated reason is off-target."
+    ],
+    "67": [
+      "GOOD",
+      "Says the cost register holds 24 records and none of them is a parking fee — absence located in a named register, not a shrug."
+    ],
+    "68": [
+      "GOOD",
+      "Refuses a blanket compliance claim and asks which regulation or record is meant. The only honest answer to that question."
+    ],
+    "69": [
+      "GOOD",
+      "Gives a defensible answer from the delta-T it can measure, says the plant is still performing, and recommends thresholds rather than pretending to a whole-life cost model."
+    ],
+    "70": [
+      "GOOD",
+      "Honest decline, and clearer than the previous run: it names the room and says there is no air-pressure sensor data for it."
+    ],
+    "71": [
+      "FLAGGED",
+      "States defibrillator positions and an emergency number as fact. The record behind it says the positions are 'modelled'. Safety-critical, so it must not be relied on until the owner confirms the three positions. Logged as BUG-858 (P1)."
+    ],
+    "72": [
+      "GOOD",
+      "Declines, says a figure would be invented, and lists what IS measured there."
+    ],
+    "73": [
+      "GOOD",
+      "Refuses, states the refusal applies to every role, and offers the aggregate alternative."
+    ]
+  }
+}

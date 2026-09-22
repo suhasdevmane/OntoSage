@@ -211,6 +211,45 @@ _ENUMERATION_QUESTION_RE = re.compile(
 )
 
 
+#: Words that mark a number as a MODEL-EVALUATION metric rather than a reading of the building.
+#: A forecast publishes how well each candidate model scored -- RMSE, MAE, MAPE, R-squared -- and
+#: those numbers sit in the same answer as the prediction. Measured live: a CO2 forecast printed
+#: "Linear Trend ... R² -0.065" beside "SeasonalNaive ... R² 0.946", and the guard reported
+#: "the recorded co2 value (-0.065) is outside the range this quantity can take in ppm" at the top
+#: of an otherwise correct forecast. An error in ppm is not a reading in ppm, so the unit cannot
+#: separate them; the metric's own name is what does.
+_METRIC_WORDS = (
+    "rmse", "mae", "mape", "r²", "r2", "r-squared", "mse", "smape", "aic", "bic",
+    "hold-out", "holdout", "score", "accuracy", "error", "residual", "coefficient",
+)
+
+
+#: How far back a metric header can sit from the number it labels. Measured on a real forecast:
+#: the "R²" column header was about 130 characters before its value, because the whole table
+#: renders as tab-and-newline separated tokens.
+_METRIC_LOOKBACK = 320
+
+#: A number inside a table ROW -- tabs or pipes immediately around it. Required alongside the
+#: header, so a metric word merely appearing in nearby prose cannot suppress a real reading.
+_TABLE_CELL_RE = re.compile(r"[|\t]\s*$")
+
+
+def _in_metric_context(before: str, after: str) -> bool:
+    """True when a number sits in a model-evaluation table rather than being a reading.
+
+    BOTH conditions are needed. A forecast prints its candidate models' RMSE, MAE, MAPE and
+    R-squared beside the prediction, and an R-squared of -0.028 was reported as an impossible CO2
+    reading at the top of three otherwise correct forecasts -- an error expressed in ppm is not a
+    reading in ppm, so the unit cannot separate them. But a forecast's PREDICTED values are still
+    readings and must still be checked, so requiring the number to sit in a table cell as well as
+    near a metric label keeps the guard on everything outside the metrics block.
+    """
+    head = before[-_METRIC_LOOKBACK:].lower()
+    if not any(word in head for word in _METRIC_WORDS):
+        return False
+    return bool(_TABLE_CELL_RE.search(before)) or "\t" in after[:4] or "|" in after[:4]
+
+
 def implausible_values(text: str, measurand: Optional[str] = None, strict: bool = False) -> list:
     """Numbers in ``text`` that cannot be a reading of ``measurand`` in any usual unit.
 
@@ -230,6 +269,9 @@ def implausible_values(text: str, measurand: Optional[str] = None, strict: bool 
         if not _is_reading(
             raw, body[max(0, m.start() - 2) : m.start()], body[m.end() : m.end() + 24]
         ):
+            continue
+        # A model's error or fit statistic is not a reading, whatever unit it carries.
+        if _in_metric_context(body[max(0, m.start() - 90) : m.start()], body[m.end() : m.end() + 30]):
             continue
         _named = _unit_kind(body[m.end() : m.end() + 24])
         if _named and _named != kind:

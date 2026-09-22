@@ -117,6 +117,34 @@ class ForecastAgent:
 
         # Extract raw sensor records
         records = self._extract_records(sql_data)
+
+        # THE READING LANE FETCHED WHAT THE QUESTION ASKED ABOUT, NOT WHAT A FORECAST NEEDS.
+        # "right now" reads the newest rows, and thirty minutes of them resampled to the hourly
+        # frequency a next-day forecast uses is one bucket -- which is why this answered
+        # "too_sparse_after_resample" about a sensor holding 73 days of history. Read the window
+        # the horizon actually needs, and keep the original rows if that read comes back empty.
+        try:
+            from orchestrator.services.forecasting.history import fetch_history
+
+            uuids = [u for u in {str(r.get("uuid") or r.get("sensor_uuid") or "") for r in records} if u]
+            if not uuids and sensor_metadata:
+                uuids = [u for u in sensor_metadata if u]
+            if uuids:
+                wider = await fetch_history(
+                    uuids,
+                    horizon.freq,
+                    horizon.n_steps,
+                    storage_map={u: (sensor_metadata or {}).get(u, {}).get("storage", "") for u in uuids},
+                )
+                if len(wider) > len(records):
+                    logger.info(
+                        "[forecast_agent] history widened: %d rows -> %d for the %s horizon",
+                        len(records), len(wider), horizon.label,
+                    )
+                    records = wider
+        except Exception as _hist_err:  # the original rows still answer, or still decline
+            logger.warning(f"[forecast_agent] history widening skipped: {_hist_err}")
+
         if not records:
             return self._error_response(
                 "No sensor data available for forecasting. "
