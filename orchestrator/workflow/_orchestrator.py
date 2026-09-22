@@ -9479,6 +9479,14 @@ SELECT ?l WHERE {
                 else (getattr(state, "persona", "general") or "general")
             )
 
+            # Only the `create` branch below sets these, but the result dict at the end of this node
+            # reads all three for EVERY action. Asking for a report's status without quoting an id,
+            # or listing reports, therefore raised UnboundLocalError inside the node and the user got
+            # the generic failure text instead of the answer the branch had already composed.
+            location: Optional[str] = None
+            device: Optional[str] = None
+            res: Dict[str, Any] = {}
+
             if action == "status":
                 rid = service.extract_report_id(user_message or "")
                 if not rid:

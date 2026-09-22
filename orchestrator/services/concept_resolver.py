@@ -37,6 +37,9 @@ logger = get_logger(__name__)
 _HBCO = "http://ontosage.org/hbco#"
 _CONCEPT_CACHE_KEY = "cache:concept:hbco_all"
 _CONCEPT_CACHE_TTL = 86400  # 24 hours
+#: A resolution the model reasoned out is stable for a building, so it is cached for a day:
+#: the second person to use a new phrasing pays nothing for it.
+_SEMANTIC_CACHE_TTL = 86400
 
 _SPARQL_LOAD_CONCEPTS = """\
 PREFIX hbco: <http://ontosage.org/hbco#>
@@ -57,6 +60,10 @@ class ConceptMatch:
     brick_classes: List[str] = field(default_factory=list)
     recipe_id: Optional[str] = None
     confidence: str = ""
+    #: True when the model chose this concept because no lay term matched. Carried so a reader can
+    #: tell a word the ontology knows from one it was reasoned about, and so the two can be counted
+    #: separately when the vocabulary is reviewed.
+    semantic: bool = False
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -65,12 +72,32 @@ class ConceptMatch:
             "brick_classes": self.brick_classes,
             "recipe_id": self.recipe_id,
             "confidence": self.confidence,
+            "semantic": self.semantic,
         }
 
 
 def _concept_id_from_uri(uri: str) -> str:
     """e.g. 'http://ontosage.org/hbco#stuffiness' -> 'stuffiness'"""
     return uri.split("#")[-1].split("/")[-1]
+
+
+async def _cache_get(key: str) -> Optional[str]:
+    """Read a cached semantic resolution. Absent Redis is a miss, never an error."""
+    try:
+        from orchestrator.redis_manager import redis_manager
+
+        return await redis_manager.get_cache(key)
+    except Exception:
+        return None
+
+
+async def _cache_set(key: str, value: str) -> None:
+    try:
+        from orchestrator.redis_manager import redis_manager
+
+        await redis_manager.set_cache(key, value, ttl=_SEMANTIC_CACHE_TTL)
+    except Exception:
+        pass
 
 
 #: IRI stem -> CURIE prefix, for every vocabulary a concept may map a class from.
@@ -418,7 +445,63 @@ class ConceptResolver:
         # Sort: longer lay term first (more specific), then by confidence
         _conf_order = {"high": 0, "medium": 1, "low": 2, "": 3}
         matches.sort(key=lambda m: (-len(m.lay_term), _conf_order.get(m.confidence, 3)))
-        return matches
+        if matches:
+            return matches
+
+        # NOTHING MATCHED LITERALLY, so ask the model which of THIS building's concepts is meant.
+        # The list above only knows the words somebody wrote down: it held "warmest", "hottest" and
+        # "coldest" but not "coolest", so "where's the coolest place to work right now?" resolved to
+        # no measurand, nothing contradicted the classifier's guess that a question mentioning "place
+        # to work" belonged to the workspace register, and a temperature question was answered from a
+        # register holding no temperature. Adding the missing word fixes one phrasing and leaves the
+        # next; this fixes the shape.
+        #
+        # It runs only here, on a miss, so a building whose vocabulary already covers the words is
+        # unaffected. It can only CHOOSE from the concepts just loaded, never invent one.
+        return await self._semantic_fallback(text, concept_map)
+
+    async def _semantic_fallback(
+        self, text: str, concept_map: Dict[str, Dict[str, Any]]
+    ) -> List[ConceptMatch]:
+        """One model call that picks a concept from this building's own list, or nothing."""
+        try:
+            from orchestrator.services import semantic_concept_match as scm
+        except Exception:
+            return []
+        if not scm.enabled():
+            return []
+        try:
+            got = await scm.match(
+                text,
+                concept_map,
+                cache_get=_cache_get,
+                cache_set=_cache_set,
+            )
+        except Exception as exc:  # a fallback must never cost the deterministic answer
+            logger.debug(f"[concept_resolver] semantic fallback skipped: {exc}")
+            return []
+        if not got.matched:
+            return []
+        # The map is keyed by IRI, so find the entry whose short concept_id was chosen.
+        entry = next(
+            (e for e in concept_map.values() if str(e.get("concept_id")) == got.concept_id), {}
+        )
+        logger.info(
+            "[concept_resolver] semantic match %r -> %s (%s)",
+            " ".join(str(text).split())[:60], got.concept_id, got.reason[:60],
+        )
+        return [
+            ConceptMatch(
+                concept_id=got.concept_id,
+                # The word the person actually used is unknown, so the concept id stands in as the
+                # evidence. It is never empty, which the cross-concept sort above relies on.
+                lay_term=got.concept_id,
+                brick_classes=list(entry.get("brick_classes") or got.brick_classes),
+                recipe_id=entry.get("recipe_id"),
+                confidence=entry.get("confidence", ""),
+                semantic=True,
+            )
+        ]
 
     async def invalidate_cache(self) -> None:
         """Clear the Redis concept map cache (call after HBCO TTL is re-uploaded)."""

@@ -252,3 +252,29 @@ def pytest_collection_finish(session):
             f"to {unique}. Test collection must not reach the network: it makes the "
             f"suite's result a function of the environment (CAVEAT-408)."
         )
+
+
+@pytest.fixture(autouse=True)
+def _semantic_concept_match_off_in_unit_tests(request, monkeypatch):
+    """Keep the model's concept fallback out of the deterministic suite.
+
+    `services/semantic_concept_match` asks the configured model which of the building's concepts a
+    question means, when no lay term matched. That is a LIVE enhancement: it reaches a provider and
+    its answer varies between runs. Left on during unit tests it silently changed what the
+    deterministic vocabulary tests were measuring -- "the box was lifted onto the shelf" reached the
+    building's `lift` concept, and a test asserting that no concept matches began to fail depending
+    on what the model said that minute.
+
+    The network guard above does not catch it: a local provider listens on loopback, which the guard
+    allows on purpose.
+
+    Tests that exercise this component enable it themselves and stub the client, so nothing here
+    stops it being tested -- only from being an invisible ingredient in everything else.
+    """
+    if "unit" not in request.node.keywords:
+        return
+    if "semantic_concept" in request.node.nodeid:
+        return
+    from orchestrator.services import semantic_concept_match as scm
+
+    monkeypatch.setattr(scm, "enabled", lambda: False)

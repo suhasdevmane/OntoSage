@@ -414,6 +414,22 @@ _SPATIAL_BYPASS_PHRASES: FrozenSet[str] = frozenset(
 # steals them because phrases like "toilet"/"bike racks" score high against the
 # amenities KB. These are classified by `report_intake_intent()` which also
 # guards against QUESTIONS ("is it too warm?" is analytics, not a complaint).
+# A request to be GUIDED somewhere names a safety place without reporting anything: "take me to the
+# nearest fire exit" was filed three times as a safety report. It is a where-is / navigation ask.
+_NAVIGATION_REQUEST_RE = _re.compile(
+    r"^\s*(?:please\s+)?(?:take|guide|lead|direct|walk|bring|get)\s+me\s+(?:to|towards?|out)\b"
+    r"|^\s*(?:please\s+)?(?:show|give|tell)\s+me\s+(?:the\s+)?(?:way|route|directions?)\b",
+    _re.IGNORECASE,
+)
+# "Before I start a long acquisition, are the approved services available?" opens with a subordinate
+# clause holding an action verb and then ASKS. The verb-target layer read "start a long acquisition"
+# as a command and queued a setpoint request (tail M). A question after the comma makes it a question;
+# "If it gets hot, turn off the AHU" has a verb after the comma and stays a command.
+_SUBORDINATE_LEAD_QUESTION_RE = _re.compile(
+    r"^\s*(?:before|after|once|when|while|if|since|as)\b[^?]*?,\s*"
+    r"(?:are|is|was|were|do|does|did|can|could|will|would|which|what|who|where|how|when|why)\b",
+    _re.IGNORECASE,
+)
 _REPORT_QUESTION_STARTS = (
     "is ",
     "are ",
@@ -993,6 +1009,8 @@ class SemanticRouter:
         if not query or not query.strip():
             return None
         q = query.lower().strip()
+        if _NAVIGATION_REQUEST_RE.search(q):
+            return None
         is_question = q.endswith("?") or q.startswith(_REPORT_QUESTION_STARTS)
 
         # A DECLARATIVE FAULT WITH A REQUEST ATTACHED IS A REPORT (tail L, 2026-09-20): "the waste bin
@@ -1086,7 +1104,7 @@ class SemanticRouter:
         # "what happens if we turn off the AHU at 6pm?" is a what-if, not an instruction.
         # "fail open / fail locked / fail safe" is a device PROPERTY, never an instruction.
         probe = _FAIL_MODE_RE.sub(" ", query)
-        if _INFORMATION_QUESTION_RE.search(probe):
+        if _INFORMATION_QUESTION_RE.search(probe) or _SUBORDINATE_LEAD_QUESTION_RE.search(probe):
             return False
         if any(p in probe.lower() for p in _CONTROL_COMMAND_PHRASES):
             return True

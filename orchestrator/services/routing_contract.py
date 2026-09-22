@@ -1834,6 +1834,40 @@ def _r_superlative_room_takeover(c: _Ctx) -> Optional[str]:
     return "deliberate" if DELIBERATE_RE.search(c.query) else None
 
 
+#: Lanes that read RECORDS. None of them holds a live reading, so none can answer "which is
+#: coolest right now" -- they can only report that the register does not record temperature.
+_RECORD_LANES = ("register", "metadata", "discovery", "compliance", "capability")
+
+
+def _r_measured_superlative_beats_a_register(c: _Ctx) -> Optional[str]:
+    """A live superlative about something the building MEASURES belongs to the data lane.
+
+    "Where's the coolest place to work in the building right now?" was classified `register`,
+    because "place to work" is the wording of the workspace-profile register, and answered from it:
+    "the register does not record any temperature ... for the workspaces". True, and useless -- the
+    building measures temperature in 234 rooms.
+
+    THREE CONDITIONS, ALL REQUIRED, because naming a measurand is not the same as asking for its
+    value. `_r_capability_measurand_is_data` above carries the scars: it converted "which approved
+    nearby space is suitable for a brief quiet pause?" into a reading because "quiet" resolves to a
+    sound sensor, when the question is about which spaces are APPROVED. So this fires only for a
+    superlative question shape (DELIBERATE_RE), about a resolved measurand, in a record lane.
+
+    The measurand test is what the semantic concept match made reliable: "coolest" was in no lay-term
+    list, so before that this rule would have had nothing to fire on.
+    """
+    if c.intent not in _RECORD_LANES:
+        return None
+    if not DELIBERATE_RE.search(c.query):
+        return None
+
+    from orchestrator.services.grounding_guard import has_measurand_concept
+
+    if not has_measurand_concept(c.normalized.get("concepts")):
+        return None
+    return "deliberate"
+
+
 #: Intents an existential comfort question is observed to land in. `capability` leads, which
 #: is where "is it stuffy anywhere in the building?" actually went — the classifier reads it
 #: as asking whether the building CAN tell you, and the honest capability answer ("that
@@ -3365,6 +3399,13 @@ CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
         "observability, which can say so",
         _r_unmeasured_quantity_is_reach,
     ),
+    # LAST, so it corrects the rules above rather than being corrected by them.
+    Rule(
+        "measured_superlative_beats_a_register",
+        "live superlative about a measured condition, classified into a register lane → "
+        "deliberate, which can rank rooms by a reading",
+        _r_measured_superlative_beats_a_register,
+    ),
 )
 
 _STAGES: Dict[str, Tuple[Rule, ...]] = {
@@ -3388,11 +3429,20 @@ def apply_contract(
     """
     from orchestrator.services.semantic_router import (  # local import — avoids cycle
         SemanticRouter,
+        normalise_quotes,
     )
 
+    # A BROWSER DOES NOT SEND THE APOSTROPHE YOU TYPED. Open WebUI sends "Where’s" with a
+    # typographic apostrophe; a terminal sends "Where's" with an ASCII one. Every rule pattern here
+    # is written with the ASCII form, so the same question took two different routes depending on
+    # where it was asked: "where's the coolest place to work" reached the deliberate lane from the
+    # CLI and the workspace register from the browser, and the browser is where the users are.
+    # Normalising once here fixes every rule at once, which is why it is done to the context rather
+    # than inside any one pattern.
+    cleaned = normalise_quotes(user_query or "")
     ctx = _Ctx(
-        query=user_query or "",
-        ql=(user_query or "").lower(),
+        query=cleaned,
+        ql=cleaned.lower(),
         normalized=normalized,
         sr=SemanticRouter,
     )
