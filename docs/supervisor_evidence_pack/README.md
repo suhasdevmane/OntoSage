@@ -8,10 +8,10 @@ readings behind them, reasoning across two sensors at once, questions whose answ
 rather than a number, and questions the system must refuse. Three questions appeared in both sets
 and are kept once.
 
-**52 of the 73 answer the question; 21 do not — 20 that miss, and 1 flagged as not to be relied on.**
+**51 of the 73 answer the question; 22 do not — 21 that miss, and 1 flagged as not to be relied on.**
 
 Both halves are here on purpose. A pack in which everything succeeds is evidence of easy questions,
-not of a working system; the twenty failures are what make the fifty-two checkable, and they turn
+not of a working system; the failures are what make the successes checkable, and most of them turn
 out to share a single cause (below).
 
 ## What to read
@@ -28,10 +28,10 @@ out to share a single cause (below).
 | family | answered | |
 |---|---|---|
 | Registers — permits, fire assets, hazards, work orders | **11 / 11** | record ids, owners, due dates; absence stated as absence |
-| Live readings and readiness | **10 / 10** | values with their timestamp and the access policy that set the resolution |
+| Live readings and readiness | **10 / 10** | values with their timestamp and the window they cover |
 | Deliberation — rank under several constraints | **4 / 4** | ranks rooms on noise, light, CO₂ and occupancy together, with the reading behind each |
 | Reports filed from a statement | **2 / 2** | a fault and a suggestion, each returned with its ticket id |
-| Honest declines and refusals | **7 / 8** | not measured, not recorded, out of scope, a person, a blanket compliance claim. The eighth is the flagged one |
+| Honest declines and refusals | **6 / 8** | not measured, not recorded, out of scope, a person, a blanket compliance claim. The eighth is the flagged one |
 | Prediction | **4 / 6** | per-room forecasts pick between models on a hold-out; floor- and building-level do not reach the forecaster |
 | Spatial, operations, anomaly | **5 / 8** | |
 | Charts | **3 / 5** | a day, a week, six floors at once — each with the reading in words beside it |
@@ -54,7 +54,7 @@ decides which lane a question belongs to: a question naming two modalities reach
 read one. The same fault explains most of the comparison failures and several others where the
 record plainly exists and the question did not reach it.
 
-That is a narrower and more useful claim than "71% of questions work", and it is what the twenty
+That is a narrower and more useful claim than "70% of questions work", and it is what the
 failures are evidence for. One cross-modal question *does* succeed — the meeting-room question
 ranks on CO₂ and occupancy together — which shows the capability exists and is reached only from
 the deliberation lane.
@@ -64,9 +64,12 @@ the deliberation lane.
 - **It is one building on one day.** It shows these 73 question shapes behaving as recorded; it is
   not a measurement of how often an arbitrary question succeeds. That figure is measured separately
   on questions nobody tuned the system on, and is quoted in the brief.
-- **Six of the fifty answers differed between two identical runs** (index 12, 18, 22, 34, 45, 47) —
-  about one in eight. The verdicts describe the run that was captured. Routing is not deterministic,
-  and that is recorded rather than hidden.
+- **Seven answers are known to differ between identical runs** (index 12, 18, 22, 34, 45, 47, 69) —
+  about one in ten. The verdicts describe the run stored beside each screenshot. Routing is not
+  deterministic, and that is recorded rather than hidden. **Correction, 2026-09-22:** #69's verdict
+  had been written against a different run's answer than the one stored, and said the question was
+  answered when the stored answer and its screenshot are a decline. Found by the regression gate
+  (`scripts/regression_answerability.py`) on its first full run, which is what the gate is for.
 - **One answer must not be relied on.** The defibrillator answer states positions as fact while the
   record behind it calls them "modelled". It is flagged in the index and open as BUG-858 (P1).
 - **Timings are the local model.** Median 100 s, slowest 273 s. The predictions are slow because
@@ -89,7 +92,12 @@ python scripts/combine_evidence_packs.py --packs docs/supervisor_evidence \
 python scripts/build_evidence_index.py --dir docs/supervisor_evidence_pack
 ```
 
-Supporting state at the time of capture: **12,393 unit tests pass, 0 fail.**
+Supporting state at the time of capture: **12,393 unit tests pass, 0 fail** (12,286 in the parked
+state, which is what CI sees).
+
+**The pack is also a test.** `scripts/regression_answerability.py` re-asks the questions that
+answer and fails if one stops, so no later change can quietly break one. Its first full run found
+the #69 verdict error corrected above.
 
 ---
 
@@ -102,10 +110,9 @@ pack that motivates it.
 
 1. **A safety-critical fact is asserted as surveyed when the record hedges.** The defibrillator
    answer gives positions and an emergency number as fact; its own `ontosage:locationText` says they
-   are "modelled". Either the owner confirms the three positions, or the record is flagged
-   `ontosage:isSimulated true` so the system declines. Until then the answer must not be used.
-   *(BUG-858; index entry flagged. Four further safety facts are recorded but hedged —
-   `docs/OWNER_FACTS_CHECKLIST.md`.)*
+   are "modelled". The owner confirms the three positions and the hedge comes out of the record.
+   Until then the answer must not be used. *(BUG-858; index entry flagged. Tracked as W0-08 in
+   `tasks/PRODUCTION_TRACKER.csv`, the one item there that needs the building's owner.)*
 
 2. **Answers must not contradict each other within one session.** A diagnosis reply claimed the
    building model holds no current readings, a few screenshots after readings were returned from it.
