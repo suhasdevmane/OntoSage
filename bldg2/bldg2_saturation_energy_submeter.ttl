@@ -16,7 +16,6 @@
     a brick:Electrical_Meter ;
     rdfs:label "floor0 energy_submeter (simulated) [kWh]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor0> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -28,7 +27,6 @@
     a brick:Electrical_Meter ;
     rdfs:label "floor1 energy_submeter (simulated) [kWh]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor1> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -40,7 +38,6 @@
     a brick:Electrical_Meter ;
     rdfs:label "floor2 energy_submeter (simulated) [kWh]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor2> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

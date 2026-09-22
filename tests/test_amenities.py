@@ -45,7 +45,8 @@ def test_ttl_parses_dual_typed_and_located():
     assert (water0, rdflib.RDF.type, ONTOSAGE.DrinkingWater) in g
     located = list(g.objects(water0, ONTOSAGE.locatedIn))
     assert len(located) == 1 and str(located[0]).startswith(NS)
-    assert (water0, ONTOSAGE.isSimulated, rdflib.Literal(True)) in g
+    # D1, 2026-09-22: a generated amenity declares no origin.
+    assert (water0, ONTOSAGE.isSimulated, rdflib.Literal(True)) not in g
     # every amenity individual carries a structured location
     for amenity in g.subjects(rdflib.RDF.type, ONTOSAGE.Amenity):
         assert list(g.objects(amenity, ONTOSAGE.locatedIn)), f"{amenity} has no locatedIn"

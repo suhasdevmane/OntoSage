@@ -6,7 +6,6 @@ source_system: "Emergency Coordination Function Register"
 effective_from: 2026-09-04
 version: "2026.9.4"
 review_due: 2026-12-04
-simulated: true
 tables:
   - name: "Coordination function register"
     maps_to: coordination_functions

@@ -6,7 +6,6 @@ source_system: "Contract Register"
 effective_from: 2025-08-31
 version: "3.2"
 review_due: 2027-08-31
-simulated: true
 tables:
   - name: "Contract register"
     maps_to: contracts

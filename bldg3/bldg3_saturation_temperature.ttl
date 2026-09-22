@@ -16,7 +16,6 @@
     a brick:Zone_Air_Temperature_Sensor ;
     rdfs:label "RM007_room temperature (simulated) [degC]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM007_room> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -28,7 +27,6 @@
     a brick:Zone_Air_Temperature_Sensor ;
     rdfs:label "RM039_room temperature (simulated) [degC]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM039_room> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -40,7 +38,6 @@
     a brick:Zone_Air_Temperature_Sensor ;
     rdfs:label "RM259A_room temperature (simulated) [degC]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg3#RM259A_room> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

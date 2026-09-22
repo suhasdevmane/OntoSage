@@ -16,7 +16,6 @@
     a brick:Occupancy_Count_Sensor ;
     rdfs:label "building parking_free (simulated) [bays]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg2#bldg2> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

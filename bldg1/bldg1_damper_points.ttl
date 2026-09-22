@@ -28,7 +28,6 @@ bldg:AHU_F0_Outside_Air_Damper a brick:Outside_Damper ;
 bldg:AHU_F0_Outside_Air_Damper_Position a brick:Damper_Position_Sensor ;
     rdfs:label "Air Handling Unit — Floor 0 — outside air damper position" ;
     brick:isPointOf bldg:AHU_F0_Outside_Air_Damper ;
-    ontosage:isSimulated true ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
         ref:hasTimeseriesId "5bd06ccc-3c08-5691-8ef8-fa3fcd763dbc" ;
@@ -42,7 +41,6 @@ bldg:AHU_F1_Outside_Air_Damper a brick:Outside_Damper ;
 bldg:AHU_F1_Outside_Air_Damper_Position a brick:Damper_Position_Sensor ;
     rdfs:label "Air Handling Unit — Floor 1 — outside air damper position" ;
     brick:isPointOf bldg:AHU_F1_Outside_Air_Damper ;
-    ontosage:isSimulated true ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
         ref:hasTimeseriesId "0e106dd4-c4d1-5450-a8af-0861f270696c" ;
@@ -56,7 +54,6 @@ bldg:AHU_F2_Outside_Air_Damper a brick:Outside_Damper ;
 bldg:AHU_F2_Outside_Air_Damper_Position a brick:Damper_Position_Sensor ;
     rdfs:label "Air Handling Unit — Floor 2 — outside air damper position" ;
     brick:isPointOf bldg:AHU_F2_Outside_Air_Damper ;
-    ontosage:isSimulated true ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
         ref:hasTimeseriesId "4a4a40ff-ec63-5c56-bdfb-8c7b3ae7e17e" ;
@@ -70,7 +67,6 @@ bldg:AHU_F3_Outside_Air_Damper a brick:Outside_Damper ;
 bldg:AHU_F3_Outside_Air_Damper_Position a brick:Damper_Position_Sensor ;
     rdfs:label "Air Handling Unit — Floor 3 — outside air damper position" ;
     brick:isPointOf bldg:AHU_F3_Outside_Air_Damper ;
-    ontosage:isSimulated true ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
         ref:hasTimeseriesId "6984cc2c-1eee-539e-8db7-6f5d17599795" ;
@@ -84,7 +80,6 @@ bldg:AHU_F4_Outside_Air_Damper a brick:Outside_Damper ;
 bldg:AHU_F4_Outside_Air_Damper_Position a brick:Damper_Position_Sensor ;
     rdfs:label "Air Handling Unit — Floor 4 — outside air damper position" ;
     brick:isPointOf bldg:AHU_F4_Outside_Air_Damper ;
-    ontosage:isSimulated true ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
         ref:hasTimeseriesId "2f78dd54-e4d2-542f-a4cc-81c5ccfef815" ;
@@ -98,7 +93,6 @@ bldg:AHU_F5_Outside_Air_Damper a brick:Outside_Damper ;
 bldg:AHU_F5_Outside_Air_Damper_Position a brick:Damper_Position_Sensor ;
     rdfs:label "Air Handling Unit — Floor 5 — outside air damper position" ;
     brick:isPointOf bldg:AHU_F5_Outside_Air_Damper ;
-    ontosage:isSimulated true ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
         ref:hasTimeseriesId "7d1ec9ca-b071-5812-8643-1d7852eba981" ;

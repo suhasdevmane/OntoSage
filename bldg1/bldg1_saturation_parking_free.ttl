@@ -16,7 +16,6 @@
     a ontosage:Parking_Occupancy_Sensor ;
     rdfs:label "building parking_free [bays]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Abacws> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

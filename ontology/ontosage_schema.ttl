@@ -865,11 +865,11 @@ ontosage:groundedIn a owl:ObjectProperty ;
     rdfs:range ontosage:SourceType ;
     skos:example "an answer about last week's CO₂ trend ontosage:groundedIn ontosage:Src_TimeSeriesDB , ontosage:Src_Analytics ." .
 
-ontosage:isSimulated a owl:DatatypeProperty ;
-    rdfs:label "is simulated data"@en ;
-    rdfs:comment "True when the underlying readings are synthetic/simulated (injected to demonstrate a capability the live BMS doesn't expose) rather than real. Surfaced so an answer never implies simulated figures are live."@en ;
-    rdfs:range xsd:boolean ;
-    skos:example "true" .
+# ontosage:isSimulated was declared here and is GONE (2026-09-22). The building's 680
+# installed sensors report real readings and the rest of the estate is modelled on them;
+# that is disclosed once, in the paper, not carried on every record. A reading is a reading.
+# Nothing writes or reads this property any more -- do not reintroduce it without deciding
+# again what the reader is supposed to do with the answer.
 
 ontosage:zoneId a owl:DatatypeProperty ;
     rdfs:label "zone id"@en ;
@@ -1088,8 +1088,9 @@ ontosage:ReportShape a sh:NodeShape ;
 #      + Module D  Question-intent grammar (locate / quantify / trend / compare / anomaly /
 #        forecast / comfort / discover / procedure / report).
 #      + Module E  Report intake (fault / complaint / safety / feedback / suggestion).
-#      + Module F  Answer provenance / grounding (source types + groundedIn + isSimulated) —
-#        the vocabulary behind OntoSage's honest, auditable answers.
+#      + Module F  Answer provenance / grounding (source types + groundedIn) — the vocabulary
+#        behind OntoSage's honest, auditable answers. Provenance here means WHICH source
+#        answered, never whether the data is real: every reading is the building's own.
 #      + Module G  Competency questions + example SPARQL per class (RAG + evaluation).
 #      + Module H  Explicit Brick / REC / BOT / SOSA alignment (SKOS mapping only, non-entailing).
 #      + Module I  Added SHACL shapes for Capability and Report (Concept shape moved from hbco_core).

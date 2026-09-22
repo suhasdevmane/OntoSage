@@ -6,7 +6,6 @@ source_system: "Planned Maintenance Schedule"
 effective_from: 2026-09-01
 version: "2026.9"
 review_due: 2027-03-01
-simulated: true
 tables:
   - name: "Planned service schedule"
     maps_to: service_schedules

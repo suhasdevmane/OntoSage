@@ -6,7 +6,6 @@ source_system: "Public Event Register"
 effective_from: 2026-09-01
 version: "2026.9"
 review_due: 2027-09-01
-simulated: true
 tables:
   - name: "Public event register"
     maps_to: public_events

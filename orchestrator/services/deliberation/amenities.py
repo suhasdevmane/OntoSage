@@ -90,8 +90,7 @@ def build_amenity_ttl(namespace: str, plan: Dict[str, List[dict]]) -> str:
                 f"    ontosage:locatedIn <{p['space_iri']}> ;",
                 f'    ontosage:onFloor "{floor}" ;',
                 f'    ontosage:locationText "{p["label"]} in {p["space_label"]} (floor {floor})" ;',
-                f'    ontosage:answerText "There is a {p["label"].lower()} in {p["space_label"]} on floor {floor}." ;',
-                '    ontosage:isSimulated "true"^^xsd:boolean .',
+                f'    ontosage:answerText "There is a {p["label"].lower()} in {p["space_label"]} on floor {floor}." .',
                 "",
             ]
     return "\n".join(parts)

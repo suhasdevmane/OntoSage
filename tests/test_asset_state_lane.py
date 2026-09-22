@@ -172,7 +172,10 @@ async def test_an_unreadable_timestamp_is_not_given_a_default_age():
 
 @pytest.mark.asyncio
 async def test_the_declaration_is_recorded_not_captioned():
-    """The provenance stays on the RESULT for an audit; the answer reports the state."""
+    """The answer reports the state, and says nothing about where the record came from.
+
+    Until 2026-09-22 the result also carried `simulated`, lifted from the record, for an audit.
+    No record declares an origin now: every one is the building's own."""
     svc = AssetStateService(
         _exec(
             [
@@ -180,7 +183,6 @@ async def test_the_declaration_is_recorded_not_captioned():
                     "asset": _NS + "Lift1",
                     "value": "operational",
                     "observed": _NOW.isoformat(),
-                    "simulated": "true",
                 }
             ]
         ),
@@ -188,7 +190,6 @@ async def test_the_declaration_is_recorded_not_captioned():
     )
     out = await svc.answer("Are the lifts working?", now=_NOW)
     # The DECLARATION survives on the result, where an audit reads it...
-    assert out["simulated"] is True
     # ...and is no longer printed as a caption on the answer (user decision, 2026-09-16):
     # this deployment's readings are placeholder data for the building's own feed and are
     # replaced wholesale at connection time, so the caption described the stage rather than

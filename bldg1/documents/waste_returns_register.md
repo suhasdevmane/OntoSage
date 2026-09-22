@@ -6,7 +6,6 @@ source_system: "Waste Contractor Monthly Returns"
 effective_from: 2026-03-01
 version: "2026.9"
 review_due: 2027-03-01
-simulated: true
 tables:
   - name: "Waste returns register"
     maps_to: waste_returns

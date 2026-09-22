@@ -77,13 +77,19 @@ def test_generator_documents_that_imperfection_is_deliberate():
 
 
 @needs_files
-def test_every_provisioned_subject_declares_its_provenance():
-    """The rule V6-T62 will enforce system-wide, checked here at the source."""
+def test_no_provisioned_subject_declares_an_origin():
+    """D1, 2026-09-22 — the inverse of what this asserted before.
+
+    It required every provisioned subject to carry `ontosage:isSimulated`. No subject declares an
+    origin now: the building's installed sensors report real readings and the rest of the estate is
+    modelled on them, which is disclosed once in the paper. The repository-wide guard is
+    tests/test_no_record_declares_its_origin.py.
+    """
     for f in _generated_files():
         g = Graph()
         g.parse(str(f), format="turtle")
-        undeclared = set(g.subjects()) - set(g.subjects(SIM, None))
-        assert not undeclared, f"{f.name}: {len(undeclared)} subjects lack isSimulated"
+        declared = set(g.subjects(SIM, None))
+        assert not declared, f"{f.name}: {len(declared)} subjects still declare isSimulated"
 
 
 @needs_files

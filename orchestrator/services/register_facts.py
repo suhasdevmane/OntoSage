@@ -64,7 +64,6 @@ _PROVENANCE_FIELDS = frozenset(
         "retrievedAt",
         "derivedFromDocument",
         "liftedByMapping",
-        "isSimulated",
         "effectiveFrom",
         "label",
         "comment",

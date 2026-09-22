@@ -20,7 +20,6 @@ bldg:Boiler_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sens
     brick:isPointOf bldg:Boiler_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -33,7 +32,6 @@ bldg:Boiler_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sensor
     brick:isPointOf bldg:Boiler_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -46,7 +44,6 @@ bldg:Boiler_2_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sens
     brick:isPointOf bldg:Boiler_2 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -59,7 +56,6 @@ bldg:Boiler_2_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sensor
     brick:isPointOf bldg:Boiler_2 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -72,7 +68,6 @@ bldg:Chiller_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sen
     brick:isPointOf bldg:Chiller_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -85,7 +80,6 @@ bldg:Chiller_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Senso
     brick:isPointOf bldg:Chiller_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -98,7 +92,6 @@ bldg:Heat_Pump_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_S
     brick:isPointOf bldg:Heat_Pump_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -111,7 +104,6 @@ bldg:Heat_Pump_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sen
     brick:isPointOf bldg:Heat_Pump_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

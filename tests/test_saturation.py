@@ -106,7 +106,10 @@ def test_saturation_ttl_parses_and_carries_the_contract():
     assert (sensor, BRICK.hasLocation, rdflib.URIRef(f"{NS}RoomA")) in g
     assert not list(g.triples((sensor, BRICK.isPartOf, None)))
     # epistemic label — the honesty non-negotiable
-    assert (sensor, ONTOSAGE.isSimulated, rdflib.Literal(True)) in g
+    # No origin triple is emitted any more (D1, 2026-09-22): every sensor the building
+    # has is the building's own. The rdfs:comment marker below is what identifies what
+    # this provisioner produced, which is what an audit of the store needs.
+    assert (sensor, ONTOSAGE.isSimulated, rdflib.Literal(True)) not in g
     # contract #8 second half: timeseries ref with uuid + storedAt
     refs = list(g.objects(sensor, REF.hasExternalReference))
     assert len(refs) == 1

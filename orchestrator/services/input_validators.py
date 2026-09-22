@@ -864,11 +864,8 @@ def _outlets_in(block: str) -> tuple:
     return tuple(sorted(found))
 
 
-_SIMULATED_RE = re.compile(r"ontosage:isSimulated\s+(?:\"?true\"?)", re.I)
-
-
 def _potability_claims(text: str):
-    """(subject, value, outlets, simulated) for every statement in `text`."""
+    """(subject, value, outlets) for every statement in `text`."""
     out = []
     for m in _POTABILITY_SUBJECT_RE.finditer(text):
         subject = m.group(1)
@@ -881,7 +878,6 @@ def _potability_claims(text: str):
                 subject,
                 (vm.group(1).strip().lower() if vm else ""),
                 outlets,
-                bool(_SIMULATED_RE.search(block)),
             )
         )
     return out
@@ -898,8 +894,11 @@ def validate_potability_agreement(path: Path) -> Tuple[bool, List[str]]:
     invented, is the exact harm Module P was written to prevent, and nothing
     checked for it.
 
-    A simulated claim losing to a real one would still leave the graph asserting
-    both, so the rule is stricter: they must not coexist at all.
+    THE CHECK IS NOW PURELY ABOUT CONTRADICTION (2026-09-22). It used to ALSO refuse a
+    provisioner-written claim standing beside the owner's own, on the ground that one was
+    simulated. Every record is now the building's own, so there is no origin to separate them by --
+    and the important half is unaffected: two different drinkability verdicts about one tap is a
+    contradiction whoever wrote them, and that is what this refuses.
     """
     if not path.is_dir():
         return True, []
@@ -911,31 +910,22 @@ def validate_potability_agreement(path: Path) -> Tuple[bool, List[str]]:
             text = _strip_turtle_comments(ttl.read_text(encoding="utf-8", errors="replace"))
         except OSError:  # pragma: no cover - unreadable file
             continue
-        for subject, value, outlets, simulated in _potability_claims(text):
-            claims.append((ttl.name, subject, value, outlets, simulated))
+        for subject, value, outlets in _potability_claims(text):
+            claims.append((ttl.name, subject, value, outlets))
 
     issues: List[str] = []
-    by_outlet: Dict[str, List[Tuple[str, str, str, bool]]] = {}
-    for fname, subject, value, outlets, simulated in claims:
+    by_outlet: Dict[str, List[Tuple[str, str, str]]] = {}
+    for fname, subject, value, outlets in claims:
         for outlet in outlets:
-            by_outlet.setdefault(outlet, []).append((fname, subject, value, simulated))
+            by_outlet.setdefault(outlet, []).append((fname, subject, value))
     for outlet, entries in sorted(by_outlet.items()):
-        values = {v for _f, _s, v, _sim in entries if v}
+        values = {v for _f, _s, v in entries if v}
         if len(values) > 1:
-            who = ", ".join(f"{s} ({v}, {f})" for f, s, v, _sim in entries)
+            who = ", ".join(f"{s} ({v}, {f})" for f, s, v in entries)
             issues.append(
                 f"{outlet} carries contradictory drinkability verdicts: {who} - two health "
                 f"claims about the same tap, at most one of which is true"
             )
-        elif len(entries) > 1:
-            sims = [e for e in entries if e[3]]
-            reals = [e for e in entries if not e[3]]
-            if sims and reals:
-                issues.append(
-                    f"{outlet} has both a SIMULATED and a real potability statement "
-                    f"({sims[0][1]} and {reals[0][1]}) - a health claim about a real "
-                    f"building must not be simulated alongside the owner's own"
-                )
     return (not issues), issues
 
 

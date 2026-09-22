@@ -98,16 +98,25 @@ async def test_toilets_on_floor_2_says_the_one_on_floor_2_is_out_of_service(monk
 
 @pytest.mark.asyncio
 async def test_toilets_on_a_floor_that_has_some_lists_that_floor(monkeypatch):
+    """Every toilet the building records on the asked-for floor, and no other floor's first.
+
+    CHANGED BY D1 (2026-09-22). A fourth record here -- a toilet in a Research Laboratory -- used
+    to be suppressed because it was generated and the floor also held surveyed ones. No record
+    declares an origin now, so all of that floor's records are listed.
+
+    A toilet recorded in a laboratory is a DATA defect and is fixed in the TTL, not hidden by a
+    filter: bldg1's placeholder toilets were replaced with the surveyed provision for exactly that
+    reason. What this still guards is the scope -- floor 2's records answer a floor 2 question, and
+    another floor's appear only under "Also recorded"."""
     live = [
-        _toilet(1, "Room 1.07", placeholder=True),
+        _toilet(1, "Room 1.07"),
         _toilet(2, "Room 2.35 — Restroom (Male)"),
         _toilet(2, "Room 2.36 — Restroom (Female)"),
-        _toilet(2, "Room 2.02 — Research Laboratory", placeholder=True),
     ]
     _wire(monkeypatch, live, [])
     text = await _ask("Where are the toilets on floor 2?")
     assert "Room 2.35" in text and "Room 2.36" in text
-    assert "Room 2.02" not in text and "Room 1.07" not in text.split("Also recorded")[0]
+    assert "Room 1.07" not in text.split("Also recorded")[0]
 
 
 @pytest.mark.asyncio

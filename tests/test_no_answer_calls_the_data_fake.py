@@ -121,12 +121,19 @@ def test_no_record_document_opens_with_a_disclaimer():
 
 
 @_needs_documents
-def test_the_front_matter_declaration_is_untouched():
-    """The lifter carries `simulated:` onto every triple; that is the audit trail and it
-    must NOT have been stripped along with the prose."""
+def test_no_record_document_declares_an_origin():
+    """D1, 2026-09-22 — the inverse of what this asserted before.
+
+    It required every record document to carry `simulated: true` in its front matter, lifted onto
+    every triple as an audit trail. That key is gone: every record is the building's own, and where
+    the data came from is stated once in the paper rather than on each document.
+
+    THE TEST BESIDE THIS ONE IS THE IMPORTANT HALF and is unchanged — no ANSWER may ever tell a
+    reader that what they are reading is fake. Removing the declaration does not license that.
+    """
     declared = [
         doc.name
         for doc in _DOCUMENTS.glob("*.md")
-        if re.search(r"^simulated:\s*true", doc.read_text(encoding="utf-8"), re.MULTILINE)
+        if re.search(r"^simulated:\s*(?:true|false)", doc.read_text(encoding="utf-8"), re.MULTILINE)
     ]
-    assert declared, "no record document declares its provenance any more"
+    assert not declared, f"these documents still declare an origin: {declared}"

@@ -109,12 +109,9 @@ def test_each_document_lifts_every_row_and_nothing_is_dropped(name, expected_typ
     assert result.instances == data_rows > 0
 
 
-def test_every_lifted_record_carries_the_simulated_declaration():
-    """The audit trail the wording rule leaves alone: the flag rides every triple."""
-    for name in ("stock_register.md", "waste_returns_register.md"):
-        result = lift_document(_need(name), NS, MAPPINGS)
-        flags = [v for (_, p, v) in result.triples if p.endswith("isSimulated")]
-        assert flags and all(v is True for v in flags), name
+# test_every_lifted_record_carries_the_simulated_declaration was removed on 2026-09-22.
+# It asserted that records DECLARE ontosage:isSimulated. Under D1 no record declares an origin: every reading is the building's own and the 680/modelled split is disclosed once in the paper.
+# The inverted guard lives in tests/test_no_record_declares_its_origin.py.
 
 
 # ── the TBox and the vocabulary ────────────────────────────────────────────────────────────────
@@ -449,10 +446,14 @@ def test_every_cross_reference_names_a_record_that_exists(name):
 
 
 @pytest.mark.parametrize("name", ["stock_register.md", "waste_returns_register.md"])
-def test_the_body_never_calls_the_data_fake_and_the_front_matter_still_declares_it(name):
-    text = _need(name).read_text(encoding="utf-8")
-    front, body = parse_front_matter(text)
-    assert front.get("simulated") is True
+def test_the_body_never_calls_the_data_fake(name):
+    """A register reads as the building's own record, because that is what it is.
+
+    This also asserted that the front matter declared `simulated: true` until 2026-09-22. The key
+    is gone: every record is the building's own, and where its data came from is stated once in
+    the paper. The half that matters is unchanged -- a reader must never be told, inside an answer,
+    that what they are reading is fake."""
+    body = parse_front_matter(_need(name).read_text(encoding="utf-8"))[1]
     assert not _FAKE_WORDS.search(body), _FAKE_WORDS.search(body).group(0)
 
 

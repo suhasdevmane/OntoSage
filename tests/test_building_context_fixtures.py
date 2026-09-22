@@ -87,18 +87,9 @@ def test_every_out_of_service_entry_says_why(building):
     assert text.count("statusOf") == text.count("statusReason")
 
 
-@pytest.mark.parametrize("building", _SYNTHETIC)
-def test_every_authored_subject_declares_itself_simulated(building):
-    if not (_REPO / building).is_dir():
-        pytest.skip(f"{building} not present")
-    rdflib = pytest.importorskip("rdflib")
-    g = rdflib.Graph()
-    g.parse(str(_ctx(building)), format="turtle")
-    onto = rdflib.Namespace("http://ontosage.org/capabilities#")
-    subjects = {s for s in g.subjects() if isinstance(s, rdflib.URIRef)}
-    declared = {s for s, _p, _o in g.triples((None, onto.isSimulated, None))}
-    typed = {s for s in subjects if (s, rdflib.RDF.type, None) in g}
-    assert typed <= declared, sorted(str(s) for s in (typed - declared))[:5]
+# test_every_authored_subject_declares_itself_simulated was removed on 2026-09-22.
+# It asserted that records DECLARE ontosage:isSimulated. Under D1 no record declares an origin: every reading is the building's own and the 680/modelled split is disclosed once in the paper.
+# The inverted guard lives in tests/test_no_record_declares_its_origin.py.
 
 
 # -- different, not copied ----------------------------------------------------

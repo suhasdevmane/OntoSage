@@ -156,9 +156,9 @@ def _closures():
     g.parse(str(ttl), format="turtle")
     q = """PREFIX o: <http://ontosage.org/capabilities#>
     PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-    SELECT ?s ?label ?on ?why ?a ?b ?sim WHERE {
+    SELECT ?s ?label ?on ?why ?a ?b WHERE {
       ?s a o:ClosurePeriod ; rdfs:label ?label ; o:appliesTo ?on ; o:closureReason ?why ;
-         o:startedAt ?a ; o:endedAt ?b ; o:isSimulated ?sim }"""
+         o:startedAt ?a ; o:endedAt ?b }"""
     return [
         {
             "iri": str(r.s).rsplit("#", 1)[-1],
@@ -167,17 +167,17 @@ def _closures():
             "why": str(r.why),
             "a": datetime.fromisoformat(str(r.a)),
             "b": datetime.fromisoformat(str(r.b)),
-            "sim": bool(r.sim.toPython()),
         }
         for r in g.query(q)
     ]
 
 
-def test_seven_closures_parse_each_ends_after_it_starts_and_is_declared():
+def test_seven_closures_parse_and_each_ends_after_it_starts():
+    """The `sim` assertion went with D1 (2026-09-22): a closure is a closure."""
     rows = _closures()
     assert len(rows) == 7
     for c in rows:
-        assert c["b"] > c["a"] and c["sim"] is True, c["iri"]
+        assert c["b"] > c["a"], c["iri"]
 
 
 def test_each_carpet_closure_falls_on_or_after_the_day_its_service_is_due():

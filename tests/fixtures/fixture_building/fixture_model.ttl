@@ -23,11 +23,9 @@ fix:W-B1 a brick:Room ; rdfs:label "W-B1 Office" .
 fix:TempA1 a brick:Air_Temperature_Sensor ; rdfs:label "W-A1 air temperature" ;
     brick:isPointOf fix:W-A1 ;
     ref:hasExternalReference [ a ref:TimeseriesReference ;
-        ref:hasTimeseriesId "fixture-temp-a1" ; ref:storedAt "fixture_db" ] ;
-    ontosage:isSimulated true .
+        ref:hasTimeseriesId "fixture-temp-a1" ; ref:storedAt "fixture_db" ]  .
 
 # A CO2 sensor DECLARED but with no timeseries reference at all: the "declared but not
 # connected" case, which is distinct from "not instrumented" and must not be conflated.
 fix:Co2B1 a brick:CO2_Sensor ; rdfs:label "W-B1 CO2" ;
-    brick:isPointOf fix:W-B1 ;
-    ontosage:isSimulated true .
+    brick:isPointOf fix:W-B1  .

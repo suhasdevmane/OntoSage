@@ -4,9 +4,8 @@ saturation.py — SATURATE provisioner: turn the coverage gap matrix into TTL (V
 For every (space × modality) the audit marks ``missing`` or ``unbacked``, emit a
 simulated sensor individual with BOTH halves of the connect-data contract (#8):
 the Brick point triples AND a ``ref:TimeseriesReference`` (deterministic uuid5 +
-``ref:storedAt`` the modality's narrow table key). Every generated sensor carries
-``ontosage:isSimulated true`` — the epistemic label that flows through to
-per-answer provenance — plus an ``rdfs:comment`` marker for greppability.
+``ref:storedAt`` the modality's narrow table key). Every generated sensor carries an
+``rdfs:comment`` marker so what this produced can be found again.
 
 Also emits the canonical ``ontosage:zoneId`` literal per discovered space — the
 join key that repairs the manifest↔ontology bridge (BUG-147 / V4-T13).
@@ -14,9 +13,8 @@ join key that repairs the manifest↔ontology bridge (BUG-147 / V4-T13).
 Deliberate choices:
   * TTL is emitted here rather than via sensor_ttl_generator.generate_timeseries_ttl,
     because that generator links sensors with ``brick:isPartOf`` (wrong idiom for
-    location-based discovery — sensors are found via ``brick:hasLocation``) and
-    cannot carry ``ontosage:isSimulated``. The ``ref:`` block conventions are kept
-    byte-compatible with it.
+    location-based discovery — sensors are found via ``brick:hasLocation``). The
+    ``ref:`` block conventions are kept byte-compatible with it.
   * Full IRIs (``<ns+local>``) are used instead of prefixed names so space locals
     containing dots ('Room_5.28') can never produce invalid Turtle PN_LOCAL names.
   * Output is deterministically ordered and timestamp-free: re-running on the same
@@ -164,7 +162,7 @@ def build_saturation_ttl(namespace: str, modality: str, items: List[SaturationIt
     table = items[0].table
     parts: List[str] = [
         f"# SATURATE (V4-T08): simulated {modality} sensors for spaces the coverage",
-        f"# audit found uninstrumented. Every sensor is labeled ontosage:isSimulated.",
+        f"# audit found uninstrumented. Each carries the rdfs:comment marker below.",
         f"# Rows live in the narrow table '{table}' (database_registry.yaml key).",
         _PREFIXES
         # the TTL validator requires every <id>_*.ttl to declare the building
@@ -184,13 +182,17 @@ def build_saturation_ttl(namespace: str, modality: str, items: List[SaturationIt
             f"    a {_qualify_class(item.brick_class)} ;",
             # THE LABEL NAMES THE POINT, not the stage of the deployment (user decision,
             # 2026-09-16). "Floor 3 carbon_monoxide (simulated) [ppm]" put the word into
-            # every answer that cited the sensor, and these readings are placeholder data
-            # for the building's own feed — replaced wholesale at connection time, at which
-            # point 1,611 labels would each have been wrong. The `isSimulated` triple below
-            # still records the provenance for anyone auditing the store.
+            # every answer that cited the sensor, and these readings stand in for the
+            # building's own feed — replaced wholesale at connection time, at which point
+            # 1,611 labels would each have been wrong.
+            #
+            # No origin triple is written any more (2026-09-22). The building's 680 installed
+            # sensors report real readings and the rest of the estate is modelled on them;
+            # that is disclosed once, in the paper, not carried on every sensor. The
+            # rdfs:comment marker below still identifies what this generator produced, which
+            # is what an audit of the store actually needs.
             f'    rdfs:label "{item.space_label} {modality}{unit_suffix}"@en ;',
             f"    brick:hasLocation <{item.space_iri}> ;",
-            '    ontosage:isSimulated "true"^^xsd:boolean ;',
             f'    rdfs:comment "{_COMMENT_MARKER}" ;',
             "    ref:hasExternalReference [",
             "        a ref:TimeseriesReference ;",

@@ -82,27 +82,9 @@ def test_two_verdicts_on_one_outlet_are_refused(tmp_path):
     assert any("contradictory" in i for i in issues), issues
 
 
-def test_a_simulated_claim_beside_a_real_one_is_refused_even_when_they_agree(tmp_path):
-    """Agreeing today is not a defence: the generator re-rolls, and a health claim
-    about a real building must not be simulated alongside the owner's own."""
-    _write(
-        tmp_path,
-        "owner.ttl",
-        "bldg:Real a ontosage:PotabilityStatement ;\n"
-        "    ontosage:appliesToOutlet bldg:Tap1 ;\n"
-        '    ontosage:potabilityValue "potable" .\n',
-    )
-    _write(
-        tmp_path,
-        "synth.ttl",
-        "bldg:Sim a ontosage:PotabilityStatement ;\n"
-        "    ontosage:appliesToOutlet bldg:Tap1 ;\n"
-        '    ontosage:potabilityValue "potable" ;\n'
-        "    ontosage:isSimulated true .\n",
-    )
-    ok, issues = validate_potability_agreement(tmp_path)
-    assert not ok
-    assert any("SIMULATED" in i for i in issues), issues
+# test_a_simulated_claim_beside_a_real_one_is_refused_even_when_they_agree was removed on 2026-09-22.
+# It asserted that a provisioner-written potability claim beside the owner's own is refused. With one kind of record there is no origin to separate them by; the check that matters -- two DIFFERENT drinkability verdicts about one tap -- is unaffected and still tested.
+# The inverted guard lives in tests/test_no_record_declares_its_origin.py.
 
 
 def test_one_statement_per_outlet_is_fine(tmp_path):

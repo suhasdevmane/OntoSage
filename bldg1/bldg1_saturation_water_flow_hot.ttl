@@ -16,7 +16,6 @@
     a brick:Hot_Water_Meter ;
     rdfs:label "Floor0 water_flow_hot [L]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -28,7 +27,6 @@
     a brick:Hot_Water_Meter ;
     rdfs:label "Floor1 water_flow_hot [L]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -40,7 +38,6 @@
     a brick:Hot_Water_Meter ;
     rdfs:label "Floor2 water_flow_hot [L]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -52,7 +49,6 @@
     a brick:Hot_Water_Meter ;
     rdfs:label "Floor3 water_flow_hot [L]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -64,7 +60,6 @@
     a brick:Hot_Water_Meter ;
     rdfs:label "Floor4 water_flow_hot [L]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -76,7 +71,6 @@
     a brick:Hot_Water_Meter ;
     rdfs:label "Floor5 water_flow_hot [L]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

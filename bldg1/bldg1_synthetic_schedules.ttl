@@ -23,62 +23,54 @@ bldg:sched_cleaning_0 a ontosage:ServiceSchedule ;
     ontosage:scheduleKind "cleaning" ;
     ontosage:appliesTo bldg:Floor0 ;
     ontosage:startedAt "2026-08-24T06:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-24T08:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-24T08:00:00"^^xsd:dateTime  .
 
 bldg:sched_waste_collection_1 a ontosage:ServiceSchedule ;
     rdfs:label "Waste Collection - Floor 1 (First Floor)"@en ;
     ontosage:scheduleKind "waste_collection" ;
     ontosage:appliesTo bldg:Floor1 ;
     ontosage:startedAt "2026-08-22T06:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-22T08:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-22T08:00:00"^^xsd:dateTime  .
 
 bldg:sched_planned_maintenance_2 a ontosage:ServiceSchedule ;
     rdfs:label "Planned Maintenance - Floor 2 (Second Floor)"@en ;
     ontosage:scheduleKind "planned_maintenance" ;
     ontosage:appliesTo bldg:Floor2 ;
     ontosage:startedAt "2026-08-27T06:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-27T08:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-27T08:00:00"^^xsd:dateTime  .
 
 bldg:sched_cleaning_3 a ontosage:ServiceSchedule ;
     rdfs:label "Cleaning - Floor 3 (Third Floor)"@en ;
     ontosage:scheduleKind "cleaning" ;
     ontosage:appliesTo bldg:Floor3 ;
     ontosage:startedAt "2026-08-23T06:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-23T08:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-23T08:00:00"^^xsd:dateTime  .
 
 bldg:sched_waste_collection_4 a ontosage:ServiceSchedule ;
     rdfs:label "Waste Collection - Floor 4 (Fourth Floor)"@en ;
     ontosage:scheduleKind "waste_collection" ;
     ontosage:appliesTo bldg:Floor4 ;
     ontosage:startedAt "2026-08-22T06:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-22T08:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-22T08:00:00"^^xsd:dateTime  .
 
 bldg:sched_planned_maintenance_5 a ontosage:ServiceSchedule ;
     rdfs:label "Planned Maintenance - Floor 5 (Fifth Floor)"@en ;
     ontosage:scheduleKind "planned_maintenance" ;
     ontosage:appliesTo bldg:Floor5 ;
     ontosage:startedAt "2026-08-24T06:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-24T08:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-24T08:00:00"^^xsd:dateTime  .
 
 bldg:sched_cleaning_6 a ontosage:ServiceSchedule ;
     rdfs:label "Cleaning - Abacws Rooftop"@en ;
     ontosage:scheduleKind "cleaning" ;
     ontosage:appliesTo bldg:Rooftop ;
     ontosage:startedAt "2026-08-24T06:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-24T08:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-24T08:00:00"^^xsd:dateTime  .
 
 bldg:sched_waste_collection_7 a ontosage:ServiceSchedule ;
     rdfs:label "Waste Collection - Ground Level Parking — Abacws"@en ;
     ontosage:scheduleKind "waste_collection" ;
     ontosage:appliesTo bldg:Parking_Level_Ground ;
     ontosage:startedAt "2026-08-21T06:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-21T08:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-21T08:00:00"^^xsd:dateTime  .
 

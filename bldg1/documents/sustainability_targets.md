@@ -6,7 +6,6 @@ source_system: "Environmental Strategy Register"
 effective_from: 2025-08-31
 version: "2026.1"
 review_due: 2027-08-31
-simulated: true
 tables:
   - name: "Target register"
     maps_to: targets

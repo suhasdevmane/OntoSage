@@ -6,7 +6,6 @@ source_system: "Warranty Register"
 effective_from: 2025-08-31
 version: "2.4"
 review_due: 2027-08-31
-simulated: true
 tables:
   - name: "Warranty register"
     maps_to: warranties

@@ -6,7 +6,6 @@ source_system: "Building Cost Line Register"
 effective_from: 2026-08-01
 version: "2026.08"
 review_due: 2026-10-01
-simulated: true
 tables:
   - name: "Building cost line register"
     maps_to: cost_lines
