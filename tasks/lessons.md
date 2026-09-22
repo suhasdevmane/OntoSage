@@ -2024,3 +2024,30 @@ other. The route depended on where the question was typed, and the browser is wh
 I found it only because I *opened the screenshot* and saw an answer the CLI had not given me
 minutes earlier. A CLI check is not a check of what the user sees. Normalising quotes once when the
 rule context is built fixes every rule at once, which is where that repair belongs.
+
+## #130 — Typographic punctuation bites twice (2026-09-22)
+
+Lesson #129 was a curly apostrophe changing which lane a question took. Three days later the same
+class of bug hid inside the regression gate: the marker `"there is no air-pressure sensor data"`
+never matched its own recorded answer, because the text carried a NON-BREAKING hyphen (U+2011) and
+the marker an ASCII one. The gate therefore reported a stable question as REGRESSED.
+
+Both times the symptom was a comparison that should obviously have matched and did not, and both
+times the text looked identical on screen. **Any string a model generated, a browser typed or a
+renderer produced must be punctuation-normalised before it is matched against a pattern written by
+hand.** Doing it at one edge — where the text enters the comparison — fixes every pattern at once.
+
+## #131 — A verdict must be re-read against the answer it is filed beside (2026-09-22)
+
+The 73-question evidence pack shipped with one verdict describing an answer that was not the one
+stored: #69 was marked GOOD with a note about a defensible chiller answer, while the stored answer
+and its screenshot were "I found nothing in Abacws Building's records". The verdict had been written
+from an earlier run, and the merged pack kept a later run's answer.
+
+Nobody would have noticed by reading the README — the count simply said 52. It was found by the
+regression gate on its first full run, because the gate derives its expectation from the STORED
+ANSWER rather than from the verdict, so the two disagreeing was immediately visible.
+
+**Where a judgement and its evidence are stored separately, something must check they still refer to
+each other.** This is lesson #121 (check labels against source data) in a second form: there, a label
+disagreed with the source table; here, with the answer beside it.

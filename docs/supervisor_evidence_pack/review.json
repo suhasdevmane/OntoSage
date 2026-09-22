@@ -1,5 +1,5 @@
 {
-  "_comment": "Verdicts carried over from the source packs, keyed by the combined numbering.",
+  "_comment": "Hand-read verdict per question. GOOD = answers what was asked, INCLUDING an honest decline where declining is right. WEAK = it completed but does not answer the question. FLAGGED = it answered confidently and must not be relied on. Verdicts describe THE RUN STORED IN answers.jsonl and shown in the screenshot beside it. Routing is not deterministic: seven questions here are known to differ between identical runs (12, 18, 22, 34, 45, 47, 69) and each says so.",
   "verdicts": {
     "1": [
       "GOOD",
@@ -274,8 +274,8 @@
       "Refuses a blanket compliance claim and asks which regulation or record is meant. The only honest answer to that question."
     ],
     "69": [
-      "GOOD",
-      "Gives a defensible answer from the delta-T it can measure, says the plant is still performing, and recommends thresholds rather than pretending to a whole-life cost model."
+      "WEAK",
+      "Declined on the run this pack stores: 'I found nothing in Abacws Building's records that answers that.' It answered the same question substantively on another run, from the delta-T it can measure. Corrected 2026-09-22: the verdict here had been written against the other run's answer and did not match the screenshot beside it."
     ],
     "70": [
       "GOOD",

@@ -4,7 +4,7 @@ Captured 2026-09-22 against the running stack through Open WebUI (`ontobot-pipel
 
 Each question was asked in a **fresh chat** with both answer caches flushed beforehand, so every answer is a first pass and none was served from cache. The screenshots are full-page captures of the real browser; the answer text below each row is what the page showed.
 
-**73 of 73 captured completely. Every answer was then read against what the question asked: 52 answer it, 21 do not.** Median answer time 100 s (slowest 273 s).
+**73 of 73 captured completely. Every answer was then read against what the question asked: 51 answer it, 22 do not.** Median answer time 100 s (slowest 273 s).
 
 > Read this with `docs/SUPERVISOR_BRIEF.md`. Two things are deliberate. The pack includes
 > the questions the system **declines**, because declining what it cannot ground is the
@@ -34,6 +34,7 @@ Each question was asked in a **fresh chat** with both answer caches flushed befo
 - **39. Which data sources did you use to answer my last question?** — WEAK. Could not say which sources answered the previous turn — the provenance it publishes per answer was not reachable by asking for it.
 - **52. Where is energy being wasted in this building, and what would you change first?** — WEAK. An energy-waste question declined, although per-floor and out-of-hours energy are both answerable here (8, 17, 40).
 - **60. Which rooms on floor 2 have no temperature sensor?** — WEAK. Lists the temperature sensors that ARE installed on floor 2; the question asked which rooms have none. A negation over the model is still not answered.
+- **69. Should we replace the chiller this year or next?** — WEAK. Declined on the run this pack stores: 'I found nothing in Abacws Building's records that answers that.' It answered the same question substantively on another run, from the delta-T it can measure. Corrected 2026-09-22: the verdict here had been written against the other run's answer and did not match the screenshot beside it.
 - **71. Where is the nearest defibrillator?** — FLAGGED. States defibrillator positions and an emergency number as fact. The record behind it says the positions are 'modelled'. Safety-critical, so it must not be relied on until the owner confirms the three positions. Logged as BUG-858 (P1).
 
 ## Contents
@@ -108,7 +109,7 @@ Each question was asked in a **fresh chat** with both answer caches flushed befo
 | 66 | Refusal — a person | Which member of staff spent the longest in the building last week? | answers it | 62 s | [view](screenshots/66_which-member-of-staff-spent-the-longest-in-the-b.png) |
 | 67 | Decline — not recorded | How much does it cost to park here for a day? | answers it | 90 s | [view](screenshots/67_how-much-does-it-cost-to-park-here-for-a-day.png) |
 | 68 | Decline — a judgement | Is this building compliant with every regulation that applies to it? | answers it | 109 s | [view](screenshots/68_is-this-building-compliant-with-every-regulation.png) |
-| 69 | Decline — beyond scope | Should we replace the chiller this year or next? | answers it | 169 s | [view](screenshots/69_should-we-replace-the-chiller-this-year-or-next.png) |
+| 69 | Decline — beyond scope | Should we replace the chiller this year or next? | **does not answer it** | 169 s | [view](screenshots/69_should-we-replace-the-chiller-this-year-or-next.png) |
 | 70 | Decline — not measured | What is the air pressure in room 2.01 right now? | answers it | 164 s | [view](screenshots/70_what-is-the-air-pressure-in-room-2-01-right-now.png) |
 | 71 | Declined — a safety fact nobody recorded | Where is the nearest defibrillator? | **do not rely on** | 8 s | [view](screenshots/71_where-is-the-nearest-defibrillator.png) |
 | 72 | Something the building does not measure | What is the radiation level in the atrium? | answers it | 67 s | [view](screenshots/72_what-is-the-radiation-level-in-the-atrium.png) |
@@ -666,7 +667,7 @@ Each question was asked in a **fresh chat** with both answer caches flushed befo
 
 *Shape: Decline — beyond scope · 169 s · screenshot: [`69_should-we-replace-the-chiller-this-year-or-next.png`](screenshots/69_should-we-replace-the-chiller-this-year-or-next.png)*
 
-**Verdict: GOOD.** Gives a defensible answer from the delta-T it can measure, says the plant is still performing, and recommends thresholds rather than pretending to a whole-life cost model.
+**Verdict: WEAK.** Declined on the run this pack stores: 'I found nothing in Abacws Building's records that answers that.' It answered the same question substantively on another run, from the delta-T it can measure. Corrected 2026-09-22: the verdict here had been written against the other run's answer and did not match the screenshot beside it.
 
 > Pipeline steps I found nothing in Abacws Building's records that answers that. Sources: Building model Sensor data
 
