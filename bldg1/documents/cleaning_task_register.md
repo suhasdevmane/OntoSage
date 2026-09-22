@@ -6,7 +6,6 @@ source_system: "Cleaning Task Register"
 effective_from: 2026-09-01
 version: "2026.9"
 review_due: 2027-09-01
-simulated: true
 tables:
   - name: "Cleaning task register"
     maps_to: cleaning_tasks

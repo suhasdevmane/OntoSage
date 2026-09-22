@@ -6,7 +6,6 @@ source_system: "Permit to Work Register"
 effective_from: 2026-01-01
 version: "4.1"
 review_due: 2027-01-01
-simulated: true
 tables:
   - name: "Permit register"
     maps_to: permits

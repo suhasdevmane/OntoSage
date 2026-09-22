@@ -6,7 +6,6 @@ source_system: "Handover and O&M Register"
 effective_from: 2025-08-31
 version: "1.8"
 review_due: 2027-08-31
-simulated: true
 tables:
   - name: "Handover register"
     maps_to: handover

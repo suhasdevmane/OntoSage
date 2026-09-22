@@ -96,8 +96,6 @@ class AmenityHit:
     serves: Tuple[int, ...] = ()
     #: The service state the building records (ontosage:statusValue); "" when it records none.
     status: str = ""
-    #: A position somebody filled in (ontosage:isSimulated), not one the building itself states.
-    placeholder: bool = False
     #: How the building describes where it is, in its own words (ontosage:locationText). Used when
     #: the asker stands at a named place rather than in a room: "left from the front entrance,
     #: approximately 25 m in" is the answer to "how do I get to the lifts from the entrance", and a
@@ -151,7 +149,7 @@ SELECT ?a (SAMPLE(?lab) AS ?label) (SAMPLE(?fl) AS ?floor) (SAMPLE(?loc) AS ?loc
        (GROUP_CONCAT(DISTINCT ?cls; separator=" ") AS ?classes)
        (SAMPLE(?verified) AS ?acc_verified) (SAMPLE(?akind) AS ?acc_kind)
        (GROUP_CONCAT(DISTINCT ?sv; separator=" ") AS ?serves)
-       (SAMPLE(?svc) AS ?service_status) (SAMPLE(?sim) AS ?simulated)
+       (SAMPLE(?svc) AS ?service_status)
        (SAMPLE(?loctext) AS ?location_text) WHERE {
   ?a a o:Amenity .
   OPTIONAL { ?a rdfs:label ?lab }
@@ -166,7 +164,6 @@ SELECT ?a (SAMPLE(?lab) AS ?label) (SAMPLE(?fl) AS ?floor) (SAMPLE(?loc) AS ?loc
   OPTIONAL { ?a o:servesFloor ?sv }
   # Service state, read the way the capability resolver reads it.
   OPTIONAL { { ?a o:amenityStatus ?st } UNION { ?st o:statusOf ?a } ?st o:statusValue ?svc }
-  OPTIONAL { ?a o:isSimulated ?sim }
   # The building's own words for where it stands, for a reader who is not in a numbered room.
   OPTIONAL { ?a o:locationText ?loctext }
 } GROUP BY ?a
@@ -274,10 +271,6 @@ async def nearest_by_floor(
         acc_kind = str((b.get("acc_kind") or {}).get("value", "")).strip()
         serves = _served_floors((b.get("serves") or {}).get("value", ""))
         status = str((b.get("service_status") or {}).get("value", "")).strip()
-        placeholder = str((b.get("simulated") or {}).get("value", "")).strip().lower() in (
-            "true",
-            "1",
-        )
         # Lay terms are for FINDING a thing; they never establish what it is.
         haystack = " ".join([iri, label, lays, classes])
         if not _matches_kind(haystack, kind_words):
@@ -308,7 +301,6 @@ async def nearest_by_floor(
                 accessibility_kind=acc_kind,
                 serves=serves,
                 status=status,
-                placeholder=placeholder,
                 location_text=str((b.get("location_text") or {}).get("value", "")).strip(),
             )
         )
@@ -316,10 +308,11 @@ async def nearest_by_floor(
     if accessible_only:
         hits = [h for h in hits if h.accessible]
 
-    # A record built from something the building states outranks a placeholder on the SAME floor:
-    # a toilet in a research laboratory beside a restroom reads as a contradiction.
-    real_floors = {h.floor_no for h in hits if not h.placeholder and h.floor_no is not None}
-    hits = [h for h in hits if not h.placeholder or h.floor_no not in real_floors]
+    # A de-duplication by record ORIGIN used to run here: a record the building stated outranked
+    # a generated one on the same floor, because "a toilet in a research laboratory beside a
+    # restroom reads as a contradiction". With one kind of record there is nothing to rank by
+    # (2026-09-22), and the contradiction it was guarding against is a DATA problem -- two records
+    # describing the same facility -- which belongs in the TTL, not in a filter here.
 
     if from_floor is None:
         return hits

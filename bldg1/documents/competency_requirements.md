@@ -6,7 +6,6 @@ source_system: "Competency Requirements"
 effective_from: 2025-08-31
 version: "1.5"
 review_due: 2027-08-31
-simulated: true
 tables:
   - name: "Competency requirements"
     maps_to: competencies

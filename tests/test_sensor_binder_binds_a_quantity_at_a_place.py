@@ -355,10 +355,17 @@ async def test_a_zone_stands_in_only_when_the_room_has_none_and_says_so():
     assert "comes from HVAC Zone 5.01, the zone that covers it" in binding.summary()
 
 
-async def test_a_stand_in_in_the_room_does_not_outrank_the_zones_real_instrument():
-    """The demo's room 5.01: the physical CO2 sensor is attached to the HVAC zone, the room only
-    carries a generated stand-in. Answering from the stand-in changed a rehearsed answer and
-    preferred a placeholder to the instrument."""
+async def test_a_sensor_in_the_room_outranks_one_on_its_zone():
+    """Room 5.01 carries its own CO2 sensor and its HVAC zone carries another.
+
+    CHANGED BY D1 (2026-09-22). This used to assert the opposite: the zone's sensor won, because
+    the room's was a generated stand-in and the zone's a physical instrument, and origin decided.
+    No sensor declares an origin now, so the tie is settled by PLACE instead — and the more
+    specific place is the right answer to a question about a room. It also drops the "a served
+    zone links these spaces, but the link is not validated" caveat the zone basis carried.
+
+    The reading will differ from the zone's. That is the point: they are different sensors in
+    different places, and the one in the room is the one the question asked about."""
     stand_in = _sensor_rows(
         "CO2_sat", "Room 5.01 co2 [ppm]", U_SIM_TEMP, ["CO2_Level_Sensor"], sim="true"
     )
@@ -377,8 +384,8 @@ async def test_a_stand_in_in_the_room_does_not_outrank_the_zones_real_instrument
     )
     binding = await _bind("What is the CO2 level in room 5.01 right now?", graph, STUFFY)
 
-    assert binding.basis == sb.BASIS_ZONE
-    assert [s.uuid for s in binding.sensors] == [U_ZONE_CO2]  # said as a zone basis, not hidden
+    assert binding.basis == sb.BASIS_OWN
+    assert [s.uuid for s in binding.sensors] == [U_SIM_TEMP]  # the sensor IN the room
 
 
 async def test_a_stand_in_alone_is_still_answered_from_when_the_zone_has_nothing_better():
@@ -427,10 +434,13 @@ async def test_a_measured_sensor_beats_a_stand_in_for_the_same_quantity():
     assert [s.uuid for s in binding.sensors] == [U_TEMP]
 
 
-async def test_only_a_stand_in_is_still_answered_from():
-    """Silence would be a false absence: a placeholder is data the building holds."""
+async def test_a_rooms_own_sensor_is_answered_from():
+    """Silence would be a false absence: every sensor the building has is data it holds.
+
+    This asserted `simulated == [True]` until D1 (2026-09-22). No sensor declares an origin now,
+    so what matters is that the room's sensor is bound and answered from at all."""
     binding = await _bind("How many people are in Room 1.06?", _room_graph(), PEOPLE)
-    assert [s.simulated for s in binding.sensors] == [True]
+    assert len(binding.sensors) == 1
 
 
 # ── plant ────────────────────────────────────────────────────────────────────────────

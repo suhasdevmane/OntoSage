@@ -26,8 +26,7 @@ bldg:Topic_AccessCards a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:layTerms "access card, badge, door won't open, card not working, entry" ;
     ontosage:answerText "Access cards are issued by the site office; a card that stops working is usually re-enabled the same day." ;
     ontosage:contactEmail "site@buildsys.example.org" ;
-    ontosage:contactPhone "+44 20 7946 0812" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:contactPhone "+44 20 7946 0812"  .
 
 bldg:Topic_Cleaning a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Cleaning"@en ;
@@ -35,15 +34,13 @@ bldg:Topic_Cleaning a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:layTerms "cleaning, cleaner, spill, my office is dirty, bins not emptied" ;
     ontosage:answerText "Offices are cleaned overnight on weekdays. Spills and one-off issues go to the site office." ;
     ontosage:contactEmail "site@buildsys.example.org" ;
-    ontosage:contactPhone "+44 20 7946 0812" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:contactPhone "+44 20 7946 0812"  .
 
 bldg:Topic_OpeningHours a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Opening hours"@en ;
     ontosage:capabilityCategory "INFORMATION" ;
     ontosage:layTerms "opening hours, when is the building open, access hours, closing time, is it open" ;
-    ontosage:answerText "Open 07:00-19:00 weekdays, closed weekends and public holidays." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "Open 07:00-19:00 weekdays, closed weekends and public holidays."  .
 
 # ── amenity service state ───────────────────────────────────────────────────
 
@@ -51,22 +48,19 @@ bldg:Status_Amenity_DrinkingWater_floor1 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_DrinkingWater_floor1 ;
     ontosage:statusValue "out_of_service" ;
     ontosage:statusReason "isolated during adjacent works" ;
-    rdfs:label "Service state - Drinking water point — RM100A_room"@en ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    rdfs:label "Service state - Drinking water point — RM100A_room"@en  .
 
 bldg:Status_Amenity_StudyArea_floor1 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_floor1 ;
     ontosage:statusValue "out_of_service" ;
     ontosage:statusReason "reported faulty and booked for repair" ;
-    rdfs:label "Service state - Study area — RM107_room"@en ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    rdfs:label "Service state - Study area — RM107_room"@en  .
 
 bldg:Status_Amenity_ToiletFacility_floor0 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_ToiletFacility_floor0 ;
     ontosage:statusValue "out_of_service" ;
     ontosage:statusReason "isolated during adjacent works" ;
-    rdfs:label "Service state - Toilet facility — RM039_room"@en ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    rdfs:label "Service state - Toilet facility — RM039_room"@en  .
 
 # ── drinkability ────────────────────────────────────────────────────────────
 #
@@ -84,5 +78,4 @@ bldg:Potability_DrinkingWater a ontosage:PotabilityStatement ;
     ontosage:appliesToOutlet bldg:Amenity_DrinkingWater_floor0 ,
         bldg:Amenity_DrinkingWater_floor1 ,
         bldg:Amenity_DrinkingWater_floor2 ,
-        bldg:Amenity_DrinkingWater_floor3 ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+        bldg:Amenity_DrinkingWater_floor3  .

@@ -49,9 +49,11 @@ RDF_TYPE = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type"
 RDFS_LABEL = "http://www.w3.org/2000/01/rdf-schema#label"
 
 #: Front-matter keys every record document must declare. None is decoration: owner and
-#: authority are the two most-demanded fields in the whole catalogue corpus, effective_from
-#: is the third of the three times the catalogues insist on separating, and simulated is
-#: what stops a synthetic record being rendered as a real one.
+#: authority are the two most-demanded fields in the whole catalogue corpus, and effective_from
+#: is the third.
+#:
+#: `simulated` was required here until 2026-09-22 and is not any more. Every record is the
+#: building's own; where its data came from is stated once in the paper, not on each document.
 REQUIRED_FRONT_MATTER = (
     "record_type",
     "owner",
@@ -59,7 +61,6 @@ REQUIRED_FRONT_MATTER = (
     "source_system",
     "effective_from",
     "version",
-    "simulated",
 )
 
 _FRONT_MATTER = re.compile(r"\A\s*---\s*\n(.*?)\n---\s*\n", re.DOTALL)
@@ -364,7 +365,9 @@ def lift_document(
                 (subject, ONTOSAGE + "owningAuthority", str(front["authority"])),
                 (subject, ONTOSAGE + "recordVersion", str(front["version"])),
                 (subject, ONTOSAGE + "retrievedAt", stamp),
-                (subject, ONTOSAGE + "isSimulated", bool(front["simulated"])),
+                # The document's `simulated:` front-matter key is no longer lifted into a
+                # triple (2026-09-22). Every record the building holds is the building's own;
+                # where its data came from is stated once in the paper, not on each row.
             ]
             if not any(p.endswith("effectiveFrom") for _, p, _ in row_triples):
                 row_triples.append(

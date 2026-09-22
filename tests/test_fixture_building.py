@@ -88,8 +88,13 @@ def test_fixture_offers_all_three_spatial_adequacy_cases():
     assert "brick:isPointOf fix:W-A2" not in TTL
 
 
-def test_every_fixture_sensor_declares_its_provenance():
-    """A synthetic source that does not say so is the failure V6-T62 exists to prevent."""
+def test_no_fixture_sensor_declares_an_origin():
+    """D1, 2026-09-22: a sensor is a sensor.
+
+    This asserted the opposite until then — every fixture sensor had to declare
+    `ontosage:isSimulated`. No record declares an origin now; the inverted guard for the whole
+    repository is tests/test_no_record_declares_its_origin.py.
+    """
     for sensor in ("fix:TempA1", "fix:Co2B1"):
         block = TTL.split(sensor)[1].split(" .\n")[0]
-        assert "ontosage:isSimulated" in block, f"{sensor} must declare provenance"
+        assert "ontosage:isSimulated" not in block

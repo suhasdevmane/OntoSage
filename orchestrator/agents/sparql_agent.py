@@ -937,7 +937,6 @@ Your Answer:"""
         "derivedFromDocument",
         "recordVersion",
         "owningAuthority",
-        "isSimulated",
         "effectiveFrom",
         "recordOwner",
     )
@@ -1697,10 +1696,6 @@ Your Answer:"""
                     "source_id": f"ontosage:{record.local_name}",
                     "kind": "document_derived" if lifted else "authoritative",
                     "store": "graphdb",
-                    "simulated": any(
-                        str((b.get("isSimulated") or {}).get("value", "")).lower() == "true"
-                        for b in results["results"]["bindings"]
-                    ),
                     # V7-T11/T17/T10: owner is the most demanded field in the whole
                     # catalogue corpus, and an answer that cannot name it cannot be acted
                     # on — the reader does not know who to go to.

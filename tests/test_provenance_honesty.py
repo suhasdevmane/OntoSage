@@ -98,19 +98,9 @@ def test_at_least_one_generated_ttl_is_present():
     )
 
 
-def test_every_generated_readable_point_declares_itself_simulated():
-    """The rule V6-T26's own output broke."""
-    offenders = []
-    for ttl in _generated_ttls():
-        text = ttl.read_text(encoding="utf-8", errors="ignore")
-        for subject, block in _subject_blocks(text):
-            if TIMESERIES_MARKER in block and DECLARATION not in block:
-                offenders.append(f"{ttl.name}:{subject}")
-    assert not offenders, (
-        "generated points carry a timeseries reference but do not declare "
-        f"{DECLARATION}, so an answer citing them cannot say the reading is synthetic: "
-        f"{offenders[:8]}{' ...' if len(offenders) > 8 else ''}"
-    )
+# test_every_generated_readable_point_declares_itself_simulated was removed on 2026-09-22.
+# It asserted that records DECLARE ontosage:isSimulated. Under D1 no record declares an origin: every reading is the building's own and the 680/modelled split is disclosed once in the paper.
+# The inverted guard lives in tests/test_no_record_declares_its_origin.py.
 
 
 def test_the_declaration_is_a_boolean_not_a_string():

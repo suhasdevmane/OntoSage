@@ -766,13 +766,12 @@ _SENSOR_TAIL = (
     "  ?ref ref:hasTimeseriesId ?uuid .\n"
     "  OPTIONAL { ?ref ref:storedAt ?storage }\n"
     "  OPTIONAL { ?sensor rdfs:label ?label }\n"
-    "  OPTIONAL { ?sensor ontosage:isSimulated ?sim }\n"
 )
 
 
 def _own_sensors_query(scope_iri: str) -> str:
     return (
-        _PREFIXES + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?sim WHERE {\n"
+        _PREFIXES + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls WHERE {\n"
         f"  ?sensor (brick:hasLocation|^brick:isLocationOf) <{scope_iri}> .\n"
         "  ?sensor rdf:type/rdfs:subClassOf* ?cls .\n" + _SENSOR_TAIL + f"}} LIMIT {MAX_PLACE_ROWS}"
     )
@@ -793,7 +792,7 @@ def _declared_sensors_query(scope_iri: str) -> str:
 def _zone_sensors_query(scope_iri: str) -> str:
     return (
         _PREFIXES
-        + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?sim ?zone ?zlabel WHERE {\n"
+        + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?zone ?zlabel WHERE {\n"
         f"  ?zone (brick:hasPart|brick:feeds) <{scope_iri}> .\n"
         "  ?zone rdf:type/rdfs:subClassOf* brick:Zone .\n"
         "  OPTIONAL { ?zone rdfs:label ?zlabel }\n"
@@ -805,7 +804,7 @@ def _zone_sensors_query(scope_iri: str) -> str:
 def _equipment_sensors_query(scope_iris: Sequence[str]) -> str:
     values = " ".join(f"<{i}>" for i in scope_iris)
     return (
-        _PREFIXES + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?sim ?equip WHERE {\n"
+        _PREFIXES + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?equip WHERE {\n"
         f"  VALUES ?equip {{ {values} }}\n"
         "  ?sensor (brick:isPointOf|^brick:hasPoint) ?equip .\n"
         "  ?sensor rdf:type/rdfs:subClassOf* ?cls .\n" + _SENSOR_TAIL + f"}} LIMIT {MAX_PLACE_ROWS}"
@@ -822,7 +821,7 @@ def _population_query(classes: Sequence[str], namespace: str, rooms_only: bool =
         else "  OPTIONAL { ?sensor brick:hasLocation ?loc }\n"
     )
     return (
-        _PREFIXES + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?sim ?loc WHERE {\n"
+        _PREFIXES + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?loc WHERE {\n"
         f"  VALUES ?local {{ {values} }}\n"
         "  ?sensor a ?cls .\n"
         '  FILTER(STRENDS(STR(?cls), CONCAT("#", ?local)) || '
@@ -866,8 +865,6 @@ def _fold(rows: Sequence[Dict[str, Any]], require_uuid: bool = True) -> List[_Ra
         if cls:
             item.classes.add(_local(cls))
             item.class_iris.setdefault(_local(cls), cls)
-        if _val(r, "sim").lower() in ("true", "1"):
-            item.simulated = True
         item.location = item.location or _val(r, "loc")
         item.zone = item.zone or _val(r, "zone")
         item.zone_label = item.zone_label or _val(r, "zlabel")
@@ -899,14 +896,17 @@ def _classify(raws: Sequence[_Raw], specs: Sequence[QuantitySpec]) -> List[Bound
 
 
 def _prefer_measured(sensors: List[BoundSensor]) -> List[BoundSensor]:
-    """Where a place holds both a measured sensor and a stand-in, answer from the measured one.
+    """Kept as a seam; it no longer ranks by origin (2026-09-22).
 
-    A placeholder (`ontosage:isSimulated`) exists to fill a gap; when the gap is not there the
-    two series disagree and the narration reports both as if they were two rooms. With ONLY
-    stand-ins the answer is still given: silence would be a false absence.
+    It used to prefer a measured sensor over a stand-in where a place held both, because the two
+    series disagree and the narration then reports them as if they were two rooms. Every reading is
+    now the building's own, so there is no origin to prefer.
+
+    THE PROBLEM IT GUARDED AGAINST IS STILL REAL: two sensors bound to one place with different
+    readings (BUG-531 found 77 sensors carrying two timeseries references). That is a data defect
+    to fix in the graph, not something to settle by where a number came from.
     """
-    real = [s for s in sensors if not s.simulated]
-    return real if real and len(real) < len(sensors) else sensors
+    return sensors
 
 
 def _holdings(raws: Sequence[_Raw], specs: Sequence[Any]) -> List[str]:

@@ -14,8 +14,7 @@
     ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05> ;
     ontosage:onFloor "Floor0" ;
     ontosage:locationText "Study area in Room 0.05 — Mechanical Plant Room (floor Floor0)" ;
-    ontosage:answerText "There is a study area in Room 0.05 — Mechanical Plant Room on floor Floor0." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "There is a study area in Room 0.05 — Mechanical Plant Room on floor Floor0."  .
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor1>
     a ontosage:Amenity , ontosage:StudyArea ;
@@ -24,8 +23,7 @@
     ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08> ;
     ontosage:onFloor "Floor1" ;
     ontosage:locationText "Study area in Room 1.08 — Computer Laboratory (floor Floor1)" ;
-    ontosage:answerText "There is a study area in Room 1.08 — Computer Laboratory on floor Floor1." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "There is a study area in Room 1.08 — Computer Laboratory on floor Floor1."  .
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor2>
     a ontosage:Amenity , ontosage:StudyArea ;
@@ -34,8 +32,7 @@
     ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03> ;
     ontosage:onFloor "Floor2" ;
     ontosage:locationText "Study area in Room 2.03 — Research Laboratory (floor Floor2)" ;
-    ontosage:answerText "There is a study area in Room 2.03 — Research Laboratory on floor Floor2." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "There is a study area in Room 2.03 — Research Laboratory on floor Floor2."  .
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor3>
     a ontosage:Amenity , ontosage:StudyArea ;
@@ -44,8 +41,7 @@
     ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03> ;
     ontosage:onFloor "Floor3" ;
     ontosage:locationText "Study area in Room 3.03 — Research Laboratory (floor Floor3)" ;
-    ontosage:answerText "There is a study area in Room 3.03 — Research Laboratory on floor Floor3." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "There is a study area in Room 3.03 — Research Laboratory on floor Floor3."  .
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor4>
     a ontosage:Amenity , ontosage:StudyArea ;
@@ -54,8 +50,7 @@
     ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03> ;
     ontosage:onFloor "Floor4" ;
     ontosage:locationText "Study area in Room 4.03 — Research Laboratory (floor Floor4)" ;
-    ontosage:answerText "There is a study area in Room 4.03 — Research Laboratory on floor Floor4." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "There is a study area in Room 4.03 — Research Laboratory on floor Floor4."  .
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_StudyArea_Floor5>
     a ontosage:Amenity , ontosage:StudyArea ;
@@ -64,8 +59,7 @@
     ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
     ontosage:onFloor "Floor5" ;
     ontosage:locationText "Study area in Room 5.03 — Research Laboratory (floor Floor5)" ;
-    ontosage:answerText "There is a study area in Room 5.03 — Research Laboratory on floor Floor5." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "There is a study area in Room 5.03 — Research Laboratory on floor Floor5."  .
 
 # -- Second bottle-refill point per floor (2026-08-27) ---------------------
 # The building has TWO drinking-water / bottle-refill points on every floor;

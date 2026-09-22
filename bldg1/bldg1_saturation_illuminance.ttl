@@ -16,7 +16,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.01 — Main Reception illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.01> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -28,7 +27,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.04 — Mechanical Plant Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.04> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -40,7 +38,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.05 — Mechanical Plant Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.05> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -52,7 +49,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.06 — Loading and Goods Storage illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.06> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -64,7 +60,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.07 — Service Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.07> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -76,7 +71,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.08 — Service Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.08> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -88,7 +82,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.10 — Building Management Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.10> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -100,7 +93,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.17 — Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.17> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -112,7 +104,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.18 — Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.18> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -124,7 +115,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.19 — Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.19> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -136,7 +126,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.20 — Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.20> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -148,7 +137,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.29 — Storage Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.29> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -160,7 +148,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.31 — Mechanical/Service Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.31> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -172,7 +159,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.32 — Mechanical/Service Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.32> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -184,7 +170,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.33 — Mechanical/Service Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.33> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -196,7 +181,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 0.34 — Building Telecommunications Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room0.34> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -208,7 +192,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.06 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.06> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -220,7 +203,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.07 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.07> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -232,7 +214,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.08 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.08> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -244,7 +225,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.09 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.09> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -256,7 +236,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.25 — Conference/Seminar Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.25> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -268,7 +247,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.26 — Conference/Seminar Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.26> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -280,7 +258,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.34 — Telecommunications Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.34> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -292,7 +269,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.37 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.37> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -304,7 +280,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.38 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.38> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -316,7 +291,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.39 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.39> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -328,7 +302,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.40 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.40> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -340,7 +313,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 1.41 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room1.41> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -352,7 +324,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.01 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.01> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -364,7 +335,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.02 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.02> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -376,7 +346,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.03 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.03> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -388,7 +357,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.04 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.04> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -400,7 +368,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.05 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.05> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -412,7 +379,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.06 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.06> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -424,7 +390,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.07 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.07> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -436,7 +401,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.08 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.08> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -448,7 +412,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.09 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.09> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -460,7 +423,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.10 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.10> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -472,7 +434,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.11 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.11> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -484,7 +445,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.12 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.12> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -496,7 +456,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.13 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.13> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -508,7 +467,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.14 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.14> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -520,7 +478,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.15 — Seminar Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.15> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -532,7 +489,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.17 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.17> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -544,7 +500,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.18 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.18> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -556,7 +511,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.19 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.19> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -568,7 +522,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.20 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.20> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -580,7 +533,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.21 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.21> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -592,7 +544,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.22 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.22> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -604,7 +555,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.24 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.24> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -616,7 +566,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.26 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.26> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -628,7 +577,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.34 — Telecommunications Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.34> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -640,7 +588,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.35 — Restroom (Male) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.35> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -652,7 +599,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.36 — Restroom (Female) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.36> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -664,7 +610,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.44 — Server Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.44> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -676,7 +621,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.47 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.47> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -688,7 +632,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.48 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.48> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -700,7 +643,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.49 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.49> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -712,7 +654,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.50 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.50> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -724,7 +665,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.52 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.52> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -736,7 +676,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.53 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.53> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -748,7 +687,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.54 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.54> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -760,7 +698,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.55 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.55> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -772,7 +709,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.56 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.56> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -784,7 +720,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.57 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.57> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -796,7 +731,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.58 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.58> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -808,7 +742,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.59 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.59> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -820,7 +753,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.60 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.60> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -832,7 +764,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.61 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.61> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -844,7 +775,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.62 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.62> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -856,7 +786,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.63 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.63> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -868,7 +797,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.64 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.64> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -880,7 +808,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.65 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.65> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -892,7 +819,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.66 — Staff Break Room / Kitchen illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.66> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -904,7 +830,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 2.67 — Storage Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room2.67> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -916,7 +841,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.01 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.01> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -928,7 +852,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.02 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.02> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -940,7 +863,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.03 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.03> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -952,7 +874,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.04 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.04> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -964,7 +885,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.05 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.05> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -976,7 +896,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.06 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.06> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -988,7 +907,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.07 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.07> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1000,7 +918,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.08 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.08> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1012,7 +929,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.09 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.09> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1024,7 +940,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.10 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.10> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1036,7 +951,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.11 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.11> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1048,7 +962,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.12 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.12> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1060,7 +973,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.13 — Seminar Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.13> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1072,7 +984,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.14 — Seminar Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.14> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1084,7 +995,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.15 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.15> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1096,7 +1006,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.16 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.16> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1108,7 +1017,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.17 — Staff Common Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.17> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1120,7 +1028,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.18 — Kitchen illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.18> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1132,7 +1039,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.20 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.20> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1144,7 +1050,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.22 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.22> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1156,7 +1061,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.26 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.26> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1168,7 +1072,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.27 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.27> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1180,7 +1083,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.36 — Restroom (Male) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.36> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1192,7 +1094,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.37 — Restroom (Female) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.37> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1204,7 +1105,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.38 — Telecommunications Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.38> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1216,7 +1116,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.46 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.46> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1228,7 +1127,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.48 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.48> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1240,7 +1138,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.50 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.50> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1252,7 +1149,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.51 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.51> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1264,7 +1160,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.52 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.52> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1276,7 +1171,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.53 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.53> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1288,7 +1182,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.54 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.54> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1300,7 +1193,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.56 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.56> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1312,7 +1204,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.57 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.57> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1324,7 +1215,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.58 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.58> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1336,7 +1226,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.59 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.59> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1348,7 +1237,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.60 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.60> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1360,7 +1248,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.61 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.61> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1372,7 +1259,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.62 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.62> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1384,7 +1270,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.63 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.63> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1396,7 +1281,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.64 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.64> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1408,7 +1292,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.65 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.65> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1420,7 +1303,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.66 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.66> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1432,7 +1314,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.67 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.67> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1444,7 +1325,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.68 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.68> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1456,7 +1336,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.69 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.69> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1468,7 +1347,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.70 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.70> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1480,7 +1358,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 3.71 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room3.71> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1492,7 +1369,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.01 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.01> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1504,7 +1380,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.02 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.02> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1516,7 +1391,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.03 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.03> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1528,7 +1402,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.05 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.05> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1540,7 +1413,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.06 — Computer Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.06> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1552,7 +1424,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.07 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.07> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1564,7 +1435,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.08 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.08> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1576,7 +1446,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.09 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.09> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1588,7 +1457,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.10 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.10> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1600,7 +1468,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.11 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.11> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1612,7 +1479,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.12 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.12> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1624,7 +1490,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.13 — Seminar Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.13> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1636,7 +1501,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.14 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.14> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1648,7 +1512,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.15 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.15> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1660,7 +1523,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.16 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.16> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1672,7 +1534,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.18 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.18> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1684,7 +1545,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.19 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.19> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1696,7 +1556,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.20 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.20> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1708,7 +1567,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.21 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.21> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1720,7 +1578,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.22 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.22> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1732,7 +1589,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.23 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.23> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1744,7 +1600,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.24 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.24> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1756,7 +1611,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.34 — Telecommunications Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.34> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1768,7 +1622,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.35 — Restroom (Male) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.35> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1780,7 +1633,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.36 — Restroom (Female) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.36> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1792,7 +1644,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.38 — Mechanical/Service Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.38> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1804,7 +1655,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.44 — Server Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.44> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1816,7 +1666,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.47 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.47> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1828,7 +1677,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.49 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.49> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1840,7 +1688,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.50 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.50> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1852,7 +1699,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.51 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.51> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1864,7 +1710,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.52 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.52> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1876,7 +1721,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.53 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.53> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1888,7 +1732,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.55 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.55> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1900,7 +1743,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.56 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.56> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1912,7 +1754,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.57 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.57> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1924,7 +1765,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.58 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.58> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1936,7 +1776,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.59 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.59> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1948,7 +1787,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.60 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.60> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1960,7 +1798,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.61 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.61> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1972,7 +1809,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.62 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.62> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1984,7 +1820,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.63 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.63> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -1996,7 +1831,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.64 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.64> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2008,7 +1842,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.65 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.65> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2020,7 +1853,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.66 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.66> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2032,7 +1864,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.67 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.67> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2044,7 +1875,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.68 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.68> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2056,7 +1886,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.69 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.69> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2068,7 +1897,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.70 — Staff Break Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.70> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2080,7 +1908,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 4.71 — Storage Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room4.71> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2092,7 +1919,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.01 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.01> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2104,7 +1930,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.02 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.02> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2116,7 +1941,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.03 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.03> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2128,7 +1952,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.04 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.04> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2140,7 +1963,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.05 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.05> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2152,7 +1974,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.06 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.06> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2164,7 +1985,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.07 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.07> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2176,7 +1996,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.08 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.08> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2188,7 +2007,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.09 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.09> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2200,7 +2018,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.10 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.10> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2212,7 +2029,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.11 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.11> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2224,7 +2040,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.12 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.12> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2236,7 +2051,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.13 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.13> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2248,7 +2062,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.14 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.14> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2260,7 +2073,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.15 — Seminar / Conference Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.15> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2272,7 +2084,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.16 — Seminar / Conference Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.16> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2284,7 +2095,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.17 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.17> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2296,7 +2106,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.18 — Meeting Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.18> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2308,7 +2117,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.20 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.20> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2320,7 +2128,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.21 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.21> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2332,7 +2139,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.22 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.22> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2344,7 +2150,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.23 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.23> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2356,7 +2161,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.26 — Staff Break Room / Kitchen illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.26> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2368,7 +2172,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.34 — Telecommunications Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.34> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2380,7 +2183,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.35 — Restroom (Male) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.35> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2392,7 +2194,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.36 — Restroom (Female) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.36> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2404,7 +2205,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.44 — Server Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.44> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2416,7 +2216,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.45 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.45> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2428,7 +2227,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.48 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.48> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2440,7 +2238,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.49 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.49> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2452,7 +2249,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.50 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.50> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2464,7 +2260,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.51 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.51> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2476,7 +2271,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.52 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.52> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2488,7 +2282,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.53 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.53> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2500,7 +2293,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.54 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.54> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2512,7 +2304,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.56 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.56> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2524,7 +2315,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.57 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.57> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2536,7 +2326,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.58 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.58> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2548,7 +2337,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.59 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.59> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2560,7 +2348,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.60 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.60> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2572,7 +2359,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.61 — Research Laboratory illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.61> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2584,7 +2370,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.62 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.62> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2596,7 +2381,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.63 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.63> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2608,7 +2392,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.64 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.64> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2620,7 +2403,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.65 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.65> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2632,7 +2414,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.66 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.66> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2644,7 +2425,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.67 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.67> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2656,7 +2436,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.68 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.68> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2668,7 +2447,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.69 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.69> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2680,7 +2458,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.70 — Academic Office illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.70> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2692,7 +2469,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Room 5.71 — Storage Room illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Room5.71> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2704,7 +2480,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Server Room — Floor 2 (Room 2.44) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F2> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2716,7 +2491,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Server Room — Floor 4 (Room 4.44) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F4> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2728,7 +2502,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Server Room — Floor 5 (Room 5.44) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Server_Room_F5> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2740,7 +2513,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Telecommunications Room — Floor 0 (Room 0.34) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F0> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2752,7 +2524,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Telecommunications Room — Floor 1 (Room 1.34) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F1> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2764,7 +2535,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Telecommunications Room — Floor 2 (Room 2.34) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F2> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2776,7 +2546,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Telecommunications Room — Floor 3 (Room 3.38) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F3> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2788,7 +2557,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Telecommunications Room — Floor 4 (Room 4.34) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F4> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -2800,7 +2568,6 @@
     a brick:Illuminance_Sensor ;
     rdfs:label "Telecommunications Room — Floor 5 (Room 5.34) illuminance [lux]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Telecom_Room_F5> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

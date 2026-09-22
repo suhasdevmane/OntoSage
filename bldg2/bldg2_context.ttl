@@ -26,8 +26,7 @@ bldg:Topic_Recycling a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:layTerms "recycling, bins, waste, rubbish, where do i put" ;
     ontosage:answerText "Mixed recycling and landfill bins sit on every floor by the stair core; glass goes to the loading bay." ;
     ontosage:contactEmail "estates@wellman.example.org" ;
-    ontosage:contactPhone "+1 555 0147" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:contactPhone "+1 555 0147"  .
 
 bldg:Topic_Deliveries a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Deliveries"@en ;
@@ -35,8 +34,7 @@ bldg:Topic_Deliveries a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:layTerms "delivery, parcel, courier, goods in, post" ;
     ontosage:answerText "Deliveries are received at the loading bay and held at the estates office for collection." ;
     ontosage:contactEmail "estates@wellman.example.org" ;
-    ontosage:contactPhone "+1 555 0147" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:contactPhone "+1 555 0147"  .
 
 bldg:Topic_Bookings a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Bookings"@en ;
@@ -44,15 +42,13 @@ bldg:Topic_Bookings a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     ontosage:layTerms "book a room, reserve, meeting room booking, how do i book" ;
     ontosage:answerText "Rooms are booked through the campus booking system; the estates office can help with recurring bookings." ;
     ontosage:contactEmail "estates@wellman.example.org" ;
-    ontosage:contactPhone "+1 555 0147" ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:contactPhone "+1 555 0147"  .
 
 bldg:Topic_OpeningHours a ontosage:KnowledgeTopic , ontosage:InformationTopic ;
     rdfs:label "Opening hours"@en ;
     ontosage:capabilityCategory "INFORMATION" ;
     ontosage:layTerms "opening hours, when is the building open, access hours, closing time, is it open" ;
-    ontosage:answerText "Open 06:30-20:00 Monday to Friday, 09:00-13:00 Saturday." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "Open 06:30-20:00 Monday to Friday, 09:00-13:00 Saturday."  .
 
 # ── amenity service state ───────────────────────────────────────────────────
 
@@ -60,22 +56,19 @@ bldg:Status_Amenity_DrinkingWater_floor2 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_DrinkingWater_floor2 ;
     ontosage:statusValue "out_of_service" ;
     ontosage:statusReason "isolated during adjacent works" ;
-    rdfs:label "Service state - Drinking water point — RM201_room"@en ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    rdfs:label "Service state - Drinking water point — RM201_room"@en  .
 
 bldg:Status_Amenity_StudyArea_floor1 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_floor1 ;
     ontosage:statusValue "out_of_service" ;
     ontosage:statusReason "reported faulty and booked for repair" ;
-    rdfs:label "Service state - Study area — RM103_room"@en ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    rdfs:label "Service state - Study area — RM103_room"@en  .
 
 bldg:Status_Amenity_ToiletFacility_floor2 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_ToiletFacility_floor2 ;
     ontosage:statusValue "out_of_service" ;
     ontosage:statusReason "isolated during adjacent works" ;
-    rdfs:label "Service state - Toilet facility — RM202_room"@en ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    rdfs:label "Service state - Toilet facility — RM202_room"@en  .
 
 # ── drinkability ────────────────────────────────────────────────────────────
 #
@@ -92,5 +85,4 @@ bldg:Potability_DrinkingWater a ontosage:PotabilityStatement ;
     ontosage:potabilityIssuedOn "2024-01-01"^^xsd:date ;
     ontosage:appliesToOutlet bldg:Amenity_DrinkingWater_floor0 ,
         bldg:Amenity_DrinkingWater_floor1 ,
-        bldg:Amenity_DrinkingWater_floor2 ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+        bldg:Amenity_DrinkingWater_floor2  .

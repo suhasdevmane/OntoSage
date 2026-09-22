@@ -16,7 +16,6 @@
     a brick:Water_Meter ;
     rdfs:label "floor0 water_flow (simulated) [L]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor0> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -28,7 +27,6 @@
     a brick:Water_Meter ;
     rdfs:label "floor1 water_flow (simulated) [L]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor1> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -40,7 +38,6 @@
     a brick:Water_Meter ;
     rdfs:label "floor2 water_flow (simulated) [L]"@en ;
     brick:hasLocation <http://buildsys.org/ontologies/bldg2#floor2> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

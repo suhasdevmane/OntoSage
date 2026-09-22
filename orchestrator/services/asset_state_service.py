@@ -264,7 +264,6 @@ class AssetStateService:
             "  OPTIONAL { ?st ontosage:statusObservedAt ?t }\n"
             "  OPTIONAL { ?st ontosage:statusSource ?src }\n"
             "  OPTIONAL { ?st ontosage:assistanceContact ?contact }\n"
-            "  OPTIONAL { ?st ontosage:isSimulated ?sim }\n"
             "  OPTIONAL { ?asset rdfs:label ?lab }\n"
             f'  FILTER(STRSTARTS(STR(?asset), "{self._ns}"))\n'
             "} GROUP BY ?asset"
@@ -282,7 +281,6 @@ class AssetStateService:
             "  OPTIONAL { ?s ontosage:scheduleKind ?k }\n"
             "  OPTIONAL { ?s ontosage:startedAt ?from }\n"
             "  OPTIONAL { ?s ontosage:endedAt ?to }\n"
-            "  OPTIONAL { ?s ontosage:isSimulated ?sim }\n"
             "} GROUP BY ?s"
         )
 
@@ -299,7 +297,6 @@ class AssetStateService:
             "  OPTIONAL { ?c ontosage:closureReason ?why }\n"
             "  OPTIONAL { ?c ontosage:startedAt ?from }\n"
             "  OPTIONAL { ?c ontosage:endedAt ?to }\n"
-            "  OPTIONAL { ?c ontosage:isSimulated ?sim }\n"
             "} GROUP BY ?c"
         )
 
@@ -425,8 +422,6 @@ class AssetStateService:
                 age = ep_age if ep_age is not None else age
             if age is not None:
                 oldest = age if oldest is None else max(oldest, age)
-            if str(r.get("simulated", "")).lower() in ("true", "1"):
-                simulated = True
             entry = {
                 "asset": local,
                 "label": r.get("label", ""),
@@ -519,7 +514,7 @@ class AssetStateService:
                 "Add them as ontosage:ServiceSchedule entries and this becomes answerable.",
                 for_admin=for_admin,
             )
-        simulated = any(str(r.get("simulated", "")).lower() in ("true", "1") for r in rows)
+        simulated = False
         listed = [
             {
                 "location": _local(r.get("location", "")) or "the building",
@@ -578,7 +573,7 @@ class AssetStateService:
                     "are in the model — it is not a guarantee that none are planned."
                 ),
             }
-        simulated = any(str(r.get("simulated", "")).lower() in ("true", "1") for r in rows)
+        simulated = False
         listed = [
             {
                 "label": r.get("label", "") or _local(r.get("c", "")),

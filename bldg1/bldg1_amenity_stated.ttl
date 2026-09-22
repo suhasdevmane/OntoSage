@@ -43,8 +43,7 @@ bldg:Amenity_Cafe_Floor0
     ontosage:onFloor "Floor0" ;
     ontosage:openingHours "Monday–Friday 08:00–16:30" ;
     ontosage:locationText "Abacws Cafe, on the ground floor (open 08:00–16:30 on weekdays)" ;
-    ontosage:answerText "There is a cafe on the ground floor (Abacws Cafe), open 08:00–16:30 on weekdays, serving hot drinks, food and snacks." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "There is a cafe on the ground floor (Abacws Cafe), open 08:00–16:30 on weekdays, serving hot drinks, food and snacks."  .
 
 bldg:Amenity_PrayerRoom_Floor1
     a ontosage:Amenity , ontosage:PrayerRoom ;
@@ -52,8 +51,7 @@ bldg:Amenity_PrayerRoom_Floor1
     ontosage:layTerms "prayer room, multi-faith room, faith room, reflection room, place to pray, somewhere to pray, where can i pray" ;
     ontosage:onFloor "Floor1" ;
     ontosage:locationText "Multi-faith prayer and reflection room, on floor 1" ;
-    ontosage:answerText "There is a multi-faith prayer and reflection room on floor 1, available to all." ;
-    ontosage:isSimulated "true"^^xsd:boolean .
+    ontosage:answerText "There is a multi-faith prayer and reflection room on floor 1, available to all."  .
 
 # -- Two places the building states plainly, transcribed and not placed (2026-09-19, wave 4) ------
 #

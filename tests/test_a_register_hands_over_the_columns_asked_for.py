@@ -32,7 +32,6 @@ _CONTINUITY_COLUMNS = [
     "derivedFromDocument",
     "recordVersion",
     "owningAuthority",
-    "isSimulated",
     "effectiveFrom",
     "recordOwner",
     "comment",
@@ -93,7 +92,7 @@ def test_provenance_stamps_go_first():
     _, kept, dropped = agent._project_columns(
         _results(_CONTINUITY_COLUMNS), _CONTINUITY_COLUMNS, "which services have an alternative?"
     )
-    for column in ("retrievedAt", "liftedByMapping", "derivedFromDocument", "isSimulated"):
+    for column in ("retrievedAt", "liftedByMapping", "derivedFromDocument"):
         assert column in dropped
         assert column not in kept
 
@@ -142,7 +141,7 @@ _WORKSPACE_COLUMNS = [
     "nearestVerticalRoute", "setupMinutes", "recoveryMinutes", "accessNote", "comment",
     "openFrom", "openUntil",
     "retrievedAt", "liftedByMapping", "derivedFromDocument", "recordVersion",
-    "owningAuthority", "isSimulated", "effectiveFrom", "recordOwner",
+    "owningAuthority", "effectiveFrom", "recordOwner",
 ]
 
 

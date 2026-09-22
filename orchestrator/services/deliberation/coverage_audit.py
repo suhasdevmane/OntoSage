@@ -291,10 +291,6 @@ class CoverageAuditor:
             "    ?r ref:hasTimeseriesId ?uuid .\n"
             "    OPTIONAL { ?r ref:storedAt ?stored }\n"
             "  }\n"
-            # V12-04: origin travels with the POINT, so the ranker can refuse to rank on
-            # evidence that was never measured. OPTIONAL because an undeclared point is
-            # UNKNOWN, not measured — treating silence as measurement was the defect.
-            "  OPTIONAL { ?sensor ontosage:isSimulated ?simulated }\n"
             f'  FILTER(STRSTARTS(STR(?sensor), "{namespace}"))\n'
             "} ORDER BY ?sensor ?cls ?space"
         )

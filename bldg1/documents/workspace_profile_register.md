@@ -6,7 +6,6 @@ source_system: "Workspace Profile Register"
 effective_from: 2026-09-01
 version: "2026.9"
 review_due: 2027-03-01
-simulated: true
 tables:
   - name: "Workspace profile register"
     maps_to: workspace_profiles

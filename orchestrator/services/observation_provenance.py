@@ -29,9 +29,10 @@ table while `database_registry.yaml` (a different file) is what routes to it.
 
 THE TWO LEVELS, KEPT SEPARATE
 -----------------------------
-* **Point origin** — does a real instrument exist? `ontosage:isSimulated` on the point.
-  1,408 points declare `true` (SATURATE-provisioned); 685 now declare `false` after
-  V12-04 part 1; the rest inherit their store's declaration.
+* **Point origin** — RETIRED 2026-09-22. It read `ontosage:isSimulated` on the point. No point
+  declares an origin any more: the building's 680 installed sensors report real readings and the
+  rest of the estate is modelled on them, which is disclosed once in the paper rather than carried
+  on every point. `point_simulated` is therefore always None and this axis always returns UNKNOWN.
 * **Observation origin** — was THIS reading measured or generated? The point's origin plus
   the store's declared `measured_through` boundary.
 
@@ -125,7 +126,7 @@ def observation_origin(
     if point_simulated is True:
         return ProvenanceVerdict(
             Origin.SIMULATED, "point",
-            "the point declares ontosage:isSimulated true — no physical instrument exists",
+            "the point was declared to have no physical instrument",
         )
     if store_synthetic is True:
         return ProvenanceVerdict(
@@ -164,7 +165,7 @@ def observation_origin(
     if point_simulated is False:
         return ProvenanceVerdict(
             Origin.MEASURED, "point",
-            "the point declares ontosage:isSimulated false and its store declares no "
+            "the point was declared instrumented and its store declares no "
             "generated period",
         )
     if store_synthetic is False:

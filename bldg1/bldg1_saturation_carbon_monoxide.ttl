@@ -16,7 +16,6 @@
     a brick:CO_Level_Sensor ;
     rdfs:label "Floor0 carbon_monoxide [ppm]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -28,7 +27,6 @@
     a brick:CO_Level_Sensor ;
     rdfs:label "Floor1 carbon_monoxide [ppm]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -40,7 +38,6 @@
     a brick:CO_Level_Sensor ;
     rdfs:label "Floor2 carbon_monoxide [ppm]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -52,7 +49,6 @@
     a brick:CO_Level_Sensor ;
     rdfs:label "Floor3 carbon_monoxide [ppm]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -64,7 +60,6 @@
     a brick:CO_Level_Sensor ;
     rdfs:label "Floor4 carbon_monoxide [ppm]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -76,7 +71,6 @@
     a brick:CO_Level_Sensor ;
     rdfs:label "Floor5 carbon_monoxide [ppm]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

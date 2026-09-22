@@ -18,30 +18,26 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ontosage: <http://ontosage.org/capabilities#> .
 
-bldg:Abacws ontosage:openingHours "Mon-Fri 07:00-22:00; Sat-Sun 08:00-18:00" ;
-    ontosage:isSimulated true .
+bldg:Abacws ontosage:openingHours "Mon-Fri 07:00-22:00; Sat-Sun 08:00-18:00"  .
 
 bldg:closure_Floor0_0 a ontosage:ClosurePeriod ;
     rdfs:label "Planned closure - Floor 0 (Ground Floor)"@en ;
     ontosage:appliesTo bldg:Floor0 ;
     ontosage:closureReason "deep clean" ;
     ontosage:startedAt "2026-09-13T08:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-09-13T17:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-09-13T17:00:00"^^xsd:dateTime  .
 
 bldg:closure_Floor1_1 a ontosage:ClosurePeriod ;
     rdfs:label "Planned closure - Floor 1 (First Floor)"@en ;
     ontosage:appliesTo bldg:Floor1 ;
     ontosage:closureReason "planned electrical maintenance" ;
     ontosage:startedAt "2026-09-18T08:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-09-18T17:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-09-18T17:00:00"^^xsd:dateTime  .
 
 bldg:closure_Floor2_2 a ontosage:ClosurePeriod ;
     rdfs:label "Planned closure - Floor 2 (Second Floor)"@en ;
     ontosage:appliesTo bldg:Floor2 ;
     ontosage:closureReason "planned electrical maintenance" ;
     ontosage:startedAt "2026-08-28T08:00:00"^^xsd:dateTime ;
-    ontosage:endedAt "2026-08-28T17:00:00"^^xsd:dateTime ;
-    ontosage:isSimulated true .
+    ontosage:endedAt "2026-08-28T17:00:00"^^xsd:dateTime  .
 

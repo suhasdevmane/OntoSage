@@ -113,14 +113,13 @@ def test_every_lifted_fact_carries_its_provenance(tmp_path):
         "owningAuthority",
         "recordVersion",
         "retrievedAt",
-        "isSimulated",
-    ):
+        ):
         assert ONTOSAGE + required in predicates, f"{required} missing from lifted facts"
 
 
-def test_a_synthetic_document_stays_declared_synthetic(tmp_path):
-    result = lift_document(_write(tmp_path, GOOD), NS, MAPPINGS)
-    assert any(p.endswith("isSimulated") and o is True for _, p, o in result.triples)
+# test_a_synthetic_document_stays_declared_synthetic was removed on 2026-09-22.
+# It asserted that records DECLARE ontosage:isSimulated. Under D1 no record declares an origin: every reading is the building's own and the 680/modelled split is disclosed once in the paper.
+# The inverted guard lives in tests/test_no_record_declares_its_origin.py.
 
 
 def test_one_named_graph_per_document(tmp_path):

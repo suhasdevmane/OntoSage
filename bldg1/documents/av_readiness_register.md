@@ -6,7 +6,6 @@ source_system: "Teaching AV Readiness Register"
 effective_from: 2026-09-01
 version: "2026.9"
 review_due: 2027-03-01
-simulated: true
 tables:
   - name: "AV readiness register"
     maps_to: av_components

@@ -91,9 +91,6 @@ class CapabilityFact:
     lay_terms: str = ""
     #: The service state the building records for this amenity; "" when it records none.
     service_status: str = ""
-    #: True for a position somebody filled in (ontosage:isSimulated) rather than one taken from
-    #: something the building itself states. Lets a floor answer prefer the second kind.
-    placeholder: bool = False
 
     def render(self) -> str:
         head = f"**{self.label}**"
@@ -224,7 +221,6 @@ class _Amenity:
     potability_authority: str = ""
     potability_issued_on: str = ""
     on_floor: str = ""
-    placeholder: bool = False
 
 
 #: Status values that mean an amenity cannot be used right now. Anything else --
@@ -263,7 +259,6 @@ def _to_fact(am: "_Amenity") -> CapabilityFact:
         on_floor=am.on_floor,
         lay_terms=", ".join(am.lay_phrases),
         service_status=am.service_status,
-        placeholder=am.placeholder,
     )
 
 
@@ -367,7 +362,7 @@ class CapabilityGraphResolver:
         q = (
             f"{_ONTO}{_RDFS}"
             "SELECT ?a ?label ?loc ?note ?cat ?lay ?answer ?url ?email ?phone ?report ?steps "
-            "?docref ?effective ?owner ?svc ?pot ?potauth ?potdate ?floor ?sim WHERE { "
+            "?docref ?effective ?owner ?svc ?pot ?potauth ?potdate ?floor WHERE { "
             "{ ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } "
             "OPTIONAL { ?a rdfs:label ?label } "
             "OPTIONAL { ?a ontosage:locationText ?loc } "
@@ -396,8 +391,7 @@ class CapabilityGraphResolver:
             "OPTIONAL { ?a ontosage:potabilityValue ?pot } "
             "OPTIONAL { ?a ontosage:potabilityAuthority ?potauth } "
             "OPTIONAL { ?a ontosage:potabilityIssuedOn ?potdate } "
-            # A placeholder position, as against one taken from something the building states.
-            "OPTIONAL { ?a ontosage:isSimulated ?sim } }"
+            "}"
         )
         # Kind vocabulary first, in its own query: a failure here must cost only the inherited
         # terms, never the amenities themselves.
@@ -449,7 +443,6 @@ class CapabilityGraphResolver:
                     potability_authority=_v("potauth"),
                     potability_issued_on=_v("potdate")[:10],
                     on_floor=_v("floor"),
-                    placeholder=_v("sim").lower() in ("true", "1"),
                 )
             )
             if _v("a"):

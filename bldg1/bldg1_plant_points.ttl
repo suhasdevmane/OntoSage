@@ -20,7 +20,6 @@ bldg:AHU_F0_Fan_Status a brick:Fan_Status ;
     brick:isPointOf bldg:AHU_F0 ;
     brick:hasLocation bldg:Floor0 ;
     brick:hasUnit "binary" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/UNITLESS> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -33,7 +32,6 @@ bldg:AHU_F0_Filter_DP a brick:Filter_Differential_Pressure_Sensor ;
     brick:isPointOf bldg:AHU_F0 ;
     brick:hasLocation bldg:Floor0 ;
     brick:hasUnit "Pa" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/PA> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -46,7 +44,6 @@ bldg:AHU_F0_Return_Air_Temperature a brick:Return_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F0 ;
     brick:hasLocation bldg:Floor0 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -59,7 +56,6 @@ bldg:AHU_F0_Supply_Air_Flow a brick:Air_Flow_Sensor ;
     brick:isPointOf bldg:AHU_F0 ;
     brick:hasLocation bldg:Floor0 ;
     brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -72,7 +68,6 @@ bldg:AHU_F0_Supply_Air_Temperature a brick:Supply_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F0 ;
     brick:hasLocation bldg:Floor0 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -85,7 +80,6 @@ bldg:AHU_F1_Fan_Status a brick:Fan_Status ;
     brick:isPointOf bldg:AHU_F1 ;
     brick:hasLocation bldg:Floor1 ;
     brick:hasUnit "binary" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/UNITLESS> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -98,7 +92,6 @@ bldg:AHU_F1_Filter_DP a brick:Filter_Differential_Pressure_Sensor ;
     brick:isPointOf bldg:AHU_F1 ;
     brick:hasLocation bldg:Floor1 ;
     brick:hasUnit "Pa" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/PA> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -111,7 +104,6 @@ bldg:AHU_F1_Return_Air_Temperature a brick:Return_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F1 ;
     brick:hasLocation bldg:Floor1 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -124,7 +116,6 @@ bldg:AHU_F1_Supply_Air_Flow a brick:Air_Flow_Sensor ;
     brick:isPointOf bldg:AHU_F1 ;
     brick:hasLocation bldg:Floor1 ;
     brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -137,7 +128,6 @@ bldg:AHU_F1_Supply_Air_Temperature a brick:Supply_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F1 ;
     brick:hasLocation bldg:Floor1 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -150,7 +140,6 @@ bldg:AHU_F2_Fan_Status a brick:Fan_Status ;
     brick:isPointOf bldg:AHU_F2 ;
     brick:hasLocation bldg:Floor2 ;
     brick:hasUnit "binary" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/UNITLESS> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -163,7 +152,6 @@ bldg:AHU_F2_Filter_DP a brick:Filter_Differential_Pressure_Sensor ;
     brick:isPointOf bldg:AHU_F2 ;
     brick:hasLocation bldg:Floor2 ;
     brick:hasUnit "Pa" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/PA> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -176,7 +164,6 @@ bldg:AHU_F2_Return_Air_Temperature a brick:Return_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F2 ;
     brick:hasLocation bldg:Floor2 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -189,7 +176,6 @@ bldg:AHU_F2_Supply_Air_Flow a brick:Air_Flow_Sensor ;
     brick:isPointOf bldg:AHU_F2 ;
     brick:hasLocation bldg:Floor2 ;
     brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -202,7 +188,6 @@ bldg:AHU_F2_Supply_Air_Temperature a brick:Supply_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F2 ;
     brick:hasLocation bldg:Floor2 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -215,7 +200,6 @@ bldg:AHU_F3_Fan_Status a brick:Fan_Status ;
     brick:isPointOf bldg:AHU_F3 ;
     brick:hasLocation bldg:Floor3 ;
     brick:hasUnit "binary" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/UNITLESS> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -228,7 +212,6 @@ bldg:AHU_F3_Filter_DP a brick:Filter_Differential_Pressure_Sensor ;
     brick:isPointOf bldg:AHU_F3 ;
     brick:hasLocation bldg:Floor3 ;
     brick:hasUnit "Pa" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/PA> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -241,7 +224,6 @@ bldg:AHU_F3_Return_Air_Temperature a brick:Return_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F3 ;
     brick:hasLocation bldg:Floor3 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -254,7 +236,6 @@ bldg:AHU_F3_Supply_Air_Flow a brick:Air_Flow_Sensor ;
     brick:isPointOf bldg:AHU_F3 ;
     brick:hasLocation bldg:Floor3 ;
     brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -267,7 +248,6 @@ bldg:AHU_F3_Supply_Air_Temperature a brick:Supply_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F3 ;
     brick:hasLocation bldg:Floor3 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -280,7 +260,6 @@ bldg:AHU_F4_Fan_Status a brick:Fan_Status ;
     brick:isPointOf bldg:AHU_F4 ;
     brick:hasLocation bldg:Floor4 ;
     brick:hasUnit "binary" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/UNITLESS> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -293,7 +272,6 @@ bldg:AHU_F4_Filter_DP a brick:Filter_Differential_Pressure_Sensor ;
     brick:isPointOf bldg:AHU_F4 ;
     brick:hasLocation bldg:Floor4 ;
     brick:hasUnit "Pa" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/PA> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -306,7 +284,6 @@ bldg:AHU_F4_Return_Air_Temperature a brick:Return_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F4 ;
     brick:hasLocation bldg:Floor4 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -319,7 +296,6 @@ bldg:AHU_F4_Supply_Air_Flow a brick:Air_Flow_Sensor ;
     brick:isPointOf bldg:AHU_F4 ;
     brick:hasLocation bldg:Floor4 ;
     brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -332,7 +308,6 @@ bldg:AHU_F4_Supply_Air_Temperature a brick:Supply_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F4 ;
     brick:hasLocation bldg:Floor4 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -345,7 +320,6 @@ bldg:AHU_F5_Fan_Status a brick:Fan_Status ;
     brick:isPointOf bldg:AHU_F5 ;
     brick:hasLocation bldg:Floor5 ;
     brick:hasUnit "binary" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/UNITLESS> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -358,7 +332,6 @@ bldg:AHU_F5_Filter_DP a brick:Filter_Differential_Pressure_Sensor ;
     brick:isPointOf bldg:AHU_F5 ;
     brick:hasLocation bldg:Floor5 ;
     brick:hasUnit "Pa" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/PA> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -371,7 +344,6 @@ bldg:AHU_F5_Return_Air_Temperature a brick:Return_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F5 ;
     brick:hasLocation bldg:Floor5 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -384,7 +356,6 @@ bldg:AHU_F5_Supply_Air_Flow a brick:Air_Flow_Sensor ;
     brick:isPointOf bldg:AHU_F5 ;
     brick:hasLocation bldg:Floor5 ;
     brick:hasUnit "L/s" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/L-PER-SEC> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -397,7 +368,6 @@ bldg:AHU_F5_Supply_Air_Temperature a brick:Supply_Air_Temperature_Sensor ;
     brick:isPointOf bldg:AHU_F5 ;
     brick:hasLocation bldg:Floor5 ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -410,7 +380,6 @@ bldg:Boiler_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sens
     brick:isPointOf bldg:Boiler_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -423,7 +392,6 @@ bldg:Boiler_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sensor
     brick:isPointOf bldg:Boiler_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -436,7 +404,6 @@ bldg:Boiler_2_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sens
     brick:isPointOf bldg:Boiler_2 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -449,7 +416,6 @@ bldg:Boiler_2_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sensor
     brick:isPointOf bldg:Boiler_2 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -462,7 +428,6 @@ bldg:Chiller_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_Sen
     brick:isPointOf bldg:Chiller_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -475,7 +440,6 @@ bldg:Chiller_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Senso
     brick:isPointOf bldg:Chiller_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -488,7 +452,6 @@ bldg:Heat_Pump_1_Entering_Water_Temperature a brick:Entering_Water_Temperature_S
     brick:isPointOf bldg:Heat_Pump_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;
@@ -501,7 +464,6 @@ bldg:Heat_Pump_1_Leaving_Water_Temperature a brick:Leaving_Water_Temperature_Sen
     brick:isPointOf bldg:Heat_Pump_1 ;
     brick:hasLocation bldg:Rooftop ;
     brick:hasUnit "degC" ;
-    ontosage:isSimulated "true"^^xsd:boolean ;
     qudt:hasUnit <http://qudt.org/vocab/unit/DEG_C> ;
     ref:hasExternalReference [
         a ref:TimeseriesReference ;

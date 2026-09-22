@@ -6,7 +6,6 @@ source_system: "Patrol Checkpoint Register"
 effective_from: 2026-09-01
 version: "2026.9"
 review_due: 2027-03-01
-simulated: true
 tables:
   - name: "Patrol checkpoint register"
     maps_to: patrol_checkpoints

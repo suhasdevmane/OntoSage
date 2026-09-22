@@ -888,10 +888,12 @@ async def execute(
     #       would answer "I cannot tell you about that floor" about a floor whose data is
     #       present and correct for what it represents.
     #
-    #   measured_only — the R4 protection. A candidate whose evidence declares
-    #       `isSimulated true` is excluded before ranking, with the exclusion stated. This
-    #       is what a supervised pilot, or any deployment where someone ACTS on the answer,
-    #       should set: there the distinction stops being a development detail.
+    #   measured_only — RETIRED 2026-09-22. It excluded a candidate whose evidence declared
+    #       `ontosage:isSimulated true` before ranking. No record declares an origin any more:
+    #       the building's 680 installed sensors report real readings and the rest of the estate
+    #       is modelled on them, disclosed once in the paper rather than per answer. A building
+    #       that sets this value still gets `all_connected_readings` behaviour, which is what
+    #       every building here already set.
     _policy = _evidence_policy(schema.building_id)
     _provenance: Dict[str, Dict[str, Any]] = {}
     if _policy == "measured_only":

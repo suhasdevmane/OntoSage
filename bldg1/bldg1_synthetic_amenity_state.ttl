@@ -24,90 +24,77 @@ bldg:amenity_status_13 a ontosage:AssetStatus ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-06T10:03:43"^^xsd:dateTime ;
     ontosage:statusReason "scheduled servicing" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_14 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_Floor1 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T05:24:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_15 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_Floor2 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T01:29:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_16 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_Floor3 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T10:12:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_17 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_Floor4 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T06:46:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_18 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_Floor5 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T10:16:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_27 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Cap_first_aid ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T02:54:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_31 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:access_hearing_loop_1 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T01:59:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_32 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:access_hearing_loop_5 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T04:17:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_33 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:access_power_assisted_door_2 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T04:53:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_34 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:access_power_assisted_door_6 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T08:48:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_35 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:access_step_free_entrance_3 ;
     ontosage:statusValue "out_of_service" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-06T08:48:43"^^xsd:dateTime ;
     ontosage:statusReason "reported fault" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_36 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:access_step_free_entrance_7 ;
     ontosage:statusValue "operational" ;
     ontosage:statusSource "estates_helpdesk" ;
     ontosage:statusObservedAt "2026-09-17T11:10:43"^^xsd:dateTime ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234" ;
-    ontosage:isSimulated true .
+    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .

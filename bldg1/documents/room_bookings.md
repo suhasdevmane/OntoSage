@@ -6,7 +6,6 @@ source_system: "Room Booking System"
 effective_from: 2025-08-31
 version: "2026.34"
 review_due: 2027-08-31
-simulated: true
 tables:
   - name: "Booking register"
     maps_to: bookings

@@ -6,7 +6,6 @@ source_system: "Door and Shutter Hardware Register"
 effective_from: 2026-09-01
 version: "2026.9"
 review_due: 2027-03-01
-simulated: true
 tables:
   - name: "Door and shutter hardware register"
     maps_to: door_hardware
