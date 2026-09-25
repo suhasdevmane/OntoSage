@@ -24,8 +24,8 @@ for what is pushed). **Everything from the 18 September evening (Stage 2 work, b
 > block in the same commit.**
 
 - **LATEST (2026-09-23, second session) — Waves 1 and 2 of `tasks/PRODUCTION_TRACKER.csv`.
-  W1-01/02/03/05, W2-01, W2-02 DONE; W1-04 PARTIAL. Nothing committed; the PARKED suite
-  number is still owed.**
+  W1-01/02/03/05, W2-01, W2-02 DONE; W1-04 PARTIAL. **Committed and pushed 2026-09-25;
+  the parked suite measured 12,489 pass / 155 skip / 0 fail that day.**
   **BUG-873 (P1) is FIXED** — the answer-relevance gate may no longer replace an answer with
   `_unanswered_response` when the turn produced visible evidence, because that text
   ("I couldn't answer that from <building>'s records") is FALSE exactly when a lane has just
@@ -90,9 +90,12 @@ for what is pushed). **Everything from the 18 September evening (Stage 2 work, b
   is active.** bldg1 up, late 2026-09-17 after the readiness wave: **7,394 pass / 48 skip /
   3 xfail / 1 fail** (13m50s) — the one failure was a source-string test pinning a call's old
   argument list, fixed and re-run 18/18. PARKED — what a fresh
-  clone, CI and Workflow rule 8 see: **6,024 pass / 123 skip / 0 fail** (9m37s, 2026-09-16,
-  RE-MEASURE OWED — the parked number is now ~1,370 tests behind the active one, and
-  parked is the number that gates a commit).
+  clone, CI and Workflow rule 8 see — **RE-MEASURED 2026-09-25, and this is the number that
+  gates a commit: 12,489 pass / 155 skip / 0 fail / 3 xfail** (18m59s, exit 0), run in the
+  parked state immediately before the push of that date. The debt this line carried since
+  2026-09-16 is paid: the stale figure was **6,024**, so parked was not ~1,370 behind the
+  active suite, it was 6,465 behind ITSELF. A number kept as a reminder to re-measure is a
+  number someone will quote. Re-measure it, do not re-word it.
   **DO NOT QUOTE A SUITE DURATION AS A PROPERTY.** The same suite ran **10m20s** and then
   **68m17s** the same afternoon, on identical work: both runs logged exactly 19
   timeout/connection lines and 44 adapter pool failures, every container was idle when checked
