@@ -163,3 +163,51 @@ def test_empty_constraints_flags_vague():
 def test_fingerprint_deterministic_for_same_program():
     a, b = _compile(FLAGSHIP, "phrasing one"), _compile(FLAGSHIP, "totally different phrasing")
     assert a.plan_fingerprint() == b.plan_fingerprint()
+
+
+# ── a direction the model omitted, read from the phrase it came with ──────────────────
+#
+# Measured live 2026-09-23, two questions, one minute apart, same two modalities:
+#
+#   "is anywhere both hot and noisy"        -> directions emitted, rooms ranked, answered
+#   "which rooms are both warm and stuffy"  -> direction "none" for both, REFUSED
+#
+# The refusal message named its own cure: "I couldn't map part of your request (warm; stuffy)".
+# `_LAY_POLARITY` already records that warm is the high end of temperature and stuffy the high
+# end of CO2, and `_constraint_from_phrase` already trusts it for phrases the model left in
+# `unmapped` -- it was simply never consulted where a MAPPED constraint arrives without a
+# direction. A refusal manufactured out of temp-0 provider wobble is not honesty.
+
+
+def test_a_polarity_word_supplies_a_direction_the_model_left_out():
+    from orchestrator.services.deliberation.compiler import _direction_from_phrase_polarity
+
+    assert _direction_from_phrase_polarity("warm") is Direction.MAXIMIZE
+    assert _direction_from_phrase_polarity("stuffy") is Direction.MAXIMIZE
+    assert _direction_from_phrase_polarity("the coolest corner") is Direction.MINIMIZE
+
+
+def test_an_avoidance_phrase_is_left_for_a_human_rather_than_inverted():
+    """"less stuffy" and "stuffy" name the same modality and OPPOSITE ends."""
+    from orchestrator.services.deliberation.compiler import _direction_from_phrase_polarity
+
+    for phrase in ("less stuffy", "avoid the noisy rooms", "somewhere without bright light"):
+        assert _direction_from_phrase_polarity(phrase) is None, phrase
+
+
+def test_two_words_pulling_opposite_ways_decline_rather_than_pick_one():
+    from orchestrator.services.deliberation.compiler import _direction_from_phrase_polarity
+
+    assert _direction_from_phrase_polarity("warm but not cold") is None
+
+
+def test_a_word_with_no_polarity_of_its_own_still_refuses():
+    """This is the boundary that keeps the fix a robustness fix.
+
+    "temperature" and "occupancy" have no better end without a preference, and inventing one
+    would answer a question nobody asked. `_infer_direction` still owns those.
+    """
+    from orchestrator.services.deliberation.compiler import _direction_from_phrase_polarity
+
+    for phrase in ("temperature", "the occupancy", "co2 level", ""):
+        assert _direction_from_phrase_polarity(phrase) is None, phrase

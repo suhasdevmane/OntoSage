@@ -36,6 +36,7 @@ from orchestrator.services.forecasting.horizon_parser import (
     ForecastHorizon,
     parse_horizon,
 )
+from orchestrator.services.forecasting import scope as _scope
 from orchestrator.services.forecasting.model_selector import ModelSelector
 from orchestrator.services.forecasting.preprocessor import (
     detect_seasonality,
@@ -153,8 +154,39 @@ class ForecastAgent:
                 horizon=horizon,
             )
 
-        # Select the primary sensor UUID and label
-        uuid, label = self._select_primary_sensor(records, sensor_metadata, user_query)
+        # W2-02: A QUESTION ABOUT A FLOOR IS NOT A QUESTION ABOUT ONE ROOM ON IT.
+        #
+        # `_select_primary_sensor` picks the single sensor whose label best matches the
+        # question's words. That is right for "the CO2 in room 5.01" and wrong for every
+        # question naming a floor or the building. Measured 2026-09-23: "predict the average
+        # CO2 on floor 3" forecast "CO2 Level Sensor installed-node 3.58" of forty-five
+        # instrumented rooms, and "what will the building's energy use be" forecast
+        # "Electrical Energy Meter - Floor 0" of six floors. Both correct forecasts of the
+        # wrong thing, with nothing in either answer saying so.
+        aggregate_note = ""
+        uuid = label = ""
+        scope_request = _scope.detect(user_query)
+        if scope_request:
+            labels = [str((m or {}).get("label", "")) for m in (sensor_metadata or {}).values()]
+            how = _scope.how_to_combine(labels, user_query)
+            folded, n_sensors = _scope.aggregate_records(records, how)
+            if n_sensors > 1 and folded:
+                records = folded
+                uuid = "__aggregate__"
+                _where = scope_request.scope_only or scope_request.phrase
+                label = f"{_where} ({'total' if how == 'total' else 'average'})"
+                aggregate_note = _scope.denominator_note(how, n_sensors, scope_request.phrase)
+                logger.info(
+                    f"[forecast_agent] aggregate scope: {how} over {n_sensors} sensors "
+                    f"for {scope_request.phrase!r}"
+                )
+            else:
+                logger.info(
+                    "[forecast_agent] aggregate scope asked for but only "
+                    f"{n_sensors} sensor(s) bound — forecasting that one"
+                )
+        if not uuid:
+            uuid, label = self._select_primary_sensor(records, sensor_metadata, user_query)
         logger.info(f"[forecast_agent] Sensor: {label} ({uuid[:20]}...)")
 
         # Determine unit
@@ -246,6 +278,13 @@ class ForecastAgent:
         result.skill_note = skill_note
 
         result.formatted_response = self._format_response(result, unit, prep_info)
+        if aggregate_note:
+            # W2-02: the denominator belongs IN the answer, not only in the log. Without
+            # it a reader cannot tell a floor's average from one room's forecast, and the
+            # two differ by forty-four rooms.
+            result.formatted_response = "\n\n".join(
+                [aggregate_note, result.formatted_response]
+            )
 
         logger.info(
             f"[forecast_agent] Done. Model={result.model_name} "

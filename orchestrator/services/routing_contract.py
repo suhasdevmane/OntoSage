@@ -1015,9 +1015,22 @@ DELIBERATE_RE = re.compile(
     # right now?" reached the single-sensor lane, which saw one room's rows and said "no
     # other floor-5 rooms have recent data" of a floor with 46 instrumented rooms. Plural
     # space noun + a condition adjective is a question over every room, which is ARBITER's.
+    # "both" (and "all"/"either") sits between the verb and the adjective in exactly the
+    # questions this branch exists for -- "which rooms are BOTH warm and stuffy" is the
+    # cross-modal form of "which rooms are stuffy", and it was the one word keeping the
+    # two-modality question out of the only lane that can rank on two modalities. Measured
+    # 2026-09-23: with "on floor 3" in place of "both" the same question routed here and was
+    # answered. The adjective list is `_CONDITION_ADJECTIVES` rather than a third copy of it;
+    # this branch carried its own, and a list duplicated is a list that diverges.
     r"|\bwhich\s+(?:\w+\s+){0,2}(?:rooms|zones|spaces|areas)\b.{0,40}\b(?:are|feel|seem|look)\s+"
-    r"(?:too\s+|very\s+|quite\s+)?(?:stuffy|noisy|loud|humid|damp|dry|dark|bright|cold|chilly|"
-    r"warm|hot|cool|quiet|crowded|busy)\b"
+    r"(?:both\s+|all\s+|either\s+)?(?:too\s+|very\s+|quite\s+)?(?:" + _CONDITION_ADJECTIVES + r")\b"
+    # "where is it cool and quiet enough to work?" -- a request for a place meeting
+    # conditions, with no space noun and no superlative for the branches above to catch, and
+    # no "anywhere" for EXISTENTIAL_COMFORT_RE. It compiled to a perfectly executable
+    # two-modality plan and never reached the lane that would have run it. Needs the dummy
+    # subject AND a condition adjective, so "where is it?" and "where is it on floor 2" stay
+    # out.
+    r"|\bwhere(?:'s|\s+is)\s+it\s+(?:\w+\s+){0,2}(?:" + _CONDITION_ADJECTIVES + r")\b"
     r"|\brank\s+(?:the\s+)?\w*\s*(?:rooms|zones|spaces|areas)\b"
     r"|\b(?:zone|room|space|area)s?\s+with\s+(?:the\s+)?(?:minimum|maximum|least|most|lowest|highest)\b)",
     re.IGNORECASE,
@@ -1906,6 +1919,85 @@ def _r_existential_comfort_is_deliberate(c: _Ctx) -> Optional[str]:
     if c.intent not in _EXISTENTIAL_COMFORT_INTENTS:
         return None
     return "deliberate" if EXISTENTIAL_COMFORT_RE.search(c.query) else None
+
+
+#: One measured quantity judged AGAINST another: "is the ventilation keeping up with occupancy",
+#: "is the cooling adequate for the heat load". The question is not about either quantity's value
+#: — it is about their relationship, which is a ranking over spaces on two modalities at once,
+#: and that is the deliberation lane's whole purpose.
+#:
+#: Measured 2026-09-23, evidence pack #27. Classified `compare`, sent to the single-sensor path,
+#: which resolved "floor 2" to eight F2-named METERS and answered "No readings were found for
+#: Floor_2" — a false statement about a floor with 49 instrumented rooms. Sent to deliberation it
+#: compiles executable on the first attempt as `occupancy MAXIMIZE, co2 MINIMIZE`, which is what
+#: "keeping up with" means: plenty of people, little CO2.
+#:
+#: NARROW BY CONSTRUCTION. It needs a RELATIONAL phrase, not merely two quantities in one
+#: sentence — "what is the temperature and humidity in room 5.01" names two and asks for both
+#: values, and must keep its reading lane.
+_ADEQUACY_RE = re.compile(
+    r"\b(?:keep(?:ing|s)?\s+up\s+with|cop(?:e|ing)\s+with|keep(?:ing|s)?\s+pace\s+with"
+    r"|adequate\s+for|sufficient\s+for|enough\s+for|matched?\s+to|in\s+line\s+with"
+    r"|proportionate\s+to|holding\s+up\s+against|able\s+to\s+handle)\b",
+    re.IGNORECASE,
+)
+
+#: Which classifications this may correct. The data lanes that cannot rank on two modalities,
+#: plus the weak intents — never `deliberate` itself (already right) and never a lane that writes.
+_ADEQUACY_INTENTS = _WEAK_INTENTS + (
+    "compare",
+    "analytics",
+    "sensor_data",
+    "trend",
+    "anomaly",
+)
+
+
+def _r_one_quantity_judged_against_another(c: _Ctx) -> Optional[str]:
+    """ "Is the ventilation keeping up with occupancy?" → deliberate (W1-03, pack #27).
+
+    Guarded twice, like the comfort rule above: the question must carry a relational phrase AND
+    resolve to at least two of this building's own modalities, so a building that measures only
+    one of them never has the question taken off the lane that can at least decline honestly.
+    """
+    if c.intent not in _ADEQUACY_INTENTS:
+        return None
+    if not _ADEQUACY_RE.search(c.query):
+        return None
+    # TWO QUANTITIES, counted from the building's own vocabulary in both the forms it takes.
+    # A modality is named literally ("occupancy") or through a lay concept the resolver already
+    # mapped ("ventilation" -> CO2, which is what the live turn resolved). Counting only one of
+    # the two forms would miss exactly this question, whose two quantities arrive one in each.
+    low = c.query.lower()
+    try:
+        from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+        named = {
+            str(m.name)
+            for m in load_modalities()
+            if re.search(
+                rf"(?<![a-z0-9]){re.escape(str(m.name).replace('_', ' '))}(?![a-z0-9])", low
+            )
+        }
+    except Exception:  # pragma: no cover - config is optional; the concepts still count
+        named = set()
+    measurands = set()
+    for concept in c.normalized.get("concepts") or []:
+        classes = (
+            concept.get("brick_classes", [])
+            if isinstance(concept, dict)
+            else getattr(concept, "brick_classes", [])
+        )
+        if any("Sensor" in str(bc) for bc in classes or []):
+            cid = (
+                concept.get("concept_id")
+                if isinstance(concept, dict)
+                else getattr(concept, "concept_id", "")
+            )
+            measurands.add(str(cid or classes[0]))
+    if len(named | measurands) < 2:
+        return None
+    return "deliberate"
 
 
 def _r_data_query_promotion(c: _Ctx) -> Optional[str]:
@@ -3405,6 +3497,16 @@ CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
         "live superlative about a measured condition, classified into a register lane → "
         "deliberate, which can rank rooms by a reading",
         _r_measured_superlative_beats_a_register,
+    ),
+    # IN THE CONCEPT STAGE, NOT THE PARSE STAGE, and it belongs here for the reason the stage
+    # exists: one of its two quantities arrives as a resolved CONCEPT ("ventilation" -> CO2) and
+    # concepts are not resolved when the parse rules run. Placed here first, it fired on the
+    # offline test and never once on a live turn -- the context it needed was empty (W1-03).
+    Rule(
+        "one_quantity_judged_against_another",
+        "'is the ventilation keeping up with occupancy?' judges one measured quantity AGAINST "
+        "another, which is a ranking on two modalities at once → deliberate (W1-03, pack #27)",
+        _r_one_quantity_judged_against_another,
     ),
 )
 

@@ -11,7 +11,7 @@ import re
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -618,8 +618,21 @@ Your Answer:"""
                 # nothing, and the answer never reaches the timeseries.
                 plain = [e for e in raw_entities if not _valid_ent_re.match(str(e))]
                 if plain:
+                    # The Brick classes the lay-term resolver already found, so a FLOOR entity
+                    # can be resolved to the points of that quantity ON the floor rather than
+                    # to whatever is NAMED for it (BUG-884). Read here, before the class target
+                    # is computed below, because the resolution happens first.
+                    _floor_classes = [
+                        str(_c)
+                        for _cm in (state.intermediate_results.get("concepts") or [])
+                        for _c in (_cm.get("brick_classes") or [])
+                        if str(_c).strip()
+                    ]
                     entities = await self._resolve_entities_by_label(
-                        plain, user_query=user_query, ts_bearing=ts_entities
+                        plain,
+                        user_query=user_query,
+                        ts_bearing=ts_entities,
+                        class_hints=_floor_classes,
                     )
             # T05: prefer HBCO concept brick class over static keyword map
             class_target = None
@@ -3967,12 +3980,87 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_
             logger.info(f"[sparql] narrowed {len(candidates)} candidates to {narrowed}")
         return narrowed or candidates
 
+    #: A floor named as an entity: "Floor_3", "floor 3", "Level 2", "storey 4". A ROOM
+    #: identifier ("2.01") is deliberately unmatched — a dotted number is a space, not a floor,
+    #: and the existing label path resolves those correctly.
+    _FLOOR_ENTITY_RE = re.compile(r"^\W*(?:floor|level|storey)[\s_\-]*(\d+)\W*$", re.IGNORECASE)
+
+    #: How many of a floor's points of one quantity to take. A floor here has 48-56 sensors per
+    #: modality; the cap is a guard against a pathological building, not a sample.
+    _FLOOR_POINT_CAP = 200
+
+    async def _resolve_floor_structurally(
+        self,
+        name: str,
+        user_query: str,
+        bldg_ns: str,
+        limit: int,
+        class_hints: Optional[Sequence[str]] = None,
+    ) -> List[str]:
+        """Points located ON a named floor, through the graph's own structure — or [].
+
+        Returns [] for anything that is not a floor name and whenever the traversal finds
+        nothing, so every other entity and every building that models floors differently falls
+        through to the label path exactly as before.
+
+        BUILDING-AGNOSTIC: the floor is matched by its own label or IRI in the ACTIVE namespace,
+        and both location idioms are covered (`brick:hasLocation` directly, and `brick:isPointOf`
+        an equipment sited in the space) — the same pair `coverage_audit` has always used,
+        because a building that models one and not the other is common.
+        """
+        m = self._FLOOR_ENTITY_RE.match(str(name or ""))
+        if not m:
+            return []
+        # THE QUANTITY MUST BE KNOWN, OR THIS MUST NOT ACT.
+        #
+        # A floor holds hundreds of points, and narrowing them by the QUESTION's words is the
+        # bug one layer down: every candidate is already on that floor, so the words "floor 3"
+        # are noise that scores `Floor3_General_Waste_Bin_Fill` above every temperature sensor
+        # in forty-eight rooms. Measured exactly that on the first attempt -- floor 3 bound four
+        # WASTE BINS for "will floor 3 be warmer than floor 4", and the narration compared them
+        # with floor 4's temperatures as though both were degrees.
+        #
+        # So the filter is the resolved Brick class, not the prose. With no class resolved this
+        # returns [] and the label path runs unchanged: binding eight arbitrary points off a
+        # floor would be worse than the behaviour this replaces, not better.
+        classes = [str(c) for c in (class_hints or []) if str(c).strip()]
+        if not classes:
+            return []
+        digits = m.group(1)
+        values = " ".join(c if ":" in c else f"brick:{c}" for c in classes[:8])
+        query = f"""{self._prefix_block()}
+SELECT DISTINCT ?s WHERE {{
+  VALUES ?cls {{ {values} }}
+  ?floor a brick:Floor .
+  OPTIONAL {{ ?floor rdfs:label ?fl }}
+  BIND(LCASE(CONCAT(STR(?floor), " ", COALESCE(STR(?fl), ""))) AS ?fhay)
+  FILTER(CONTAINS(?fhay, "floor_{digits}") || CONTAINS(?fhay, "floor {digits}")
+      || CONTAINS(?fhay, "level_{digits}") || CONTAINS(?fhay, "level {digits}"))
+  ?space brick:isPartOf ?floor .
+  {{ ?s brick:hasLocation ?space }} UNION {{ ?s brick:isPointOf ?e . ?e brick:hasLocation ?space }}
+  ?s a ?cls ; ref:hasExternalReference ?r .
+  FILTER(STRSTARTS(STR(?s), '{bldg_ns}'))
+}} LIMIT 400"""
+        try:
+            hits = await self._select_subjects(query, bldg_ns, _active_prefix())
+        except Exception as exc:  # pragma: no cover - the label path still answers
+            logger.warning(f"[sparql] structural floor resolution skipped: {exc}")
+            return []
+        if not hits:
+            return []
+        logger.info(
+            f"[sparql] '{name}' resolved STRUCTURALLY to {len(hits)} point(s) of "
+            f"{classes[:3]} on that floor, taking {min(len(hits), limit)}"
+        )
+        return hits[:limit]
+
     async def _resolve_entities_by_label(
         self,
         names: List[str],
         limit: int = 8,
         user_query: str = "",
         ts_bearing: Optional[Set[str]] = None,
+        class_hints: Optional[Sequence[str]] = None,
     ) -> List[str]:
         """Resolve human-readable point names to <prefix>:LocalName IRIs.
 
@@ -3987,8 +4075,34 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_
         bldg_pfx = _active_prefix()
         resolved: List[str] = []
         ts_bearing = ts_bearing if ts_bearing is not None else set()
+        structural_found = False
 
         for name in names:
+            # A FLOOR IS A PLACE, NOT A NAME (BUG-884).
+            #
+            # Matching a floor by text finds what is NAMED for it, not what is ON it. Measured
+            # 2026-09-23: "Will floor 3 be warmer than floor 4 tomorrow?" resolved to
+            # ['Access_Reader_F3_Entrance', 'Entry_Count_Sensor_F3', 'HVAC_Meter_F3',
+            # 'Lighting_Meter_F3', ...] -- eight floor-3 METERS, nothing at all from floor 4,
+            # and not one temperature sensor. The same shape answered "No readings were found
+            # for Floor_2" for pack #27.
+            #
+            # The graph already holds the structure: floor -> spaces -> points, through the two
+            # location idioms the coverage audit has always covered. Asked structurally, floor 3
+            # yields 96 temperature sensors across 48 spaces.
+            structural = await self._resolve_floor_structurally(
+                name, user_query, bldg_ns, self._FLOOR_POINT_CAP, class_hints
+            )
+            if structural:
+                # A FLOOR'S MEAN IS NOT EIGHT OF ITS ROOMS. The default limit exists to stop a
+                # unit name dragging in every point on an AHU; a floor entity is the opposite
+                # case -- the question is ABOUT all of them, and `resolved[:limit]` with the
+                # default 8 both averaged a sixth of floor 3 and dropped floor 4 entirely from a
+                # comparison whose answer still quoted floor-4 numbers.
+                structural_found = True
+                resolved.extend(h for h in structural if h not in resolved)
+                ts_bearing.update(structural)
+                continue
             # A dotted identifier stays WHOLE and digits are never dropped (WB-10). Splitting
             # "Room_2.01" on non-alphanumerics gave room/2/01, the length filter discarded "2",
             # and CONTAINS("room") && CONTAINS("01") resolved room 2.01 to Room5.01's sensor —
@@ -4043,9 +4157,13 @@ SELECT DISTINCT ?s WHERE {{
                         ts_bearing.update(hits)
                     break
 
+        cap = max(limit, self._FLOOR_POINT_CAP * len(names)) if structural_found else limit
         if resolved:
-            logger.info(f"[sparql] resolved {names} → {resolved[:limit]} via rdfs:label/IRI match")
-        return resolved[:limit]
+            logger.info(
+                f"[sparql] resolved {names} → {len(resolved[:cap])} point(s), "
+                f"e.g. {resolved[:4]}"
+            )
+        return resolved[:cap]
 
     async def _filter_existing(self, entities: List[str]) -> List[str]:
         """Return only the entities the active building's graph actually contains.

@@ -87,12 +87,38 @@ _ABSENCE_PATTERNS: Tuple[str, ...] = (
 )
 
 
+#: An absence that is COUNTED against a population is a statement about part of the building,
+#: not about the building. "1 of 234 spaces have no noise sensor" is the true answer to "are
+#: there any rooms without a noise sensor?", and this guard replaced it with "this building does
+#: have 235 noise sensor(s) — the limitation isn't a lack of sensing", which answers a question
+#: nobody asked and throws away the one that was (2026-09-23, the coverage-gap lane).
+#:
+#: This does not weaken what the guard was built for. The claim it exists to catch — "the
+#: ontology data you provided does not contain any temperature sensors" — carries no count of
+#: spaces, because a model generalising from a retrieval window has none to give.
+_SCOPED_ABSENCE_RE = re.compile(
+    r"\b\d[\d,]*\s*(?:of|/|out\s+of)\s*\d[\d,]*\s+(?:spaces?|rooms?|zones?|areas?|floors?)\b"
+    r"|\b(?:spaces?|rooms?|zones?|areas?|floors?)\b[^.]{0,40}?\bhave\s+(?:one|a\b)",
+    re.IGNORECASE,
+)
+
+#: Sentence split good enough to scope a claim. Markdown bullets and headings end a claim as
+#: surely as a full stop does, and an answer that lists rooms on their own lines must not have
+#: the list read as part of the sentence above it.
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\n+")
+
+
 def detect_absence_claim(text: str) -> Optional[str]:
     """Return the modality an answer claims the building lacks, else None.
 
     Pure and side-effect free. Precision-first: an unmatched answer returns None
     and passes through untouched, because a false positive here would rewrite a
     correct answer.
+
+    Judged SENTENCE BY SENTENCE, and a sentence that counts the absence against a population is
+    not a claim about the building -- see `_SCOPED_ABSENCE_RE`. Reading the whole answer as one
+    string let a scoped, correct, deterministic answer be replaced by a building-wide correction
+    it did not contradict.
     """
     if not text:
         return None
@@ -112,8 +138,10 @@ def detect_absence_claim(text: str) -> Optional[str]:
             # a stem is a licence to match a WORD, never a fragment inside one.
             token = r"(?<![a-z])" + token + r"(?![a-z])"
             for pat in _ABSENCE_PATTERNS:
-                if re.search(pat.replace("{m}", token), low):
-                    return modality
+                rx = re.compile(pat.replace("{m}", token))
+                for sentence in _SENTENCE_SPLIT_RE.split(low):
+                    if rx.search(sentence) and not _SCOPED_ABSENCE_RE.search(sentence):
+                        return modality
     return None
 
 

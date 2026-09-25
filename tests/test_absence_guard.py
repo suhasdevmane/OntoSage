@@ -163,3 +163,65 @@ def test_the_real_false_absence_is_still_caught():
     )
     assert detect_absence_claim("There are no humidity sensors on floor 3.") == "humidity"
     assert detect_absence_claim("This building lacks any water flow sensors.") == "water_flow"
+
+
+# ── a COUNTED absence is about part of the building, not about the building ───────────
+#
+# 2026-09-23. The coverage-gap lane answered "Are there any rooms without a noise sensor?"
+# correctly and deterministically from the coverage matrix -- "1 of 234 spaces have no noise
+# sensor. 233 have one that reports readings", verified against the graph -- and this guard
+# replaced the whole thing with "this building does have 235 noise sensor(s) -- the limitation
+# isn't a lack of sensing". The correction was true and answered a question nobody asked, and
+# the answer that was asked for was thrown away. Third time this session a guard destroyed a
+# correct answer (see also BUG-868, BUG-873).
+#
+# The guard read the answer as ONE string, so a scoped claim looked like a building-wide one.
+
+def test_a_counted_absence_is_not_a_claim_about_the_building():
+    assert (
+        detect_absence_claim(
+            "**1 of 234 spaces have no noise sensor.** 233 have one that reports readings."
+        )
+        is None
+    )
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        "**12 of 234 spaces have no co2 sensor.** 222 have one that reports readings.",
+        "3 out of 40 rooms have no temperature sensor.",
+        "17/234 zones have no humidity sensor.",
+        "Every one of the 234 spaces I audited has a temperature sensor. None is missing one.",
+    ],
+)
+def test_scoped_coverage_answers_pass_through_untouched(answer):
+    assert detect_absence_claim(answer) is None
+
+
+@pytest.mark.parametrize(
+    "claim,modality",
+    [
+        # The claim this guard was BUILT for, measured on bldg2 which has 138 of them.
+        (
+            "The ontology data you provided does **not** contain any temperature sensors, "
+            "so I cannot list live room temperatures.",
+            "temperature",
+        ),
+        ("This building has no noise sensors.", "noise"),
+        ("There are no water flow sensors in the building.", "water_flow"),
+        ("The building lacks any humidity sensors.", "humidity"),
+    ],
+)
+def test_an_unscoped_building_wide_claim_is_still_caught(claim, modality):
+    """The narrowing must not cost the guard its purpose."""
+    assert detect_absence_claim(claim) == modality
+
+
+def test_a_true_absence_beside_a_scoped_one_is_still_caught():
+    """Per SENTENCE, not per answer: one scoped sentence must not shelter an unscoped one."""
+    text = (
+        "1 of 234 spaces have no noise sensor. "
+        "This building has no water flow sensors at all."
+    )
+    assert detect_absence_claim(text) == "water_flow"

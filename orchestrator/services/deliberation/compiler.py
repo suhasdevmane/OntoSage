@@ -122,6 +122,30 @@ _AVOIDANCE_RE = re.compile(
 _WORD_RE = re.compile(r"[a-zA-Z][a-zA-Z\-]*")
 
 
+def _direction_from_phrase_polarity(phrase: str) -> Optional[Direction]:
+    """The end a phrase asks for, when one of its words carries its own polarity — or None.
+
+    Used only where the model gave a modality but no usable direction. Three ways it declines
+    rather than guesses, each closing a way this could answer the wrong question:
+
+    * An avoidance phrasing is left alone. "less stuffy" and "stuffy" name the same modality
+      and OPPOSITE ends, and `_AVOIDANCE_RE` is the existing test for that.
+    * Two words that disagree return None. "warm but not too hot" carries both ends; picking
+      one would be a coin toss wearing a number.
+    * A word with no polarity of its own contributes nothing, which is what leaves
+      "temperature" and "occupancy" refusable — those have no better end without a preference.
+    """
+    text = (phrase or "").strip()
+    if not text or _AVOIDANCE_RE.search(text):
+        return None
+    found = {
+        _LAY_POLARITY[_base_form(t)]
+        for t in _WORD_RE.findall(text)
+        if _base_form(t) in _LAY_POLARITY
+    }
+    return found.pop() if len(found) == 1 else None
+
+
 def _constraint_from_phrase(phrase: str, known: set, decision: DecisionKind):
     """A lay word inside an UNMAPPED phrase, turned into the constraint it names — or None.
 
@@ -408,6 +432,28 @@ def _parse_compiled(raw: str, query: str, known: set) -> CQIR:
         direction_raw = str(c.get("direction", "")).strip().lower()
         if direction_raw not in _DIRECTIONS:
             inferred = _infer_direction(modality, decision, threshold)
+            if inferred is None:
+                # Before giving up, read the PHRASE the constraint came from. `_LAY_POLARITY`
+                # already knows that "warm" is the high end of temperature and "stuffy" the
+                # high end of CO2; the salvage below applies it to phrases the model left in
+                # `unmapped`, and it was never applied here, where a mapped constraint arrives
+                # with its direction missing. The answer was in the signal's own phrase field.
+                #
+                # WHY THIS IS A ROBUSTNESS FIX AND NOT NEW LICENCE TO GUESS. Measured
+                # 2026-09-23: "is anywhere both hot and noisy" compiled with both directions
+                # and ranked rooms correctly, while "which rooms are both warm and stuffy"
+                # emitted direction "none" for both and was refused -- same class of word, the
+                # same two modalities, different provider output on the day. A refusal
+                # manufactured out of temp-0 wobble is not honesty. `_infer_direction` still
+                # owns every word that does NOT carry its own polarity ("temperature",
+                # "occupancy"), and still refuses those, because there the better end really
+                # is a preference and inventing one would answer a question nobody asked.
+                inferred = _direction_from_phrase_polarity(phrase)
+                if inferred is not None:
+                    logger.info(
+                        f"[compiler] direction for {modality} read from the phrase "
+                        f"{phrase!r} -> {inferred.value}"
+                    )
             if inferred is None:
                 signals.append(
                     AmbiguitySignal(

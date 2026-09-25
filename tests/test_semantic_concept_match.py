@@ -276,3 +276,93 @@ async def test_it_counts_when_it_acts(monkeypatch):
     before = scm.ACTED["matched"]
     await scm.match("is the air stale in here", CONCEPT_MAP)
     assert scm.ACTED["matched"] == before + 1
+
+
+# ── the readable-class filter: a menu is about THIS building, not the schema ──────────
+#
+# `fire_safety` and `emergency_exit` both name `brick:Smoke_Detector`. The schema agrees that
+# is a sensor class; this building holds two instances of it and not one reading. Offering them
+# as candidate measurands is what let "is there smoke in the lab?" resolve to an emergency exit,
+# and no wording of the prompt fixes a menu that contains the wrong answer. Two rounds of prompt
+# tuning traded that trap against recall on "which room is least noisy" and gained nothing --
+# lessons.md #132.
+
+SMOKE_MAP = dict(CONCEPT_MAP)
+SMOKE_MAP["http://ontosage.org/hbco#fire_safety"] = {
+    "concept_id": "fire_safety",
+    "label": "Fire safety",
+    "lay_terms": ["smoke", "fire"],
+    "brick_classes": ["brick:Fire_Alarm", "brick:Smoke_Detector"],
+}
+
+#: What the live graph reports: classes with at least one instance carrying a timeseries.
+READS = {"temperature_sensor", "co2_level_sensor"}
+
+
+def test_a_class_with_no_readings_is_not_offered_as_a_quantity():
+    ids = [c["id"] for c in scm.build_candidates(SMOKE_MAP, readable=READS)]
+    assert "fire_safety" not in ids, "a class the building never reads is not a measurand"
+    assert "thermal_comfort" in ids and "stuffiness" in ids, "real measurands must survive"
+
+
+def test_an_unreadable_graph_stands_the_filter_down_rather_than_emptying_the_menu():
+    """The direction this must fail in.
+
+    An empty set would filter every concept away and silently disable the matcher, turning one
+    unreadable HTTP call into a building that understands nothing. None means unknown, and an
+    unknown must not act.
+    """
+    ids = [c["id"] for c in scm.build_candidates(SMOKE_MAP, readable=None)]
+    assert "fire_safety" in ids, "with no reading of the graph, the menu is what it always was"
+
+
+def test_the_filter_counts_how_often_it_acted():
+    """A fail-open component nobody counts is indistinguishable from one that never runs.
+
+    lessons.md #126 -- learned when a gate was believed to be guarding a lane it had stopped
+    touching.
+    """
+    before = dict(scm.FILTER_STATS)
+    scm.build_candidates(SMOKE_MAP, readable=READS)
+    scm.build_candidates(SMOKE_MAP, readable=None)
+    assert scm.FILTER_STATS["applied"] == before["applied"] + 1
+    assert scm.FILTER_STATS["unavailable"] == before["unavailable"] + 1
+    assert scm.FILTER_STATS["removed"] > before["removed"]
+
+
+@pytest.mark.parametrize(
+    "written",
+    [
+        "brick:Temperature_Sensor",
+        "https://brickschema.org/schema/Brick#Temperature_Sensor",
+        "http://example.org/vocab/Temperature_Sensor",
+        "Temperature_Sensor",
+    ],
+)
+def test_a_class_is_matched_however_it_is_written_down(written):
+    """The graph returns full IRIs; the concept register writes prefixed names. A filter that
+    compared the two spellings literally would remove every concept it was given."""
+    one = {"k": {"concept_id": "c", "label": "c", "lay_terms": [], "brick_classes": [written]}}
+    assert [c["id"] for c in scm.build_candidates(one, readable=READS)] == ["c"]
+
+
+def test_the_filter_names_no_building_no_concept_and_no_class():
+    """Building-agnostic by construction: the set comes from the active graph, never from here."""
+    from pathlib import Path
+
+    import ast
+
+    src = Path("orchestrator/services/semantic_concept_match.py").read_text(encoding="utf-8")
+    fn = next(
+        n
+        for n in ast.parse(src).body
+        if isinstance(n, ast.FunctionDef) and n.name == "build_candidates"
+    )
+    # The EXECUTABLE body only. The docstring names `fire_safety` and `brick:Smoke_Detector`
+    # on purpose -- that is the worked example of why this filter exists, and a guard that
+    # forbade explaining itself would be paid for in the next maintainer's hour. Comments and
+    # docstrings are prose; a literal in the LOGIC is what would break the next building.
+    stmts = [s for s in fn.body if not (isinstance(s, ast.Expr) and isinstance(s.value, ast.Constant))]
+    logic = "\n".join(ast.unparse(s) for s in stmts)
+    for literal in ("bldg1", "bldg2", "abacws", "fire_safety", "Smoke_Detector", "Temperature"):
+        assert literal.lower() not in logic.lower(), literal

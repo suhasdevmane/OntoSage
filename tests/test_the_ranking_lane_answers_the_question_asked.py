@@ -362,3 +362,49 @@ def test_the_privacy_line_names_no_policy_and_no_clamp():
     for internal in ("policy_facility_manager_any", "clamped", "resolution"):
         assert internal not in text
     assert doss.applied_policies, "the rule itself stays in the payload, for audit"
+
+
+def test_bug_868_a_tie_at_the_TOP_of_the_band_is_disclosed_like_a_tie_at_the_bottom():
+    """The mirror image of row 58, and the commoner one.
+
+    Measured live 2026-09-23: "Which rooms are both warm and stuffy right now?" compiles as
+    list_matching with direction `above` and NO threshold, so the scorer falls back to the band
+    edge and every room above it lands at exactly 1.0. The answer read "Best match: Room 2.24 —
+    score 1 out of 1, where 1 fits everything you asked for" for a room at 22.675 C in a 20-26
+    band. The guard caught `total <= 0` only, so the identical failure at the other end of the
+    range walked straight past it and came out sounding like a confident recommendation.
+    """
+    ir = CQIR(
+        decision=DecisionKind.LIST_MATCHING,
+        constraints=[Constraint(modality="temperature", direction=Direction.ABOVE)],
+        raw_query="which rooms are both warm and stuffy right now?",
+    )
+    out = _flat_outcome()
+    for s in out.score.ranked:
+        s.total = 1.0
+    doss = _dossier_from(ir, out)
+    text = render_answer(doss)
+    assert "Best match" not in text, "a tie at 1.0 is not a recommendation"
+    assert "don't separate these spaces" in text
+    assert "23.933" in text, "the readings themselves are still shown"
+    assert numeric_guard(text, doss) == []
+
+
+def test_a_partial_tie_is_still_a_ranking():
+    """The guard must fire on a TIE, not on a high score.
+
+    A ranking whose leader shares its total with nobody is a real recommendation however close
+    the field is, and suppressing "Best match" there would throw away a correct answer.
+    """
+    ir = CQIR(
+        decision=DecisionKind.LIST_MATCHING,
+        constraints=[Constraint(modality="temperature", direction=Direction.ABOVE)],
+        raw_query="which rooms are warm?",
+    )
+    out = _flat_outcome()
+    out.score.ranked[0].total = 1.0
+    out.score.ranked[1].total = 0.999
+    doss = _dossier_from(ir, out)
+    text = render_answer(doss)
+    assert text.startswith("**Best match:")
+    assert numeric_guard(text, doss) == []
