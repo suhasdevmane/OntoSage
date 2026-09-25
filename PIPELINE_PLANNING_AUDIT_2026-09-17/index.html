@@ -1,0 +1,3045 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/PIPELINE_PLANNING_AUDIT_2026-09-17/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Pipeline planning, memory, retry and honesty — audit - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#pipeline-planning-memory-retry-and-honesty-audit" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Pipeline planning, memory, retry and honesty — audit
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-verdict-in-one-paragraph" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Verdict in one paragraph
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-scorecard" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Scorecard
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-already-implemented-do-not-build-these-again" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Already implemented — do not build these again
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Already implemented — do not build these again">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-intent-guessing-strong" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Intent guessing (strong)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-honest-replies-strongest-part-of-the-system" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Honest replies (strongest part of the system)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-retry-that-is-already-correct" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Retry that is already correct
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-genuinely-missing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Genuinely missing
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Genuinely missing">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#41-the-pipeline-is-routed-not-planned" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.1 The pipeline is routed, not planned
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42-previous-questions-reach-two-places-and-neither-is-the-planner" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2 Previous questions reach two places, and neither is the planner
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#42b-the-demo-endpoint-and-the-probe-endpoint-do-not-share-their-memory-wiring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.2b The demo endpoint and the probe endpoint do not share their memory wiring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#43-no-memory-of-failure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.3 No memory of failure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#44-the-sparql-self-correction-engine-is-wired-and-two-of-its-four-legs-are-inert" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.4 The SPARQL self-correction engine is wired, and two of its four legs are inert
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#45-_safe_node-never-retries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.5 _safe_node never retries
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#46-retry-configuration-that-does-nothing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4.6 Retry configuration that does nothing
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-the-failure-mode-the-owner-most-wants-to-avoid-every-instance-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. The failure mode the owner most wants to avoid — every instance found
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. The failure mode the owner most wants to avoid — every instance found">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#tier-1-unscoped-substitution" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier 1 — unscoped substitution
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-2-residual-scope-holes-in-the-bug-632-fix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier 2 — residual scope holes in the BUG-632 fix
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-3-substituted-results-that-then-get-cached-or-reused" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier 3 — substituted results that then get cached or reused
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tier-4-the-guard-stands-down-on-the-error-that-starts-the-cascade" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tier 4 — the guard stands down on the error that starts the cascade
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#checked-and-not-this-bug-shape-these-are-honest-retries-leave-them-alone" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checked and NOT this bug shape — these are honest retries, leave them alone
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-ranked-shortlist-at-most-5-smallest-change-first" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Ranked shortlist — at most 5, smallest change first
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Ranked shortlist — at most 5, smallest change first">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a1-make-the-semantic-rag-fallback-visible-to-the-verifier-land-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A1 — Make the semantic-RAG fallback visible to the verifier · LAND TODAY
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a2-name-the-expanded-window-when-sql-auto-expands-land-today" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A2 — Name the expanded window when SQL auto-expands · LAND TODAY
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a3-make-the-empty-result-fast-path-actually-fire-land-today-lowest-risk-of-the-three" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A3 — Make the empty-result fast path actually fire · LAND TODAY (lowest risk of the three)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a4-one-bounded-lane-retry-on-timeout-only-defer-to-after-the-demo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A4 — One bounded lane retry on TIMEOUT only · DEFER TO AFTER THE DEMO
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#a5-give-the-modality-repair-the-room-not-just-the-floor-defer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A5 — Give the modality repair the room, not just the floor · DEFER
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#also-considered-and-ranked-below-the-cut" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Also considered and ranked below the cut
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-things-i-deliberately-am-not-recommending" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Things I deliberately am not recommending
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-one-thing-i-would-say-plainly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. One thing I would say plainly
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-corrections-owed-to-claudemd-and-to-module-docstrings" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. Corrections owed to CLAUDE.md and to module docstrings
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-new-defects-found-by-this-audit-not-yet-in-fix_trackercsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. New defects found by this audit (not yet in FIX_TRACKER.csv)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/PIPELINE_PLANNING_AUDIT_2026-09-17.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="pipeline-planning-memory-retry-and-honesty-audit">Pipeline planning, memory, retry and honesty — audit<a class="headerlink" href="#pipeline-planning-memory-retry-and-honesty-audit" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-09-17 · <strong>Branch:</strong> <code>development</code> · <strong>Scope:</strong> read-only audit, no code changed
+<strong>Against:</strong> <em>"My system should always smartly plan the flow of the pipeline based on the
+questions and the previous questions and guess the intents and plan the pipeline and give the
+right and honest replies with retry loop on failures within the system."</em></p>
+<hr />
+<h2 id="1-verdict-in-one-paragraph">1. Verdict in one paragraph<a class="headerlink" href="#1-verdict-in-one-paragraph" title="Permanent link">&para;</a></h2>
+<p>Four of the five clauses are built, and two of them are built unusually well. <strong>Intent guessing</strong>
+is a 44-rule ordered contract with a pinned-precedence test — this is real, deterministic, and
+survives an LLM outage. <strong>Honest replies</strong> is the strongest part of the system: a referent
+existence gate, a publication gate, a disclosure gate, a typed turn-outcome taxonomy and a
+co-reference safety check that refuses to launder a swapped room. <strong>Previous questions</strong> are used,
+but only by a rewrite and a two-key carry-forward, neither of which reaches the planner or the
+routing contract — and the carry-forward's safety guard exists on <strong>one endpoint only</strong> (§4.2b).
+The two genuinely weak clauses are <strong>"plan the pipeline"</strong> — the LangGraph topology is static,
+every node leads to <code>response</code>, and there is no re-plan edge — and <strong>"retry loop on failures"</strong>,
+which works at the LLM call, SQL syntax and analytics code, and nowhere else: <code>_safe_node</code>
+records a typed failure and moves on with <strong>zero</strong> retries, while the one multi-strategy
+self-correction engine has two of its four strategies inert and a fast path that has never fired.</p>
+<p>The serious risk for tomorrow is not the missing retry loop. It is that several failure paths
+<strong>substitute a different answer</strong> instead of retrying or declining — and the worst of them, the
+semantic-RAG fallback, both <strong>discards an honest decline that was already composed</strong> and
+<strong>structurally bypasses the publication gate</strong>, because the verifier crashes on its own result
+shape and the crash is logged at DEBUG.</p>
+<hr />
+<h2 id="2-scorecard">2. Scorecard<a class="headerlink" href="#2-scorecard" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Clause of the intention</th>
+<th>State</th>
+<th>Where</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Guess the intent</td>
+<td><strong>Built, strong</strong></td>
+<td><code>routing_contract.py</code> 44 ordered rules + LLM classifier that sees ~5 prior messages</td>
+</tr>
+<tr>
+<td>Use previous questions</td>
+<td><strong>Partial, and endpoint-dependent</strong></td>
+<td>rewrite + 2-key carry-forward; <code>prune_inherited</code> on <code>/v1/chat/completions</code> only (§4.2b); planner and routing are single-turn</td>
+</tr>
+<tr>
+<td>Plan the pipeline</td>
+<td><strong>Weak / mostly static</strong></td>
+<td><code>_graph.py:41</code> static topology, no re-plan edge; <code>goal_planner.py</code> unwired</td>
+</tr>
+<tr>
+<td>Honest replies</td>
+<td><strong>Built, strongest part</strong></td>
+<td>referent gate, publication gate, disclosure gate, turn_outcome — with one structural hole (§5 S4)</td>
+</tr>
+<tr>
+<td>Retry loop on failures</td>
+<td><strong>Three places, one of them half-inert</strong></td>
+<td><code>llm_manager</code> 3 attempts, <code>sql_agent._repair_sql</code> 2, <code>analytics_agent</code> 3-with-deadline. <code>_safe_node</code>: <strong>none</strong>. Self-correction: 2 of 4 strategies inert</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="3-already-implemented-do-not-build-these-again">3. Already implemented — do not build these again<a class="headerlink" href="#3-already-implemented-do-not-build-these-again" title="Permanent link">&para;</a></h2>
+<h3 id="31-intent-guessing-strong">3.1 Intent guessing (strong)<a class="headerlink" href="#31-intent-guessing-strong" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>The routing contract is real and ordered.</strong> <code>orchestrator/services/routing_contract.py</code>
+  holds <strong>40 parse-stage + 1 post-stage + 3 concept-stage = 44</strong> rules
+  (<code>routing_contract.py:1798</code>, <code>:2016</code>, <code>:2025</code>). Precedence is the contract: <code>apply_contract</code>
+  walks the stage tuple in order, first rule whose <code>fn</code> returns an intent wins the rewrite, and
+  every applied name is recorded on <code>normalized["routing_rules_applied"]</code>
+  (<code>routing_contract.py:2059-2104</code>). A rule that raises is logged and skipped so a broken rule
+  cannot break routing (<code>:2085-2087</code>).<blockquote>
+<p><strong>CLAUDE.md is stale here.</strong> It says "36 parse-stage + 1 post-stage + 3 concept-stage,
+counted 2026-09-08". The file now holds 40 parse-stage rules. Same failure mode the file
+itself warns about.</p>
+</blockquote>
+</li>
+<li>Order is pinned by a test that asserts the literal name list:
+  <code>tests/test_routing_contract.py:237 test_precedence_order_is_pinned</code>.</li>
+<li><strong>The contract survives an LLM outage.</strong> On a classification exception the fallback dict is
+  still run through parse and post stages (<code>dialogue_agent.py:1171-1190</code>) and documents may still
+  claim it (<code>:1200</code>). This is BUG-167's fix and it is correct.</li>
+<li><strong>A classification failure is never cached</strong> (<code>dialogue_agent.py:1146-1149</code>) — a wrong intent
+  cannot get pinned to a question for an hour.</li>
+<li>The intent-detection prompt cache key is a hash of the <strong>whole prompt</strong>, which includes the
+  conversation history (<code>dialogue_agent.py:1095-1106</code>), so the cache is history-sensitive by
+  construction. Good.</li>
+</ul>
+<h3 id="32-honest-replies-strongest-part-of-the-system">3.2 Honest replies (strongest part of the system)<a class="headerlink" href="#32-honest-replies-strongest-part-of-the-system" title="Permanent link">&para;</a></h3>
+<p>These are all live on the request path and all worth demoing:</p>
+<table>
+<thead>
+<tr>
+<th>Guarantee</th>
+<th>File:line</th>
+<th>Failure direction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Referent existence gate, once for every lane</td>
+<td><code>_orchestrator.py:1931 _gate_referent_once</code></td>
+<td>fails <strong>open</strong> (deliberate)</td>
+</tr>
+<tr>
+<td>Publication gate — withholds text, chart <em>and</em> export</td>
+<td><code>_orchestrator.py:5526-5559</code>, <code>publication_gate.py:170</code></td>
+<td>fails <strong>open</strong> (deliberate)</td>
+</tr>
+<tr>
+<td>Disclosure gate — a policy refusal governs every channel</td>
+<td><code>_orchestrator.py:5503-5522</code></td>
+<td>fails <strong>closed</strong> (deliberate)</td>
+</tr>
+<tr>
+<td>Typed turn outcome — timeout ≠ unreachable ≠ defect</td>
+<td><code>services/turn_outcome.py:46-57</code>, surfaced at <code>_orchestrator.py:5475-5490</code></td>
+<td>never costs the turn</td>
+</tr>
+<tr>
+<td>Co-reference rewrite cannot swap the referent</td>
+<td><code>context_switch.py:131 rewrite_is_safe</code>, called <code>dialogue_agent.py:668-677</code></td>
+<td>rejects the rewrite</td>
+</tr>
+<tr>
+<td>Context switch prunes place-bound carry-forward</td>
+<td><code>context_switch.py:112 prune_inherited</code>, called <code>main.py:3736</code></td>
+<td>prunes only on a positive switch</td>
+</tr>
+<tr>
+<td>Reference to an earlier reply that does not exist</td>
+<td><code>_orchestrator.py:1314-1324</code></td>
+<td>declines</td>
+</tr>
+<tr>
+<td>CQ-IR compiler declines rather than guesses</td>
+<td><code>compiler.py:193-262</code>, <code>:429-440</code></td>
+<td>emits <code>AmbiguitySignal</code> → clarification</td>
+</tr>
+<tr>
+<td>Graph drift during the turn is reported, never retried</td>
+<td><code>_orchestrator.py:5431-5466</code></td>
+<td>reports</td>
+</tr>
+</tbody>
+</table>
+<p>The comment at <code>_orchestrator.py:5434-5435</code> is the design principle the owner is asking for,
+already written down: <em>"It reports and never retries: a retry would answer from the NEW mapping
+and say nothing about the old one, which is the same silent substitution one layer up."</em></p>
+<h3 id="33-retry-that-is-already-correct">3.3 Retry that is already correct<a class="headerlink" href="#33-retry-that-is-already-correct" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>LLM calls</strong>: <code>LLM_MAX_RETRIES=3</code> with exponential backoff (<code>llm_manager.py:53-56</code>,
+  loop at <code>:354-419</code>), a circuit breaker at 5 failures / 30 s recovery (<code>:180</code>), retryability
+  classification (<code>:281-302</code>), an <strong>empty completion promoted to a retryable error</strong>
+  (<code>:374-383</code>), and a longer wait when the local runner has <em>crashed</em> rather than merely stalled
+  (<code>:59-95</code>, <code>:411-417</code>). Identical prompt, identical client, no model downgrade — the model is
+  chosen once before the loop at <code>:331</code>. Correct shape. On exhaustion it re-raises after
+  <code>record_llm_failure</code> (<code>:421-423</code>); it never fabricates text.</li>
+<li><strong>SQL syntax repair</strong>: <code>sql_agent.py:959-1013 _repair_sql</code>, 2 bounded attempts, feeds the DB
+  error back, <em>keeps the same logical intent</em>, and <strong>returns <code>[]</code> when exhausted</strong> rather than
+  substituting (<code>:1012-1013</code>). This is the pattern the owner wants — with one caveat, see R3 below.</li>
+<li><strong>Analytics / code-executor repair</strong>: <code>analytics_agent.py:834-903 _execute_with_retries</code>, up to
+  3 executions with up to 2 LLM code repairs, governed by a <strong>deadline</strong> rather than a backoff —
+  50 % of <code>WORKFLOW_TIMEOUT_S</code> (<code>:76-94</code>) — and returns an explicit failure, never a fabricated
+  number (<code>:896-903</code>). Good shape. (<code>gave_up_early</code> at <code>:873-888</code> has no production consumer.)</li>
+<li><strong>Embedding service</strong>: 3 attempts, explicit <code>(1.0, 2.0, 4.0)</code> backoff, raises <code>EmbeddingError</code>
+  on exhaustion — <code>embedding_service.py:44</code>, <code>:202-233</code>.</li>
+<li><strong>Per-lane retry accounting already exists and is correct.</strong> <code>_record_lane_outcome</code>
+  (<code>_orchestrator.py:575-601</code>) sets <code>first_pass=False</code> automatically when a lane already has an
+  entry for this turn, and <code>TurnOutcome.first_pass_ok</code> / <code>.retried</code> roll it up
+  (<code>turn_outcome.py:189-201</code>). <strong>Nothing currently re-runs a lane, so this never fires</strong> — but
+  it means a lane-level retry can be added with zero accounting work.</li>
+</ul>
+<hr />
+<h2 id="4-genuinely-missing">4. Genuinely missing<a class="headerlink" href="#4-genuinely-missing" title="Permanent link">&para;</a></h2>
+<h3 id="41-the-pipeline-is-routed-not-planned">4.1 The pipeline is routed, not planned<a class="headerlink" href="#41-the-pipeline-is-routed-not-planned" title="Permanent link">&para;</a></h3>
+<p><code>_build_graph</code> (<code>workflow/_graph.py:41-245</code>) builds a <strong>static DAG</strong>. Every intent node gets
+exactly one outgoing edge to <code>response</code> (<code>:232-234</code>), the data lanes go
+<code>sparql → sql → analytics → response</code> through conditional edges that only look <em>forward</em>
+(<code>:145-174</code>), and there is <strong>no edge that returns to <code>dialogue</code> or to any earlier stage</strong>. A turn
+therefore executes exactly one attempt at exactly one shape. "Plan the pipeline" is currently
+"choose a lane once, from the text of one question."</p>
+<p>Three would-be planners exist and none of them plans:</p>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>State</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>GoalPlanner</code></td>
+<td><strong>completely unwired</strong> — zero importers in <code>orchestrator/</code></td>
+<td>only reference is the flag definition <code>shared/config.py:567</code></td>
+</tr>
+<tr>
+<td><code>GOAL_PLANNER_ENABLED</code></td>
+<td>default <code>False</code></td>
+<td><code>shared/config.py:568</code></td>
+</tr>
+<tr>
+<td><code>MultiIntentDetector</code> → <code>planner</code></td>
+<td><strong>wired and on by default</strong></td>
+<td><code>_orchestrator.py:1886-1910</code>; <code>MULTI_INTENT_ENABLED</code> default <code>True</code> at <code>shared/config.py:564</code></td>
+</tr>
+<tr>
+<td>CQ-IR compiler (ARBITER)</td>
+<td><strong>wired</strong>, single-shot, no re-compile on ambiguity</td>
+<td><code>_orchestrator.py:6792</code>, <code>compiler.py:429-450</code></td>
+</tr>
+</tbody>
+</table>
+<p>Multi-intent decomposition is the one genuine planner: it decomposes a compound question and
+overrides the intent to <code>planner</code> (<code>_orchestrator.py:1908</code>). It is guarded against eating a
+register-answerable question (<code>:1866-1884</code>). But it plans from <strong>the current question's text
+only</strong> — <code>_detector.detect(_user_q, state.current_intent, entities)</code> at <code>:1898</code> receives no
+history.</p>
+<h3 id="42-previous-questions-reach-two-places-and-neither-is-the-planner">4.2 Previous questions reach two places, and neither is the planner<a class="headerlink" href="#42-previous-questions-reach-two-places-and-neither-is-the-planner" title="Permanent link">&para;</a></h3>
+<p>There is no single "conversation memory". <strong>Four independent channels</strong> carry state, with
+different scopes, bounds and consumers:</p>
+<table>
+<thead>
+<tr>
+<th>Channel</th>
+<th>Storage</th>
+<th>Bound</th>
+<th>Read by</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A. <code>state.messages</code></td>
+<td>Redis <code>conversation:&lt;id&gt;</code> + client-supplied <code>messages[]</code></td>
+<td>20 (<code>CONVERSATION_MAX_MESSAGES</code>, <code>config.py:674</code>)</td>
+<td>coref rewrite, intent prompt, SPARQL prompt, affirmation detector</td>
+</tr>
+<tr>
+<td>B. <code>turn_memory.carry_forward</code></td>
+<td>Postgres <code>turn_memory</code></td>
+<td><strong>last 1 row</strong>, exactly 2 keys</td>
+<td><code>main.py:3710</code> → <code>intermediate_results</code></td>
+</tr>
+<tr>
+<td>C. <code>turn_memory.get_older_context()</code></td>
+<td>Postgres <code>turn_memory</code></td>
+<td>30 rows, offset 20</td>
+<td>injected as a <code>system</code> message</td>
+</tr>
+<tr>
+<td>D. <code>agent_memory</code> (per-<strong>user</strong>, cross-session)</td>
+<td>Qdrant <code>user_memory</code></td>
+<td>top-5 of 200</td>
+<td><code>memory_context</code> in the intent prompt only</td>
+</tr>
+</tbody>
+</table>
+<p>Channel B's whitelist is exactly two keys: <code>_CARRY_FORWARD_KEYS = {"forecast_result",
+"analytics_result"}</code> (<code>turn_memory.py:24</code>; mirrored as <code>_CARRIED_FORWARD_ON_PURPOSE</code> at
+<code>_orchestrator.py:507</code>). Everything else is wiped each turn by <code>_clear_stale_lane_results</code>
+(<code>_orchestrator.py:712-738</code>).</p>
+<p><strong>The previous turn's intent is persisted and never read back.</strong> <code>turn_memory.py:61</code> writes it;
+<code>get_carry_forward</code> selects only the <code>carry_forward</code> column (<code>turn_memory.py:99-100</code>), and
+<code>get_older_context</code> uses intent only as display text inside a prose line (<code>:144</code>). A repo-wide
+grep for <code>previous_intent</code> / <code>last_intent</code> / <code>previous_answer</code> / <code>already_tried</code> in
+<code>orchestrator/</code> returns nothing.</p>
+<p>Answering the specific question "does prior context influence planning?":</p>
+<table>
+<thead>
+<tr>
+<th>Consumer</th>
+<th>Sees history?</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LLM intent classifier</td>
+<td><strong>Yes</strong> — summary + last 5 messages</td>
+<td><code>dialogue_agent.py:1074-1079</code>, injected at <code>:1385</code></td>
+</tr>
+<tr>
+<td>Routing contract rules</td>
+<td><strong>No.</strong> <code>_Ctx</code> carries <code>query</code>, <code>ql</code>, <code>normalized</code>, <code>sr</code> and nothing else</td>
+<td><code>routing_contract.py:310-321</code></td>
+</tr>
+<tr>
+<td><code>MultiIntentDetector</code></td>
+<td><strong>No</strong></td>
+<td><code>_orchestrator.py:1898</code></td>
+</tr>
+<tr>
+<td>CQ-IR compiler</td>
+<td><strong>No</strong> — compiles <code>query</code> + this building's modalities</td>
+<td><code>compiler.py</code> <code>compile_query</code> signature</td>
+</tr>
+<tr>
+<td>Co-reference rewrite</td>
+<td><strong>Yes</strong> — last 6 messages</td>
+<td><code>dialogue_agent.py:626</code></td>
+</tr>
+<tr>
+<td>Carry-forward (<code>analytics_result</code>, <code>forecast_result</code>)</td>
+<td><strong>Yes</strong>, pruned on subject switch</td>
+<td><code>main.py:3736</code>, <code>context_switch.py:112</code></td>
+</tr>
+<tr>
+<td>Agent memory (<code>user_memory</code> Qdrant)</td>
+<td><strong>Yes</strong>, injected into the classifier prompt</td>
+<td><code>_orchestrator.py:1201-1203</code></td>
+</tr>
+</tbody>
+</table>
+<p>The follow-up detector is a <strong>keyword heuristic</strong>: <code>_is_followup_query</code>
+(<code>dialogue_agent.py:266-282</code>) returns True for ≤ 4 words, a leading "and/also/then/what about",
+or a deictic word. A follow-up phrased as a full sentence without a pronoun —
+<em>"And what were the humidity levels over the same period?"</em> — depends on the marker list; anything
+outside it gets <strong>no rewrite at all</strong> and is classified as if the conversation had not happened
+(the classifier still sees history in its prompt, so this degrades rather than breaks).</p>
+<p>Also worth knowing: every <strong>deterministic pre-LLM short-circuit</strong> inside <code>detect_intent</code> is
+history-blind — self-description (<code>dialogue_agent.py:766-782</code>), the TTL capability/record probes
+(<code>:833-840</code>), the readiness/metrology/events/wayfinding regexes (<code>:805-820</code>). They fire before the
+history-bearing prompt is ever built.</p>
+<p>And the classifier's window is much smaller than the stored history: <code>prune_messages(...,
+max_messages=5)</code> at <code>dialogue_agent.py:1075</code>, then <code>format_conversation_history</code> drops the current
+message and truncates each remaining one to 200 chars (<code>:205-216</code>). <strong>The classifier sees ~4-5
+prior messages, not 20.</strong> The rewrite sees 6 (<code>:626</code>).</p>
+<p>Silent truncation to be aware of: <code>get_older_context(skip_recent=20, max_older=30)</code>
+(<code>turn_memory.py:112-137</code>) means turns 21-50 back are summarised and <strong>anything older than ~50
+turns is invisible</strong> although 500 rows are retained (<code>turn_memory.py:30</code>). Every Postgres failure
+in that module degrades to <code>{}</code> / <code>""</code> behind a <code>logger.warning</code> (<code>:88-89</code>, <code>:108-109</code>,
+<code>:148-149</code>) — carry-forward and older context can vanish with no user-visible signal.</p>
+<h3 id="42b-the-demo-endpoint-and-the-probe-endpoint-do-not-share-their-memory-wiring">4.2b The demo endpoint and the probe endpoint do not share their memory wiring<a class="headerlink" href="#42b-the-demo-endpoint-and-the-probe-endpoint-do-not-share-their-memory-wiring" title="Permanent link">&para;</a></h3>
+<p><strong>This is the finding I would most want the owner to know before tomorrow.</strong></p>
+<p><code>turn_memory</code> — <code>save_turn</code>, <code>get_carry_forward</code>, <code>get_older_context</code> — and the context-switch
+guard <code>prune_inherited</code> are wired into <strong><code>/v1/chat/completions</code> only</strong>
+(<code>main.py:3710</code>, <code>:3736-3744</code>, <code>:3759</code>, <code>:3894</code>, <code>:3975</code>; endpoint at <code>:3572</code>).</p>
+<p><code>/chat</code> (<code>main.py:2363</code>), <code>/chat/stream</code> (<code>:2619</code>) and the <code>/stream</code> websocket (<code>:3152</code>) call
+<strong>none</strong> of them. Those paths load the whole prior <code>ConversationState</code> from Redis, and
+<code>_clear_stale_lane_results</code> deliberately <strong>preserves</strong> <code>forecast_result</code> and <code>analytics_result</code>
+(<code>_orchestrator.py:507</code>, <code>:728-729</code>). So on those three endpoints the exact V12-11/A14 bug
+<code>context_switch.py</code> was written to fix — <em>"what is the temperature in 5.01?"</em> then <em>"what about
+room 3.27? plot it"</em> — is <strong>still reachable</strong>, because nothing prunes the place-bound carry-forward.</p>
+<p>The consequence cuts both ways and both halves matter:</p>
+<ul>
+<li><strong>The demo is safe on this axis.</strong> Open WebUI uses <code>/v1/chat/completions</code>
+  (CLAUDE.md says so explicitly), which is the endpoint that <em>has</em> the guard.</li>
+<li><strong>The probe cannot see it.</strong> <code>scripts/regression_probe.py</code> uses <code>/chat</code>, which has no turn
+  memory at all. So <strong>60/60 on the probe is not evidence about conversational behaviour</strong> — the
+  probe path does not carry state forward, does not prune it, and does not exercise
+  <code>prune_inherited</code> even once.</li>
+</ul>
+<p>Do not "fix" this today by wiring turn_memory into <code>/chat</code>. Note it, and rely on the demo
+endpoint.</p>
+<h3 id="43-no-memory-of-failure">4.3 No memory of failure<a class="headerlink" href="#43-no-memory-of-failure" title="Permanent link">&para;</a></h3>
+<p>Failures <strong>are</strong> stored: <code>agent_memory.store_failure</code> (<code>_orchestrator.py:5622</code>,
+<code>agent_memory.py:365-386</code>). But:</p>
+<ol>
+<li>Nothing reads them back to change behaviour. There is no "this shape failed last time, try
+   differently."</li>
+<li>Worse: <code>_search</code> (<code>agent_memory.py:309-329</code>) applies <strong>no filter on <code>memory_type</code></strong> and <strong>no
+   score threshold</strong>, so a stored failure is retrieved alongside successes and rendered into the
+   classifier prompt as <code>Answer: [FAILURE] ...</code> under the heading <em>"Relevant memories from this
+   user's history"</em> (<code>agent_memory.py:300-307</code>). The Qdrant path passes no <code>score_threshold</code>; the
+   fallback path (<code>:327-329</code>) is pure recency with no relevance test at all.</li>
+</ol>
+<p>This is prompt contamination, not a wrong answer, and it is low-severity. But it is the opposite
+of a learning loop. <code>agent_memory.py:22</code> claims the module implements <em>"failed clarification
+patterns (avoid repeating same clarification question)"</em>; no retrieval-side logic implements it.</p>
+<p>The closest thing to a cross-turn behavioural memory is <code>pending_clarification_type</code> /
+<code>user_context</code> (<code>_orchestrator.py:1210-1227</code>) — "I asked a question last turn, here is the
+answer" — and it is a resume mechanism, cleared unconditionally at <code>:1226-1227</code>. The only true
+<em>negative</em> memory in the system is <code>_orchestrator.py:1311-1324</code>, which refuses when the user
+refers to an earlier reply that does not exist. That is absence-of-history, not memory-of-failure.</p>
+<p><code>self_correction_engine</code>, <code>turn_outcome</code> and <code>retrieval_outcome</code> are all <strong>within-turn</strong>
+classifiers. Nothing survives the turn boundary as a "do not try that again" signal.</p>
+<h3 id="44-the-sparql-self-correction-engine-is-wired-and-two-of-its-four-legs-are-inert">4.4 The SPARQL self-correction engine is wired, and two of its four legs are inert<a class="headerlink" href="#44-the-sparql-self-correction-engine-is-wired-and-two-of-its-four-legs-are-inert" title="Permanent link">&para;</a></h3>
+<p><code>SelfCorrectionEngine</code> <strong>is</strong> on the live request path: constructed at <code>sparql_agent.py:205</code>,
+invoked at <code>:551</code>, reached from the graph at <code>_orchestrator.py:2201</code>. It runs 4 iterations
+(<code>self_correction_engine.py:331</code>, <code>max_attempts=3</code> at <code>:43</code>) over 4 strategies (<code>:299-302</code>),
+each execution capped at 30 s. As wired:</p>
+<table>
+<thead>
+<tr>
+<th>Leg</th>
+<th>State</th>
+<th>Evidence</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SyntaxFixStrategy</code></td>
+<td>live</td>
+<td><code>self_correction_engine.py:299</code></td>
+</tr>
+<tr>
+<td><code>PrefixRepairStrategy</code></td>
+<td>live</td>
+<td><code>:300</code></td>
+</tr>
+<tr>
+<td><code>LLMRegenerationStrategy</code></td>
+<td><strong>no-op</strong> — the caller passes <code>"llm_call": None</code></td>
+<td><code>sparql_agent.py:549</code>; strategy returns unchanged at <code>self_correction_engine.py:194-195</code></td>
+</tr>
+<tr>
+<td><code>TemplateSchemaFallbackStrategy</code></td>
+<td><strong>computed, never executed</strong> — at <code>attempt_num == 4</code> the break guard <code>4 &gt; 4</code> is False, so the strategy runs and assigns <code>current_query</code>, then <code>range(1, 5)</code> is exhausted</td>
+<td>guard <code>:387</code>, apply <code>:402-409</code>, loop <code>:331</code></td>
+</tr>
+</tbody>
+</table>
+<p>So "self-correction" is, in practice, two regex passes. Three further defects:</p>
+<ul>
+<li><strong>The empty-result fast path never fires.</strong> The engine short-circuits on the exact string
+  <code>"Empty result set"</code> (<code>:395</code>), but its own executor emits <code>"Empty results"</code>
+  (<code>sparql_agent.py:516</code>) and <code>error</code> takes that first (<code>:349-351</code>). Every genuinely empty graph
+  result therefore burns all four iterations — <strong>up to three extra SPARQL executions, 30 s
+  timeout each</strong> — before falling through. On the demo path, every honest "no data" answer pays
+  that latency. This is the opposite of the documented intent at <code>:391-394</code>.</li>
+<li><strong>The engine's honest decline is discarded.</strong> On exhaustion it composes
+  <em>"I attempted to answer your query but encountered difficulties after N correction attempts…"</em>
+  (<code>:436-442</code>). <code>sparql_agent.py:554-565</code> reads only <code>correction_result["results"]</code> and, finding
+  none, calls <code>answer_semantically</code>. <strong>The decline the engine wrote never reaches the user; RAG
+  prose does.</strong> This is the single clearest instance of the owner's stated concern in the
+  codebase.</li>
+<li>Minor: <code>state</code> is not passed at <code>sparql_agent.py:551-553</code>, so
+  <code>state.intermediate_results["correction_log"]</code> is never written on the live path, despite the
+  module docstring claiming it.</li>
+</ul>
+<h3 id="45-_safe_node-never-retries">4.5 <code>_safe_node</code> never retries<a class="headerlink" href="#45-_safe_node-never-retries" title="Permanent link">&para;</a></h3>
+<p><code>_orchestrator.py:960-1024</code>. One <code>await node_fn(state)</code>, one <code>except</code>. It classifies the failure
+type correctly (<code>:983</code>), records it (<code>:984</code>), seeds empty-but-valid results for the data lanes
+(<code>:1001-1017</code>) and appends a user-visible degradation notice (<code>:1019-1021</code>). Zero retries. A
+<code>ReadTimeout</code> on GraphDB — which <code>turn_outcome.py:23-29</code> documents as <em>frequently latency rather
+than a defect</em>, with a measured 10.7 s / 61.1 s / 13.3 s spread on the same question — costs the
+whole answer, and the user is told to ask again (<code>turn_outcome.py:140-143</code>) by a system that
+could have asked again itself.</p>
+<h3 id="46-retry-configuration-that-does-nothing">4.6 Retry configuration that does nothing<a class="headerlink" href="#46-retry-configuration-that-does-nothing" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Claim</th>
+<th>Reality</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>settings.MAX_RETRY_ATTEMPTS</code> (<code>shared/config.py:561</code>)</td>
+<td><code>config.py:949</code> states <em>"llm_manager retries each call up to MAX_RETRY_ATTEMPTS times"</em></td>
+<td><strong>Never read anywhere.</strong> <code>llm_manager.py:53</code> reads the env var <code>LLM_MAX_RETRIES</code> and ignores the setting. Changing it does nothing.</td>
+</tr>
+<tr>
+<td><code>ConversationState.retry_count</code> (<code>shared/models.py:316</code>)</td>
+<td>"Number of retry attempts"</td>
+<td>Declared; never incremented, never read.</td>
+</tr>
+<tr>
+<td><code>self_correction_policy.SelfCorrectionPolicy</code> (<code>services/self_correction_policy.py:48</code>)</td>
+<td>its own docstring at <code>:125</code> says <em>"imported by sql_agent and analytics_agent"</em></td>
+<td><strong>Zero production importers.</strong> Only the module, four references in <code>tests/test_survey_aligned_phases.py</code>, and a plan doc. <code>correction_trace</code> is never written by any live turn.</td>
+</tr>
+<tr>
+<td>Circuit breakers</td>
+<td><code>circuit_breaker.py:4</code> advertises GraphDB and RAG</td>
+<td>Only <strong>two</strong> exist in product code: <code>llm</code> (<code>llm_manager.py:180</code>) and <code>mysql</code> (<code>adapters/mysql_adapter.py:250</code>). <strong>There is no GraphDB breaker</strong> — the store whose failure started BUG-631.</td>
+</tr>
+</tbody>
+</table>
+<p>One sceptical note on the LLM breaker: <code>record_failure()</code> fires on <em>every</em> failed attempt
+(<code>llm_manager.py:392</code>, <code>:395</code>), so one user request that burns all 3 attempts contributes 3 of
+the 5 failures needed to open it. Two unlucky consecutive requests open the LLM breaker for 30 s
+— during a demo, that is every lane failing at once.</p>
+<hr />
+<h2 id="5-the-failure-mode-the-owner-most-wants-to-avoid-every-instance-found">5. The failure mode the owner most wants to avoid — every instance found<a class="headerlink" href="#5-the-failure-mode-the-owner-most-wants-to-avoid-every-instance-found" title="Permanent link">&para;</a></h2>
+<p><strong>A "retry" that answers a different question.</strong> Ordered by severity. Tier 1 drops the
+constraint the user named.</p>
+<h3 id="tier-1-unscoped-substitution">Tier 1 — unscoped substitution<a class="headerlink" href="#tier-1-unscoped-substitution" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>What substitutes</th>
+<th>file:line</th>
+<th>What it drops</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S1</td>
+<td><code>_get_instances_for_class</code> — first N instances of a Brick class, building-namespace filter only</td>
+<td><code>sparql_agent.py:2997</code></td>
+<td><strong>all</strong> spatial scope. This is the BUG-631 primitive; BUG-631 fixed the <em>prefix bug upstream</em> and explicitly left this in</td>
+</tr>
+<tr>
+<td>S2</td>
+<td>Its caller runs <strong>before</strong> floor scoping and feeds 40 unscoped IRIs to the LLM as candidates</td>
+<td><code>sparql_agent.py:429-437</code>, used at <code>:487</code>; <code>_floor_scoped_sparql</code> not called until <code>:449</code></td>
+<td>floor/room</td>
+</tr>
+<tr>
+<td>S3</td>
+<td><code>_pattern_instance_search</code> — IRI substring match, no spatial predicate</td>
+<td><code>sparql_agent.py:3286</code></td>
+<td>all scope</td>
+</tr>
+<tr>
+<td>S4</td>
+<td><strong>Semantic-RAG fallback on zero SPARQL results</strong> — answers from vector retrieval over a different corpus, <strong>discarding the honest decline the correction engine just composed</strong> (<code>self_correction_engine.py:436-442</code>)</td>
+<td><code>sparql_agent.py:554-565</code> → <code>answer_semantically</code> <code>:256-277</code></td>
+<td>everything. Context came from <code>top_k=10, min_score=0.3</code> with no building/floor/class filter (<code>:1478-1486</code>)</td>
+</tr>
+<tr>
+<td>S5</td>
+<td><code>_fallback_pattern_search</code> preserves dotted room ids only</td>
+<td><code>sparql_agent.py:3663-3664</code>, returns at <code>:3690</code></td>
+<td><code>floor 3</code> / <code>3rd floor</code> produce no dotted id → <code>loc_filter</code> empty → 50 building-wide points</td>
+</tr>
+<tr>
+<td>S6</td>
+<td>Wrong-modality UUIDs kept when the kind filter matches nothing (<code>else</code> branch keeps the unfiltered set)</td>
+<td><code>_orchestrator.py:2635-2640</code></td>
+<td>modality</td>
+</tr>
+<tr>
+<td>S7</td>
+<td><strong>SQL auto-expand</strong> — 0 rows in window → refetch last 200 rows <em>regardless of date</em></td>
+<td><code>sql_agent.py:643-690</code></td>
+<td>the time window</td>
+</tr>
+<tr>
+<td>S8</td>
+<td>Anomaly lane rewrites the question's modality to temperature</td>
+<td><code>_orchestrator.py:2005-2007</code></td>
+<td>modality (documented/deliberate)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>S4 is the one I would fix first, and here is why it is worse than it looks.</strong>
+<code>answer_semantically</code> returns <code>"success": True</code> with <code>results</code> as a <strong>list</strong>
+(<code>sparql_agent.py:267-277</code>). The verifier reads
+<code>sparql_result.get("results", {}).get("results", {}).get("bindings", [])</code>
+(<code>verifier_agent.py:168</code>) — on a list that raises <code>AttributeError</code>. I confirmed this by
+evaluating the expression against the exact literal shape. The call site swallows it at
+<strong>DEBUG</strong> (<code>_orchestrator.py:4774-4777</code>), so <strong>no <code>verification</code> record is written</strong>, and
+<code>publication_gate.evaluate</code> returns <code>publish=True</code> on a missing record by design
+(<code>publication_gate.py:189-192</code>). Net effect:</p>
+<blockquote>
+<p>The single path most likely to produce an ungrounded answer is the single path on which the
+publication gate never runs — and nothing logs above DEBUG that this happened.</p>
+</blockquote>
+<p><strong>S7 is the one most likely to embarrass the demo.</strong> The guard is a keyword list
+(<code>sql_agent.py:644-663</code>) that includes <code>today</code>, <code>hour</code>, <code>week</code>… but <strong>not</strong> <code>right now</code>,
+<code>currently</code>, <code>at the moment</code>, <code>latest</code>, or <code>live</code>. So <em>"what is the CO2 right now?"</em> with no
+recent rows returns up to 200 rows of arbitrary age, and <strong>nothing sets a flag</strong> — I grepped for
+<code>window_expanded</code> / <code>expanded_window</code> / <code>fallback_window</code> and the only hits are the two log lines
+at <code>sql_agent.py:666</code> and <code>:689</code>. The answer reaches the user with no indication its window moved.</p>
+<h3 id="tier-2-residual-scope-holes-in-the-bug-632-fix">Tier 2 — residual scope holes in the BUG-632 fix<a class="headerlink" href="#tier-2-residual-scope-holes-in-the-bug-632-fix" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>file:line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S9</td>
+<td>Floor extraction for the modality repair is <code>\b(?:floor\|level)\s*(\d+)\b</code> — misses <code>3rd floor</code>, <code>ground floor</code>, <code>top floor</code>; and a <strong>room</strong>-scoped question has no floor token at all, so the repair reverts to building-wide</td>
+<td><code>_orchestrator.py:2236</code>, <code>:2245-2247</code></td>
+</tr>
+<tr>
+<td>S10</td>
+<td>Uses <code>settings.BUILDING_NAMESPACE</code> (process-global) rather than the per-request namespace; <code>building_id</code> is not threaded into <code>needs_repair</code> / <code>build_modality_query</code></td>
+<td><code>_orchestrator.py:2245</code>, <code>modality_repair.py:198,241,277</code></td>
+</tr>
+<tr>
+<td>S11</td>
+<td>The <code>_miss</code> branch replaces results unconditionally — the under-populated branch has a "never shrink" guard, this one has none</td>
+<td><code>_orchestrator.py:2257-2263</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="tier-3-substituted-results-that-then-get-cached-or-reused">Tier 3 — substituted results that then get cached or reused<a class="headerlink" href="#tier-3-substituted-results-that-then-get-cached-or-reused" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>file:line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S12</td>
+<td><strong>Unscoped fallback rows are written under the scoped query's cache key</strong> for 1 h, so every later run of the <em>correct</em> query is served the substituted result — without even the fallback log line</td>
+<td><code>sparql_agent.py:3558</code> (key), <code>:3595</code>, <code>:3630</code></td>
+</tr>
+<tr>
+<td>S13</td>
+<td><code>_instance_cache</code> keyed by Brick class only, not by building, on a long-lived agent instance</td>
+<td><code>sparql_agent.py:2993-2994</code>, <code>:203</code>; instance at <code>_orchestrator.py:891</code></td>
+</tr>
+<tr>
+<td>S14</td>
+<td>Prior turn's rows restored as this turn's answer for <code>compliance</code>/<code>compare</code>/<code>trend</code> with no check that they cover this question's entity/floor/window</td>
+<td><code>_orchestrator.py:2316-2320</code> (saved at <code>:2016</code>); same shape <code>:1383-1390</code>, inheriting prior entities at <code>:1374-1376</code></td>
+</tr>
+<tr>
+<td>S16</td>
+<td><code>_repair_sql</code> exhaustion returns <code>[]</code> — <strong>indistinguishable from "the database has no rows"</strong>. Downstream "no data found" prose is then a false statement about the building</td>
+<td><code>sql_agent.py:1012-1013</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="tier-4-the-guard-stands-down-on-the-error-that-starts-the-cascade">Tier 4 — the guard stands down on the error that starts the cascade<a class="headerlink" href="#tier-4-the-guard-stands-down-on-the-error-that-starts-the-cascade" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Issue</th>
+<th>file:line</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>S15</td>
+<td><code>ReferentResolver</code> fails <strong>open</strong> on any exception, returning <code>SKIPPED</code>. BUG-631's trigger <em>was</em> a GraphDB error (<code>MALFORMED QUERY: Multiple prefix declarations</code>) — the gate would have skipped on exactly that query</td>
+<td><code>referent_resolver.py:520-522</code>, also <code>:394-396</code></td>
+</tr>
+</tbody>
+</table>
+<p>Failing open is a defensible choice (the comment says so, and I agree with it for a live demo).
+The problem is that failing open is <strong>silent to the user</strong>: nothing tells them the existence
+check did not run.</p>
+<h3 id="checked-and-not-this-bug-shape-these-are-honest-retries-leave-them-alone">Checked and NOT this bug shape — these are honest retries, leave them alone<a class="headerlink" href="#checked-and-not-this-bug-shape-these-are-honest-retries-leave-them-alone" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>sql_agent.py:959-1013 _repair_sql</code> — same question, fixed SQL. Honest, but see <strong>S16</strong>: the
+  empty list it returns on exhaustion is indistinguishable from a genuinely empty table.</li>
+<li><code>sparql_agent.py:1881-1902 _repair_query</code> and <code>self_correction_engine.py</code> <code>SyntaxFixStrategy</code> /
+  <code>PrefixRepairStrategy</code> — syntax repair of the same intent, <code>user_query</code> carried through.</li>
+<li><code>modality_repair</code> (<code>_orchestrator.py:2205-2275</code>) is a substitution, but it is the <strong>best-behaved
+  one</strong>: it fails open on exception (<code>:2272-2275</code>) and it <strong>records what it swapped</strong> in
+  <code>intermediate_results["modality_repair"] = {modality, reason, was, now}</code> (<code>:2266-2271</code>). That
+  audit trail is what S4, S7 and S12 are missing.</li>
+<li><code>planner_agent.py:303-327 _fallback_plan</code> — degrades the <em>plan</em>, not the scope.</li>
+<li><code>mysql_events_adapter.py:249</code> — <code>return "1=0"  # explicit empty match — never silently widen scope</code>. <strong>This is the model to copy.</strong></li>
+<li><code>response_cache</code> fuzzy match is <strong>off by default</strong> (<code>response_cache.py:80</code>) and gated on
+  <code>salient_ids()</code> equality plus role/user partitioning. Residual: <code>salient_ids</code> matches only
+  <code>\d[\d.]*</code> (<code>:225</code>), so two questions differing only in a <em>non-numeric</em> window ("this week" vs
+  "this month") could fuzzy-match <strong>if</strong> fuzzy is ever turned on. Leave it off.</li>
+<li><strong>The pre-graph cache lookup looks dangerous and is not.</strong> <code>_serve_from_cache</code> runs at
+  <code>_orchestrator.py:9004</code>, <em>before</em> <code>graph.ainvoke</code> and therefore before the co-reference rewrite
+  at <code>:1283</code>, and the cache key carries <strong>no conversation id</strong> (<code>response_cache.py:325-327</code>). But
+  <code>put</code> stores under <code>state.messages[-2].content</code> (<code>_orchestrator.py:5578-5581</code>), which by then is
+  the <strong>rewritten</strong> text — so a raw follow-up like <em>"what about there?"</em> can never match a stored
+  entry. The asymmetry costs a cache miss, not a wrong answer. I checked this specifically
+  because it is the shape that would be worst; it does not bite.</li>
+</ul>
+<hr />
+<h2 id="6-ranked-shortlist-at-most-5-smallest-change-first">6. Ranked shortlist — at most 5, smallest change first<a class="headerlink" href="#6-ranked-shortlist-at-most-5-smallest-change-first" title="Permanent link">&para;</a></h2>
+<p>I am ranking by <em>(harm prevented) ÷ (blast radius)</em> with the 18:00 freeze in mind.
+<strong>A1, A2 and A3 are landable today. A4 and A5 are not, and I would say no to both if asked.</strong></p>
+<p>If you only have appetite for one, take <strong>A3</strong> — it is a one-string change, it is provably safe in
+direction, and it removes both a latency risk and a substitution vector.
+If you want the biggest honesty win, take <strong>A1</strong>, but read its risk paragraph first: it changes
+answers.</p>
+<hr />
+<h3 id="a1-make-the-semantic-rag-fallback-visible-to-the-verifier-land-today">A1 — Make the semantic-RAG fallback visible to the verifier · <strong>LAND TODAY</strong><a class="headerlink" href="#a1-make-the-semantic-rag-fallback-visible-to-the-verifier-land-today" title="Permanent link">&para;</a></h3>
+<p><strong>Fixes:</strong> the one path where the publication gate structurally never runs (S4).
+<strong>Change:</strong> two lines. In <code>verifier_agent._sparql_returned_data</code>
+(<code>verifier_agent.py:162-169</code>), guard the chained <code>.get()</code> so a list-shaped <code>results</code> returns
+<code>False</code> instead of raising. That alone turns the semantic-RAG turn into
+<code>grounded=False, source="none", confidence=0.20</code>, which the publication gate already knows how
+to handle.
+<strong>Files:</strong> <code>orchestrator/agents/verifier_agent.py</code> (1 function).
+<strong>Blast radius:</strong> every turn calls <code>verify()</code>, but the guarded branch only changes behaviour for
+result dicts whose <code>results</code> is not a dict — today that is the semantic-RAG shape and nothing
+else. Turns that currently produce a verification record produce the identical one.
+<strong>Risk:</strong> low-to-moderate, and the <em>direction</em> matters: it will start <strong>withholding</strong> answers that
+are currently published. If the demo script contains a question that currently reaches
+semantic RAG, this will change that answer from confident prose to a withheld/declined one.
+That is the correct behaviour and it is also a demo-day surprise.
+<strong>Verify:</strong> grep the demo script for questions that log
+<code>"SPARQL returned no results, attempting semantic fallback"</code>; run those five or six by hand and
+look at what the publication gate does. <code>pytest -m unit -q -k "verifier or publication"</code>.
+<strong>If you are not willing to accept a changed answer today:</strong> land only the <code>logger.debug</code> →
+<code>logger.warning</code> half at <code>_orchestrator.py:4777</code>, so you can <em>see</em> it happening during the demo
+without changing any answer. That half is zero-risk.</p>
+<hr />
+<h3 id="a2-name-the-expanded-window-when-sql-auto-expands-land-today">A2 — Name the expanded window when SQL auto-expands · <strong>LAND TODAY</strong><a class="headerlink" href="#a2-name-the-expanded-window-when-sql-auto-expands-land-today" title="Permanent link">&para;</a></h3>
+<p><strong>Fixes:</strong> S7 — "what is the CO2 right now?" answered from rows of arbitrary age with no notice.
+<strong>Change:</strong> at <code>sql_agent.py:686-690</code>, when the fallback query returns rows, set one bus flag
+(e.g. <code>sql_result["window_expanded"] = True</code> with the oldest/newest timestamp actually returned),
+and append one sentence in <code>_response_node</code> next to the existing turn-outcome note
+(<code>_orchestrator.py:5475-5490</code>), which is already the place a caveat sentence goes. Optionally add
+<code>right now</code>, <code>currently</code>, <code>at the moment</code>, <code>latest</code>, <code>live</code> to the keyword guard at <code>:644-663</code> —
+that one-line list edit is independently worth doing and is the lowest-risk part.
+<strong>Files:</strong> <code>orchestrator/agents/sql_agent.py</code>, <code>orchestrator/workflow/_orchestrator.py</code>
+(response node, one insert).
+<strong>Blast radius:</strong> only turns that currently hit the auto-expand. It <strong>adds</strong> a sentence; it never
+withholds. No answer changes.
+<strong>Risk:</strong> low. This is additive text on an already-degraded path.
+<strong>Verify:</strong> ask a "right now" question against a sensor with no recent rows and read the answer;
+<code>pytest -m unit -q -k sql</code>.</p>
+<hr />
+<h3 id="a3-make-the-empty-result-fast-path-actually-fire-land-today-lowest-risk-of-the-three">A3 — Make the empty-result fast path actually fire · <strong>LAND TODAY (lowest risk of the three)</strong><a class="headerlink" href="#a3-make-the-empty-result-fast-path-actually-fire-land-today-lowest-risk-of-the-three" title="Permanent link">&para;</a></h3>
+<p><strong>Fixes:</strong> up to <strong>three redundant SPARQL executions, 30 s timeout each</strong>, on every honest
+"no data" answer — a demo-latency risk — and removes a substitution vector at the same time.
+<strong>The bug:</strong> <code>self_correction_engine.py:395</code> short-circuits on the literal string
+<code>"Empty result set"</code>, but the executor it is given emits <code>"Empty results"</code>
+(<code>sparql_agent.py:516</code>) and <code>error</code> takes that value first (<code>self_correction_engine.py:349-351</code>).
+The branch has never fired.
+<strong>Change:</strong> one string. Either make <code>sparql_agent.py:516</code> emit <code>"Empty result set"</code>, or widen the
+comparison at <code>:395</code>. I prefer widening the comparison — it does not change a value other code
+may read.
+<strong>Files:</strong> one line in <code>orchestrator/services/self_correction_engine.py</code>.
+<strong>Blast radius:</strong> only turns where SPARQL executed successfully and returned zero rows.
+<strong>Risk: the lowest of the three, and the direction is provably safe.</strong> <code>error == "Empty results"</code>
+can only occur with <code>success=True</code> (<code>sparql_agent.py:513-519</code>), i.e. the query parsed and ran — so
+<code>SyntaxFixStrategy</code> and <code>PrefixRepairStrategy</code> cannot be <em>repairing</em> anything; they can only
+mutate a valid query into a different one. Today, if such a mutation happens to return rows, those
+rows become the answer to a question they do not match. This change removes that. Control flow on
+the break is already correct: <code>last_result</code> is set immediately above (<code>:384</code>) and the function
+returns it (<code>:411-445</code>), so the caller's behaviour is unchanged — it still falls to semantic RAG,
+just ~90 s sooner.
+<strong>Verify:</strong> ask a question about a sensor class the building does not have; confirm the log shows
+<code>⚡ Empty result set</code> once instead of three <code>🔄 Self-correction attempt</code> lines, and time it.
+<code>pytest -m unit -q -k correction</code>.</p>
+<hr />
+<h3 id="a4-one-bounded-lane-retry-on-timeout-only-defer-to-after-the-demo">A4 — One bounded lane retry on TIMEOUT only · <strong>DEFER TO AFTER THE DEMO</strong><a class="headerlink" href="#a4-one-bounded-lane-retry-on-timeout-only-defer-to-after-the-demo" title="Permanent link">&para;</a></h3>
+<p><strong>Fixes:</strong> the missing "retry loop on failures" clause, in the one case where retrying is
+honest: <code>Outcome.TIMEOUT</code>, which <code>turn_outcome.py:23-29</code> documents as usually latency.
+<strong>Change:</strong> in <code>_safe_node</code> (<code>_orchestrator.py:967-1022</code>), when <code>_classify_failure(e)</code> is
+<code>TIMEOUT</code> and the lane has not already been retried this turn, <code>await node_fn(state)</code> once more.
+The accounting is <strong>already built</strong>: <code>_record_lane_outcome</code> sets <code>first_pass=False</code> on the second
+entry automatically (<code>:590</code>), and <code>TurnOutcome.first_pass_ok</code> / <code>.retried</code> already publish it
+(<code>turn_outcome.py:189-201</code>). Explicitly do <strong>not</strong> retry <code>FAILED</code> (reproducible) or
+<code>BACKEND_UNAVAILABLE</code> (nothing to talk to).
+<strong>Files:</strong> <code>orchestrator/workflow/_orchestrator.py</code> (one function).
+<strong>Blast radius:</strong> <strong>every lane in the system.</strong> That is exactly why it should not land today.
+<strong>Risk:</strong> the failure mode is latency, not wrongness — a retried 60 s lane can take 120 s, and
+<code>CAVEAT-500</code> records a 121 s client timeout already being hit. A demo that hangs is worse than a
+demo that says "that timed out."
+<strong>Verify:</strong> the 60-case regression probe, before and after, both green. That is a 20-minute run
+you do not have room for today.</p>
+<hr />
+<h3 id="a5-give-the-modality-repair-the-room-not-just-the-floor-defer">A5 — Give the modality repair the room, not just the floor · <strong>DEFER</strong><a class="headerlink" href="#a5-give-the-modality-repair-the-room-not-just-the-floor-defer" title="Permanent link">&para;</a></h3>
+<p><strong>Fixes:</strong> S9 — BUG-632's fix covers <code>floor N</code> and leaves <code>3rd floor</code>, <code>ground floor</code> and every
+<strong>room</strong>-scoped question reverting to building-wide.
+<strong>Change:</strong> extend the floor regex at <code>_orchestrator.py:2236</code> to ordinal and named floors, and —
+the larger half — pass a room/zone constraint into <code>modality_repair.build_modality_query</code> when the
+question names one, so a repair can widen the class but never the place. The BUG-632 note already
+states that rule: <em>"A repair may widen the CLASS it looks for, never the PLACE it looks in."</em>
+<strong>Files:</strong> <code>orchestrator/workflow/_orchestrator.py</code>, <code>orchestrator/services/modality_repair.py</code>.
+<strong>Blast radius:</strong> every question that reaches the modality repair — which, per BUG-632, includes
+the flagship <em>"what is the air quality on floor N?"</em> demo question that was fixed <strong>yesterday</strong>.
+<strong>Risk:</strong> high for today. This is the single most recently-touched code path in the demo script.
+Touching it on freeze day, after it was verified live yesterday, is how a green demo goes red.</p>
+<hr />
+<h3 id="also-considered-and-ranked-below-the-cut">Also considered and ranked below the cut<a class="headerlink" href="#also-considered-and-ranked-below-the-cut" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Filter <code>memory_type == "failure"</code> out of <code>AgentMemory._search</code></strong> (<code>agent_memory.py:309-329</code>),
+  and add a <code>score_threshold</code> to the Qdrant query at <code>:315-322</code>. Low risk, but the benefit is
+  prompt hygiene rather than a wrong answer, and it touches classification input on freeze day.</li>
+<li><strong>Add a GraphDB circuit breaker.</strong> There isn't one (<code>circuit_breaker.py:4</code> advertises it;
+  only <code>llm</code> at <code>llm_manager.py:180</code> and <code>mysql</code> at <code>adapters/mysql_adapter.py:250</code> exist). Worth
+  doing, not today.</li>
+<li><strong>Surface the correction engine's decline instead of falling to RAG</strong> — the honest text already
+  exists at <code>self_correction_engine.py:436-442</code> and is thrown away at <code>sparql_agent.py:554-565</code>.
+  This is the <em>most correct</em> fix for S4 and the <em>worst</em> one to land today: it turns every
+  empty-SPARQL question in the demo script into a decline. A1 gets most of the safety for a
+  fraction of the behaviour change.</li>
+</ul>
+<hr />
+<h2 id="7-things-i-deliberately-am-not-recommending">7. Things I deliberately am <strong>not</strong> recommending<a class="headerlink" href="#7-things-i-deliberately-am-not-recommending" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Do not add a re-plan loop to the LangGraph topology.</strong> That is the textbook answer to "plan
+  the pipeline" and it is a large refactor of <code>_build_graph</code> (<code>workflow/_graph.py:41-245</code>) plus
+  every conditional-edge map. The static DAG is not currently costing you wrong answers; the
+  substitutions in §5 are.</li>
+<li><strong>Do not wire <code>GoalPlanner</code>.</strong> It is unwired, <code>GOAL_PLANNER_ENABLED</code> defaults to <code>False</code>
+  (<code>shared/config.py:568</code>), and it decomposes by literal substring trigger
+  (<code>goal_planner.py:134-145</code>). Wiring an unexercised planner the day before a demo buys nothing.</li>
+<li><strong>Do not give the routing contract access to conversation history.</strong> <code>_Ctx</code>
+  (<code>routing_contract.py:310-321</code>) being text-only is <em>why</em> the 44-rule precedence order is
+  testable and why <code>test_precedence_order_is_pinned</code> means anything. Making rules history-dependent
+  makes the contract untestable. If prior context needs to influence routing, it should do so by
+  improving the <strong>rewrite</strong> (which already feeds every stage), not by making rules stateful.</li>
+<li><strong>Do not turn on fuzzy response caching.</strong> <code>response_cache.py:80</code> defaults it off and
+  <code>salient_ids</code> (<code>:225</code>) only protects numeric discriminators.</li>
+<li><strong>Do not wire <code>turn_memory</code> / <code>prune_inherited</code> into <code>/chat</code> today</strong> (§4.2b). It is the right
+  fix and it is a four-endpoint change touching state loading, which is the last thing to move
+  the day before a demo that runs on the <em>other</em> endpoint.</li>
+<li><strong>Do not remove any of the substituting fallbacks in §5 outright.</strong> Several of them are the
+  reason some questions answer at all. The correct treatment for every one of them is the
+  <code>modality_repair</code> treatment: keep it, scope it, and <strong>record what it swapped</strong> on the bus
+  (<code>_orchestrator.py:2266-2271</code>) so a caveat can be written from the record. That is post-demo
+  work with a clear shape.</li>
+</ul>
+<hr />
+<h2 id="8-one-thing-i-would-say-plainly">8. One thing I would say plainly<a class="headerlink" href="#8-one-thing-i-would-say-plainly" title="Permanent link">&para;</a></h2>
+<p>The owner's intention describes a system that plans and retries. What the code actually is, and
+is <em>good</em> at, is a system that <strong>routes deterministically and declines honestly</strong>. Those are not
+the same thing, and the second is the harder one to build — it is largely built, and it is worth
+demoing as what it is rather than as a planner.</p>
+<p>The gap between the two is not filled by adding a planner. It is filled by making sure that every
+time the system cannot answer, the thing the user receives is the decline it already knows how to
+write — instead of a different question's answer. Several of the sixteen substitutions in §5 exist
+because a decline was composed and then thrown away (S4), or never reached a gate that would have
+caught it (S4 again, via the verifier crash), or was made indistinguishable from real absence
+(S7, S16). That is the work, and it is smaller than a planner.</p>
+<hr />
+<h2 id="9-corrections-owed-to-claudemd-and-to-module-docstrings">9. Corrections owed to <code>CLAUDE.md</code> and to module docstrings<a class="headerlink" href="#9-corrections-owed-to-claudemd-and-to-module-docstrings" title="Permanent link">&para;</a></h2>
+<ul>
+<li>Routing contract rule count: the file says <strong>36+1+3</strong>; the code holds <strong>40+1+3</strong> (counted
+  2026-09-17 from <code>PARSE_STAGE_RULES</code>/<code>POST_STAGE_RULES</code>/<code>CONCEPT_STAGE_RULES</code>).</li>
+<li><code>shared/config.py:949</code> states <em>"llm_manager retries each call up to MAX_RETRY_ATTEMPTS times"</em>.
+  False — <code>llm_manager.py:53</code> reads the env var <code>LLM_MAX_RETRIES</code>; the setting is never read.</li>
+<li><code>services/self_correction_policy.py:125</code> states the module is <em>"imported by sql_agent and
+  analytics_agent"</em>. False — zero production importers.</li>
+<li><code>services/circuit_breaker.py:4</code> advertises GraphDB and RAG breakers. Neither exists.</li>
+<li><code>.claude/rules/agent-patterns.md:15</code> says <code>_graph.py</code> contains <code>_safe_node</code>. It does not —
+  <code>_safe_node</code> is at <code>_orchestrator.py:960</code>.</li>
+</ul>
+<hr />
+<h2 id="10-new-defects-found-by-this-audit-not-yet-in-fix_trackercsv">10. New defects found by this audit (not yet in <code>FIX_TRACKER.csv</code>)<a class="headerlink" href="#10-new-defects-found-by-this-audit-not-yet-in-fix_trackercsv" title="Permanent link">&para;</a></h2>
+<p>Filed here for the owner to decide; <strong>I have not added tracker rows</strong> (not my file).</p>
+<table>
+<thead>
+<tr>
+<th>Proposed</th>
+<th>Sev</th>
+<th>Summary</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BUG</td>
+<td><strong>P1</strong></td>
+<td>Verifier raises <code>AttributeError</code> on the semantic-RAG result shape (<code>verifier_agent.py:168</code> vs <code>sparql_agent.py:270</code>); swallowed at DEBUG (<code>_orchestrator.py:4777</code>); no verification record is written, so <code>publication_gate</code> publishes by design (<code>publication_gate.py:189-192</code>). The path most likely to be ungrounded is the path with no gate.</td>
+</tr>
+<tr>
+<td>BUG</td>
+<td>P2</td>
+<td>SQL auto-expand replaces the asked-for time window with "latest 200 rows, any date" and sets no flag (<code>sql_agent.py:643-690</code>). Guard keyword list omits <code>right now</code> / <code>currently</code> / <code>latest</code> / <code>live</code> (<code>:644-663</code>).</td>
+</tr>
+<tr>
+<td>BUG</td>
+<td>P2</td>
+<td>Unscoped fallback rows are cached under the <strong>scoped</strong> query's key for 1 h (<code>sparql_agent.py:3558</code>, <code>:3595</code>, <code>:3630</code>), so the substitution outlives the failure and recurs silently.</td>
+</tr>
+<tr>
+<td>BUG</td>
+<td>P2</td>
+<td>The self-correction engine's empty-result fast path has never fired: it tests <code>error == "Empty result set"</code> (<code>self_correction_engine.py:395</code>) while its executor emits <code>"Empty results"</code> (<code>sparql_agent.py:516</code>). Every empty graph result burns 3 extra SPARQL executions at 30 s each, and a mutated-but-valid query that happens to return rows becomes the answer.</td>
+</tr>
+<tr>
+<td>BUG</td>
+<td>P2</td>
+<td><code>prune_inherited</code> and all of <code>turn_memory</code> are wired into <code>/v1/chat/completions</code> only (<code>main.py:3710-3975</code>). On <code>/chat</code>, <code>/chat/stream</code> and the <code>/stream</code> websocket, <code>analytics_result</code> / <code>forecast_result</code> survive a subject change unpruned (<code>_orchestrator.py:507</code>, <code>:728-729</code>) — the V12-11/A14 bug is still reachable there, and the regression probe runs on that endpoint.</td>
+</tr>
+<tr>
+<td>BUG</td>
+<td>P2</td>
+<td>The correction engine composes an honest decline on exhaustion (<code>self_correction_engine.py:436-442</code>) and <code>sparql_agent.py:554-565</code> discards it in favour of semantic-RAG prose.</td>
+</tr>
+<tr>
+<td>CAVEAT</td>
+<td>P3</td>
+<td>Two of four self-correction strategies are inert: <code>LLMRegenerationStrategy</code> is a no-op because the caller passes <code>"llm_call": None</code> (<code>sparql_agent.py:549</code>), and <code>TemplateSchemaFallbackStrategy</code> is applied at attempt 4 and then never executed because the loop ends (<code>self_correction_engine.py:331</code>, <code>:387</code>, <code>:402-409</code>).</td>
+</tr>
+<tr>
+<td>CAVEAT</td>
+<td>P3</td>
+<td>Dead retry surface: <code>settings.MAX_RETRY_ATTEMPTS</code> (<code>config.py:561</code>) never read; <code>ConversationState.retry_count</code> (<code>models.py:316</code>) never written; <code>SelfCorrectionPolicy</code> (<code>self_correction_policy.py:48</code>) has zero production importers; no GraphDB circuit breaker exists.</td>
+</tr>
+<tr>
+<td>CAVEAT</td>
+<td>P3</td>
+<td><code>record_failure()</code> fires per <em>attempt</em> (<code>llm_manager.py:392</code>, <code>:395</code>), so one request burning 3 attempts contributes 3 of the 5 failures that open the LLM breaker for 30 s.</td>
+</tr>
+<tr>
+<td>CAVEAT</td>
+<td>P3</td>
+<td><code>_instance_cache</code> is keyed by Brick class only on a process-lifetime agent instance (<code>sparql_agent.py:2993</code>, <code>:203</code>) — cross-building leakage in a multi-building deployment.</td>
+</tr>
+<tr>
+<td>CAVEAT</td>
+<td>P3</td>
+<td><code>AgentMemory._search</code> returns stored failures with no <code>memory_type</code> filter and no score threshold (<code>agent_memory.py:309-329</code>); they render as <code>Answer: [FAILURE] …</code> in the classifier prompt.</td>
+</tr>
+<tr>
+<td>CAVEAT</td>
+<td>P3</td>
+<td><code>_repair_sql</code> recovery does not touch <code>_record_lane_outcome</code>, so a turn that needed 2 SQL repairs still reports <code>first_pass_ok=True</code> — the exact conflation <code>turn_outcome.py:31-35</code> warns about.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

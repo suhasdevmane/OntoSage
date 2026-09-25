@@ -1,0 +1,94 @@
+I'm writing a report on this building. How many condition surveys have grade C?
+Briefly: When is the Laboratory chemicals - COSHH due for review?
+Which operating regimes are active?
+Can you tell me how many event activities with event EVT-2026-0052 are scheduled?
+Could you tell me: how many coordination functions are recorded in total?
+For my notes: How many handover records of document kind O&M manual are there in total?
+Which patrol checkpoints with frequency 2-hourly are current?
+Briefly: Are any AV components of kind Display failed?
+For the audit record: When is WCP-013 next collected?
+Who is the recorded owner of the continuity provisions with criticality high?
+Are any timetabled sessions with weekday Thursday scheduled?
+Briefly: When was the Asbestos cement flue remnant last tested?
+For my notes: How many circulation times are recorded in total?
+Which asset engineering profiles with engineering system ventilation are active? Just the references, please.
+Which role owns the door hardware items of kind escape door?
+List every one of the access permissions that are suspended, giving each reference.
+Could you tell me: how many incident records of category injury are there in total?
+Briefly: What is the name of WS-28?
+For my notes: When is EV-009 due for review?
+Who owns CLN-0010?
+Could you list the departments that are reduced?
+Which accessible routes have no lift status recorded?
+Can you tell me how many stakeholder groups of category Occupant are active?
+Briefly: How many contracts are recorded in total?
+For my notes: What is the asset of WTY-BMS-2024?
+List every one of the bookings in Room 5.16 - Seminar / Conference Room that are confirmed, giving each reference.
+For my notes: When was SVC-01 last completed?
+How many permits of type Electrical isolation are suspended?
+Can you tell me how many cost lines are open?
+For the audit record: When is FSA-020 next due for testing?
+Briefly: Are any work orders with trade Controls technician completed?
+Briefly: When is APR-029 due for review?
+How many evacuation provisions on floor 3 are there in total?
+Who is in charge of the Level 5 general waste?
+Which role owns the access permissions with time profile ESCORTED?
+For the audit record: When is HZ-012 next due for testing?
+Who is the recorded owner of REG-001?
+Briefly: Which work orders have no completed recorded?
+Which workspace profiles on floor 4 are active?
+Could you tell me: when was AEP-010 last visited?
+How many fire safety assets are active?
+For the audit record: When is APR-013 due for review?
+For my notes: Are any departments active?
+Could you tell me: when is SVC-04 next due?
+How many timetabled sessions on floor 1 are scheduled?
+For my notes: What is the scope of CON-2023-014?
+Could you tell me: when was the Room 3.01 projector last checked?
+For the audit record: How many handover records of document kind As-built drawing set are there in total?
+Briefly: When is the Electrical safety - HV switchroom due for review?
+Who is accountable for the event activities with event EVT-2026-0045?
+Could you tell me: how many stakeholder groups of category Visitor are there in total?
+Do any permits of type Work at height have the status 'Closed, fire watch completed'?
+For the audit record, how many bookings in Room 5.15 - Seminar / Conference Room are confirmed?
+For my notes: When is the Level 3 lab corridor fire door next due?
+How many circulation times are active?
+For my notes: When was CLN-0022 last done?
+Briefly: How many warranties are recorded in total?
+Could you tell me: which continuity provisions have no alternative capacity recorded?
+For the audit record: How many accessible routes are recorded in total?
+Who is accountable for CL-2026-012?
+Which incident records of category property damage are closed?
+For my notes: Which coordination functions have no evidence reference recorded?
+List every one of the condition surveys that have grade A, giving each reference.
+Who is accountable for the patrol checkpoints with circuit C2-PUBLIC?
+How many timetabled sessions with weekday Friday are there in total?
+For my notes: What is the replaceability of AEP-012?
+Could you list the access permissions with time profile ESCORTED that have the status 'exception'?
+Who is the recorded owner of INC-2026-011?
+Briefly: When is RA-2026-001 due for review?
+For my notes: Are any contracts expired?
+How many bookings are recorded in total?
+Could you tell me: when is CP-007 next due?
+For my notes: Are any warranties expired?
+Who is accountable for the cost lines with cost centre ABW-MECH?
+For the audit record: When was AV-104-MIC last checked?
+Briefly: What are the responds within hours for DEP-01?
+Could you tell me: when is SVC-16 next due?
+For the audit record: When is EV-011 due for review?
+How many condition surveys have grade A?
+For my notes: How many patrol checkpoints with circuit C1-PERIMETER are there in total?
+List every one of the permits of type Work at height that are closed, giving each reference.
+Who owns the hazard controls of kind COSHH substance?
+Give me the headline number: how many approvals with authority Cardiff University Estates are current?
+Could you tell me: which fire safety assets have no evidence reference recorded?
+How many work orders are completed?
+Could you list the stakeholder groups with access tier Visitor that are occasional?
+Briefly: When was the North stairwell ground door last tested?
+Which role owns the Roll call and accounting?
+For my notes: How many cleaning tasks with standard Presentation are there in total?
+For the audit record: What is the status of REG-008?
+How many workspace profiles are recorded in total?
+Briefly: Are any circulation times active?
+Who is in charge of the waste collection points with stream label Laboratory glass?
+How many handover records of document kind O&M manual are held?

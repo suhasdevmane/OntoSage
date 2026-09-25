@@ -1,0 +1,2611 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/EVALUATION_CALIBRATION_2026-09-18/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Calibrating the grader against human labels - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#calibrating-the-grader-against-human-labels" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Calibrating the grader against human labels
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-was-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1 · What was measured
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-the-kappa-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2 · The kappa table
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2 · The kappa table">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-the-llm-judge-is-not-adopted-and-the-reason-is-a-measurement-error-worth-naming" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 · The LLM judge is not adopted, and the reason is a measurement error worth naming
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-the-test-that-matters-more-than-the-kappa" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 · The test that matters more than the kappa
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-confusion-matrices-overall-n294" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3 · Confusion matrices (overall, n=294)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3 · Confusion matrices (overall, n=294)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#old-heuristic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Old heuristic
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#deterministic-rubric" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Deterministic rubric
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-what-each-rule-is-worth" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4 · What each rule is worth
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-where-the-winning-grader-still-disagrees-with-the-human" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5 · Where the winning grader still disagrees with the human
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-the-two-backends" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6 · The two backends
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6 · The two backends">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-llm-judge-run-established-and-what-it-did-not" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the LLM judge run established, and what it did not
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-honest-limits" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7 · Honest limits
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-how-it-is-used" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8 · How it is used
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/EVALUATION_CALIBRATION_2026-09-18.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="calibrating-the-grader-against-human-labels">Calibrating the grader against human labels<a class="headerlink" href="#calibrating-the-grader-against-human-labels" title="Permanent link">&para;</a></h1>
+<p><strong>Workstream A3 of <code>tasks/ARCH_UPGRADE_PLAN_2026-09-18.md</code>. Measured 2026-09-17, offline, over
+294 hand-labelled answers.</strong></p>
+<p>Every claim this project makes of the form <em>"this change improved things"</em> is produced by a
+grader. On 2026-09-17 the project's grader (<code>scripts/grade_stakeholder_answers.py</code>) scored 20 of
+147 live answers weird; two careful hand reads of the same answers scored 107 and 113. Until the
+gap between those two numbers is measured, no quality claim in the thesis is supported. This
+document measures it.</p>
+<p>Nothing here decides that a grader is good. It reports agreement with the human labels, which are
+treated as ground truth, and it reports the cases where the winning grader still disagrees.</p>
+<hr />
+<h2 id="1-what-was-measured">1 · What was measured<a class="headerlink" href="#1-what-was-measured" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Corpus</td>
+<td>294 answers: <code>docs/phase0/phase0_read.jsonl</code> (147, baseline run 14:10-15:20) and <code>docs/phase0/phase0_rerun_read.jsonl</code> (147, the same questions re-asked 16:00-17:30 after the day's fixes)</td>
+</tr>
+<tr>
+<td>Ground truth</td>
+<td>the human's three verdicts: <code>GOOD_ANSWER</code>, <code>GOOD_DECLINE</code>, <code>WEIRD</code>. An honest decline is a correct answer, not a failure</td>
+</tr>
+<tr>
+<td>Answers graded</td>
+<td><code>phase0_baseline.md.jsonl</code>, <code>phase0_rerun.md.jsonl</code> — recorded text only, never a live re-ask</td>
+</tr>
+<tr>
+<td>Graders compared</td>
+<td><strong>old heuristic</strong> (its recorded output in <code>phase0_graded.jsonl</code> / <code>phase0_rerun_graded.jsonl</code>, six buckets collapsed onto the human's three), <strong>deterministic</strong> (<code>scripts/grade_answers_rubric.py --judge deterministic</code>), <strong>LLM judge</strong> (<code>--judge llm</code>, structured output)</td>
+</tr>
+<tr>
+<td>Statistic</td>
+<td>Cohen's kappa, three-class and weird/not-weird, plus precision and recall on WEIRD, per split and overall</td>
+</tr>
+</tbody>
+</table>
+<p>The rubric is five dimensions, each scored PASS / FAIL / NA, collapsed into one verdict — any FAIL
+makes the answer WEIRD:</p>
+<table>
+<thead>
+<tr>
+<th>dimension</th>
+<th>the question it asks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>answers_question</code></td>
+<td>does it answer what was asked, rather than apologise, template, name its own machinery, or tell the reader to add data?</td>
+</tr>
+<tr>
+<td><code>figures_traceable</code></td>
+<td>is every figure traceable to something the answer itself names?</td>
+</tr>
+<tr>
+<td><code>honest_absence</code></td>
+<td>if it states an absence, is that absence stated honestly and about the right thing?</td>
+</tr>
+<tr>
+<td><code>no_invented_claim</code></td>
+<td>is it free of conclusions the cited evidence cannot support?</td>
+</tr>
+<tr>
+<td><code>right_subject</code></td>
+<td>is the whole answer, footers included, about the subject asked about?</td>
+</tr>
+</tbody>
+</table>
+<p>The deterministic judge's rules were written from the defect classes the human reader wrote up in
+<code>docs/phase0/phase0_read.md</code> (C1-C22), not invented for this measurement.</p>
+<hr />
+<h2 id="2-the-kappa-table">2 · The kappa table<a class="headerlink" href="#2-the-kappa-table" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>grader</th>
+<th>split</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">accuracy</th>
+<th style="text-align: right;">kappa (3-class)</th>
+<th style="text-align: right;">kappa (weird / not)</th>
+<th style="text-align: right;">weird P</th>
+<th style="text-align: right;">weird R</th>
+<th style="text-align: right;">weird F1</th>
+<th style="text-align: right;">weird share it reports</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>old heuristic</td>
+<td>baseline</td>
+<td style="text-align: right;">147</td>
+<td style="text-align: right;">45.6%</td>
+<td style="text-align: right;">0.272</td>
+<td style="text-align: right;">0.168</td>
+<td style="text-align: right;">100.0%</td>
+<td style="text-align: right;">27.1%</td>
+<td style="text-align: right;">42.6%</td>
+<td style="text-align: right;">19.7%</td>
+</tr>
+<tr>
+<td>old heuristic</td>
+<td>rerun</td>
+<td style="text-align: right;">147</td>
+<td style="text-align: right;">35.4%</td>
+<td style="text-align: right;">0.181</td>
+<td style="text-align: right;">0.071</td>
+<td style="text-align: right;">95.0%</td>
+<td style="text-align: right;">16.8%</td>
+<td style="text-align: right;">28.6%</td>
+<td style="text-align: right;">13.6%</td>
+</tr>
+<tr>
+<td><strong>old heuristic</strong></td>
+<td><strong>overall</strong></td>
+<td style="text-align: right;"><strong>294</strong></td>
+<td style="text-align: right;"><strong>40.5%</strong></td>
+<td style="text-align: right;"><strong>0.226</strong></td>
+<td style="text-align: right;"><strong>0.116</strong></td>
+<td style="text-align: right;"><strong>98.0%</strong></td>
+<td style="text-align: right;"><strong>21.8%</strong></td>
+<td style="text-align: right;"><strong>35.7%</strong></td>
+<td style="text-align: right;"><strong>16.7%</strong></td>
+</tr>
+<tr>
+<td>deterministic</td>
+<td>baseline</td>
+<td style="text-align: right;">147</td>
+<td style="text-align: right;">68.7%</td>
+<td style="text-align: right;">0.451</td>
+<td style="text-align: right;">0.457</td>
+<td style="text-align: right;">95.9%</td>
+<td style="text-align: right;">65.4%</td>
+<td style="text-align: right;">77.8%</td>
+<td style="text-align: right;">49.7%</td>
+</tr>
+<tr>
+<td>deterministic</td>
+<td>rerun</td>
+<td style="text-align: right;">147</td>
+<td style="text-align: right;">67.3%</td>
+<td style="text-align: right;">0.385</td>
+<td style="text-align: right;">0.376</td>
+<td style="text-align: right;">93.7%</td>
+<td style="text-align: right;">65.5%</td>
+<td style="text-align: right;">77.1%</td>
+<td style="text-align: right;">53.7%</td>
+</tr>
+<tr>
+<td><strong>deterministic</strong></td>
+<td><strong>overall</strong></td>
+<td style="text-align: right;"><strong>294</strong></td>
+<td style="text-align: right;"><strong>68.0%</strong></td>
+<td style="text-align: right;"><strong>0.420</strong></td>
+<td style="text-align: right;"><strong>0.419</strong></td>
+<td style="text-align: right;"><strong>94.7%</strong></td>
+<td style="text-align: right;"><strong>65.5%</strong></td>
+<td style="text-align: right;"><strong>77.4%</strong></td>
+<td style="text-align: right;"><strong>51.7%</strong></td>
+</tr>
+<tr>
+<td>LLM judge</td>
+<td>smoke sample</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">60.0%</td>
+<td style="text-align: right;">0.401</td>
+<td style="text-align: right;">0.432</td>
+<td style="text-align: right;">57.1%</td>
+<td style="text-align: right;">66.7%</td>
+<td style="text-align: right;">61.5%</td>
+<td style="text-align: right;">35.0%</td>
+</tr>
+</tbody>
+</table>
+<p><em>(the human's own figures: 72.8% weird on the baseline, 76.9% on the rerun)</em></p>
+<p><strong>The LLM row is not comparable with the two above it</strong> — see §2.1. It is a 20-row sample with a
+different weird share, and kappa moves with the class balance on its own.</p>
+<p><strong>The deterministic rubric grader wins, and by a wide margin on the class that matters.</strong> On the
+weird/not-weird decision its kappa is <strong>0.419 against the old heuristic's 0.116 — a gain of
++0.303</strong>, and it finds <strong>65.5% of the answers the human called weird against the old grader's
+21.8%</strong>, at 94.7% precision. Three-class kappa: 0.420 vs 0.226.</p>
+<p>Both numbers are modest in absolute terms. 0.42 is "moderate" agreement, not good agreement. The
+honest reading is: the old instrument was close to useless for the weird class (it missed four out
+of five), the new one is usable as a direction indicator and is not usable as a level.</p>
+<h3 id="21-the-llm-judge-is-not-adopted-and-the-reason-is-a-measurement-error-worth-naming">2.1 · The LLM judge is not adopted, and the reason is a measurement error worth naming<a class="headerlink" href="#21-the-llm-judge-is-not-adopted-and-the-reason-is-a-measurement-error-worth-naming" title="Permanent link">&para;</a></h3>
+<p>The LLM judge ran on a verdict-stratified sample of 20 rows (7 GOOD_ANSWER, 7 GOOD_DECLINE, 6
+WEIRD) — the GPU budget for this workstream. 20 of 20 replies parsed and satisfied the schema;
+<strong>zero UNGRADED</strong>, which is the one thing the smoke test does establish.</p>
+<p>Ranking graders on their headline rows would have said <em>"the LLM judge wins, +0.316 over the old
+heuristic"</em>. That is wrong, and the script printed it before it was fixed. On <strong>the same 20 rows</strong>:</p>
+<table>
+<thead>
+<tr>
+<th>grader</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">accuracy</th>
+<th style="text-align: right;">kappa (3-class)</th>
+<th style="text-align: right;">kappa (weird/not)</th>
+<th style="text-align: right;">weird P</th>
+<th style="text-align: right;">weird R</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>old heuristic</strong></td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">85.0%</td>
+<td style="text-align: right;"><strong>0.772</strong></td>
+<td style="text-align: right;"><strong>0.583</strong></td>
+<td style="text-align: right;">100.0%</td>
+<td style="text-align: right;">50.0%</td>
+</tr>
+<tr>
+<td>deterministic</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">65.0%</td>
+<td style="text-align: right;">0.474</td>
+<td style="text-align: right;">0.524</td>
+<td style="text-align: right;">66.7%</td>
+<td style="text-align: right;">66.7%</td>
+</tr>
+<tr>
+<td>LLM judge</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">60.0%</td>
+<td style="text-align: right;">0.401</td>
+<td style="text-align: right;">0.432</td>
+<td style="text-align: right;">57.1%</td>
+<td style="text-align: right;">66.7%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>On that sample the old heuristic wins.</strong> The sample is 30% weird; the corpus is 74.8% weird. A
+high-precision, low-recall grader looks excellent on a balanced sample and fails on the real
+distribution, which is exactly how the old grader survived this long. The script now decides the
+winner only on rows every grader scored, and says so when that set is a sample.</p>
+<p>So: <strong>the LLM judge is not adopted, and on this evidence it is not better than either of the
+others.</strong> Its errors were mostly the GOOD_ANSWER/GOOD_DECLINE boundary, which does not matter, but
+it also called a correct work-order listing weird ("a figure not traceable to a named register",
+when the register was named) and a correct clarification weird. <strong>Full LLM-judge calibration over
+all 294 rows is owed and needs a GPU slot from the lead</strong> (~13 min of exclusive GPU at the smoke
+rate; budget 45-60 min for 294 rows under rehearsal contention).</p>
+<h3 id="22-the-test-that-matters-more-than-the-kappa">2.2 · The test that matters more than the kappa<a class="headerlink" href="#22-the-test-that-matters-more-than-the-kappa" title="Permanent link">&para;</a></h3>
+<p>The two runs are a natural experiment. The human read both and said the system got <strong>worse</strong>
+after the day's fixes: weird 72.8% → <strong>76.9%</strong>, +4.1 points.</p>
+<table>
+<thead>
+<tr>
+<th>grader</th>
+<th style="text-align: right;">baseline</th>
+<th style="text-align: right;">rerun</th>
+<th style="text-align: right;">movement</th>
+<th>agrees with the human?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>human (ground truth)</td>
+<td style="text-align: right;">72.8%</td>
+<td style="text-align: right;">76.9%</td>
+<td style="text-align: right;"><strong>+4.1 pts</strong></td>
+<td>—</td>
+</tr>
+<tr>
+<td>old heuristic</td>
+<td style="text-align: right;">19.7%</td>
+<td style="text-align: right;">13.6%</td>
+<td style="text-align: right;"><strong>-6.1 pts</strong></td>
+<td><strong>no — opposite direction</strong></td>
+</tr>
+<tr>
+<td>deterministic rubric</td>
+<td style="text-align: right;">49.7%</td>
+<td style="text-align: right;">53.7%</td>
+<td style="text-align: right;"><strong>+4.1 pts</strong></td>
+<td>yes, same direction and same size</td>
+</tr>
+</tbody>
+</table>
+<p>The old grader reported a 31% relative improvement on a day the system got worse. That is the
+precise failure this workstream existed to remove, and it is removed: the rubric gate run over the
+same two files exits non-zero and names the regression.</p>
+<p>The agreement in magnitude (+4.1 vs +4.1) is a coincidence of this corpus and must not be quoted
+as a property of the grader.</p>
+<hr />
+<h2 id="3-confusion-matrices-overall-n294">3 · Confusion matrices (overall, n=294)<a class="headerlink" href="#3-confusion-matrices-overall-n294" title="Permanent link">&para;</a></h2>
+<h3 id="old-heuristic">Old heuristic<a class="headerlink" href="#old-heuristic" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>human  grader</th>
+<th style="text-align: right;">GOOD_ANSWER</th>
+<th style="text-align: right;">GOOD_DECLINE</th>
+<th style="text-align: right;">WEIRD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOOD_ANSWER</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>GOOD_DECLINE</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">44</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td><strong>WEIRD</strong></td>
+<td style="text-align: right;"><strong>86</strong></td>
+<td style="text-align: right;"><strong>86</strong></td>
+<td style="text-align: right;"><strong>48</strong></td>
+</tr>
+</tbody>
+</table>
+<p>172 of 220 weird answers were passed: 86 as good answers, 86 as honest declines. The grader reads
+shape, and both a confident misreading and a decline citing the wrong register have the right
+shape.</p>
+<h3 id="deterministic-rubric">Deterministic rubric<a class="headerlink" href="#deterministic-rubric" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>human  grader</th>
+<th style="text-align: right;">GOOD_ANSWER</th>
+<th style="text-align: right;">GOOD_DECLINE</th>
+<th style="text-align: right;">WEIRD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOOD_ANSWER</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>GOOD_DECLINE</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr>
+<td><strong>WEIRD</strong></td>
+<td style="text-align: right;"><strong>40</strong></td>
+<td style="text-align: right;"><strong>36</strong></td>
+<td style="text-align: right;"><strong>144</strong></td>
+</tr>
+</tbody>
+</table>
+<p>It never calls a human GOOD_ANSWER weird. Its 8 false alarms are all declines. Its 76 misses split
+40 / 36 between answers and declines, and section 5 says what they are.</p>
+<hr />
+<h2 id="4-what-each-rule-is-worth">4 · What each rule is worth<a class="headerlink" href="#4-what-each-rule-is-worth" title="Permanent link">&para;</a></h2>
+<p>Each rule was removed in turn and the weird/not kappa re-measured. A rule that does not pay is
+visible rather than assumed.</p>
+<table>
+<thead>
+<tr>
+<th>rule</th>
+<th style="text-align: right;">fires on human-WEIRD</th>
+<th style="text-align: right;">fires on human-GOOD</th>
+<th style="text-align: right;">kappa without it</th>
+<th style="text-align: right;">delta</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>NON_ANSWER_TEMPLATE</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.349</td>
+<td style="text-align: right;">+0.070</td>
+</tr>
+<tr>
+<td>FOOTER_MISFIRE</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.362</td>
+<td style="text-align: right;">+0.057</td>
+</tr>
+<tr>
+<td>ONTOLOGY_NAMED</td>
+<td style="text-align: right;">40</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.376</td>
+<td style="text-align: right;">+0.043</td>
+</tr>
+<tr>
+<td>FRAGMENT</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.376</td>
+<td style="text-align: right;">+0.043</td>
+</tr>
+<tr>
+<td>USER_ATTRIBUTION</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.380</td>
+<td style="text-align: right;">+0.038</td>
+</tr>
+<tr>
+<td>OPEN_DOMAIN_PROSE</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.390</td>
+<td style="text-align: right;">+0.029</td>
+</tr>
+<tr>
+<td>INTERNAL_TOKEN</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.399</td>
+<td style="text-align: right;">+0.019</td>
+</tr>
+<tr>
+<td>DOCUMENT_CATCHALL</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;"><strong>5</strong></td>
+<td style="text-align: right;">0.400</td>
+<td style="text-align: right;">+0.018</td>
+</tr>
+<tr>
+<td>ADD_DATA_INSTRUCTION</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.404</td>
+<td style="text-align: right;">+0.015</td>
+</tr>
+<tr>
+<td>PHRASE_NOT_A_PLACE</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.409</td>
+<td style="text-align: right;">+0.010</td>
+</tr>
+<tr>
+<td>BREAKDOWN_SUM / TABLE_COUNT_MISMATCH / DEICTIC_BOUND / STALE_FUTURE_DATE</td>
+<td style="text-align: right;">1 each</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.414</td>
+<td style="text-align: right;">+0.005 each</td>
+</tr>
+<tr>
+<td>UNRELATED_REGISTER</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;"><strong>3</strong></td>
+<td style="text-align: right;">0.416</td>
+<td style="text-align: right;">+0.003</td>
+</tr>
+<tr>
+<td>PROVENANCE_LEAK / LANE_JARGON / REPETITION</td>
+<td style="text-align: right;">4 / 14 / 6</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.419</td>
+<td style="text-align: right;">+0.000</td>
+</tr>
+<tr>
+<td>COUNT_CONTRADICTION</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.419</td>
+<td style="text-align: right;">+0.000</td>
+</tr>
+</tbody>
+</table>
+<p>Read with care:</p>
+<ul>
+<li>A <code>+0.000</code> delta does not mean the rule is useless. <code>LANE_JARGON</code> fires on 14 weird rows and no
+  good ones; it contributes nothing to kappa only because those rows already fail another rule. It
+  is kept because it names the defect correctly in the reason line, which is what a developer acts
+  on.</li>
+<li><code>UNRELATED_REGISTER</code> (+0.003 at the cost of 3 false alarms) and <code>DOCUMENT_CATCHALL</code> (+0.018 at
+  the cost of 5) are the two rules paying the least for the damage they do. Both are kept for now
+  and both are the first candidates to drop if precision has to rise.</li>
+<li><code>COUNT_CONTRADICTION</code> never fires on this corpus. It stays because it is free and the defect it
+  describes (a part stated larger than its whole) is one the register lane can produce.</li>
+<li>The four arithmetic and date rules fire once each. They are the rules that would matter most in
+  a thesis — "the answer contradicts its own table" — and on 294 rows they are barely exercised.
+  Do not report them as working.</li>
+</ul>
+<hr />
+<h2 id="5-where-the-winning-grader-still-disagrees-with-the-human">5 · Where the winning grader still disagrees with the human<a class="headerlink" href="#5-where-the-winning-grader-still-disagrees-with-the-human" title="Permanent link">&para;</a></h2>
+<p>The 76 missed weird rows are not spread evenly. By the human's own defect classes:</p>
+<table>
+<thead>
+<tr>
+<th>class</th>
+<th style="text-align: right;">missed</th>
+<th style="text-align: right;">caught</th>
+<th>what the class is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C7</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;">7</td>
+<td>register narration misreads a status or date, or invents a conclusion</td>
+</tr>
+<tr>
+<td>C8</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">4</td>
+<td>a register chosen on one bare word; the lane then declines with that register's statistics</td>
+</tr>
+<tr>
+<td>C9</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">8</td>
+<td>the building holds the data and no lane reaches it (false absence)</td>
+</tr>
+<tr>
+<td>C19</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">4</td>
+<td>shortcut misroutes</td>
+</tr>
+<tr>
+<td>C4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">17</td>
+<td>metadata RAG fallback</td>
+</tr>
+<tr>
+<td>others</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">24</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p><strong>The single disagreement pattern, stated plainly: a fluent, well-formed answer that is simply
+untrue about what the building holds.</strong> Three quarters of the misses (C7, C8, C9) share it. Two
+examples:</p>
+<blockquote>
+<p><strong>baseline row 50 (IR-034)</strong> — asked whether digital evidence items can be authenticated,
+scoped, permissioned and preserved with an unbroken chain of custody. Answer: <em>"No — the
+waste-collection records do not contain any information about authentication, scope,
+permissioning or preservation of a chain of custody."</em> Well formed, honest in tone, correct
+about the register it read. Weird because it read the waste register for a records-management
+question while an approval-and-evidence register sat unread.</p>
+<p><strong>baseline row 19 (CT-065)</strong> — <em>"the next authorised collection is scheduled for 8 September
+2026"</em>, said on 17 September. Caught here, by the date rule, and only because the claim carried
+a literal date. The same class of error without a date literal — <em>"all lifts are available"</em>
+beside a table showing one out of service — is invisible to text alone.</p>
+</blockquote>
+<p>Nothing in the recorded text distinguishes these from a correct decline. Closing this gap needs
+the evidence the answer was built from, not a better reading of the prose. That is what A2's claim
+binder produces; when it lands, the grader should consume the evidence record rather than the
+answer alone, and that is the single change most likely to move kappa past 0.42.</p>
+<p>For scale on the movement it does see: run over the two Phase 0 files the gate reports <strong>16
+questions improved and 22 regressed</strong>, against the human's 9 improved and 15 regressed. The same
+story, slightly louder, in the same direction.</p>
+<p><strong>In the other direction — the 8 false alarms — all are declines, and 5 of them expose a
+disagreement between the two human readers rather than a grader fault.</strong> The document lane's
+catch-all (<em>"the documents do not answer this. I searched … Register; they are the closest
+material and none of them contains the answer"</em>) was labelled WEIRD by the baseline reader and
+GOOD_DECLINE by the rerun reader, on the same template. The remaining 3 are declines that cite a
+register sharing no vocabulary with the question but which the human judged reasonable
+(<em>"sampling rates … they only record observed duty values"</em>).</p>
+<hr />
+<h2 id="6-the-two-backends">6 · The two backends<a class="headerlink" href="#6-the-two-backends" title="Permanent link">&para;</a></h2>
+<p>Both sit behind one interface (<code>Judge.grade</code>), so the calibration, the run grader and the gate are
+identical code with a different judge.</p>
+<ul>
+<li><strong><code>--judge deterministic</code></strong> — features only. No model, no network; a test asserts it by making
+  <code>urlopen</code> raise. Every verdict carries the rule that decided it and the text that triggered it.</li>
+<li><strong><code>--judge llm</code></strong> — one structured-output call per answer. The JSON schema is passed to the
+  provider as the requested <code>format</code>, temperature 0, and the reply is validated against the schema
+  field by field. <strong>A reply that does not parse, or parses but does not satisfy the schema, is
+  recorded as <code>UNGRADED</code> — never guessed, never defaulted.</strong> <code>UNGRADED</code> rows are excluded from
+  kappa and counted separately, so an unreliable judge shows up as a shrinking denominator instead
+  of as agreement.</li>
+</ul>
+<h3 id="what-the-llm-judge-run-established-and-what-it-did-not">What the LLM judge run established, and what it did not<a class="headerlink" href="#what-the-llm-judge-run-established-and-what-it-did-not" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ran</td>
+<td>20 answers, verdict-stratified across both splits, <code>gpt-oss:20b</code> via Ollama, temperature 0</td>
+</tr>
+<tr>
+<td>schema compliance</td>
+<td><strong>20 / 20 parsed and validated; 0 UNGRADED</strong></td>
+</tr>
+<tr>
+<td>agreement</td>
+<td>see §2.1 — third of three on the rows it shared with the others</td>
+</tr>
+<tr>
+<td><strong>owed</strong></td>
+<td><strong>full calibration over all 294 rows, which needs an exclusive GPU slot from the lead</strong></td>
+</tr>
+</tbody>
+</table>
+<p>Artifacts: <code>scripts/outputs/rubric_calibration_smoke.{md,json}</code> and
+<code>rubric_calibration_smoke_rows.jsonl</code> (every row, every grader, every reason). The saved rows can
+be re-summarised with <code>--recompute</code> without spending a single further model call.</p>
+<hr />
+<h2 id="7-honest-limits">7 · Honest limits<a class="headerlink" href="#7-honest-limits" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>294 rows, one building, one labeller per split.</strong> There is no second annotator, so there is
+   no human-human kappa to compare against. The two splits were read by two readers following the
+   same written method, and section 5 shows they disagree with each other on at least one whole
+   template. An inter-annotator study on a shared subset is owed before any of these kappas is
+   quoted as a measurement of the rubric rather than of one reader.</li>
+<li><strong>The deterministic rules were written from this corpus.</strong> The class descriptions they encode
+   came from the baseline read. The rerun split is the closest thing to held-out data here, and
+   the grader does lose ground on it (kappa 0.457 → 0.376) — partly for that reason, and partly
+   because the day's fixes removed exactly the phrasings the rules match while leaving the defect
+   underneath. <strong>A phrase-matching grader is fooled by phrase-level fixes.</strong> That is the same
+   failure mode as the old grader, one level down, and it is the reason the gate is a direction
+   indicator and not a score.</li>
+<li><strong>The level is wrong; only the direction is calibrated.</strong> The grader reports a 51.7% weird
+   share where the human reads 74.8%. Never quote the grader's weird share as the system's weird
+   share.</li>
+<li><strong>Text-only.</strong> The grader cannot see the evidence an answer was built from, so it cannot check
+   whether a figure is true — only whether the answer names something that could support it. Every
+   figure-level check here is a consistency check, not a fact check.</li>
+<li><strong>The arithmetic and date rules are barely exercised</strong> (one firing each) and must not be
+   reported as validated.</li>
+<li><strong>The old heuristic's numbers are read from its recorded output</strong>, not re-derived, so they are
+   exactly the numbers that were acted on that day.</li>
+<li><strong>The LLM judge has been measured on 20 rows, which is not a measurement.</strong> Nothing in §2.1
+   should be quoted except "20/20 replies satisfied the schema" and "it is not adopted".</li>
+<li><strong>Kappa is sensitive to the class balance.</strong> §2.1 is a worked example of that inside this very
+   corpus: the same three graders rank in two different orders on two different row sets. Any
+   future comparison must state the row set and its weird share.</li>
+</ol>
+<hr />
+<h2 id="8-how-it-is-used">8 · How it is used<a class="headerlink" href="#8-how-it-is-used" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># Calibration (offline, no GPU, ~20 s)</span>
+python<span class="w"> </span>scripts/grade_answers_rubric.py<span class="w"> </span>--calibrate<span class="w"> </span>--asof<span class="w"> </span><span class="m">2026</span>-09-17<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--out<span class="w"> </span>scripts/outputs/rubric_calibration
+
+<span class="c1"># Add the LLM judge. --llm-sample N keeps it to N stratified rows; --llm-all is the owed run.</span>
+python<span class="w"> </span>scripts/grade_answers_rubric.py<span class="w"> </span>--calibrate<span class="w"> </span>--asof<span class="w"> </span><span class="m">2026</span>-09-17<span class="w"> </span>--with-llm<span class="w"> </span>--llm-all<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--out<span class="w"> </span>scripts/outputs/rubric_calibration_llm
+
+<span class="c1"># Re-summarise a saved calibration without grading anything again</span>
+python<span class="w"> </span>scripts/grade_answers_rubric.py<span class="w"> </span>--recompute<span class="w"> </span>scripts/outputs/&lt;name&gt;_rows.jsonl
+
+<span class="c1"># Grade one recorded run</span>
+python<span class="w"> </span>scripts/grade_answers_rubric.py<span class="w"> </span>--grade<span class="w"> </span>&lt;run&gt;.md.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bank<span class="w"> </span>docs/phase0/phase0_bank.jsonl<span class="w"> </span>--asof<span class="w"> </span>&lt;run<span class="w"> </span>date&gt;<span class="w"> </span>--out<span class="w"> </span>scripts/outputs/&lt;name&gt;
+
+<span class="c1"># Regression gate: prints what moved each way, exits non-zero when the weird share rises</span>
+python<span class="w"> </span>scripts/grade_answers_rubric.py<span class="w"> </span>--gate<span class="w"> </span>&lt;new&gt;.md.jsonl<span class="w"> </span>--baseline<span class="w"> </span>&lt;previous&gt;.md.jsonl<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--asof<span class="w"> </span>&lt;run<span class="w"> </span>date&gt;
+</code></pre></div>
+<p>The gate reads two recorded runs and nothing else. It never asks the live system — a test asserts
+that by making <code>urlopen</code> raise inside the gate path. It matches questions across the two files,
+prints every question that moved in each direction with the rule that decided it, and exits 1 when
+the weird share rises. Run over the baseline and the rerun it exits 1 and names 22 regressions
+against 16 improvements, which is the correct direction.</p>
+<p>Tests: <code>tests/test_grade_answers_rubric.py</code> (48 tests, <code>-m unit</code>). Two of them pin this document:
+the corpus is 294 rows, and the deterministic judge beats the old heuristic on weird kappa,
+recall and precision. If either stops being true, a test goes red rather than a claim going stale.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

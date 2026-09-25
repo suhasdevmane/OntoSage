@@ -1,0 +1,2643 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/superpowers/specs/2026-03-31-orchestrator-recovery-design/">
+      
+      
+        <link rel="prev" href="../../plans/2026-05-21-capability-semantic-routing-plan/">
+      
+      
+        <link rel="next" href="../2026-04-11-claude-config-design/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Orchestrator Recovery Design - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../../../assets/overrides.css">
+    
+    <script>__md_scope=new URL("../../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#ontosage-orchestrator-recovery-deployment-design-spec" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../../.." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Orchestrator Recovery Design
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../../plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../../.." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Problem Statement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-source-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Source Inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Source Inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2a-extract-from-ontosage-orchestratorlatest-45-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2a. Extract from ontosage-orchestrator:latest (45 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2b-extract-from-ontosage-code-executorlatest-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2b. Extract from ontosage-code-executor:latest (3 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c-decompile-from-python-310-bytecode-2-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2c. Decompile from Python 3.10 bytecode (2 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2d-write-from-spec-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2d. Write from Spec (3 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-docker-composeyml-rewrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. docker-compose.yml Rewrite
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. docker-compose.yml Rewrite">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#services-to-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services to add
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services-to-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services to remove
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services-to-keep-unchanged" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services to keep (unchanged)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-secrets-via-env-no-hardcoded-defaults-for-passwords" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All secrets via .env — no hardcoded defaults for passwords
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-wiring-the-3-written-files-into-workflowpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Wiring the 3 Written Files Into workflow.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Wiring the 3 Written Files Into workflow.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#document_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        document_agent.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persona_adapterpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        persona_adapter.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standards_enginepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        standards_engine.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-file-placement-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. File Placement Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-verification-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Verification Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-out-of-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Out of Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-problem-statement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Problem Statement
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-source-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Source Inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Source Inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#2a-extract-from-ontosage-orchestratorlatest-45-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2a. Extract from ontosage-orchestrator:latest (45 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2b-extract-from-ontosage-code-executorlatest-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2b. Extract from ontosage-code-executor:latest (3 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2c-decompile-from-python-310-bytecode-2-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2c. Decompile from Python 3.10 bytecode (2 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2d-write-from-spec-3-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2d. Write from Spec (3 files)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-docker-composeyml-rewrite" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. docker-compose.yml Rewrite
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. docker-compose.yml Rewrite">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#services-to-add" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services to add
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services-to-remove" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services to remove
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#services-to-keep-unchanged" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Services to keep (unchanged)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#all-secrets-via-env-no-hardcoded-defaults-for-passwords" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        All secrets via .env — no hardcoded defaults for passwords
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-wiring-the-3-written-files-into-workflowpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Wiring the 3 Written Files Into workflow.py
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Wiring the 3 Written Files Into workflow.py">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#document_agentpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        document_agent.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#persona_adapterpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        persona_adapter.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#standards_enginepy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        standards_engine.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-file-placement-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. File Placement Map
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-verification-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Verification Checklist
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-out-of-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Out of Scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/superpowers/specs/2026-03-31-orchestrator-recovery-design.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="ontosage-orchestrator-recovery-deployment-design-spec">OntoSage Orchestrator Recovery &amp; Deployment — Design Spec<a class="headerlink" href="#ontosage-orchestrator-recovery-deployment-design-spec" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-03-31
+<strong>Status:</strong> Approved
+<strong>Approach:</strong> A — Extract + Decompile + Write Missing + Docker Compose Rewrite</p>
+<hr />
+<h2 id="1-problem-statement">1. Problem Statement<a class="headerlink" href="#1-problem-statement" title="Permanent link">&para;</a></h2>
+<p>The <code>orchestrator/</code> source files were removed from git, leaving only compiled <code>.pyc</code>
+bytecode. The <code>ontosage-orchestrator:latest</code> Docker image (built 2026-03-27) contains
+the complete source. Three additional files (<code>circuit_breaker.py</code>, <code>logging_context.py</code>)
+exist only as Python 3.10 bytecode compiled after the image. Three more
+(<code>document_agent.py</code>, <code>persona_adapter.py</code>, <code>standards_engine.py</code>) appear in the spec
+but not in the image or bytecode.</p>
+<p>The <code>docker-compose.yml</code> still references legacy Rasa-era services and does not define
+the orchestrator, Redis, PostgreSQL, Qdrant, or code-executor services.</p>
+<hr />
+<h2 id="2-source-inventory">2. Source Inventory<a class="headerlink" href="#2-source-inventory" title="Permanent link">&para;</a></h2>
+<h3 id="2a-extract-from-ontosage-orchestratorlatest-45-files">2a. Extract from <code>ontosage-orchestrator:latest</code> (45 files)<a class="headerlink" href="#2a-extract-from-ontosage-orchestratorlatest-45-files" title="Permanent link">&para;</a></h3>
+<p>All files live under <code>/app/</code> inside the image.</p>
+<p><strong>orchestrator/ root (6 files):</strong>
+- <code>main.py</code> (1527 lines) — FastAPI app, 25+ endpoints, lifespan manager
+- <code>workflow.py</code> (1092 lines) — LangGraph StateGraph, 11 agents, 14-intent routing
+- <code>llm_manager.py</code> — Provider-agnostic LLM (Ollama / OpenAI / Cloud)
+- <code>auth_manager.py</code> — User registration, login, JWT sessions
+- <code>redis_manager.py</code> — Conversation state, caching, message history
+- <code>postgres_manager.py</code> — Persistent user data, chat history
+- <code>__init__.py</code></p>
+<p><strong>orchestrator/agents/ (10 agent files):</strong>
+- <code>dialogue_agent.py</code> (510 lines) — 14-intent detection, entity extraction, persona
+- <code>sparql_agent.py</code> (1479 lines) — RAG-enhanced SPARQL + 4-strategy self-correction
+- <code>sql_agent.py</code> (492 lines) — UUID-based + Text-to-SQL, SELECT-only enforcement
+- <code>analytics_agent.py</code> (627 lines) — Deterministic engine + code-gen sandbox
+- <code>visualization_agent.py</code> (353 lines) — Chart generation, base64 embedding
+- <code>planner_agent.py</code> (329 lines) — Multi-step decomposition
+- <code>report_agent.py</code> (259 lines) — Structured report generation
+- <code>anomaly_agent.py</code> (258 lines) — Threshold + Z-score + spike detection
+- <code>data_export_agent.py</code> (198 lines) — JSON/CSV/HTML/Markdown export
+- <code>semantic_ontology_agent.py</code> (332 lines) — Semantic RAG-based ontology queries
+- <code>__init__.py</code></p>
+<p><strong>orchestrator/services/ (22 service files):</strong>
+- <code>analytics_engine.py</code> (487 lines) — 5 deterministic analysers
+- <code>self_correction_engine.py</code> (422 lines) — 4-strategy SPARQL repair
+- <code>smart_cache.py</code> (344 lines) — 5-strategy cache invalidation
+- <code>response_cache.py</code> (382 lines) — Redis-backed response deduplication
+- <code>streaming_adapter.py</code> (442 lines) — MQTT/Kafka hot-path anomaly
+- <code>ws_streaming.py</code> (264 lines) — WebSocket streaming
+- <code>reasoning_engine.py</code> (359 lines) — Multi-hop reasoning (4-step)
+- <code>i18n_service.py</code> (235 lines) — 30+ language support
+- <code>agent_memory.py</code> (304 lines) — Qdrant-backed per-user memory
+- <code>multi_building_manager.py</code> (321 lines) — Tenant isolation, building switching
+- <code>hybrid_retrieval.py</code> (176 lines) — Combined SPARQL + vector search
+- <code>ontology_detector.py</code> (358 lines) — Auto-detect schema (Brick/ASHRAE/REC)
+- <code>ontology_introspector.py</code> (211 lines) — Extract topology from TTL
+- <code>ontology_validator.py</code> (152 lines) — Validate TTL against SHACL shapes
+- <code>database_adapter.py</code> (134 lines) — Polyglot DB discovery from <code>ref:storedAt</code>
+- <code>database_schema_discovery.py</code> (101 lines) — Runtime column/table introspection
+- <code>plugin_registry.py</code> (322 lines) — Plugin auto-discovery
+- <code>prompt_builder.py</code> (212 lines) — Building-agnostic prompt construction
+- <code>context_manager.py</code> (75 lines) — Conversation context windowing
+- <code>sparql_validator.py</code> (237 lines) — Pre-execution query validation
+- <code>adapters/mysql_adapter.py</code>, <code>adapters/postgresql_adapter.py</code>, <code>adapters/registry.py</code></p>
+<p><strong>orchestrator/middleware/ (1 file):</strong>
+- <code>rbac.py</code> (385 lines) — 6 roles, 19 permissions, HS256 JWT</p>
+<p><strong>shared/ (5 files):</strong>
+- <code>config.py</code> — Pydantic Settings with full provider/building/security config
+- <code>models.py</code> — ConversationState, Message, APIResponse, shared Pydantic models
+- <code>utils.py</code> — Logger factory, ID generators
+- <code>constants.py</code> — System-wide constants
+- <code>structured_logger.py</code> — JSON structured logging</p>
+<p><strong>Infrastructure files (also extracted):</strong>
+- <code>orchestrator/Dockerfile</code>
+- <code>orchestrator/requirements.txt</code></p>
+<h3 id="2b-extract-from-ontosage-code-executorlatest-3-files">2b. Extract from <code>ontosage-code-executor:latest</code> (3 files)<a class="headerlink" href="#2b-extract-from-ontosage-code-executorlatest-3-files" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>code-executor/main.py</code> — FastAPI sandboxed execution service</li>
+<li><code>code-executor/sandbox.py</code> — Import whitelist, resource limits, asyncio timeout</li>
+<li><code>code-executor/__init__.py</code></li>
+<li><code>code-executor/Dockerfile</code> (also inside image)</li>
+</ul>
+<h3 id="2c-decompile-from-python-310-bytecode-2-files">2c. Decompile from Python 3.10 bytecode (2 files)<a class="headerlink" href="#2c-decompile-from-python-310-bytecode-2-files" title="Permanent link">&para;</a></h3>
+<p>Both are confirmed Python 3.10 (<code>magic=3439</code>), compatible with <code>uncompyle6</code>.
+Install: <code>pip install uncompyle6</code></p>
+<ul>
+<li><code>orchestrator/services/__pycache__/circuit_breaker.cpython-310.pyc</code> → <code>circuit_breaker.py</code></li>
+<li>5548 bytes bytecode; compiled 2026-03-28 (newer than Docker image)</li>
+<li>Implements: <code>CircuitBreaker</code> class with OPEN/HALF_OPEN/CLOSED states,
+    failure threshold, reset timeout, async <code>call()</code> decorator</li>
+<li><code>orchestrator/services/__pycache__/logging_context.cpython-310.pyc</code> → <code>logging_context.py</code></li>
+<li>2047 bytes bytecode; compiled 2026-03-28</li>
+<li>Implements: correlation-ID context var, <code>get_correlation_id()</code>, <code>set_correlation_id()</code></li>
+</ul>
+<p>After decompile: manually review and clean generated output (uncompyle6 sometimes
+emits syntactic artifacts for 3.10).</p>
+<h3 id="2d-write-from-spec-3-files">2d. Write from Spec (3 files)<a class="headerlink" href="#2d-write-from-spec-3-files" title="Permanent link">&para;</a></h3>
+<p>These are absent from both image and bytecode but are specified in SYSTEM_REPORT.md.
+Write clean, minimal implementations.</p>
+<p><strong><code>orchestrator/agents/document_agent.py</code></strong>
+- Class <code>DocumentAgent</code> with <code>async generate(state: ConversationState) -&gt; ConversationState</code>
+- Document types: <code>summary</code>, <code>executive_kpi</code>, <code>anomaly_digest</code>, <code>compliance_report</code>,
+  <code>energy_report</code>, <code>iaq_report</code>, <code>research_export</code>
+- Generates Markdown (always), HTML (optional), PDF/DOCX via <code>weasyprint</code>/<code>python-docx</code>
+  with graceful fallback if libraries unavailable
+- Triggered by intent <code>document</code> or via <code>DocumentAgent</code> call in response node
+- Saves output to <code>settings.EXPORTS_DIR</code>, returns download URL in response</p>
+<p><strong><code>orchestrator/services/persona_adapter.py</code></strong>
+- Class <code>PersonaAdapter</code> with <code>async adapt(response: str, persona: str, context: dict) -&gt; str</code>
+- 10 personas: <code>executive</code>, <code>researcher</code>, <code>occupant</code>, <code>sustainability_officer</code>,
+  <code>facility_manager</code>, <code>student</code>, <code>visitor</code>, <code>engineer</code>, <code>auditor</code>, <code>default</code>
+- Each persona has a system prompt fragment injected into an LLM call
+- Uses <code>llm_manager</code> for the reframing call; returns original if LLM unavailable
+- Called as last step before returning response in <code>_response_node</code></p>
+<p><strong><code>orchestrator/services/standards_engine.py</code></strong>
+- Class <code>StandardsEngine</code> with <code>check(readings: dict, standards: list[str]) -&gt; dict</code>
+- Pure deterministic logic — no LLM needed
+- 6 standards: ASHRAE 55, ASHRAE 62.1, WELL v2, BREEAM Hea 02, EN 15251, ISO 50001
+- Returns per-parameter PASS/FAIL with measured value, threshold, and margin
+- Integrated into <code>_analytics_node</code> for <code>compliance</code> intent
+- Also exposed as MCP tool <code>check_standards_batch</code></p>
+<hr />
+<h2 id="3-docker-composeyml-rewrite">3. docker-compose.yml Rewrite<a class="headerlink" href="#3-docker-composeyml-rewrite" title="Permanent link">&para;</a></h2>
+<h3 id="services-to-add">Services to add<a class="headerlink" href="#services-to-add" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Image/Build</th>
+<th>Port</th>
+<th>Volumes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>orchestrator</code></td>
+<td><code>build: ./orchestrator</code></td>
+<td>8000</td>
+<td><code>./data:/app/data:ro</code>, <code>./config:/app/config:ro</code>, <code>./outputs:/app/outputs</code></td>
+</tr>
+<tr>
+<td><code>redis</code></td>
+<td><code>redis:7-alpine</code></td>
+<td>6379</td>
+<td><code>redis-data:/data</code></td>
+</tr>
+<tr>
+<td><code>postgres-user-data</code></td>
+<td><code>postgres:15-alpine</code></td>
+<td>5433</td>
+<td><code>postgres-user-data:/var/lib/postgresql/data</code></td>
+</tr>
+<tr>
+<td><code>qdrant</code></td>
+<td><code>qdrant/qdrant:latest</code></td>
+<td>6333/6334</td>
+<td><code>qdrant-data:/qdrant/storage</code></td>
+</tr>
+<tr>
+<td><code>code-executor</code></td>
+<td><code>build: ./code-executor</code></td>
+<td>8002</td>
+<td>none (stateless)</td>
+</tr>
+<tr>
+<td><code>graphdb</code> (profile: <code>graphdb</code>)</td>
+<td><code>devmanenvision/graphdb:10.4.2</code></td>
+<td>7200</td>
+<td><code>graphdb-data:/opt/graphdb/home</code></td>
+</tr>
+<tr>
+<td><code>rag-service</code> (profile: <code>graphdb</code>)</td>
+<td><code>build: ./rag-service/graphdbRAG</code></td>
+<td>8001</td>
+<td><code>./bldg1/trial/dataset:/app/input:ro</code></td>
+</tr>
+<tr>
+<td><code>ollama</code> (profile: <code>local-llm</code>)</td>
+<td>existing image</td>
+<td>11435</td>
+<td><code>ollama-models:/usr/share/ollama/.ollama/models</code></td>
+</tr>
+<tr>
+<td><code>prometheus</code> (profile: <code>monitoring</code>)</td>
+<td><code>prom/prometheus</code></td>
+<td>9090</td>
+<td><code>./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro</code></td>
+</tr>
+<tr>
+<td><code>grafana</code> (profile: <code>monitoring</code>)</td>
+<td><code>grafana/grafana</code></td>
+<td>3002</td>
+<td><code>grafana-data:/var/lib/grafana</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="services-to-remove">Services to remove<a class="headerlink" href="#services-to-remove" title="Permanent link">&para;</a></h3>
+<p>All of the following are Rasa-era services no longer needed:
+<code>rasa</code>, <code>action_server</code>, <code>duckling_server</code>, <code>rasa-train</code>, <code>http_server</code>, <code>rasa-editor</code>,
+<code>decider-service</code>, <code>microservices</code></p>
+<h3 id="services-to-keep-unchanged">Services to keep (unchanged)<a class="headerlink" href="#services-to-keep-unchanged" title="Permanent link">&para;</a></h3>
+<p><code>mysql</code>, <code>jena-fuseki</code>, <code>fuseki-db</code>, <code>rasa-frontend</code> (React UI), <code>pgadmin</code></p>
+<h3 id="all-secrets-via-env-no-hardcoded-defaults-for-passwords">All secrets via <code>.env</code> — no hardcoded defaults for passwords<a class="headerlink" href="#all-secrets-via-env-no-hardcoded-defaults-for-passwords" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code>MYSQL_ROOT_PASSWORD, MYSQL_APP_PASSWORD, FUSEKI_ADMIN_PASSWORD,
+POSTGRES_USER_PASSWORD, SECRET_KEY, GRAPHDB_PASSWORD,
+PGADMIN_DEFAULT_PASSWORD
+</code></pre></div>
+<hr />
+<h2 id="4-wiring-the-3-written-files-into-workflowpy">4. Wiring the 3 Written Files Into workflow.py<a class="headerlink" href="#4-wiring-the-3-written-files-into-workflowpy" title="Permanent link">&para;</a></h2>
+<p><code>workflow.py</code> currently does NOT import <code>document_agent</code>, <code>persona_adapter</code>, or
+<code>standards_engine</code>. They must be wired in as follows:</p>
+<h3 id="document_agentpy">document_agent.py<a class="headerlink" href="#document_agentpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Import: <code>from orchestrator.agents.document_agent import DocumentAgent</code></li>
+<li>Add <code>self.document_agent = DocumentAgent()</code> in <code>__init__</code></li>
+<li>Add <code>workflow.add_node("document", self._document_node)</code> in <code>_build_graph()</code></li>
+<li>Add edge: <code>Dialogue → document</code> for intent <code>document</code></li>
+<li>Add <code>_document_node</code> method that calls <code>self.document_agent.generate(state)</code></li>
+</ul>
+<h3 id="persona_adapterpy">persona_adapter.py<a class="headerlink" href="#persona_adapterpy" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Import: <code>from orchestrator.services.persona_adapter import PersonaAdapter</code></li>
+<li>Add <code>self.persona_adapter = PersonaAdapter()</code> in <code>__init__</code></li>
+<li>In <code>_response_node</code>: after building the response text, call
+  <code>state["response"] = await self.persona_adapter.adapt(state["response"], persona, context)</code></li>
+</ul>
+<h3 id="standards_enginepy">standards_engine.py<a class="headerlink" href="#standards_enginepy" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Import: <code>from orchestrator.services.standards_engine import StandardsEngine</code></li>
+<li>Add <code>self.standards_engine = StandardsEngine()</code> in <code>__init__</code></li>
+<li>In <code>_analytics_node</code>: when <code>intent == "compliance"</code>, call
+  <code>standards_result = self.standards_engine.check(sql_data, requested_standards)</code>
+  and merge into the analytics result before passing to response</li>
+</ul>
+<hr />
+<h2 id="5-file-placement-map">5. File Placement Map<a class="headerlink" href="#5-file-placement-map" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code>OntoSage/
+├── orchestrator/
+│   ├── Dockerfile                     ← extracted from image
+│   ├── requirements.txt               ← extracted from image
+│   ├── __init__.py                    ← extracted
+│   ├── main.py                        ← extracted
+│   ├── workflow.py                    ← extracted + wiring additions
+│   ├── llm_manager.py                 ← extracted
+│   ├── auth_manager.py                ← extracted
+│   ├── redis_manager.py               ← extracted
+│   ├── postgres_manager.py            ← extracted
+│   ├── agents/
+│   │   ├── __init__.py                ← extracted
+│   │   ├── dialogue_agent.py          ← extracted
+│   │   ├── sparql_agent.py            ← extracted
+│   │   ├── sql_agent.py               ← extracted
+│   │   ├── analytics_agent.py         ← extracted
+│   │   ├── visualization_agent.py     ← extracted
+│   │   ├── planner_agent.py           ← extracted
+│   │   ├── report_agent.py            ← extracted
+│   │   ├── anomaly_agent.py           ← extracted
+│   │   ├── data_export_agent.py       ← extracted
+│   │   ├── semantic_ontology_agent.py ← extracted
+│   │   └── document_agent.py          ← WRITTEN from spec
+│   ├── services/
+│   │   ├── analytics_engine.py        ← extracted
+│   │   ├── self_correction_engine.py  ← extracted
+│   │   ├── smart_cache.py             ← extracted
+│   │   ├── response_cache.py          ← extracted
+│   │   ├── streaming_adapter.py       ← extracted
+│   │   ├── ws_streaming.py            ← extracted
+│   │   ├── reasoning_engine.py        ← extracted
+│   │   ├── i18n_service.py            ← extracted
+│   │   ├── agent_memory.py            ← extracted
+│   │   ├── multi_building_manager.py  ← extracted
+│   │   ├── hybrid_retrieval.py        ← extracted
+│   │   ├── ontology_detector.py       ← extracted
+│   │   ├── ontology_introspector.py   ← extracted
+│   │   ├── ontology_validator.py      ← extracted
+│   │   ├── database_adapter.py        ← extracted
+│   │   ├── database_schema_discovery.py ← extracted
+│   │   ├── plugin_registry.py         ← extracted
+│   │   ├── prompt_builder.py          ← extracted
+│   │   ├── context_manager.py         ← extracted
+│   │   ├── sparql_validator.py        ← extracted
+│   │   ├── circuit_breaker.py         ← DECOMPILED from pyc
+│   │   ├── logging_context.py         ← DECOMPILED from pyc
+│   │   ├── persona_adapter.py         ← WRITTEN from spec
+│   │   ├── standards_engine.py        ← WRITTEN from spec
+│   │   └── adapters/
+│   │       ├── __init__.py            ← extracted
+│   │       ├── mysql_adapter.py       ← extracted
+│   │       ├── postgresql_adapter.py  ← extracted
+│   │       └── registry.py            ← extracted
+│   └── middleware/
+│       ├── __init__.py                ← extracted
+│       └── rbac.py                    ← extracted
+├── shared/
+│   ├── __init__.py                    ← extracted
+│   ├── config.py                      ← extracted
+│   ├── models.py                      ← extracted
+│   ├── utils.py                       ← extracted
+│   ├── constants.py                   ← extracted
+│   └── structured_logger.py           ← extracted
+├── code-executor/
+│   ├── Dockerfile                     ← extracted from code-executor image
+│   ├── __init__.py                    ← extracted
+│   ├── main.py                        ← extracted
+│   └── sandbox.py                     ← extracted
+└── docker-compose.yml                 ← REWRITTEN (full clean replacement)
+</code></pre></div>
+<hr />
+<h2 id="6-verification-checklist">6. Verification Checklist<a class="headerlink" href="#6-verification-checklist" title="Permanent link">&para;</a></h2>
+<p>After all files are in place:</p>
+<ul class="task-list">
+<li class="task-list-item"><input type="checkbox" disabled/> <code>docker compose build orchestrator</code> completes without errors</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <code>docker compose build code-executor</code> completes without errors</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <code>docker compose up -d</code> (core stack) starts all services healthy</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <code>GET http://localhost:8000/health</code> returns <code>{"status": "ok"}</code></li>
+<li class="task-list-item"><input type="checkbox" disabled/> <code>GET http://localhost:8000/health/aggregate</code> shows all dependencies</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <code>POST http://localhost:8000/chat</code> with <code>{"message": "What is HVAC?"}</code> returns a response</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <code>POST http://localhost:8000/chat</code> with sensor query routes through SPARQL → SQL</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <code>POST http://localhost:8000/chat</code> with compliance intent invokes StandardsEngine</li>
+<li class="task-list-item"><input type="checkbox" disabled/> <code>POST http://localhost:8000/chat</code> with persona set applies PersonaAdapter</li>
+<li class="task-list-item"><input type="checkbox" disabled/> Frontend at <code>http://localhost:3000</code> connects to orchestrator</li>
+</ul>
+<hr />
+<h2 id="7-out-of-scope">7. Out of Scope<a class="headerlink" href="#7-out-of-scope" title="Permanent link">&para;</a></h2>
+<ul>
+<li>MCP server (separate service, not blocking orchestrator deployment)</li>
+<li>Prometheus/Grafana dashboards (profile-based, not blocking)</li>
+<li>Open WebUI integration (optional, deferred)</li>
+<li>InfluxDB/TimescaleDB adapters (Phase 9 per roadmap)</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+      
+      <nav class="md-footer__inner md-grid" aria-label="Footer" >
+        
+          
+          <a href="../../plans/2026-05-21-capability-semantic-routing-plan/" class="md-footer__link md-footer__link--prev" aria-label="Previous: Capability Semantic Routing">
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+            </div>
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Previous
+              </span>
+              <div class="md-ellipsis">
+                Capability Semantic Routing
+              </div>
+            </div>
+          </a>
+        
+        
+          
+          <a href="../2026-04-11-claude-config-design/" class="md-footer__link md-footer__link--next" aria-label="Next: Claude Config Design">
+            <div class="md-footer__title">
+              <span class="md-footer__direction">
+                Next
+              </span>
+              <div class="md-ellipsis">
+                Claude Config Design
+              </div>
+            </div>
+            <div class="md-footer__button md-icon">
+              
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 11v2h12l-5.5 5.5 1.42 1.42L19.84 12l-7.92-7.92L10.5 5.5 16 11z"/></svg>
+            </div>
+          </a>
+        
+      </nav>
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../../../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

@@ -1,0 +1,76 @@
+# OntoSage demo script — candidate questions (DRAFT, 2026-09-15)
+# Pass 1 (2026-09-15 03:3x): 19/28 demo-ready; swapped building-wide rankings for floor-scoped ones.
+# Each must answer correctly 3/3 first-pass through /v1 (Open WebUI) before it is kept.
+# Sources: regression probe first-pass cases, stakeholder run #1 PASS rows, re-asks that now pass.
+
+# ── Occupant ──────────────────────────────────────────────────────────────────
+What is the CO2 level in room 5.01 right now?
+Where's the coolest place to work on floor 5 right now?
+Is tap water free somewhere, or do I have to buy bottles?
+What is the nearest accessible toilet to room 3.10?
+
+# ── Lecturer / student ────────────────────────────────────────────────────────
+Is Room 1.06 ready for my class?
+Is Room1.06 free for the next two hours?
+Which space on Floor 3 has the best conditions for focused work this afternoon?
+Where can I work for three hours with power, good Wi-Fi and a low risk of noise?
+
+# ── Facility manager / operations ─────────────────────────────────────────────
+How many open work orders are there, and which are overdue?
+Which HVAC systems run outside normal hours, and is each exception approved?
+Which permits are open?
+Is the lift working?
+
+# ── Energy / sustainability ───────────────────────────────────────────────────
+Which floor used the most energy yesterday?
+can you provide energy saving suggestion?
+
+# ── Health & safety / fire ────────────────────────────────────────────────────
+Which fire safety assets are overdue or cannot be evidenced?
+Which hazard controls are overdue for test?
+Which refuge points are defective, and who owns them?
+
+# ── Researcher / data ─────────────────────────────────────────────────────────
+When was the CO2 sensor in Room 5.01 last calibrated?
+How many sensors are overdue for calibration?
+Give me a report on the CO2 in room 5.01 yesterday.
+
+# ── Visitor / wayfinding ──────────────────────────────────────────────────────
+What is this building and who runs it?
+Show me floor 3
+
+# ── Whole building (WB-01..22, 2026-09-15) ────────────────────────────────────
+Where's the coolest place to work in the building right now?
+Which room in the building is the quietest right now?
+Which room in the building has the best air quality right now?
+Which rooms in the building are the stuffiest right now?
+Which floor is the warmest right now?
+What is the average CO2 on each floor right now?
+Which floor has the lowest humidity right now?
+Which rooms in the building have the highest PM2.5 right now?
+What is the CO2 level in room 2.01 right now?
+
+# ── Plant and safety detail (added 2026-09-16, answered from new placeholder data) ──
+# Both were previously answered from the wrong source: doors from the energy meters, the
+# heating circuit from the patrol register. Each now reads its own records.
+Which shutters or doors fail open versus fail locked on power loss?
+What's the delta-T across the heating circuit, and is it healthy?
+
+# ── Asked by someone who has never seen this building (added 2026-09-16) ─────
+# None of these names a room, a floor or a sensor. Each one used to fail: the comfort
+# questions hit a 274-sensor refusal, the room count said the building keeps no such
+# record, and the week-on-week question compared two partial days. They are the strongest
+# material in the script because they are how a stakeholder actually asks.
+Is it stuffy anywhere in the building?
+Is there anywhere quiet I can work?
+How many rooms are on floor 2?
+How has the temperature on floor 3 changed over the last week?
+Compare this week's electricity use with last week.
+What is the average TVOC on floor 3 today?
+
+# ── Boundaries: the correct answer is a refusal or an honest absence ──────────
+Is the professor in her office?
+Can my manager see when I badge in and out?
+Open the windows on floor 3.
+What is the radiation level in the atrium?
+The toilet on floor 2 is leaking.

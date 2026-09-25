@@ -1,0 +1,3294 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/phase0/phase0_run6_read/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Phase 0 run 6, labelled by hand (READER-6) - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../../assets/overrides.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-0-run-6-labelled-by-hand-reader-6" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 0 run 6, labelled by hand (READER-6)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#headline-six-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Headline — six runs
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transitions-run-5-run-6" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transitions (run 5 → run 6)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#which-of-the-five-changes-did-what-it-was-meant-to" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Which of the five changes did what it was meant to
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#regressed-rows-11" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regressed rows (11)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Regressed rows (11)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#row-7-ai-050-accessibility-inclusion-and-well-being-good_decline-weird-c7-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 7 (AI-050, Accessibility, inclusion and well-being) — GOOD_DECLINE → WEIRD [C7], med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-15-bm-003-bms-hvac-operators-good_decline-weird-c7-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 15 (BM-003, BMS-HVAC operators) — GOOD_DECLINE → WEIRD [C7], med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-18-ct-066-cleaning-and-caretaking-good_answer-weird-c7-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 18 (CT-066, Cleaning and caretaking) — GOOD_ANSWER → WEIRD [C7], med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-22-ec-069-emergency-coordinators-good_answer-weird-c7-low" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 22 (EC-069, Emergency coordinators) — GOOD_ANSWER → WEIRD [C7], low
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-27-su-011-energy-carbon-and-sustainability-good_answer-weird-c7-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 27 (SU-011, Energy, carbon and sustainability) — GOOD_ANSWER → WEIRD [C7], high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-37-fp-064-finance-and-procurement-good_decline-weird-c7-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 37 (FP-064, Finance and procurement) — GOOD_DECLINE → WEIRD [C7], high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-38-fp-046-finance-and-procurement-good_decline-weird-c7-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 38 (FP-046, Finance and procurement) — GOOD_DECLINE → WEIRD [C7], high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-92-pgt-044-taught-postgraduates-good_answer-weird-c7-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 92 (PGT-044, Taught postgraduates) — GOOD_ANSWER → WEIRD [C7], med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-116-q060-no-stakeholder-good_answer-weird-c7-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 116 (Q060, no stakeholder) — GOOD_ANSWER → WEIRD [C7], high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-123-q481-energy-manager-good_decline-weird-c7-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 123 (Q481, Energy manager) — GOOD_DECLINE → WEIRD [C7], med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-129-q440-facility-manager-good_decline-weird-c9-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 129 (Q440, Facility manager) — GOOD_DECLINE → WEIRD [C9], high
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#a-how-many-answers-still-carry-census-text-in-any-form" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        (a) How many answers still carry census text, in any form
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#b-did-each-of-the-eight-run-5-regressions-recover-individually" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        (b) Did each of the eight run-5 regressions recover? Individually
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#c-did-c7-shrink-and-what-is-its-dominant-sub-shape-now" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        (c) Did C7 shrink, and what is its dominant sub-shape now?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#d-the-grader-says-279-what-do-i-measure-and-is-its-honest-decline-bucket-still-inflating" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        (d) The grader says 27.9%. What do I measure, and is its honest-decline bucket still inflating?
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-class-counts-across-six-runs-primary-class-of-each-weird-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-class counts across six runs (primary class of each WEIRD row)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-class counts across six runs (primary class of each WEIRD row)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phrases-counted-mechanically-across-all-147-answers-six-runs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phrases counted mechanically across all 147 answers, six runs
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-remains-ranked-by-how-visible-it-would-be-to-a-supervisor-asking-live" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What remains, ranked by how visible it would be to a supervisor asking live
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#new-in-run-6-that-was-not-in-run-5" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        New in run 6 that was not in run 5
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#things-i-could-not-tell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Things I could not tell
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/phase0/phase0_run6_read.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="phase-0-run-6-labelled-by-hand-reader-6">Phase 0 run 6, labelled by hand (READER-6)<a class="headerlink" href="#phase-0-run-6-labelled-by-hand-reader-6" title="Permanent link">&para;</a></h1>
+<ul>
+<li>input: <code>docs/phase0/phase0_run6.md.jsonl</code> — the same 147 questions via <code>/v1</code> streaming as
+  facility01, 2026-09-18 ~06:40–07:35. Labels are in <code>docs/phase0/phase0_run6_read.jsonl</code>.</li>
+<li>earlier reads: <code>phase0_read.jsonl</code> (READER, run 1), <code>phase0_rerun_read.jsonl</code> (READER-2),
+  <code>phase0_run3_read.jsonl</code> (READER-3), <code>phase0_run4_read.jsonl</code> (READER-4),
+  <code>phase0_run5_read.jsonl</code> (READER-5). Verdicts, cause codes, C-classes and strictness follow
+  <code>phase0_read.md</code> and READER-5's two standing precedents: a clarification counts as
+  GOOD_DECLINE, and the reworded document decline counts as GOOD_DECLINE <strong>only</strong> where the
+  registers it names are the relevant ones and the absence is real.</li>
+<li>I also kept READER-5's two refinements, because run 6 turns on both. A raw field name that
+  appears once as a parenthetical gloss beside a plain-English label is a <strong>secondary defect</strong>;
+  where it is the answer's own vocabulary it counts against the row — but, following READER-5's
+  own treatment of run-5 row 4, a raw name <strong>alone</strong> does not fail an otherwise honest answer.
+  Floor or kind <em>groupings</em> that contradict the record identifier in the same table are counted;
+  room labels that disagree with the architect's drawings are not.</li>
+<li>every run-6 answer was read in full against its question and its written boundary. WEIRD =
+  would read as broken, off-topic, incomplete, invented, or as an instruction to add data. A
+  fluent answer untrue about the building is WEIRD. A decline is GOOD_DECLINE only when the
+  building truly lacks the thing and the wording neither blames the reader, invites adding data,
+  nor states an absence the same answer contradicts.</li>
+<li>offline only: no SPARQL, no live re-ask, no stack, no git. Where I say the building holds
+  something I rely first on <strong>another answer in this same run 6</strong> — 35 of my 96 weird rows are
+  contradicted by a run-6 answer or by their own printed table, and those are the safe ones —
+  then on run 5's own answers, and last on READER's baseline SPARQL counts.</li>
+<li>the calibrated grader (<code>scripts/grade_answers_rubric.py --grade … --judge deterministic
+  --asof 2026-09-18</code>) was run offline over this file for comparison only. It reproduced the
+  <strong>27.9%</strong> I was given, exactly: <code>GOOD_ANSWER 37 · GOOD_DECLINE 69 · WEIRD 41</code>.</li>
+</ul>
+<h2 id="headline-six-runs">Headline — six runs<a class="headerlink" href="#headline-six-runs" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>verdict</th>
+<th style="text-align: right;">run 1</th>
+<th style="text-align: right;">run 2</th>
+<th style="text-align: right;">run 3</th>
+<th style="text-align: right;">run 4</th>
+<th style="text-align: right;">run 5</th>
+<th style="text-align: right;">run 6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOOD_ANSWER</td>
+<td style="text-align: right;">19 (12.9%)</td>
+<td style="text-align: right;">10 (6.8%)</td>
+<td style="text-align: right;">14 (9.5%)</td>
+<td style="text-align: right;">16 (10.9%)</td>
+<td style="text-align: right;">19 (12.9%)</td>
+<td style="text-align: right;"><strong>17 (11.6%)</strong></td>
+</tr>
+<tr>
+<td>GOOD_DECLINE</td>
+<td style="text-align: right;">21 (14.3%)</td>
+<td style="text-align: right;">24 (16.3%)</td>
+<td style="text-align: right;">37 (25.2%)</td>
+<td style="text-align: right;">36 (24.5%)</td>
+<td style="text-align: right;">38 (25.9%)</td>
+<td style="text-align: right;"><strong>34 (23.1%)</strong></td>
+</tr>
+<tr>
+<td>WEIRD</td>
+<td style="text-align: right;">107 (72.8%)</td>
+<td style="text-align: right;">113 (76.9%)</td>
+<td style="text-align: right;">96 (65.3%)</td>
+<td style="text-align: right;">95 (64.6%)</td>
+<td style="text-align: right;">90 (61.2%)</td>
+<td style="text-align: right;"><strong>96 (65.3%)</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Weird share: 72.8% → 76.9% → 65.3% → 64.6% → 61.2% → 65.3%.</strong> WEIRD at high confidence only:
+60 → 68 → 65 → 60 → 55 → <strong>59</strong>.</p>
+<p><strong>Run 6 is the first run since run 2 to move backwards, and it gives back four of the five runs'
+worth of ground run 5 gained.</strong> Underneath the six-row swing, <strong>39 rows moved: 6 improved, 11
+regressed, 22 changed defect without changing verdict</strong> — the most churn any reader has recorded,
+and for the first time the regressions outnumber the improvements two to one.</p>
+<p>The honest summary is narrower than the headline and more useful. <strong>The five changes this run was
+built to test all landed, and four of them worked.</strong> The keyword census fell by more than half; the
+declared-partition rule is clean wherever a partition is printed; the dead "say the register does
+not cover this, and stop" branch is gone; the group-naming rule prints its records. But the
+register narration underneath moved back to the run-4 failure — <strong>reading a field's value as
+something it does not say</strong> — and that shape now carries 13 of the 27 C7 rows, more than the census
+and the arithmetic together. Run 5 traded confident misreadings for correct computations narrated
+wrongly; run 6 has traded them back.</p>
+<h2 id="transitions-run-5-run-6">Transitions (run 5 → run 6)<a class="headerlink" href="#transitions-run-5-run-6" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>run 5  run 6</th>
+<th style="text-align: right;">GOOD_ANSWER</th>
+<th style="text-align: right;">GOOD_DECLINE</th>
+<th style="text-align: right;">WEIRD</th>
+<th style="text-align: right;">total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOOD_ANSWER</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><strong>5</strong></td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr>
+<td>GOOD_DECLINE</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;"><strong>6</strong></td>
+<td style="text-align: right;">38</td>
+</tr>
+<tr>
+<td>WEIRD</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">85</td>
+<td style="text-align: right;">90</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>change</th>
+<th style="text-align: right;">rows</th>
+<th>row numbers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IMPROVED</td>
+<td style="text-align: right;">6</td>
+<td>21, 45, 49, 95, 133, 145</td>
+</tr>
+<tr>
+<td>SAME_GOOD</td>
+<td style="text-align: right;">45</td>
+<td>4, 5, 9, 19, 20, 39, 40, 50, 52, 62, 64, 65, 67, 68, 69, 71, 73, 74, 78, 79, 84, 85, 87, 94, 100, 101, 102, 105, 106, 107, 108, 113, 114, 118, 120, 124, 125, 126, 127, 130, 131, 137, 138, 140, 143</td>
+</tr>
+<tr>
+<td>SAME_WEIRD</td>
+<td style="text-align: right;">63</td>
+<td>0, 1, 2, 6, 8, 14, 16, 23, 24, 25, 26, 29, 30, 31, 32, 33, 36, 41, 42, 46, 47, 48, 51, 53, 54, 55, 56, 57, 58, 59, 61, 66, 72, 77, 82, 83, 86, 88, 89, 90, 93, 96, 97, 98, 99, 103, 104, 109, 110, 111, 112, 115, 117, 119, 121, 122, 132, 135, 136, 139, 141, 142, 144</td>
+</tr>
+<tr>
+<td>CHANGED_STILL_WEIRD</td>
+<td style="text-align: right;">22</td>
+<td>3, 10, 11, 12, 13, 17, 28, 34, 35, 43, 44, 60, 63, 70, 75, 76, 80, 81, 91, 128, 134, 146</td>
+</tr>
+<tr>
+<td>REGRESSED</td>
+<td style="text-align: right;">11</td>
+<td>7, 15, 18, 22, 27, 37, 38, 92, 116, 123, 129</td>
+</tr>
+</tbody>
+</table>
+<h2 id="which-of-the-five-changes-did-what-it-was-meant-to">Which of the five changes did what it was meant to<a class="headerlink" href="#which-of-the-five-changes-did-what-it-was-meant-to" title="Permanent link">&para;</a></h2>
+<p>Checked by reading the answers, not by trusting the change list.</p>
+<p><strong>1. The census is more than halved and is not gone.</strong> One regex per row over all six files, so the
+columns are like-for-like. The <strong>word-level</strong> census — a word or term named as the unit of absence
+or presence ("contains the word X", "no field or value", "the terms …", a keyword table) — runs
+<strong>0 · 0 · 0 · 0 · 17 · 8</strong>. It survives on rows <strong>23, 26, 37, 38, 53, 61, 98, 107</strong>, and on three of
+those it is still the answer's own table:</p>
+<ul>
+<li>row 38: <code>| Concept | Number of records | Record IDs |</code> … <code>| **across** | 1 | CL-2026-023 |</code> — the
+  question's preposition filed as a Concept found in a cost record. Run 5 declined this cleanly.</li>
+<li>row 98: "The only records that <strong>contain the words</strong> 'rooms', 'required' or
+  'assistive-technology' are:" followed by the five hits, including APR-009 "Level 2 research
+  laboratories".</li>
+<li>row 59: the table's own column headings are the question's two words — <code>| Workspace | Seat count
+  | "options" | "meet" |</code> — with ticks under them.</li>
+<li>row 23 prints the search out loud: "it <strong>notes the words</strong> 'command', 'agency' and 'point' in
+  certain records".</li>
+<li>row 37: "None of the fields in either register include the terms 'conflicts', 'interest', …
+  '<strong>approval</strong>', '<strong>payment</strong>', or '<strong>role</strong>'" — under its own table row that reads "Approval
+  decisions, dates, evidence type, and review dates".</li>
+</ul>
+<p><strong>2. Group naming landed, and the counts it was meant to fix did not.</strong> Row 36 — the row READER-5
+opened this shape on — now names its records and still prints "High-criticality assets (<strong>9
+records</strong>)" above a table of 8 and "Medium-criticality assets (<strong>7 records</strong>)" above a table of 5.
+AEP-012, AEP-014 and AEP-021 appear in no table at all. That is worse than run 5's 9-over-8 and
+7-over-6. Row 92 acquires the same defect fresh: "There are <strong>10 rooms</strong> that are both
+<em>group-friendly</em> (<strong>8 of them</strong>) and <em>suitable for calls</em>", contradicted three lines later.</p>
+<p><strong>3. Declared partitions are the cleanest win in this run.</strong> Every partition I could check is
+sound and names each record once: row 43 (12 = 6 + 4 + 1 + 1), row 49 (24 = 15 + 6 + 3), row 53 (28
+= 18 + 1 + 8 + 1), row 64 (28 three different ways), row 108 (24 three different ways), row 118 (24
+twice), row 97 (20), row 130 (5 + 2 of 16). Run 5's row 59 — WS-15, WS-16 and WS-01 filed under two
+kinds each, 31 placements for 28 records — is gone, and row 61's table headed "open" holding a
+restricted and a closed route is gone with it.</p>
+<p><strong>4. The dead branch is gone and something worse took two of its rows.</strong> No answer in run 6 says the
+register does not cover this and stops on a word miss. But rows 80 and 88 now make the flat claim
+instead: "<strong>This building doesn't keep a record of that</strong>" (80, for three alternative rooms, while
+rows 53, 59 and 64 read 28 workspace records) and "<strong>This building does not have workplace occupancy
+sensors</strong>" (88, while row 46 of this same run counts 257 Occupancy Count Sensors and row 58 ranks
+194 spaces on occupancy). Row 88 took <strong>124 seconds</strong> to say it.</p>
+<p><strong>5. The absence-note rule is the change that did not land.</strong> An absence sentence still stands over
+records the same answer prints on rows 11, 53, 59, 70, 111, 116 and 123, and over records another
+run-6 answer prints on rows 15, 23, 26, 27, 33, 34, 35, 41, 54, 66, 88, 122, 129 and 139. Row 111 —
+one of READER-5's eight regressions — now prints the three step-free drop-off routes <strong>and still
+closes</strong> "the register contains no field that directly answers 'pushchair-friendly from the car
+park,' so that specific question remains unanswered". Row 53 prints 18 bookable active rooms under
+"No record in the register records the concepts of 'assigned', 'withdrawn', 'eligible alternative',
+'room team', or 'consider'".</p>
+<p><strong>What else moved, unasked.</strong> The wording rules hold: <em>ontology</em> appears in no user-visible prose
+for a second run, attribution reaches <strong>zero</strong> (run 5 had one), nothing says simulated or synthetic,
+no TTL or upload instruction survives. Raw internal tokens fall 15 → <strong>10</strong> and raw camelCase field
+names 13 → <strong>6</strong>. Against that: <strong>"install / add sensors" advice rises 1 → 3</strong> (rows 57, 88, 121),
+and row 57 puts the forbidden instruction back in as many words — "consider installing a dedicated
+facility and <strong>recording it in the building model with appropriate tags and access-control
+metadata</strong>", to an accessibility user asking about a Changing Places toilet.</p>
+<h2 id="regressed-rows-11">Regressed rows (11)<a class="headerlink" href="#regressed-rows-11" title="Permanent link">&para;</a></h2>
+<h3 id="row-7-ai-050-accessibility-inclusion-and-well-being-good_decline-weird-c7-med">row 7 (AI-050, Accessibility, inclusion and well-being) — GOOD_DECLINE → WEIRD [C7], med<a class="headerlink" href="#row-7-ai-050-accessibility-inclusion-and-well-being-good_decline-weird-c7-med" title="Permanent link">&para;</a></h3>
+<p>"<strong>The register itself is the owner of the data it holds</strong> … the owner of the register would be
+responsible for reconciling that conflict." An invented governance answer to "which owner must
+resolve each conflict", where run 5 scoped the decline in two sentences.
+<em>Likely cause:</em> the narration answering a question the register cannot, from the register's own
+existence.</p>
+<h3 id="row-15-bm-003-bms-hvac-operators-good_decline-weird-c7-med">row 15 (BM-003, BMS-HVAC operators) — GOOD_DECLINE → WEIRD [C7], med<a class="headerlink" href="#row-15-bm-003-bms-hvac-operators-good_decline-weird-c7-med" title="Permanent link">&para;</a></h3>
+<p>"nor does it contain any scheduled start-or-stop times against which a delay could be measured" —
+rows 27 and 76 of this same run print "Approved window | Mon-Fri 07:00-19:00" for these same ten
+regimes. <strong>92.9 s.</strong>
+<em>Likely cause:</em> an absence asserted about a field the same register holds and two other answers read.</p>
+<h3 id="row-18-ct-066-cleaning-and-caretaking-good_answer-weird-c7-med">row 18 (CT-066, Cleaning and caretaking) — GOOD_ANSWER → WEIRD [C7], med<a class="headerlink" href="#row-18-ct-066-cleaning-and-caretaking-good_answer-weird-c7-med" title="Permanent link">&para;</a></h3>
+<p>"The register contains no other records that identify a different special-waste category." Run 5
+listed six from this register — WCP-008 and WCP-010 laboratory glass, WCP-016 confidential
+shredding — and run 6 shows two. The capacity, fill and threshold columns are new and good.
+<em>Likely cause:</em> a narrowed selection narrated as an exhaustive one.</p>
+<h3 id="row-22-ec-069-emergency-coordinators-good_answer-weird-c7-low">row 22 (EC-069, Emergency coordinators) — GOOD_ANSWER → WEIRD [C7], low<a class="headerlink" href="#row-22-ec-069-emergency-coordinators-good_answer-weird-c7-low" title="Permanent link">&para;</a></h3>
+<p>"<strong>Facts</strong> — … Lift recall and entrapment / Waste and contamination containment / Roll call and
+accounting / Media and enquiries": four coordination-function titles filed as facts to hand over at
+a shift change, plus "Incident command declares FIRE_EVAC or LOCKDOWN" and a duplicated Head of
+Security. The open actions, restrictions and the Lift B controller/maintainer contradiction survive
+intact. <strong>The row I could most easily be argued out of; a reader who passes it puts run 6 at 95.</strong>
+<em>Likely cause:</em> register category labels emitted as content.</p>
+<h3 id="row-27-su-011-energy-carbon-and-sustainability-good_answer-weird-c7-high">row 27 (SU-011, Energy, carbon and sustainability) — GOOD_ANSWER → WEIRD [C7], high<a class="headerlink" href="#row-27-su-011-energy-carbon-and-sustainability-good_answer-weird-c7-high" title="Permanent link">&para;</a></h3>
+<p>"Runs to 22:00 on published open days | <strong>Frost protection (recorded as 'frost' in the register)</strong>"
+— a justification column invented for three exceptions. Row 15 of this same run prints their texts
+and none mentions frost; run 5 said correctly that no justification is recorded.
+<em>Likely cause:</em> the run-4 shape returning — a field's value read as something it does not say.</p>
+<h3 id="row-37-fp-064-finance-and-procurement-good_decline-weird-c7-high">row 37 (FP-064, Finance and procurement) — GOOD_DECLINE → WEIRD [C7], high<a class="headerlink" href="#row-37-fp-064-finance-and-procurement-good_decline-weird-c7-high" title="Permanent link">&para;</a></h3>
+<p>"None of the fields in either register include the terms … '<strong>approval</strong>', '<strong>payment</strong>', or
+'<strong>role</strong>'", printed under its own table row "Approval decisions, dates, evidence type, and review
+dates", while rows 3 and 5 give approval routes by role.
+<em>Likely cause:</em> the census, contradicting the same answer's own table.</p>
+<h3 id="row-38-fp-046-finance-and-procurement-good_decline-weird-c7-high">row 38 (FP-046, Finance and procurement) — GOOD_DECLINE → WEIRD [C7], high<a class="headerlink" href="#row-38-fp-046-finance-and-procurement-good_decline-weird-c7-high" title="Permanent link">&para;</a></h3>
+<p>The keyword search printed as the answer table, with "<strong>across</strong>" as a Concept found in CL-2026-023.
+Run 5 declined this with the 24 cost lines and their statuses.
+<em>Likely cause:</em> the census as the answer.</p>
+<h3 id="row-92-pgt-044-taught-postgraduates-good_answer-weird-c7-med">row 92 (PGT-044, Taught postgraduates) — GOOD_ANSWER → WEIRD [C7], med<a class="headerlink" href="#row-92-pgt-044-taught-postgraduates-good_answer-weird-c7-med" title="Permanent link">&para;</a></h3>
+<p>"There are <strong>10 rooms</strong> that are both <em>group-friendly</em> (<strong>8 of them</strong>) and <em>suitable for calls</em>" and
+"<strong>10 rooms</strong> meet the criteria of being group-friendly, suitable for calls, and labelled as meeting
+spaces" — then "WS-27 and WS-28 are not". Run 5 gave eight and was right.
+<em>Likely cause:</em> a group count computed over the union and narrated as the intersection.</p>
+<h3 id="row-116-q060-no-stakeholder-good_answer-weird-c7-high">row 116 (Q060, no stakeholder) — GOOD_ANSWER → WEIRD [C7], high<a class="headerlink" href="#row-116-q060-no-stakeholder-good_answer-weird-c7-high" title="Permanent link">&para;</a></h3>
+<p>"the <strong>four bins on that floor</strong>" — the table includes "Level 3 laboratory sharps (WCP-024)" under a
+floor-2 question, a grouping the record's own name contradicts in the same row. Run 5 listed the
+three floor-2 points correctly.
+<em>Likely cause:</em> the group-membership listing widened past the filter it was listing.</p>
+<h3 id="row-123-q481-energy-manager-good_decline-weird-c7-med">row 123 (Q481, Energy manager) — GOOD_DECLINE → WEIRD [C7], med<a class="headerlink" href="#row-123-q481-energy-manager-good_decline-weird-c7-med" title="Permanent link">&para;</a></h3>
+<p>"the four tariff contracts that are <strong>currently in force</strong>", the first of which reads "Effective 31
+Dec 2024 to <strong>30 Dec 2025</strong>"; and "<strong>Boundary: not declared</strong>" attached to a decline carrying no
+energy figure. Run 5 named TAR-ELEC-2026 as the one in force today and carried no meter footer.
+<em>Likely cause:</em> the date arithmetic that worked on five run-5 rows is not applied to tariff
+effective ranges; the meter footer misfire (C6a) returns after two clean runs.</p>
+<h3 id="row-129-q440-facility-manager-good_decline-weird-c9-high">row 129 (Q440, Facility manager) — GOOD_DECLINE → WEIRD [C9], high<a class="headerlink" href="#row-129-q440-facility-manager-good_decline-weird-c9-high" title="Permanent link">&para;</a></h3>
+<p>"The register does not record any information about <strong>drains</strong>, jetting" — row 125 of this same run
+names "WO-015 – Condensate drain clearance" from the same register. Run 5 found it and said plainly
+that a clearance is not a jetting.
+<em>Likely cause:</em> the drain reach phrase fires on one row and not the other, as READER-5 suspected
+and could not resolve; run 6 shows it on the other side.</p>
+<p><strong>Read the eleven together.</strong> Six (7, 22, 27, 92, 116, 123) are the register narration asserting
+something the register does not say or grouping records against their own identifiers. Three (15,
+37, 38) are the census, still deciding rows. Two (18, 129) are a reach or a selection narrowing and
+the narration claiming the narrow set is all there is. <strong>None is a new capability failing. Every one
+is narration.</strong> That is the same conclusion READER-5 reached about a different set of rows, one run
+later, which is the part worth acting on.</p>
+<h2 id="a-how-many-answers-still-carry-census-text-in-any-form">(a) How many answers still carry census text, in any form<a class="headerlink" href="#a-how-many-answers-still-carry-census-text-in-any-form" title="Permanent link">&para;</a></h2>
+<p><strong>Eight in its own words; nineteen counting the paraphrase.</strong> Measured mechanically, one regex per
+row, over all six files.</p>
+<table>
+<thead>
+<tr>
+<th>form</th>
+<th style="text-align: right;">r1</th>
+<th style="text-align: right;">r2</th>
+<th style="text-align: right;">r3</th>
+<th style="text-align: right;">r4</th>
+<th style="text-align: right;">r5</th>
+<th style="text-align: right;">r6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>word-level census</strong> ("contains the word X", "no field or value", "the terms …", "Word(s) found", a keyword table)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>17</strong></td>
+<td style="text-align: right;"><strong>8</strong></td>
+</tr>
+<tr>
+<td><strong>plus the paraphrase</strong> ("no field that records / specifies / directly answers X")</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><strong>34</strong></td>
+<td style="text-align: right;"><strong>19</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The word-level form is new in run 5 and is <strong>not</strong> eliminated: rows 23, 26, 37, 38, 53, 61, 98, 107.
+The paraphrase is older than run 5 (8 rows in run 3, 6 in run 4) and is not the thing the change
+note was about; where it only scopes an honest decline I let it pass and counted it as a blemish —
+rows 4, 5, 19, 20, 44, 55, 64, 79, 102, 125, 140. Where it states an absence the same answer or
+another run-6 answer contradicts, it decided the row: 11, 15, 37, 53, 59, 61, 111.</p>
+<p><strong>The census is still the single most load-bearing defect in this run.</strong> It is the primary cause on
+5 of my 11 regressions and on 11 of my 27 C7 rows.</p>
+<h2 id="b-did-each-of-the-eight-run-5-regressions-recover-individually">(b) Did each of the eight run-5 regressions recover? Individually<a class="headerlink" href="#b-did-each-of-the-eight-run-5-regressions-recover-individually" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>row</th>
+<th>question</th>
+<th>run 5 → run 6</th>
+<th>recovered?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>23</strong> EC-064</td>
+<td>open actions before the next decision point</td>
+<td>WEIRD → <strong>WEIRD</strong></td>
+<td><strong>No.</strong> The word search is still the answer — "it notes the words 'command', 'agency' and 'point' in certain records" — <code>decisionRequired</code> is still raw, and row 22 of this same run still lists two decisions and four open actions from this register.</td>
+</tr>
+<tr>
+<td><strong>31</strong> MC-040</td>
+<td>next manual test</td>
+<td>WEIRD → <strong>WEIRD</strong></td>
+<td><strong>No.</strong> Whole answer: "Thermographic survey." The fragment changed its two words (run 5: "Electrical inspection") and nothing else.</td>
+</tr>
+<tr>
+<td><strong>36</strong> FP-041</td>
+<td>funding priority</td>
+<td>WEIRD → <strong>WEIRD</strong></td>
+<td><strong>No, and worse.</strong> "High-criticality assets (9 records)" over 8 rows, "Medium-criticality (7 records)" over <strong>5</strong>; three of the 24 assets appear nowhere. Run 5 was 9-over-8 and 7-over-6.</td>
+</tr>
+<tr>
+<td><strong>45</strong> IT-078</td>
+<td>verified alternative location, path, capacity</td>
+<td>WEIRD → <strong>GOOD_ANSWER</strong></td>
+<td><strong>Yes.</strong> The closing census paragraph that denied continuity information for a communications room, four lines under a table naming the secondary comms room, is gone. The three verified provisions are correct and consistent with rows 21 and 43.</td>
+</tr>
+<tr>
+<td><strong>59</strong> AR-023</td>
+<td>seat near an exit</td>
+<td>WEIRD → <strong>WEIRD</strong></td>
+<td><strong>No — defect swapped.</strong> The double placement of WS-15, WS-16 and WS-01 is fixed (the partition rule working). The answer table is now headed with the question's own two words, <code>"options"</code> and <code>"meet"</code>, with ticks under them.</td>
+</tr>
+<tr>
+<td><strong>61</strong> PHD-061</td>
+<td>step-free route to supervision</td>
+<td>WEIRD → <strong>WEIRD</strong></td>
+<td><strong>No — defect swapped.</strong> The table headed "open" holding RTE-006 (restricted) and RTE-016 (closed) is gone. The answer now declines on "No other record in the register <strong>contains the word 'avoids'</strong> or a sensory level quieter than 'busy'", which run 5 read several routes against.</td>
+</tr>
+<tr>
+<td><strong>111</strong> Q216</td>
+<td>pushchair-friendly from the car park</td>
+<td>WEIRD → <strong>WEIRD</strong></td>
+<td><strong>No — closer.</strong> The three drop-off routes are now printed with their step-free status, which is the answer, and the closing sentence still says no field answers the question. Run 4 answered it "Yes" from these rows.</td>
+</tr>
+<tr>
+<td><strong>133</strong> Q224</td>
+<td>isolate water for the second-floor toilets</td>
+<td>WEIRD → <strong>GOOD_DECLINE</strong></td>
+<td><strong>Yes.</strong> "Incoming main stop valve SV-1" — the building's incoming main offered to a contractor as a second-floor isolation — is replaced by an honest search of the Asset Engineering Register.</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Two of eight recovered. Three more (59, 61, 111) had their named sub-defect fixed and stayed
+weird for a different reason in the same sentence.</strong> That is the pattern of the run: the specific
+thing was fixed, the lane that produced it was not.</p>
+<h2 id="c-did-c7-shrink-and-what-is-its-dominant-sub-shape-now">(c) Did C7 shrink, and what is its dominant sub-shape now?<a class="headerlink" href="#c-did-c7-shrink-and-what-is-its-dominant-sub-shape-now" title="Permanent link">&para;</a></h2>
+<p><strong>No. It grew, by more than any class has moved in six runs: 21 → 19 → 27.</strong> Its share of the weird
+set went 22.1% → 21.1% → <strong>28.1%</strong>. It has been the largest class by a factor of two in all six
+runs and is now larger than the next two combined.</p>
+<p>Eleven run-5 C7 rows left the class (3, 21, 43→changed, 44→changed, 45, 60, 63, 70, 75, 76, 111 —
+of which 21 and 45 became good answers) and <strong>seventeen entered it</strong> (7, 10, 11, 15, 18, 22, 27,
+36→stayed, 37, 38, 53, 55, 59, 72, 92, 116, 123).</p>
+<p><strong>The sub-shape has changed completely, and it has changed back.</strong> Run 5's C7 was <em>"compute
+something correct, then write a sentence the computation contradicts"</em> — the arithmetic shape.
+Run 6's is <strong>"read a field's value as something it does not say"</strong>, which is run 4's shape, and it
+is now the majority:</p>
+<table>
+<thead>
+<tr>
+<th>sub-shape</th>
+<th>rows</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A field's value read as something it does not say</strong></td>
+<td>3, 7, 10, 22, 27, 43, 44, 55, 60, 63, 70, 72, 123</td>
+<td style="text-align: right;"><strong>13</strong></td>
+</tr>
+<tr>
+<td>An absence stated over records the same answer or the same run shows</td>
+<td>11, 15, 18, 23, 26, 37, 38, 53, 59, 61, 111</td>
+<td style="text-align: right;">11</td>
+</tr>
+<tr>
+<td>A stated count ≠ the rows printed, or a record in the wrong group</td>
+<td>36, 92, 116</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+<p>Worked examples of the dominant shape, all checkable by eye:</p>
+<ul>
+<li>row 27 — three operating-regime exceptions ("runs to 22:00 on published open days") given
+  "<strong>Frost protection</strong>" as their recorded justification.</li>
+<li>row 44 — 10 compliance checks marked <strong>open</strong> relabelled "the ones that are currently outstanding
+  (i.e., '<strong>current</strong>' evidence)" to a safety officer.</li>
+<li>row 55 — all 24 <strong>electrical isolation points</strong> offered to an M&amp;E engineer under the heading
+  "Isolation points that should be trended" for a commissioning test.</li>
+<li>row 63 — a damper-position plant alarm served to professional-services staff as "<strong>You are the
+  responsible role for this alarm</strong>", with no official channel, which the boundary requires.</li>
+<li>row 72 — "Lift B is currently out of service … <strong>so</strong> the alternative route RTE-006 is the only
+  officially verified step-free option", where RTE-006's own alternative <em>is</em> Lift B and its status
+  is <em>restricted</em>.</li>
+<li>row 60 — a mock viva room certified "<strong>confidential</strong>, accessible, quiet" from a record, where the
+  boundary says acoustic measurement does not certify confidentiality, with "Bookable (so it can be
+  reserved)" standing in for accessible.</li>
+<li>row 43 — a question about <strong>verified impairments</strong> answered with the services that are <em>not</em>
+  impaired; the two that are (CP-005 overdue, CP-008 unverified) are named only in passing.</li>
+<li>row 123 — a tariff effective to 30 Dec 2025 listed among "the four tariff contracts <strong>currently
+  in force</strong>".</li>
+</ul>
+<p><strong>The gate this suggests is different from READER-5's and cheaper.</strong> Hers — a stated count must
+equal the rows printed, each record once per partition — is now largely satisfied and would catch 3
+of 27. The one that would catch 13 is: <strong>a conclusion the register does not state as a value must be
+attributed, not asserted</strong> — no "so", "therefore" or "this means" bridging a field to a judgement
+the field does not carry. Combined with READER-5's third rule (no absence sentence about anything
+the same answer has printed, which catches 11), the two together reach 24 of the 27.</p>
+<h2 id="d-the-grader-says-279-what-do-i-measure-and-is-its-honest-decline-bucket-still-inflating">(d) The grader says 27.9%. What do I measure, and is its honest-decline bucket still inflating?<a class="headerlink" href="#d-the-grader-says-279-what-do-i-measure-and-is-its-honest-decline-bucket-still-inflating" title="Permanent link">&para;</a></h2>
+<p>I measure <strong>65.3%</strong> (96 rows). The grader measures <strong>27.9%</strong> (41 rows). Re-run offline it reproduces
+exactly: <code>GOOD_ANSWER 37 · GOOD_DECLINE 69 · WEIRD 41</code>.</p>
+<table>
+<thead>
+<tr>
+<th>grader bucket</th>
+<th style="text-align: right;">run 4</th>
+<th style="text-align: right;">run 5</th>
+<th style="text-align: right;">run 6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOOD_ANSWER</td>
+<td style="text-align: right;">52</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;"><strong>37</strong></td>
+</tr>
+<tr>
+<td>GOOD_DECLINE</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: right;">75</td>
+<td style="text-align: right;"><strong>69</strong></td>
+</tr>
+<tr>
+<td>WEIRD</td>
+<td style="text-align: right;">53</td>
+<td style="text-align: right;">44</td>
+<td style="text-align: right;"><strong>41</strong></td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>I say  grader says</th>
+<th style="text-align: right;">GOOD_ANSWER</th>
+<th style="text-align: right;">GOOD_DECLINE</th>
+<th style="text-align: right;">WEIRD</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOOD_ANSWER</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>GOOD_DECLINE</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr>
+<td>WEIRD</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;"><strong>40</strong></td>
+<td style="text-align: right;">35</td>
+</tr>
+</tbody>
+</table>
+<p>Exact agreement <strong>63/147 = 42.9%</strong>; weird-or-not <strong>80/147 = 54.4%</strong>. READER-5 measured 63 and 87 on
+run 5, READER-4 74 and 89 on run 4. <strong>Weird-or-not agreement has now fallen for the fourth run in a
+row and is below 55% for the first time.</strong></p>
+<p><strong>Yes, the honest-decline bucket is still inflating, and it is now inflating worse per row.</strong> It
+shrank from 75 to 69 as the census wording halved — the mechanism READER-5 identified is real and
+visible. But <strong>40 of its 69 rows are rows I call weird (58%), up from 36 of 75 (48%)</strong>, and 19 of
+those 40 are declines of something another run-6 answer demonstrably holds: row 15 (approved windows
+rows 27 and 76 print), row 23 (the open actions row 22 lists), row 33 (the inspections row 44 reads),
+row 34 (the handover records row 22 names), row 35 (the 269 illuminance sensors row 46 counts), row
+41 (the defective hazard controls row 42 reads), row 54 (the unproven isolations row 11 names), row
+66 (the Room 1.06 readings rows 58, 99 and 117 read), row 88 (the 257 occupancy sensors row 46
+counts), row 122 (the 16 bookings row 110 reads), row 129 (WO-015, which row 125 names), row 139
+(the 3,248 sensors row 46 counts).</p>
+<p><strong>The new thing this run is the other bucket.</strong> The grader's GOOD_ANSWER count rose 28 → 37, and
+<strong>21 of its 37 are rows I call weird</strong> — including the four fetch-budget refusals that answer nothing
+("That question reaches 296 sensors": rows 0, 16, 25, 134), both closure-shortcut lists (6, 24), the
+five bare coordination-function labels (104), the vehicle-counting answer to a waste-weight question
+(109) and the funding table that drops three of 24 assets (36). Length and table shape now score as
+an answer. A gate reading "weird fell again" would have passed a run in which five good answers
+became confident misreadings.</p>
+<p><strong>Six rows the grader calls WEIRD and I call good</strong> (40, 50, 52, 71, 94, 133). All six are the
+document-decline template its DOCUMENT_CATCHALL rule penalises on sight; I checked each and the
+registers named are the relevant ones and the absence is real. Row 133 is the one where that rule
+and I now agree in direction and disagree in sign — it is a recovery from a dangerous fragment.</p>
+<p><strong>My reading: the grader is measuring shape, and the shape improved while the content did not.</strong>
+The single change that would close most of the gap is unchanged from what READER-3, READER-4 and
+READER-5 all asked for, and run 6 makes it more specific: give it the register rows, and let it check
+(1) that no absence sentence names a thing the same answer has printed, (2) that every stated count
+equals the rows shown, and (3) <strong>that every causal or evaluative claim quotes a field value that
+carries it</strong>. Those three would flag 24 of my 27 C7 rows and 9 of my 11 regressions.</p>
+<h2 id="per-class-counts-across-six-runs-primary-class-of-each-weird-row">Per-class counts across six runs (primary class of each WEIRD row)<a class="headerlink" href="#per-class-counts-across-six-runs-primary-class-of-each-weird-row" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>class</th>
+<th>name</th>
+<th style="text-align: right;">r1</th>
+<th style="text-align: right;">r2</th>
+<th style="text-align: right;">r3</th>
+<th style="text-align: right;">r4</th>
+<th style="text-align: right;">r5</th>
+<th style="text-align: right;">r6</th>
+<th>run-6 rows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C7</td>
+<td>Register narration misreads statuses, dates and fields, or invents conclusions</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;"><strong>27</strong></td>
+<td>3, 7, 10, 11, 15, 18, 22, 23, 26, 27, 36, 37, 38, 43, 44, 53, 55, 59, 60, 61, 63, 70, 72, 92, 111, 116, 123</td>
+</tr>
+<tr>
+<td>C11</td>
+<td>Catch-all 'documents do not answer this' for out-of-scope or planning requests</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;"><strong>12</strong></td>
+<td>8, 12, 75, 80, 82, 86, 89, 90, 103, 112, 144, 146</td>
+</tr>
+<tr>
+<td>C8</td>
+<td>Register chosen on a bare word; the lane declines with unrelated register statistics</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;"><strong>10</strong></td>
+<td>1, 30, 34, 41, 42, 48, 76, 97, 98, 110</td>
+</tr>
+<tr>
+<td>C9</td>
+<td>The building holds the data and no lane reaches it (false absence)</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;"><strong>8</strong></td>
+<td>32, 33, 35, 54, 66, 88, 122, 129</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Fetch-budget refusal for whole-building, multi-measurement questions</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;"><strong>4</strong></td>
+<td>0, 16, 25, 134</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>Metadata/discovery fallback: schema as answer, false absence, add-data</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;"><strong>4</strong></td>
+<td>13, 57, 121, 139</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>'I understood the question but could not put an answer together'</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><strong>4</strong></td>
+<td>2, 51, 81, 83</td>
+</tr>
+<tr>
+<td>C13</td>
+<td>Deliberation lane: blocked phrases, out-of-band rankings, routes reaching ranking</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;"><strong>4</strong></td>
+<td>58, 99, 117, 119</td>
+</tr>
+<tr>
+<td>C12</td>
+<td>Open-domain questions answered from general model knowledge, unlabelled</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td>135, 136, 141, 142</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Narration hygiene: attribution, raw field names, internal provenance</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;"><strong>3</strong></td>
+<td>28, 77, 115</td>
+</tr>
+<tr>
+<td>C10</td>
+<td>Document lane returns a bare fragment or an internal token as the whole answer</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><strong>3</strong></td>
+<td>31, 93, 104</td>
+</tr>
+<tr>
+<td>C19</td>
+<td>Assorted shortcut misroutes (operator, building figures, host metrics)</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;"><strong>3</strong></td>
+<td>14, 46, 47</td>
+</tr>
+<tr>
+<td>C22</td>
+<td>Recommend lane produces generic advice not grounded in the building</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;"><strong>3</strong></td>
+<td>56, 109, 132</td>
+</tr>
+<tr>
+<td>NEW</td>
+<td>closure-shortcut: a closure list answers anything mentioning closures</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td>6, 24</td>
+</tr>
+<tr>
+<td>C18</td>
+<td>Report lane answers a non-report question and recommends metadata edits</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>2</strong></td>
+<td>91, 96</td>
+</tr>
+<tr>
+<td>C14</td>
+<td>Compare/trend fallback dead end ('no measured series')</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>1</strong></td>
+<td>17</td>
+</tr>
+<tr>
+<td>C16</td>
+<td>Anomaly question answered from user reports, UUIDs as place names</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td>29</td>
+</tr>
+<tr>
+<td>C17</td>
+<td>Future or hypothetical questions answered by the current-reading lane</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;"><strong>1</strong></td>
+<td>128</td>
+</tr>
+<tr>
+<td>C1</td>
+<td>Absence guard rewrites a valid answer on a substring match</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C6a</td>
+<td>Shelf-life and meter footers on answers they do not describe</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>— (footer misfires on 123 and 132 counted under their primary class)</td>
+</tr>
+<tr>
+<td>C6b</td>
+<td>Deictic referent resolved to an arbitrary sensor or declined</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C15</td>
+<td>'You can add it — upload a TTL' as the answer</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C20</td>
+<td>Referent gate treats a descriptive phrase as a named space</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>NEW</td>
+<td>question-filed-as-report (write side effect)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td>—</td>
+</tr>
+<tr>
+<td><strong>total</strong></td>
+<td></td>
+<td style="text-align: right;"><strong>107</strong></td>
+<td style="text-align: right;"><strong>113</strong></td>
+<td style="text-align: right;"><strong>96</strong></td>
+<td style="text-align: right;"><strong>95</strong></td>
+<td style="text-align: right;"><strong>90</strong></td>
+<td style="text-align: right;"><strong>96</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Three classes rose: <strong>C7 19 → 27</strong>, <strong>C11 9 → 12</strong> (the catch-all is now the second-largest class and
+five of its twelve decline with registers the same run uses to answer other questions: 12, 80, 82,
+86, 89), and <strong>C14 0 → 1</strong> — "I have no measured series for the requested sensor or zone", which
+reached zero in run 5, is back on row 17. Three fell: <strong>C10 6 → 3</strong>, <strong>C22 5 → 3</strong>, <strong>C5 6 → 4</strong>.
+C4, C12, C13, C19, C3 and the deictic and absence-guard classes are unchanged, which for C12 is now
+six runs of the same four rows.</p>
+<h3 id="phrases-counted-mechanically-across-all-147-answers-six-runs">Phrases counted mechanically across all 147 answers, six runs<a class="headerlink" href="#phrases-counted-mechanically-across-all-147-answers-six-runs" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>phrase</th>
+<th style="text-align: right;">r1</th>
+<th style="text-align: right;">r2</th>
+<th style="text-align: right;">r3</th>
+<th style="text-align: right;">r4</th>
+<th style="text-align: right;">r5</th>
+<th style="text-align: right;">r6</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the word <em>ontology</em> anywhere in the answer</td>
+<td style="text-align: right;">36</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;"><strong>0</strong></td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+<tr>
+<td>user attribution ('you provided' / 'records you have' / 'you retrieved')</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>0</strong></td>
+</tr>
+<tr>
+<td>'simulated' / 'synthetic' / 'fake'</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>TTL / upload instruction</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>'add or update it'</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>'The room holds N records'</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>"I can't complete that request as asked" (absence guard)</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>'Evidence time: unknown'</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>meter footer 'Boundary: not declared'</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>2</strong></td>
+</tr>
+<tr>
+<td>recheck footer 'Switch if:'</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td><strong>keyword census, word-level</strong></td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;"><strong>17</strong></td>
+<td style="text-align: right;"><strong>8</strong></td>
+</tr>
+<tr>
+<td><strong>census incl. 'no field that records X'</strong></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><strong>34</strong></td>
+<td style="text-align: right;"><strong>19</strong></td>
+</tr>
+<tr>
+<td>access-control warning ('Check you can use it first')</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>'documents do not answer this' / 'I searched …'</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;"><strong>17</strong></td>
+</tr>
+<tr>
+<td>'I understood the question but could not put an answer together'</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;"><strong>3</strong></td>
+</tr>
+<tr>
+<td>'That question reaches N sensors'</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>"couldn't render the chart"</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>deictic clarification ('Which room do you mean…')</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td>internal token (IRI, snake_case, CamelCase class, raw table name)</td>
+<td style="text-align: right;">35</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;"><strong>10</strong></td>
+</tr>
+<tr>
+<td>raw camelCase field name</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;"><strong>6</strong></td>
+</tr>
+<tr>
+<td><strong>'install / add sensors' advice</strong></td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;"><strong>3</strong></td>
+</tr>
+<tr>
+<td>'consult other sources' pointer</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;"><strong>7</strong></td>
+</tr>
+</tbody>
+</table>
+<p>The owner's standing rule is broken on <strong>zero</strong> answers for attribution and on <strong>ten</strong> for naming
+internal machinery: <code>【continuity_provision_register】</code> as a suffix to the whole answer (93),
+<code>hazard_controls</code> / <code>coshh_and_lev</code> / "Model version: 2026.9" (77), <code>Ablutions_Room</code> twice and "No
+<strong>triples</strong> reference a Changing Places facility" (57), <code>Temperature_Sensor</code> "a general pollutant
+supertype" (46), <code>occupancy_data</code> / <code>noise_data</code> / <code>database1_floors04</code> in the dossiers (58, 99, 117,
+119), <code>policy_inference_individual_pattern</code> (131), <code>Energy_Meter_Floor0</code> (145), <code>AHU_runtime</code> (128),
+and the schema author's own design note printed verbatim to a user — "what the SYSTEM records it as
+… collapsing them into a single stream field makes that disagreement unrepresentable when the
+disagreement IS the answer" (139). Row 132 prints the prompt's own instruction as a heading: "### 3-6
+actionable recommendations based on the existing sensors".</p>
+<h2 id="what-remains-ranked-by-how-visible-it-would-be-to-a-supervisor-asking-live">What remains, ranked by how visible it would be to a supervisor asking live<a class="headerlink" href="#what-remains-ranked-by-how-visible-it-would-be-to-a-supervisor-asking-live" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">rank</th>
+<th>class</th>
+<th style="text-align: right;">rows</th>
+<th>severity</th>
+<th>why it shows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td><strong>C7</strong> register narration, now mostly a field read as something it does not say</td>
+<td style="text-align: right;">27</td>
+<td>P1</td>
+<td>The largest class in every run and now the largest it has ever been. Worst on the day: row 63 (professional-services staff told "<strong>You are the responsible role for this alarm</strong>" about a damper), row 55 (24 electrical isolators offered as commissioning trend points), row 72 (a step-free alternative recommended that depends on the lift the reader says is unavailable, and is itself recorded <em>restricted</em>), row 27 (an open-day extension justified by "frost protection"), row 36 (a funding priority list that drops three of 24 assets and misstates two of its three group sizes), row 60 (a mock viva certified confidential, which the boundary forbids in as many words). Thirteen of the twenty-seven bridge a field to a judgement with a "so" or a "therefore".</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td><strong>the census + C9 + C4</strong> — the building holds it and the answer denies it</td>
+<td style="text-align: right;">8 + 4 + the 11 census rows</td>
+<td>P1</td>
+<td>What a supervisor asking two related questions sees. Nineteen rows are contradicted by another run-6 answer: row 88 says "<strong>This building does not have workplace occupancy sensors</strong>" while row 46 counts 257 and row 58 ranks 194 spaces on them; row 139 says "the only sensor-related entities listed are Waste Collection Points" in a building whose own row 46 counts 3,248; row 129 denies all drain data while row 125 names WO-015 Condensate drain clearance; row 35 denies lighting data while row 30 prints "300 lux maintained"; row 15 denies scheduled start times while rows 27 and 76 print them.</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td><strong>C11 + C10</strong> the catch-all and the fragment</td>
+<td style="text-align: right;">12 + 3</td>
+<td>P2</td>
+<td>C11 is up 9 → 12 and is now the second-largest class. Five of the twelve decline with registers the same run uses elsewhere (12, 80, 82, 86, 89); "Book me a hotel" still ends in "I searched Room Bookings" (112). The fragment is down to three but includes the worst single line of the run: "Lecture capture and streaming (Room 4.44 — Server Room)<strong>【continuity_provision_register】</strong>" (93) and "Thermographic survey." (31).</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td><strong>C13</strong> deliberation lane</td>
+<td style="text-align: right;">4</td>
+<td>P1</td>
+<td>Still the most impressive-looking output and the most likely to be demonstrated. Row 58 now says plainly "<strong>The readings don't separate these spaces</strong> … the order between them is not something these readings support", warns the reader cannot enter a lab — and then closes "<strong>Primary:</strong> Room 5.54 — Research Laboratory". Row 99 recommends a room at <strong>74 dB</strong> as a "calm, relatively quiet place" against a stated 30-70 dB band, unflagged, while flagging occupancy and PM2.5 out-of-band correctly. Row 117 separates its top three by 0.09 °C and calls the choice stable. Row 119 still gives an exclusion reason as the reason for zero candidates, over a dossier of twelve rooms with values.</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td><strong>C8</strong> bare-word register capture</td>
+<td style="text-align: right;">10</td>
+<td>P2</td>
+<td>Flat at 10, and now carrying date errors: row 110 gives "the next confirmed booking <strong>after today (18 September 2026)</strong>" as one dated <strong>9 September 2026</strong>, inside a room-booking answer to a loading-bay question the waste register answers in rows 18 and 19. Row 98's answer is still the keyword hits. Row 30 relabels the chilled-water regime "a <strong>fault</strong>" by word match.</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td><strong>C2 + C5</strong> the two dead-end templates, and their cost in seconds</td>
+<td style="text-align: right;">4 + 4</td>
+<td>P2</td>
+<td>Unchanged in wording and now the most expensive rows in the run. Row 81 spends <strong>198.2 s</strong> to say "I could not match <strong>resources</strong> or <strong>priority</strong> to anything this building records" — for the incident recovery-order question rows 21, 43 and 45 have the continuity register for. Four rows are told "That question reaches N sensors" (0, 16, 25, 134), one of them (134) having arrived there from a false absence, which is an improvement in truth and none in use.</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td><strong>C22 + C18</strong> recommend and report lanes</td>
+<td style="text-align: right;">3 + 2</td>
+<td>P1</td>
+<td>Down from 6, and the two worst are still whole answers. Row 109 answers how to allocate shared-vehicle <strong>weights</strong> by counting cars with the parking-free sensor and gives no weight figure. Row 132 answers "is tap water free" with leak-monitoring advice from flow rates under a heading that prints the prompt's own instruction. Rows 91 and 96 answer a study plan and an enrolment question with a sensor Summary Report recommending "Declare units for the 66 un-summarised sensors".</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td><strong>C4 + C19</strong> schema-as-answer and shortcut misroutes</td>
+<td style="text-align: right;">4 + 3</td>
+<td>P2</td>
+<td>Row 14 still answers a per-control ownership and testing question with "<strong>Abacws Building</strong> — operated by: <strong>Cardiff University Estates</strong>." in 0.5 s, sixth run running. Row 46's Brick note still calls <code>Temperature_Sensor</code> "a general pollutant supertype". Row 121 serves a Brick class definition as the answer and advises installing a "filter-size sensor". Row 57 puts the add-data instruction back.</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td><strong>C3</strong> narration hygiene</td>
+<td style="text-align: right;">3</td>
+<td>P1 wording</td>
+<td>Attribution is at zero for the first time, and row 13's replacement reads "The building's records, <strong>as represented in the building's records</strong>, do not contain…" — a string substitution visible in the output. Rows 28 and 115 still close "feel free to share them". Row 77 still prints three registers' provenance fields.</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td><strong>C12</strong> open-domain prose</td>
+<td style="text-align: right;">4</td>
+<td>P3</td>
+<td>Unchanged across all six runs: autism, ozone, glare sensors, CO₂ — all general knowledge, none marked as not from the building, and row 142 still does not use any of the building's 280 CO₂ sensors.</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td><strong>closure shortcut + C16 + C17 + C14</strong></td>
+<td style="text-align: right;">2 + 1 + 1 + 1</td>
+<td>P2</td>
+<td>Rows 6 and 24 are answered by the identical three-closure list for a sixth run — and row 6 now takes <strong>28.5 s</strong> to print it. Row 29 still prints "d 7baf 689-b 028-5ba 7-91a 4-686a 66265659" as a place name. Row 17 brings back "I have no measured series".</td>
+</tr>
+</tbody>
+</table>
+<p><strong>If one thing is fixed before the demo, it is not the census.</strong> The census is now eight rows, and
+halving it again buys three. <strong>Fix the bridge</strong>: forbid a causal or evaluative clause ("so", "therefore",
+"this means", "you are") that is not carried by a printed field value. That is 13 of my 27 C7 rows,
+6 of my 11 regressions, and the rows a supervisor will notice because they are confidently wrong
+rather than merely empty. <strong>If two, apply READER-5's absence rule</strong> — no absence sentence may name a
+thing the same answer has already printed — which is 11 more and finishes rows 53, 59, 111 and 116
+where the substance is already on the page.</p>
+<p><strong>Latency, which no reader has graded.</strong> Run 6 took <strong>59.0 minutes</strong> (run 5: 55.3), median <strong>13.1 s</strong>
+— the fastest median of the six runs — but the tail is the worst since run 1: <strong>10 answers over 60 s</strong>
+(run 5: 7), and the four slowest all produce nothing usable: row 81 at <strong>198.2 s</strong> (the template),
+row 75 at <strong>190.9 s</strong> (a calibration question searched in the Accessible Route Register), row 96 at
+<strong>146.6 s</strong> (a sensor report to a timetabling team), row 88 at <strong>124.0 s</strong> (a false absence about
+occupancy sensors). Three and a half minutes for a wrong register is worse in a live demo than a
+wrong answer in twelve seconds.</p>
+<h2 id="new-in-run-6-that-was-not-in-run-5">New in run 6 that was not in run 5<a class="headerlink" href="#new-in-run-6-that-was-not-in-run-5" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Zero user attribution</strong>, for the first time — and the substitution is visible: "as represented in
+  the building's records" (13).</li>
+<li><strong>Declared partitions that hold</strong>, on eight rows, with every record placed once (43, 49, 53, 64,
+  97, 108, 118, 130).</li>
+<li><strong>A closure linked to the routes it interrupts</strong>, correctly anchored to today: "Scheduled closure
+  (Floor 1) … active from 08:00 to 17:00 on 18 September 2026" over the five Level-1 routes (85).
+  Run 5 said closures were not linked to routes.</li>
+<li><strong>A readiness-triage answer that says what an absence does and does not mean</strong>: "No AV readiness
+  record names Room 5.52, so its teaching technology <strong>has not been assessed — which is not the same
+  as it working</strong>" (95).</li>
+<li><strong>The run-5 inverted CO₂ claim corrected</strong> inside the same recommendation set, which now also
+  declares its six meters and closes "without adding new equipment" (145).</li>
+<li><strong>A ranking that says its own readings cannot separate the candidates</strong> — and then names a primary
+  anyway (58).</li>
+<li><strong><code>【continuity_provision_register】</code></strong> appended to a fragment in CJK brackets (93) — a new shape of
+  internal leak.</li>
+<li><strong>The prompt's own instruction as a user-visible heading</strong>: "### 3-6 actionable recommendations
+  based on the existing sensors" (132).</li>
+<li><strong>A past date given as the next event</strong>, twice: "the next confirmed booking after today (18
+  September 2026) … on 9 September 2026" (110) and an expired tariff among those "currently in
+  force" (123).</li>
+<li><strong>"This building does not have workplace occupancy sensors"</strong> (88) and <strong>"the only sensor-related
+  entities listed are Waste Collection Points"</strong> (139) — two flat, confident, false statements about
+  the building's instrumentation, each contradicted by row 46 of the same run.</li>
+<li><strong>The meter footer returns</strong> after two clean runs, on a tariff decline with no energy figure (123).</li>
+</ul>
+<h2 id="things-i-could-not-tell">Things I could not tell<a class="headerlink" href="#things-i-could-not-tell" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Whether run 6 is worse than run 5 or differently wrong.</strong> Six rows of weird share on one sample at
+  non-zero temperature is inside the churn every reader since READER-3 has measured — 39 rows moved
+  to produce a net of six. What I will stand behind is narrower: <strong>the wording rules are done and
+  stayed done; the census halved; the partition rule works; and the register narration moved back to
+  the run-4 shape, which is the shape that produces confidently wrong sentences rather than empty
+  ones.</strong> Eleven regressions against six recoveries is the first time any reader has seen that ratio.</li>
+<li><strong>Rows 22, 111 and 9 are the ones I could most easily be argued out of.</strong> Row 22's handover is
+  substantively useful and only its "Facts" section is broken — a reader who passes it puts run 6 at</li>
+<li>Row 111 prints the three routes that answer the question and only its closing sentence denies
+  them; a reader who passes it puts run 6 at 94. Row 9 I <em>passed</em> at low confidence despite a
+  backticked list of five raw field names being a whole section of the answer, on READER-5's own
+  precedent that a raw name alone does not fail an honest decline; a stricter reader puts run 6 at 97.</li>
+<li><strong>Rows 19, 20, 64, 102, 107, 113, 120, 140 and 145 I passed at low confidence</strong>, each with a named
+  blemish in its evidence line. Applied strictly — counting the census paraphrase, the consult-elsewhere
+  pointer and the redundant recommendation as failures — run 6 is 105, and the comparison with run 5
+  would need re-reading under the same strictness to mean anything.</li>
+<li><strong>Row 18 rests on run 5's answer, not on a run-6 one.</strong> Run 5 listed WCP-008, WCP-010 and WCP-016 as
+  special-waste points from this register; run 6 shows two and says there are no others. If run 5 was
+  the wrong reading, row 18 is a good answer and run 6 is 95.</li>
+<li><strong>Rows contradicted only by READER's baseline SPARQL</strong>: 42 (the AED first-aid point), 48 (15 permits),
+  56 and 75 (1,929 calibrated points), 93 and 98 (22 AV readiness, 12 AV equipment), 104 (25 service
+  schedules), 122 (the Room 1.06 projector), 132 (13 drinking-water points). I ran no query. The 35
+  rows contradicted inside run 6 are the safe ones.</li>
+<li><strong>Whether rows 15, 27 and 76 disagree or are reading different fields.</strong> Row 15 says the
+  operating-regime register holds no scheduled start-or-stop times; rows 27 and 76 print approved
+  windows for the same ten regimes. Two answers in the same run cannot both be right, and I cannot
+  tell offline which field each read.</li>
+<li><strong>Rows 70 and 72 still disagree about how many routes use a lift</strong> — 15 versus 10, from the same
+  register, minutes apart. READER-5 recorded the same disagreement at 10 versus 8. The numbers moved;
+  the disagreement did not.</li>
+<li><strong>Whether row 43 and row 21 agree.</strong> Row 21 makes CP-003 high-criticality; row 43 files it under
+  "none" — but those are different fields (criticality versus verification state), so this may be the
+  first run in which they are consistent. I could not confirm it offline.</li>
+<li><strong>Row 75 took 190.9 seconds to search the Accessible Route Register for a calibration question.</strong>
+  Run 5 reached the calibration data on this row for the first time in five runs and reported a round
+  "1 000" sensors. Run 6 loses the reach entirely. I cannot tell whether the reach was withdrawn or
+  whether the register selection simply lost a coin toss.</li>
+<li><strong>Latency.</strong> Not graded, and it should be. Over 60 s in run 6: rows 81 (198.2 s), 75 (190.9 s), 96
+  (146.6 s), 88 (124.0 s), 51 (93.7 s), 15 (92.9 s), 91 (86.4 s), 94 (85.1 s), 99 (81.6 s), 57 (71.2 s).
+  Row 94 spent 85.1 s on a one-sentence document decline; row 87 spent 37.7 s on two sentences; row 79
+  spent 34.2 s on two. The time is not going into the answers that are long.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>
