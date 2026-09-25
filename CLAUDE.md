@@ -23,7 +23,60 @@ for what is pushed). **Everything from the 18 September evening (Stage 2 work, b
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **LATEST (2026-09-20) — read [`docs/READINESS_2026-09-19.md`](./docs/READINESS_2026-09-19.md) first.**
+- **LATEST (2026-09-23, second session) — Waves 1 and 2 of `tasks/PRODUCTION_TRACKER.csv`.
+  W1-01/02/03/05, W2-01, W2-02 DONE; W1-04 PARTIAL. Nothing committed; the PARKED suite
+  number is still owed.**
+  **BUG-873 (P1) is FIXED** — the answer-relevance gate may no longer replace an answer with
+  `_unanswered_response` when the turn produced visible evidence, because that text
+  ("I couldn't answer that from <building>'s records") is FALSE exactly when a lane has just
+  answered from them. It was destroying a `ranked=195 guard_violations=0` deliberation answer
+  and a completed forecast. With no evidence visible it replaces as before.
+  **BUG-883 (P1) fixed:** a forecast of ONE sensor was presented as a floor's or the
+  building's — 1 room of 45, 1 meter of 6 — and for energy that is low by a factor of six.
+  Forecasts now fold every bound sensor into one series and STATE the denominator; mean vs
+  total comes from the QUANTITY, never the wording (lesson #139).
+  Also fixed: BUG-881 (pack #27 said "No readings were found for Floor_2" of a floor with 42
+  instrumented spaces), CAVEAT-882 (a rule reading resolved concepts sat in the parse stage,
+  passed 11 offline tests and fired zero times live — lesson #138).
+  **Routing rules are now 60 parse + 2 post + 5 concept.**
+  **Third session, same day — W2-01/02 DONE, W2-03 PARTIAL. Suite 12,594 pass / 0 fail.
+  Gate 50/51 (the one is BUG-866).**
+  **BUG-884 (P1):** naming a floor bound the sensors NAMED for it, not the sensors ON it —
+  "floor 3 vs floor 4" bound eight floor-3 METERS, nothing from floor 4, no temperature sensor
+  at all. Now traverses floor → spaces → points, filtered by the resolved Brick class, and
+  returns NOTHING when no class resolves (binding arbitrary points off a floor is worse than
+  what it replaces). Verified against MySQL: 48 and 56 sensors, means 22.877 / 22.817.
+  **THE HIGHEST-LEVERAGE OPEN ITEM IS NOW BUG-879** — the aggregate lane declines any question
+  naming a place, which blocks W1-04's room case AND W2-03's interval comparison (BUG-885:
+  "Floor 3 is warmer than Floor 4" asserted twice in bold from a 0.06 °C gap against a 3.9 °C
+  spread). Fix BUG-879 and both rows become small.
+  **The gate's own classifier was wrong three times** (BUG-876, BUG-886, CAVEAT-887): ONE
+  question produced THREE honest decline wordings in a day. Every change to the marker list is
+  now verified against all 73 stored answers by a test — an intermediate broader pattern moved
+  two of them and was rejected for it. lessons #141.
+  **The finding that should change how the next session reads the plan: four Wave-1 rows asked
+  for something already built.** The multi-read lane (W1-01/02) was the deliberation lane, which
+  already ranked on N modalities with coverage and a dossier; the "one SPARQL" for W1-05 was
+  `deliberation/coverage_audit.py`, whose first documentation line is the question verbatim; the
+  comparison arithmetic for W1-04 was `evidence/matched_comparison.py`, with one caller. Each
+  time only the ROUTING to it was missing. **Ask the running system and grep by PURPOSE before
+  building what a row names** — lessons #133, #136.
+  Fixed and verified live: BUG-869 (a comfort constraint with no direction was refused although
+  `_LAY_POLARITY` held the answer), BUG-870 (the word "both" kept two-modality questions out of
+  the lane), BUG-868 (a tie at score 1.0 announced as "Best match … fits everything you asked
+  for"), BUG-872 (an R² and a row count reported as impossible humidity readings — the fix
+  existed and its caller passed 90 chars to a 320-char lookback, lesson #137), BUG-877B (a
+  confident "all rooms have a temperature sensor" narrated from a TOTAL sensor count), BUG-878
+  (the absence guard replacing a correct counted absence), plus two gate defects (BUG-876,
+  CAVEAT-877).
+  **Three guards destroyed a correct answer in one session (lesson #135): each detected
+  correctly and ACTED too widely.** One is still open and needs the user: **BUG-873 (P1)** — the
+  answer-relevance gate discards a successful forecast and leaves nothing.
+  **Before sending the evidence pack, read CAVEAT-875**: pack question #1 answers about half the
+  time, caused by BUG-873.
+  W1-04 is **PARTIAL and says so** — the mechanism is proven live at building scope; a named
+  room (BUG-879) and energy (BUG-880) still decline, each with a row.
+- **(2026-09-20) — read [`docs/READINESS_2026-09-19.md`](./docs/READINESS_2026-09-19.md) first.**
   Committed 2026-09-20 with bldg1 PARKED. `-m unit` **12,314 pass / 0 fail** building active;
   **12,207 pass / 155 skip / 0 fail PARKED** (what a fresh clone and CI see — 117 tests had failed
   parked because their fixtures read `input/documents`; they now fall back to `bldg1/documents`). Unseen-question weird rate: **61 % → 26.6 %** (tails K+L, n=124; pooled D–J was
@@ -307,8 +360,8 @@ for what is pushed). **Everything from the 18 September evening (Stage 2 work, b
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**43** parse-stage + 2 post-stage + 3 concept-stage ordered rules, counted FROM THE MODULE
-  again 2026-09-18 after `asset_state_without_a_family` joined the post stage;
+  (**60** parse-stage + 2 post-stage + 4 concept-stage ordered rules, counted FROM THE MODULE
+  again 2026-09-23; it said 43+2+3 and had gone stale a fourth time;
   2026-09-17 — this line said 17+1+1 for weeks after it stopped being true, then 36+1+3 for
   another nine days, which is the same failure twice. Count it, do not read it: `python -c
   "from orchestrator.services import routing_contract as r; print(len(r.PARSE_STAGE_RULES),

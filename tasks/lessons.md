@@ -2051,3 +2051,226 @@ ANSWER rather than from the verdict, so the two disagreeing was immediately visi
 **Where a judgement and its evidence are stored separately, something must check they still refer to
 each other.** This is lesson #121 (check labels against source data) in a second form: there, a label
 disagreed with the source table; here, with the answer beside it.
+
+## #132 — Two prompt edits that trade precision for recall mean the MENU is wrong (2026-09-23)
+
+The semantic concept matcher let "is there smoke in the lab?" resolve to `emergency_exit`. I fixed
+it in the prompt. The next run fixed smoke and broke "which room is least noisy". I fixed the
+wording again; that run fixed noisy and broke smoke a different way. Two edits, no net gain, and
+each one a plausible-sounding rule about how to read a question.
+
+The menu was the bug. `fire_safety` and `emergency_exit` were on it because they carry
+`brick:Smoke_Detector`, which IS a sensor class in the schema — and of which this building holds two
+instances with **zero readings between them**. The model was being asked to decline an option that
+should never have been offered, and no wording makes "choose the best of these" reliably answer
+"none of these".
+
+The filter that fixes it is four lines and asks the graph, not the schema: a concept is a candidate
+measurand only if one of its classes has an instance here that carries a timeseries reference.
+Sound, temperature and CO2 answer 233/233, 296/296, 280/280. Smoke and fire answer 2/0 and 6/0. It
+removed 7 of 92 concepts, all five traps passed at once, and the prompt got SHORTER.
+
+**When a second prompt edit trades one failure for another, stop editing the prompt.** The model is
+usually doing the task it was given; check what it was given. And prefer a question the data can
+answer ("does anything here report this?") over a rule about language ("point at the word that names
+this quantity") — the first is building-agnostic and the second is a guess about English.
+
+## #133 — Ask the lane that exists before building the one the plan names (2026-09-23)
+
+Wave 1 of the production plan was five rows about building a multi-read lane: route a question
+naming two measurands, fetch N modalities, combine their meaning. Estimated days.
+
+Before writing any of it I asked the live system four cross-modal questions. One of them —
+"is anywhere both hot and noisy at the moment?" — came back with the rooms ranked on temperature AND
+noise, per-modality values, the band each was scored against, 195 of 234 spaces considered, 39
+excluded and listed, and an evidence dossier naming the source table per reading. The lane was
+already there and already correct.
+
+Of the other three, one was refused by the compiler because the model had omitted a direction the
+polarity table already held (BUG-869), and two never reached the lane: one because the word "both"
+sat between the verb and the adjective, one because "where is it cool and quiet" matched no routing
+branch (BUG-870). Total fix: two regex widenings and an 8-line function.
+
+**A plan written from the outside describes what looks missing, not what is missing.** Four
+questions and ten minutes reclassified two days of building as two small defects — and the
+difference was visible only from the ANSWER, not from reading the code, because the code for a lane
+that works and a lane nobody can reach looks the same.
+
+## #134 — A probe that reuses one chat measures the co-reference rewrite too (2026-09-23)
+
+"Where is it cool and quiet enough to work?" routed to `deliberate` asked alone, and to `sparql`
+asked as turn four of the same chat. I spent a cycle looking for the routing rule that failed. None
+had: the rewrite had resolved "it" against the previous answer's room, changing the question's SHAPE
+so it no longer matched the pattern — correct behaviour for a real follow-up, and silent corruption
+of a measurement.
+
+**Send a distinct chat id per question in any harness not deliberately testing follow-ups.** The
+class is wider than this one rewrite: anything that legitimately depends on conversation state turns
+a batch of independent questions into one conversation, and reports the difference as a defect in
+whatever you happened to be changing. Related: CAVEAT-871, and #126 on pairing measurements.
+
+## #135 — Three guards destroyed a correct answer in one session (2026-09-23)
+
+Each was built to stop a specific dishonesty, each was right to exist, and each replaced a
+correct answer with a worse one:
+
+* **BUG-868** — the ranking lane suppressed "Best match" when every score tied at the BOTTOM of
+  the band (row 58) and said nothing when every score tied at 1.0, so a 22.6 °C room in a 20–26
+  band was announced as "score 1 out of 1, fits everything you asked for".
+* **BUG-873** — the answer-relevance gate discarded a successful forecast (`MAE=0.473%RH`,
+  `success=True`) as OFF_TOPIC and left "I couldn't answer that". Its own `except` branch is
+  commented "the gate must never cost an answer"; the success path does exactly that.
+* **BUG-878** — the absence guard replaced "1 of 234 spaces have no noise sensor, 233 have one"
+  — verified against the graph — with "this building does have 235 noise sensor(s)". True, and
+  an answer to a question nobody asked.
+
+The shape is identical every time: **a guard detects correctly and then acts too widely.** The
+detection was right in all three. What was wrong was the SCOPE of the replacement — bottom of
+the band but not the top, any OFF_TOPIC verdict rather than a wrong referent, any sentence
+rather than an unscoped one.
+
+**When a guard fires, ask what it is allowed to do, not only what it is allowed to notice.** And
+prefer narrowing the ACTION to narrowing the detection: a guard that notices less is blind, a
+guard that acts more carefully is still watching. Two of these three were fixed by scoping the
+action and neither lost any of the cases it was built for — pinned by re-testing the original
+failure verbatim in each case.
+
+## #136 — Four plan rows in two sessions asked for something already built (2026-09-23)
+
+* **W1-01/W1-02** "build a multi-read lane" — the deliberation lane already ranked on N
+  modalities with coverage, exclusions and a dossier.
+* **W1-05** "one SPARQL: spaces minus spaces that have a sensor of the class" —
+  `deliberation/coverage_audit.py`, whose first line of documentation is the question verbatim
+  ("which spaces lack which sensor modalities?"), and which additionally separates "no sensor"
+  from "a sensor reporting nothing", which the proposed query would have collapsed.
+* **W1-04** "compare two periods" — the WINDOW half was genuinely missing, but
+  `evidence/matched_comparison.py` had done the comparison arithmetic since V6, with covariate
+  matching and confidence intervals, and had one caller.
+
+In every case the plan was written from the outside, from what the system FAILED to answer.
+That is a true observation and a bad inference: a lane that works and a lane nobody can reach
+produce the identical symptom, and the code for both looks the same from a distance.
+
+**Before building what a plan names, ask the running system the question and grep for the
+capability by its PURPOSE rather than its name.** Ten minutes of four questions reclassified two
+days of building as three small defects. The corollary is uncomfortable and worth stating: this
+repository's real deficit is not missing capability, it is capability nothing routes to — which
+means a routing or surfacing fix is usually worth more than a new module, and a new module
+built over a working one is worse than nothing, because now two things answer the question.
+
+## #137 — A constant is not in force until its caller lets it be (2026-09-23)
+
+`plausibility.py` defines `_METRIC_LOOKBACK = 320`, with a comment explaining the number:
+"the R² column header was about 130 characters before its value, because the whole table renders
+as tab-and-newline separated tokens". The function that uses it looks back `_METRIC_LOOKBACK`
+characters. The call site passed it **90**.
+
+So the fix written for the CO2 case, with six passing tests, was dead on arrival — and the same
+defect reappeared on a humidity forecast, where an R² of -0.029 and a row count of 193 were
+reported as "the recorded humidity value (193, -0.029) is outside the range this quantity can
+take in %... the sensor's scaling should be checked before this reading is relied on", over a
+series that is a clean 30–70 %RH with zero impossible values.
+
+The six existing tests passed throughout because their sample text was SHORTENED: the R² sat
+within 90 characters of its header, which never happens in the answer the system renders.
+
+**A test built from a convenient approximation of the real artefact tests the approximation.**
+The new test uses the verbatim rendered answer, and a second one pins the lookback by DISTANCE
+so the constant cannot be silently under-fed again. Related: #101, and the whole of the
+measurement-apparatus family.
+
+## #138 — A test that builds the input can build an input the pipeline never produces (2026-09-23)
+
+The new routing rule `one_quantity_judged_against_another` needs two of the building's
+quantities, and one of them arrives as a resolved lay concept ("ventilation" → CO2). I put it in
+`PARSE_STAGE_RULES`. Eleven unit tests passed — they constructed the normalized dict themselves,
+concepts included. On a live turn it fired **zero** times: concepts are resolved *after* the
+parse stage, so the field it read was always empty and its guard could never be satisfied.
+
+The tests were not wrong about the rule. They proved its LOGIC and said nothing about whether
+the data it reads exists at the point it runs. A test that hands a function its input has, by
+construction, no opinion on where that input comes from.
+
+**When a unit test constructs the input, something else must prove the pipeline produces it
+there.** The cheapest something else is one live question — which is how this was caught, after
+the offline suite was fully green in the wrong stage. Where a stage boundary exists, the rule of
+thumb is blunt: a rule reading a field belongs in the stage that fills it, and the pinned-order
+comment is where to say so, because that test is the only place a reader reliably looks.
+
+## #139 — One sensor standing in for a floor, with every digit correct (2026-09-23)
+
+    "Predict the average CO2 on floor 3"        -> forecast of ONE room, of 45 instrumented
+    "What will the building's energy use be?"   -> forecast of ONE floor's meter, of six
+
+Both answers were internally perfect: real history, proper model selection, hold-out validation,
+confidence intervals. Both answered a question nobody asked. And the energy one was additionally
+*low by roughly a factor of six*, because energy SUMS across meters.
+
+The substitution was not even hidden — the chosen sensor is named in the heading. But a reader
+who asked about floor 3 has no reason to read "Forecast: CO2 Level Sensor installed-node 3.58"
+as a correction of their question; they read it as the system's name for the thing they asked
+about.
+
+**Naming what you actually measured is not the same as saying you measured something else.**
+The fix is one sentence — "averaged over 50 sensors" — and the general rule is that wherever a
+lane narrows a question's scope to make it answerable, the narrowing belongs in the answer, in
+words, not only in a label the reader must decode.
+
+The second half is worth its own line: **mean or total is a property of the QUANTITY, not of the
+question's wording.** "Total CO2 on floor 3" must still average — summing forty-five rooms of
+concentration gives 33,000 ppm — while "the building's energy" must sum whether or not anyone
+said "total". A system that took the aggregate from the phrasing would be wrong in exactly the
+cases where the phrasing is loosest.
+
+## #140 — Replacing a name match with a structure query can reintroduce the name match (2026-09-23)
+
+"Will floor 3 be warmer than floor 4 tomorrow?" bound eight floor-3 METERS — access reader,
+entry counter, HVAC meter — nothing from floor 4, and no temperature sensor at all. The resolver
+matched a floor by TEXT, so it found what was *named* for the floor rather than what was *on*
+it. The graph had held floor → spaces → points the whole time; asked structurally, floor 3 gives
+48 temperature sensors and floor 4 gives 56.
+
+**The fix reintroduced the bug one layer down, and the answer stayed confident throughout.** The
+structural query returns 400 points, so I narrowed them with the existing scorer — which ranks by
+overlap with the QUESTION's words. Every candidate was already on floor 3, so "floor 3" was pure
+noise, and `Floor3_General_Waste_Bin_Fill` outscored forty-eight temperature sensors. The system
+then compared floor 3's waste bins against floor 4's temperatures and reported degrees.
+
+**When you narrow a set that is already scoped, the words that did the scoping are noise, and
+they will score highest.** The filter has to be the thing the scoping did not already use — here
+the resolved Brick class. And where no class resolves, the honest move is to return nothing and
+let the old path run: binding eight arbitrary points off a floor is worse than the behaviour
+being replaced, not better.
+
+**Second trap, same fix: a floor's mean is not eight of its rooms.** A default `limit=8` that
+exists to stop a unit name dragging in every point on an AHU truncated 104 floor sensors to 8 —
+all from floor 3 — while the answer went on quoting floor-4 numbers. A limit written for one
+question shape silently becomes a sampling decision in another.
+
+Both were found by reading the resolution log against the answer, not by any test, and both
+produced fluent wrong answers rather than errors. Related: #121 (check labels against source
+data) — the closing check here was querying MySQL directly for both floors' means.
+
+## #141 — A fix to a measuring instrument is wrong in BOTH directions, and they cost differently (2026-09-23)
+
+The answerability gate scored an honest decline as an answer, because the system had reworded
+it: the marker is the literal "there is no air-pressure sensor DATA" and the answer said "no
+air-pressure sensor INSTALLED IN Room 2.01". A decline recognised by one fixed string is a
+decline recognised in one phrasing.
+
+Fixing it took three attempts, and the two failures were in the OPPOSITE direction:
+
+* `there (is|are) no .{0,40} sensors?` also matched **"there are no GAPS IN SENSOR COVERAGE"** —
+  a completeness answer asserting the exact opposite of an absence.
+* keying on `installed` alone matched the LABEL **"CO2 Level Sensor installed-node 3.07"**.
+
+Both would have called real answers declines. **The two errors are not symmetric.** A decline
+scored as an answer HIDES a regression — the gate goes quiet while something is broken. An
+answer scored as a decline MANUFACTURES one — and a gate that cries wolf gets switched off,
+after which it hides everything. So the second is cheaper to notice and more expensive to leave.
+
+What caught both was refusing to accept the fix until every one of the 73 stored answers
+classified exactly as before. The broad pattern moved two of them (57/14 → 55/16), and that
+number was the whole signal. **A classifier change silently rewrites the baseline the gate
+compares against**, because the expected kind is DERIVED from the stored answer by that same
+classifier — so "did anything move?" is the only question worth asking, and it is now a test.
