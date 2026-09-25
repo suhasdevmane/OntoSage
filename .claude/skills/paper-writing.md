@@ -1,109 +1,130 @@
 ---
 name: paper-writing
-description: Use when revising sections of paper/research paper.tex, refreshing statistics from survey outputs, adding figures, or aligning the OntoSage++ draft with the IMWUT sample paper structure.
+description: Use when revising sections of paper/research paper.tex, checking a statistic against its source, regenerating a table or figure, or building the PDF. Covers the OntoSage IMWUT submission.
 ---
 
-# Paper Writing Runbook — OntoSage++ IMWUT Submission
+# Paper writing runbook — OntoSage, IMWUT
 
-## Always Start Here
+Read `.claude/rules/imwut-boundaries.md` before drafting or editing prose. It is the style
+contract and it takes precedence over general writing advice.
 
-1. Read `paper/PROGRESS.md` — know what is done, what is next
-2. Read `paper/PAPER_INDEX.md` — find line ranges for the section you will edit
-3. Read ONLY the targeted line range from `paper/research paper.tex` — never the whole file (it is 1000+ lines)
+## Start here
 
-## Target Structure (mirror sample paper)
+1. `paper/PROGRESS.md` — what changed, in what order, and what is still owed
+2. `paper/PAPER_INDEX.md` — section-to-line map
+3. Read only the line range you will edit. The file is 2,100+ lines.
 
-The sample is Guo et al. 2018 IMWUT (20 pages, `acmsmall`). Match this section order exactly:
+## Current state (verified 2026-09-24)
 
-| § | Sample paper section | OntoSage++ equivalent | Source data |
-|---|---------------------|----------------------|-------------|
-| Abstract | 1 paragraph problem + 1 paragraph contribution | Same | Hand-written, refresh stats from `outputs/tables/A2_*` |
-| 1 Introduction | Motivation, 4 RQs, contributions list, paper roadmap | Same | RQs already in draft, polish |
-| 2 Related Work | 3 sub-streams (HBI, semantic AI, heterogeneity) | Same | Bib in `references.bib` |
-| 3 Methodology | Survey design, participants, ethics, analysis approach | Phase 1 study | `ANALYSIS_METHODOLOGY.md` Part 6 |
-| 3.1 Participants | Demographics table | Demographics | `outputs/tables/A2_demographics_table.csv` |
-| 3.2 Survey Design | Stage 1-4 elicitation | Same | Existing draft sec |
-| 3.3 Data Collection | Corpus size, period, ethics | Same | `corpus_summary_stats.md` |
-| 3.4 Analysis Approach | Statistical methods | Same | `ANALYSIS_METHODOLOGY.md` Part 3 |
-| 4 Findings | RQ1-RQ5 results | Phase 1 results | `outputs/tables/B*-F*.csv` |
-| 4.1 Corpus Overview | Domain + intent dist | RQ1 | `B4_corpus_statistics.csv` |
-| 4.2 Stage Comparison | Elicitation effect | RQ2 | `C1_stage_stats.csv`, `C3_novelty_*` |
-| 4.3 Role-Based | Role × domain | RQ3 | `D1_role_domain_heatmap.png`, `D2_*` |
-| 4.4 Topic Priorities | Borda + clustering | RQ4 | `E1_borda_scores.png`, `E2_topic_clusters.md` |
-| 4.5 Question Prefs | Within-topic | RQ5 | `F1_question_preferences_by_topic.csv` |
-| 5 System Design | OntoSage++ architecture | Existing draft sec 4 | `paper/figures/architecture.pdf` |
-| 6 Phase 2 Eval | 15-person post-design study | Existing draft sec 5 | `paper/post_design_survey/responses.csv` + `summary_stats.csv` |
-| 7 Discussion | Implications | Same | Synthesis |
-| 8 Limitations | Honest constraints | Same | Sample size, simulated data |
-| 9 Conclusion | Wrap | Same | — |
+- **48 pages**, 0 errors, 0 undefined references
+- **13,775 words** of core prose against IMWUT's recommended 8,000–10,000 — about 3,300 over
+- **117 `\ph{xxx}` placeholders** awaiting the N=30 deployment study; 30 itself is real
+- 19 tables, 12 figures
 
-## Refreshing Statistics (most common task)
+## Section map
 
-```bash
-# 1. List every TBD or fabricated number
-grep -n "TBD-from\|87.3\|66.4\|90\\\\%\|42 participants" "paper/research paper.tex"
+| § | Title | Source of its numbers |
+|---|---|---|
+| 1 | Introduction | — |
+| 2 | Related Work | `references.bib` |
+| 3 | Phase 1: Understanding Stakeholder Intentions (14 subsections, pp. 5–20) | `Survey analysis and results/outputs/tables/` |
+| 3.1 | Study Design: Staged Prompting | `SURVEY_PROTOCOL.md` |
+| 3.3 | Analysis: Taxonomy Development | `B3_irr_report.md` |
+| 3.5 | Stage Comparison: The Context Gap | `C1_stage_stats.csv`, `Z_domain_by_stage.csv`, `Z_intent_by_stage.csv` |
+| 3.6 | Complexity Preference by Persona | `F2_complexity_preference_by_persona.csv` |
+| 3.8 | Aggregate Topic Priorities | `E1_topic_priority_table.csv`, `E1_kendalls_w.md` |
+| 3.10 | Question Complexity Preferences | `F1_overall_level_preference.csv` |
+| 3.13 | What Stakeholders Said Would Make Them Trust It | `Z_stage5_vision_themes.csv` |
+| 3.14 | Extending Coverage Beyond the Sampled Personas | `generated/catalogue-roles.csv` |
+| 4 | OntoSage (13 subsections) | live graph; `generated/building-characteristics.csv` |
+| 5 | Evaluation Deployment | `post_design_survey/responses.csv` (pilot; N=30 pending) |
+| 6 | Results | `H*_*.csv`, `H10_statistical_tests.csv` |
+| 7 | Discussion | — |
+| 8 | Limitations and Future Work | — |
+| 9 | Conclusion | — |
+| A–I | Appendices, after the references | as above |
 
-# 2. For each match, find the corresponding CSV
-ls "paper/Survey analysis and results/outputs/tables/"
+## The rule that matters most
 
-# 3. Read the CSV, get the real number, Edit the .tex
-# 4. Log replacements in paper/PROGRESS.md under "Stat refreshes"
-```
-
-## Adding a Figure
-
-```latex
-% In research paper.tex at the right section:
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{Survey analysis and results/outputs/figures/B4_domain_distribution.pdf}
-\caption{Distribution of Level-1 query domains across the corpus (n=5,127). Indoor temperature, air quality, and energy dominate.}
-\label{fig:domain-dist}
-\end{figure}
-```
-
-After adding:
-1. Append the figure label to `PAPER_INDEX.md`
-2. If using a PNG, also generate a PDF (`convert_svg_to_pdf.py` is in `paper/figures/`)
-
-## Fixing the Fabricated Stats
-
-The current draft contains these PLACEHOLDER numbers that must be replaced before submission:
-
-| Fake stat | Where (approx) | Replace with |
-|-----------|----------------|--------------|
-| `87.3% task completion` | abstract, sec 6 | `98.3%` (118/120) from `post_design_survey/summary_stats.csv` |
-| `66.4% time reduction` | abstract, sec 6 | Recast as qualitative claim or remove until baseline study runs |
-| `90% engineering reduction` | abstract, sec 6 | Real T0-T3 effort comparison from §5.3 |
-| `42 participants` (Phase 2) | abstract, sec 6 | `15` from `post_design_survey/responses.csv` |
-| Mean SUS to add | sec 6 RQ4 | `84.5` from `post_design_survey/summary_stats.csv` |
-| `68% Stage 1 Cluster C` | sec 3.4 | Real % from `B4_corpus_statistics.csv` |
-| `80% Stage 2 Cluster B` | sec 3.4 | Real % from `B4_corpus_statistics.csv` |
-| `Building B/C synthetic` | sec 5 | Mark as "synthetic Brick TTL" — currently honest, keep |
-
-## Compiling the Paper
+**Every number in the paper traces to a file that produced it.** Nine defect classes have been
+found in this paper and all nine were numeric. Two chi-square values were stale against
+`H10_statistical_tests.csv`; all 24 cells of one table panel were stale; four figure counts
+were wrong; one table row silently merged cells. None was visible on the page.
 
 ```bash
 cd paper
-pdflatex "research paper.tex"
-bibtex "research paper"
-pdflatex "research paper.tex"
-pdflatex "research paper.tex"
+python verify_claims.py                  # every table cell vs its source
+python verify_claims.py --prose-suspects # claims that match NO source anywhere
+python verify_claims.py --null-test      # why naive value-matching does not work
 ```
 
-If `acmart` complains about missing CCS XML, that's OK — placeholder block at line 214.
+A claim that fails `--prose-suspects` is almost certainly stale: it failed the most permissive
+test available. A claim that *passes* proves nothing — that pool accepts invented numbers 97%
+of the time, which is exactly why the tool reports its own false-match rate.
 
-## Common Pitfalls
+## Regenerating tables and figures
 
-| Pitfall | Fix |
-|---------|-----|
-| Editing whole file at once | Use `PAPER_INDEX.md` to find line range, edit just that |
-| Reading the 9 MB sample PDF every time | Read once, summary is in `paper/CLAUDE.md` "Sample paper structure" |
-| Leaving fabricated stats in | Run grep above before every commit |
-| Forgetting to anonymise | Never put usernames in the .tex; use `P01..P60` |
-| Citing without `references.bib` entry | `grep -n "<key>" paper/references.bib` first |
-| Skipping ethics statement | Section 3.3 MUST cite SREC COMSC/Ethics/2025/044b |
+```bash
+cd paper
+python scripts/gen_tables.py --list          # which tables are generated, which are authored
+python scripts/gen_tables.py --all
+python scripts/live_building_facts.py        # Building A vs the LIVE graph (needs the stack up)
+python scripts/count_records.py              # the 41 registers and their 1,467 rows
+cd "Survey analysis and results"
+python scripts/Z_paper_derived_tables.py     # panels the phase scripts never emitted
+python scripts/Z_stage5_vision_analysis.py   # Stage 5 open responses
+```
 
-## Handoff to survey-analysis Skill
+Six of eight formerly hand-authored tables now have generators. `tab:guards` and
+`tab:adaptation-components` remain authored — nothing checks them, so read them by hand.
 
-If a section needs new analysis (e.g., "what's the avg complexity per role"), do NOT compute it inline. Switch to the `survey-analysis` skill to add it to the appropriate phase script, regenerate the table, then come back here to cite the result.
+**Building A facts must come from the live graph, not from a regex over `input/*.ttl`.** The
+regex cannot see the loaded TBox or any inference and gave wrong answers for five of six
+counts. Start the stack (`docker compose up -d`), then run `live_building_facts.py`.
+
+## Figures
+
+`figures/*.xml` is the source of record; the `.pdf` is an export. Correcting a number in the
+paper without correcting the XML means the next re-export reverts it.
+
+```bash
+cd paper/figures
+python check_figure_integrity.py          # overlapping boxes, dangling edges, value drift
+python sync_diagram_values.py             # re-apply measured values
+python restack_columns.py <file>.xml      # re-size boxes to their text after editing
+python fix_footer.py                      # re-pin the full-width footer
+"/c/Program Files/draw.io/draw.io.exe" --no-sandbox --export --format pdf --crop \
+    --output fig_name.pdf fig_name.xml
+```
+
+A figure fitted to `\textwidth` renders its 12 pt type at `12 × 395.82 / width` points. At
+1,130 units wide that is about 4 pt. **Height does not affect this** — only width does.
+
+## Building
+
+```bash
+cd paper
+./build.sh          # one pass, for prose edits
+./build.sh full     # three passes + bibtex, after any label, ref, cite or float change
+```
+
+`pdflatex` exits 0 on errors it recovered from and still writes a PDF, so read the script's
+verdict. `pdflatex … | tail` reports *tail's* exit code, not LaTeX's.
+
+## Pitfalls
+
+| Pitfall | What happens |
+|---|---|
+| Patching the `.tex` through a shell heredoc | Escapes arrive mangled. `\b` became a literal BACKSPACE and matched nothing; `\texttt` became a TAB; `\\` became `\` and merged table rows. **Write the script to a file and run it.** |
+| A script that prints "ok" then raises | It exits before writing. Two edit batches were silently lost this way. Write once, then **re-read from disk to prove the change landed**. |
+| Editing the `.tex` during a build | LaTeX reads as it goes; errors point at lines that no longer exist. |
+| Replacing `\ph{xxx}` with a plausible value | Turns a pending value into an apparent measurement. |
+| Trusting a regex over Turtle for graph facts | It cannot see inference. GraphDB is the authority. |
+| Reading the 9 MB sample PDF | The structure summary is in `paper/CLAUDE.md`. |
+| Citing without a bib entry | `grep -n "<key>" paper/references.bib` first. |
+
+## Handing off
+
+New analysis belongs in a phase script under `Survey analysis and results/scripts/`, not
+computed inline and pasted. Add it there, regenerate the table, then cite the result here —
+that is what keeps `verify_claims.py` able to check it.
