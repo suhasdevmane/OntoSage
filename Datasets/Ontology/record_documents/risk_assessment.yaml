@@ -1,0 +1,37 @@
+# Risk assessments -> ontosage:RiskAssessment
+record_type: risk_assessment
+class: ontosage:RiskAssessment
+iri_template: "risk/{reference}"
+label_column: reference
+
+columns:
+  reference:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  hazard:
+    predicate: ontosage:coveredScope
+    datatype: xsd:string
+    required: true
+  area:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+  assessed:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  review_due:
+    predicate: ontosage:dueDate
+    datatype: xsd:date
+    required: true
+  assessor_role:
+    predicate: ontosage:responsibleRole
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      current: ["Current", "In date", "Valid"]
+      due: ["Due", "Due for review", "Review due"]
+      overdue: ["Overdue", "Past review", "Expired"]

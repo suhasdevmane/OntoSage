@@ -390,3 +390,27 @@ docs/node_credentials.json
 
 # V12-29: the sealed Gate A set stays out of history until its single run (hash is committed)
 tasks/gate_a/sealed_set.jsonl
+
+##############################
+# Datasets: PUBLISHED (user decision, 2026-09-25).
+# The shareable bundle behind the paper -- the 7,151-question survey corpus from
+# 96 participants, the 37-role stakeholder catalogue, the ontology, and the
+# 73-probe evidence pack. Participant data is pseudonymised; Datasets/pii_scan.py
+# re-checks the whole folder and must pass before any commit that touches it.
+#
+# The negations below are NOT decoration. The generic `outputs/` and `*SUMMARY*.md`
+# rules earlier in this file were silently swallowing 145 of the 375 files --
+# including outputs/tables/, outputs/figures/ and survey_evaluation_results.csv,
+# which is where Datasets/README.md sends every numeric claim in Section 3. The
+# folder would have shipped with its evidence missing and nothing would have said so.
+!Datasets/
+!Datasets/**
+# ...except build junk, and the pseudonym mapping, which must NEVER ship: a
+# pseudonym table beside pseudonymised data re-identifies it.
+Datasets/**/__pycache__/
+Datasets/**/*.pyc
+Datasets/**/username_to_pid.csv
+
+# Local distribution bundle built from Datasets/ (see scripts note in README)
+OntoSage_Datasets_*.manifest.txt
+##############################

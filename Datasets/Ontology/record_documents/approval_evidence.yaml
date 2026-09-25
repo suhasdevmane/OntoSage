@@ -1,0 +1,105 @@
+# Approval and evidence register -> ontosage:ApprovalRecord
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS — IT IS THE LARGEST SINGLE GAP IN THE CORPUS
+# ------------------------------------------------------------
+# Of the 1,023 stakeholder questions that did not answer with data, **546 (53%) ask about
+# approval, evidence or ownership**, and they are spread across ALL 31 roles — not
+# concentrated in one. Clustering the wording made it obvious: the recurring terms in every
+# role's unanswered set are the same six words — *evidence, approved, authorised, owner,
+# confirmed, verified*.
+#
+# These questions are not asking for a reading. They ask:
+#
+#     Is this approved, and by whom?      Under what authority, and until when?
+#     What evidence exists, and dated?    Who is accountable?      When is it reviewed?
+#
+# The building held sensor values, equipment and registers of things — and nothing at all
+# about whether any of it was *authorised*, what *substantiates* it, or who *answers for
+# it*. Module R declared no Approval and no Evidence class.
+#
+# ROLES, NEVER PEOPLE. `approved_by_role` and `accountable_role` name a role template. Only
+# 11 of the 1,023 questions mention a person at all and every one of those asks who is
+# *accountable*, which is a role. The catalogues forbid exposing who holds what and the leak
+# benchmark certifies zero leaks over 38 traps; naming individuals here would break both for
+# no gain.
+#
+# EVIDENCE AND APPROVAL ARE SEPARATE COLUMNS. A thing can be approved with no evidence
+# recorded, or evidenced but never approved, and those are different problems with different
+# remedies. Collapsing them into one "verified" flag would hide exactly the gap an auditor is
+# looking for.
+record_type: approval_evidence
+class: ontosage:ApprovalRecord
+iri_template: "approval/{approval}"
+label_column: subject
+
+columns:
+  approval:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  subject:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  subject_kind:
+    predicate: ontosage:approvalSubjectKind
+    datatype: xsd:string
+    required: true
+  decision:
+    predicate: ontosage:approvalDecision
+    datatype: xsd:string
+    required: true
+    values:
+      approved: ["Approved", "Granted", "Accepted"]
+      conditional: ["Conditional", "Approved with conditions", "Provisional"]
+      refused: ["Refused", "Rejected", "Declined"]
+      withdrawn: ["Withdrawn", "Revoked", "Lapsed"]
+      pending: ["Pending", "Awaiting decision", "Submitted"]
+  approved_by_role:
+    predicate: ontosage:approvedByRole
+    datatype: xsd:string
+    required: true
+  authority:
+    predicate: ontosage:owningAuthority
+    datatype: xsd:string
+    required: true
+  approved_on:
+    predicate: ontosage:approvedOn
+    datatype: xsd:date
+  valid_until:
+    predicate: ontosage:effectiveTo
+    datatype: xsd:date
+  reference:
+    predicate: ontosage:approvalReference
+    datatype: xsd:string
+  evidence_type:
+    # ABSENT means no evidence is recorded, which is a finding rather than a blank.
+    predicate: ontosage:evidenceKind
+    datatype: xsd:string
+  evidence_ref:
+    predicate: ontosage:evidenceReference
+    datatype: xsd:string
+  evidence_date:
+    predicate: ontosage:evidenceDate
+    datatype: xsd:date
+  accountable_role:
+    predicate: ontosage:accountableRole
+    datatype: xsd:string
+    required: true
+  review_due:
+    predicate: ontosage:reviewDue
+    datatype: xsd:date
+  conditions:
+    predicate: ontosage:approvalConditions
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      current: ["Current", "In force", "Live"]
+      due_review: ["Due review", "Review due", "Expiring"]
+      expired: ["Expired", "Out of date", "Lapsed"]
+      no_evidence: ["No evidence", "Unevidenced", "Evidence missing"]

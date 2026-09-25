@@ -1,0 +1,535 @@
+# What a sensor class actually MEASURES (CAVEAT-286).
+#
+# ── The problem this exists to state ────────────────────────────────────────────
+#
+# Brick 1.4 asserts, at Brick_v1.4.ttl:31248:
+#
+#     brick:TVOC_Sensor rdfs:subClassOf brick:Particulate_Matter_Sensor .
+#
+# So every TVOC sensor is, by inference, a particulate-matter sensor — 35 of them in
+# bldg1, sitting alongside 34 PM1, 34 PM10 and 35 PM2.5. A question asking how many
+# particulate-matter sensors the building has counts a GAS measurement among them.
+#
+# Brick is not simply wrong. Its own definition of that class is "Detects pollutants
+# in the ambient air", and under that reading a VOC sensor belongs. The NAME is what
+# misleads: a reader hearing "particulate matter" thinks of suspended solids, not of
+# pollutants in general. Total volatile organic compounds are gases, measured by a
+# different instrument (PID or metal-oxide, not optical scattering) and regulated
+# against different limits.
+#
+# ── What is NOT done here, and why ──────────────────────────────────────────────
+#
+# * The vendored Brick file is NOT edited. "We use Brick 1.4" has to stay true; a
+#   locally-patched copy makes the conformance claim false and the divergence
+#   invisible.
+# * No owl:disjointWith is asserted. Declaring TVOC_Sensor disjoint from a class it
+#   is a subclass of makes it UNSATISFIABLE — every TVOC sensor becomes a
+#   contradiction, which is a worse answer than the one being fixed.
+#
+# ── What IS done ────────────────────────────────────────────────────────────────
+#
+# This file states, in OntoSage's own vocabulary, what each confusable class
+# measures. Nothing here contradicts Brick: a class may be a Particulate_Matter_
+# Sensor by Brick's hierarchy AND measure volatile organic compounds by this file.
+# The two coexist, and an answer that rolls a count up the hierarchy can say what it
+# swept in.
+#
+# ── Why the terms are OntoSage's own ────────────────────────────────────────────
+#
+# QUDT's quantity kinds do not reach this granularity: CO2, CO, NO2 and TVOC are all
+# a VolumeFraction or a MoleFraction, so borrowing QUDT would make the four
+# indistinguishable — and telling NO2 from CO is precisely the other half of
+# CAVEAT-286, where a nitrogen-dioxide sensor was typed as carbon monoxide. The
+# terms below are therefore declared rather than borrowed, and say so.
+
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix brick:    <https://brickschema.org/schema/Brick#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+
+ontosage:measuresQuantityKind a owl:ObjectProperty ;
+    rdfs:label "measures quantity kind"@en ;
+    rdfs:comment "The physical quantity a sensor class measures, stated by OntoSage rather than inferred from a class hierarchy. Two classes related by rdfs:subClassOf may still measure different quantities: Brick puts TVOC under Particulate_Matter_Sensor because that class means 'pollutant sensor' in Brick's own definition, not because a VOC is a particulate. Where they differ, a count rolled up the hierarchy has to say what it included."@en .
+
+ontosage:Measurand a owl:Class ;
+    rdfs:label "Measurand"@en ;
+    rdfs:comment "A quantity a sensor can measure, at the granularity that distinguishes one gas from another. QUDT stops at VolumeFraction, which cannot tell CO from NO2 - so these are declared here rather than borrowed."@en .
+
+ontosage:ParticulateMatter a ontosage:Measurand ;
+    rdfs:label "particulate matter"@en ;
+    rdfs:comment "Suspended solid or liquid particles, measured by optical scattering."@en .
+ontosage:VolatileOrganicCompounds a ontosage:Measurand ; rdfs:label "volatile organic compounds"@en .
+ontosage:CarbonDioxide  a ontosage:Measurand ; rdfs:label "carbon dioxide"@en .
+ontosage:CarbonMonoxide a ontosage:Measurand ; rdfs:label "carbon monoxide"@en .
+ontosage:NitrogenDioxide a ontosage:Measurand ; rdfs:label "nitrogen dioxide"@en .
+ontosage:Methane        a ontosage:Measurand ; rdfs:label "methane"@en .
+ontosage:Ozone          a ontosage:Measurand ; rdfs:label "ozone"@en .
+ontosage:Formaldehyde   a ontosage:Measurand ; rdfs:label "formaldehyde"@en .
+
+# ── particulate matter: solids and liquids suspended in air ────────────────────
+brick:Particulate_Matter_Sensor ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM1_Sensor         ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM1_Level_Sensor   ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM2.5_Sensor       ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM2.5_Level_Sensor ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM10_Sensor        ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+brick:PM10_Level_Sensor  ontosage:measuresQuantityKind ontosage:ParticulateMatter .
+
+# ── gases: NOT particulate, however Brick's hierarchy files them ───────────────
+brick:TVOC_Sensor ontosage:measuresQuantityKind ontosage:VolatileOrganicCompounds ;
+    rdfs:comment "A gas mixture. Brick makes this a subclass of Particulate_Matter_Sensor; that is Brick using the class as a general pollutant supertype, and it does not make a VOC a particulate."@en .
+brick:TVOC_Level_Sensor  ontosage:measuresQuantityKind ontosage:VolatileOrganicCompounds .
+brick:CO2_Sensor         ontosage:measuresQuantityKind ontosage:CarbonDioxide .
+brick:CO2_Level_Sensor   ontosage:measuresQuantityKind ontosage:CarbonDioxide .
+brick:CO_Sensor          ontosage:measuresQuantityKind ontosage:CarbonMonoxide .
+brick:CO_Level_Sensor    ontosage:measuresQuantityKind ontosage:CarbonMonoxide .
+brick:NO2_Level_Sensor   ontosage:measuresQuantityKind ontosage:NitrogenDioxide .
+brick:Methane_Level_Sensor ontosage:measuresQuantityKind ontosage:Methane .
+brick:Ozone_Level_Sensor ontosage:measuresQuantityKind ontosage:Ozone .
+brick:Formaldehyde_Level_Sensor ontosage:measuresQuantityKind ontosage:Formaldehyde .
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+#  PART 2 — WHAT A READING CAN PHYSICALLY BE
+# ══════════════════════════════════════════════════════════════════════════════
+#
+# ── The problem this exists to state ──────────────────────────────────────────
+#
+# On 2026-09-06 this building answered:
+#
+#     "Floor 1's average CO2 (157 ppm) is higher than Floor 3's (111 ppm). Both
+#      averages are well below the 800 ppm guideline for healthy indoor air, so
+#      overall air quality is compliant. Actionable recommendation: install or
+#      verify adequate ventilation..."
+#
+# Outdoor air is about 420 ppm. Neither figure is a low reading; neither is a
+# reading. 174 of the building's CO2 sensors were being written a 0-150 band --
+# an AIR QUALITY INDEX scale -- because the publish map typed them by the Brick
+# SUPERCLASS (Air_Quality_Sensor, which covers CO2, TVOC and particulates alike)
+# instead of by the specific class the graph gives them. Part 1 of this file
+# exists because rolling a count up Brick's hierarchy loses the quantity; this is
+# the same loss, costing values instead of counts.
+#
+# Nothing caught it. The comfort bands the deliberation scorer cites live inside
+# that one lane, so seventeen other lanes had no notion that a number could be
+# impossible. An answer built on an impossible number then terminated in a
+# capital-expenditure recommendation.
+#
+# ── PHYSICAL POSSIBILITY IS NOT COMFORT ───────────────────────────────────────
+#
+# These are deliberately WIDE, and they are not the comfort or compliance bands.
+# ASHRAE 62.1's 420-1500 ppm says what is COMFORTABLE; 5000 ppm is an evacuation,
+# and it is still a reading. A plausibility band that encodes comfort would
+# suppress exactly the readings a building most needs to report.
+#
+# The rule they support is narrow and absolute: a value OUTSIDE this band is not
+# a measurement. It is not averaged, not ranked, not compared and never turned
+# into a recommendation -- it is reported as implausible, naming the sensor. A
+# lane that cannot decide is not licensed to guess.
+#
+# Sources are cited per band. Where a band is a judgement rather than a standard,
+# it says so, because a number in an ontology with no provenance becomes a fact
+# by being copied.
+
+ontosage:physicalMin a owl:DatatypeProperty ;
+    rdfs:label "physical minimum"@en ;
+    rdfs:domain ontosage:Measurand ;
+    rdfs:comment "The lowest value this quantity can physically take in a building. Below it, the reading is not a measurement of this quantity -- most often the stream is carrying a different quantity's scale. This is a POSSIBILITY bound, deliberately wider than any comfort or compliance band."@en .
+
+ontosage:physicalMax a owl:DatatypeProperty ;
+    rdfs:label "physical maximum"@en ;
+    rdfs:domain ontosage:Measurand ;
+    rdfs:comment "The highest value this quantity can physically take in a building. Set at or above the emergency/IDLH level rather than at a comfort limit: a dangerous reading must still be reportable, and only an impossible one suppressed."@en .
+
+ontosage:physicalUnit a owl:DatatypeProperty ;
+    rdfs:label "physical unit"@en ;
+    rdfs:domain ontosage:Measurand ;
+    rdfs:comment "The unit the band is expressed in. A band without its unit is how a ppm range comes to be applied to a stream in ppb."@en .
+
+ontosage:bandSource a owl:DatatypeProperty ;
+    rdfs:label "band source"@en ;
+    rdfs:comment "Where the bound comes from. A number with no provenance becomes a fact by being copied."@en .
+
+# ── gases ─────────────────────────────────────────────────────────────────────
+ontosage:CarbonDioxide
+    ontosage:physicalUnit "ppm" ;
+    ontosage:physicalMin 350 ;
+    ontosage:physicalMax 40000 ;
+    ontosage:bandSource "Lower bound: outdoor background is ~420 ppm and falling below ~350 indoors is not achievable, so a sub-350 reading is a different quantity. Upper bound: NIOSH IDLH 40,000 ppm -- an emergency, and still a reading." .
+
+ontosage:CarbonMonoxide
+    ontosage:physicalUnit "ppm" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 1500 ;
+    ontosage:bandSource "NIOSH IDLH for CO is 1,200 ppm; the bound sits just above it." .
+
+ontosage:NitrogenDioxide
+    ontosage:physicalUnit "ppb" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 20000 ;
+    ontosage:bandSource "NIOSH IDLH for NO2 is 20 ppm = 20,000 ppb." .
+
+ontosage:Ozone
+    ontosage:physicalUnit "ppb" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 5000 ;
+    ontosage:bandSource "NIOSH IDLH for ozone is 5 ppm = 5,000 ppb." .
+
+ontosage:Formaldehyde
+    ontosage:physicalUnit "ppb" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 20000 ;
+    ontosage:bandSource "NIOSH IDLH for formaldehyde is 20 ppm = 20,000 ppb." .
+
+ontosage:Methane
+    ontosage:physicalUnit "ppm" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 50000 ;
+    ontosage:bandSource "Lower explosive limit for methane in air is 5% by volume = 50,000 ppm." .
+
+ontosage:VolatileOrganicCompounds
+    ontosage:physicalUnit "ppb" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 60000 ;
+    ontosage:bandSource "Judgement, not a standard: consumer TVOC sensors saturate in the tens of thousands of ppb and no single IDLH covers a mixture." .
+
+ontosage:ParticulateMatter
+    ontosage:physicalUnit "ug/m3" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 2000 ;
+    ontosage:bandSource "Judgement: severe wildfire-smoke indoor PM2.5 has been measured in the high hundreds; 2,000 leaves headroom without admitting a scale error." .
+
+# ── the quantity the CO2 stream was actually carrying ─────────────────────────
+#
+# Declared so the disagreement is nameable rather than merely wrong. An index is
+# not a concentration, and the two share no unit, no scale and no meaning.
+ontosage:AirQualityIndex a ontosage:Measurand ;
+    rdfs:label "air quality index"@en ;
+    rdfs:comment "A composite INDEX, not a concentration. Naming it separately is the point: a stream carrying an index cannot be reported in ppm, and the 0-150 values written against 174 CO2 sensors were on this scale."@en ;
+    ontosage:physicalUnit "index" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 500 ;
+    ontosage:bandSource "US EPA AQI runs 0-500." .
+
+# ── the physical environment ──────────────────────────────────────────────────
+ontosage:AirTemperature a ontosage:Measurand ;
+    rdfs:label "air temperature"@en ;
+    ontosage:physicalUnit "degC" ;
+    ontosage:physicalMin -30 ;
+    ontosage:physicalMax 70 ;
+    ontosage:bandSource "Judgement: covers a cold store and a plant room. A building air temperature outside it is a fault or a unit error -- 70 degC would read as 158 degF." .
+
+ontosage:WaterTemperature a ontosage:Measurand ;
+    rdfs:label "water temperature"@en ;
+    ontosage:physicalUnit "degC" ;
+    ontosage:physicalMin -10 ;
+    ontosage:physicalMax 120 ;
+    ontosage:bandSource "Judgement: covers a chilled circuit at 4 degC, a glycol loop below zero, and a heating flow at 82 degC, with headroom to the boiling point at atmospheric pressure. A heating flow of 72 degC is ordinary and was being excluded as impossible because the water points inherited the AIR band from Temperature_Sensor." .
+
+ontosage:RelativeHumidity a ontosage:Measurand ;
+    rdfs:label "relative humidity"@en ;
+    ontosage:physicalUnit "%RH" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 100 ;
+    ontosage:bandSource "Definitional: relative humidity is a percentage of saturation." .
+
+ontosage:Illuminance a ontosage:Measurand ;
+    rdfs:label "illuminance"@en ;
+    ontosage:physicalUnit "lux" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 150000 ;
+    ontosage:bandSource "Direct sunlight is about 120,000 lux; the bound sits above it for a sensor in a rooflight." .
+
+ontosage:SoundPressureLevel a ontosage:Measurand ;
+    rdfs:label "sound pressure level"@en ;
+    ontosage:physicalUnit "dB(A)" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 140 ;
+    ontosage:bandSource "0 dB is the threshold of hearing; 140 dB is the threshold of pain and the ceiling of building-grade meters." .
+
+ontosage:OxygenFraction a ontosage:Measurand ;
+    rdfs:label "oxygen fraction"@en ;
+    ontosage:physicalUnit "%" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 25 ;
+    ontosage:bandSource "Ambient air is 20.95%; enriched atmospheres above 25% are outside building HVAC." .
+
+ontosage:OccupancyCount a ontosage:Measurand ;
+    rdfs:label "occupancy count"@en ;
+    ontosage:physicalUnit "people" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 10000 ;
+    ontosage:bandSource "Judgement: a per-space counter. Negative is impossible; the upper bound catches a counter that has wrapped or is reporting a different quantity." .
+
+ontosage:BinaryState a ontosage:Measurand ;
+    rdfs:label "binary state"@en ;
+    rdfs:comment "Contact, occupancy status, motion: a stream with exactly two admissible values."@en ;
+    ontosage:physicalUnit "state" ;
+    ontosage:physicalMin 0 ;
+    ontosage:physicalMax 1 ;
+    ontosage:bandSource "Definitional." .
+
+# ── sensor class -> measurand, for the classes buildings actually instantiate ──
+#
+# SPECIFIC CLASSES ONLY WHERE A SPECIFIC CLASS EXISTS. Air_Quality_Sensor is
+# deliberately NOT mapped: it is Brick's supertype for CO2, TVOC and particulate
+# sensors alike, so giving it a band would hand every one of them the wrong one --
+# which is the defect this part of the file exists to prevent. A sensor typed only
+# as Air_Quality_Sensor has no band, and a reader must say it cannot check rather
+# than check against a guess.
+
+brick:Air_Temperature_Sensor      ontosage:measuresQuantityKind ontosage:AirTemperature .
+brick:Zone_Air_Temperature_Sensor ontosage:measuresQuantityKind ontosage:AirTemperature .
+brick:Temperature_Sensor          ontosage:measuresQuantityKind ontosage:AirTemperature .
+# Water side. Declared on the parent AND on the two specific classes, so a building that
+# types only one of them still resolves a band — and so the most-specific match wins over the
+# air band these classes inherit from Temperature_Sensor.
+brick:Water_Temperature_Sensor    ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Leaving_Water_Temperature_Sensor  ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Entering_Water_Temperature_Sensor ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Hot_Water_Supply_Temperature_Sensor ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Chilled_Water_Supply_Temperature_Sensor ontosage:measuresQuantityKind ontosage:WaterTemperature .
+brick:Humidity_Sensor             ontosage:measuresQuantityKind ontosage:RelativeHumidity .
+brick:Relative_Humidity_Sensor    ontosage:measuresQuantityKind ontosage:RelativeHumidity .
+brick:Zone_Air_Humidity_Sensor    ontosage:measuresQuantityKind ontosage:RelativeHumidity .
+brick:Illuminance_Sensor          ontosage:measuresQuantityKind ontosage:Illuminance .
+brick:Luminance_Sensor            ontosage:measuresQuantityKind ontosage:Illuminance .
+brick:Sound_Sensor                ontosage:measuresQuantityKind ontosage:SoundPressureLevel .
+brick:Noise_Sensor                ontosage:measuresQuantityKind ontosage:SoundPressureLevel .
+brick:Occupancy_Count_Sensor      ontosage:measuresQuantityKind ontosage:OccupancyCount .
+brick:Occupancy_Sensor            ontosage:measuresQuantityKind ontosage:BinaryState .
+brick:Occupancy_Status            ontosage:measuresQuantityKind ontosage:BinaryState .
+brick:Motion_Sensor               ontosage:measuresQuantityKind ontosage:BinaryState .
+brick:Contact_Sensor              ontosage:measuresQuantityKind ontosage:BinaryState .
+
+# ── PART 3 — WHAT A READING TYPICALLY IS ──────────────────────────────────────
+#
+# A second, NARROWER band, and the distinction is the whole point of having two.
+#
+# `physicalMin/Max` says what is POSSIBLE, and a value outside it is rejected as
+# not-a-measurement. `typicalMin/Max` says what is ORDINARY, and nothing is ever
+# rejected for falling outside it -- a CO2 spike at 2,400 ppm is exactly the
+# reading a building needs to report, and a guard that suppressed it would be
+# worse than no guard.
+#
+# The typical band exists so that a SYNTHETIC stream has one declared source for
+# its range. Before this, ranges lived in two hand-written tables: the publisher's
+# `_WIDE_RANGES`, keyed by name substring, and a JSON map with no generator at
+# all. The JSON typed 174 CO2 sensors as `Air_Quality_Sensor` and gave them 0-150,
+# an air-quality-index scale, and every floor 0-4 CO2 answer has been wrong since.
+# Two tables, one of them unowned, disagreeing about the same sensors.
+#
+# So: one declaration, in the ontology, per quantity. A generator reads it; the
+# plausibility guard reads the wider band beside it; neither hardcodes a number.
+
+ontosage:typicalMin a owl:DatatypeProperty ;
+    rdfs:label "typical minimum"@en ;
+    rdfs:domain ontosage:Measurand ;
+    rdfs:comment "The low end of the ordinary operating range. Used to GENERATE synthetic streams and to describe what is normal. NEVER used to reject a reading -- that is physicalMin's job, and confusing the two suppresses the readings that matter most."@en .
+
+ontosage:typicalMax a owl:DatatypeProperty ;
+    rdfs:label "typical maximum"@en ;
+    rdfs:domain ontosage:Measurand ;
+    rdfs:comment "The high end of the ordinary operating range. See typicalMin: descriptive, never a filter."@en .
+
+ontosage:typicalDecimals a owl:DatatypeProperty ;
+    rdfs:label "typical decimals"@en ;
+    rdfs:domain ontosage:Measurand ;
+    rdfs:comment "Decimal places a reading of this quantity is meaningfully reported to. A fallback: the storage column's own scale wins where the schema knows it, because writing 0.25 into an integer column stores 0 and that is how a correct range still yields an incorrect reading."@en .
+
+ontosage:CarbonDioxide            ontosage:typicalMin  400 ; ontosage:typicalMax 1200 ; ontosage:typicalDecimals 0 .
+ontosage:CarbonMonoxide           ontosage:typicalMin    0 ; ontosage:typicalMax    5 ; ontosage:typicalDecimals 1 .
+ontosage:NitrogenDioxide          ontosage:typicalMin    5 ; ontosage:typicalMax   40 ; ontosage:typicalDecimals 0 .
+ontosage:Ozone                    ontosage:typicalMin    0 ; ontosage:typicalMax   60 ; ontosage:typicalDecimals 0 .
+ontosage:Formaldehyde             ontosage:typicalMin    5 ; ontosage:typicalMax   50 ; ontosage:typicalDecimals 1 .
+ontosage:Methane                  ontosage:typicalMin    0 ; ontosage:typicalMax   10 ; ontosage:typicalDecimals 1 .
+ontosage:VolatileOrganicCompounds ontosage:typicalMin    0 ; ontosage:typicalMax  500 ; ontosage:typicalDecimals 0 .
+ontosage:ParticulateMatter        ontosage:typicalMin    2 ; ontosage:typicalMax   35 ; ontosage:typicalDecimals 0 .
+ontosage:AirQualityIndex          ontosage:typicalMin    0 ; ontosage:typicalMax  150 ; ontosage:typicalDecimals 0 .
+ontosage:AirTemperature           ontosage:typicalMin   18 ; ontosage:typicalMax   28 ; ontosage:typicalDecimals 2 .
+
+# Water temperature had a PHYSICAL band and no ordinary one, so any water point fell back to
+# the AIR range that Temperature_Sensor carries — and a 69 degC boiler flow was published at
+# 22.5 degC (BUG-638). The range below spans both circuits this building runs: a chilled loop
+# in single figures and a heating flow in the seventies. It is deliberately WIDE, because one
+# measurand covers both and narrowing it would assert a distinction the ontology does not
+# make; a point whose series must stay coherent (a flow and its return) is generated as a
+# correlated set instead of drawn from this range.
+ontosage:WaterTemperature         ontosage:typicalMin    5 ; ontosage:typicalMax   80 ; ontosage:typicalDecimals 1 .
+ontosage:RelativeHumidity         ontosage:typicalMin   30 ; ontosage:typicalMax   70 ; ontosage:typicalDecimals 2 .
+ontosage:Illuminance              ontosage:typicalMin    0 ; ontosage:typicalMax 1000 ; ontosage:typicalDecimals 0 .
+ontosage:SoundPressureLevel       ontosage:typicalMin   30 ; ontosage:typicalMax   80 ; ontosage:typicalDecimals 0 .
+ontosage:OxygenFraction           ontosage:typicalMin 20.6 ; ontosage:typicalMax 20.95 ; ontosage:typicalDecimals 2 .
+ontosage:OccupancyCount           ontosage:typicalMin    0 ; ontosage:typicalMax   30 ; ontosage:typicalDecimals 0 .
+ontosage:BinaryState              ontosage:typicalMin    0 ; ontosage:typicalMax    1 ; ontosage:typicalDecimals 0 .
+
+# ── PART 4 — the quantities the second narrow table carries ───────────────────
+#
+# These were typed in the old hand-written publish map, and every line below
+# replaces a range that was wrong in the same way the CO2 one was: a plausible
+# number attached to the wrong quantity.
+#
+#   Lighting_Correlated_Color_Temperature_*  was generating 18-28.
+#       Correlated colour temperature is measured in KELVIN. Warm white is 2700 K
+#       and daylight is 6500 K. It had been given the AIR TEMPERATURE band, so a
+#       lighting question would have been answered "22 K" -- three degrees above
+#       absolute zero -- and read as a room temperature by anything that saw it.
+#
+#   Smoke_Detector, Leak_Detector_Equipment      were generating 0-100.
+#       Both are BINARY. A smoke detector reading 43 is not a smoke level; it is a
+#       number with no referent, and a safety question is the worst place to have one.
+#
+#   Access_Reader, Vibration_Sensor_Equipment    were generating 0-100.
+#   Position_Sensor                              0-100 happened to be right, by luck.
+#
+# The pattern is one mistake: a range chosen because it looked reasonable, with
+# nothing tying it to what the instrument measures.
+
+ontosage:ElectricalPower a ontosage:Measurand ;
+    rdfs:label "electrical power"@en ;
+    ontosage:physicalUnit "kW" ; ontosage:physicalMin 0 ; ontosage:physicalMax 5000 ;
+    ontosage:bandSource "Judgement: a building-scale feed. Negative would mean export, which these meters do not measure." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 6 ; ontosage:typicalDecimals 2 .
+
+ontosage:ElectricalEnergy a ontosage:Measurand ;
+    rdfs:label "electrical energy"@en ;
+    ontosage:physicalUnit "kWh" ; ontosage:physicalMin 0 ; ontosage:physicalMax 1000000 ;
+    # NARROWED 2026-09-17 (BUG-756). The typical band is what a generated point is drawn
+    # from, and 0-100 is a CUMULATIVE REGISTER's range, not one INTERVAL read. When the floor
+    # submeters joined the publish map on 2026-09-16 18:00 they began emitting 30-75 kWh per
+    # 15-minute sample where the preceding fortnight averaged 3.4, and "compare this week's
+    # electricity use with last week" answered "+160.9%" from the scale change alone.
+    # 8 is the observed interval maximum of this building's own history (per-floor samples ran
+    # 1.9-4.9 kWh), with headroom. The physical band above is unchanged: a cumulative register
+    # is still physically possible, it is simply not what a generated interval sample is.
+    ontosage:bandSource "Measured: interval reads on this building's floor submeters, 2026-09-03..16, ran 1.9-4.9 kWh per 15 minutes. Only the lower bound is physical." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 8 ; ontosage:typicalDecimals 2 .
+
+ontosage:ColourTemperature a ontosage:Measurand ;
+    rdfs:label "correlated colour temperature"@en ;
+    rdfs:comment "Kelvin, NOT degrees Celsius. Declared separately for exactly that reason: a lighting colour temperature given an air-temperature band generated values three degrees above absolute zero."@en ;
+    ontosage:physicalUnit "K" ; ontosage:physicalMin 1000 ; ontosage:physicalMax 10000 ;
+    ontosage:bandSource "Candlelight is about 1,800 K; the bluest commercial white is about 8,000 K." ;
+    ontosage:typicalMin 2700 ; ontosage:typicalMax 6500 ; ontosage:typicalDecimals 0 .
+
+ontosage:LinearPositionPercent a ontosage:Measurand ;
+    rdfs:label "position, percent open"@en ;
+    ontosage:physicalUnit "%" ; ontosage:physicalMin 0 ; ontosage:physicalMax 100 ;
+    ontosage:bandSource "Definitional: a damper or valve position as a percentage of travel." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 100 ; ontosage:typicalDecimals 0 .
+
+ontosage:WaterLevel a ontosage:Measurand ;
+    rdfs:label "water level"@en ;
+    ontosage:physicalUnit "%" ; ontosage:physicalMin 0 ; ontosage:physicalMax 100 ;
+    ontosage:bandSource "Definitional: tank level as a percentage of capacity." ;
+    ontosage:typicalMin 10 ; ontosage:typicalMax 95 ; ontosage:typicalDecimals 0 .
+
+ontosage:WaterFlow a ontosage:Measurand ;
+    rdfs:label "water flow rate"@en ;
+    ontosage:physicalUnit "L/min" ; ontosage:physicalMin 0 ; ontosage:physicalMax 2000 ;
+    ontosage:bandSource "Judgement: a building main. Negative flow would mean backflow, which these meters do not report." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 50 ; ontosage:typicalDecimals 1 .
+
+ontosage:WaterVolume a ontosage:Measurand ;
+    rdfs:label "water volume"@en ;
+    ontosage:physicalUnit "L" ; ontosage:physicalMin 0 ; ontosage:physicalMax 10000000 ;
+    ontosage:bandSource "Judgement: a cumulative register; only the lower bound is physical." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 500 ; ontosage:typicalDecimals 0 .
+
+ontosage:AirFlow a ontosage:Measurand ;
+    rdfs:label "air flow rate"@en ;
+    ontosage:physicalUnit "L/s" ; ontosage:physicalMin 0 ; ontosage:physicalMax 20000 ;
+    ontosage:bandSource "Judgement: an AHU-scale duct." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 500 ; ontosage:typicalDecimals 0 .
+
+ontosage:VibrationVelocity a ontosage:Measurand ;
+    rdfs:label "vibration velocity"@en ;
+    ontosage:physicalUnit "mm/s" ; ontosage:physicalMin 0 ; ontosage:physicalMax 100 ;
+    ontosage:bandSource "ISO 10816 machine-vibration severity bands top out well below 100 mm/s RMS." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 7 ; ontosage:typicalDecimals 2 .
+
+ontosage:SolarIrradiance a ontosage:Measurand ;
+    rdfs:label "solar irradiance"@en ;
+    ontosage:physicalUnit "W/m2" ; ontosage:physicalMin 0 ; ontosage:physicalMax 1400 ;
+    ontosage:bandSource "The solar constant at the top of the atmosphere is about 1,361 W/m2; nothing at ground level exceeds it." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 900 ; ontosage:typicalDecimals 0 .
+
+ontosage:EventCount a ontosage:Measurand ;
+    rdfs:label "event count"@en ;
+    rdfs:comment "A counter of discrete events in an interval -- badge presentations, door openings. Distinct from OccupancyCount, which is a population, not a tally."@en ;
+    ontosage:physicalUnit "events" ; ontosage:physicalMin 0 ; ontosage:physicalMax 100000 ;
+    ontosage:bandSource "Judgement: only the lower bound is physical. Negative is impossible; the upper bound catches a wrapped counter." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 40 ; ontosage:typicalDecimals 0 .
+
+# ── class -> measurand for the equipment-side classes ─────────────────────────
+brick:Electrical_Meter        ontosage:measuresQuantityKind ontosage:ElectricalEnergy .
+brick:Electrical_Energy_Sensor ontosage:measuresQuantityKind ontosage:ElectricalEnergy .
+brick:Energy_Sensor           ontosage:measuresQuantityKind ontosage:ElectricalEnergy .
+brick:Active_Power_Sensor     ontosage:measuresQuantityKind ontosage:ElectricalPower .
+brick:Electric_Power_Sensor   ontosage:measuresQuantityKind ontosage:ElectricalPower .
+brick:Power_Sensor            ontosage:measuresQuantityKind ontosage:ElectricalPower .
+brick:Position_Sensor         ontosage:measuresQuantityKind ontosage:LinearPositionPercent .
+brick:Damper_Position_Sensor  ontosage:measuresQuantityKind ontosage:LinearPositionPercent .
+brick:Valve_Position_Sensor   ontosage:measuresQuantityKind ontosage:LinearPositionPercent .
+brick:Water_Level_Sensor      ontosage:measuresQuantityKind ontosage:WaterLevel .
+brick:Water_Flow_Sensor       ontosage:measuresQuantityKind ontosage:WaterFlow .
+brick:Water_Usage_Sensor      ontosage:measuresQuantityKind ontosage:WaterVolume .
+brick:Air_Flow_Sensor         ontosage:measuresQuantityKind ontosage:AirFlow .
+brick:Flow_Sensor             ontosage:measuresQuantityKind ontosage:AirFlow .
+brick:Solar_Irradiance_Sensor ontosage:measuresQuantityKind ontosage:SolarIrradiance .
+brick:Smoke_Detector          ontosage:measuresQuantityKind ontosage:BinaryState .
+brick:Access_Reader           ontosage:measuresQuantityKind ontosage:EventCount .
+
+# `Lighting_Correlated_Color_Temperature_Command` is a COMMAND, not a sensor. It is
+# mapped anyway: a command carries the same quantity and the same unit as the sensor
+# that reads it back, and a synthetic stream for it must be in kelvin either way.
+brick:Lighting_Correlated_Color_Temperature_Sensor  ontosage:measuresQuantityKind ontosage:ColourTemperature .
+brick:Lighting_Correlated_Color_Temperature_Command ontosage:measuresQuantityKind ontosage:ColourTemperature .
+
+# NOT MAPPED, deliberately:
+#   brick:Sensor, brick:Point           -- supertypes; a band here would reach everything.
+#   brick:Air_Quality_Sensor            -- Brick's supertype for CO2, TVOC and PM alike.
+#   brick:Gas_Sensor                    -- supertype for CO, CO2, NO2, methane.
+#   brick:Vibration_Sensor_Equipment    -- not a Brick class; the building's own
+#                                          equipment-side name. Declare it in the
+#                                          building's TTL as a brick:Vibration_Sensor
+#                                          and it inherits the band below.
+brick:Vibration_Sensor ontosage:measuresQuantityKind ontosage:VibrationVelocity .
+
+# ── PART 5 — the remainder ────────────────────────────────────────────────────
+#
+# Eight sensors in this building were still unmapped after Part 4, and none of them
+# was an exotic case: `Vibration_Sensor_Equipment`, `Leak_Detector_Equipment` and
+# `Building_Water_Meter` are ordinary Brick classes, and two are OntoSage's own.
+# They were unmapped because a hand-written table is finished when its author stops
+# writing, not when the building stops having sensors.
+#
+# Whether the last eight are declared or skipped changes 1.3% of one table. It is
+# done because the alternative is a file that is right about the common classes and
+# quietly silent about the rest -- which is how the original map came to type 174
+# CO2 sensors as a supertype and nobody noticed for weeks.
+
+ontosage:SoilMoisture a ontosage:Measurand ;
+    rdfs:label "soil moisture"@en ;
+    ontosage:physicalUnit "%VWC" ; ontosage:physicalMin 0 ; ontosage:physicalMax 100 ;
+    ontosage:bandSource "Volumetric water content as a percentage; saturation is the definitional ceiling." ;
+    ontosage:typicalMin 10 ; ontosage:typicalMax 45 ; ontosage:typicalDecimals 1 .
+
+ontosage:Rainfall a ontosage:Measurand ;
+    rdfs:label "rainfall"@en ;
+    ontosage:physicalUnit "mm" ; ontosage:physicalMin 0 ; ontosage:physicalMax 500 ;
+    ontosage:bandSource "Judgement: an interval accumulation. The world record for 24 hours is about 1,825 mm; a building gauge reporting above 500 mm in an interval is faulty." ;
+    ontosage:typicalMin 0 ; ontosage:typicalMax 10 ; ontosage:typicalDecimals 1 .
+
+brick:Vibration_Sensor_Equipment ontosage:measuresQuantityKind ontosage:VibrationVelocity .
+brick:Leak_Detector_Equipment    ontosage:measuresQuantityKind ontosage:BinaryState .
+brick:Water_Meter                ontosage:measuresQuantityKind ontosage:WaterVolume .
+brick:Building_Water_Meter       ontosage:measuresQuantityKind ontosage:WaterVolume .
+ontosage:Soil_Moisture_Sensor    ontosage:measuresQuantityKind ontosage:SoilMoisture .
+ontosage:Rainfall_Sensor         ontosage:measuresQuantityKind ontosage:Rainfall .
+
+# STILL NOT MAPPED, and correctly so: brick:Sensor, brick:Point, brick:Equipment,
+# brick:Sensor_Equipment, brick:ICT_Equipment, brick:Meter, rec:Asset, s223:Equipment
+# and owl:NamedIndividual. Every one is a supertype or a structural type. Giving any of
+# them a band would reach every instrument beneath it, which is the defect this whole
+# file exists to prevent, restated one level up.

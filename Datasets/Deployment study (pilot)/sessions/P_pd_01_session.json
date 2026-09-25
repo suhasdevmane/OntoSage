@@ -1,0 +1,543 @@
+{
+  "session_metadata": {
+    "participant_id": "P_pd_01",
+    "role": "Student/Researcher",
+    "session_date": "2025-10-14",
+    "site": "Abacws, Cardiff University (Building A)",
+    "ethics_ref": "COMSC/Ethics/2025/044b",
+    "session_start": "2025-10-14T09:00:00",
+    "total_duration_min": 52.9,
+    "facilitator": "Research Team",
+    "anonymised": true,
+    "study_phase": "post_deployment_evaluation"
+  },
+  "sus_scores": {
+    "Q1": 5,
+    "Q2": 2,
+    "Q3": 5,
+    "Q4": 2,
+    "Q5": 5,
+    "Q6": 2,
+    "Q7": 5,
+    "Q8": 2,
+    "Q9": 4,
+    "Q10": 1,
+    "SUS_Total": 87.5
+  },
+  "task_summary": {
+    "T1": {
+      "completed": true,
+      "attempts": 1,
+      "duration_min": 3.07
+    },
+    "T2": {
+      "completed": true,
+      "attempts": 1,
+      "duration_min": 2.45
+    },
+    "T3": {
+      "completed": true,
+      "attempts": 1,
+      "duration_min": 2.53
+    },
+    "T4": {
+      "completed": true,
+      "attempts": 1,
+      "duration_min": 2.53
+    },
+    "T5": {
+      "completed": true,
+      "attempts": 1,
+      "duration_min": 3.05
+    },
+    "T6": {
+      "completed": true,
+      "attempts": 1,
+      "duration_min": 2.32
+    },
+    "T7": {
+      "completed": true,
+      "attempts": 1,
+      "duration_min": 2.53
+    },
+    "T8": {
+      "completed": true,
+      "attempts": 1,
+      "duration_min": 2.22
+    }
+  },
+  "tasks_completed": 8,
+  "tasks_total": 8,
+  "turns": [
+    {
+      "turn_id": 1,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:01:12",
+      "role": "participant",
+      "message": "How comfortable is the air quality in here?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 2,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:01:52",
+      "role": "system",
+      "message": "Current air quality index across monitored zones: Good. CO₂ levels are 580–680 ppm (ASHRAE threshold: 1000 ppm). Relative humidity is 44–51% RH (comfort range: 30–60%). No VOC or particulate alerts are active.",
+      "latency_s": 3.7
+    },
+    {
+      "turn_id": 3,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:03:45",
+      "role": "participant",
+      "message": "Is this a good building to study in?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 4,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:04:06",
+      "role": "system",
+      "message": "Abacws is a modern academic facility equipped with environmental sensors monitoring air quality, temperature, and occupancy. Based on current readings, Floor 5 has a mean CO₂ of 612 ppm (well below the 1000 ppm ASHRAE threshold) and temperature of 21.4 °C — comfortable conditions for focused work.",
+      "latency_s": 2.6
+    },
+    {
+      "turn_id": 5,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:06:00",
+      "role": "participant",
+      "message": "How warm is it typically in research offices here?",
+      "think_aloud": "Says 'Oh, that's clever' when entity is resolved automatically."
+    },
+    {
+      "turn_id": 6,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:06:25",
+      "role": "system",
+      "message": "That's a great question, though it may be outside what I can directly answer from sensor data. I can help you with building conditions — temperature, air quality, energy usage, occupancy, or equipment status. Would any of those be useful?",
+      "latency_s": 3.8
+    },
+    {
+      "turn_id": 7,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:08:38",
+      "role": "participant",
+      "message": "Is it too noisy for focused work?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 8,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:09:20",
+      "role": "system",
+      "message": "That's a great question, though it may be outside what I can directly answer from sensor data. I can help you with building conditions — temperature, air quality, energy usage, occupancy, or equipment status. Would any of those be useful?",
+      "latency_s": 4.2
+    },
+    {
+      "turn_id": 9,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:10:51",
+      "role": "participant",
+      "message": "What's the carbon footprint of this building?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 10,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:11:37",
+      "role": "system",
+      "message": "That's a great question, though it may be outside what I can directly answer from sensor data. I can help you with building conditions — temperature, air quality, energy usage, occupancy, or equipment status. Would any of those be useful?",
+      "latency_s": 2.9
+    },
+    {
+      "turn_id": 11,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:12:46",
+      "role": "participant",
+      "message": "Is the lighting good for reading?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 12,
+      "phase": "1_zero_knowledge",
+      "timestamp": "2025-10-14T09:13:29",
+      "role": "system",
+      "message": "That's a great question, though it may be outside what I can directly answer from sensor data. I can help you with building conditions — temperature, air quality, energy usage, occupancy, or equipment status. Would any of those be useful?",
+      "latency_s": 3.9
+    },
+    {
+      "turn_id": 13,
+      "phase": "2_context_reveal",
+      "timestamp": "2025-10-14T09:14:29",
+      "role": "facilitator",
+      "message": "Facilitator: Here is an overview of the building you are exploring.\n\nBuilding: Abacws, Cardiff University (Building A)\nFloors: Ground, 1–6\nFocus area: Floor 5 (research offices and labs)\n\nRooms on Floor 5:\n  5.01 — Open-plan research office (24 desks)\n  5.02 — Meeting room A (10 seats)\n  5.03 — Meeting room B (6 seats)\n  5.04 — PhD student office (12 desks)\n  5.05 — Server room / IT hub\n  5.06 — Seminar room (40 seats)\n  5.07 — Staff kitchen and break area\n\nSensor types available:\n  Temperature (°C), CO2 (ppm), Relative Humidity (%), Occupancy (binary), Air Quality Index, Energy (kWh)\n\nYou can ask anything about the building — current conditions, trends, comparisons, anomalies, or compliance with standards like ASHRAE 55.",
+      "note": "Facilitator shares building overview — participants read for ~90 seconds."
+    },
+    {
+      "turn_id": 14,
+      "phase": "2_context_aware",
+      "timestamp": "2025-10-14T09:17:58",
+      "role": "participant",
+      "message": "Are there any sensors in the server room (5.05)?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 15,
+      "phase": "2_context_aware",
+      "timestamp": "2025-10-14T09:18:29",
+      "role": "system",
+      "message": "**Sensors available in Building A (Abacws):**\n\nTotal: **680 sensors** across **34 zones**\n\n| Type | Count |\n|------|-------|\n| Zone Air Temperature | 120 |\n| CO₂ Concentration | 98 |\n| Relative Humidity | 112 |\n| Occupancy (PIR) | 87 |\n| Air Quality Index | 64 |\n| Energy Meter | 89 |\n| HVAC Status | 110 |\n\nYou can query any sensor by room name, zone, or sensor type. *(Full sensor catalogue: 680 entries — CSV download available)*",
+      "latency_s": 6.5
+    },
+    {
+      "turn_id": 16,
+      "phase": "2_context_aware",
+      "timestamp": "2025-10-14T09:20:06",
+      "role": "participant",
+      "message": "Which meeting room has better air quality, 5.02 or 5.03?",
+      "think_aloud": "Reads response carefully, then types follow-up."
+    },
+    {
+      "turn_id": 17,
+      "phase": "2_context_aware",
+      "timestamp": "2025-10-14T09:20:41",
+      "role": "system",
+      "message": "CO₂ levels across Floor 5: 5.02 → 612 ppm, 5.03 → 587 ppm, 5.04 → 634 ppm, 5.06 → 698 ppm. All values are below the 1000 ppm ASHRAE threshold. Best air quality: Room 5.03.",
+      "latency_s": 2.3
+    },
+    {
+      "turn_id": 18,
+      "phase": "2_context_aware",
+      "timestamp": "2025-10-14T09:21:54",
+      "role": "participant",
+      "message": "What was the energy usage on Floor 5 yesterday?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 19,
+      "phase": "2_context_aware",
+      "timestamp": "2025-10-14T09:22:14",
+      "role": "system",
+      "message": "Floor 5 energy yesterday: 247 kWh total. Top consumers: 5.01 Open Plan (89 kWh), 5.05 Server Room (71 kWh). Weekend usage typically drops 52% compared to weekday baseline.",
+      "latency_s": 3.3
+    },
+    {
+      "turn_id": 20,
+      "phase": "2_context_aware",
+      "timestamp": "2025-10-14T09:23:20",
+      "role": "participant",
+      "message": "What is the CO2 level in Room 5.04 right now?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 21,
+      "phase": "2_context_aware",
+      "timestamp": "2025-10-14T09:23:54",
+      "role": "system",
+      "message": "CO₂ levels across Floor 5: 5.02 → 612 ppm, 5.03 → 587 ppm, 5.04 → 634 ppm, 5.06 → 698 ppm. All values are below the 1000 ppm ASHRAE threshold. Best air quality: Room 5.03.",
+      "latency_s": 4.0
+    },
+    {
+      "turn_id": 22,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:25:54",
+      "role": "facilitator",
+      "message": "We will now move to 8 standardised tasks. I will hand you a task card for each one. Please think aloud as you work."
+    },
+    {
+      "turn_id": 23,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:26:18",
+      "role": "facilitator",
+      "message": "[Task card] T1 (L1): \"What is the current temperature in Room 5.04?\""
+    },
+    {
+      "turn_id": 24,
+      "phase": "3_tasks",
+      "task_id": "T1",
+      "timestamp": "2025-10-14T09:26:55",
+      "role": "participant",
+      "message": "What is the current temperature in Room 5.04?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 25,
+      "phase": "3_tasks",
+      "task_id": "T1",
+      "timestamp": "2025-10-14T09:29:23",
+      "role": "system",
+      "message": "The current temperature in Room 5.04 (PhD Student Office) is **21.2 °C** (last reading: 2 minutes ago, sensor: bldg:Zone_Air_Temp_5.04). This is within the ASHRAE 55 comfort range of 20–26 °C.",
+      "latency_s": 3.5
+    },
+    {
+      "turn_id": 26,
+      "phase": "3_tasks",
+      "task_id": "T1",
+      "timestamp": "2025-10-14T09:29:23",
+      "role": "facilitator_log",
+      "message": "Task T1 completed in 3.1 min.",
+      "task_completed": true,
+      "attempts": 1,
+      "duration_min": 3.07
+    },
+    {
+      "turn_id": 27,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:30:04",
+      "role": "facilitator",
+      "message": "[Task card] T2 (L2): \"Show me energy use for the last 7 days.\""
+    },
+    {
+      "turn_id": 28,
+      "phase": "3_tasks",
+      "task_id": "T2",
+      "timestamp": "2025-10-14T09:30:39",
+      "role": "participant",
+      "message": "Show me energy use for the last 7 days.",
+      "think_aloud": "Reads response carefully, then types follow-up."
+    },
+    {
+      "turn_id": 29,
+      "phase": "3_tasks",
+      "task_id": "T2",
+      "timestamp": "2025-10-14T09:32:31",
+      "role": "system",
+      "message": "**Energy Usage — Building A, last 7 days:**\n\n| Day | kWh |\n|-----|-----|\n| Mon | 418 |\n| Tue | 401 |\n| Wed | 435 |\n| Thu | 412 |\n| Fri | 389 |\n| Sat | 198 |\n| Sun | 167 |\n\nWeekly total: **2,420 kWh**. Peak day: Wednesday (435 kWh). Weekday average is 411 kWh — 2.3× weekend average. *(Inline chart generated — downloadable CSV available)*",
+      "latency_s": 7.9
+    },
+    {
+      "turn_id": 30,
+      "phase": "3_tasks",
+      "task_id": "T2",
+      "timestamp": "2025-10-14T09:32:31",
+      "role": "facilitator_log",
+      "message": "Task T2 completed in 2.5 min.",
+      "task_completed": true,
+      "attempts": 1,
+      "duration_min": 2.45
+    },
+    {
+      "turn_id": 31,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:33:17",
+      "role": "facilitator",
+      "message": "[Task card] T3 (L3): \"Are any rooms outside ASHRAE 55 comfort range right now?\""
+    },
+    {
+      "turn_id": 32,
+      "phase": "3_tasks",
+      "task_id": "T3",
+      "timestamp": "2025-10-14T09:34:08",
+      "role": "participant",
+      "message": "Are any rooms outside ASHRAE 55 comfort range right now?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 33,
+      "phase": "3_tasks",
+      "task_id": "T3",
+      "timestamp": "2025-10-14T09:35:49",
+      "role": "system",
+      "message": "**ASHRAE 55 Comfort Compliance — Current Snapshot:**\n\nChecking all 34 monitored zones against operative temperature (20–26 °C) and relative humidity (30–60%) thresholds.\n\n⚠️ **2 zones outside comfort range:**\n- Room 5.05 (Server Room): 26.8 °C — above upper limit\n- Ground Floor Lobby: humidity 68% — above upper limit\n\nAll other 32 zones are compliant. *(Compliance report generated — PDF download available)*",
+      "latency_s": 15.2
+    },
+    {
+      "turn_id": 34,
+      "phase": "3_tasks",
+      "task_id": "T3",
+      "timestamp": "2025-10-14T09:35:49",
+      "role": "facilitator_log",
+      "message": "Task T3 completed in 2.5 min.",
+      "task_completed": true,
+      "attempts": 1,
+      "duration_min": 2.53
+    },
+    {
+      "turn_id": 35,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:36:20",
+      "role": "facilitator",
+      "message": "[Task card] T4 (L4): \"Compare CO2 levels in Rooms 5.02 and 5.03 this week.\""
+    },
+    {
+      "turn_id": 36,
+      "phase": "3_tasks",
+      "task_id": "T4",
+      "timestamp": "2025-10-14T09:37:15",
+      "role": "participant",
+      "message": "Compare CO2 levels in Rooms 5.02 and 5.03 this week.",
+      "think_aloud": "Says 'Oh, that's clever' when entity is resolved automatically."
+    },
+    {
+      "turn_id": 37,
+      "phase": "3_tasks",
+      "task_id": "T4",
+      "timestamp": "2025-10-14T09:38:52",
+      "role": "system",
+      "message": "**CO₂ Comparison — Rooms 5.02 vs 5.03, this week:**\n\n| Day | Room 5.02 (ppm) | Room 5.03 (ppm) |\n|-----|------|------|\n| Mon | 612 | 587 |\n| Tue | 698 | 623 |\n| Wed | 724 | 641 |\n| Thu | 688 | 601 |\n| Fri | 643 | 578 |\n\nRoom 5.02 consistently shows higher CO₂ (weekly mean: 673 ppm vs 606 ppm), likely due to higher occupancy — both remain below the 1000 ppm threshold. *(Dual-axis chart generated — sensor UUIDs: a8df-002, a8df-003)*",
+      "latency_s": 7.1
+    },
+    {
+      "turn_id": 38,
+      "phase": "3_tasks",
+      "task_id": "T4",
+      "timestamp": "2025-10-14T09:38:52",
+      "role": "facilitator_log",
+      "message": "Task T4 completed in 2.5 min.",
+      "task_completed": true,
+      "attempts": 1,
+      "duration_min": 2.53
+    },
+    {
+      "turn_id": 39,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:39:39",
+      "role": "facilitator",
+      "message": "[Task card] T5 (L3): \"Find the most energy-intensive zone yesterday.\""
+    },
+    {
+      "turn_id": 40,
+      "phase": "3_tasks",
+      "task_id": "T5",
+      "timestamp": "2025-10-14T09:40:35",
+      "role": "participant",
+      "message": "Find the most energy-intensive zone yesterday.",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 41,
+      "phase": "3_tasks",
+      "task_id": "T5",
+      "timestamp": "2025-10-14T09:42:42",
+      "role": "system",
+      "message": "**Most energy-intensive zone yesterday:**\n\nZone: **Floor 5 Open Plan (5.01)** — 89.4 kWh (36% of Floor 5 total)\nRunner-up: Server Room 5.05 — 71.2 kWh\n\nThe open-plan office peak was at 14:00–16:00 (48.2 kWh in that window). All other zones ranged from 8 to 34 kWh. *(Zone energy chart generated)*",
+      "latency_s": 9.8
+    },
+    {
+      "turn_id": 42,
+      "phase": "3_tasks",
+      "task_id": "T5",
+      "timestamp": "2025-10-14T09:42:42",
+      "role": "facilitator_log",
+      "message": "Task T5 completed in 3.0 min.",
+      "task_completed": true,
+      "attempts": 1,
+      "duration_min": 3.05
+    },
+    {
+      "turn_id": 43,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:43:28",
+      "role": "facilitator",
+      "message": "[Task card] T6 (L3): \"Are there any anomalies in the HVAC system today?\""
+    },
+    {
+      "turn_id": 44,
+      "phase": "3_tasks",
+      "task_id": "T6",
+      "timestamp": "2025-10-14T09:44:12",
+      "role": "participant",
+      "message": "Are there any anomalies in the HVAC system today?",
+      "think_aloud": null
+    },
+    {
+      "turn_id": 45,
+      "phase": "3_tasks",
+      "task_id": "T6",
+      "timestamp": "2025-10-14T09:45:48",
+      "role": "system",
+      "message": "**HVAC Anomaly Check — today:**\n\nFound **1 anomaly**:\n- AHU-5 (Air Handling Unit, Floor 5): supply air temperature spiked to 32 °C at 09:15 for 12 minutes before returning to baseline (18 °C). This matches a transient fault pattern — no sustained issue detected.\n\nAll other HVAC units are operating within expected parameters. *(Anomaly flagged in audit log — downloadable report available)*",
+      "latency_s": 12.2
+    },
+    {
+      "turn_id": 46,
+      "phase": "3_tasks",
+      "task_id": "T6",
+      "timestamp": "2025-10-14T09:45:48",
+      "role": "facilitator_log",
+      "message": "Task T6 completed in 2.3 min.",
+      "task_completed": true,
+      "attempts": 1,
+      "duration_min": 2.32
+    },
+    {
+      "turn_id": 47,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:46:22",
+      "role": "facilitator",
+      "message": "[Task card] T7 (L3): \"Generate a daily report for Floor 5.\""
+    },
+    {
+      "turn_id": 48,
+      "phase": "3_tasks",
+      "task_id": "T7",
+      "timestamp": "2025-10-14T09:47:10",
+      "role": "participant",
+      "message": "Generate a daily report for Floor 5.",
+      "think_aloud": "Says 'Oh, that's clever' when entity is resolved automatically."
+    },
+    {
+      "turn_id": 49,
+      "phase": "3_tasks",
+      "task_id": "T7",
+      "timestamp": "2025-10-14T09:48:54",
+      "role": "system",
+      "message": "**Daily Report — Floor 5, today:**\n\n- **Temperature:** mean 21.6 °C, range 20.1–26.8 °C (1 zone above threshold: 5.05)\n- **CO₂:** mean 634 ppm, all zones below 1000 ppm\n- **Humidity:** mean 47% RH, all zones within comfort range\n- **Occupancy:** peak 14:00 (87 persons across 6 zones), mean 52 persons\n- **Energy:** 247 kWh total (Floor 5), 28.4 kWh below 7-day average\n- **Alerts:** 1 active (Server Room temperature)\n\n*(Full report generated — PDF + CSV download available)*",
+      "latency_s": 18.6
+    },
+    {
+      "turn_id": 50,
+      "phase": "3_tasks",
+      "task_id": "T7",
+      "timestamp": "2025-10-14T09:48:54",
+      "role": "facilitator_log",
+      "message": "Task T7 completed in 2.5 min.",
+      "task_completed": true,
+      "attempts": 1,
+      "duration_min": 2.53
+    },
+    {
+      "turn_id": 51,
+      "phase": "3_tasks",
+      "timestamp": "2025-10-14T09:49:26",
+      "role": "facilitator",
+      "message": "[Task card] T8 (L1): \"What sensors are available in this building?\""
+    },
+    {
+      "turn_id": 52,
+      "phase": "3_tasks",
+      "task_id": "T8",
+      "timestamp": "2025-10-14T09:50:11",
+      "role": "participant",
+      "message": "What sensors are available in this building?",
+      "think_aloud": "Participant explores menu briefly before typing."
+    },
+    {
+      "turn_id": 53,
+      "phase": "3_tasks",
+      "task_id": "T8",
+      "timestamp": "2025-10-14T09:51:39",
+      "role": "system",
+      "message": "**Sensors available in Building A (Abacws):**\n\nTotal: **680 sensors** across **34 zones**\n\n| Type | Count |\n|------|-------|\n| Zone Air Temperature | 120 |\n| CO₂ Concentration | 98 |\n| Relative Humidity | 112 |\n| Occupancy (PIR) | 87 |\n| Air Quality Index | 64 |\n| Energy Meter | 89 |\n| HVAC Status | 110 |\n\nYou can query any sensor by room name, zone, or sensor type. *(Full sensor catalogue: 680 entries — CSV download available)*",
+      "latency_s": 2.2
+    },
+    {
+      "turn_id": 54,
+      "phase": "3_tasks",
+      "task_id": "T8",
+      "timestamp": "2025-10-14T09:51:39",
+      "role": "facilitator_log",
+      "message": "Task T8 completed in 2.2 min.",
+      "task_completed": true,
+      "attempts": 1,
+      "duration_min": 2.22
+    },
+    {
+      "turn_id": 55,
+      "phase": "4_post_session",
+      "timestamp": "2025-10-14T09:52:51",
+      "role": "facilitator",
+      "message": "Task phase complete. Please now complete the SUS questionnaire (paper form)."
+    }
+  ]
+}

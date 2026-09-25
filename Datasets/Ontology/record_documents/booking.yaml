@@ -1,0 +1,45 @@
+# Room bookings -> ontosage:Booking
+#
+# precedence.py already names bookings as the AUTHORITATIVE source for availability and
+# forbids inferring occupancy from sensors — "a room with nobody in it is not an available
+# room". That machinery was built and had nothing to read.
+#
+# booked_by is a ROLE or team, never a named individual: the catalogues limit person-level
+# detail to an authorised case, and an availability question does not need one.
+record_type: booking
+class: ontosage:Booking
+iri_template: "booking/{reference}"
+label_column: reference
+
+columns:
+  reference:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  room:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  start:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:dateTime
+    required: true
+  end:
+    predicate: ontosage:effectiveTo
+    datatype: xsd:dateTime
+    required: true
+  booked_by_role:
+    predicate: ontosage:bookedByRole
+    datatype: xsd:string
+    required: true
+  expected_attendees:
+    predicate: ontosage:expectedAttendees
+    datatype: xsd:integer
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      confirmed: ["Confirmed", "Booked", "Approved"]
+      provisional: ["Provisional", "Tentative", "Held"]
+      cancelled: ["Cancelled", "Withdrawn"]

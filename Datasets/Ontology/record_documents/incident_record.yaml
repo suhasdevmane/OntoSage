@@ -1,0 +1,96 @@
+# Incident and near-miss register -> ontosage:IncidentRecord
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# 47 non-computed questions in the 2,960-question capture ask about incidents and near
+# misses, and the building held an eight-row prose log with no mapping. Health and safety
+# officers, insurers, emergency coordinators and facilities managers all reach for it:
+#
+#     "Which hazards are introduced by contractors, deliveries, shared occupiers or
+#      neighbouring works?"
+#     "Do complaints from these rooms point to one shared plant item or control path?"
+#
+# TWO SEVERITY COLUMNS, NOT ONE. severity is what actually happened; potential_severity is
+# what could reasonably have happened. A near miss with LOW actual and HIGH potential
+# severity is the single most important row in any incident register, and a schema with one
+# severity field cannot express it — it would file the most informative event as the least
+# important one.
+#
+# NEAR MISSES SHARE THE REGISTER WITH INJURIES, deliberately. Splitting them is how an
+# organisation stops noticing that the two have the same cause.
+#
+# A BLANK investigation_finding IS A FINDING when potential severity is high. The register
+# is designed so "which high-potential events were never investigated?" is a query rather
+# than an audit.
+record_type: incident_record
+class: ontosage:IncidentRecord
+iri_template: "incident/{ref}"
+label_column: summary
+
+columns:
+  ref:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  summary:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  occurred_on:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  category:
+    predicate: ontosage:incidentCategory
+    datatype: xsd:string
+    required: true
+  severity:
+    predicate: ontosage:incidentSeverity
+    datatype: xsd:string
+    required: true
+  potential_severity:
+    predicate: ontosage:potentialSeverity
+    datatype: xsd:string
+    required: true
+  immediate_action:
+    predicate: ontosage:immediateAction
+    datatype: xsd:string
+    required: true
+  investigation_finding:
+    # Optional on purpose: an uninvestigated high-potential event must be recordable.
+    predicate: ontosage:investigationFinding
+    datatype: xsd:string
+  reportable:
+    predicate: ontosage:externallyReportable
+    datatype: xsd:boolean
+    required: true
+  actions_outstanding:
+    predicate: ontosage:actionsOutstanding
+    datatype: xsd:string
+  reported_by_role:
+    predicate: ontosage:reportTo
+    datatype: xsd:string
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+    required: true
+  closed_on:
+    predicate: ontosage:completedDate
+    datatype: xsd:date
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      open: ["Open", "Under investigation"]
+      closed: ["Closed"]
+      monitoring: ["Monitoring", "Action tracked"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

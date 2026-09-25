@@ -1,0 +1,73 @@
+{
+  "rows": 6157,
+  "model": "gpt-5.5",
+  "level_dist": {
+    "1": 2399,
+    "2": 794,
+    "3": 1978,
+    "4": 213,
+    "5": 644,
+    "6": 129
+  },
+  "latent_dist": {
+    "1": 1066,
+    "2": 712,
+    "3": 1494,
+    "4": 1318,
+    "5": 922,
+    "6": 645
+  },
+  "answer_basis": {
+    "building-data": 4033,
+    "hybrid": 1345,
+    "general-knowledge": 779
+  },
+  "answerability": {
+    "requires_extension": 4542,
+    "full": 1407,
+    "partial": 208
+  },
+  "mean_level": 2.4,
+  "mean_latent": 3.37,
+  "pct_latent_gt_level": 63.0,
+  "pct_iceberg_ge2": 35.0,
+  "pct_iceberg_ge3": 15.2,
+  "answerable_today_pct": 22.9,
+  "requires_extension_pct": 73.8,
+  "stage_counts": {
+    "1": 1636,
+    "2": 1723,
+    "3": 1459,
+    "4": 1339
+  },
+  "n_personas": 21,
+  "data_quality_violations": 40,
+  "gap_counts": {
+    "Other / niche": 2268,
+    "Occupancy sensing": 1330,
+    "BMS actuation / write-back": 1009,
+    "Energy metering": 936,
+    "Live streams floors 0-4": 855,
+    "Calendar / room-booking API": 517,
+    "Weather feed": 504,
+    "Lighting sensing/control": 425,
+    "Access / security systems": 415,
+    "Policy / document KB": 333,
+    "Extended IAQ (PM/VOC/NO2 etc.)": 324,
+    "Maintenance / CMMS records": 323,
+    "Ontology metadata enrichment": 304,
+    "Noise / acoustic sensing": 286,
+    "Water metering": 234,
+    "Carbon / ESG data": 152,
+    "Tariff / cost data": 104,
+    "Equipment condition monitoring": 95,
+    "Parking / EV": 93,
+    "Solar / renewables": 83,
+    "Occupant surveys / feedback": 64,
+    "Waste / recycling": 62,
+    "User profiles / preferences": 31
+  },
+  "ext_rows_fully_covered_by_top3_gaps_pct": 17.6,
+  "ext_rows_fully_covered_by_top5_gaps_pct": 31.0,
+  "ext_rows_fully_covered_by_top8_gaps_pct": 48.8
+}

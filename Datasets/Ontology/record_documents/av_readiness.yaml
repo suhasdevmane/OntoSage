@@ -1,0 +1,90 @@
+# Teaching AV readiness register -> ontosage:AVReadiness
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# The teaching and audiovisual support team computed at 34% with 36 questions unanswered.
+# Their recurring words are *approved, authorised, evidence, room, path, check* and their
+# questions are about READINESS WITH EVIDENCE, per room, right now:
+#
+#     "For teaching due to start in the next 90 minutes, which rooms have complete current
+#      AV evidence and which do not?"
+#     "Following maintenance, is there enough post-work evidence to keep this room in
+#      service, or should it be withheld?"
+#     "Is the complete audio path ready for the scheduled teaching format, including the
+#      required microphone?"
+#
+# THE AUDIO PATH IS A CHAIN AND IS RECORDED AS ONE. A room with a working projector, a
+# working display and a dead microphone is not "mostly ready" — it cannot run a lecture that
+# needs amplification. So each component carries its own state and its own last check, and
+# the room's readiness is computed from the chain rather than asserted as a single flag.
+#
+# `last_checked` AND `evidence_ref` ARE BOTH REQUIRED. "Checked" without a record is a claim;
+# the questions ask for evidence by name, and a room withheld from service on someone's
+# recollection is exactly what they are trying to avoid.
+record_type: av_readiness
+class: ontosage:AVReadiness
+iri_template: "av/{component}"
+label_column: name
+
+columns:
+  component:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  room:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  kind:
+    predicate: ontosage:avComponentKind
+    datatype: xsd:string
+    required: true
+  audio_path:
+    # Whether this component is part of the amplified audio chain. A format that needs a
+    # microphone fails if any link is down, regardless of the display.
+    predicate: ontosage:inAudioPath
+    datatype: xsd:boolean
+    required: true
+  supports_format:
+    predicate: ontosage:supportsFormat
+    datatype: xsd:string
+  # NOT required, and the reason matters. These were required on the first draft, with the
+  # note that "checked without a record is a claim" -- and the register then refused to
+  # load, because the most important row in it is a hearing loop that has NEVER BEEN
+  # TESTED and therefore has neither. A schema too strict to express the finding it exists
+  # to surface is the wrong schema.
+  #
+  # The real constraint is conditional and a mapping cannot express it: no component may be
+  # recorded `ready` without evidence. `unevidenced` is a state precisely so an untested
+  # component is representable, and tests/test_av_readiness_needs_evidence.py enforces the
+  # conditional rule the mapping cannot.
+  last_checked:
+    predicate: ontosage:lastCompleted
+    datatype: xsd:date
+  evidence_ref:
+    predicate: ontosage:evidenceReference
+    datatype: xsd:string
+  next_due:
+    predicate: ontosage:nextDue
+    datatype: xsd:date
+  state:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      ready: ["Ready", "In service", "Working"]
+      degraded: ["Degraded", "Partial", "Reduced"]
+      failed: ["Failed", "Out of service", "Dead"]
+      unevidenced: ["Unevidenced", "Not checked", "Evidence missing"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

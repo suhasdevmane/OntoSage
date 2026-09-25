@@ -1,0 +1,97 @@
+# Waste collection point register -> ontosage:WasteCollectionPoint
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# Waste-management teams computed at 29%, and the role never appeared in the earlier
+# systems ranking at all — it surfaced only once every catalogue had been measured. Their
+# 31 unanswered questions are about points, streams and fill:
+#
+#     "Which collection points are likely to cross their approved fill threshold before the
+#      next confirmed collection?"
+#     "Where do stream names, colours, icons, apertures or system records CONFLICT within a
+#      station?"
+#     "Which temporary or event waste assets are active now, and what service period and
+#      stream apply?"
+#
+# THE CONFLICT QUESTION IS THE INTERESTING ONE and it shapes the columns. A station where the
+# bin is labelled "Mixed recycling", the signage says "Dry mixed", the aperture is a narrow
+# slot and the system record says "General waste" is a station people will use wrongly. So
+# label, signage and aperture are SEPARATE columns rather than one "stream" field —
+# collapsing them would make the disagreement unrepresentable, and the disagreement is the
+# answer.
+record_type: waste_collection
+class: ontosage:WasteCollectionPoint
+iri_template: "waste/{point}"
+label_column: name
+
+columns:
+  point:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  station:
+    predicate: ontosage:wasteStation
+    datatype: xsd:string
+    required: true
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  stream_record:
+    # What the system says this point is for.
+    predicate: ontosage:wasteStream
+    datatype: xsd:string
+    required: true
+  stream_label:
+    # What is printed on the bin itself.
+    predicate: ontosage:labelledStream
+    datatype: xsd:string
+    required: true
+  aperture:
+    # What the opening physically accepts. A narrow slot cannot take a pizza box whatever
+    # the label claims.
+    predicate: ontosage:apertureKind
+    datatype: xsd:string
+  capacity_litres:
+    predicate: ontosage:capacityLitres
+    datatype: xsd:integer
+  fill_percent:
+    predicate: ontosage:fillPercent
+    datatype: xsd:integer
+  fill_threshold:
+    predicate: ontosage:approvedFillThreshold
+    datatype: xsd:integer
+  next_collection:
+    predicate: ontosage:nextDue
+    datatype: xsd:date
+    required: true
+  service_period:
+    predicate: ontosage:serviceFrequency
+    datatype: xsd:string
+    required: true
+  temporary:
+    # Event and temporary assets come and go; a register that could not say which are
+    # active now would answer the wrong question after every event.
+    predicate: ontosage:isTemporary
+    datatype: xsd:boolean
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "In service"]
+      overdue: ["Overdue", "Missed collection"]
+      withdrawn: ["Withdrawn", "Removed", "Out of service"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

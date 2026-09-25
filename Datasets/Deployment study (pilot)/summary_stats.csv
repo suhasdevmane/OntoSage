@@ -1,0 +1,25 @@
+Metric,Value,N,Notes
+Total Participants,15,15,
+Mean SUS Score,84.5,15,Above the 80.3 "Excellent" threshold (Bangor et al. 2009)
+Median SUS Score,85.0,15,
+SUS Std Dev,4.9,15,
+SUS Range,75.0-92.5,15,
+SUS >= 80 (Good or Excellent),11,15,73 percent
+SUS >= 68 (Above Average),15,15,100 percent
+SUS by Role - Student/Researcher Mean,85.4,6,
+SUS by Role - IT/Operator Mean,88.75,4,
+SUS by Role - Visitor/Guest Mean,80.0,5,
+Mean NASA-TLX Mental Demand,33.0,15,
+Mean NASA-TLX Physical Demand,13.7,15,
+Mean NASA-TLX Temporal Demand,25.7,15,
+Mean NASA-TLX Performance (higher=better),82.7,15,
+Mean NASA-TLX Effort,33.7,15,
+Mean NASA-TLX Frustration,21.0,15,
+Mean Task Completion (of 8 tasks),7.87,15,98.3 percent
+Tasks Fully Completed,118,120,total possible
+Mean Time on All Tasks (min),17.8,15,
+Median Time on All Tasks (min),18.0,15,
+Q3 Yes (would adopt),14,15,93.3 percent
+Q3 Maybe,1,15,6.7 percent
+Q3 No,0,15,0 percent
+Roles Represented,3,15,Student/Researcher (6) + IT/Operator (4) + Visitor/Guest (5)

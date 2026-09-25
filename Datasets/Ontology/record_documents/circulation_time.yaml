@@ -1,0 +1,69 @@
+# Circulation time register -> ontosage:CirculationTime
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# Lecturers were the worst-served role in the re-sample: 0 of 5, after every other role
+# had improved. Their questions are about the JOURNEY, and the building knew where both
+# rooms were and nothing about getting between them:
+#
+#     "I have back-to-back seminars in different rooms. Which transition needs the larger
+#      travel and setup allowance?"
+#
+# FLOOR-TO-FLOOR, NOT ROOM-TO-ROOM. A room-pair matrix grows as the square of the room
+# count — this building would need over five thousand rows to say what twenty-one say —
+# and the floor change dominates the time anyway. A register nobody can maintain is a
+# register that goes stale, and a stale travel time is worse than none.
+#
+# TWO TIMES, NOT ONE. step_free_minutes is not walking_minutes with a lift substituted:
+# it includes the wait, and on most pairs it is LONGER. Planning a transition on the
+# walking figure sends a wheelchair user late, which is the failure this register exists
+# to prevent rather than a rounding difference.
+record_type: circulation_time
+class: ontosage:CirculationTime
+iri_template: "circulation/{code}"
+label_column: route
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  route:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  from_floor:
+    predicate: ontosage:fromFloor
+    datatype: xsd:string
+    required: true
+  to_floor:
+    predicate: ontosage:toFloor
+    datatype: xsd:string
+    required: true
+  walking_minutes:
+    predicate: ontosage:walkingMinutes
+    datatype: xsd:decimal
+    required: true
+  step_free_minutes:
+    predicate: ontosage:stepFreeMinutes
+    datatype: xsd:decimal
+    required: true
+  depends_on_lift:
+    predicate: ontosage:dependsOnLift
+    datatype: xsd:boolean
+    required: true
+  vertical_route:
+    predicate: ontosage:nearestVerticalRoute
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active"]
+      degraded: ["Degraded"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

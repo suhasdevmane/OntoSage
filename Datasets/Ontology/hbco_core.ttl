@@ -1,0 +1,18 @@
+# HBCO core TBox — CONSOLIDATED into the OntoSage Conversational Building Vocabulary (OCBV).
+#
+# As of OCBV 2.0.0 the canonical, publication-ready definitions of the hbco: conversation concepts
+# (hbco:Concept, hbco:CompositeConcept, hbco:mapsToBrickClass, hbco:layTerm, …) and their SHACL
+# shape live in ONE file:
+#     input/ontosage_schema.ttl   (Module B + Module I)
+# so the whole "talk to the building" layer is a single document. The hbco: namespace and every
+# term are unchanged — this consolidation is non-breaking.
+#
+# This file is intentionally kept (as a valid, near-empty stub) so tooling that globs ontology/*.ttl
+# still finds it, without duplicating the TBox (which would risk drift between two copies).
+# Per-building lay-term instances live in ontology/hbco_mappings.ttl and input/<bldg>_concepts.ttl
+# and resolve against the terms defined in input/ontosage_schema.ttl.
+
+@prefix hbco:    <http://ontosage.org/hbco#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+
+hbco:Concept rdfs:isDefinedBy <http://ontosage.org/ontology> .

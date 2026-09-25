@@ -1,0 +1,13 @@
+constant,value
+n_questions,7151
+n_participants,96
+chi2_intent_by_stage,78.0
+chi2_intent_dof,9
+chi2_intent_p,4.001e-13
+cramers_v_intent,0.06
+n_stage_1,1904
+n_stage_2,2003
+n_stage_3,1705
+n_stage_4,1539
+pct_volume_wholly_analytical_types,5.64
+pct_volume_top2_nonanalytical_types,90.86

@@ -1,0 +1,17 @@
+prompt,theme,n_all,pct_all,n_detemplated,pct_detemplated,n_base_all,n_base_detemplated
+Trust,Privacy and surveillance,34,57.6,25,50.0,59,50
+Trust,Explanation and provenance,24,40.7,20,40.0,59,50
+Trust,Security and access control,27,45.8,19,38.0,59,50
+Trust,Accuracy and error,26,44.1,18,36.0,59,50
+Trust,Consent and opt-out,6,10.2,6,12.0,59,50
+PainPoints,Information buried,31,52.5,26,48.1,59,54
+PainPoints,Too complex / technical,24,40.7,22,40.7,59,54
+PainPoints,Slow,18,30.5,15,27.8,59,54
+PainPoints,Fragmented across systems,17,28.8,14,25.9,59,54
+Interaction,Conversational (voice/chat),48,81.4,40,78.4,59,51
+Interaction,Charts on demand,22,37.3,18,35.3,59,51
+Interaction,"Short, plain answers",25,42.4,17,33.3,59,51
+Interaction,Alerts and notifications,25,42.4,17,33.3,59,51
+CONSTANT,_respondents,59,,,,,
+CONSTANT,_responses,295,,,,,
+CONSTANT,_total_words,9396,,,,,
