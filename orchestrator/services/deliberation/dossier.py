@@ -371,12 +371,25 @@ def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
     # itself quoted. Each utility had saturated at the bottom of its band, so the order came
     # from the tie-break and meant nothing — but "Best match" is a recommendation, and the
     # reader has no way to see that it was a coin toss. Saying so costs one sentence.
-    _flat = all((s.total or 0.0) <= 0.0 for s in dossier.ranked)
+    #
+    # BUG-868, 2026-09-23: this caught a tie at the BOTTOM of the band and missed the mirror
+    # image at the top, which is the commoner one. "Which rooms are both warm and stuffy right
+    # now?" compiles as list_matching with `above` and NO threshold, so the scorer falls back
+    # to the band edge and every room above it lands at exactly 1.0. The answer then read
+    # "Best match: Room 2.24 — score 1 out of 1, where 1 fits everything you asked for" for a
+    # room at 22.675 C in a 20-26 band. `_fold_unbounded_threshold_direction` fixes this for
+    # RANKING decisions and deliberately leaves list_matching alone, because an unbounded
+    # filter there really is under-specified — so the ambiguity is kept on purpose, and the
+    # answer is where it has to be disclosed. A tie is a tie at either end of the range.
+    _totals = {round(s.total or 0.0, 6) for s in dossier.ranked}
+    _flat = all((s.total or 0.0) <= 0.0 for s in dossier.ranked) or (
+        len(dossier.ranked) > 1 and len(_totals) == 1
+    )
     if _flat:
         lines.append(
             "**The readings don't separate these spaces.** On what you asked for, every "
-            "space I could measure sits at the same end of the range, so picking a best one "
-            "would be arbitrary. Here is what they read:"
+            "space I could measure scores the same, so picking a best one would be "
+            "arbitrary. Here is what they read:"
         )
     else:
         lines.append(

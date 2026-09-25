@@ -105,8 +105,15 @@ _CLOCK_CONTEXT_RE = re.compile(r"[:/]\s*$|^\s*[:/]")
 _IDENTIFIER_PREFIX_RE = re.compile(r"(?:[A-Za-z]-|#|\bno\.\s*|\bref\s*)$")
 
 #: WB-22: a number followed by a noun that counts things.
+#: ``data`` is the qualifier that actually turns up in front of a count and was not allowed for.
+#: A humidity forecast prints "**History used:** 193 data points", and because the noun after the
+#: number was "data" rather than "points" the count was judged as a reading and the answer opened
+#: with "the recorded humidity value (193, -0.029) is outside the range this quantity can take in
+#: %, so it is most likely raw or unscaled sensor output ... the sensor's scaling should be checked
+#: before this reading is relied on". The stored series for that sensor is a clean 30-70 %RH with
+#: not one impossible value, and the forecast's own predictions were 52.66 %RH (BUG-872).
 _COUNT_NOUN_RE = re.compile(
-    r"^\s*(?:readings?|sensors?|samples?|rooms?|spaces?|points?|records?|rows?|series|"
+    r"^\s*(?:data\s+)?(?:readings?|sensors?|samples?|rooms?|spaces?|points?|records?|rows?|series|"
     r"floors?|meters?|devices?|values?|measurements?|people|persons?|times|occurrences?|"
     r"episodes?|findings?|reports?|days?|hours?|minutes?|seconds?|weeks?)\b",
     re.IGNORECASE,
@@ -271,7 +278,17 @@ def implausible_values(text: str, measurand: Optional[str] = None, strict: bool 
         ):
             continue
         # A model's error or fit statistic is not a reading, whatever unit it carries.
-        if _in_metric_context(body[max(0, m.start() - 90) : m.start()], body[m.end() : m.end() + 30]):
+        #
+        # SLICE TO _METRIC_LOOKBACK, NOT TO 90. This passed 90 characters into a function whose
+        # whole job is to look back _METRIC_LOOKBACK (320) of them, so the constant and the
+        # comment explaining WHY it is 320 -- "the R-squared column header was about 130
+        # characters before its value" -- were both dead. The fix for the CO2 case was written,
+        # tested, and then handed a third of the window it needed; measured again 2026-09-23 on a
+        # humidity forecast, where R-squared -0.029 was once more reported as an impossible
+        # reading (BUG-872). A constant is not in force until its caller lets it be.
+        if _in_metric_context(
+            body[max(0, m.start() - _METRIC_LOOKBACK) : m.start()], body[m.end() : m.end() + 30]
+        ):
             continue
         _named = _unit_kind(body[m.end() : m.end() + 24])
         if _named and _named != kind:

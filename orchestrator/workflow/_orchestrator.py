@@ -1202,6 +1202,42 @@ async def _false_absence_from_a_held_register(state, text: str) -> str:
     return text
 
 
+def _grounded_evidence_behind(state) -> str:
+    """What evidence this turn actually produced, named — or "" when it produced none.
+
+    Deterministic, and deliberately positive-only: it reports evidence it can SEE, and an empty
+    string means "none visible", never "none exists". A caller may therefore use it to withhold
+    an action, and must not use it to justify one.
+    """
+    results = getattr(state, "intermediate_results", None)
+    if not isinstance(results, dict):
+        return ""
+    dossier = results.get("evidence_dossier")
+    if isinstance(dossier, dict):
+        ranked = dossier.get("ranked") or []
+        rows = dossier.get("evidence") or []
+        if ranked or rows:
+            return f"a ranking over {len(ranked)} candidates from {len(rows)} readings"
+    for key, what in (
+        ("aggregate_result", "figures computed in the store"),
+        ("comparison", "two periods fetched and compared"),
+    ):
+        payload = results.get(key)
+        if isinstance(payload, dict) and (payload.get("figures") or payload.get("baseline")):
+            return what
+    # THE FORECAST LANE WAS MISSED BY THE FIRST VERSION OF THIS, and it is the lane BUG-873 was
+    # first observed in. A forecast writes `forecast_result`, not a dossier, so the check above
+    # saw nothing and the gate went on replacing a completed model — "[forecast_agent] Done.
+    # Model=SeasonalNaive MAE=8.681ppm" followed by "nothing to say" — with a decline that says
+    # the records could not answer. Caught by the answerability gate on pack index 6, on the run
+    # that was supposed to confirm the fix.
+    forecast = results.get("forecast_result")
+    if isinstance(forecast, dict) and forecast.get("success") and forecast.get("forecast"):
+        model = str(forecast.get("model") or forecast.get("model_name") or "a model")
+        return f"a fitted {model} forecast over {len(forecast.get('forecast') or [])} steps"
+    return ""
+
+
 async def _relevance_gated(state, ctx, text: str) -> str:
     """``text``, or the honest decline when the model judges it does not respond (2D-16 wave 8).
 
@@ -1231,6 +1267,39 @@ async def _relevance_gated(state, ctx, text: str) -> str:
                 "lane": lane,
             }
         if not verdict.replace:
+            return text
+        # THE REPLACEMENT MUST NOT ASSERT SOMETHING FALSE (BUG-873, P1).
+        #
+        # `_unanswered_response` says "I couldn't answer that from <building>'s records". When a
+        # lane has just answered FROM THOSE RECORDS, that sentence is not a cautious decline, it
+        # is a false statement about the building — and it throws away the grounded answer that
+        # disproves it. Measured twice, on two different questions:
+        #
+        #   [deliberate] answered: plan=319aa153 ranked=195 guard_violations=0
+        #   [response] relevance gate replaced a deliberate answer: OFF_TOPIC
+        #   [response] nothing to say: intent=deliberate ... error=none
+        #
+        # and on a humidity forecast that had completed with MAE 0.473 %RH.
+        #
+        # THE GATE IS NOT WRONG TO OBJECT. In both cases the answer was incomplete: it ranked the
+        # rooms and did not say what the two readings together suggest; it forecast hour by hour
+        # and never gave the mean that was asked for. Incomplete is a reason to say so, not a
+        # reason to substitute nothing — an answer that covers half the question beats a decline
+        # that covers none of it and is untrue besides.
+        #
+        # So the gate keeps its judgement and loses only this one action, and only where there is
+        # positive evidence to protect. With no evidence visible it replaces exactly as before,
+        # which is the case it was built for: a model that generalised from a retrieval window.
+        grounded = _grounded_evidence_behind(state)
+        if grounded:
+            logger.info(
+                f"[response] relevance gate OBJECTED to a {lane} answer but did not replace it: "
+                f"{verdict.label} ({verdict.reason}) — the turn produced {grounded}, so the "
+                "decline would have been untrue"
+            )
+            if isinstance(results, dict):
+                results["relevance_gate"]["replaced"] = False
+                results["relevance_gate"]["withheld_because"] = grounded
             return text
         logger.info(
             f"[response] relevance gate replaced a {lane} answer: {verdict.label} "
@@ -2772,6 +2841,36 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         if state.current_intent == "anomaly" and not _ANOMALY_METRIC_RE.search(latest_message):
             _sparql_query = f"{latest_message} temperature sensors"
             logger.info("[anomaly] no metric named — defaulting SPARQL target to temperature")
+
+        # W1-05: "which rooms have NO temperature sensor" is a set difference the coverage
+        # matrix already holds exactly, and asking a model to write the SPARQL for it produced
+        # three different wrong answers on three phrasings (2026-09-23) -- including "all of the
+        # rooms have at least one temperature sensor", narrated from a query returning TOTAL
+        # sensor counts, which cannot tell one sensor type from another. Deterministic on
+        # purpose, for the same reason `_infer_plant_class` is: a question whose answer is
+        # derivable from the graph and config should not be left to similarity.
+        #
+        # Returns None for anything it does not recognise, so every other question reaches the
+        # agent exactly as before.
+        try:
+            from orchestrator.services import coverage_gap as _gap
+            from orchestrator.services.deliberation.live import active_identity as _ident
+            from orchestrator.services.deliberation.live import sparql_exec as _gap_exec
+
+            _gap_answer = await _gap.answer(
+                latest_message, _gap_exec, _ident()["BUILDING_NAMESPACE"]
+            )
+        except Exception as _gap_exc:  # pragma: no cover - must never cost the lane its answer
+            logger.warning(f"[coverage_gap] hook stood down: {_gap_exc}")
+            _gap_answer = None
+        if _gap_answer:
+            logger.info("[coverage_gap] answered deterministically from the coverage matrix")
+            state.intermediate_results["sparql_result"] = {
+                "success": True,
+                "formatted_response": _gap_answer,
+                "source": "coverage_gap",
+            }
+            return state
 
         # UNIFIED AGENT APPROACH:
         # Use SPARQLAgent for everything (it now handles semantic fallback internally)

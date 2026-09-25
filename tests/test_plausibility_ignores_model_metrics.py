@@ -62,3 +62,69 @@ def test_a_metric_word_in_prose_does_not_suppress_a_reading():
         "which is below the comfort band."
     )
     assert implausible_values(draft, "co2") == [-412.0]
+
+
+# ── BUG-872: the real forecast, not a hand-built approximation of one ─────────────────
+#
+# Every test above passed while this shipped. They were written against a shortened stand-in
+# whose R-squared sat close to its header; in the answer the system actually renders, the
+# header is ~130 characters back, and the caller was slicing 90. The constant said 320, the
+# comment explained why it said 320, and the call site handed it a third of that.
+#
+# Captured verbatim from /v1/chat/completions, 2026-09-23. The stored series for this sensor
+# is a clean 30-70 %RH with not one impossible value; the forecast's own predictions are
+# 52.66 %RH. The two numbers the guard objected to are a ROW COUNT and an R-SQUARED.
+
+REAL_HUMIDITY_FORECAST = """## Forecast: Zone Air Humidity Sensor installed-node 2.01
+
+**Horizon:** next 24 hours  |  **As of:** 2026-09-23 01:43 (building time)  |  \
+**History used:** 193 data points
+
+### Model Selection
+
+| Model | RMSE | MAE | MAPE | R\u00b2 | Selected |
+|-------|------|-----|------|----|----------|
+| Linear Trend (sklearn) | 2.923%RH | 2.643%RH | 5.4% | -0.029 |  |
+| SeasonalNaive | 0.839%RH | 0.648%RH | 1.3% | 0.915 |  |
+| Holt-Winters (seasonal=24) | 0.642%RH | 0.475%RH | 1.0% | 0.950 | \u2705 **Winner** |
+| SARIMA(1, 0, 0)\u00d7(1, 0, 1)[24] | 0.821%RH | 0.662%RH | 1.4% | 0.919 |  |
+
+### Predictions \u2014 next 24 hours
+
+| Time | Predicted | 80% CI | 95% CI |
+|------|-----------|--------|--------|
+| 2026-09-21 11:00 | **52.66%RH** | [51.34, 53.99]%RH | [50.37, 54.95]%RH |
+| 2026-09-21 12:00 | **52.89%RH** | [51.02, 54.77]%RH | [49.65, 56.13]%RH |
+"""
+
+
+def test_bug_872_a_real_forecast_raises_no_false_alarm():
+    """The whole answer, as rendered. -0.029 is an R-squared and 193 is a row count."""
+    found = implausible_values(REAL_HUMIDITY_FORECAST, "humidity")
+    assert found == [], f"false alarm on a correct forecast: {found}"
+
+
+def test_bug_872_a_row_count_is_not_a_reading():
+    """ "193 data points" -- the count noun is qualified, and only the bare noun was allowed."""
+    assert implausible_values("**History used:** 193 data points of humidity", "humidity") == []
+
+
+def test_bug_872_the_metric_lookback_constant_is_actually_in_force():
+    """A constant is not in force until its caller lets it be.
+
+    Pinned by DISTANCE, not by the sample text: put an R-squared far enough behind its header
+    to exceed the old 90-character slice and well inside the documented 320.
+    """
+    from orchestrator.services.plausibility import _METRIC_LOOKBACK
+
+    assert _METRIC_LOOKBACK >= 300
+    filler = " | ".join(f"{i}.000%RH" for i in range(12))  # > 90 chars of table cells
+    text = f"| Model | RMSE | MAE | R\u00b2 |\n| Linear Trend | {filler} | -0.029 |\n"
+    assert len(filler) > 90
+    assert implausible_values(text, "humidity") == []
+
+
+def test_a_predicted_value_outside_the_possible_range_is_still_caught():
+    """The guard must not be turned off by the presence of a metrics table."""
+    broken = REAL_HUMIDITY_FORECAST.replace("**52.66%RH**", "**193.4%RH**")
+    assert implausible_values(broken, "humidity"), "a real impossible prediction must still fire"

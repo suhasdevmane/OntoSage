@@ -58,6 +58,39 @@ _DECLINE_MARKERS = (
     "no readings were found for",
 )
 
+#: Declines whose wording carries the REFERENT in the middle, so no fixed substring spans them.
+#:
+#: "I couldn't answer that about **Room2.01** from Abacws Building's records" is the same decline
+#: as "I couldn't answer that from ...", with the room named. The literal marker above does not
+#: span the inserted name, so the gate scored that decline as an ANSWER -- and a decline counted
+#: as an answer is the direction that hides a regression rather than inventing one. Found
+#: 2026-09-23 while measuring an intermittent question; the shipped pack happens to contain none
+#: of this variant, so its recorded counts are unaffected.
+_DECLINE_PATTERNS = (
+    re.compile(r"i could ?n[o']?t answer that\s+about\b.{0,80}?\bfrom\b"),
+    re.compile(r"i could ?n[o']?t find\s+.{0,60}?\bin (?:the )?(?:building|records)\b"),
+    # "there is no air-pressure sensor INSTALLED IN Room 2.01" -- the same honest decline the
+    # literal marker below spells "...sensor DATA available for room 2.01". The quantity and the
+    # tail both vary, so the fixed string matched one phrasing and scored the other as an ANSWER.
+    # The system was right both times; the gate was wrong the second time (pack index 70).
+    #
+    # DELIBERATELY NARROW, and the first two attempts show why. `there (?:is|are) no .{0,40}
+    # sensors?` also matched "there are no GAPS IN SENSOR COVERAGE" -- a completeness answer
+    # asserting the opposite -- and a rule keyed on `installed` alone matched the label
+    # "CO2 Level Sensor installed-node 3.07". Requiring "installed/fitted IN|AT|FOR" keeps the
+    # claim and rejects both. Checked against every stored pack answer: zero reclassified.
+    re.compile(r"there (?:is|are) no\b[^.]{0,40}?\bsensors?\s+(?:installed|fitted)\s+(?:in|at|for)\b"),
+    # THIRD wording of the same decline, same day: "I don't have any air-pressure data for
+    # Room 2.01", followed by a list of the room's OTHER sensors. The asked quantity is still
+    # declined, and offering what the building does have does not make it an answer to the
+    # question. Matches none of the 73 stored answers, so the baseline is untouched.
+    #
+    # Three phrasings in one day is the real finding here, and it is recorded as CAVEAT-887:
+    # a marker list cannot keep up with a system free to reword its declines, and the durable
+    # test is whether the answer gives a figure FOR THE QUANTITY ASKED.
+    re.compile(r"i do ?n[o']?t have any\b[^.]{0,40}?\bdata\b"),
+)
+
 #: A refusal is a DIFFERENT thing from a decline: the system can answer and declines to, on purpose.
 #: It must not be counted as a regression when a question was always meant to be refused.
 _REFUSAL_MARKERS = (
@@ -101,6 +134,8 @@ def classify(answer: str) -> str:
     if any(m in head for m in _REFUSAL_MARKERS):
         return "refused"
     if any(m in head for m in _DECLINE_MARKERS):
+        return "declined"
+    if any(p.search(head) for p in _DECLINE_PATTERNS):
         return "declined"
     return "answered"
 
@@ -203,7 +238,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     stamp_run = datetime.now().strftime("%H%M%S")
     print(f"re-asking {len(subjects)} question(s) from {Path(args.pack).name} "
           f"as {args.email or '(no identity - runs as readonly)'}\n")
-    results, regressions, improvements = [], [], []
+    results, regressions, improvements, intermittents = [], [], [], []
     for i, r in enumerate(subjects, 1):
         got = ask(args.base, r["question"], args.model, token, args.timeout,
                   email=args.email, chat_id=f"regr-{stamp_run}-{r['n']}")
@@ -212,6 +247,27 @@ def main(argv: Optional[List[str]] = None) -> int:
         # is the regression this exists for; a decline that became an answer is an improvement.
         ok = kind == r["expected_kind"]
         status = "ok  " if ok else ("BETTER" if r["verdict"] != "GOOD" and kind == "answered" else "REGRESSED")
+        # CONFIRM A REGRESSION BEFORE REPORTING ONE (2026-09-23).
+        #
+        # Index 1 -- a two-week humidity forecast -- reported REGRESSED on a build whose changes
+        # provably cannot reach it: the routing pattern does not match the question and the other
+        # three changes are deliberation-lane only. Re-asked three times on that same build it
+        # declined once and answered twice. One run is not a measurement of an intermittent lane,
+        # and a gate that cries regression at a flake gets switched off, which costs far more than
+        # the flake.
+        #
+        # AN INTERMITTENT IS NOT AN OK. It is reported and counted in its own category and never
+        # folded into "still behave as recorded" -- a retry that succeeds is still a first-pass
+        # failure (lessons.md, "report first-pass failures"). The exit code stays 0 because the
+        # behaviour is not gone, and the line stays visible because it is not well either.
+        if status == "REGRESSED":
+            retry = ask(args.base, r["question"], args.model, token, args.timeout,
+                        email=args.email, chat_id=f"regr-{stamp_run}-{r['n']}-retry")
+            retry_kind = classify(retry["answer"]) if not retry["error"] else "empty"
+            if retry_kind == r["expected_kind"]:
+                status = "FLAKY"
+                intermittents.append(r["n"])
+                got, kind = retry, retry_kind
         if status == "REGRESSED":
             regressions.append(r["n"])
         elif status == "BETTER":
@@ -220,7 +276,8 @@ def main(argv: Optional[List[str]] = None) -> int:
               f"{kind:<8s} {got['seconds']:6.1f}s  {r['question'][:52]}")
         results.append({**{k: r[k] for k in ("n", "question", "verdict", "expected_kind")},
                         "got_kind": kind, "seconds": round(got["seconds"], 1),
-                        "error": got["error"], "answer": got["answer"]})
+                        "error": got["error"], "answer": got["answer"],
+                        "first_pass_failed": status == "FLAKY"})
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -229,7 +286,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     path.write_text(json.dumps({"pack": args.pack, "results": results}, ensure_ascii=False, indent=2),
                     encoding="utf-8")
 
-    print(f"\n{len(subjects) - len(regressions)} of {len(subjects)} still behave as recorded")
+    steady = len(subjects) - len(regressions) - len(intermittents)
+    print(f"\n{steady} of {len(subjects)} still behave as recorded")
+    if intermittents:
+        print(f"INTERMITTENT (failed first pass, answered on re-ask): {intermittents}")
+        print("   Not counted as still behaving. The lane is not gone; it is not reliable either.")
     if improvements:
         print(f"IMPROVED (a question that did not answer now does): {improvements}")
     if regressions:

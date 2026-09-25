@@ -290,6 +290,23 @@ def _slip_target(word: str, vocabulary: FrozenSet[str]) -> Optional[str]:
     return near[0] if len(near) == 1 else None
 
 
+#: Words that join two CONDITIONS in one question: "warm and stuffy", "CO2 while occupancy is
+#: flat", "ventilation against occupancy". Deliberately small and about grammar, not about any
+#: building's vocabulary -- it only decides whether to ASK the model, never what the answer is.
+_COORDINATORS = (
+    " and ", " while ", " versus ", " vs ", " against ", " alongside ", " as well as ",
+    " together with ", " compared with ", " compared to ", " but ", " yet ",
+)
+
+
+def _coordinates_conditions(text: str) -> bool:
+    """True when the question joins more than one condition, so one match may not be all of them."""
+    low = f" {str(text or '').lower()} "
+    if any(c in low for c in _COORDINATORS):
+        return True
+    return " both " in low
+
+
 def whole_lay_terms(concept_map: Dict[str, Dict[str, Any]]) -> FrozenSet[str]:
     """Every lay term, whole — the judge of a hyphen compound's head (see term_names_the_subject)."""
     return frozenset(
@@ -445,7 +462,24 @@ class ConceptResolver:
         # Sort: longer lay term first (more specific), then by confidence
         _conf_order = {"high": 0, "medium": 1, "low": 2, "": 3}
         matches.sort(key=lambda m: (-len(m.lay_term), _conf_order.get(m.confidence, 3)))
+
+        # A PARTIAL MATCH IS ALSO A MISS. "Which rooms are both warm and stuffy right now?" matched
+        # `stuffiness` and stopped: "warm" is in no lay-term list (the register holds "warmest"),
+        # so the question resolved to ONE measurand and read as single-modality to everything
+        # downstream. Half a question answered looks exactly like a whole one.
+        #
+        # So the model is consulted when the question COORDINATES conditions and the literal pass
+        # found fewer than two. The cost is one call on the questions that need it, and none on the
+        # single-condition questions that are the ordinary case.
+        _measurands = [m for m in matches if m.brick_classes]
+        if matches and not (_coordinates_conditions(normalized) and len(_measurands) < 2):
+            return matches
         if matches:
+            extra = await self._semantic_fallback(text, concept_map, exclude=_measurands)
+            if extra:
+                by_id = {m.concept_id for m in matches}
+                matches.extend(e for e in extra if e.concept_id not in by_id)
+                matches.sort(key=lambda m: (-len(m.lay_term), _conf_order.get(m.confidence, 3)))
             return matches
 
         # NOTHING MATCHED LITERALLY, so ask the model which of THIS building's concepts is meant.
@@ -461,9 +495,16 @@ class ConceptResolver:
         return await self._semantic_fallback(text, concept_map)
 
     async def _semantic_fallback(
-        self, text: str, concept_map: Dict[str, Dict[str, Any]]
+        self,
+        text: str,
+        concept_map: Dict[str, Dict[str, Any]],
+        exclude: Optional[List[ConceptMatch]] = None,
     ) -> List[ConceptMatch]:
-        """One model call that picks a concept from this building's own list, or nothing."""
+        """Model-chosen concepts from this building's own list, or nothing.
+
+        ``exclude`` names what the literal pass already found, so a partial match asks only about
+        what is still unaccounted for and cannot return the same concept twice.
+        """
         try:
             from orchestrator.services import semantic_concept_match as scm
         except Exception:
@@ -476,32 +517,38 @@ class ConceptResolver:
                 concept_map,
                 cache_get=_cache_get,
                 cache_set=_cache_set,
+                already=[m.concept_id for m in (exclude or [])],
             )
         except Exception as exc:  # a fallback must never cost the deterministic answer
             logger.debug(f"[concept_resolver] semantic fallback skipped: {exc}")
             return []
         if not got.matched:
             return []
-        # The map is keyed by IRI, so find the entry whose short concept_id was chosen.
-        entry = next(
-            (e for e in concept_map.values() if str(e.get("concept_id")) == got.concept_id), {}
-        )
-        logger.info(
-            "[concept_resolver] semantic match %r -> %s (%s)",
-            " ".join(str(text).split())[:60], got.concept_id, got.reason[:60],
-        )
-        return [
-            ConceptMatch(
-                concept_id=got.concept_id,
-                # The word the person actually used is unknown, so the concept id stands in as the
-                # evidence. It is never empty, which the cross-concept sort above relies on.
-                lay_term=got.concept_id,
-                brick_classes=list(entry.get("brick_classes") or got.brick_classes),
-                recipe_id=entry.get("recipe_id"),
-                confidence=entry.get("confidence", ""),
-                semantic=True,
+        already = {m.concept_id for m in (exclude or [])}
+        by_id = {str(e.get("concept_id")): e for e in concept_map.values()}
+        out: List[ConceptMatch] = []
+        for cid in (got.concept_ids or [got.concept_id]):
+            if cid in already:
+                continue
+            entry = by_id.get(cid, {})
+            out.append(
+                ConceptMatch(
+                    concept_id=cid,
+                    # The word the person actually used is unknown, so the concept id stands in as
+                    # the evidence. It is never empty, which the cross-concept sort relies on.
+                    lay_term=cid,
+                    brick_classes=list(entry.get("brick_classes") or got.brick_classes),
+                    recipe_id=entry.get("recipe_id"),
+                    confidence=entry.get("confidence", ""),
+                    semantic=True,
+                )
             )
-        ]
+        if out:
+            logger.info(
+                "[concept_resolver] semantic match %r -> %s (%s)",
+                " ".join(str(text).split())[:60], [m.concept_id for m in out], got.reason[:60],
+            )
+        return out
 
     async def invalidate_cache(self) -> None:
         """Clear the Redis concept map cache (call after HBCO TTL is re-uploaded)."""

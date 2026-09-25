@@ -2892,4 +2892,10 @@ def _result(
             "window": {"start": window.start, "end": window.end},
             "sensors": sensors,
         },
+        # The figures the text quotes, machine-readable (W1-04). They were computed here and
+        # recorded as evidence, and then only the PROSE left this function -- so a caller that
+        # wanted to compare two of these answers had to parse numbers back out of English, which
+        # is the failure this repository keeps paying for. Returning them costs nothing and is
+        # what lets the comparison lane subtract two periods without reading either answer.
+        "figures": dict(figures or {}),
     }

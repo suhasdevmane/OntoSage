@@ -380,15 +380,11 @@ class SQLAgent:
             from orchestrator.services import aggregate_lane
             from orchestrator.services.deliberation.live import sparql_exec
 
-            answer = await aggregate_lane.try_answer(
-                question=user_query,
+            _lane_kwargs = dict(
                 uuids=list(uuids),
                 storage_map=storage_map,
                 metadata=sensor_metadata,
-                start_date=start_date,
-                end_date=end_date,
                 budget_hit=over_fetch_budget(len(uuids), rows_per_uuid_for(user_query)),
-                tz_name=settings.BUILDING_TIMEZONE,
                 adapter_for=lambda uri: adapter_registry._adapters.get(
                     adapter_registry._resolve_storage_key(uri or "")
                 ),
@@ -397,6 +393,31 @@ class SQLAgent:
                 resolution_clamp_s=max_resolution_s,
                 aggregate_only=aggregate_across_sensors,
             )
+            # W1-04: a question naming TWO periods gets both fetched. Measured 2026-09-23,
+            # "compare the average CO2 this week against last week" fetched a 14-hour window and
+            # said it could not compare, and "yesterday versus the same day last week" declined
+            # outright -- in both cases because only one window was ever resolved. This runs the
+            # same lane a second time over the baseline period and states both figures and the
+            # difference; it returns None for every one-period question, which is nearly all of
+            # them, leaving the call below exactly as it was.
+            from orchestrator.services import comparison_lane
+
+            answer = await comparison_lane.try_compare(
+                question=user_query,
+                try_answer=aggregate_lane.try_answer,
+                start_date=start_date,
+                end_date=end_date,
+                tz_name=settings.BUILDING_TIMEZONE,
+                **_lane_kwargs,
+            )
+            if answer is None:
+                answer = await aggregate_lane.try_answer(
+                    question=user_query,
+                    start_date=start_date,
+                    end_date=end_date,
+                    tz_name=settings.BUILDING_TIMEZONE,
+                    **_lane_kwargs,
+                )
             # SAY WHICH WORDS WERE NOT HONOURED (2026-09-19). "Which COMMISSIONED CO2-monitored
             # zones show sustained elevated CO2 during an APPROVED occupied period?" is computable
             # as an exceedance, and no series records commissioning or approval. The figures are

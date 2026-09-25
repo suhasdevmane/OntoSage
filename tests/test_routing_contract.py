@@ -926,10 +926,16 @@ def test_concept_stage_precedence_is_pinned():
         # exactly the case the reach lane exists to answer. Placed earlier it would
         # intercept real data questions.
         "unmeasured_quantity_is_reach",
-        # BUG-860: LAST, because every rule in the stage runs and the last one wins, so this is
-        # where a correction belongs. It rescues a live superlative about a measured condition
+        # BUG-860: every rule in the stage runs and the last one wins, so this is where a
+        # correction belongs. It rescues a live superlative about a measured condition
         # from a lane that holds records and no readings.
         "measured_superlative_beats_a_register",
+        # W1-03 / pack #27: IN THIS STAGE, NOT THE PARSE STAGE, and the position is the point.
+        # One of its two quantities arrives as a resolved CONCEPT ("ventilation" -> CO2), and
+        # concepts do not exist when the parse rules run. Written into the parse stage first, it
+        # passed its offline tests — which supplied the concepts — and never fired once on a
+        # live turn, because the context it read was empty there.
+        "one_quantity_judged_against_another",
     ]
 
 
@@ -1287,3 +1293,154 @@ def test_naming_a_measurand_is_not_enough_without_a_superlative():
         intent="register", concepts=quiet,
     )
     assert got == "register"
+
+
+# ── cross-modal comfort questions reach the lane that can rank on two modalities ──────
+#
+# Measured live 2026-09-23. All four of these compile to executable two-modality plans, and
+# the deliberation lane answers the ones that reach it with a ranked list, per-modality
+# values, coverage and a dossier. Two of the four never reached it:
+#
+#   "Which rooms on floor 3 are warm and stuffy?"     -> deliberate, answered
+#   "Which rooms are both warm and stuffy right now?" -> sparql, declined
+#
+# The difference between those two questions is the word "both", which sat between the verb
+# and the adjective and fell outside the CAVEAT-563 branch. The lane was never missing; one
+# word kept the question out of it.
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Which rooms are both warm and stuffy right now?",
+        "Which rooms are all quiet and bright?",
+        "Which spaces are either stuffy or humid?",
+        "Where is it cool and quiet enough to work?",
+        "Where's it warm and bright right now?",
+    ],
+)
+def test_a_cross_modal_comfort_question_reaches_deliberate(query):
+    assert rc.DELIBERATE_RE.search(query), query
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "where is it?",
+        "Where is it on floor 2?",
+        "which rooms are available tomorrow",
+        "which policy should I read",
+        "where is room 2.14",
+        "Which rooms are bookable?",
+        "where is it stored",
+    ],
+)
+def test_widening_did_not_swallow_a_question_that_is_not_about_a_condition(query):
+    """The widening needs a condition adjective. A `where is it` with none stays where it was."""
+    assert not rc.DELIBERATE_RE.search(query), query
+
+
+def test_the_condition_adjectives_are_named_once():
+    """Three copies of one list is three lists that diverge.
+
+    This branch carried its own inline adjective list while `_CONDITION_ADJECTIVES` sat six
+    lines above it. Adding "smelly" to one would have left the other two answering differently
+    for reasons nobody could see from either site.
+    """
+    for adjective in ("smelly", "draughty", "stale", "muggy"):
+        assert rc.DELIBERATE_RE.search(f"which rooms are both {adjective} and warm")
+
+
+# ── one measured quantity judged AGAINST another (W1-03, pack #27) ───────────────────
+#
+# "Is the ventilation keeping up with occupancy on floor 2 this afternoon?" was classified
+# `compare` and sent to the single-sensor path, which resolved "floor 2" to eight F2-named
+# METERS and answered "No readings were found for Floor_2" — a false statement about a floor
+# with 49 instrumented rooms. Handed to the deliberation lane the same question compiles
+# executable on the first attempt as `occupancy MAXIMIZE, co2 MINIMIZE`, which is what "keeping
+# up with" means: plenty of people, little CO2.
+
+_CO2_CONCEPT = {"concept_id": "ventilation_quality", "brick_classes": ["brick:CO2_Level_Sensor"]}
+_TEMP_CONCEPT = {"concept_id": "temperature_reading", "brick_classes": ["brick:Temperature_Sensor"]}
+
+
+def _route(query, intent="compare", concepts=(_CO2_CONCEPT,)):
+    normalized = {
+        "intent": intent,
+        "entities": [],
+        "confidence": 0.9,
+        "concepts": list(concepts),
+    }
+    applied = rc.apply_contract(query, normalized, stage="concept")
+    return normalized["intent"], applied
+
+
+def test_pack_27_reaches_the_lane_that_can_rank_on_two_modalities():
+    intent, applied = _route("Is the ventilation keeping up with occupancy on floor 2 this afternoon?")
+    assert intent == "deliberate"
+    assert "one_quantity_judged_against_another" in applied
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "Is the ventilation keeping up with occupancy on floor 2?",
+        "is the cooling keeping pace with occupancy today",
+        "is the ventilation coping with occupancy in the lab",
+    ],
+)
+def test_the_relational_phrasings_people_use(query):
+    assert _route(query)[0] == "deliberate", query
+
+
+@pytest.mark.parametrize(
+    "query,concepts",
+    [
+        # Two quantities, but the question asks for their VALUES, not their relationship.
+        ("What is the temperature and humidity in room 5.01?", (_CO2_CONCEPT, _TEMP_CONCEPT)),
+        # Relational phrase, but only ONE quantity in the building's vocabulary.
+        ("is the budget adequate for the refurbishment", ()),
+        ("is the lift keeping up with demand", ()),
+        # No relational phrase at all.
+        ("Compare the average CO2 this week against last week.", (_CO2_CONCEPT,)),
+        ("Which rooms are both warm and stuffy right now?", (_CO2_CONCEPT, _TEMP_CONCEPT)),
+    ],
+)
+def test_it_does_not_take_a_question_that_only_resembles_the_shape(query, concepts):
+    """Two guards, both required: a relational phrase AND two of this building's quantities."""
+    _intent, applied = _route(query, concepts=concepts)
+    assert "one_quantity_judged_against_another" not in applied, query
+
+
+def test_a_lane_that_is_already_right_is_left_alone():
+    """It may correct a data lane; it may never move a question already going to deliberate."""
+    _intent, applied = _route(
+        "Is the ventilation keeping up with occupancy?", intent="deliberate"
+    )
+    assert "one_quantity_judged_against_another" not in applied
+
+
+def test_the_rule_names_no_building_and_no_modality():
+    """The quantities come from the active building's config, never from this file.
+
+    Judged on the EXECUTABLE body. The comment beside it names "occupancy" and "CO2" on purpose
+    — that is the worked example of the two forms a quantity arrives in, and a guard that
+    forbade explaining itself would be paid for in the next maintainer's hour.
+    """
+    import ast
+    import inspect
+    import textwrap
+
+    tree = ast.parse(
+        textwrap.dedent(inspect.getsource(rc._r_one_quantity_judged_against_another))
+    )
+    fn = tree.body[0]
+    if (
+        fn.body
+        and isinstance(fn.body[0], ast.Expr)
+        and isinstance(fn.body[0].value, ast.Constant)
+    ):
+        fn.body = fn.body[1:]
+    code = ast.unparse(ast.fix_missing_locations(tree))
+    for literal in ("co2", "occupancy", "temperature", "bldg1", "abacws", "ventilation"):
+        assert literal not in code.lower(), literal
