@@ -1,0 +1,35 @@
+{
+  "snapshot_at": "2026-06-25 10:10:39",
+  "total_participants": 80,
+  "total_questions": 5866,
+  "stage_counts": {
+    "S1": 1580,
+    "S2": 1691,
+    "S3": 1388,
+    "S4": 1207
+  },
+  "persona_participants": {
+    "Guests": 22,
+    "Occupants": 18,
+    "Student": 14,
+    "Building Owners": 8,
+    "IT": 7,
+    "Facility Managers": 6,
+    "Health and Safety Officers": 3,
+    "Ontology Experts": 1,
+    "Sustainability and Energy Management Teams": 1
+  },
+  "persona_questions": {
+    "Guests": 1398,
+    "Occupants": 1237,
+    "Student": 1493,
+    "Building Owners": 435,
+    "IT": 681,
+    "Facility Managers": 427,
+    "Health and Safety Officers": 100,
+    "Ontology Experts": 4,
+    "Sustainability and Energy Management Teams": 91
+  },
+  "master_table_rows": 5604,
+  "master_table_unique_qid": 5604
+}

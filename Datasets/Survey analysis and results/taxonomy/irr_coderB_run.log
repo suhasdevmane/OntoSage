@@ -1,0 +1,300 @@
+row 0: [SUSTAINABILITY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How do you support green spaces or plants in the building?
+row 1: [AIR_QUALITY|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] dust levels high
+row 2: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] great
+row 3: [ENERGY|DIAGNOSTIC|DIAGNOSTIC|REALTIME|BUILDING|MULTI_STEP] How much energy does the smart building system use from AI, and is it increasing
+row 4: [THERMAL|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] What is the temperature in the building
+row 5: [OTHER|COMPARISON|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Which is most cool substance on our earth?
+row 6: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] Do you ever get tired?
+row 7: [AIR_QUALITY|CAPABILITY|INFORMATIONAL|REALTIME|ROOM|LOOKUP] We live in your building, and our room is near the EV charging area. How are you
+row 8: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] noise event
+row 9: [PRIVACY|DIAGNOSTIC|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] What about employees with an open door policy who like to keep their doors open?
+row 10: [SAFETY|CAPABILITY|PRESCRIPTIVE|PREDICTIVE|BUILDING|MULTI_STEP] could the building proactively notice when harmful materials may be used and off
+row 11: [SAFETY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] how often do you check for safety issues ?
+row 12: [SECURITY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] Is there motion detected?
+row 13: [OTHER|DIAGNOSTIC|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] how to stop a child crying
+row 14: [ENERGY|RECOMMENDATION|PRESCRIPTIVE|PREDICTIVE|UNSPECIFIED|MULTI_STEP] when is the most efficient time for me to run my dishwasher?
+row 15: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] When i think about many peole i think about breath and dust. How to the filters 
+row 16: [AIR_QUALITY|DIAGNOSTIC|DIAGNOSTIC|PREDICTIVE|BUILDING|MULTI_STEP] How would the air quality number get high if you are presumably filtering the ai
+row 17: [SECURITY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Is there a way to bypass a system, such as a smart system lock, after hours, whe
+row 18: [LIGHTING|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Can the blue light filter be adjusted for daytime and nighttime hours?
+row 19: [WAYFINDING|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] wayfinding available?
+row 20: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] can I customize lighting preferences for my workspace?
+row 21: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 1
+row 22: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] how does the building use  internal  environment?
+row 23: [ENERGY|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] Is voltage stable?
+row 24: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] WHAT FISHERMAN DO INOUR SOCIETY ?
+row 25: [OTHER|COMPARISON|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] HOW IS THIS DIFFERENT FROM WHAT PEOPLE USED BEFOR?
+row 26: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] How is humidity managed to prevent dry air?
+row 27: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] how does the building acpert
+row 28: [ENERGY|COMPARISON|PRESCRIPTIVE|STATIC|BUILDING|MULTI_STEP] Is the HVAC equipment on the roof properly shaded to improve their efficiency in
+row 29: [THERMAL|DIAGNOSTIC|INFORMATIONAL|STATIC|UNSPECIFIED|MULTI_STEP] How does the system determine what the ideal temp is when people have different 
+row 30: [SECURITY|STATUS|INFORMATIONAL|REALTIME|POINT|LOOKUP] Is the door open or closed?
+row 31: [WATER|STATUS|INFORMATIONAL|REALTIME|BUILDING|AGGREGATION] How much water is being used daily?
+row 32: [THERMAL|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How many  Temperature sensors in this buildings?
+row 33: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Are the smart plugs moveable or are they located on fixed power outlets?
+row 34: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] How much current required to run a motor/
+row 35: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How do Occupants communicate with the Smart Functions of this Building?
+row 36: [ACCESSIBILITY|STATUS|INFORMATIONAL|STATIC|ROOM|LOOKUP] How does the look of the lobby reflect inclusivity, being welcome to all culture
+row 37: [ENERGY|STATUS|INFORMATIONAL|REALTIME|ROOM|AGGREGATION] how much energy is used by lighting in each zon?
+row 38: [SAFETY|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] Are there any safety concerns detected?
+row 39: [SAFETY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] how often do you check for safety issues ?
+row 40: [ACCESSIBILITY|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] What is the procedure for food deliveries?
+row 41: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] I
+row 42: [OCCUPANCY|ANOMALY|DIAGNOSTIC|REALTIME|BUILDING|MULTI_STEP] WHICH ZONES ARE CURRENTLY BEING COOLED OR HEATED DESPITE HAVING ZERO OCCUPANCY?
+row 43: [ENERGY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|MULTI_STEP] Can the information on the amount of energy usage be inputted with information o
+row 44: [THERMAL|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] What is the temperature right now?
+row 45: [OCCUPANCY|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] Is there cafeter crowded at the moment?
+row 46: [THERMAL|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] Are there any areas of this room hotter than others?
+row 47: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] What is the humidity level?
+row 48: [MAINTENANCE|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] how often are the filters cleaned and maintained?
+row 49: [WATER|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] water safe?
+row 50: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] How is the air quality right now
+row 51: [LIGHTING|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] light optimal here
+row 52: [WASTE|RECOMMENDATION|PRESCRIPTIVE|REALTIME|BUILDING|MULTI_STEP] can you reduce waste in the building?
+row 53: [LIGHTING|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] What is your ambient light amount?
+row 54: [THERMAL|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] Is HVAC running?
+row 55: [SECURITY|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] Are there currently active motion detectors in the secure bicycle storage area f
+row 56: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 147
+row 57: [ENERGY|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|MULTI_STEP] How can we help reduce energy usage?
+row 58: [SECURITY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How do you protect the building?
+row 59: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 20
+row 60: [ENERGY|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|LOOKUP] how do you save energy daily?
+row 61: [OCCUPANCY|CAPABILITY|INFORMATIONAL|STATIC|POINT|LOOKUP] What is your occupancy sensor used for?
+row 62: [CONTROL|CAPABILITY|PRESCRIPTIVE|REALTIME|ROOM|LOOKUP] If it's a sunny day, can you lower blinds to save glare and keep temps low?
+row 63: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] As a tenant am I able to adjust the theromstat or do I need to ask the landlord 
+row 64: [THERMAL|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] Do the temp sensors warm empty rooms?
+row 65: [AIR_QUALITY|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] carbon low?
+row 66: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] How fast is the fan currently running for the ventilation system in your room? I
+row 67: [THERMAL|RECOMMENDATION|PRESCRIPTIVE|PREDICTIVE|BUILDING|MULTI_STEP] I worked in an office where the air conditioning didn't kick in until it got rea
+row 68: [LIGHTING|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How is visual comfort measured by the building?
+row 69: [AIR_QUALITY|CAPABILITY|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] Can I see live CO2 levels on displays?
+row 70: [AIR_QUALITY|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] What is the acceptable threshold for carbondioxide level?
+row 71: [LIGHTING|DIAGNOSTIC|DIAGNOSTIC|STATIC|UNSPECIFIED|LOOKUP] can glare affect visibility?
+row 72: [LIGHTING|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] how is natural light maximixed here
+row 73: [LIGHTING|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|MULTI_STEP] What type of internal lights are used and could altering the light colors slight
+row 74: [WATER|CAPABILITY|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] can you track water usage daily?
+row 75: [SUSTAINABILITY|STATUS|INFORMATIONAL|STATIC|CAMPUS|LOOKUP] is the site a brownfield
+row 76: [THERMAL|DIAGNOSTIC|DIAGNOSTIC|PREDICTIVE|BUILDING|MULTI_STEP] Is there a way to understand when one area of the building is heated up, how it 
+row 77: [AIR_QUALITY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How does the ventilation system work to ensure fresh air?
+row 78: [SECURITY|STATUS|INFORMATIONAL|STATIC|ROOM|LOOKUP] Who is given access to this space? What kind of security does the space have?
+row 79: [WAYFINDING|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] can you guide me to the nearest exit?
+row 80: [ENERGY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] What is the energy usage today?
+row 81: [MAINTENANCE|HISTORICAL|INFORMATIONAL|HISTORICAL|BUILDING|LOOKUP] When was the roof last replaced?
+row 82: [OTHER|DIAGNOSTIC|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Why does this system interest me? what does the open plan systems actually offer
+row 83: [PRIVACY|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] Are you attempting to get employees in trouble by monitoring their water usage?
+row 84: [THERMAL|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] Is it possible to have different temperatures in the same room?
+row 85: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] Do the lights turn on for 1 person?
+row 86: [THERMAL|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] How warm is it in here?
+row 87: [THERMAL|RECOMMENDATION|PRESCRIPTIVE|STATIC|ROOM|MULTI_STEP] How can temps be managed in an open office setting?
+row 88: [SAFETY|RECOMMENDATION|PRESCRIPTIVE|STATIC|BUILDING|LOOKUP] how would be a safety measures in the building
+row 89: [AIR_QUALITY|CAPABILITY|INFORMATIONAL|REALTIME|ROOM|LOOKUP] Could the building alert a room if pollution levels have risen too high and vent
+row 90: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] lightting optaial
+row 91: [ENERGY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Can the building monitor energy use and alert humans to spikes and possible prob
+row 92: [ACCESSIBILITY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] is there an elevator or only stairs
+row 93: [THERMAL|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Does the building actually talk back to me
+row 94: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] HEALTH CARE
+row 95: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Can you automatically adjust temperature based on occupancy?
+row 96: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] What kind of microphone is used in the sound level sensor?
+row 97: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] acoustic
+row 98: [LIGHTING|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] lights on?
+row 99: [THERMAL|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] cooling okey?
+row 100: [OTHER|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Are you able to process payments?
+row 101: [LIGHTING|DIAGNOSTIC|DIAGNOSTIC|STATIC|UNSPECIFIED|LOOKUP] can glare affect visibility?
+row 102: [SAFETY|CAPABILITY|INFORMATIONAL|STATIC|POINT|LOOKUP] Can the frequency sensor detect abnormal EMF polution?
+row 103: [CONTROL|DIAGNOSTIC|DIAGNOSTIC|STATIC|ROOM|MULTI_STEP] What are the complications with dealing effectively with implementing sensors pr
+row 104: [TRANSPORT|STATUS|INFORMATIONAL|REALTIME|CAMPUS|LOOKUP] Can you show available parking?
+row 105: [THERMAL|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] What is the current temperature in this room
+row 106: [SAFETY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] system safe?
+row 107: [ACCESSIBILITY|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Is there any parking area near with it?
+row 108: [THERMAL|DIAGNOSTIC|INFORMATIONAL|STATIC|ROOM|LOOKUP] does the laundry room have sensors that can alert residents when their laundry i
+row 109: [AIR_QUALITY|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|LOOKUP] how do you maintain air quality?
+row 110: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] Is there any windows open?
+row 111: [OCCUPANCY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] What do you use motion sensors for?
+row 112: [ENERGY|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|AGGREGATION] How much power do all of the lamps in my bedroom use? I want to determine if my 
+row 113: [ACCESSIBILITY|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] What features are available to guests in the lobby?
+row 114: [ENERGY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Can the building shift loads to greener hours?
+row 115: [AIR_QUALITY|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] is there bad smell in air ?
+row 116: [AIR_QUALITY|RECOMMENDATION|PRESCRIPTIVE|STATIC|ROOM|MULTI_STEP] What if users of the space have different preferences for humidity level?
+row 117: [OTHER|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Who owns this building?
+row 118: [OCCUPANCY|RECOMMENDATION|PRESCRIPTIVE|REALTIME|UNSPECIFIED|LOOKUP] can you reduce the least croweded right now
+row 119: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] water carbon
+row 120: [AIR_QUALITY|ANOMALY|DIAGNOSTIC|REALTIME|BUILDING|LOOKUP] are we maintaining relative humidity between 40 to 60
+row 121: [WATER|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] IS WATER SUPPLY OKAY ?
+row 122: [SECURITY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Are people allowed access to the roof? How does the building control and verify 
+row 123: [AIR_QUALITY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] are there CO2 detectors in all apartments?
+row 124: [MAINTENANCE|ANOMALY|DIAGNOSTIC|HISTORICAL|BUILDING|LOOKUP] has your building had any problems with the backup generator and frequency?
+row 125: [ENERGY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|MULTI_STEP] How many batteries could be totally offline before the system becomes unusable?
+row 126: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 54
+row 127: [OCCUPANCY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] How does people count wpork?
+row 128: [ENERGY|COMPARISON|INFORMATIONAL|HISTORICAL|BUILDING|MULTI_STEP] CAN YOU SHOW A HEATMAP OF ENERGY CONSUMPTION VS. ACTUAL FLOR USAGE FOR THE LAST 
+row 129: [WATER|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] What is the purity of the drinking water?
+row 130: [CONTROL|RECOMMENDATION|PRESCRIPTIVE|REALTIME|UNSPECIFIED|LOOKUP] how can i adjust environment?
+row 131: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] What type of building ?
+row 132: [WELLBEING|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] healthy space?
+row 133: [AIR_QUALITY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] can you smell?
+row 134: [AIR_QUALITY|RECOMMENDATION|PRESCRIPTIVE|REALTIME|ROOM|MULTI_STEP] Would the humidity in the office support plant growth without damaging equipment
+row 135: [MAINTENANCE|DIAGNOSTIC|DIAGNOSTIC|STATIC|UNSPECIFIED|LOOKUP] what happens if a charger fails?
+row 136: [SAFETY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] Is the rooftop clear?
+row 137: [OCCUPANCY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Do occupancy sensord use camers
+row 138: [THERMAL|RECOMMENDATION|PRESCRIPTIVE|STATIC|BUILDING|MULTI_STEP] I assume that on hot days, some people won't get cool enough. And on cold days, 
+row 139: [LIGHTING|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|LOOKUP] How do you handle lighting? I hate any type of glare or insufficient lighting.
+row 140: [SECURITY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] doors locked?
+row 141: [OCCUPANCY|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] room occupied?
+row 142: [ACCESSIBILITY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] is there a cutoff time for activities in the meeting and outdoor spaces
+row 143: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 7
+row 144: [WATER|RECOMMENDATION|PRESCRIPTIVE|STATIC|BUILDING|MULTI_STEP] how can you reduce water usage in this building?
+row 145: [ENERGY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|MULTI_STEP] Tell me more about your energy efficiency plans. Is the connected electric grid 
+row 146: [SUSTAINABILITY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] how do you support green building standards?
+row 147: [ACCESSIBILITY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Are there shared spaces to work?
+row 148: [THERMAL|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] What is current temperature in this room?
+row 149: [OTHER|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Can you automate yourself
+row 150: [SECURITY|STATUS|INFORMATIONAL|REALTIME|POINT|LOOKUP] Is there any movement detected here?
+row 151: [ENERGY|ANOMALY|DIAGNOSTIC|REALTIME|BUILDING|LOOKUP] is the HVAC system running at optimal efficiency?
+row 152: [THERMAL|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Thermal comfort was manually closing the shades or putting on a sweater. What wi
+row 153: [LIGHTING|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] what is the current lightlevel?
+row 154: [ENERGY|STATUS|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] Do any of the smart plugs in the breakroom still have a standby power draw while
+row 155: [ACCESSIBILITY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Can anyone use the EV chargers?
+row 156: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 2
+row 157: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] ergtg
+row 158: [MAINTENANCE|CAPABILITY|INFORMATIONAL|PREDICTIVE|UNSPECIFIED|LOOKUP] How soon can I be alerted if a sensor replacement is necessary?
+row 159: [OCCUPANCY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] Are there any cats inside this building (very allergic)?
+row 160: [THERMAL|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] Are my windows leaking heat right now?
+row 161: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] how does the building communicate with is owner?
+row 162: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] If we drop a chicken from the roof will it survive
+row 163: [OCCUPANCY|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] Is the Focus Zone Currently at its maximum occupancy limits
+row 164: [OCCUPANCY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Are there any health risks involved with the occupancy sensors?
+row 165: [OCCUPANCY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How does the system manage flow if everyone leaves and arrives at the same time?
+row 166: [THERMAL|DIAGNOSTIC|DIAGNOSTIC|REALTIME|BUILDING|MULTI_STEP] Where does the background noise from the Building come from, is it overhead and 
+row 167: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] HAVE YOU WATCHED AVENGER MOVIE /
+row 168: [ENERGY|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|MULTI_STEP] how to make energy more efficient
+row 169: [SUSTAINABILITY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Is the building a green building?
+row 170: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 2
+row 171: [LIGHTING|RECOMMENDATION|PRESCRIPTIVE|REALTIME|UNSPECIFIED|LOOKUP] Can you improve lighting conditions?
+row 172: [THERMAL|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] Are lighting and temperature optimal?
+row 173: [ACCESSIBILITY|HISTORICAL|INFORMATIONAL|HISTORICAL|POINT|LOOKUP] When was the door last used?
+row 174: [AIR_QUALITY|COMPARISON|INFORMATIONAL|REALTIME|ROOM|AGGREGATION] Which desk areas are louder than others?
+row 175: [INFO_REQUEST|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Does this Building have any visible panels that display information or must ever
+row 176: [MAINTENANCE|CAPABILITY|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] Can you alert maintenance issues quickly?
+row 177: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 12
+row 178: [OCCUPANCY|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] is this room actually occupied or just booked?
+row 179: [OTHER|DIAGNOSTIC|DIAGNOSTIC|PREDICTIVE|UNSPECIFIED|LOOKUP] why
+row 180: [LIGHTING|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] What is the current light intensity (lux) in this room?
+row 181: [ENERGY|COMPARISON|INFORMATIONAL|HISTORICAL|BUILDING|AGGREGATION] What days of the week use the most energy?
+row 182: [OCCUPANCY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How many people do you hold at a maximum?
+row 183: [WAYFINDING|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Where is the nearest restroom?
+row 184: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] humidy right
+row 185: [AIR_QUALITY|RECOMMENDATION|PRESCRIPTIVE|REALTIME|UNSPECIFIED|LOOKUP] the ac how would reduce the co2
+row 186: [WELLBEING|RECOMMENDATION|PRESCRIPTIVE|REALTIME|UNSPECIFIED|MULTI_STEP] Imagine the noise levels around you — what could the building do to help you con
+row 187: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] what does sensor measures how would be feel
+row 188: [THERMAL|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] Is the room temperature comfortable for eneryone?
+row 189: [WATER|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] Leak detected?
+row 190: [OCCUPANCY|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] Can you room too crowded?
+row 191: [MAINTENANCE|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] How often are these systems inspected, to make sure they are operating correctly
+row 192: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] thankyou
+row 193: [SAFETY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] IS THE BUILDING LIGHTENING PROOF?
+row 194: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] DAS
+row 195: [ENERGY|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|MULTI_STEP] What's the best way to save money by analizing gas usage?
+row 196: [SAFETY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Where is the fire extinguisher located?
+row 197: [ENERGY|DIAGNOSTIC|DIAGNOSTIC|STATIC|UNSPECIFIED|LOOKUP] How does a low Power Factor affect the efficiency of an industrial electrical sy
+row 198: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] in the building  health will  manage  equipments
+row 199: [AIR_QUALITY|STATUS|INFORMATIONAL|STATIC|ROOM|LOOKUP] What is the acceptable threshold for VOC levels here
+row 200: [ENERGY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] what is the current power usage?
+row 201: [MAINTENANCE|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] our projector isn't working. can you get another one in here pronto?
+row 202: [LIGHTING|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] What are the current lux levels on the lights in the rooms?
+row 203: [OCCUPANCY|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] Is it too crowded here?
+row 204: [OCCUPANCY|RECOMMENDATION|PRESCRIPTIVE|REALTIME|UNSPECIFIED|LOOKUP] In which area I can work without interruptions?
+row 205: [WATER|HISTORICAL|INFORMATIONAL|HISTORICAL|UNSPECIFIED|AGGREGATION] How much water have I used this month so far?
+row 206: [WELLBEING|ANOMALY|PRESCRIPTIVE|REALTIME|UNSPECIFIED|LOOKUP] Ca you alert me if the noise level crosses 60 decibels?
+row 207: [WELLBEING|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] Can the system detect if someone in a large open room is sick?
+row 208: [LIGHTING|DIAGNOSTIC|DIAGNOSTIC|STATIC|UNSPECIFIED|LOOKUP] why i need lightning clear
+row 209: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] good
+row 210: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] windows open?
+row 211: [THERMAL|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] temperature high?
+row 212: [OCCUPANCY|CAPABILITY|INFORMATIONAL|REALTIME|ROOM|LOOKUP] Where would the number of people in this area be displayed so that someone could
+row 213: [ENERGY|RECOMMENDATION|PRESCRIPTIVE|STATIC|BUILDING|LOOKUP] what incentives do you offer to lower usage during peak times
+row 214: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] what kind of color combination is perfect to use buildings
+row 215: [THERMAL|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Can cooling system prevent overheating?
+row 216: [ENERGY|RECOMMENDATION|PRESCRIPTIVE|REALTIME|BUILDING|MULTI_STEP] How can we reduce energy consumption in this building?
+row 217: [WATER|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How does the building collect and reuse rainwater?
+row 218: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] how to the microphones adapt to those that are loud spoken and soft spoken
+row 219: [CONTROL|CAPABILITY|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] can i us efan in high speed
+row 220: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] meeting room is important
+row 221: [THERMAL|STATUS|INFORMATIONAL|HISTORICAL|BUILDING|LOOKUP] does your building get cold in the winter
+row 222: [SUSTAINABILITY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] What are the key green features of the building?
+row 223: [ACCESSIBILITY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] free parking available
+row 224: [AIR_QUALITY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Does the oxygen sensors trigger any action?
+row 225: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Do you turn off lights when no one is there?
+row 226: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] How Cars Works
+row 227: [ENERGY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] What is the gas meter reading now?
+row 228: [WELLBEING|CAPABILITY|PRESCRIPTIVE|REALTIME|UNSPECIFIED|LOOKUP] Can you remind me every half an hour to drink water?
+row 229: [LIGHTING|RECOMMENDATION|PRESCRIPTIVE|REALTIME|ROOM|MULTI_STEP] The only time we noticed lighting was when a bulb burned out in the office. How 
+row 230: [AIR_QUALITY|COMPARISON|INFORMATIONAL|HISTORICAL|UNSPECIFIED|AGGREGATION] Do VOC levels vary depending on time of day or occupancy
+row 231: [WAYFINDING|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Do you have any integration with apps on people's phones, like for instance, ins
+row 232: [ACCESSIBILITY|RECOMMENDATION|PRESCRIPTIVE|STATIC|BUILDING|MULTI_STEP] From the lobby, what is the most direct path to the conference center for my dis
+row 233: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] 2
+row 234: [ENERGY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Do you have solar power?
+row 235: [OTHER|DIAGNOSTIC|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] wont it increase cost
+row 236: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] What is the air quality in the office?
+row 237: [CONTROL|CAPABILITY|PRESCRIPTIVE|STATIC|UNSPECIFIED|LOOKUP] AUTOMATICALLY INCREASE
+row 238: [SAFETY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Can voltage fluctuation damage equipment?
+row 239: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] are window open now
+row 240: [ENERGY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] How much powe actully need in ordinary home
+row 241: [AIR_QUALITY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] air healthy?
+row 242: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] for what in your life do you fell most grateful beside me
+row 243: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] How many windows do you have?
+row 244: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] How dose the building involve?
+row 245: [AIR_QUALITY|CAPABILITY|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] can you monitor PM10 regularly?
+row 246: [WAYFINDING|STATUS|INFORMATIONAL|REALTIME|CAMPUS|LOOKUP] Are there any  free study spaces available nearby?
+row 247: [THERMAL|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] Is the temperature within safe limits?
+row 248: [LIGHTING|CAPABILITY|PRESCRIPTIVE|REALTIME|ROOM|LOOKUP] Can you reduce glare in workspaces?
+row 249: [ENERGY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Does this building run on renewable energy resources?
+row 250: [AIR_QUALITY|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] Is the humidity level comfortable?
+row 251: [WATER|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] what's the water remperature in the cafe area today?
+row 252: [MAINTENANCE|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] How often do you have to replace batteries?
+row 253: [WATER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] How much water is used?
+row 254: [MAINTENANCE|STATUS|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] Do any of the batteries need to be replaced in the sensors?
+row 255: [TRANSPORT|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] elevator busy?
+row 256: [AIR_QUALITY|ANOMALY|DIAGNOSTIC|REALTIME|ROOM|LOOKUP] is co2 too high here
+row 257: [WATER|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|MULTI_STEP] How do you promote water conservation among users?
+row 258: [THERMAL|DIAGNOSTIC|INFORMATIONAL|STATIC|ROOM|MULTI_STEP] How does an increase in Relative Humidity affect the perceived Temperature (Heat
+row 259: [WATER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] how filtered and purified is the water you're offering?
+row 260: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Can manually override sensor controls?
+row 261: [AIR_QUALITY|COMPARISON|INFORMATIONAL|REALTIME|UNSPECIFIED|AGGREGATION] Which areas have the freshest air right now?
+row 262: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] can you manage both whole house and specific rooms?
+row 263: [ENERGY|DIAGNOSTIC|DIAGNOSTIC|STATIC|UNSPECIFIED|MULTI_STEP] What happens when energy efficiency and employee productivity are at odds?
+row 264: [INFO_REQUEST|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] What is the function of your building?
+row 265: [WATER|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Can you detect water leaks automatically?
+row 266: [SECURITY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] Is the safe open the entire time the building is open?
+row 267: [AIR_QUALITY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] can NO2 affect air quality?
+row 268: [WAYFINDING|CAPABILITY|INFORMATIONAL|REALTIME|BUILDING|MULTI_STEP] can you, the building direct me to the quickest elevator based on use and time e
+row 269: [LIGHTING|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|MULTI_STEP] how do you improve lighting efficiency?
+row 270: [SAFETY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Does the building have backup emergency lighting in stairwells?
+row 271: [SAFETY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] Do we have a working UPS in place that is showing to be at full charge in case o
+row 272: [SUSTAINABILITY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Habitat creation?
+row 273: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] what materials are being used for the ceiling and floors
+row 274: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|POINT|LOOKUP] Would this automatic shutoff for standby mode be something that could be done pe
+row 275: [CONTROL|CAPABILITY|PRESCRIPTIVE|STATIC|BUILDING|MULTI_STEP] could the building automatically determine which data analysis I may be overlook
+row 276: [OCCUPANCY|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|MULTI_STEP] How do you manage crowd flow in busy areas?
+row 277: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] hi
+row 278: [OCCUPANCY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] visitors waiting?
+row 279: [WATER|CAPABILITY|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] Can you detect leaks and alert users immediately?
+row 280: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Do you like Icecream?
+row 281: [OCCUPANCY|STATUS|INFORMATIONAL|REALTIME|ROOM|LOOKUP] room currently ocuiped
+row 282: [SECURITY|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] can motion sensors detect movement at night?
+row 283: [ENERGY|STATUS|INFORMATIONAL|REALTIME|BUILDING|LOOKUP] How much power is being used in our home while we're away?
+row 284: [WELLBEING|DIAGNOSTIC|INFORMATIONAL|HISTORICAL|UNSPECIFIED|AGGREGATION] How many noise spikes (sneezes, drops) happen each day?
+row 285: [TRANSPORT|CAPABILITY|INFORMATIONAL|STATIC|CAMPUS|LOOKUP] How do you detect available parking spaces?
+row 286: [OTHER|STATUS|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] eats free?
+row 287: [OTHER|ANOMALY|DIAGNOSTIC|REALTIME|UNSPECIFIED|LOOKUP] is building data showing any issues ?
+row 288: [ACCESSIBILITY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] in regular day what is the office timing
+row 289: [ENERGY|RECOMMENDATION|PRESCRIPTIVE|REALTIME|UNSPECIFIED|LOOKUP] can you reduce energy usage at night?
+row 290: [OTHER|CAPABILITY|INFORMATIONAL|STATIC|UNSPECIFIED|LOOKUP] Are you the only building that can talk around here?
+row 291: [CONTROL|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] Does the server room still need humans to monitor at all in a smart building?
+row 292: [SECURITY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] what are your security features?
+row 293: [CONTROL|CAPABILITY|INFORMATIONAL|PREDICTIVE|BUILDING|LOOKUP] Can the building adjust the climate proactively based on weather forecasts?
+row 294: [ENERGY|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] power usage?
+row 295: [LIGHTING|RECOMMENDATION|PRESCRIPTIVE|STATIC|UNSPECIFIED|MULTI_STEP] How could daylight be balanced with artificial lighting to save energy while kee
+row 296: [OTHER|STATUS|INFORMATIONAL|REALTIME|UNSPECIFIED|LOOKUP] tdg
+row 297: [ENERGY|CAPABILITY|INFORMATIONAL|STATIC|BUILDING|LOOKUP] can the energy meter break down individual apartments
+row 298: [THERMAL|CAPABILITY|INFORMATIONAL|STATIC|ROOM|LOOKUP] How do you measure temperature in different rooms?
+row 299: [SUSTAINABILITY|STATUS|INFORMATIONAL|STATIC|BUILDING|LOOKUP] Is the building designed to be environmentally friendly?

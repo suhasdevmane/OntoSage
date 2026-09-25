@@ -1,0 +1,107 @@
+# Stores and stock register -> ontosage:StockItem
+#
+# Ships with the ONTOLOGY, not with any building: a second building drops a document of this
+# shape and gets these triples with no code change.
+#
+# WHY THIS EXISTS
+# ---------------
+# The 37 stakeholder catalogues ask, in roles from external maintenance contractors to
+# cleaning teams to teaching AV support, whether the part or consumable a job needs is
+# actually held:
+#
+#     "Which required spares and consumables are confirmed available, where are they held,
+#      and are they allocated to this job?"
+#     "What supplies need to be replenished from central stores before the next shift starts?"
+#     "Which approved spares should be staged for the coming assessment or event peak?"
+#     "Are enough charged portable assistive-listening receivers available through the
+#      approved loan process?"
+#
+# The asset register says what plant exists; the service schedule says when it is serviced;
+# neither says whether the belt, the filter set or the receiver is on the shelf.
+#
+# FOUR KINDS, DELIBERATELY SEPARATE: consumable (used up), spare (held against a named asset),
+# loan (lent and returned) and surplus (withdrawn, available for reuse). "Are we running low"
+# is a different question for each, so the kind is a column and not a word in the item name.
+#
+# STATUS FOLLOWS THE NUMBERS. In stock means quantity on hand is at or above the minimum;
+# Low and On order mean it is below. tests/test_the_stock_and_waste_return_registers.py holds
+# the document to that, so a shortage is a comparison and not an adjective.
+record_type: stock_item
+class: ontosage:StockItem
+iri_template: "stock/{code}"
+label_column: item
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  item:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  kind:
+    predicate: ontosage:stockKind
+    datatype: xsd:string
+    required: true
+    values:
+      consumable: ["Consumable"]
+      spare: ["Spare"]
+      loan: ["Loan"]
+      surplus: ["Surplus"]
+  category:
+    predicate: ontosage:stockCategory
+    datatype: xsd:string
+  store:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  on_hand:
+    predicate: ontosage:quantityOnHand
+    datatype: xsd:integer
+    required: true
+  minimum:
+    predicate: ontosage:minimumLevel
+    datatype: xsd:integer
+    required: true
+  unit:
+    predicate: ontosage:stockUnit
+    datatype: xsd:string
+  used_for:
+    predicate: ontosage:usedFor
+    datatype: xsd:string
+  supplier:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+  lead_time_days:
+    # Blank where nothing has been agreed. A guessed lead time is worse than none.
+    predicate: ontosage:leadTimeDays
+    datatype: xsd:integer
+  last_counted:
+    predicate: ontosage:lastCounted
+    datatype: xsd:date
+    required: true
+  next_due:
+    # Delivery date when On order, reorder date when Low, next scheduled use otherwise.
+    predicate: ontosage:nextDue
+    datatype: xsd:date
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      in_stock: ["In stock"]
+      low: ["Low"]
+      on_order: ["On order"]
+      out_of_stock: ["Out of stock"]
+      available_for_reuse: ["Available for reuse"]
+      withdrawn: ["Withdrawn"]
+  accountable_role:
+    # A role, never a person. Deliberately NOT ontosage:recordOwner: the lifter already writes
+    # the document's own owner as recordOwner on every row, so a second owner per row would
+    # give every stock line two answers to "who owns this".
+    predicate: ontosage:accountableRole
+    datatype: xsd:string
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

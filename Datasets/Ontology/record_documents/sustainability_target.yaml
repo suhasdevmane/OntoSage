@@ -1,0 +1,51 @@
+# Sustainability and carbon targets -> ontosage:SustainabilityTarget
+#
+# The class was already defined in the TBox with zero instances anywhere. A target is a
+# commitment with a baseline, a date and an authority — a bare percentage with none of
+# those is a slogan, so every one of them is required here.
+record_type: sustainability_target
+class: ontosage:SustainabilityTarget
+iri_template: "target/{reference}"
+label_column: reference
+
+columns:
+  reference:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  metric:
+    predicate: ontosage:targetMetric
+    datatype: xsd:string
+    required: true
+  target_value:
+    predicate: ontosage:targetValue
+    datatype: xsd:decimal
+    required: true
+  unit:
+    predicate: ontosage:targetUnit
+    datatype: xsd:string
+    required: true
+  baseline_value:
+    predicate: ontosage:baselineValue
+    datatype: xsd:decimal
+    required: true
+  baseline_period:
+    predicate: ontosage:targetBaselinePeriod
+    datatype: xsd:string
+    required: true
+  target_date:
+    predicate: ontosage:targetDate
+    datatype: xsd:date
+    required: true
+  authority:
+    predicate: ontosage:targetAuthority
+    datatype: xsd:string
+    required: true
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      on_track: ["On track", "On-track", "Ahead"]
+      at_risk: ["At risk", "At-risk", "Behind"]
+      met: ["Met", "Achieved", "Complete"]

@@ -1,0 +1,36 @@
+# Project handover, as-built and O&M records -> ontosage:HandoverRecord
+#
+# Also what the five-part commissioning gate reads: a claim of "commissioned" must rest
+# on a record, not on a flag somebody set.
+record_type: handover
+class: ontosage:HandoverRecord
+iri_template: "handover/{reference}"
+label_column: reference
+
+columns:
+  reference:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  asset:
+    predicate: ontosage:coveredScope
+    datatype: xsd:string
+    required: true
+  document_kind:
+    predicate: ontosage:note
+    datatype: xsd:string
+    required: true
+  issued:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  issued_by:
+    predicate: ontosage:providerName
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      held: ["Held", "On file", "Received", "Complete"]
+      outstanding: ["Outstanding", "Missing", "Not received", "Awaited"]

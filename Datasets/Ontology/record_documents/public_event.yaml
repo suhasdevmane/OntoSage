@@ -1,0 +1,87 @@
+# Public event register -> ontosage:PublicEvent
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS, AND WHY IT IS NOT A BOOKING
+# --------------------------------------------
+# Measured on the 2,480-question stakeholder capture: visitors and event attendees are the
+# second worst-served role at 16% computed, with 59 questions unanswered. They ask things a
+# room booking cannot answer — when check-in opens, which entrance to use, whether a
+# companion needs separate registration, whether the venue has moved since the invitation
+# went out.
+#
+# ontosage:Booking already models a room held for a period. An event is the PUBLIC-FACING
+# arrangement over that booking: admission times, entrance, registration and the change
+# history a visitor is asking about. Keeping them separate matters because they disagree —
+# a booking can move without the published event changing, and that disagreement is the
+# answer to "has the venue changed since the information I received".
+record_type: public_event
+class: ontosage:PublicEvent
+iri_template: "event/{event}"
+label_column: title
+
+columns:
+  event:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  title:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  venue:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  date:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  starts:
+    predicate: ontosage:startsAt
+    datatype: xsd:string
+    required: true
+  ends:
+    predicate: ontosage:endsAt
+    datatype: xsd:string
+  doors_open:
+    predicate: ontosage:doorsOpenAt
+    datatype: xsd:string
+  check_in_from:
+    predicate: ontosage:checkInFrom
+    datatype: xsd:string
+  entrance:
+    predicate: ontosage:visitorEntrance
+    datatype: xsd:string
+    required: true
+  registration:
+    predicate: ontosage:registrationPolicy
+    datatype: xsd:string
+    required: true
+    values:
+      required: ["Required", "Ticketed", "Pre-registration required"]
+      walk_up: ["Walk-up", "Open", "No registration"]
+      closed: ["Closed", "Full", "Waitlist"]
+  companion:
+    predicate: ontosage:companionPolicy
+    datatype: xsd:string
+  access_note:
+    predicate: ontosage:accessibilityNote
+    datatype: xsd:string
+  previous_venue:
+    # Present ONLY when the event moved. Its absence is not "unchanged" by inference —
+    # it is the register saying nothing, which is why the column is optional and the
+    # answer must say which of the two it is.
+    predicate: ontosage:previousLocationText
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      scheduled: ["Scheduled", "Confirmed", "On"]
+      moved: ["Moved", "Relocated", "Rescheduled"]
+      cancelled: ["Cancelled", "Withdrawn"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string

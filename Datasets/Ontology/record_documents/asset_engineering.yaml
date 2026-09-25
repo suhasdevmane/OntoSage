@@ -1,0 +1,140 @@
+# Asset engineering profile register -> ontosage:AssetEngineeringProfile
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# After the eleven earlier registers landed, the 185-question re-sample left three
+# non-occupant roles worst: mechanical and electrical engineers (1/5), insurers and risk
+# assessors (2/5) and facilities managers (2/5). Their questions were not about access and
+# not about routing:
+#
+#     "What duty was this plant designed and commissioned for, and what duty is it
+#      demonstrably delivering?"
+#     "Which isolation points and downstream dependencies are documented, and what must
+#      still be proved?"
+#     "Are asset names and tags consistent across drawings, BMS, meters, O&M information
+#      and maintenance records?"
+#     "Which rarely visited roofs, basements, risers, stores and plant areas have the
+#      longest blind intervals?"
+#
+# The building recorded that an air handling unit EXISTS. It never recorded what it was FOR.
+#
+# THREE DUTY COLUMNS, NOT ONE. design_duty is the claim on the drawing, commissioned_duty is
+# what was witnessed, observed_duty is what is measured now. Collapsing them into a single
+# "duty" would make the only interesting question — where they disagree — unaskable. This is
+# the same principle as the waste register keeping label, signage and system record apart.
+#
+# THREE TAG COLUMNS FOR THE SAME REASON. "Are asset names consistent across systems?" is
+# only answerable if the inconsistency can be represented. One canonical identifier would
+# assert the consistency the question is asking about.
+#
+# A BLANK observed_duty IS A FINDING. It means nothing measures this asset, which is
+# precisely what an engineer asking "what is it demonstrably delivering?" needs to be told —
+# not an estimate, and not silence.
+record_type: asset_engineering
+class: ontosage:AssetEngineeringProfile
+iri_template: "assetprofile/{code}"
+label_column: name
+
+columns:
+  code:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  name:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  floor:
+    predicate: ontosage:onFloor
+    datatype: xsd:string
+  design_duty:
+    predicate: ontosage:designDuty
+    datatype: xsd:string
+    required: true
+  commissioned_duty:
+    predicate: ontosage:commissionedDuty
+    datatype: xsd:string
+  observed_duty:
+    # Deliberately optional. Blank means nothing measures it, and that is the answer.
+    predicate: ontosage:observedDuty
+    datatype: xsd:string
+  duty_evidence:
+    predicate: ontosage:dutyEvidence
+    datatype: xsd:string
+  isolation_point:
+    predicate: ontosage:isolationPoint
+    datatype: xsd:string
+    required: true
+  isolation_proven_on:
+    predicate: ontosage:isolationProvenOn
+    datatype: xsd:date
+  downstream:
+    predicate: ontosage:downstreamDependencies
+    datatype: xsd:string
+    required: true
+  tag_drawings:
+    predicate: ontosage:tagOnDrawings
+    datatype: xsd:string
+  tag_bms:
+    predicate: ontosage:tagInBMS
+    datatype: xsd:string
+  tag_maintenance:
+    predicate: ontosage:tagInMaintenance
+    datatype: xsd:string
+  parent_asset:
+    # Blank for a top-level item. The CHAIN is what an asset-management question asks about.
+    predicate: ontosage:parentAsset
+    datatype: xsd:string
+  engineering_system:
+    predicate: ontosage:engineeringSystem
+    datatype: xsd:string
+    required: true
+  serves_area:
+    # Distinct from `location`, which is where the asset SITS. An AHU in a ground-floor
+    # plant room serving Level 3 is the ordinary case; conflating them sends an engineer
+    # to the wrong floor.
+    predicate: ontosage:servesArea
+    datatype: xsd:string
+    required: true
+  location_verified_on:
+    # A location nobody has checked is a record, not a fact.
+    predicate: ontosage:locationVerifiedOn
+    datatype: xsd:date
+  criticality:
+    predicate: ontosage:criticality
+    datatype: xsd:string
+    required: true
+  replaceability:
+    predicate: ontosage:replaceability
+    datatype: xsd:string
+    required: true
+  value_band:
+    predicate: ontosage:valueBand
+    datatype: xsd:string
+  last_visited:
+    predicate: ontosage:lastVisited
+    datatype: xsd:date
+  inspection_interval_days:
+    predicate: ontosage:inspectionIntervalDays
+    datatype: xsd:integer
+    required: true
+  services_in_void:
+    predicate: ontosage:servicesInVoid
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      active: ["Active", "In service"]
+      degraded: ["Degraded", "Running with defect"]
+      out_of_service: ["Out of service", "Isolated"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

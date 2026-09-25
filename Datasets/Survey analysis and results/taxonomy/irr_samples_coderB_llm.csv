@@ -1,0 +1,301 @@
+PID,Stage,Question,domain_l1,query_type_l2,intent,temporal,spatial,complexity,coder_notes
+P72,4,How do you support green spaces or plants in the building?,SUSTAINABILITY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P85,2,dust levels high,AIR_QUALITY,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,The query implies a concern about current dust levels being too high.
+P46,2,great,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is off-topic with fewer than 3 meaningful building-related words.
+P53,4,"How much energy does the smart building system use from AI, and is it increasing demand and price in the area?",ENERGY,DIAGNOSTIC,DIAGNOSTIC,REALTIME,BUILDING,MULTI_STEP,"The question seeks to understand the impact of AI on energy use and its broader effects, requiring multiple data sources."
+P68,1,What is the temperature in the building,THERMAL,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P86,1,Which is most cool substance on our earth?,OTHER,COMPARISON,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question is off-topic as it does not relate to building informatics.
+P72,1,Do you ever get tired?,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The question is off-topic and not related to building informatics.
+P51,3,"We live in your building, and our room is near the EV charging area. How are you monitoring the air quality to ensure we won't get poisoned by toxic off gassing from the batteries?",AIR_QUALITY,CAPABILITY,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P85,2,noise event,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under a specific domain.
+P79,2,What about employees with an open door policy who like to keep their doors open?,PRIVACY,DIAGNOSTIC,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is more about workplace culture than building informatics.
+P54,4,could the building proactively notice when harmful materials may be used and offer a safer option that is already available?,SAFETY,CAPABILITY,PRESCRIPTIVE,PREDICTIVE,BUILDING,MULTI_STEP,The query asks about the building's capability to predictively identify and suggest alternatives for harmful materials.
+P67,1,how often do you check for safety issues ?,SAFETY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P74,2,Is there motion detected?,SECURITY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P93,1,how to stop a child crying,OTHER,DIAGNOSTIC,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is not related to building informatics.
+P23,4,when is the most efficient time for me to run my dishwasher?,ENERGY,RECOMMENDATION,PRESCRIPTIVE,PREDICTIVE,UNSPECIFIED,MULTI_STEP,
+P29,3,When i think about many peole i think about breath and dust. How to the filters manage this?,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,"The question is about how filters manage air quality, specifically related to breath and dust."
+P79,2,How would the air quality number get high if you are presumably filtering the air before it comes in?,AIR_QUALITY,DIAGNOSTIC,DIAGNOSTIC,PREDICTIVE,BUILDING,MULTI_STEP,
+P24,1,"Is there a way to bypass a system, such as a smart system lock, after hours, when it  might be difficult to get the help of IT?",SECURITY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question is about the capability of bypassing a security system.
+P87,4,Can the blue light filter be adjusted for daytime and nighttime hours?,LIGHTING,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P73,3,wayfinding available?,WAYFINDING,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P88,3,can I customize lighting preferences for my workspace?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P03,1,1,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is off-topic as it contains fewer than 3 meaningful building-related words.
+P96,3,how does the building use  internal  environment?,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is too vague and lacks specific building-related context.
+P92,2,Is voltage stable?,ENERGY,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P65,1,WHAT FISHERMAN DO INOUR SOCIETY ?,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question is off-topic and not related to building informatics.
+P84,2,HOW IS THIS DIFFERENT FROM WHAT PEOPLE USED BEFOR?,OTHER,COMPARISON,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question lacks specific building-related context or terms.
+P60,4,How is humidity managed to prevent dry air?,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P91,1,how does the building acpert,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is unclear and lacks meaningful building-related words.
+P54,3,Is the HVAC equipment on the roof properly shaded to improve their efficiency in summer? does their shading negatively impact the solar panels?,ENERGY,COMPARISON,PRESCRIPTIVE,STATIC,BUILDING,MULTI_STEP,"The question involves comparing the shading effects on HVAC efficiency and solar panels, requiring analysis of both systems."
+P57,2,How does the system determine what the ideal temp is when people have different preferences?,THERMAL,DIAGNOSTIC,INFORMATIONAL,STATIC,UNSPECIFIED,MULTI_STEP,"The question seeks to understand the decision-making process, which likely involves multiple factors and data sources."
+P64,2,Is the door open or closed?,SECURITY,STATUS,INFORMATIONAL,REALTIME,POINT,LOOKUP,
+P61,4,How much water is being used daily?,WATER,STATUS,INFORMATIONAL,REALTIME,BUILDING,AGGREGATION,
+P96,2,How many  Temperature sensors in this buildings?,THERMAL,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P28,2,Are the smart plugs moveable or are they located on fixed power outlets?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P86,2,How much current required to run a motor/,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question is more about electrical engineering than building informatics.
+P76,1,How do Occupants communicate with the Smart Functions of this Building?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P26,3,"How does the look of the lobby reflect inclusivity, being welcome to all cultures, for instance at holidays?",ACCESSIBILITY,STATUS,INFORMATIONAL,STATIC,ROOM,LOOKUP,"The question pertains to the inclusivity aspect of the lobby's design, which falls under accessibility and inclusivity considerations."
+P71,4,how much energy is used by lighting in each zon?,ENERGY,STATUS,INFORMATIONAL,REALTIME,ROOM,AGGREGATION,"Assuming 'zon' is a typo for 'zone', which implies multiple rooms."
+P64,4,Are there any safety concerns detected?,SAFETY,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P67,1,how often do you check for safety issues ?,SAFETY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P79,3,What is the procedure for food deliveries?,ACCESSIBILITY,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P64,2,I,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is too short and lacks meaningful building-related content.
+P62,1,WHICH ZONES ARE CURRENTLY BEING COOLED OR HEATED DESPITE HAVING ZERO OCCUPANCY?,OCCUPANCY,ANOMALY,DIAGNOSTIC,REALTIME,BUILDING,MULTI_STEP,"The query involves checking occupancy and HVAC status, indicating an anomaly if zones are conditioned without occupancy."
+P80,2,Can the information on the amount of energy usage be inputted with information on energy prices to get an idea of how much each device costs in energy?,ENERGY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,MULTI_STEP,
+P97,2,What is the temperature right now?,THERMAL,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P45,1,Is there cafeter crowded at the moment?,OCCUPANCY,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P87,3,Are there any areas of this room hotter than others?,THERMAL,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,
+P92,2,What is the humidity level?,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P23,4,how often are the filters cleaned and maintained?,MAINTENANCE,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P81,1,water safe?,WATER,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,"The query is checking for an anomaly in water safety, implying a real-time diagnostic check."
+P88,1,How is the air quality right now,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P91,3,light optimal here,LIGHTING,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,"The query implies checking if the lighting is optimal, which is an anomaly check."
+P52,4,can you reduce waste in the building?,WASTE,RECOMMENDATION,PRESCRIPTIVE,REALTIME,BUILDING,MULTI_STEP,
+P34,2,What is your ambient light amount?,LIGHTING,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P74,2,Is HVAC running?,THERMAL,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P43,3,Are there currently active motion detectors in the secure bicycle storage area for additional protection?,SECURITY,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P83,1,147,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is off-topic with fewer than 3 meaningful building-related words.
+P35,4,How can we help reduce energy usage?,ENERGY,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,MULTI_STEP,
+P66,1,How do you protect the building?,SECURITY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P16,1,20,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is off-topic with fewer than 3 meaningful building-related words.
+P63,4,how do you save energy daily?,ENERGY,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,LOOKUP,
+P33,2,What is your occupancy sensor used for?,OCCUPANCY,CAPABILITY,INFORMATIONAL,STATIC,POINT,LOOKUP,
+P87,4,"If it's a sunny day, can you lower blinds to save glare and keep temps low?",CONTROL,CAPABILITY,PRESCRIPTIVE,REALTIME,ROOM,LOOKUP,
+P38,1,As a tenant am I able to adjust the theromstat or do I need to ask the landlord to do so?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P42,2,Do the temp sensors warm empty rooms?,THERMAL,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,The question is about the capability of temperature sensors affecting room temperature.
+P70,4,carbon low?,AIR_QUALITY,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,"The query is checking if carbon levels are too low, indicating an anomaly."
+P43,2,How fast is the fan currently running for the ventilation system in your room? It is louder than it used to be.,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,"The question asks for the current speed of the fan, which relates to air quality and ventilation."
+P77,2,I worked in an office where the air conditioning didn't kick in until it got really hot. I nearly passed out once. How will you prevent this from happening?,THERMAL,RECOMMENDATION,PRESCRIPTIVE,PREDICTIVE,BUILDING,MULTI_STEP,The question seeks a solution to prevent future thermal discomfort.
+P60,4,How is visual comfort measured by the building?,LIGHTING,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P60,4,Can I see live CO2 levels on displays?,AIR_QUALITY,CAPABILITY,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P96,2,What is the acceptable threshold for carbondioxide level?,AIR_QUALITY,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question seeks a static fact about acceptable CO2 levels.
+P52,2,can glare affect visibility?,LIGHTING,DIAGNOSTIC,DIAGNOSTIC,STATIC,UNSPECIFIED,LOOKUP,
+P85,1,how is natural light maximixed here,LIGHTING,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,The question seeks information on design or features that maximize natural light.
+P76,4,What type of internal lights are used and could altering the light colors slightly help with glare and visibility?,LIGHTING,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,MULTI_STEP,
+P49,2,can you track water usage daily?,WATER,CAPABILITY,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P40,4,is the site a brownfield,SUSTAINABILITY,STATUS,INFORMATIONAL,STATIC,CAMPUS,LOOKUP,
+P24,4,"Is there a way to understand when one area of the building is heated up, how it effects other areas? That is, does a temperature change in one area allow for slight lowered adjustments in other areas to save on energy costs?",THERMAL,DIAGNOSTIC,DIAGNOSTIC,PREDICTIVE,BUILDING,MULTI_STEP,"The query seeks to understand the causal relationship between temperature changes in different areas and energy savings, requiring predictive analysis."
+P60,1,How does the ventilation system work to ensure fresh air?,AIR_QUALITY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P26,3,Who is given access to this space? What kind of security does the space have?,SECURITY,STATUS,INFORMATIONAL,STATIC,ROOM,LOOKUP,The question pertains to access control and security features of a specific space.
+P52,3,can you guide me to the nearest exit?,WAYFINDING,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P64,1,What is the energy usage today?,ENERGY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P35,1,When was the roof last replaced?,MAINTENANCE,HISTORICAL,INFORMATIONAL,HISTORICAL,BUILDING,LOOKUP,
+P82,3,Why does this system interest me? what does the open plan systems actually offer for me to change?,OTHER,DIAGNOSTIC,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is vague and lacks specific building-related context.
+P79,4,Are you attempting to get employees in trouble by monitoring their water usage?,PRIVACY,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,"The question implies a concern about privacy related to monitoring, not about water usage itself."
+P15,4,Is it possible to have different temperatures in the same room?,THERMAL,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P42,2,Do the lights turn on for 1 person?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P87,1,How warm is it in here?,THERMAL,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P33,4,How can temps be managed in an open office setting?,THERMAL,RECOMMENDATION,PRESCRIPTIVE,STATIC,ROOM,MULTI_STEP,
+P94,1,how would be a safety measures in the building,SAFETY,RECOMMENDATION,PRESCRIPTIVE,STATIC,BUILDING,LOOKUP,
+P53,4,Could the building alert a room if pollution levels have risen too high and ventilate until safe to return?,AIR_QUALITY,CAPABILITY,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P91,4,lightting optaial,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is gibberish with a misspelling of 'lighting' and 'optimal'.
+P53,4,Can the building monitor energy use and alert humans to spikes and possible problems?,ENERGY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P41,1,is there an elevator or only stairs,ACCESSIBILITY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P39,1,Does the building actually talk back to me,THERMAL,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P98,2,HEALTH CARE,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under building-related domains.
+P69,4,Can you automatically adjust temperature based on occupancy?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P48,2,What kind of microphone is used in the sound level sensor?,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The question is about a component specification, not a building domain."
+P85,4,acoustic,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under a specific domain.
+P73,2,lights on?,LIGHTING,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P73,3,cooling okey?,THERMAL,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query asks for the current status of the cooling system.
+P29,1,Are you able to process payments?,OTHER,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The query is off-topic as it pertains to payment processing, not building informatics."
+P63,2,can glare affect visibility?,LIGHTING,DIAGNOSTIC,DIAGNOSTIC,STATIC,UNSPECIFIED,LOOKUP,
+P37,2,Can the frequency sensor detect abnormal EMF polution?,SAFETY,CAPABILITY,INFORMATIONAL,STATIC,POINT,LOOKUP,
+P80,3,What are the complications with dealing effectively with implementing sensors properly when dealing with a shared workspace?,CONTROL,DIAGNOSTIC,DIAGNOSTIC,STATIC,ROOM,MULTI_STEP,"The question seeks to understand challenges in sensor implementation, which involves control systems and shared space dynamics."
+P66,1,Can you show available parking?,TRANSPORT,STATUS,INFORMATIONAL,REALTIME,CAMPUS,LOOKUP,
+P88,2,What is the current temperature in this room,THERMAL,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P78,3,system safe?,SAFETY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is asking about the current safety status of the system.
+P96,1,Is there any parking area near with it?,ACCESSIBILITY,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P23,2,does the laundry room have sensors that can alert residents when their laundry is done?,THERMAL,DIAGNOSTIC,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P63,1,how do you maintain air quality?,AIR_QUALITY,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,LOOKUP,
+P68,2,Is there any windows open?,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,The question pertains to the current state of windows affecting air quality.
+P33,2,What do you use motion sensors for?,OCCUPANCY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P51,2,How much power do all of the lamps in my bedroom use? I want to determine if my energy use is too high or not.,ENERGY,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,AGGREGATION,"The user is concerned about whether the energy use is too high, indicating an anomaly check."
+P33,3,What features are available to guests in the lobby?,ACCESSIBILITY,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P60,4,Can the building shift loads to greener hours?,ENERGY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P67,3,is there bad smell in air ?,AIR_QUALITY,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P26,2,What if users of the space have different preferences for humidity level?,AIR_QUALITY,RECOMMENDATION,PRESCRIPTIVE,STATIC,ROOM,MULTI_STEP,"The question seeks advice on managing varying preferences, implying a need for a strategy or solution."
+P27,1,Who owns this building?,OTHER,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,"The question is about ownership, not a building-informatics domain."
+P91,1,can you reduce the least croweded right now,OCCUPANCY,RECOMMENDATION,PRESCRIPTIVE,REALTIME,UNSPECIFIED,LOOKUP,The query seeks a recommendation on reducing occupancy in the least crowded area currently.
+P91,4,water carbon,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under a specific domain.
+P40,4,are we maintaining relative humidity between 40 to 60,AIR_QUALITY,ANOMALY,DIAGNOSTIC,REALTIME,BUILDING,LOOKUP,
+P62,4,IS WATER SUPPLY OKAY ?,WATER,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P53,3,Are people allowed access to the roof? How does the building control and verify credentials?,SECURITY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P23,2,are there CO2 detectors in all apartments?,AIR_QUALITY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P22,2,has your building had any problems with the backup generator and frequency?,MAINTENANCE,ANOMALY,DIAGNOSTIC,HISTORICAL,BUILDING,LOOKUP,
+P20,2,How many batteries could be totally offline before the system becomes unusable?,ENERGY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,MULTI_STEP,"The question involves understanding system limits and dependencies, requiring a multi-step analysis."
+P16,1,54,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is off-topic with fewer than 3 meaningful building-related words.
+P66,2,How does people count wpork?,OCCUPANCY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,Typo in 'wpork' assumed to mean 'work'.
+P62,1,CAN YOU SHOW A HEATMAP OF ENERGY CONSUMPTION VS. ACTUAL FLOR USAGE FOR THE LAST 30 DAYS?,ENERGY,COMPARISON,INFORMATIONAL,HISTORICAL,BUILDING,MULTI_STEP,"The query involves comparing energy consumption with floor usage over a historical period, requiring data aggregation and visualization."
+P95,2,What is the purity of the drinking water?,WATER,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P96,3,how can i adjust environment?,CONTROL,RECOMMENDATION,PRESCRIPTIVE,REALTIME,UNSPECIFIED,LOOKUP,"The query seeks advice on adjusting the environment, implying control settings."
+P89,1,What type of building ?,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query lacks sufficient context to classify under a specific building domain.
+P78,4,healthy space?,WELLBEING,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is vague but implies a current-state lookup regarding wellbeing.
+P36,1,can you smell?,AIR_QUALITY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The question is about the building's capability to detect odors, related to air quality."
+P87,4,Would the humidity in the office support plant growth without damaging equipment?,AIR_QUALITY,RECOMMENDATION,PRESCRIPTIVE,REALTIME,ROOM,MULTI_STEP,"The query involves assessing current humidity levels for plant growth and equipment safety, requiring a balance analysis."
+P29,3,what happens if a charger fails?,MAINTENANCE,DIAGNOSTIC,DIAGNOSTIC,STATIC,UNSPECIFIED,LOOKUP,"The question seeks to understand the cause or consequence of a charger failure, which is a maintenance issue."
+P68,3,Is the rooftop clear?,SAFETY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P44,2,Do occupancy sensord use camers,OCCUPANCY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P51,4,"I assume that on hot days, some people won't get cool enough. And on cold days, some will complain that the building isn't warm enough. How is the balance between energy efficiency and thermal comfort controlled?",THERMAL,RECOMMENDATION,PRESCRIPTIVE,STATIC,BUILDING,MULTI_STEP,"The question seeks advice on managing thermal comfort and energy efficiency, implying a need for a strategy or system explanation."
+P77,1,How do you handle lighting? I hate any type of glare or insufficient lighting.,LIGHTING,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,LOOKUP,
+P81,1,doors locked?,SECURITY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P70,2,room occupied?,OCCUPANCY,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P41,4,is there a cutoff time for activities in the meeting and outdoor spaces,ACCESSIBILITY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,The query seeks information about building policies regarding activity times.
+P83,1,7,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is off-topic with fewer than 3 meaningful building-related words.
+P63,4,how can you reduce water usage in this building?,WATER,RECOMMENDATION,PRESCRIPTIVE,STATIC,BUILDING,MULTI_STEP,
+P51,4,Tell me more about your energy efficiency plans. Is the connected electric grid able to support load during peak demand? I'd also be curious to know the baseload and general energy consumption on a typical day when the building is mostly occupied.,ENERGY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,MULTI_STEP,"The question involves understanding energy efficiency plans and grid capability, which requires multiple data points and analysis."
+P63,4,how do you support green building standards?,SUSTAINABILITY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P95,4,Are there shared spaces to work?,ACCESSIBILITY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P61,2,What is current temperature in this room?,THERMAL,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P29,1,Can you automate yourself,OTHER,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question is off-topic as it does not relate to building informatics.
+P61,3,Is there any movement detected here?,SECURITY,STATUS,INFORMATIONAL,REALTIME,POINT,LOOKUP,
+P71,1,is the HVAC system running at optimal efficiency?,ENERGY,ANOMALY,DIAGNOSTIC,REALTIME,BUILDING,LOOKUP,
+P77,4,Thermal comfort was manually closing the shades or putting on a sweater. What will be built into the building so we can join the modern world?,THERMAL,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,The question is about future capabilities for thermal comfort in the building.
+P63,2,what is the current lightlevel?,LIGHTING,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P43,2,Do any of the smart plugs in the breakroom still have a standby power draw while nothing is plugged into them?,ENERGY,STATUS,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,
+P33,3,Can anyone use the EV chargers?,ACCESSIBILITY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P16,2,2,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is off-topic with fewer than 3 meaningful building-related words.
+P03,3,ergtg,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is gibberish with no meaningful building-related words.
+P15,2,How soon can I be alerted if a sensor replacement is necessary?,MAINTENANCE,CAPABILITY,INFORMATIONAL,PREDICTIVE,UNSPECIFIED,LOOKUP,
+P23,1,Are there any cats inside this building (very allergic)?,OCCUPANCY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,"The query is about the presence of cats, which relates to occupancy status."
+P25,2,Are my windows leaking heat right now?,THERMAL,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,
+P96,2,how does the building communicate with is owner?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P90,1,If we drop a chicken from the roof will it survive,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question is off-topic and not related to building informatics.
+P45,4,Is the Focus Zone Currently at its maximum occupancy limits,OCCUPANCY,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,
+P15,2,Are there any health risks involved with the occupancy sensors?,OCCUPANCY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The question is about the potential health risks related to occupancy sensors, which falls under capability and informational intent."
+P26,3,How does the system manage flow if everyone leaves and arrives at the same time?,OCCUPANCY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,The question is about the system's capability to manage occupancy flow.
+P28,3,"Where does the background noise from the Building come from, is it overhead and can it be directed?",THERMAL,DIAGNOSTIC,DIAGNOSTIC,REALTIME,BUILDING,MULTI_STEP,"The query seeks to identify the source and potential redirection of noise, which involves diagnostic analysis."
+P65,1,HAVE YOU WATCHED AVENGER MOVIE /,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is off-topic and not related to building informatics.
+P45,4,how to make energy more efficient,ENERGY,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,MULTI_STEP,
+P21,1,Is the building a green building?,SUSTAINABILITY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P11,1,2,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under a specific building-related domain.
+P66,1,Can you improve lighting conditions?,LIGHTING,RECOMMENDATION,PRESCRIPTIVE,REALTIME,UNSPECIFIED,LOOKUP,
+P69,3,Are lighting and temperature optimal?,THERMAL,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,"The question asks if conditions are optimal, implying a check against a standard, which is an anomaly detection."
+P61,2,When was the door last used?,ACCESSIBILITY,HISTORICAL,INFORMATIONAL,HISTORICAL,POINT,LOOKUP,
+P87,3,Which desk areas are louder than others?,AIR_QUALITY,COMPARISON,INFORMATIONAL,REALTIME,ROOM,AGGREGATION,Assuming noise levels are part of air quality monitoring.
+P76,2,"Does this Building have any visible panels that display information or must everything be accessed through apps or terminals, such as in the case of outside weather or security threats?",INFO_REQUEST,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P59,3,Can you alert maintenance issues quickly?,MAINTENANCE,CAPABILITY,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P16,1,12,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under any specific domain.
+P88,3,is this room actually occupied or just booked?,OCCUPANCY,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P46,1,why,OTHER,DIAGNOSTIC,DIAGNOSTIC,PREDICTIVE,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under a specific building domain.
+P69,2,What is the current light intensity (lux) in this room?,LIGHTING,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P33,4,What days of the week use the most energy?,ENERGY,COMPARISON,INFORMATIONAL,HISTORICAL,BUILDING,AGGREGATION,
+P79,2,How many people do you hold at a maximum?,OCCUPANCY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P97,1,Where is the nearest restroom?,WAYFINDING,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P85,3,humidy right,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,"The query asks for the current humidity level, which is a status check."
+P94,2,the ac how would reduce the co2,AIR_QUALITY,RECOMMENDATION,PRESCRIPTIVE,REALTIME,UNSPECIFIED,LOOKUP,
+P93,3,Imagine the noise levels around you — what could the building do to help you concentrate?,WELLBEING,RECOMMENDATION,PRESCRIPTIVE,REALTIME,UNSPECIFIED,MULTI_STEP,"The query seeks advice on improving concentration by managing noise, which relates to wellbeing."
+P94,2,what does sensor measures how would be feel,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is unclear and lacks meaningful building-related context.
+P61,4,Is the room temperature comfortable for eneryone?,THERMAL,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,"The query seeks to determine if the current temperature is within a comfortable range, implying an anomaly check."
+P71,4,Leak detected?,WATER,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P61,1,Can you room too crowded?,OCCUPANCY,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,"The question implies checking if the room is currently too crowded, indicating an anomaly detection."
+P21,2,"How often are these systems inspected, to make sure they are operating correctly?",MAINTENANCE,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The question seeks information on inspection frequency, which is a static fact about maintenance procedures."
+P91,1,thankyou,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is off-topic with fewer than 3 meaningful building-related words.
+P62,4,IS THE BUILDING LIGHTENING PROOF?,SAFETY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P12,4,DAS,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under a specific building domain.
+P15,2,What's the best way to save money by analizing gas usage?,ENERGY,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,MULTI_STEP,
+P95,1,Where is the fire extinguisher located?,SAFETY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P93,2,How does a low Power Factor affect the efficiency of an industrial electrical system?,ENERGY,DIAGNOSTIC,DIAGNOSTIC,STATIC,UNSPECIFIED,LOOKUP,
+P94,2,in the building  health will  manage  equipments,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is unclear and lacks meaningful building-related context.
+P88,2,What is the acceptable threshold for VOC levels here,AIR_QUALITY,STATUS,INFORMATIONAL,STATIC,ROOM,LOOKUP,The query seeks a static policy or guideline for VOC levels in a specific room.
+P63,2,what is the current power usage?,ENERGY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P22,3,our projector isn't working. can you get another one in here pronto?,MAINTENANCE,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,The query is about the status of a projector and a request for replacement.
+P35,4,What are the current lux levels on the lights in the rooms?,LIGHTING,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P74,1,Is it too crowded here?,OCCUPANCY,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,
+P95,4,In which area I can work without interruptions?,OCCUPANCY,RECOMMENDATION,PRESCRIPTIVE,REALTIME,UNSPECIFIED,LOOKUP,The query seeks advice on a suitable area based on current occupancy levels.
+P25,2,How much water have I used this month so far?,WATER,HISTORICAL,INFORMATIONAL,HISTORICAL,UNSPECIFIED,AGGREGATION,
+P95,2,Ca you alert me if the noise level crosses 60 decibels?,WELLBEING,ANOMALY,PRESCRIPTIVE,REALTIME,UNSPECIFIED,LOOKUP,"The query is about monitoring noise levels, which relates to wellbeing."
+P57,3,Can the system detect if someone in a large open room is sick?,WELLBEING,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P45,4,why i need lightning clear,LIGHTING,DIAGNOSTIC,DIAGNOSTIC,STATIC,UNSPECIFIED,LOOKUP,"The query seeks to understand the reason for needing clear lighting, which is diagnostic in nature."
+P49,4,good,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is too vague and lacks meaningful building-related context.
+P81,2,windows open?,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,Assuming the question is about the current state of windows affecting air quality.
+P81,2,temperature high?,THERMAL,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P28,3,Where would the number of people in this area be displayed so that someone could know about the crowd before walking there?,OCCUPANCY,CAPABILITY,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P41,4,what incentives do you offer to lower usage during peak times,ENERGY,RECOMMENDATION,PRESCRIPTIVE,STATIC,BUILDING,LOOKUP,
+P40,1,what kind of color combination is perfect to use buildings,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The query is about aesthetic design, not building informatics."
+P66,3,Can cooling system prevent overheating?,THERMAL,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P61,4,How can we reduce energy consumption in this building?,ENERGY,RECOMMENDATION,PRESCRIPTIVE,REALTIME,BUILDING,MULTI_STEP,
+P60,1,How does the building collect and reuse rainwater?,WATER,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P29,3,how to the microphones adapt to those that are loud spoken and soft spoken,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is about the capability of microphones to adapt to different speaking volumes.
+P45,2,can i us efan in high speed,CONTROL,CAPABILITY,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query asks about the capability of using a fan at high speed.
+P40,3,meeting room is important,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query lacks sufficient context or meaningful building-related words.
+P31,2,does your building get cold in the winter,THERMAL,STATUS,INFORMATIONAL,HISTORICAL,BUILDING,LOOKUP,The question implies a historical check on temperature during winter.
+P21,1,What are the key green features of the building?,SUSTAINABILITY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P91,3,free parking available,ACCESSIBILITY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P96,2,Does the oxygen sensors trigger any action?,AIR_QUALITY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P72,2,Do you turn off lights when no one is there?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P93,1,How Cars Works,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The query is off-topic as it pertains to cars, not buildings."
+P66,2,What is the gas meter reading now?,ENERGY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P95,1,Can you remind me every half an hour to drink water?,WELLBEING,CAPABILITY,PRESCRIPTIVE,REALTIME,UNSPECIFIED,LOOKUP,"The query is about setting a reminder, which relates to wellbeing and capability."
+P77,4,The only time we noticed lighting was when a bulb burned out in the office. How can lighting be made to adapt to our different uses throughout the day and evening?,LIGHTING,RECOMMENDATION,PRESCRIPTIVE,REALTIME,ROOM,MULTI_STEP,
+P88,2,Do VOC levels vary depending on time of day or occupancy,AIR_QUALITY,COMPARISON,INFORMATIONAL,HISTORICAL,UNSPECIFIED,AGGREGATION,The query seeks to compare VOC levels across different times and occupancy states.
+P57,3,"Do you have any integration with apps on people's phones, like for instance, instead of just a welcome display with a map or something can you guide people to their destinations on their phones?",WAYFINDING,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P51,3,"From the lobby, what is the most direct path to the conference center for my disabled friend who cannot take the stairs?",ACCESSIBILITY,RECOMMENDATION,PRESCRIPTIVE,STATIC,BUILDING,MULTI_STEP,
+P12,1,2,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is too vague and lacks meaningful building-related context.
+P35,1,Do you have solar power?,ENERGY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P45,3,wont it increase cost,OTHER,DIAGNOSTIC,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query lacks sufficient context to classify under a specific building domain.
+P35,3,What is the air quality in the office?,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P98,2,AUTOMATICALLY INCREASE,CONTROL,CAPABILITY,PRESCRIPTIVE,STATIC,UNSPECIFIED,LOOKUP,The query suggests a capability check for automatic control adjustments.
+P59,2,Can voltage fluctuation damage equipment?,SAFETY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The question is about the potential impact of voltage fluctuation, which relates to safety concerns for equipment."
+P91,2,are window open now,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,Assumes the question is about air quality related to window status.
+P44,2,How much powe actully need in ordinary home,ENERGY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,Assuming 'ordinary home' refers to a typical building's energy requirement.
+P70,4,air healthy?,AIR_QUALITY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query seeks current air quality status.
+P44,1,for what in your life do you fell most grateful beside me,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is not related to building informatics.
+P27,1,How many windows do you have?,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The question is about a static building feature, not a dynamic system or condition."
+P89,1,How dose the building involve?,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is unclear and lacks meaningful building-related context.
+P63,2,can you monitor PM10 regularly?,AIR_QUALITY,CAPABILITY,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P71,1,Are there any  free study spaces available nearby?,WAYFINDING,STATUS,INFORMATIONAL,REALTIME,CAMPUS,LOOKUP,
+P69,3,Is the temperature within safe limits?,THERMAL,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P59,4,Can you reduce glare in workspaces?,LIGHTING,CAPABILITY,PRESCRIPTIVE,REALTIME,ROOM,LOOKUP,
+P53,1,Does this building run on renewable energy resources?,ENERGY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P61,2,Is the humidity level comfortable?,AIR_QUALITY,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P71,3,what's the water remperature in the cafe area today?,WATER,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,
+P34,2,How often do you have to replace batteries?,MAINTENANCE,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P97,2,How much water is used?,WATER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P35,2,Do any of the batteries need to be replaced in the sensors?,MAINTENANCE,STATUS,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,
+P81,1,elevator busy?,TRANSPORT,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P91,2,is co2 too high here,AIR_QUALITY,ANOMALY,DIAGNOSTIC,REALTIME,ROOM,LOOKUP,
+P72,4,How do you promote water conservation among users?,WATER,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,MULTI_STEP,
+P93,2,How does an increase in Relative Humidity affect the perceived Temperature (Heat Index) in a room?,THERMAL,DIAGNOSTIC,INFORMATIONAL,STATIC,ROOM,MULTI_STEP,"The question seeks to understand the relationship between humidity and perceived temperature, requiring a multi-step analysis."
+P22,3,how filtered and purified is the water you're offering?,WATER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P96,2,Can manually override sensor controls?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P88,3,Which areas have the freshest air right now?,AIR_QUALITY,COMPARISON,INFORMATIONAL,REALTIME,UNSPECIFIED,AGGREGATION,
+P29,2,can you manage both whole house and specific rooms?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P79,4,What happens when energy efficiency and employee productivity are at odds?,ENERGY,DIAGNOSTIC,DIAGNOSTIC,STATIC,UNSPECIFIED,MULTI_STEP,"The question seeks to understand the cause or implications of a conflict between energy efficiency and productivity, requiring a complex analysis."
+P79,1,What is the function of your building?,INFO_REQUEST,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,The question seeks a static informational lookup about the building's purpose or function.
+P66,4,Can you detect water leaks automatically?,WATER,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P79,3,Is the safe open the entire time the building is open?,SECURITY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P63,2,can NO2 affect air quality?,AIR_QUALITY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The question is about the general impact of NO2 on air quality, not specific to a time or place."
+P23,4,"can you, the building direct me to the quickest elevator based on use and time etc rather than me just choosing one at random?",WAYFINDING,CAPABILITY,INFORMATIONAL,REALTIME,BUILDING,MULTI_STEP,
+P63,4,how do you improve lighting efficiency?,LIGHTING,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,MULTI_STEP,
+P53,3,Does the building have backup emergency lighting in stairwells?,SAFETY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P43,3,Do we have a working UPS in place that is showing to be at full charge in case of power instability?,SAFETY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P71,4,Habitat creation?,SUSTAINABILITY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The query is about the building's capability to support habitat creation, which is a sustainability concern."
+P40,3,what materials are being used for the ceiling and floors,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,"The query is about building materials, which doesn't fit any specific domain."
+P20,2,Would this automatic shutoff for standby mode be something that could be done per outlet?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,POINT,LOOKUP,
+P54,4,could the building automatically determine which data analysis I may be overlooking and give annual breakdowns of what should be given a deeper look?,CONTROL,CAPABILITY,PRESCRIPTIVE,STATIC,BUILDING,MULTI_STEP,"The query asks if the building can autonomously analyze data and provide insights, which involves control and analytics capabilities."
+P72,3,How do you manage crowd flow in busy areas?,OCCUPANCY,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,MULTI_STEP,
+P03,3,hi,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is off-topic with no building-related content.
+P73,3,visitors waiting?,OCCUPANCY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query seeks current information about visitor occupancy.
+P72,4,Can you detect leaks and alert users immediately?,WATER,CAPABILITY,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,
+P86,1,Do you like Icecream?,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question is off-topic and not related to building informatics.
+P85,2,room currently ocuiped,OCCUPANCY,STATUS,INFORMATIONAL,REALTIME,ROOM,LOOKUP,The query is checking the current occupancy status of a room.
+P52,2,can motion sensors detect movement at night?,SECURITY,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,
+P87,2,How much power is being used in our home while we're away?,ENERGY,STATUS,INFORMATIONAL,REALTIME,BUILDING,LOOKUP,
+P87,3,"How many noise spikes (sneezes, drops) happen each day?",WELLBEING,DIAGNOSTIC,INFORMATIONAL,HISTORICAL,UNSPECIFIED,AGGREGATION,"The query seeks a count of noise events over time, which is an aggregation task."
+P72,3,How do you detect available parking spaces?,TRANSPORT,CAPABILITY,INFORMATIONAL,STATIC,CAMPUS,LOOKUP,
+P81,3,eats free?,OTHER,STATUS,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The query is too vague and lacks context to classify under building-related domains.
+P67,4,is building data showing any issues ?,OTHER,ANOMALY,DIAGNOSTIC,REALTIME,UNSPECIFIED,LOOKUP,The query is too vague to assign a specific domain.
+P94,1,in regular day what is the office timing,ACCESSIBILITY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P63,1,can you reduce energy usage at night?,ENERGY,RECOMMENDATION,PRESCRIPTIVE,REALTIME,UNSPECIFIED,LOOKUP,
+P75,1,Are you the only building that can talk around here?,OTHER,CAPABILITY,INFORMATIONAL,STATIC,UNSPECIFIED,LOOKUP,The question is off-topic as it does not pertain to building informatics.
+P82,3,Does the server room still need humans to monitor at all in a smart building?,CONTROL,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P29,1,what are your security features?,SECURITY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P53,4,Can the building adjust the climate proactively based on weather forecasts?,CONTROL,CAPABILITY,INFORMATIONAL,PREDICTIVE,BUILDING,LOOKUP,
+P78,2,power usage?,ENERGY,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query seeks current power usage information.
+P90,4,How could daylight be balanced with artificial lighting to save energy while keeping comfort?,LIGHTING,RECOMMENDATION,PRESCRIPTIVE,STATIC,UNSPECIFIED,MULTI_STEP,
+P03,1,tdg,OTHER,STATUS,INFORMATIONAL,REALTIME,UNSPECIFIED,LOOKUP,The query is gibberish with no meaningful building-related words.
+P23,2,can the energy meter break down individual apartments,ENERGY,CAPABILITY,INFORMATIONAL,STATIC,BUILDING,LOOKUP,
+P72,2,How do you measure temperature in different rooms?,THERMAL,CAPABILITY,INFORMATIONAL,STATIC,ROOM,LOOKUP,
+P60,1,Is the building designed to be environmentally friendly?,SUSTAINABILITY,STATUS,INFORMATIONAL,STATIC,BUILDING,LOOKUP,

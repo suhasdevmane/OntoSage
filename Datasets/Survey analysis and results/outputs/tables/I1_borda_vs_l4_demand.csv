@@ -1,0 +1,21 @@
+TopicID,TopicLabel,Borda,n_rankers,PctL4First,Cluster,Color,ShortLabel
+2,Air Quality & Ventilation,1378.0,67,26.9,1,#e74c3c,Air Quality
+1,Indoor Temperature Control,1367.0,69,26.1,1,#e74c3c,Temperature
+8,Fire Safety & Emergency,1267.0,58,24.1,4,#f39c12,Fire Safety
+6,Security & Access Control,1240.0,55,20.0,4,#f39c12,Security
+5,Energy Consumption,1151.0,50,24.0,4,#f39c12,Energy
+3,Lighting & Daylight,1121.0,59,30.5,2,#3498db,Lighting
+13,Health & Well-being,1058.0,45,31.1,4,#f39c12,Health
+7,Occupancy & Space Utilisation,1018.0,43,20.9,1,#e74c3c,Occupancy
+9,Water Management,1008.0,40,25.0,4,#f39c12,Water
+4,Noise & Acoustics,942.0,38,31.6,1,#e74c3c,Noise
+10,Waste & Recycling,928.0,33,24.2,3,#2ecc71,Waste
+11,Renewable Energy & Solar,908.0,30,40.0,3,#2ecc71,Renewable Energy
+12,Green Spaces & Biodiversity,842.0,36,33.3,3,#2ecc71,Green Spaces
+14,IoT Sensors & Data Analytics,829.0,34,38.2,2,#3498db,IoT/Analytics
+19,Building Maintenance & Faults,793.0,26,26.9,4,#f39c12,Maintenance
+15,"Lifts, Stairs & Internal Transport",708.0,18,16.7,2,#3498db,Lifts/Transport
+20,Carbon Footprint & Net Zero,661.0,21,28.6,4,#f39c12,Carbon/Net Zero
+16,Parking & EV Charging,658.0,14,14.3,2,#3498db,Parking/EV
+17,Building Automation & AI,652.0,11,27.3,2,#3498db,Bldg Automation
+18,User Apps & Digital Interaction,581.0,13,53.8,2,#3498db,User Apps

@@ -1,0 +1,9 @@
+PrimaryPersona,participants,questions,pct_participants,pct_questions,questions_per_participant,is_specialist
+Facility Managers,6,427,6.2,6.0,71.2,True
+IT,7,681,7.3,9.5,97.3,True
+Building Owners,8,435,8.3,6.1,54.4,True
+Sustainability and Energy Management Teams,10,740,10.4,10.3,74.0,True
+Health and Safety Officers,11,740,11.5,10.3,67.3,True
+Student,14,1493,14.6,20.9,106.6,False
+Occupants,18,1237,18.8,17.3,68.7,False
+Guests,22,1398,22.9,19.5,63.5,False

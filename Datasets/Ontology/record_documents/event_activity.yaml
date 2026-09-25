@@ -1,0 +1,78 @@
+# Event activity register -> ontosage:EventActivity
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# `ontosage:PublicEvent` answers a visitor's questions about ARRIVING — admission, entrance,
+# check-in, whether the venue moved. Prospective students and their families ask about the
+# INSIDE of the event, and computed at 28%: *"how much time should we allow for the course
+# talk, building tour and questions with staff?"*, *"we only have two hours, what should we
+# prioritise?"*, *"can my parent join each activity, and do they need separate
+# registration?"*, *"where can my family wait quietly between activities?"*
+#
+# Those need a row per activity, not per event. An agenda is not a property of an event; it
+# is a sequence of things with their own durations, locations and rules.
+#
+# COMPANION POLICY IS PER ACTIVITY, not per event. A campus tour and a one-to-one admissions
+# interview can sit inside the same open day and differ on whether a parent may attend, and
+# a family planning their day needs that at the activity level or the answer is wrong for
+# half of it.
+record_type: event_activity
+class: ontosage:EventActivity
+iri_template: "activity/{activity}"
+label_column: title
+
+columns:
+  activity:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  event:
+    # The PublicEvent this belongs to, by its record id, so the two registers join.
+    predicate: ontosage:partOfEvent
+    datatype: xsd:string
+    required: true
+  title:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  sequence:
+    predicate: ontosage:circuitSequence
+    datatype: xsd:integer
+    required: true
+  starts:
+    predicate: ontosage:startsAt
+    datatype: xsd:string
+    required: true
+  minutes:
+    predicate: ontosage:expectedMinutes
+    datatype: xsd:integer
+    required: true
+  location:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  companion:
+    predicate: ontosage:companionPolicy
+    datatype: xsd:string
+  optional:
+    # So "we only have two hours, what should we prioritise" is answerable by dropping the
+    # optional activities rather than by the system inventing a preference.
+    predicate: ontosage:isOptional
+    datatype: xsd:boolean
+    required: true
+  access_note:
+    predicate: ontosage:accessibilityNote
+    datatype: xsd:string
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      scheduled: ["Scheduled", "Confirmed", "On"]
+      full: ["Full", "Booked out"]
+      cancelled: ["Cancelled", "Withdrawn"]
+  owner:
+    predicate: ontosage:recordOwner
+    datatype: xsd:string

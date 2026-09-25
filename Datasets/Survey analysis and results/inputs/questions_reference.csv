@@ -1,0 +1,81 @@
+Topic_ID,Topic_Label,Level,Complexity,Question_Text
+1,Indoor Temperature Control,L1,Basic,What is the current temperature reading in a specific room?
+1,Indoor Temperature Control,L2,Intermediate,Compare temperature settings and readings across all zones in the building.
+1,Indoor Temperature Control,L3,Advanced,Analyse temperature trends and daily patterns over the past month to detect anomalies.
+1,Indoor Temperature Control,L4,Expert,Generate a thermal comfort report with recommendations to improve temperature consistency across floors.
+2,Air Quality & Ventilation,L1,Basic,What is the current CO₂ level in the office area?
+2,Air Quality & Ventilation,L2,Intermediate,Compare air quality readings between different floors and zones of the building.
+2,Air Quality & Ventilation,L3,Advanced,Show how ventilation rates and CO₂ levels change throughout a typical work day from sensor data.
+2,Air Quality & Ventilation,L4,Expert,Produce a ventilation optimisation plan with graphs and alerts for poor air quality events.
+3,Lighting & Daylight,L1,Basic,What is the current light level in a specific room or area?
+3,Lighting & Daylight,L2,Intermediate,Compare lighting levels across different zones and identify areas that are too bright or too dim.
+3,Lighting & Daylight,L3,Advanced,Analyse daylight patterns and artificial lighting usage over time from lux sensors.
+3,Lighting & Daylight,L4,Expert,Create a lighting schedule recommendation report that balances daylight use energy savings and occupant comfort.
+4,Noise & Acoustics,L1,Basic,What is the current noise level in the open-plan office?
+4,Noise & Acoustics,L2,Intermediate,Compare noise levels between meeting rooms open areas and corridors.
+4,Noise & Acoustics,L3,Advanced,Show hourly noise trends and identify peak noise periods from acoustic sensor data.
+4,Noise & Acoustics,L4,Expert,Generate an acoustic comfort report with recommendations for noise reduction and quiet zone planning.
+5,Energy Consumption,L1,Basic,What is the current total energy consumption of the building?
+5,Energy Consumption,L2,Intermediate,Break down energy usage by floor zone or equipment category from the database.
+5,Energy Consumption,L3,Advanced,Identify energy consumption trends peak demand periods and unusual spikes over the past 6 months.
+5,Energy Consumption,L4,Expert,Produce an energy optimisation report with cost-saving recommendations benchmark comparisons and visual dashboards.
+6,Security & Access Control,L1,Basic,How many people have accessed the building today?
+6,Security & Access Control,L2,Intermediate,Show access logs for restricted areas and identify which zones had the most visits.
+6,Security & Access Control,L3,Advanced,Analyse access patterns over time and flag unusual after-hours entries from security sensor data.
+6,Security & Access Control,L4,Expert,Generate a security risk assessment report with visual heat maps and recommended access policy changes.
+7,Occupancy & Space Utilisation,L1,Basic,How many people are currently in the building or a specific room?
+7,Occupancy & Space Utilisation,L2,Intermediate,Compare occupancy rates across different zones and meeting rooms from the database.
+7,Occupancy & Space Utilisation,L3,Advanced,Analyse weekly occupancy patterns and identify underused spaces from historical sensor data.
+7,Occupancy & Space Utilisation,L4,Expert,Create a space utilisation report with recommendations for redesigning underperforming areas and visual floor plans.
+8,Fire Safety & Emergency,L1,Basic,Are all fire alarms and smoke detectors currently operational?
+8,Fire Safety & Emergency,L2,Intermediate,Show the status of emergency systems across all floors including fire doors and exit signs.
+8,Fire Safety & Emergency,L3,Advanced,Review historical fire alarm events and maintenance logs to identify reliability issues.
+8,Fire Safety & Emergency,L4,Expert,Generate an emergency preparedness report with risk scoring equipment health dashboards and evacuation route analysis.
+9,Water Management,L1,Basic,What is the current water consumption reading for the building?
+9,Water Management,L2,Intermediate,Compare water usage across different floors and identify the highest-consuming areas.
+9,Water Management,L3,Advanced,Analyse water consumption trends and detect potential leaks from flow sensor time-series data.
+9,Water Management,L4,Expert,Produce a water conservation report with leak alerts usage forecasts and rainwater harvesting recommendations.
+10,Waste & Recycling,L1,Basic,What are the current waste bin fill levels in the building?
+10,Waste & Recycling,L2,Intermediate,Compare waste generation rates across different zones such as the cafe offices and lobby.
+10,Waste & Recycling,L3,Advanced,Track waste volumes over time and identify trends in recycling vs general waste from sensor data.
+10,Waste & Recycling,L4,Expert,Create a waste management report with recycling improvement recommendations and cost-benefit visualisations.
+11,Renewable Energy & Solar,L1,Basic,What is the current solar panel energy output?
+11,Renewable Energy & Solar,L2,Intermediate,Compare renewable energy generation against total building energy consumption by zone.
+11,Renewable Energy & Solar,L3,Advanced,Analyse solar generation patterns across seasons and weather conditions from historical data.
+11,Renewable Energy & Solar,L4,Expert,Generate a renewable energy performance report with ROI analysis expansion recommendations and forecast dashboards.
+12,Green Spaces & Biodiversity,L1,Basic,What are the current soil moisture and irrigation levels on the green roof?
+12,Green Spaces & Biodiversity,L2,Intermediate,Compare environmental conditions across different green space zones such as roof gardens and courtyards.
+12,Green Spaces & Biodiversity,L3,Advanced,Track plant health indicators and microclimate data over time from environmental sensors.
+12,Green Spaces & Biodiversity,L4,Expert,Produce a biodiversity and green space impact report with visual maps and maintenance recommendations.
+13,Health & Well-being,L1,Basic,What is the current indoor air quality index relevant to occupant health?
+13,Health & Well-being,L2,Intermediate,Compare well-being related metrics like temperature humidity and air quality across different work zones.
+13,Health & Well-being,L3,Advanced,Analyse correlations between environmental conditions and occupancy patterns to assess comfort levels over time.
+13,Health & Well-being,L4,Expert,Generate a health and well-being report with actionable recommendations comfort scoring and trend visualisations.
+14,IoT Sensors & Data Analytics,L1,Basic,How many IoT sensors are currently active and online in the building?
+14,IoT Sensors & Data Analytics,L2,Intermediate,Show sensor coverage across all zones and identify areas with no monitoring.
+14,IoT Sensors & Data Analytics,L3,Advanced,Analyse sensor data quality uptime and reading frequency trends to identify reliability issues.
+14,IoT Sensors & Data Analytics,L4,Expert,Produce a data analytics report showing cross-sensor insights anomaly detection results and predictive maintenance alerts.
+15,"Lifts, Stairs & Internal Transport",L1,Basic,What is the current status of all lifts in the building?
+15,"Lifts, Stairs & Internal Transport",L2,Intermediate,Compare lift usage and wait times across different floors from the database.
+15,"Lifts, Stairs & Internal Transport",L3,Advanced,Analyse lift and stairwell usage patterns during peak hours from footfall and sensor data.
+15,"Lifts, Stairs & Internal Transport",L4,Expert,Create a transport efficiency report with scheduling recommendations energy use visualisations and accessibility improvements.
+16,Parking & EV Charging,L1,Basic,How many parking spaces are currently available?
+16,Parking & EV Charging,L2,Intermediate,Show EV charger availability and usage across different parking zones.
+16,Parking & EV Charging,L3,Advanced,Analyse parking occupancy and EV charging demand patterns over the past 3 months from sensor data.
+16,Parking & EV Charging,L4,Expert,Generate a parking and EV infrastructure report with demand forecasts expansion recommendations and utilisation dashboards.
+17,Building Automation & AI,L1,Basic,What building systems are currently running in automated mode?
+17,Building Automation & AI,L2,Intermediate,Compare automated vs. manual control settings across HVAC lighting and security systems.
+17,Building Automation & AI,L3,Advanced,Analyse the effectiveness of automated schedules and setpoints versus actual sensor readings over time.
+17,Building Automation & AI,L4,Expert,Produce an AI-driven optimisation report with predictive models automation rule recommendations and performance visualisations.
+18,User Apps & Digital Interaction,L1,Basic,How many users are currently interacting with the building's digital systems?
+18,User Apps & Digital Interaction,L2,Intermediate,Show the most frequently used digital features and services across different user groups.
+18,User Apps & Digital Interaction,L3,Advanced,Analyse user interaction patterns and feature adoption trends from app usage data over time.
+18,User Apps & Digital Interaction,L4,Expert,Create a digital experience report with user satisfaction scoring feature gap analysis and improvement recommendations.
+19,Building Maintenance & Faults,L1,Basic,Are there any active fault alerts or maintenance tickets in the building?
+19,Building Maintenance & Faults,L2,Intermediate,Show fault history and maintenance records for each building zone and equipment type.
+19,Building Maintenance & Faults,L3,Advanced,Analyse equipment failure trends and predict upcoming maintenance needs from sensor health data.
+19,Building Maintenance & Faults,L4,Expert,Generate a predictive maintenance report with risk dashboards spare part recommendations and cost-saving projections.
+20,Carbon Footprint & Net Zero,L1,Basic,What is the building's current estimated carbon emissions rate?
+20,Carbon Footprint & Net Zero,L2,Intermediate,Break down carbon emissions by energy source zone and activity type from the database.
+20,Carbon Footprint & Net Zero,L3,Advanced,Track carbon footprint trends over the past year and compare against reduction targets from monitored data.
+20,Carbon Footprint & Net Zero,L4,Expert,Produce a net-zero progress report with pathway visualisations offset recommendations and benchmark comparisons.

@@ -1,0 +1,90 @@
+# Maintenance work order register -> ontosage:WorkOrder
+#
+# Ships with the ONTOLOGY, not with any building.
+#
+# WHY THIS EXISTS
+# ---------------
+# ontosage:WorkOrder was declared in the TBox with lay terms and had no mapping, so — like
+# ServiceSchedule before it — the building could name the concept and hold none of it.
+# `maintenance_log.md` already carried 24 entries across six assets as prose bullet lists,
+# which the document lane could quote and nothing could count, filter or group.
+#
+# The questions it serves are the facilities and engineering ones the re-sample left open:
+#
+#     "Has this repaired asset returned to the same abnormal pattern under comparable
+#      demand?"
+#     "Do complaints from these rooms point to one shared plant item or control path?"
+#
+# TWO CORRECTIONS WERE MADE TO THE SOURCE, and both are stated in the document itself:
+#
+# 1. THE ORIGINAL NAMED INDIVIDUAL TECHNICIANS. Every other register in this building holds
+#    identity at ROLE level, because the catalogues forbid exposing who did what and the PDP
+#    is built on that assumption. Lifting a named technician into the graph would have put personal
+#    names into an answerable store through the back door. The column is now a trade.
+#
+# 2. SEVERAL TASK TYPES WERE IMPOSSIBLE FOR THEIR ASSET — an oil change and belt tensioning
+#    on an electrical distribution board, a filter replacement on a passenger lift, a smoke
+#    test on a chilled water pump. They were randomly generated. Carried over verbatim they
+#    would have made the register assert maintenance nobody could have performed, which is a
+#    worse failure than holding no register at all: an engineer spots it instantly and stops
+#    trusting every other row. Dates, assets, statuses and hours are unchanged.
+record_type: work_order
+class: ontosage:WorkOrder
+iri_template: "workorder/{ref}"
+label_column: task
+
+columns:
+  ref:
+    predicate: ontosage:recordId
+    datatype: xsd:string
+    required: true
+  task:
+    predicate: rdfs:label
+    datatype: xsd:string
+    required: true
+  asset_code:
+    # Joins to the asset engineering register, so fault history and design duty meet.
+    predicate: ontosage:primarySystem
+    datatype: xsd:string
+    required: true
+  asset_name:
+    predicate: ontosage:locationText
+    datatype: xsd:string
+    required: true
+  raised_on:
+    predicate: ontosage:effectiveFrom
+    datatype: xsd:date
+    required: true
+  category:
+    predicate: ontosage:scheduleKind
+    datatype: xsd:string
+    required: true
+  trade:
+    # A trade, never a person. See the header.
+    predicate: ontosage:responsibleRole
+    datatype: xsd:string
+    required: true
+  hours:
+    # HOURS (3.6, 0.8, 2.9), which this once lifted into ontosage:expectedMinutes: every work
+    # order read as a few minutes long and the word "hours" matched no field. The property
+    # is named for what the column holds and carries its unit in its name.
+    predicate: ontosage:jobHours
+    datatype: xsd:decimal
+  priority:
+    predicate: ontosage:priority
+    datatype: xsd:string
+    required: true
+  completed_on:
+    predicate: ontosage:completedDate
+    datatype: xsd:date
+  status:
+    predicate: ontosage:recordStatus
+    datatype: xsd:string
+    required: true
+    values:
+      open: ["Open", "Pending"]
+      in_progress: ["In progress"]
+      completed: ["Completed"]
+  note:
+    predicate: rdfs:comment
+    datatype: xsd:string

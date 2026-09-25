@@ -1,0 +1,24 @@
+capability_gap,questions_needing_it,pct_of_corpus
+Other / niche,2268,36.8
+Occupancy sensing,1330,21.6
+BMS actuation / write-back,1009,16.4
+Energy metering,936,15.2
+Live streams floors 0-4,855,13.9
+Calendar / room-booking API,517,8.4
+Weather feed,504,8.2
+Lighting sensing/control,425,6.9
+Access / security systems,415,6.7
+Policy / document KB,333,5.4
+Extended IAQ (PM/VOC/NO2 etc.),324,5.3
+Maintenance / CMMS records,323,5.2
+Ontology metadata enrichment,304,4.9
+Noise / acoustic sensing,286,4.6
+Water metering,234,3.8
+Carbon / ESG data,152,2.5
+Tariff / cost data,104,1.7
+Equipment condition monitoring,95,1.5
+Parking / EV,93,1.5
+Solar / renewables,83,1.3
+Occupant surveys / feedback,64,1.0
+Waste / recycling,62,1.0
+User profiles / preferences,31,0.5

@@ -1,0 +1,13 @@
+# OntoSage capability vocabulary — SUPERSEDED.
+#
+# The canonical, publication-ready OntoSage Conversational Building Vocabulary (OCBV) now lives in
+#   input/ontosage_schema.ttl
+# (a single, fully-documented, Brick-extending schema). This stub is kept only so existing
+# tooling that globs ontology/*.ttl finds a valid file; it intentionally declares no terms to
+# avoid duplicating the schema. Per-building instances (input/<bldg>_capabilities.ttl,
+# input/<bldg>_knowledge.ttl) are dual-typed and resolve against OCBV.
+
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://ontosage.org/ontology> rdfs:seeAlso ontosage:Capability .
