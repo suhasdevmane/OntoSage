@@ -126,6 +126,106 @@ def over_fetch_budget(n_uuids: int, rows_per_uuid: int) -> bool:
     return n_uuids > MAX_FETCH_UUIDS or n_uuids * rows_per_uuid > MAX_FETCH_ROWS
 
 
+def resolve_named_window(
+    user_query: str,
+    start_date: Optional[str],
+    end_date: Optional[str],
+    now: Optional[datetime] = None,
+) -> Tuple[Optional[str], Optional[str], Dict[str, Any]]:
+    """The window this fetch will actually use, and where it came from (BUG-939).
+
+    Both SQL builders honour the bounds they are given; the defect was in the bounds. The
+    classifier is asked for them, and measured on 2026-09-30 it answers the SAME question
+    shape three different ways — a rolling 14 days for "this week against last week", no
+    window at all for the same request phrased around a room, and a window that STARTS NOW
+    for "warmer tomorrow", whose `"now+1d"` end no resolver in this system parses. With no
+    bounds each builder falls back to a fixed 30 days, and the per-sensor row cap then cuts
+    that to whatever 1,000 newest rows reach back to — about 11 days on this building's
+    energy meters.
+
+    Two corrections, both narrow:
+
+    1. A NAMED CALENDAR PERIOD IS ARITHMETIC, so it is computed rather than asked for.
+       `requested_interval.calendar_period_bounds` resolves week / month / quarter / year in
+       the building's own zone and hands back store-clock bounds; when it resolves, it wins.
+       That is the same precedence `calendar_day_bounds` already takes at the dialogue stage
+       and for the same reason: the question is the authoritative source and the compile is
+       one reading of it. It returns None for anything whose boundaries are in dispute, and
+       the compiled range is then left exactly as it was.
+
+    2. A WINDOW THAT STARTS IN THE FUTURE SELECTS ROWS THAT DO NOT EXIST, so both bounds are
+       dropped and the lane reads recent history. `sensor_binder.history_window` already does
+       this for the `trend` and `forecast` intents; "Will floor 3 or floor 4 be warmer
+       tomorrow?" classifies as `compare`, so it was not covered. The comparison is against
+       `store_now()`, never the local clock — the stores are UTC and a local comparison here
+       is what produced three withdrawn fixes and a withdrawn P1 in September.
+
+    Returns `(start, end, origin)`. `origin` is recorded on the bus so a later gate or
+    evidence record can read which of the three sources set the window, rather than
+    inferring it from the SQL.
+    """
+    origin: Dict[str, Any] = {
+        "source": "classifier" if (start_date or end_date) else "default_lookback",
+        "compiled_start": str(start_date or ""),
+        "compiled_end": str(end_date or ""),
+    }
+    try:
+        from orchestrator.services.requested_interval import (
+            building_tz,
+            calendar_period_bounds,
+            named_period,
+            store_now,
+        )
+    except Exception as exc:  # pragma: no cover - the lane still answers without this
+        logger.debug(f"[sql] named-window resolution unavailable: {exc}")
+        return start_date, end_date, origin
+
+    if now is None:
+        now = store_now()
+
+    try:
+        bounds = calendar_period_bounds(user_query, building_tz())
+    except Exception as exc:  # a resolver failure must not cost the turn
+        logger.warning(f"[sql] calendar period resolution failed (non-fatal): {exc}")
+        bounds = None
+    if bounds:
+        named = named_period(user_query)
+        origin.update(
+            {
+                "source": "named_period",
+                "unit": named[0] if named else "",
+                "offsets": list(named[1]) if named else [],
+                "start": bounds[0],
+                "end": bounds[1],
+            }
+        )
+        if (str(start_date or ""), str(end_date or "")) != bounds:
+            logger.info(
+                "[sql] the question names a calendar %s — window set to %s .. %s "
+                "(compiled was %s .. %s)",
+                origin["unit"],
+                bounds[0],
+                bounds[1],
+                start_date,
+                end_date,
+            )
+        return bounds[0], bounds[1], origin
+
+    begins = _parse_window_start(start_date)
+    if begins is not None and begins >= now - timedelta(minutes=1):
+        logger.info(
+            "[sql] compiled window starts at %s, which is not in the past on the stores' "
+            "clock (%s) — reading recent history instead",
+            start_date,
+            now.strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        origin.update({"source": "future_start_dropped", "start": "", "end": ""})
+        return None, None, origin
+
+    origin.update({"start": str(start_date or ""), "end": str(end_date or "")})
+    return start_date, end_date, origin
+
+
 #: Bare period words that neither regex above carries. Kept as a set rather than folded into
 #: `_PERIOD_RE` because these are substring tests on purpose ("hour" inside "hourly").
 _PERIOD_WORDS = frozenset(
@@ -478,11 +578,28 @@ class SQLAgent:
             logger.info(f"User Query: {user_query}")
             logger.info(f"UUIDs to fetch: {len(uuids)}")
 
+            # THE PERIOD THE QUESTION NAMES, RESOLVED ONCE, BEFORE ANY LANE READS IT
+            # (BUG-939). Placed above the aggregate lane deliberately: a wrong window is
+            # wrong in every lane, and the point of resolving it here is that there is one
+            # answer rather than one per reader.
+            start_date, end_date, requested_window = resolve_named_window(
+                user_query, start_date, end_date
+            )
+            # The window in words, computed once from the RESOLVED bounds. Every disclosure
+            # that names a period reads this, so no two of them can name different periods.
+            requested_window["label"] = self._requested_window_label(start_date, end_date)
+
             # A whole-building or per-floor aggregate is answered by the store itself, BEFORE the
             # breadth refusal below (2D-10, BUG-808/814). Returns None to leave everything as it was.
             _agg = await self._try_aggregate_lane(
-                uuids, user_query, storage_map, start_date, end_date, sensor_metadata,
-                max_resolution_s, aggregate_across_sensors,
+                uuids,
+                user_query,
+                storage_map,
+                start_date,
+                end_date,
+                sensor_metadata,
+                max_resolution_s,
+                aggregate_across_sensors,
             )
             if _agg is not None:
                 return _agg
@@ -521,10 +638,7 @@ class SQLAgent:
                 msg = too_broad_reply(
                     user_query,
                     len(uuids),
-                    [
-                        str((m or {}).get("label") or "")
-                        for m in (sensor_metadata or {}).values()
-                    ],
+                    [str((m or {}).get("label") or "") for m in (sensor_metadata or {}).values()],
                 )
                 logger.info(f"[sql] declining as too broad: {len(uuids)} > {MAX_FETCH_UUIDS}")
                 return {
@@ -1050,6 +1164,40 @@ Return ONLY the SQL query, no markdown, no explanations.
                     f"store. Narrowing it to a floor or a room reads all of them._"
                 )
 
+            # THE ROW CAP, SAID — because it was DETECTED and never reached the reader
+            # (BUG-939). `rows_capped` has been on the bus since BUG-479 and exactly one
+            # module reads it: `report_agent`. Every other answer narrated the cap as
+            # completeness, and on 2026-09-29 one said so in as many words — "Across **all**
+            # 1,000 recorded values". A cap does not fail, it under-reports, and in prose it
+            # stops looking like a cap at all.
+            #
+            # The sentence carries the two facts a reader can act on: the count is the size
+            # of a sample, and these are the newest rows, so the period actually covered
+            # begins later than the one asked for. Both are stated deterministically here
+            # rather than left to the narration, for the same reason as the resolution clamp
+            # and the substitution note above.
+            #
+            # The WORDING lives in `disclosure_gate` beside the substitution note, and the
+            # MARKER on the bus below is what a later gate reads — so the sentence a reader
+            # sees and the record a gate reads cannot drift apart. It also has to be said
+            # when the NARRATION wins the dispatch rather than this prose, which is the case
+            # BUG-939's live example came from; `disclosure_gate.truncation_note` is the half
+            # the response node appends there, exactly as it does for the substitution.
+            _cap_earliest, _cap_latest = ("", "")
+            if rows_capped:
+                from orchestrator.services.disclosure_gate import truncation_note
+
+                _cap_earliest, _cap_latest = self._row_span(all_data)
+                formatted += truncation_note(
+                    {
+                        "capped": True,
+                        "row_limit": _row_limit,
+                        "requested_label": self._requested_window_label(start_date, end_date),
+                        "actual_earliest": _cap_earliest,
+                        "actual_latest": _cap_latest,
+                    }
+                )
+
             return {
                 "success": True,
                 "query": "Multiple Queries (Storage Aware)",
@@ -1068,6 +1216,19 @@ Return ONLY the SQL query, no markdown, no explanations.
                 # states a count must be able to see that it is capped.
                 "rows_capped": rows_capped,
                 "row_limit": _row_limit,
+                # The span the rows ACTUALLY cover, so `disclosure_gate.truncation_note` can
+                # state it wherever the note is appended, rather than re-deriving it from
+                # rows a later stage may have coarsened or masked.
+                "rows_earliest": _cap_earliest,
+                "rows_latest": _cap_latest,
+                # Which of the three sources set the window these rows came from, and the
+                # bounds it produced (BUG-939). Recorded rather than left to be inferred
+                # from the SQL: `source` is "named_period" when the question named a
+                # calendar week/month/quarter/year and the arithmetic resolved it,
+                # "future_start_dropped" when the compiled window began in the future,
+                # "classifier" when the compiled bounds were used as given, and
+                # "default_lookback" when there were none and each builder applied its own.
+                "requested_window": dict(requested_window),
                 # The clamp that shaped these rows, "" when none did — so the evidence
                 # record can state the resolution actually served rather than inferring
                 # it from timestamps that now describe buckets.
@@ -1777,11 +1938,94 @@ Generate a concise, natural response that:
    range and period comes from them, and the period is the one they state (from - to),
    not the question's wording.
 
+Rules about what these readings do and do not establish. These are not style notes: each
+one names a measured failure of this prompt.
+8. NO CAPACITY, LIMIT OR THRESHOLD WAS SUPPLIED TO YOU. Never introduce one, and never
+   call a space overcrowded, busy, at or over capacity, or in breach of an occupancy
+   limit. A narration of these rows once tabled five "Overcrowded areas" against
+   "exceed 10 occupants" - a figure that exists nowhere in this building - with all five
+   places recorded as "sensor name not recorded".
+9. A READING IS A NUMBER, NOT A STATE. Nothing above says a thing is broken, faulty,
+   out of order, an open issue or a recorded problem, and nothing above is a list of
+   incidents. Never write "active issues", "the only recorded problems", "currently
+   listed" or any count of open faults. A narration of these rows once presented six
+   entries from a static "how to report an issue" taxonomy - no timestamp, no status -
+   as "six active issues ... the only recorded problems at the moment".
+10. NEVER TELL ANYONE WHAT TO DO. No recovery order, no priority sequence, no plan, no
+   step list, and no instruction to restore power, re-open a room, alert security,
+   evacuate, dispatch anyone, or verify something before letting people in. A narration
+   of these rows once wrote a five-step "Recommended recovery sequence (dependency-aware)"
+   addressed to an incident leader, built from a charger occupancy point read as
+   "available" and a booked room read as one to re-open. Report the readings and stop.
+11. NAME ONLY WHAT THE SENSOR INFORMATION NAMES. If a series has no readable name, say
+   the name is not recorded - do not describe it as a place.
+
 Response:"""
+
+        def _facts_only(reason: str) -> str:
+            """The readings with no conclusion drawn from them.
+
+            Used both when the model is unreachable and when the guard below replaces its
+            narration, so the two paths cannot drift apart (the same argument the anomaly
+            lane's ``factual_summary`` makes).
+            """
+            summary_lines = all_rows_summary
+            if not summary_lines:
+                try:
+                    from orchestrator.services.series_summary import summarise_series
+
+                    summary_lines, _ = summarise_series(results, sensor_metadata or {}, _tz)
+                except Exception:  # the listed rows still answer, less readably
+                    summary_lines = ""
+            parts = [
+                "Here are the readings themselves. "
+                f"{reason} No conclusion has been drawn from them."
+            ]
+            if summary_lines:
+                parts.append(summary_lines)
+            parts.append(result_text.rstrip())
+            return "\n\n".join(parts)
 
         try:
             summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
-            return summary.strip()
         except Exception as e:
             logger.warning(f"[sql_agent] LLM summary generation failed, returning raw results: {e}")
-            return result_text  # Fallback to raw results
+            return _facts_only("The readings could not be summarised.")
+
+        summary = (summary or "").strip()
+        # THE PROMPT ABOVE IS THE REQUEST; THIS IS THE PART THAT CANNOT BE DECLINED
+        # (BUG-1302, BUG-1332, and BUG-709's prompt rule made deterministic).
+        #
+        # BUG-709 added "never issue an instruction, a plan, a recovery order or a priority"
+        # to a prompt on 2026-09-18. Re-asked four times on 2026-09-30 the same question got
+        # four wrong answers and the rule HELD ON THREE OF THEM. A rule that must hold every
+        # time cannot live only in a prompt.
+        #
+        # On a hit this does NOT decline and does NOT edit the sentence: the reader gets every
+        # reading, with its label, its unit and its statistics, and only the inference is
+        # dropped (lesson #135 -- narrow what a guard may DO, not what it may notice).
+        #
+        # SCOPE IS MEASURED. `reading_lane_claims` is applied here because these rows are
+        # numeric readings. Over the 2,912 stored answers in this repo it would alter 22
+        # lane-blind, 11 of them hand-read GOOD -- every one a register or capability answer
+        # QUOTING a recorded procedure, which this lane never does. Restricted to the 295
+        # stored answers whose recorded lane is a reading lane it alters 2, both already
+        # hand-read WEIRD, and 0 hand-read GOOD.
+        from orchestrator.services.anomaly.narration_guard import reading_lane_claims
+
+        # The first rows only: `rows` is read purely to learn the row SHAPE (does it carry a
+        # capacity? a status?), which is homogeneous here, and a fetch can be 30,720 rows.
+        _hits = reading_lane_claims(summary, results[:50])
+        if _hits:
+            logger.warning(
+                "[sql_narration_guard] ACTED: replaced a narration making %d claim(s) %r that "
+                "%d reading(s) cannot support (BUG-1302/BUG-1332)",
+                len(_hits),
+                _hits[:6],
+                len(results),
+            )
+            return _facts_only(
+                "The summary written over them stated something the readings do not record, "
+                "so it was withheld."
+            )
+        return summary

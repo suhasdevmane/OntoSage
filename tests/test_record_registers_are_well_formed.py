@@ -85,7 +85,15 @@ def test_the_iri_template_uses_a_column_that_exists(path):
     m = _mapping(path)
     import re
 
-    for field in re.findall(r"\{(\w+)\}", m["iri_template"]):
+    fields = re.findall(r"\{(\w+)\}", m["iri_template"])
+    # A template with NO placeholder is not a template: every row renders the same IRI and
+    # the register collapses to a single record. That is precisely the failure this test
+    # names, and the loop passed it by running zero times (CAVEAT-1115).
+    assert fields, (
+        f"{path.name} has an iri_template with no {{column}} placeholder "
+        f"({m['iri_template']!r}); every record would collide on the same IRI"
+    )
+    for field in fields:
         assert field in (m.get("columns") or {}), (
             f"{path.name} builds its IRI from {{{field}}}, which is not a column — every "
             f"record would collide on the same IRI"
@@ -106,7 +114,12 @@ def test_the_label_column_exists(path):
 def test_a_status_lookup_is_a_declared_list_not_a_judgement(path):
     """The one interpretation a mapping is allowed, and it must be exhaustive by
     declaration — a cell matching nothing is an error, never a guess."""
-    for column, spec in (_mapping(path).get("columns") or {}).items():
+    columns = _mapping(path).get("columns") or {}
+    # A mapping with no columns at all is broken in a way this test would otherwise report
+    # as clean (CAVEAT-1115). Whether any column declares a `values` lookup is a per-register
+    # choice, so that filter is left alone -- only the outer collection is pinned.
+    assert columns, f"{path.name} declares no columns"
+    for column, spec in columns.items():
         values = (spec or {}).get("values")
         if values is None:
             continue

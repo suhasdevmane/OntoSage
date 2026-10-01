@@ -49,7 +49,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import (
@@ -121,6 +121,13 @@ class AggregateIntent:
     worst: bool = False  # "worst" needs the measurand to say which end is bad
 
 
+#: A question naming a FLOOR specifically ("on floor 2", "level 3"), as opposed to a room.
+#: Used only to choose the grouping when a place-scoped claim is allowed (BUG-879), so the
+#: figures are keyed by the floor rather than by each room on it. The floor word must carry a
+#: NUMBER: "level" is also the second half of "noise level" and "CO2 level".
+_FLOOR_NAMED_RE = re.compile(r"\b(?:floor|level|storey)\s*[a-z]?\d+\b", re.IGNORECASE)
+
+
 _FLOOR_GROUP = re.compile(
     r"\b(?:which|what)\s+(?:floors?|levels?|storeys?)\b"
     r"|\b(?:each|every|per|by)\s+(?:floor|level|storey)\b"
@@ -176,12 +183,38 @@ _NOW = re.compile(
     re.IGNORECASE,
 )
 _FLOOR_NUM = re.compile(r"\b(?:floor|level|storey)\s*(\d+)\b", re.IGNORECASE)
+#: HOW a quantity is monitored: a question about the METHOD, not about the readings (BUG-1317).
+#: Measured live 2026-09-30: "how is water consumption montored here?" was parsed as a TOTAL,
+#: because `_TOTAL` matches `consum\w*`, and answered with seven flow-rate meters' latest values
+#: -- "Water Flow Sensor HotWater recorded the highest flow rate of 26.10 L per min". The
+#: relevance gate had deleted an earlier form of that answer with "Provides data, not explanation
+#: of monitoring method", which is exactly right.
+#:
+#: Over both corpora 101 questions have this shape and the aggregate lane claims 24 of them, 23
+#: from the REAL survey corpus: "How do you measure noise levels in dB?", "how is humidity
+#: monitored", "How do you track occupancy?", "How does the building detect poor air quality?".
+#: Each was answered with a building mean of the quantity it names.
+#:
+#: NOT CAUGHT, AND SAID SO RATHER THAN PAPERED OVER: the verbatim question above spells it
+#: "montored". This is keyed on the verb, so a misspelling of the verb misses, and the real
+#: corpus misspells freely ("rainwter", "buidling", "ventilaton"). CAVEAT-1318.
+_MONITORING_METHOD = (
+    r"how\s+(?:is|are|was|were|do|does|did|can|could|would|will)\s+(?:\w+[\s-]+){0,4}?"
+    r"(?:monitor|monitors|monitored|monitoring|measure|measures|measured|measuring|"
+    r"track|tracks|tracked|tracking|record|records|recorded|recording|"
+    r"detect|detects|detected|detecting|sense|senses|sensed|"
+    r"calculate[sd]?|calculated|computed?|collect|collects|collected|"
+    r"gather|gathers|gathered|determined?|determines|assessed?|assesses)\b"
+)
+
 #: Questions that use an aggregate word but ask for something else: a forecast, a change over time,
-#: or a time of day. "Which floor will have the highest CO2 tomorrow" is not a maximum of the past.
+#: a time of day, or the METHOD by which something is monitored. "Which floor will have the highest
+#: CO2 tomorrow" is not a maximum of the past, and "how is humidity monitored" is not a mean of it.
 _NOT_AN_AGGREGATE = re.compile(
     r"\b(?:will|going\s+to|tomorrow|next\s+(?:hour|day|week|month)|forecast|predict\w*|"
     r"expected|trend\w*|rise|rose|risen|rising|fall|fell|fallen|falling|increase[sd]?|"
-    r"decrease[sd]?|chang(?:e|ed|es|ing)|over\s+time|what\s+time|when)\b",
+    r"decrease[sd]?|chang(?:e|ed|es|ing)|over\s+time|what\s+time|when)\b"
+    r"|\b" + _MONITORING_METHOD,
     re.IGNORECASE,
 )
 
@@ -527,6 +560,189 @@ def display_name(measurand: Optional[str]) -> str:
     if not measurand:
         return "the reading"
     return _DISPLAY.get(measurand, measurand.replace("_", " "))
+
+
+#: Words that may sit to the left of a quantity noun without qualifying WHICH quantity it is:
+#: determiners, question and copula words, the statistic the reader asked for, and the place
+#: words the grouping already handles. A CLOSED set of function words, deliberately — not a list
+#: of quantities. Enumerating the domain is what lesson #170 says never to do; enumerating
+#: English's function words is finite and does not rot when a building adds a modality.
+_QUALIFIER_STOP = frozenset(
+    """
+    a an the this that these those any some all each every both either neither no
+    what whats what's which who whose how when where why is are was were be been being am
+    do does did has have had can could will would shall should may might must
+    and or but nor if then than as of in on at to for from by with about into over under
+    me my mine our ours your yours its their theirs his her hers
+    average avg mean median typical usual current latest present highest lowest max maximum
+    min minimum peak most least worst best top bottom highest-average total overall
+    building buildings floor floors storey storeys level levels room rooms space spaces
+    zone zones area areas site here there now today yesterday tonight
+    sensor sensors reading readings value values figure figures data
+    show tell give get find report say state
+    right just still really very quite much many more less
+    high higher low lower poor good bad better worse warm warmer cold colder hot hotter
+    cool cooler loud louder quiet quieter stable steady comfortable uncomfortable safe unsafe
+    normal abnormal acceptable excessive elevated raised reduced sudden
+    """.split()
+)
+
+#: How far left the qualifier may reach. "supply air temperature" is three words; nothing a
+#: reader writes to name a quantity needs more, and a longer reach starts swallowing clauses.
+_QUALIFIER_MAX_WORDS = 3
+
+_WORDS_RE = re.compile(r"[A-Za-z][A-Za-z0-9]*")
+
+
+def asked_quantity_name(question: str, measurand: Optional[str], labels: Sequence[str] = ()) -> str:
+    """What to CALL the quantity in the answer: the reader's own phrase, or the coarse measurand.
+
+    `display_name(measurand)` is a vote over coarse categories and it is right for a set of room
+    sensors. It is WRONG for a set that all measure something narrower, and the failure is a
+    false statement about the building rather than a clumsy one. Measured live 2026-09-30
+    (BUG-1255): *"What is the return air temperature?"* bound this building's six AHU return-air
+    points -- correctly, one per floor, ~13,120 rows each, newest four minutes before the ask --
+    and answered **"Across the building temperature is averaging 21.4 degC"** with a per-floor
+    table beneath it reading "Floor 0 | 26.0". An occupant is told their floor is 26 degC when
+    the figure is the air inside the ductwork. The answer-relevance gate deleted it and was
+    right to.
+
+    TWO THINGS MAKE THIS SAFE, and neither is a list of quantity names.
+
+    * The phrase is the READER'S. It is read leftwards from the quantity word the question
+      itself uses, across words that are not function words, so it can never be more specific
+      than what was asked. A question that says only "temperature" still gets "temperature".
+    * The phrase must be TRUE OF EVERY BOUND SENSOR. Each extra word must appear in every one
+      of their names. If the reader asks for the outside air temperature and the pipeline binds
+      room sensors, the labels do not carry "outside", the coarse name is kept, and the
+      relevance gate goes on catching the off-topic answer as before. So this cannot invent a
+      quantity, and it cannot rename a set that does not measure what was asked.
+
+    Wording only. It changes no figure, no grouping and no decision about whether to answer.
+    """
+    base = display_name(measurand)
+    if not question or not measurand:
+        return base
+    words = _WORDS_RE.findall(question)
+    lowered = [w.lower() for w in words]
+    #: the quantity word as the READER spelled it -- "temperature", "humidity", "noise"
+    anchor = base.lower().split()[-1]
+    try:
+        at = lowered.index(anchor)
+    except ValueError:
+        return base
+    # A word the coarse name ALREADY carries is not a qualifier. Without this, measurand
+    # "air quality" read leftwards from "quality" over the question's own "air" and produced
+    # "air air quality".
+    stop = _QUALIFIER_STOP | set(base.lower().split())
+    extra: List[str] = []
+    i = at - 1
+    while i >= 0 and len(extra) < _QUALIFIER_MAX_WORDS and lowered[i] not in stop:
+        # A POSSESSIVE OR A FRAGMENT IS NOT A QUALIFIER, and the short words are where the
+        # measured mistakes were. Over both corpora the three wrong names this produced were
+        # "today's occupancy" -> "s occupancy", "the AI temperature settings" -> "ai
+        # temperature" and a truncated "re temperature conditions" -> "re temperature". Nothing
+        # under three letters names a quantity.
+        if len(lowered[i]) < 3:
+            break
+        extra.insert(0, lowered[i])
+        i -= 1
+    if not extra:
+        return base
+    # WORD BY WORD, NOT BY SUBSTRING. "the AI temperature settings" passed a substring check
+    # against every label reading "... air temperature", because "ai" sits inside "air", and
+    # named the quantity "ai temperature".
+    names = [set(w.lower() for w in _WORDS_RE.findall(str(lb or ""))) for lb in labels if lb]
+    if not names or not all(set(extra) <= nm for nm in names):
+        # THE READER'S QUALIFIER IS NOT TRUE OF THE BOUND SENSORS. This used to fall back to the
+        # COARSE name, on the reasoning that it is "at least not a claim about a quantity nobody
+        # measured". Measured live, that is not enough (BUG-1403):
+        #
+        #   Q  "What is the barometric pressure in the building?"
+        #   A  "Across the building **pressure** is averaging 19.1 Pa, ranging from 0.0 to 51.5"
+        #
+        # The six bound sensors are all "Air Handling Unit — Floor N filter differential
+        # pressure", typed `Filter_Differential_Pressure_Sensor`: the pressure drop across an
+        # AHU filter, which is a filter-clogging indicator. Barometric pressure is ~101,325 Pa.
+        # The coarse name was true of the sensors and answered a question about a DIFFERENT
+        # physical quantity without ever saying the qualifier had been dropped. This building
+        # holds no barometric sensor, so the right answer is that it cannot be given.
+        #
+        # So where the reader's qualifier does not hold, name the quantity THE SENSORS carry:
+        # the run of words every bound label puts immediately before the quantity word. That
+        # cannot invent anything — every word comes from every label — and it hands the reader
+        # the discrepancy instead of hiding it ("filter differential pressure", not "pressure").
+        # Where the labels share no such run, the coarse name stands as before.
+        theirs = _shared_qualifier(labels, anchor)
+        # THE LABELS ARE LOGGED, NOT JUST THE DECISION. Diagnosing this cost two probes: the
+        # graph's own labels yield 'filter differential' and the live turn yielded '', so the
+        # strings reaching here are not the strings the graph holds — and the old line recorded
+        # the verdict without the input that produced it.
+        logger.info(
+            "[aggregate] qualifier %r not carried by all %d bound sensor names — naming what "
+            "they DO carry: %r (from labels %r)",
+            " ".join(extra),
+            len(names),
+            (theirs + " " + base).strip(),
+            [str(lb)[:60] for lb in list(labels)[:6]],
+        )
+        return (theirs + " " + base).strip() if theirs else base
+    return " ".join(extra) + " " + base
+
+
+def _shared_qualifier(labels: Sequence[Any], anchor: str) -> str:
+    """The words every bound label puts immediately before ``anchor``, or "" (BUG-1403).
+
+    Derived from the labels and nothing else, so it cannot name a quantity the building does not
+    measure. Returns "" unless EVERY label agrees, because a qualifier true of some sensors and
+    not others is the defect this is here to fix, one level down.
+    """
+    # THE LABELS MAY NOT CONTAIN THE QUANTITY WORD AT ALL, and that is the live case. Measured:
+    # the six bound pressure sensors reach this function as 'AHU F5 Filter DP', 'AHU F2 Filter
+    # DP', ... -- short display names in which "differential pressure" is abbreviated to "DP",
+    # so there is no "pressure" to read leftwards from and the first version of this returned ""
+    # and left the answer calling AHU filter differential pressure simply "pressure".
+    #
+    # Where no label carries the anchor, use the words EVERY label shares instead, in the order
+    # the first one spells them. For the six above that is "AHU Filter DP", which is true of all
+    # six and cannot be mistaken for barometric pressure. Still incapable of inventing: a word
+    # appears only if it appears in every bound label.
+    # AT LEAST TWO LABELS, because the whole claim is "words EVERY label shares" and with one
+    # label that is merely its own words. A single bound sensor named for a different quantity
+    # would otherwise be read as naming this one (a test asserting that caught it).
+    if len(list(labels)) >= 2 and not any(
+        anchor in [w.lower() for w in _WORDS_RE.findall(str(lb or ""))] for lb in labels
+    ):
+        token_sets = [
+            {w.lower() for w in _WORDS_RE.findall(str(lb or ""))} for lb in labels if str(lb or "")
+        ]
+        if not token_sets:
+            return ""
+        shared = set.intersection(*token_sets)
+        first = [w for w in _WORDS_RE.findall(str(labels[0] or ""))]
+        kept = [w for w in first if w.lower() in shared and len(w) > 1]
+        return " ".join(kept) if kept else ""
+
+    runs = []
+    for lb in labels or ():
+        words = [w.lower() for w in _WORDS_RE.findall(str(lb or ""))]
+        if anchor not in words:
+            return ""
+        at = words.index(anchor)
+        run: List[str] = []
+        i = at - 1
+        while i >= 0 and len(run) < _QUALIFIER_MAX_WORDS:
+            w = words[i]
+            if len(w) < 3 or w in _QUALIFIER_STOP:
+                break
+            run.insert(0, w)
+            i -= 1
+        if not run:
+            return ""
+        runs.append(tuple(run))
+    if not runs or len(set(runs)) != 1:
+        return ""
+    return " ".join(runs[0])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -1262,7 +1478,18 @@ def _group_key(f: Facts, group: str) -> str:
     if group == "floor":
         return f.floor
     if group == "room":
-        return f.room or f.label
+        # A BARE NUMBER IS NOT A PLACE NAME (CAVEAT-938). Measured live 2026-09-29, immediately
+        # after BUG-879 started letting room-scoped questions through: "the temperature in room
+        # 5.01 this week compared with last week" labelled every figure "5 mean", "5 peak",
+        # "5 lowest", because this point's resolved `room` is the string "5". The figures were
+        # room 5.01's and the basis line said so, but "5" reads as FLOOR 5 -- which is exactly
+        # the scope confusion the regrouping half of BUG-879 exists to prevent, arriving by the
+        # label instead of by the grouping. The sensor's own label carries the room ("CO2 Level
+        # Sensor 5.01"), so prefer it whenever `room` is too thin to name a place.
+        room = (f.room or "").strip()
+        if room and not room.isdigit():
+            return room
+        return f.label or room or "this room"
     return "building"
 
 
@@ -1493,11 +1720,12 @@ def render_extreme(
     additive: bool = False,
     no_limit_note: bool = False,
     band_text: str = "",
+    quantity: str = "",
 ) -> str:
     """The answer to 'which floor/room ... highest/lowest/most/least', with its boundary."""
     if not ranked:
         return ""
-    name = display_name(measurand)
+    name = quantity or display_name(measurand)
     u = f" {unit}" if unit else ""
     top = ranked[0]
     who = _place_name(intent.group, top.key)
@@ -1645,9 +1873,10 @@ def render_exceedance(
     unplaced: int,
     bands_checked: bool,
     band_text: str = "",
+    quantity: str = "",
 ) -> str:
     """'Has X been high anywhere?' — yes/no against a CITED limit, and where."""
-    name = display_name(measurand)
+    name = quantity or display_name(measurand)
     u = f" {unit}" if unit else ""
     total_readings = sum(g.readings for g in floors) or sum(g.readings for g in ranked_rooms)
     over_readings = sum(g.exceed_readings for g in ranked_rooms)
@@ -1764,6 +1993,7 @@ def render_summary(
     unplaced: int,
     bands_checked: bool,
     band_text: str = "",
+    quantity: str = "",
 ) -> str:
     """What a quantity is doing across the building and floor by floor.
 
@@ -1773,7 +2003,7 @@ def render_summary(
     """
     if not ranked:
         return ""
-    name = display_name(measurand)
+    name = quantity or display_name(measurand)
     u = f" {unit}" if unit else ""
     now = window.latest
     highs = [g.high for g in ranked if g.high is not None]
@@ -1883,6 +2113,170 @@ def render_not_additive(*, name: str, unit: str, sensors: int, asked: str) -> st
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 9b. Is anyone there: a count of PLACES, over a denominator the answer states
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+@dataclass
+class PresenceCount:
+    """How many places have someone in them, and what the figure is over.
+
+    Every field is a COUNT the caller computed from the store's own latest readings. Nothing
+    here is inferred from wording: BUG-954's "two rooms are occupied" was a narrator naming the
+    rows it could list beside its own statistics saying 103, so the count and the names it prints
+    are derived from one list and cannot disagree.
+    """
+
+    occupied: List[str]  # places whose chosen series reads above zero
+    empty: List[str]  # places whose chosen series reads zero
+    #: "presence" when a status/presence flag decided it, "count" when a people counter did.
+    basis: str = "presence"
+    #: How many places each instrument actually decided. Kept apart from `basis` because the
+    #: denominator sentence must not claim every place has the instrument most of them have.
+    by_presence: int = 0
+    by_counter: int = 0
+    #: Places where a counter and a presence flag disagree about whether anyone is there.
+    conflicted: List[str] = field(default_factory=list)
+    conflict_low: Optional[float] = None
+    conflict_high: Optional[float] = None
+    #: Series with a reading that the graph does not place in a space, so they name no place.
+    unplaced: int = 0
+    #: Series that count a whole FLOOR. A floor is not a room and its counter is not a room's,
+    #: so it is neither counted as a place nor silently dropped (the same rule `combine_latest`
+    #: applies when it refuses to add a floor meter to the rooms it already covers).
+    floor_level: int = 0
+    #: Series the stores could not read at all.
+    no_reading: int = 0
+    first_at: Optional[datetime] = None
+    last_at: Optional[datetime] = None
+
+
+def _basis_sentence(by_presence: int, by_counter: int, place_word: str) -> str:
+    """Which instrument decided each place's figure, counted rather than assumed.
+
+    THE DENOMINATOR MUST NOT CLAIM AN INSTRUMENT IT DOES NOT HAVE. The lead sentence says "spaces
+    with an occupancy sensor" and this says which kind, per place: a building where most spaces
+    carry a presence flag and a handful carry only a counter would otherwise be described as
+    though every space had the flag.
+    """
+    if by_presence and by_counter:
+        return (
+            f"{_n(by_presence)} of these {place_word} are decided by an occupancy-presence "
+            f"sensor and {_n(by_counter)} by a people counter, each its newest reading."
+        )
+    if by_counter:
+        return "Each figure is the newest reading of that space's people counter."
+    if by_presence:
+        return "Each figure is the newest reading of that space's occupancy-presence sensor."
+    return ""
+
+
+def _join_places(names: Sequence[str], limit: int = 8) -> str:
+    """Up to `limit` place names, then how many more. Never a bare "and others".
+
+    The remainder is a COUNT, not a hedge: a reader who is told eight of a hundred names needs
+    to know it was a hundred. A place name can itself contain "and" ("Loading and Goods
+    Storage"), so the remainder is separated by a comma rather than by another "and".
+    """
+    shown = list(names[:limit])
+    rest = len(names) - len(shown)
+    if not shown:
+        return ""
+    if rest:
+        return ", ".join(shown) + f", and {rest} more"
+    return shown[0] if len(shown) == 1 else ", ".join(shown[:-1]) + f" and {shown[-1]}"
+
+
+def render_presence(
+    count: PresenceCount,
+    *,
+    wants: str,
+    window: Window,
+    tz_name: Optional[str],
+    name_places: bool = True,
+) -> str:
+    """The count of occupied or empty places, with the denominator it is over.
+
+    THE DENOMINATOR IS PLACES, AND IT IS STATED (lesson #139, BUG-883). "Two rooms are occupied"
+    is a claim about rooms; a series is not a room, some rooms carry two occupancy series and
+    some carry none. The figure below is over the places that HAVE one, the places that do not
+    are counted separately, and the sentence says which of the two is which.
+    """
+    total = len(count.occupied) + len(count.empty)
+    if total == 0:
+        return ""
+    noun = "occupancy sensor"
+    place_word = "space" if total == 1 else "spaces"
+    at = ""
+    if count.last_at is not None:
+        if count.first_at is not None and count.first_at != count.last_at:
+            at = (
+                f", read between {_show(count.first_at, tz_name)} and "
+                f"{_show(count.last_at, tz_name)}"
+            )
+        else:
+            at = f", read at {_show(count.last_at, tz_name)}"
+
+    if wants == "empty":
+        lead = (
+            f"**{_n(len(count.empty))} of the {_n(total)} {place_word} with an {noun} have "
+            f"nobody in them right now**; {_n(len(count.occupied))} have someone{at}."
+        )
+        listed, listed_label = count.empty, "Empty"
+    else:
+        lead = (
+            f"**{_n(len(count.occupied))} of the {_n(total)} {place_word} with an {noun} have "
+            f"someone in them right now**; {_n(len(count.empty))} do not{at}."
+        )
+        listed, listed_label = count.occupied, "Occupied"
+
+    lines = [lead]
+    if name_places and listed:
+        lines.append("")
+        lines.append(f"{listed_label}: {_join_places(listed)}.")
+
+    extra: List[str] = []
+    basis_note = _basis_sentence(count.by_presence, count.by_counter, place_word)
+    if basis_note:
+        extra.append(basis_note)
+    if count.conflicted:
+        band = ""
+        if count.conflict_low is not None and count.conflict_high is not None:
+            band = (
+                f" reporting {_n(count.conflict_low)} to {_n(count.conflict_high)} people"
+                if count.conflict_low != count.conflict_high
+                else f" reporting {_n(count.conflict_low)} people"
+            )
+        extra.append(
+            f"{_n(len(count.conflicted))} of these {place_word} carry a second occupancy series "
+            f"that disagrees at the same moment: a people counter{band} where the presence "
+            f"sensor reports nobody, or the reverse. The records give no way to decide between "
+            f"two instruments in the same space, so the figure above is the presence sensors' "
+            f"and this is stated rather than resolved."
+        )
+    if count.floor_level:
+        extra.append(
+            f"{_n(count.floor_level)} occupancy series count a whole floor rather than a space "
+            f"and are not among the {_n(total)}: a floor is not a room, and adding its counter "
+            "to the rooms it already covers would count the same people twice."
+        )
+    if count.unplaced:
+        extra.append(
+            f"{_n(count.unplaced)} occupancy series returned a reading but are not placed in a "
+            f"space in the building model, so they are not in the {_n(total)} above."
+        )
+    if count.no_reading:
+        extra.append(
+            f"{_n(count.no_reading)} occupancy series returned no reading for {window.label} "
+            "and are not counted."
+        )
+    if extra:
+        lines.append("")
+        lines.append(" ".join(extra))
+    return "\n".join(lines).strip()
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 10. The entry point the SQL lane calls
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -1950,6 +2344,36 @@ def wants_lane(
         # WHEN does it happen: the hourly profile, not a "how is it now" summary (wave 5).
         return AggregateIntent("profile", "building", True, False, False, ())
     if intent is None:
+        # THE SUMMARY IS FOR A QUESTION WITH NO STATISTIC, NOT FOR ONE THIS MODULE REFUSED
+        # (BUG-1316). `parse_intent` returns None for two different reasons, and only one of
+        # them is a gap the summary should fill. Either it found no statistic word -- a bare
+        # measurand, which is what case 6 exists for -- or `_NOT_AN_AGGREGATE` matched, which is
+        # this module SAYING SO: "a forecast, a change over time, or a time of day ... is not a
+        # maximum of the past". Case 6 could not tell the two apart and re-admitted every
+        # question the parser had just declined.
+        #
+        # MEASURED LIVE, 2026-09-30, occupant on /v1, and it is why this is not cosmetic:
+        #   "Has the humidity changed significantly in the past hour?" -> bound and fetched 275
+        #     humidity series and answered with a window summary; the relevance gate deleted it
+        #     (OFF_TOPIC, "does not address change, only gives current values") and the reader
+        #     got a decline.
+        #   "How has the temperature changed over time?" -> the same, deleted the same way.
+        #   "how's the air quality index trending over the last few hours?" -> **the gate did NOT
+        #     fire** and "Across the building air quality is averaging 69.2 level" was shipped as
+        #     the answer to a TRENDING question. The gate is a messenger, not a backstop.
+        #
+        # BLAST RADIUS, both corpora, 11,211 questions: 147 move (91 asking how something
+        # CHANGED, 32 about the future, 24 about when). Every real-corpus question in the two
+        # non-delta families was hand-read and every one is a capability or explanation question
+        # -- "Will I get alerts if air quality is poor?", "When noise levels are too high how
+        # does the building help block that out?" -- which no building-wide mean answers. So the
+        # move is from a statistic nobody asked for to a decline that names what CAN be read.
+        if summary and _NOT_AN_AGGREGATE.search(question or ""):
+            logger.info(
+                "[aggregate] not claimed: the question asks about a change, a forecast or a "
+                "time of day, which a summary of the window cannot answer"
+            )
+            return None
         # A BARE MEASURAND IS NOT A REFUSAL (wave 4). Five of the 24 unacceptable answers in the
         # fresh read were this lane's breadth refusal on a question that named a quantity and no
         # place: "how does the building prevent overheating in sun exposed areas?" was told it
@@ -2077,6 +2501,7 @@ async def try_answer(
     bands: Optional[Dict[str, Tuple[float, float]]] = None,
     resolution_clamp_s: Optional[float] = None,
     aggregate_only: bool = False,
+    allow_named_place: bool = False,
 ) -> Optional[Dict[str, Any]]:
     """Answer an aggregate question from the stores, or return None to leave the lane as it was.
 
@@ -2098,6 +2523,7 @@ async def try_answer(
         is_readings_question,
         names_a_period,
         names_a_place,
+        presence_question,
         resolve_unit,
     )
     from orchestrator.services.units import normalise
@@ -2141,10 +2567,26 @@ async def try_answer(
     # hot-water plant recovering?" were each answered with a TEMPERATURE or FLOW summary. A summary
     # answers a question that names its quantity; the question's own words are the only evidence of
     # that, so a question that names none is not this lane's.
+    # BUG-879: a named place need not mean "decline" — it can mean "group by that place".
+    #
+    # The veto above reads "a named place makes a building-wide summary an answer to a different
+    # question", and that is right about a BUILDING-WIDE summary. It is not right about the
+    # question. When the pipeline has already bound this question's sensors to the place it
+    # names, a summary over them IS that place's summary; what would be wrong is LABELLING it
+    # as the building's. So the caller may lift the veto, and when it does the grouping moves to
+    # the place, where `_group_key` names the group after the room or floor rather than
+    # "building" — the label follows the scope by construction instead of by promise.
+    #
+    # Lifted only by an explicit caller flag, never inferred: the comparison lane knows it has
+    # scoped both of its windows to one place, and nothing else does. Measured 2026-09-23: with
+    # the veto in force, "compare the average CO2 in room 5.01 this week against last week"
+    # refused BOTH of its windows with `not claimed: measurand=co2 place=True`, which is what
+    # left W1-04 and W2-03 PARTIAL.
+    _place_named = names_a_place(question)
     summary_ok = bool(
         measurand
         and question_asks_about(question, measurand)
-        and not names_a_place(question)
+        and (allow_named_place or not _place_named)
         and not asks_for_per_sensor_detail(question)
         and is_readings_question(question)
         and not asks_which_place(question)
@@ -2157,6 +2599,63 @@ async def try_answer(
     intent = wants_lane(
         question, len(uuids), budget_hit, has_floor, kinds, headcount, summary_ok, profile_ok
     )
+    if intent is None and allow_named_place and summary_ok:
+        # LIFTING THE VETO WAS NOT ENOUGH, AND THIS IS THE HALF THAT WAS MISSING (BUG-879).
+        # `summary_ok` only ever reaches `wants_lane`'s SIXTH case, which fires when the question
+        # parses to NO statistic in particular. "Compare the AVERAGE CO2 in room 5.01 this week
+        # against last week" parses perfectly well � stat=mean, group=building � so it skipped
+        # that case, matched none of the five others, and was declined for a reason that had
+        # nothing to do with the place veto. Measured 2026-09-29, after the veto was lifted:
+        # `summary_ok=True` and `wants_lane` still returned None for both window sizes.
+        #
+        # `wants_lane`'s five cases are all "this lane must take it because no other lane can".
+        # This is a different claim and belongs to the caller: the comparison lane has already
+        # scoped BOTH windows to one place and has nothing else to fall back on, so a decline
+        # here leaves the user with nothing rather than with a worse answer. It is gated on
+        # `summary_ok`, so every honesty test that guards the summary path � names the measurand,
+        # asks about readings, asks for no per-sensor detail, does not ask WHICH place � guards
+        # this too, and the regrouping below still moves the label onto the place.
+        intent = parse_intent(question)
+    if intent is None and measurand == "occupancy":
+        # IS ANYONE THERE IS A COUNT OF PLACES, AND THIS LANE IS WHERE IT IS COUNTED (BUG-954).
+        # It reaches here precisely because it holds no statistic word, so every branch above
+        # has already declined it; taking it changes nothing that was being answered.
+        #
+        # The question must be about occupancy AND name no other quantity: "which zones show
+        # sustained elevated CO2 during an approved occupied period?" holds the frame and the
+        # word "occupied" and is an exceedance question about CO2, which the guard below leaves
+        # to the branch that answers it.
+        _asked = question_measurands(question)
+        _wants = presence_question(question) if _asked <= {"occupancy"} else None
+        if _wants is not None and not resolution_clamp_s:
+            _window = resolve_window(question, start_date, end_date, tz_name, latest=True, now=now)
+            if _window is not None:
+                _places: Dict[str, Place] = {}
+                if sparql_exec is not None:
+                    try:
+                        _places = parse_locations(await sparql_exec(build_location_query(uuids)))
+                    except Exception as exc:  # placement is the grouping; without it, decline
+                        logger.warning(f"[aggregate] presence locations unavailable: {exc}")
+                _answer = await _answer_presence(
+                    wants=_wants,
+                    uuids=uuids,
+                    storage_map=storage_map,
+                    facts=facts_from(uuids, metadata, _places),
+                    window=_window,
+                    adapter_for=adapter_for,
+                    store_key=store_key,
+                    tz_name=tz_name,
+                    # `aggregate_only` means this reader may not have a map of where people
+                    # are, so the count is given and the places are not named.
+                    name_places=not aggregate_only,
+                )
+                if _answer is not None:
+                    logger.info(
+                        "[aggregate] presence claim: wants=%s spaces=%s",
+                        _wants,
+                        (_answer.get("aggregate") or {}).get("sensors"),
+                    )
+                    return _answer
     if intent is None:
         logger.info(
             "[aggregate] not claimed: measurand=%s place=%s per_sensor=%s readings=%s "
@@ -2177,6 +2676,38 @@ async def try_answer(
     if headcount and intent.group == "floor" and not intent.now and not names_a_period(question):
         # Present tense with no period named: "which floor has the most people" is about now.
         intent = AggregateIntent(intent.stat, intent.group, intent.descending, False, True)
+    _grp = "floor" if _FLOOR_NAMED_RE.search(question or "") else "room"
+    if (
+        allow_named_place
+        and _place_named
+        and intent.group != _grp
+        and intent.group in ("building", "floor")
+    ):
+        # THE LABEL MUST FOLLOW THE SCOPE (BUG-879). Claiming a place-named question while still
+        # grouping as "building" would key every figure "building mean" over one room's sensors
+        # — the same shape as BUG-883, where one sensor was reported as a floor's. Grouping by
+        # the place makes `_group_key` name the group after the room or floor instead, so the
+        # figure cannot claim a scope it does not have.
+        #
+        # "building" WAS NOT THE ONLY WRONG GROUP (CAVEAT-938, widened 2026-09-29). This guard
+        # first fired only on `group == "building"`, and the live re-ask showed why that is not
+        # enough: "the temperature in room 5.01 this week compared with last week" does not
+        # parse to an intent at all, so it is claimed by the bare-measurand SUMMARY path, which
+        # hardcodes `group="floor"`. The guard was skipped, `_group_key(f, "floor")` returned
+        # the floor number, and every figure was labelled "5 mean" over a group holding ONE
+        # sensor — a room's reading wearing a floor's name, which is BUG-883 exactly. A question
+        # that names a ROOM must group by room whatever the claiming path assumed; a question
+        # that names a FLOOR is left alone when it is already grouped by floor.
+        intent = AggregateIntent(
+            intent.stat,
+            _grp,
+            intent.descending,
+            intent.verdict,
+            intent.now,
+            intent.floors,
+            intent.worst,
+        )
+        logger.info(f"[aggregate] place-scoped claim: grouping by {_grp} so the figures name it")
     window = resolve_window(question, start_date, end_date, tz_name, latest=intent.now, now=now)
     if intent.stat == "profile":
         # A pattern needs several days. A pipeline window of a class-length afternoon would give one
@@ -2391,6 +2922,16 @@ async def try_answer(
 
     common = dict(
         measurand=measurand or "",
+        # WHAT THE ANSWER CALLS THE QUANTITY (BUG-1255). Computed from the question's own
+        # qualifier and checked against every bound sensor's name, so a set that all measures
+        # something narrower than the coarse measurand is not summarised under the coarse word.
+        # Over the sensors that ANSWERED, not over everything the pipeline bound: the name has to
+        # be true of the set the figures came from.
+        quantity=asked_quantity_name(
+            question,
+            measurand,
+            [str((metadata.get(u) or {}).get("label") or "") for u in sorted(answered)],
+        ),
         unit=unit,
         window=window,
         sensors_used=len(answered),
@@ -2618,6 +3159,143 @@ async def _bands_for(
     except Exception as exc:
         logger.warning(f"[aggregate] physical bands unavailable: {exc}")
         return {}, False
+
+
+async def _answer_presence(
+    *,
+    wants: str,
+    uuids: Sequence[str],
+    storage_map: Dict[str, str],
+    facts: Dict[str, Facts],
+    window: Window,
+    adapter_for: Callable[[str], Any],
+    store_key: Callable[[str], str],
+    tz_name: Optional[str],
+    name_places: bool = True,
+) -> Optional[Dict[str, Any]]:
+    """How many spaces have someone in them, counted in code from each series' newest reading.
+
+    THE COUNT IS COMPUTED, NOT NARRATED (BUG-954). Nothing in this module parsed "which rooms are
+    occupied at the moment" — it holds no statistic word, so `parse_intent` returned None and
+    `wants_lane` declined, twice per phrasing on the live runs of 2026-09-30. The turn then
+    fetched the readings and left the count to the narration, which named the five rooms it could
+    list under a headline of five, beside its own statistics saying 131 of 234 read zero. The
+    figure below comes from one list of places; the names printed are that list's members, so the
+    headline and the names cannot disagree.
+
+    A SPACE IS NOT A SERIES. Grouping is by the space the graph places each series in. Where one
+    space carries both a presence flag and a people counter the flag decides it — it is the
+    instrument that answers "is anyone there" — and the disagreement is reported rather than
+    hidden, because two instruments in one space reading differently is a fact about the records.
+    """
+    ready, _unsupported = await _stores_ready(uuids, storage_map, adapter_for, store_key)
+    if not ready:
+        return None
+    latest: List[SensorLatest] = []
+    for _key, (adapter, members) in ready.items():
+        got, _bad = await run_latest(adapter, members, window)
+        latest.extend(got)
+    if not latest:
+        return None
+
+    from orchestrator.services.aggregate_support import counts_people
+
+    # place -> family -> newest reading. A series the graph does not place names no space, so it
+    # cannot be counted as one; it is disclosed instead.
+    by_place: Dict[str, Dict[str, float]] = {}
+    unplaced = 0
+    floor_level = 0
+    first_at: Optional[datetime] = None
+    last_at: Optional[datetime] = None
+    for r in latest:
+        f = facts.get(r.uuid)
+        if f is None:
+            continue
+        if f.on_floor:
+            # A FLOOR IS NOT A ROOM. Its counter covers every room on it, so counting it as one
+            # more place would both inflate the denominator and count those people twice.
+            floor_level += 1
+            continue
+        place = (f.room or "").strip()
+        if not place or place.isdigit():
+            unplaced += 1
+            continue
+        family = "count" if counts_people(f.label, _kind_of(f.unit)) else "presence"
+        held = by_place.setdefault(place, {})
+        # One reading per family per place: a space with two presence flags is still one space,
+        # and the newest of them is what "right now" means there.
+        if family not in held or r.value > held[family]:
+            held[family] = r.value
+        if r.at is not None:
+            first_at = r.at if first_at is None or r.at < first_at else first_at
+            last_at = r.at if last_at is None or r.at > last_at else last_at
+    if not by_place:
+        return None
+
+    basis = "presence" if any("presence" in v for v in by_place.values()) else "count"
+    occupied: List[str] = []
+    empty: List[str] = []
+    conflicted: List[str] = []
+    conflict_values: List[float] = []
+    by_presence = by_counter = 0
+    for place in sorted(by_place):
+        seen = by_place[place]
+        chosen = seen.get(basis)
+        if chosen is None:
+            # This space has no series of the family that decided the rest, so its own is used.
+            # Counted separately: the denominator sentence must not say every space has the
+            # instrument most of them have.
+            other = next(iter(seen))
+            chosen = seen[other]
+            by_presence, by_counter = (
+                (by_presence + 1, by_counter)
+                if other == "presence"
+                else (by_presence, by_counter + 1)
+            )
+        elif basis == "presence":
+            by_presence += 1
+        else:
+            by_counter += 1
+        (occupied if chosen > 0 else empty).append(place)
+        if len(seen) > 1 and len({v > 0 for v in seen.values()}) > 1:
+            conflicted.append(place)
+            other = "count" if basis == "presence" else "presence"
+            if other in seen:
+                conflict_values.append(seen[other])
+
+    count = PresenceCount(
+        occupied=occupied,
+        empty=empty,
+        basis=basis,
+        by_presence=by_presence,
+        by_counter=by_counter,
+        conflicted=conflicted,
+        conflict_low=min(conflict_values) if conflict_values else None,
+        conflict_high=max(conflict_values) if conflict_values else None,
+        unplaced=unplaced,
+        floor_level=floor_level,
+        no_reading=len([u for u in uuids if u not in {r.uuid for r in latest}]),
+        first_at=first_at,
+        last_at=last_at,
+    )
+    text = render_presence(
+        count, wants=wants, window=window, tz_name=tz_name, name_places=name_places
+    )
+    if not text:
+        return None
+    intent = AggregateIntent("presence", "room", True, False, True, ())
+    return _result(
+        text,
+        intent,
+        window,
+        len(latest),
+        {
+            "spaces with someone in them": float(len(occupied)),
+            "spaces with nobody in them": float(len(empty)),
+            "spaces counted": float(len(occupied) + len(empty)),
+            "spaces whose two occupancy series disagree": float(len(conflicted)),
+        },
+    )
 
 
 async def _answer_total(

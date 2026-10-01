@@ -123,7 +123,7 @@ def test_a_reading_exactly_at_the_threshold_does_not_fire_a_strictly_greater_rul
 
 
 def test_a_point_with_no_value_does_not_fire_and_is_not_read_as_compliant():
-    """"No reading" is not "within threshold". Treating a silent instrument as a healthy
+    """ "No reading" is not "within threshold". Treating a silent instrument as a healthy
     one is the same error as narrating an empty fetch as sensor absence."""
     fired: List[Tuple[str, str, float]] = []
     eng = _engine({}, fired)
@@ -225,13 +225,21 @@ def test_the_shipped_concept_rule_declares_its_scope():
     path = REPO / "input" / "rules.yaml"
     if not path.is_file():  # pragma: no cover - parked tree
         pytest.skip("no active building")
-    for entry in (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("rules", []):
+    rules = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("rules") or []
+    assert rules, f"{path} parsed to no rules at all"
+    concept_rules = 0
+    for entry in rules:
         trig = entry.get("trigger", {}) or {}
         if trig.get("concept") and not trig.get("sensor_uuid"):
+            concept_rules += 1
             assert trig.get("scope") in (SCOPE_ALL, SCOPE_FIRST), (
                 f"rule {entry.get('id')!r} triggers on a concept and declares no scope, so "
                 "it would be loaded disabled"
             )
+    # "The rule that made this a defect must not still be the undeclared one" is a claim about
+    # a concept-triggered rule; with none present it is a claim about nothing (CAVEAT-882 was
+    # exactly a rule that passed eleven offline tests and fired zero times live).
+    assert concept_rules, "no concept-triggered rule is shipped, so none was checked for scope"
 
 
 # ── a rule firing means its condition matched. Nothing moved. ────────────────
@@ -255,7 +263,12 @@ def test_the_only_shipped_action_type_is_notify():
     path = REPO / "input" / "rules.yaml"
     if not path.is_file():  # pragma: no cover - parked tree
         pytest.skip("no active building")
-    for entry in (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("rules", []):
+    rules = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("rules") or []
+    # The `or {}` / default-[] chain turns an unparseable or restructured rules.yaml into a
+    # silent zero-rule pass, which is how "the only shipped action type is notify" would go
+    # on being true after an actuating rule was added under a different key (CAVEAT-1115).
+    assert rules, f"{path} parsed to no rules at all"
+    for entry in rules:
         assert (entry.get("action") or {}).get("type", "notify") == "notify"
 
 

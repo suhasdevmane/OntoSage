@@ -313,6 +313,12 @@ def test_precedence_order_is_pinned():
         # Wave 8: what can I automate -> automation_capability, before the shape check.
         "what_can_i_automate",
         "automation_needs_a_shape",
+        # tail N #50 (2026-09-30, BUG-1245): "are there alerts for unusual energy patterns or
+        # wastage?" got the alert-CREATION form — "I haven't created an alert yet. I need the
+        # value that should trigger it". DIRECTLY AFTER automation_needs_a_shape because it
+        # corrects it: that rule reads the literal word "alerts" as a well-formed alert shape
+        # and stands down, and every rule in a stage runs with the last one winning.
+        "alert_existence_is_a_capability",
         # V4 ARBITER: appended LAST so every earlier claim (reports, control,
         # floor_plan, data promotions) wins before deliberation is considered.
         "constraint_recommendation",
@@ -424,6 +430,11 @@ def test_precedence_order_is_pinned():
         # design standard, then guidance), 2026-09-19.
         "ungrounded_question_never_fetches",
         "scope_boundary",
+        # LAST on purpose (BUG-941 / BUG-1020): it corrects whatever the classifier guessed for a
+        # question about the CONVERSATION, not one particular wrong guess. Measured over all
+        # 4,287 questions the project holds, it moves exactly one other — itself a recall
+        # question. Added 2026-09-30 in the same change as the rule, per the contract.
+        "session_recall",
     ]
     assert [r.name for r in rc.POST_STAGE_RULES] == [
         "data_query_promotion",
@@ -531,7 +542,10 @@ def test_a_last_serviced_question_still_files_no_ticket_and_now_reaches_the_regi
     are first freed from the maintenance intake, which would have filed a ticket."""
     n, applied = _apply(query, intent="maintenance")
     assert n["intent"] == "metadata"
-    assert applied[:2] == ["history_question_not_report", "maintenance_record_is_a_register_question"]
+    assert applied[:2] == [
+        "history_question_not_report",
+        "maintenance_record_is_a_register_question",
+    ]
 
 
 @pytest.mark.parametrize(
@@ -1256,8 +1270,13 @@ def test_lanes_that_own_their_own_refusals_are_left_alone(intent):
 # ── BUG-860: a live superlative about a measured condition is not a register question ──
 
 
-_TEMP = [{"concept_id": "temperature_reading", "lay_term": "coolest",
-          "brick_classes": ["brick:Temperature_Sensor"]}]
+_TEMP = [
+    {
+        "concept_id": "temperature_reading",
+        "lay_term": "coolest",
+        "brick_classes": ["brick:Temperature_Sensor"],
+    }
+]
 
 
 @pytest.mark.parametrize("intent", ["register", "metadata", "discovery", "compliance"])
@@ -1265,7 +1284,8 @@ def test_a_live_superlative_leaves_a_record_lane_for_deliberate(intent):
     """A register holds records, not readings, so it cannot say which room is coolest now."""
     got = _concept_route(
         "Where's the coolest place to work in the building right now?",
-        intent=intent, concepts=_TEMP,
+        intent=intent,
+        concepts=_TEMP,
     )
     assert got == "deliberate"
 
@@ -1274,7 +1294,8 @@ def test_the_same_question_with_a_typographic_apostrophe_routes_identically():
     """A browser sends 'Where’s'; a terminal sends "Where's". The route must not depend on it."""
     curly = _concept_route(
         "Where\u2019s the coolest place to work in the building right now?",
-        intent="register", concepts=_TEMP,
+        intent="register",
+        concepts=_TEMP,
     )
     assert curly == "deliberate"
 
@@ -1286,11 +1307,17 @@ def test_a_register_question_naming_no_measurand_keeps_its_lane():
 
 def test_naming_a_measurand_is_not_enough_without_a_superlative():
     """'Which approved space is suitable for a quiet pause' is about approval, not a reading."""
-    quiet = [{"concept_id": "quiet_space", "lay_term": "quiet",
-              "brick_classes": ["ontosage:Sound_Level_Sensor"]}]
+    quiet = [
+        {
+            "concept_id": "quiet_space",
+            "lay_term": "quiet",
+            "brick_classes": ["ontosage:Sound_Level_Sensor"],
+        }
+    ]
     got = _concept_route(
         "Which approved nearby space is suitable for a brief quiet pause?",
-        intent="register", concepts=quiet,
+        intent="register",
+        concepts=quiet,
     )
     assert got == "register"
 
@@ -1376,7 +1403,9 @@ def _route(query, intent="compare", concepts=(_CO2_CONCEPT,)):
 
 
 def test_pack_27_reaches_the_lane_that_can_rank_on_two_modalities():
-    intent, applied = _route("Is the ventilation keeping up with occupancy on floor 2 this afternoon?")
+    intent, applied = _route(
+        "Is the ventilation keeping up with occupancy on floor 2 this afternoon?"
+    )
     assert intent == "deliberate"
     assert "one_quantity_judged_against_another" in applied
 
@@ -1414,9 +1443,7 @@ def test_it_does_not_take_a_question_that_only_resembles_the_shape(query, concep
 
 def test_a_lane_that_is_already_right_is_left_alone():
     """It may correct a data lane; it may never move a question already going to deliberate."""
-    _intent, applied = _route(
-        "Is the ventilation keeping up with occupancy?", intent="deliberate"
-    )
+    _intent, applied = _route("Is the ventilation keeping up with occupancy?", intent="deliberate")
     assert "one_quantity_judged_against_another" not in applied
 
 
@@ -1431,16 +1458,146 @@ def test_the_rule_names_no_building_and_no_modality():
     import inspect
     import textwrap
 
-    tree = ast.parse(
-        textwrap.dedent(inspect.getsource(rc._r_one_quantity_judged_against_another))
-    )
+    tree = ast.parse(textwrap.dedent(inspect.getsource(rc._r_one_quantity_judged_against_another)))
     fn = tree.body[0]
-    if (
-        fn.body
-        and isinstance(fn.body[0], ast.Expr)
-        and isinstance(fn.body[0].value, ast.Constant)
-    ):
+    if fn.body and isinstance(fn.body[0], ast.Expr) and isinstance(fn.body[0].value, ast.Constant):
         fn.body = fn.body[1:]
     code = ast.unparse(ast.fix_missing_locations(tree))
     for literal in ("co2", "occupancy", "temperature", "bldg1", "abacws", "ventilation"):
         assert literal not in code.lower(), literal
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Tail N, 2026-09-30 — six wrong lanes out of sixty real survey questions.
+#
+# Every question below is the EXACT text a participant typed, taken from
+# `paper/Survey analysis and results/corpus/classified_corpus.csv` and re-asked live on
+# 2026-09-30 (`docs/phase0/tail_N_2026-09-30_read.md`).
+# ═══════════════════════════════════════════════════════════════════════════════
+
+
+_TAIL_N_SAFETY_Q = "if the main exit is blocked by smoke, what is the alternative route"
+
+
+@pytest.mark.parametrize(
+    "start",
+    [
+        None,
+        "general",
+        "capability",
+        "metadata",
+        "discovery",
+        "clarification",
+        "report",
+        "recommend",
+        "planner",
+        "observability",
+        "register",
+        "sensor_data",
+        "analytics",
+        "floor_plan",
+        "spatial_query",
+        "anomaly",
+        "alert",
+        # The one that matters most: the classifier may reach for the report label itself.
+        "safety_report",
+    ],
+)
+def test_a_safety_question_never_becomes_a_safety_report(start):
+    """BUG-1241, SAFETY. Live it was filed as URGENT report REP-F9828F and answered with a
+    ticket number. Whatever the classifier guesses, it must never reach the intake node.
+
+    `report` is the summary/document lane, not the intake one, and this rule leaves it alone
+    on purpose — it files nothing, so it is outside what this defect is about.
+    """
+    n, applied = _apply(_TAIL_N_SAFETY_Q, intent=start)
+    assert n["intent"] not in (
+        "safety_report",
+        "maintenance",
+        "complaint",
+        "feedback",
+        "suggestion",
+    ), f"from {start!r} the question was filed as {n['intent']!r} via {applied}"
+    if start != "report":
+        assert (
+            n["intent"] == "capability"
+        ), f"from {start!r} it went to {n['intent']!r} via {applied}"
+
+
+@pytest.mark.parametrize(
+    "statement,expect",
+    [
+        # A STATEMENT still files — this is what the hypothetical guard must not cost.
+        ("the fire exit is blocked by smoke", "safety_report"),
+        ("there is broken glass in the corridor", "safety_report"),
+        ("the toilet on floor 1 is leaking", "maintenance"),
+        # A statement with a question attached is judged on the statement (the existing
+        # multi-sentence rescue), so it still files.
+        ("The fire exit is blocked. What should I do?", "safety_report"),
+        # A bare auxiliary after a subordinate lead is a REQUEST, not a question.
+        ("since the lift is broken, can someone fix it", "maintenance"),
+        ("if you can, please fix the broken light in 5.01", "maintenance"),
+    ],
+)
+def test_the_hypothetical_guard_does_not_stop_a_real_report_filing(statement, expect):
+    """Measured over the 7,196 questions this project holds, the guard moves 7 — every one a
+    hypothetical safety/fault scenario followed by a wh-question, and no genuine report."""
+    from orchestrator.services.semantic_router import SemanticRouter
+
+    assert SemanticRouter.report_intake_intent(statement) == expect
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        _TAIL_N_SAFETY_Q,
+        # The same shape from three other participants in the same corpus.
+        "if the muster point is unsafe due to weather, where is the backup",
+        "if smoke is detected in a riser, which areas need to be cleared first",
+        "if water is found leaking near electrics, how is the hazard contained",
+        "if a fire starts on floor 3, what is the safest evacuation route",
+    ],
+)
+def test_a_hypothetical_that_then_asks_is_a_question(query):
+    """BUG-1241 root cause: no "?" and an opening "if" made `is_question` False, and one
+    `_REPORT_SAFETY_PHRASES` word then turned a question into an urgent incident."""
+    from orchestrator.services.semantic_router import SemanticRouter
+
+    assert SemanticRouter.report_intake_intent(query) is None
+
+
+# ── BUG-1245: "are there alerts for X?" asks what exists ──────────────────────
+
+
+@pytest.mark.parametrize("start", ["alert", "automation_capability"])
+def test_an_alert_existence_question_is_not_a_request_to_create_one(start):
+    """Live it answered "I haven't created an alert yet. I need the value that should
+    trigger it…" — a configuration form, to someone asking whether alerting exists."""
+    n, applied = _apply("are there alerts for unusual energy patterns or wastage?", intent=start)
+    assert n["intent"] == "automation_capability", applied
+
+
+@pytest.mark.parametrize(
+    "query,start,expect",
+    [
+        # A standing request is the opposite shape and keeps its lane.
+        ("Alert me if CO2 exceeds 1000 ppm in room 5.01", "alert", "alert"),
+        ("Notify me when temperature goes above 28 degrees on floor 3", "alert", "alert"),
+        # Live state, not reach.
+        ("are there any alerts right now?", "alert", "alert"),
+        ("are there any ongoing maintenance alerts for equipment health?", "alert", "alert"),
+        # A request to SET ONE UP, which the first draft of the pattern wrongly claimed:
+        # the subject decides what "provide" means (you = create, the building = capability).
+        (
+            "Could you provide a priority alert to the facilities team if any standby "
+            "loads exceed a certain threshold during out-of-hours?",
+            "alert",
+            "alert",
+        ),
+        # An alarm that already happened is a record; that rule runs first and still wins.
+        ("have there been any alarms this week?", "alert", "metadata"),
+    ],
+)
+def test_the_alert_existence_rule_claims_nothing_else(query, start, expect):
+    n, _applied = _apply(query, intent=start)
+    assert n["intent"] == expect, query

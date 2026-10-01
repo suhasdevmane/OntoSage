@@ -58,7 +58,61 @@ CAN_MEASURE_RE = re.compile(
     # floor-plan menu — a picker, in response to a fire-safety question.
     r"|\bwhat\s+(?:detection|monitoring|coverage|sensors?|instrumentation)\b"
     r".{0,20}\b(?:covers?|is in place|do(?:es)? (?:we|you) have|exists?)\b"
-    r"|\b(?:detection|monitoring|coverage)\s+(?:is\s+)?in place\b",
+    r"|\b(?:detection|monitoring|coverage)\s+(?:is\s+)?in place\b"
+    # "WHAT DATA DO YOU COLLECT?" IS THE FIRST QUESTION ANYONE ASKS, and it declined
+    # (BUG-947 / tail M #61, 2026-09-29): "I don't have that specific information on record
+    # for Abacws Building. For building-specific queries please contact your building's
+    # facilities / estates management team" — then offered Waste collection point records.
+    # The system knows all 44 held record classes and all 45 measured modalities, and the
+    # reach lane answers "what can you measure in this building?" with every one of them. The
+    # gap was only the verb: `collect` is not in the alternation above, and the passive "what
+    # kind of data is collected" names no actor at all.
+    #
+    # DELIBERATELY NARROW, because "collect" is also what happens to WASTE here. The building
+    # holds 24 waste collection points and a collection schedule, and "when is the recycling
+    # collected?" must stay a register question. So: `collect` only as a verb the ASKER
+    # attributes to the system ("do you collect"), and the passive form only for the fixed
+    # phrase "what kind/sort/type of data".
+    r"|\b(?:do|does|can|could|will)\s+(?:you|we|this building|the system|it)\b"
+    r".{0,40}\b(?:collect|gather)\b"
+    r"|\bwhat\s+(?:kind|sort|type)s?\s+of\s+data\b"
+    r"|\bwhat\s+data\s+(?:do|does|can|could)\s+(?:you|we|this building|the system|it)\b",
+    re.IGNORECASE,
+)
+
+#: The instruments, in the words people use for them. Plural, or explicitly quantified: a
+#: question about ONE named sensor is not a request for a building-wide sweep, and answering it
+#: with one would replace the asker's question with a different one.
+_INSTRUMENTS = (
+    r"(?:(?:sensors|meters|devices|instruments|streams|feeds|monitors|data\s+points)\b"
+    r"|(?:any|which|each|every|all)\s+(?:sensor|meter|device|instrument|stream|feed|monitor)\b)"
+)
+
+#: Having stopped sending data. Deliberately NOT "not working" or "broken" — those are claims
+#: about the instrument, and a store can only ever evidence claims about the DATA.
+_SILENCE = (
+    r"(?:stopped|stop|ceased|quit|gone\s+(?:silent|quiet|dark|offline)|dropped\s+(?:out|off)"
+    r"|(?:not|no\s+longer|never|haven'?t|hasn'?t|aren'?t|isn'?t|don'?t|doesn'?t)"
+    r"\s+(?:been\s+|being\s+)?(?:reporting|report|reported|sending|sent|transmitting"
+    r"|updating|updated|recording|recorded|writing|written)"
+    r"|offline|silent|flat[\s-]?lined|unresponsive|missing\s+data|gone\s+missing)"
+)
+
+#: "Which sensors have stopped reporting, and when was each last seen?" (W3-05).
+#:
+#: Two shapes: the instruments and the silence in either order, and the bare "when did each
+#: last report", which asks for the same derivation without using a word for silence at all.
+#: The gap between the two halves is bounded so a sentence that mentions sensors and, twenty
+#: words later, mentions something being offline does not become a building-wide health sweep.
+SILENCE_RE = re.compile(
+    rf"\b{_INSTRUMENTS}[^.?!]{{0,50}}?\b{_SILENCE}\b"
+    rf"|\b{_SILENCE}\b[^.?!]{{0,50}}?\b{_INSTRUMENTS}"
+    # A bare "last report" is allowed only AFTER the instruments ("when did each sensor last
+    # report"). The other way round it is usually a document — "where is the last report on the
+    # sensors" — and a health sweep is not an answer to that.
+    rf"|\b{_INSTRUMENTS}[^.?!]{{0,50}}?\blast\s+(?:seen|reported|report|wrote|sent|updated"
+    rf"|reading)\b"
+    rf"|\blast\s+(?:seen|reported|wrote|sent|updated)\b[^.?!]{{0,50}}?\b{_INSTRUMENTS}",
     re.IGNORECASE,
 )
 
@@ -198,7 +252,22 @@ def is_observability_question(text: str) -> bool:
         # question, measured live on bldg2. The reporting route is a knowledge
         # topic; this lane has nothing to say about it.
         return False
-    return bool(CAN_MEASURE_RE.search(text) or CAN_ANSWER_RE.search(text))
+    return bool(
+        CAN_MEASURE_RE.search(text) or CAN_ANSWER_RE.search(text) or is_silence_question(text)
+    )
+
+
+def is_silence_question(text: str) -> bool:
+    """True when the question asks which sensors have stopped reporting, and when (W3-05).
+
+    This is a reach question and belongs in this lane for the same reason the others do: it is
+    about the DATA rather than about the building, and any lane that reasons from a window of
+    readings can only ever conclude that everything is fine — silence is invisible in the rows
+    by definition. Measured live on 2026-09-29, that is exactly what happened: "All of the
+    sensors listed have a reading at the most recent timestamp ... none of them appear to have
+    stopped reporting", asserted over a sensor that had been dead for twelve days.
+    """
+    return bool(SILENCE_RE.search(text or ""))
 
 
 #: "what can you measure here" — the OPEN question, asking for the menu rather than about one
@@ -208,7 +277,20 @@ def is_observability_question(text: str) -> bool:
 OPEN_QUESTION_RE = re.compile(
     r"\bwhat\s+can\s+you\s+(?:measure|monitor|tell me about)\b"
     r"|\bwhat\s+(?:sensors?|data|readings?)\b.{0,20}\b(?:do you have|are there|exist)\b"
-    r"|\bwhat\s+is\s+(?:measured|monitored|instrumented)\b",
+    r"|\bwhat\s+is\s+(?:measured|monitored|instrumented)\b"
+    # TWO GATES, AND WIDENING ONE WITHOUT THE OTHER GETS YOU HALFWAY (BUG-947, tail M #61).
+    # Teaching `CAN_MEASURE_RE` about "collect" made the question reach this lane, and it then
+    # answered "**Which space did you mean?**" — because the branch that lists the building's
+    # measurands is gated on THIS pattern instead. Better than the false decline it replaced,
+    # and still not the answer the system has: "what can you measure in this building?" names
+    # all 45 modalities. A question naming no quantity and no place wants that menu.
+    #
+    # Every alternative added here keeps the word "data" in it, deliberately. A bare
+    # "what is collected" would claim "what is collected on Tuesdays" — the waste round, which
+    # this building holds as 24 collection points and a schedule.
+    r"|\bwhat\s+(?:kind|sort|type)s?\s+of\s+data\b"
+    r"|\bwhat\s+data\b.{0,20}\b(?:is|are)\s+collected\b"
+    r"|\bwhat\s+data\s+(?:do|does|can|could)\s+(?:you|we|this building|the system|it)\b",
     re.IGNORECASE,
 )
 
@@ -351,6 +433,34 @@ def present_modalities(space_entry: Dict[str, Any]) -> List[str]:
     return sorted(out)
 
 
+def catalogue_unreadable(building: str) -> str:
+    """The building's sensor catalogue could not be read — the ONE wording for it.
+
+    UNAVAILABLE IS NOT ABSENT (CAVEAT-951). On a cold container the first question that
+    declines came back with *"The nearest things I can answer are the Interval record,
+    Timetabled session and Access event records."* — records only, no measurands at all. The
+    identical question thirty seconds later, warm, added *"…and the readings of pm25, air
+    quality, carbon monoxide and co2."* Nothing in the cold answer said the catalogue could not
+    be read; the list simply looked shorter, and a reader takes a shorter list as a smaller
+    building. That is the fourth kind of nothing — a retrieval failure — presented as the
+    first, a fact about the world.
+
+    The measurand list is derived from `_measured_modality_counts`, whose contract already
+    distinguishes the two: it returns None when nothing could be read, and never zero. The
+    caller throws that None away by turning it into an empty list, so the distinction exists
+    and is discarded one line before it is needed.
+
+    This lane already had to say it, for its own cold case, and says it here so a second
+    wording is never written. `tests/test_an_unreadable_catalogue_is_not_an_empty_one.py`
+    parses the sentence back out of the response node and fails if the two drift apart.
+    """
+    name = str(building or "").strip() or "this building"
+    return (
+        f"**I couldn't read {name}'s sensor catalogue just now,** so I can't list what it "
+        "measures. Ask about a particular quantity, or try again in a moment."
+    )
+
+
 __all__ = [
     "CAN_ANSWER_RE",
     "CAN_MEASURE_RE",
@@ -360,6 +470,7 @@ __all__ = [
     "UNINSTRUMENTED",
     "UNKNOWN",
     "Reach",
+    "catalogue_unreadable",
     "is_observability_question",
     "is_open_question",
     "named_quantity",

@@ -352,6 +352,11 @@ def test_model_selector_winner_has_lowest_mae():
     series = _make_series(n=72)
     result = ModelSelector().select_and_forecast(series, n_steps=12)
 
+    # A selector that evaluated one candidate satisfies "the winner has the lowest MAE"
+    # trivially; the point of the test is that it beat OTHERS (CAVEAT-1115).
+    assert (
+        len(result["all_metrics"]) >= 2
+    ), f"only {len(result['all_metrics'])} model was evaluated, so the winner beat nothing"
     winner_mae = result["all_metrics"][result["winner"]].mae
     for name, m in result["all_metrics"].items():
         assert m.mae >= winner_mae - 1e-9, (

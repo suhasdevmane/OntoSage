@@ -2662,7 +2662,23 @@ ontosage:PublicEvent ontosage:layTerms "seminar", "public lecture", "public lect
 # STILL NOT REACHED, and left alone deliberately: CT-025 ("which washrooms have a confirmed
 # service this shift") selects PatrolCheckpoint on "this shift" — a cleaning round answered
 # from the security patrol register. Every phrase that recovers it costs a plant question.
-ontosage:CleaningTask ontosage:layTerms "cleaning", "clean", "cleaner", "caretaker",
+# BARE "clean" REMOVED 2026-09-30 (BUG-1291). It is an ADJECTIVE far more often than it is
+# this register's name, and `held_record_class` is a routing SHORT-CIRCUIT — the dialogue
+# agent logs "[ttl-route] metadata via held record class: CleaningTask — skipping LLM intent
+# call" — so one four-letter word decided a whole turn with no classification at all.
+# Measured live: "are EV chargers powered by clean energy?" was answered "The cleaning task
+# register (30 records) cannot answer this".
+# Measured over 2,960 catalogue + 7,151 real survey questions before removing it: 25 questions
+# move off CleaningTask, of which 18 were WRONG — 11 air-quality ("air clean?", "Is the air
+# clean?", "How clean is the indoor air compared to outdoor air today?", asked by six separate
+# participants), 5 clean-energy, 2 catalogue (decontamination routes, owner handback). The 7
+# that lose it ("how to clean AC", "can you clean yourself") were being DECLINED by this
+# register anyway, so none of them loses an answer.
+# "cleaned" ADDED in the same edit and measured: it captures 7 questions this register exists
+# to answer and could not reach — "When was the restroom cleaned?", "how often is this area
+# cleaned or sanitized?", "how often are the filters cleaned", "When was the last time the
+# lobby was cleaned?" — because the scorer matches \b<term>\b and "cleaning" does not.
+ontosage:CleaningTask ontosage:layTerms "cleaning", "cleaned", "cleaner", "caretaker",
     "caretaking", "janitorial", "housekeeping", "my zone", "my round", "task list",
     "cleaning schedule", "cleaning standard", "which rooms must be ready", "my shift",
     "washroom should i service", "washrooms should i service", "washroom service",
@@ -2727,8 +2743,27 @@ ontosage:Tariff ontosage:layTerms "tariff", "tariffs", "unit rate", "standing ch
 # answer them. A no-show is a property of a booking nobody attended, so the booking register
 # is where the question starts. Measured: 4 catalogue questions move, all from the
 # room-booking catalogue (RB-032, RB-034, RB-040, RB-074); guard set unchanged at 0.
+# "reserved" ADDED 2026-09-30 (BUG-1251). The register declared the NOUN and the past
+# participle of "book", and not the past participle of "reserve", so tail N #46 "are there any
+# spaces RESERVED but not currently in use?" reached no register while the decline's own
+# pointer printed "Room booking". That is BUG-970's two-matcher disagreement and this is the
+# one instance of the six where it is real: `content_terms` stems "reserved" to "reserv", which
+# `_close` prefix-matches to "reservation", and the selector's \breserved\b cannot.
+# MEASURED over all 2,960 catalogue questions: ONE moves, and it is a gain -- RB-014 "Are the
+# main room, breakout rooms, waiting area and support spaces reserved consistently for this
+# event?" goes from NO register to Booking. Nothing is lost and nothing changes register.
+# LB-063, the only other catalogue question containing the word ("which choices remain reserved
+# to incident command"), does NOT move: CoordinationFunction already outscores a bare
+# eight-character term there. Guard set 0 violations before and after.
+# NOTE ON PLACEMENT: this note sits ABOVE the statement, not inside it. A comment between the
+# object list and the terminating "." is legal Turtle and breaks
+# tests/test_every_record_class_is_reachable_by_words.py, whose `_declared_terms` reads these
+# statements from the SOURCE and stops at the first full stop -- so a prose sentence inside a
+# statement makes the class look as though it declares no lay terms at all. The test caught it
+# on the first run (lessons #153).
 ontosage:Booking ontosage:layTerms "booking", "bookings", "reservation", "reservations",
-    "room booking", "booked", "who has booked", "no-show", "no-shows" .
+    "room booking", "booked", "who has booked", "no-show", "no-shows",
+    "reserved" .
 
 # Lay terms for the three record classes that had none.
 #
@@ -2840,7 +2875,43 @@ ontosage:AccessEvent ontosage:layTerms "access event", "access events", "door ev
     "door events", "entry log", "entry logs", "tailgating", "forced door",
     "door held open", "door forced",
     "accessed", "access log", "access logs", "who entered", "who went in",
-    "entry record", "entry records", "badge in", "badged in", "swipe record" .
+    "entry record", "entry records", "badge in", "badged in", "swipe record",
+    "exit log", "exit logs", "entry and exit log", "entry and exit logs",
+    "who visits", "who visited", "visitor log", "visitor logs", "visit log", "visit logs" .
+
+### THE LAST TEN TERMS ABOVE WERE ADDED 2026-09-30 (BUG-1251), for two live false declines in
+### the tail-N read that this register could have answered.
+###
+###   #25 "do the entry and exit LOGS reconcile for a roll call right now?" selected
+###       CoordinationFunction on its declared "roll call" and answered "the emergency
+###       coordination function register (14 records) cannot answer this ... nothing about exit,
+###       logs and reconcile" -- the register naming the three words it lacks. This class
+###       declared "entry log" and "entry logs" and neither can match, because the asker
+###       COORDINATES the nouns: "entry AND EXIT logs" contains the contiguous string
+###       "exit logs" and never the contiguous string "entry log". A lay term is matched WHOLE,
+###       with word boundaries, so a coordinated noun phrase reaches only its LAST head. Every
+###       register whose vocabulary is written "<modifier> <head>" has the same blind spot.
+###   #9  "Does the server room keep track of WHO VISITS the room?" reached no register at all
+###       under either matcher and fell to the document lane, which searched the Stakeholder
+###       Group Register and declined. The building holds 679 access events.
+###
+### "entry and exit log(s)" is declared as well as "exit log(s)" because it is the phrase people
+### write, and because it scores 38.00 against "roll call"'s 18.00 -- so the class wins OUTRIGHT
+### rather than on a tie-break, which would be decided by the building's own ordering and is not
+### a reason anyone would accept for choosing between two registers (lessons #155).
+###
+### MEASURED over all 2,960 catalogue questions (scripts/register_reach.py, schema on disk,
+### 2026-09-19 instance snapshot): these ten terms move ZERO questions and add ZERO guard
+### violations. Zero is honest in both directions and is stated as such -- the catalogue holds
+### none of these phrasings, so it is evidence that nothing is TAKEN, not evidence that anything
+### is gained. The gain is the two live questions above.
+###
+### BARE "visitor"/"visitors" WAS MEASURED AND REJECTED (CAVEAT-1253): 30 of 2,960 questions
+### move and read by hand most are not access-event questions at all -- "A visitor is joining
+### me. Which approved meeting point is easy to find", "How stale are the HR, student, visitor,
+### contractor and training feeds", "Which loan, visitor or contractor credentials are overdue".
+### A visitor is a KIND OF PERSON in this corpus and only sometimes a row in a door log. Same
+### shape as CAVEAT-972's automatic plural tolerance. Whole phrases only.
 
 ### MEASURED 2026-09-17 and deliberately NOT changed: once this class is held (271 placeholder
 ### activations), singular "alarm" names the activation log in about three of fourteen
@@ -2915,10 +2986,29 @@ ontosage:outOfHoursRoute a owl:DatatypeProperty ;
 # working answers. "escalation", "who owns" and "who is accountable" were dropped because
 # CoordinationFunction and ApprovalRecord already declare them and a tie routes
 # alphabetically — the longer, unambiguous forms below carry the same questions.
+# PLURALS DECLARED 2026-09-30 (BUG-948). `_terms_for` adds a plural for the LABEL and the
+# CLASS NAME and deliberately takes a declared lay term WHOLE, so "escalation route" was
+# reachable and "escalation routes" was not: measured inside the container, "what is the
+# escalation route" ranked Department at 32.0 and "what are the escalation routes" ranked
+# NOTHING, and tail M #54 ("Are emergency contacts, duty managers and escalation ROUTES
+# current, reachable and authorised for tonight?") was declined for the plural alone.
+# Automatic plural tolerance was measured on the 2,960-question catalogue and REJECTED — see
+# BUG-948's tracker row — because it is right for a specific phrase and wrong for a generic
+# one, and the module cannot tell them apart. Declaring the plurals this register wants is the
+# TTL-first fix (design contract #2) and cannot over-capture a term nobody named here.
+#
+# MAINTENANCE CREW 2026-09-30 (BUG-947 instance 7). "Do you have a maintenance crew?" was
+# declined although six departments are recorded, one of them labelled "Mechanical and
+# Electrical Maintenance" — an INSTANCE label, which lends no vocabulary. Whole phrases only:
+# the bare "team"/"teams" screening above still holds and is not reopened.
 ontosage:Department ontosage:layTerms "department", "departments",
     "who do i contact", "who is responsible", "responsible department",
-    "accountable owner", "escalation route", "helpdesk", "service desk",
-    "contact route", "response target", "out of hours", "duty officer",
+    "responsible departments", "accountable owner", "accountable owners",
+    "escalation route", "escalation routes", "helpdesk", "service desk",
+    "service desks", "contact route", "contact routes", "response target",
+    "response targets", "out of hours", "duty officer", "duty officers",
+    "maintenance team", "maintenance teams", "maintenance crew",
+    "maintenance crews", "maintenance department", "maintenance staff",
     "who should i report this to", "which team handles", "who is my contact" .
 
 
@@ -3250,8 +3340,26 @@ ontosage:openDefect a owl:DatatypeProperty ;
     rdfs:label "open defect"@en ;
     rdfs:comment "A defect recorded against this asset and not yet closed. Blank means none recorded, which is not the same as none present, and the register says so."@en .
 
+# BARE "detection" REMOVED 2026-09-30 (BUG-1291), and the six phrases that keep what it was
+# for ADDED. "Detection" belongs to gas sensors, motion sensors, leak sensors and audit
+# process language at least as often as it belongs to a fire precaution, and this register
+# holds 30 fire ASSETS with test dates — it cannot answer any of those. Measured live:
+# "Could the humidity detection be tied in with the water sensors ... water/leakage issues?"
+# was answered with six fire-alarm zones.
+# Measured over 2,960 catalogue + 7,151 real survey questions: 17 questions move off
+# FireSafetyAsset, 16 of them WRONG today — 6 identical "is the gas detection sensor in the
+# kitchen reading normal?", 3 motion-detection, 1 chemical-detection threshold, 1 humidity,
+# and 5 catalogue questions using "detection" as an incident-response process word
+# ("did detection, alerting, acknowledgement, escalation ... occur in the required sequence").
+# The ONE right answer bare "detection" was buying — "which areas related to fire safty or
+# smoke detection?" — is preserved by "smoke detection" below; that question was the reason
+# the phrases were added rather than the term simply dropped.
+# One move is from wrong to differently wrong and is recorded rather than hidden: "how leak
+# detection sensors could prevent damage and reduce waste" now selects WasteCollectionPoint.
 ontosage:FireSafetyAsset ontosage:layTerms "fire door", "fire doors", "fire alarm",
-    "smoke detector", "smoke detectors", "detection", "extinguisher", "extinguishers",
+    "smoke detector", "smoke detectors", "extinguisher", "extinguishers",
+    "fire detection", "smoke detection", "detection system", "detection systems",
+    "detection asset", "detection assets",
     "sprinkler", "sprinklers", "suppression", "compartmentation", "fire compartment",
     "fire stopping", "escape route", "escape routes", "means of escape", "fire precaution",
     "fire precautions", "emergency lighting", "fire safety asset" .

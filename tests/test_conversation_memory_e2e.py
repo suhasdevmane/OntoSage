@@ -94,18 +94,18 @@ async def test_carry_forward_injected_into_new_state():
 
 
 @pytest.mark.asyncio
-async def test_older_context_text_format():
-    """Older turn summaries are formatted as readable text."""
-    import importlib.util
-    import pathlib
+async def test_an_older_turn_is_recalled_by_subject_and_not_by_its_figure():
+    """W5-01. This test used to REQUIRE the opposite, and that was the defect.
 
-    spec = importlib.util.spec_from_file_location(
-        "turn_memory",
-        str(pathlib.Path("orchestrator/services/turn_memory.py").resolve()),
-    )
-    mod = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(mod)
-    TurnMemoryService = mod.TurnMemoryService
+    It asserted ``"22.3" in ctx`` for a row whose ``result_summary`` read
+    ``"Room 5.02: 22.3 deg C current reading"`` — so a measurement produced twenty turns
+    earlier was pinned as something that must be fed back into the prompt, with no time
+    basis and no statement that it was stale. A remembered number restated as current is a
+    fabrication (design contract #4). ``get_session_summary`` carries the SUBJECT of a past
+    turn and an outcome word, and nothing else from the answer; the full guarantee and its
+    bounds live in ``tests/test_a_remembered_turn_carries_no_figure.py``.
+    """
+    from orchestrator.services.turn_memory import TurnMemoryService
 
     mock_conn = AsyncMock()
     mock_conn.fetch = AsyncMock(
@@ -127,11 +127,15 @@ async def test_older_context_text_format():
     )
 
     svc = TurnMemoryService(pool=mock_pool)
-    ctx = await svc.get_older_context("conv-fc", skip_recent=20)
+    # skip_recent=0: the fixture holds ONE turn, and the skip is now applied in Python over
+    # the rows actually returned rather than as a SQL OFFSET the fake ignored. With the old
+    # 20 this asserted against a row a real Postgres would never have returned.
+    ctx = await svc.get_session_summary("conv-fc", skip_recent=0)
 
-    assert "Earlier conversation context" in ctx
-    assert "22.3" in ctx
+    assert "Earlier in this session" in ctx
     assert "sensor_data" in ctx
+    assert "room 5.02" in ctx
+    assert "22.3" not in ctx
 
 
 @pytest.mark.asyncio

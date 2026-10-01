@@ -110,9 +110,14 @@ class TestTheTargetsActuallyExist:
             "ontosage": "http://ontosage.org/capabilities#",
             "brick": "https://brickschema.org/schema/Brick#",
         }
+        checked = 0
         for target in set(RETYPE.values()):
             pfx, local = target.split(":", 1)
             if pfx != "ontosage":
                 continue  # brick targets are verified against the live graph
+            checked += 1
             uri = URIRef(NS[pfx] + local)
             assert (uri, RDF.type, OWL.Class) in onto, f"{target} is not declared"
+        # A RETYPE table that stopped naming any ontosage target would skip every
+        # assertion above and still report that every replacement is declared.
+        assert checked, "no ontosage target in RETYPE — this test verified nothing"

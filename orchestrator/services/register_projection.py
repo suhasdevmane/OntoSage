@@ -2266,6 +2266,63 @@ _CROSS_SOURCE_RE = re.compile(
 )
 
 
+def _what_it_records(rows: List[Dict], res: "Resolution") -> Tuple[List[str], int]:
+    """The register's content columns in plain words, and how many the sentence leaves out.
+
+    THE DEFECT THIS EXISTS FOR, measured 2026-09-30 over all 38 registers that lift.
+    ``out_of_scope_decline`` tells a reader what a register records, and the list it printed
+    was filtered by ``names_what_a_record_is`` -- which answers a different question ("do this
+    column's VALUES name the record?", used to pick an identifier). Measured share of content
+    columns the sentence actually named: **median 29%, and 21 of 38 registers a third or
+    less** -- ``access_permission`` 1 of 8, ``event_activity`` 1 of 8, ``room_bookings`` 1 of
+    5, ``accessible_route`` 3 of 14. Live, occupant, 2026-09-30:
+
+        "Which boundary-to-door route is currently evidenced for ambulance crews ...
+         including step-free constraints?"
+        -> "The accessible route register (16 records) cannot answer this: it records route
+            distance metres, route from and route to, and nothing about ambulance,
+            boundary-to-door, constraints and crews."
+
+    The register holds ``isStepFree``, ``status``, ``surveyedOn``, ``doorOperation`` and ten
+    more, and ``isStepFree`` is the column the question NAMED -- so the sentence omitted the
+    one field that made the refusal wrong and stated a 3-of-14 subset as though it were the
+    register. A reader cannot tell that apart from a thin register (design contract 4).
+
+    So: every content column is named, the ones the QUESTION reaches lead (a decline is
+    entitled to be read against what the asker asked for), then the naming columns, then the
+    rest; the list is still capped at eight, and what the cap drops is DISCLOSED as a count
+    rather than silently omitted. Over-claiming is impossible by construction -- every column
+    named is a column the rows carry.
+
+    "The question reaches it" is the complement of ``res.unanswered`` and is decided by the
+    same matcher that decided that (``rf._term_matches_column``), so the two halves of the
+    sentence cannot disagree. Measured on the asset-engineering example above: the question
+    names criticality, the register HAS ``criticality`` -- which is why "criticality" is
+    absent from the "nothing about" list -- and the old sentence still did not name it.
+
+    Does NOT change whether the decline fires: ``speaks`` is decided before this runs.
+    """
+    vocab = get_vocabulary()
+    content = rf._content_columns(rows, _all_columns(rows))
+    core = ((res.prep.core if res.prep else "") or "").lower()
+    asked = [w for w in rf._WORD_RE.findall(core) if len(w) >= 4]
+    reached = [
+        c
+        for c in content
+        if c in (res.fields or {}) or any(rf._term_matches_column(w, c) for w in asked)
+    ]
+    naming = [
+        c
+        for c in content
+        if c not in reached
+        and (not c.startswith(("record", "label")) and vocab.names_what_a_record_is(c))
+    ]
+    rest = [c for c in content if c not in reached and c not in naming]
+    ordered = list(dict.fromkeys(reached + naming + rest))
+    labels = list(dict.fromkeys(_label(c) for c in ordered)) or [_label(c) for c in content]
+    return labels[:8], max(0, len(labels) - 8)
+
+
 def out_of_scope_decline(
     rows: List[Dict],
     question: str,
@@ -2309,19 +2366,12 @@ def out_of_scope_decline(
         )
         if not speaks:
             return ""
-        vocab = get_vocabulary()
-        content = rf._content_columns(rows, _all_columns(rows))
-        held = [
-            _label(c)
-            for c in content
-            if not c.startswith(("record", "label"))
-            and vocab.names_what_a_record_is(c)
-            or c in ("label",)
-        ]
-        held = list(dict.fromkeys(held))[:8] or [_label(c) for c in content[:8]]
+        held, unnamed = _what_it_records(rows, res)
+        more = f", plus {unnamed} more field{'s' if unnamed != 1 else ''}" if unnamed else ""
         return (
             f"{_register_phrase(register_label).capitalize()} ({len(rows)} records) cannot "
-            f"answer this: it records {_join(held)}, and nothing about {_join(beyond[:4])}."
+            f"answer this: it records {_join(held)}{more}, and nothing about "
+            f"{_join(beyond[:4])}."
         )
     except Exception as exc:  # pragma: no cover - the narration still answers
         logger.warning(f"[register_projection] decline skipped: {type(exc).__name__}: {exc}")

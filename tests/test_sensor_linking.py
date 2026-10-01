@@ -93,9 +93,18 @@ def test_the_class_map_is_read_from_the_modality_config(linker):
     cfg = yaml.safe_load(
         (REPO / "config" / "saturation_modalities.yaml").read_text(encoding="utf-8")
     )["modalities"]
+    assert cfg, "saturation_modalities.yaml declares no modalities"
+    mapped = 0
     for modality, spec in cfg.items():
         for cls in spec.get("brick_classes") or []:
-            assert m.get(str(cls).split(":")[-1]) is not None
+            mapped += 1
+            assert m.get(str(cls).split(":")[-1]) is not None, (modality, cls)
+    # `spec.get("brick_classes") or []` can empty the inner loop for every modality at once,
+    # and "a building that adds a modality gets linking for free" would then be asserted about
+    # no class (CAVEAT-1115).
+    assert mapped >= len(
+        cfg
+    ), f"only {mapped} brick classes across {len(cfg)} modalities reached the class map"
 
 
 def _building_dir_any_state() -> Optional[Path]:

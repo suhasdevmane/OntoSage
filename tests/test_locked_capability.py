@@ -13,11 +13,22 @@ from types import SimpleNamespace
 import pytest
 
 from orchestrator.services.datasource_registry import DataSourceRegistry
+from orchestrator.workflow import _orchestrator as _wo
 from orchestrator.workflow._orchestrator import WorkflowOrchestrator
-from shared.config import settings
 from shared.models import ConversationState, Message
 
 pytestmark = pytest.mark.unit
+
+# Patch WHERE IT IS USED (lesson #159). `_orchestrator` captured `settings` at import time;
+# `tests/test_strict_secrets.py` reloads `shared.config` and rebinds that module attribute,
+# so a module-level `from shared.config import settings` here would be patching an object
+# `_check_locked_capability` no longer reads. `_wo.settings` is that object by construction.
+#
+# The flag also has TWO real values depending on an untracked file: `shared/config.py`
+# defaults DATASOURCE_TOGGLES_ENABLED to False (what CI and a fresh clone see) while a
+# developer's `.env` sets it true. Measured both ways: with the patch neutered, the `True`
+# tests fail on the default and the `False` test fails under `.env` — so in either state
+# some of these pass for the ambient value rather than the patched one.
 
 
 MANIFEST = textwrap.dedent(
@@ -80,28 +91,39 @@ def _fake_self(reg, mgr):
 
 
 def test_gate_fires_for_disabled_source(tmp_path, monkeypatch):
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
     fs = _fake_self(_reg(tmp_path), _Mgr(enabled=[]))
     src = WorkflowOrchestrator._check_locked_capability(fs, _state("where is a free desk?"))
     assert src == "occupancy"
 
 
 def test_gate_silent_when_source_enabled(tmp_path, monkeypatch):
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
     fs = _fake_self(_reg(tmp_path), _Mgr(enabled=["occupancy"]))
     src = WorkflowOrchestrator._check_locked_capability(fs, _state("where is a free desk?"))
     assert src is None
 
 
 def test_gate_silent_when_flag_off(tmp_path, monkeypatch):
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", False)
+    """The FLAG is what silences it — proved by flipping it, not by asserting None once.
+
+    `assert src is None` against a flag that is already False (the `shared/config.py`
+    default, which is what CI sees) passes without the gate ever being reached. The same
+    fixture is therefore run both ways here: the only difference between the two calls is
+    the flag, so a gate that stopped reading it cannot pass this.
+    """
     fs = _fake_self(_reg(tmp_path), _Mgr(enabled=[]))
-    src = WorkflowOrchestrator._check_locked_capability(fs, _state("where is a free desk?"))
-    assert src is None
+    st = _state("where is a free desk?")
+
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    assert WorkflowOrchestrator._check_locked_capability(fs, st) == "occupancy"
+
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", False)
+    assert WorkflowOrchestrator._check_locked_capability(fs, st) is None
 
 
 def test_gate_silent_without_keyword(tmp_path, monkeypatch):
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
     fs = _fake_self(_reg(tmp_path), _Mgr(enabled=[]))
     src = WorkflowOrchestrator._check_locked_capability(fs, _state("what is the room temperature?"))
     assert src is None
@@ -111,20 +133,20 @@ def test_gate_silent_for_non_data_intent(tmp_path, monkeypatch):
     # CAVEAT-017 fix: a disabled-source keyword inside an informational / how-to / report
     # question (non-data intent) must NOT be intercepted — it passes through to the graph /
     # documents / report_intake, not the "enable X" decline.
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
     fs = _fake_self(_reg(tmp_path), _Mgr(enabled=[]))
     st = _state("how do I report an occupancy complaint?", intent="capability")
     assert WorkflowOrchestrator._check_locked_capability(fs, st) is None
 
 
 def test_gate_silent_without_registry(monkeypatch):
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
     fs = _fake_self(None, None)
     assert WorkflowOrchestrator._check_locked_capability(fs, _state("free desk?")) is None
 
 
 def test_gate_picks_matching_disabled_source(tmp_path, monkeypatch):
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
     fs = _fake_self(_reg(tmp_path), _Mgr(enabled=[]))
     src = WorkflowOrchestrator._check_locked_capability(fs, _state("what are the peak hours?"))
     assert src == "energy"
@@ -132,7 +154,7 @@ def test_gate_picks_matching_disabled_source(tmp_path, monkeypatch):
 
 def test_gate_forbids_source_by_role(tmp_path, monkeypatch):
     # occupancy ENABLED, but the user's role is not allowed → forbidden decline
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
     from orchestrator.services import admin_config
 
     monkeypatch.setattr(admin_config, "read_role_access", lambda: {"readonly": []})
@@ -145,7 +167,7 @@ def test_gate_forbids_source_by_role(tmp_path, monkeypatch):
 
 
 def test_gate_allows_source_for_permitted_role(tmp_path, monkeypatch):
-    monkeypatch.setattr(settings, "DATASOURCE_TOGGLES_ENABLED", True)
+    monkeypatch.setattr(_wo.settings, "DATASOURCE_TOGGLES_ENABLED", True)
     from orchestrator.services import admin_config
 
     monkeypatch.setattr(admin_config, "read_role_access", lambda: {"readonly": ["occupancy"]})

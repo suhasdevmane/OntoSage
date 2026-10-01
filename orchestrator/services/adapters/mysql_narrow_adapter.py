@@ -143,6 +143,16 @@ class MySQLNarrowAdapter(MySQLAdapter):
                     pass
         return out
 
+    async def latest_by_uuid_exhaustive(self, uuids: List[str]) -> Dict[str, Optional[datetime]]:
+        """Same query: on a narrow table the exact answer is already the cheap one (W3-05).
+
+        MUST be overridden rather than inherited. The wide implementation builds one
+        ``MAX(CASE WHEN <column> ...)`` per uuid, and here the uuids are ROWS — it would also
+        find them in ``get_columns()``, which on this adapter returns the distinct uuids rather
+        than column names, and emit a query naming sensors as columns that do not exist.
+        """
+        return await self.latest_by_uuid(uuids)
+
     async def _timestamp_column(self) -> Optional[str]:
         """Always `datetime` — the narrow contract, not a discovered name.
 

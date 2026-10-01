@@ -103,17 +103,49 @@ _FALLBACK_RECORD_CLASSES = (
     "TimetabledSession",
 )
 
+#: The class-tree roots the REGISTER vocabulary is discovered beneath — the set that drives
+#: routing (`held_record_class`) and the by-name decline (`absent_record_class`).
+#:
+#: ``o:Amenity`` IS DELIBERATELY NOT HERE, AND THE REASON IS MEASURED, NOT ASSUMED (BUG-1333,
+#: 2026-10-01). Adding it looks right — 71 amenities are invisible to the false-absence guard
+#: without it — and over the 2,960-question stakeholder catalogue, with the live snapshot, it
+#: does this:
+#:
+#: * **251 questions newly declined BY NAME against a class the building holds nothing of** —
+#:   ``ABSENT:Service`` 222 and ``ABSENT:Facility`` 29. ``o:Service`` and ``o:Facility`` have 0
+#:   instances here, so they never enter the HELD set, but widening the roots also widens
+#:   ``_ALL_CLASS_TERMS``, and their class-name seeds are the bare words *service* and
+#:   *facility*. The fix for one false-absence family would have created a larger one.
+#: * **47 questions of unvetted register churn on the answering path** — 15 move
+#:   ``WorkspaceProfile`` (28 instances, 64 declared terms) to ``StudyArea`` (6 instances), and
+#:   32 newly select ``Lift`` (2 instances) where ``CirculationTime`` owns "lift wait".
+#: * the gain is only **20 questions**, and every one of them moves OFF the capability lane
+#:   that already answers it (``AMENITY:ToiletFacility -> ToiletFacility`` 11, and 9 more).
+#:
+#: So the guard gets its own graph-derived view of the amenity family instead
+#: (`held_amenity_classes`), and routing is left exactly as it was. ``o:Capability`` was never a
+#: candidate: it admits ``o:KnowledgeTopic`` (47 instances), ``o:InformationTopic`` (30),
+#: ``o:Procedure`` (9), ``o:MaintenanceIssue`` (6), ``o:Policy`` (3) and
+#: ``o:PotabilityStatement`` (1) — prose topics the capability lane answers from their own
+#: ``answerText``, not holdings a register question is read from.
+#:
+#: Re-measure with ``python scripts/register_reach.py --snapshot`` then ``--compare <before>``
+#: before changing this tuple; the snapshot query reads it, so the two cannot diverge.
+_RECORD_ROOTS: Tuple[str, ...] = ("Record", "IntervalRecord")
+
 #: Every class the ontology declares beneath a record root. A building that adds its own
 #: register subclasses one of these and is found with no code change.
 _DISCOVER_QUERY = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX o: <http://ontosage.org/capabilities#>
 SELECT DISTINCT ?cls WHERE {
-  VALUES ?root { o:Record o:IntervalRecord }
+  VALUES ?root { %s }
   ?cls rdfs:subClassOf+ ?root .
   FILTER(STRSTARTS(STR(?cls), "http://ontosage.org/capabilities#"))
 }
-"""
+""" % " ".join(
+    f"o:{root}" for root in _RECORD_ROOTS
+)
 
 
 async def _discover_record_classes() -> tuple:
@@ -186,6 +218,24 @@ class RecordClass:
     qualifiers: Tuple[str, ...] = ()
 
 
+def plural_of(word: str) -> str:
+    """English plural, enough for a class name or label.
+
+    The y->ies rule needs a CONSONANT before the y: "warranty" becomes "warranties" but "survey"
+    becomes "surveys", not "surveies" — which is what a naive rule produced, so "condition surveys"
+    (the form anyone would type) matched nothing.
+
+    MODULE-LEVEL AND PUBLIC SINCE 2026-10-01 because a second caller appeared. It was a closure
+    inside `_terms_for`, so `absence_wording` wrote its own ``+ "s"`` and produced *"24 toilet
+    facilitys"* in a sentence whose whole purpose is to correct the reader. One rule, one place.
+    """
+    if word.endswith("s"):
+        return word
+    if word.endswith("y") and len(word) > 1 and word[-2] not in "aeiou":
+        return word[:-1] + "ies"
+    return word + "s"
+
+
 def _terms_for(
     local_name: str, label: str, lay: str = "", include_head_words: bool = True
 ) -> Tuple[str, ...]:
@@ -210,18 +260,7 @@ def _terms_for(
     behaviour, and nothing uses it.
     """
 
-    def _plural(word: str) -> str:
-        """English plural, enough for a class name.
-
-        The y->ies rule needs a CONSONANT before the y: "warranty" becomes "warranties"
-        but "survey" becomes "surveys", not "surveies" — which is what a naive rule
-        produced, so "condition surveys" (the form anyone would type) matched nothing.
-        """
-        if word.endswith("s"):
-            return word
-        if word.endswith("y") and len(word) > 1 and word[-2] not in "aeiou":
-            return word[:-1] + "ies"
-        return word + "s"
+    _plural = plural_of
 
     words: set = set()
 
@@ -341,6 +380,102 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
     logger.info(
         "[record_registry] %s",
         ", ".join(f"{r.local_name}={r.instances}" for r in found) or "no record classes held",
+    )
+    return found
+
+
+#: The AMENITY classes this building holds instances of — the other half of "what the building
+#: holds", read from the same graph by the same query and kept OUT of `_RECORD_ROOTS`.
+#:
+#: BUG-1333: the false-absence guard consults `record_classes` only, so *"None of the recorded
+#: series refers to a toilet, restroom, or accessibility facility"* stood over a graph holding 24
+#: ``o:ToiletFacility``, 18 ``o:AccessibilityFeature`` and 16 ``o:DrinkingWater``. The guard RAN —
+#: ``describes_retrieval_wide()`` returns True on that text, measured — and `held_record_class`
+#: could not name a class, because a toilet is reachable only from ``o:Amenity``/``o:Capability``.
+#: ``o:AccessibleRoute`` IS an ``o:Record``, so a route question was protected and a toilet
+#: question was not.
+#:
+#: This is the SECOND SOURCE rather than a third root, because the measurement in `_RECORD_ROOTS`
+#: says a third root costs 251 new by-name declines and 47 register moves to gain 20 questions.
+#: The classes come back as ordinary `RecordClass` objects, so every scorer in this module works on
+#: them unchanged — no second matcher, which is the mistake BUG-947 recorded (a decline's pointer
+#: and a register's selector using different matchers, and the pointer being the better one).
+#:
+#: ``FILTER(?cls != o:Amenity)`` because GraphDB's RDFS ruleset materialises
+#: ``?c rdfs:subClassOf ?c``: without it the umbrella class itself is returned with 71 instances
+#: and the label "Amenity", and a note naming *amenity records* tells a reader nothing.
+_AMENITY_DISCOVER_QUERY = """
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX o: <http://ontosage.org/capabilities#>
+SELECT DISTINCT ?cls WHERE {
+  ?cls rdfs:subClassOf+ o:Amenity .
+  FILTER(?cls != o:Amenity)
+  FILTER(STRSTARTS(STR(?cls), "http://ontosage.org/capabilities#"))
+}
+"""
+
+#: The amenity cache is keyed apart from the record cache so neither can evict the other, and
+#: `clear_cache` empties both.
+_AMENITY_CACHE: Dict[str, Tuple[float, List["RecordClass"]]] = {}
+
+
+async def held_amenity_classes(namespace: str = "") -> List["RecordClass"]:
+    """The amenity classes this building holds instances of, cached briefly.
+
+    Same shape as `record_classes` and deliberately NOT merged into it: these classes drive the
+    honesty guards, never routing. An empty list is returned when the graph cannot be read, and an
+    empty list means "nothing known", never "nothing held" — a caller may withhold a correction on
+    it and must never assert an absence from it.
+    """
+    key = namespace or "_active"
+    hit = _AMENITY_CACHE.get(key)
+    if hit and (time.monotonic() - hit[0]) < _TTL_SECONDS:
+        return hit[1]
+
+    found: List[RecordClass] = []
+    try:
+        from orchestrator.services.ontology_manager import run_sparql_select
+
+        discovered = await run_sparql_select(_AMENITY_DISCOVER_QUERY, limit=200)
+        if not discovered.get("ok"):
+            raise RuntimeError(discovered.get("error") or "amenity class discovery failed")
+        names = sorted(
+            {
+                str(row.get("cls", "")).rsplit("#", 1)[-1]
+                for row in (discovered.get("rows") or [])
+                if row.get("cls")
+            }
+        )
+        if not names:
+            return hit[1] if hit else []
+        values = " ".join(f"o:{name}" for name in names)
+        result = await run_sparql_select(_QUERY % values, limit=len(names) + 1)
+        if not result.get("ok"):
+            raise RuntimeError(result.get("error") or "amenity count select failed")
+        for row in result.get("rows") or []:
+            cls = str(row.get("cls") or "")
+            try:
+                count = int(str(row.get("n") or "0"))
+            except ValueError:
+                count = 0
+            if not cls or count <= 0:
+                continue
+            local = cls.rsplit("#", 1)[-1]
+            label = str(row.get("label") or "") or local
+            found.append(
+                RecordClass(
+                    local, label, count, _terms_for(local, label, str(row.get("lays") or ""))
+                )
+            )
+    except Exception as exc:
+        logger.debug(f"[record_registry] could not read amenity classes: {describe_exception(exc)}")
+        return hit[1] if hit else []
+
+    _AMENITY_CACHE[key] = (time.monotonic(), found)
+    _warm_patterns(term for amenity in found for term in amenity.terms)
+    logger.info(
+        "[record_registry] amenities %s",
+        ", ".join(f"{r.local_name}={r.instances}" for r in found) or "none held",
     )
     return found
 
@@ -962,5 +1097,6 @@ def clear_cache() -> None:
     global _LAY_LOADED
     _ID_PREFIXES.clear()
     _CACHE.clear()
+    _AMENITY_CACHE.clear()
     _TERM_PATTERNS.clear()
     _LAY_LOADED = False

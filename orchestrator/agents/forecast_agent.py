@@ -32,11 +32,11 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
+from orchestrator.services.forecasting import scope as _scope
 from orchestrator.services.forecasting.horizon_parser import (
     ForecastHorizon,
     parse_horizon,
 )
-from orchestrator.services.forecasting import scope as _scope
 from orchestrator.services.forecasting.model_selector import ModelSelector
 from orchestrator.services.forecasting.preprocessor import (
     detect_seasonality,
@@ -127,7 +127,9 @@ class ForecastAgent:
         try:
             from orchestrator.services.forecasting.history import fetch_history
 
-            uuids = [u for u in {str(r.get("uuid") or r.get("sensor_uuid") or "") for r in records} if u]
+            uuids = [
+                u for u in {str(r.get("uuid") or r.get("sensor_uuid") or "") for r in records} if u
+            ]
             if not uuids and sensor_metadata:
                 uuids = [u for u in sensor_metadata if u]
             if uuids:
@@ -135,12 +137,16 @@ class ForecastAgent:
                     uuids,
                     horizon.freq,
                     horizon.n_steps,
-                    storage_map={u: (sensor_metadata or {}).get(u, {}).get("storage", "") for u in uuids},
+                    storage_map={
+                        u: (sensor_metadata or {}).get(u, {}).get("storage", "") for u in uuids
+                    },
                 )
                 if len(wider) > len(records):
                     logger.info(
                         "[forecast_agent] history widened: %d rows -> %d for the %s horizon",
-                        len(records), len(wider), horizon.label,
+                        len(records),
+                        len(wider),
+                        horizon.label,
                     )
                     records = wider
         except Exception as _hist_err:  # the original rows still answer, or still decline
@@ -277,14 +283,12 @@ class ForecastAgent:
         )
         result.skill_note = skill_note
 
-        result.formatted_response = self._format_response(result, unit, prep_info)
+        result.formatted_response = self._format_response(result, unit, prep_info, user_query)
         if aggregate_note:
             # W2-02: the denominator belongs IN the answer, not only in the log. Without
             # it a reader cannot tell a floor's average from one room's forecast, and the
             # two differ by forty-four rooms.
-            result.formatted_response = "\n\n".join(
-                [aggregate_note, result.formatted_response]
-            )
+            result.formatted_response = "\n\n".join([aggregate_note, result.formatted_response])
 
         logger.info(
             f"[forecast_agent] Done. Model={result.model_name} "
@@ -313,6 +317,29 @@ class ForecastAgent:
         }
 
     # ── Private helpers ───────────────────────────────────────────────────────
+
+    @staticmethod
+    def _occupied_hours() -> tuple:
+        """The building's declared occupied hours, or (None, None) when it declares none.
+
+        Read from `building.yaml` rather than assumed. "After hours" and "during opening
+        hours" have no fixed meaning without a schedule, and `detect_mask` declines the mask
+        instead of inventing 08:00-18:00 — a building literal wearing a clock face. This
+        building currently declares none, so those phrasings reduce over the whole horizon
+        and say so, which is the same reading the SQL lane gives them.
+        """
+        try:
+            from orchestrator.services.building_context import resolve_building_context
+
+            ctx = resolve_building_context(None)
+            start = getattr(ctx, "occupied_start_hour", None)
+            end = getattr(ctx, "occupied_end_hour", None)
+            return (
+                int(start) if start is not None else None,
+                int(end) if end is not None else None,
+            )
+        except Exception:  # pragma: no cover - no schedule is the documented default
+            return (None, None)
 
     def _extract_records(self, sql_data: Optional[Dict[str, Any]]) -> List[dict]:
         """Pull the flat record list out of the SQL agent result dict."""
@@ -511,6 +538,7 @@ class ForecastAgent:
         result: ForecastResult,
         unit: str,
         prep_info: dict,
+        user_query: str = "",
     ) -> str:
         """Render the forecast as markdown with confidence intervals table."""
         from orchestrator.services.requested_interval import local_stamp
@@ -518,10 +546,46 @@ class ForecastAgent:
         now_str = local_stamp()  # WB-06: shown to a person, so the building's clock
         m = result.metrics
 
+        # THE FIGURE THE QUESTION ASKED FOR, FIRST (BUG-874).
+        #
+        # "What is the expected MEAN humidity in room 2.01 TOMORROW AFTERNOON?" was answered
+        # with a 24-row hourly table and no mean. The fit, the sensor and the horizon were
+        # all right; the output shape is fixed and nothing reduced the series to the one
+        # number asked for. `reduce_to_requested_figure` returns None when the question asks
+        # for the series rather than a figure, which is the ordinary case, so the table
+        # remains the whole answer for "forecast the temperature tomorrow".
+        headline = ""
+        try:
+            from orchestrator.services.forecasting.window_aggregate import (
+                reduce_to_requested_figure,
+            )
+            from orchestrator.services.requested_interval import building_tz
+
+            headline = (
+                reduce_to_requested_figure(
+                    user_query,
+                    result.future_index,
+                    result.forecast,
+                    result.lower_95,
+                    result.upper_95,
+                    unit=unit,
+                    horizon_label=result.horizon.label,
+                    tz_name=building_tz(),
+                    occupied_hours=self._occupied_hours(),
+                )
+                or ""
+            )
+        except Exception as exc:  # a headline must never cost a forecast
+            logger.debug(f"[forecast_agent] requested-figure reduction skipped: {exc}")
+
         # ── Header ────────────────────────────────────────────────────────────
         lines = [
             f"## Forecast: {result.sensor_label}",
             f"",
+        ]
+        if headline:
+            lines += [headline, ""]
+        lines += [
             f"**Horizon:** {result.horizon.label}  |  "
             f"**As of:** {now_str}  |  "
             f"**History used:** {result.n_history_points} data points",

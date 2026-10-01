@@ -299,8 +299,34 @@ def absence_sentence(subject: str, building: str = "this building") -> str:
     ``building`` is accepted so callers need not know that this wording does not spell it out.
     """
     if not subject:
-        name = (building or "this building").strip()
-        return f"I found nothing in {name}'s records that answers that."
+        # NOT "I found nothing in <building>'s records that answers that" (BUG-1271). That
+        # sentence is a claim about the WORLD, and this branch is reached precisely when the
+        # system could not work out what the question is ABOUT -- `_SUBJECT_PATTERNS` are all
+        # existence-shaped ("is there a", "how many", "where is"), so any VALUE question
+        # ("What is the average sound level?") returns "" here.
+        #
+        # MEASURED 2026-09-30, tail N, one run, the same reader, minutes apart:
+        #   #16 "What is the average sound level?"   -> "I found nothing in Abacws Building's
+        #                                                records that answers that."
+        #   #28 "does the building sound feel good"  -> "Across the building sound is averaging
+        #                                                56.2", six floors, 233 sensors
+        # The graph holds 235 sound/noise sensors with a timeseries reference. The first answer
+        # was false, and false in the one direction design contract #4 exists to prevent.
+        #
+        # "I could not tell what you are asking about" and "we hold nothing on that" are
+        # different facts -- the four-kinds-of-nothing distinction. Only the second may be
+        # worded as a statement about the records, and this branch cannot know it.
+        # THE OPENING IS REUSED VERBATIM FROM `too_broad_reply`, DELIBERATELY. Four independent
+        # consumers classify a decline by its first sentence -- `regression_answerability`'s
+        # `_DECLINE_MARKERS`, `publication_gate.is_decline`, `audit_decline_markers.py` and the
+        # grader -- and a NEW phrasing would be read as an ANSWER by all of them (lessons #141,
+        # where one question produced three honest decline wordings in a day and moved the
+        # measured decline rate without the system changing). "i couldn't tie that question to
+        # a reading" is already in that list, already tested, and already honest here.
+        return (
+            "I couldn't tie that question to a reading I can give you, so I have no figure for "
+            "it. Name the room, floor or quantity you mean and I will look again."
+        )
     return f"'{subject}' does not exist in this building, so there is nothing to report about it."
 
 
@@ -431,7 +457,11 @@ def _without_wide_narration(text: str) -> str:
 
 
 def false_absence_note(
-    text: str, question: str, records: Sequence[Any], building: str = "this building"
+    text: str,
+    question: str,
+    records: Sequence[Any],
+    building: str = "this building",
+    amenities: Sequence[Any] = (),
 ) -> Optional[str]:
     """A note that names the register the building HOLDS, in place of an absence about it.
 
@@ -451,9 +481,25 @@ def false_absence_note(
 
     Returns None otherwise, so a TRUE decline ("The dataset only lists sensors and their details"
     for a question about the building's age, where no register matches) is left exactly as it was.
+
+    ``amenities`` IS THE OTHER HALF OF "WHAT THE BUILDING HOLDS" AND IT WAS MISSING (BUG-1333).
+    *"None of the recorded series refers to a toilet, restroom, or accessibility facility"* passed
+    the two gates above — measured, ``describes_retrieval_wide`` returns True on that verbatim text
+    — reached `held_record_class`, and got None, because ``o:ToiletFacility`` hangs off
+    ``o:Amenity``/``o:Capability`` while ``o:AccessibleRoute`` hangs off ``o:Record``. So a route
+    question was protected and a toilet question was not, over a graph holding 24 toilets, 18
+    accessibility features and 16 drinking-water points. The amenity classes arrive as ordinary
+    ``RecordClass`` objects from `record_registry.held_amenity_classes`, so they are scored by the
+    SAME matcher — deliberately, because two matchers for one decision is BUG-947's shape. Records
+    are searched FIRST and win a tie: a register is a thing with fields a follow-up can ask about,
+    an amenity is a place, and when both match the reader is better served by the register.
     """
     body = text or ""
-    if not records or not describes_retrieval_wide(body):
+    # ``records`` may legitimately be None (the registry could not be read), and that must stay a
+    # no-op rather than a TypeError: a wording pass may never cost the reader the original answer.
+    held_records = list(records or ())
+    holdings = held_records + [a for a in (amenities or ()) if a not in held_records]
+    if not holdings or not describes_retrieval_wide(body):
         return None
     remaining = _without_wide_narration(body)
     if len(remaining.split()) >= _MIN_REMAINING_WORDS and not says_only_that_there_is_none(
@@ -463,7 +509,7 @@ def false_absence_note(
     try:
         from orchestrator.services.record_registry import held_record_class
 
-        held = held_record_class(question or "", list(records))
+        held = held_record_class(question or "", holdings)
     except Exception:  # a registry hiccup must never cost the reader the original answer
         return None
     name = (building or "this building").strip()
@@ -475,11 +521,29 @@ def false_absence_note(
         # it; widening the registry's vocabulary is the fix for a missed match, not this function.
         return None
     label = str(held.label).strip().lower()
+    if held in held_records:
+        return (
+            f"**{name} keeps {label} records, and that is where this would be answered.** I could "
+            f"not read the answer from them just now, so I would rather not say the building holds "
+            f"nothing. Ask for the {label} records — naming a room, floor or date if you have one "
+            "— and I will read them."
+        )
+    # An AMENITY is a place, not a register, so the sentence says so. Wording it "keeps <x>
+    # records" would tell an occupant to ask for paperwork about a toilet. The COUNT is stated
+    # because it is the whole point — the answer being corrected said there were none — and it is
+    # read from the graph on this turn, never stored here.
+    #
+    # The plural comes from `record_registry.plural_of`, which is what builds the class's own
+    # matching terms. A local ``+ "s"`` produced "24 toilet facilitys" in a sentence whose only
+    # job is to correct the reader — and it was the SECOND copy of a rule the registry already had.
+    from orchestrator.services.record_registry import plural_of
+
+    count = int(getattr(held, "instances", 0) or 0)
+    noun = label if count == 1 else plural_of(label)
     return (
-        f"**{name} keeps {label} records, and that is where this would be answered.** I could "
-        f"not read the answer from them just now, so I would rather not say the building holds "
-        f"nothing. Ask for the {label} records — naming a room, floor or date if you have one — "
-        "and I will read them."
+        f"**{name} does record {count} {noun}, so I should not have implied it holds none.** "
+        f"I could not read the details out just now. Ask where the {plural_of(label)} are — "
+        "naming a floor if you have one — and I will read them from the building's own record."
     )
 
 

@@ -42,6 +42,19 @@ _ACTION_FRAME = (
     r"|\bhow\s+(?:do|should|can)\s+(?:i|we)\s+(?:get\s+out|evacuate|escape|leave|exit|raise)\b"
     r"|\bwhat\s+(?:are|is)\s+the\s+(?:steps|actions)\b"
     r"|\bwhat\s+to\s+do\b"
+    # SAFETY, tail N #5 (2026-09-30, BUG-1241). "if the main exit is blocked by smoke, what is
+    # the alternative route" asks where to GO, and none of the frames above sees it: it has no
+    # "I/we", and "route" was not one of the procedure nouns. It is the second gate behind the
+    # report-intake one — fixing only that gate left the question with no lane that answers it
+    # (lesson #154). Narrow twice over: an ESCAPE qualifier must sit on the noun, and
+    # `EMERGENCY_ACTION_RE` still requires an emergency within 60 characters, so "what is the
+    # nearest exit?" and "what is the quickest route to 5.01?" are untouched.
+    r"|\bwhat(?:'s| is| are)\s+the\s+(?:\w+\s+){0,2}"
+    r"(?:alternative|alternate|other|second|secondary|backup|back-?up|emergency|escape|"
+    r"evacuation|assembly)\s+"
+    r"(?:routes?|exits?|ways?\s+out|ways?|paths?|stairs?|stairwells?|points?)\b"
+    r"|\bwhich\s+(?:way|route|exit|stairs?|stairwell)\s+(?:do|should|must|can)\s+"
+    r"(?:i|we|people|staff|everyone|occupants)\b"
 )
 
 #: The dangerous thing. A lift someone is stuck in belongs here; a lift that is merely out of
@@ -56,9 +69,40 @@ _EMERGENCY = (
     r"|\bcarbon\s+monoxide\s+alarm\b|\bsevere\s+weather\b"
 )
 
+# THE GAP MAY CROSS A FULL STOP, BUT NOT A `?` OR `!` (BUG-1393, 2026-10-01).
+#
+# It was `[^?.!]`, so the emergency and the action frame had to sit in ONE SENTENCE — and the
+# most natural way a person reports an emergency and asks what to do is TWO. A single
+# punctuation mark decided whether the building gave up its evacuation procedure:
+#
+#     "The fire alarm is sounding, what should I do?"   comma      -> matched, answered
+#     "The fire alarm is sounding. What should I do?"   full stop  -> NO MATCH
+#
+# The second was answered, live, by the fire-safety ASSET register: a decline about the control
+# panel's overdue weekly test, followed by the model's own invented advice ("follow the
+# building's standard fire-alarm procedures (e.g., evacuate, contact the fire department") —
+# the exact answer this module's docstring was written to prevent, on the question class where
+# being wrong costs most.
+#
+# TWO GATES FAILED TOGETHER ON ONE PREDICATE, which is why neither showed up alone:
+# `dialogue_agent`'s metadata short-circuit already defers to `is_emergency_action_question`
+# ("this return would skip the rule that says so"), and so does the routing rule
+# `emergency_action_is_a_procedure`. Both read this regex. BUG-1241's shape exactly.
+#
+# `?` and `!` stay barriers, and they are what keeps this narrow: a `?` ends a question, so two
+# questions are two topics — "Where are the fire extinguishers? What should I do about my
+# booking?" still does not match. A `.` commonly just separates a statement from the question
+# that follows it in the same breath.
+#
+# MEASURED over the full 4,060-question bank before landing: **1 question gains (the one above),
+# 0 lost.** On hand phrasings — which is where this shape actually lives, the bank holding only
+# two emergency-action questions at all — three move from declined to answered: the sounding
+# alarm, "There is smoke in the corridor. What should I do?" and "Someone has collapsed. Who do
+# I call?" Zero false positives across six controls, including "There was a fire drill last
+# week. What should I do about the broken projector?" (held by `_ABOUT_THE_EQUIPMENT_RE`).
 EMERGENCY_ACTION_RE = re.compile(
-    rf"(?:{_ACTION_FRAME})[^?.!]{{0,60}}(?:{_EMERGENCY})"
-    rf"|(?:{_EMERGENCY})[^?.!]{{0,60}}(?:{_ACTION_FRAME})",
+    rf"(?:{_ACTION_FRAME})[^?!]{{0,60}}(?:{_EMERGENCY})"
+    rf"|(?:{_EMERGENCY})[^?!]{{0,60}}(?:{_ACTION_FRAME})",
     re.IGNORECASE,
 )
 

@@ -1,0 +1,196 @@
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+@prefix hbco:     <http://ontosage.org/hbco#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Design occupancy — ONE ROOM, ONE RECORD (BUG-896, 2026-09-30)
+#
+# Every figure is on `hbco:roomCapacity`, the property the SHARED schema declares
+# (ontology/ontosage_schema.ttl). The building used to also declare its own
+# `<building>:maxOccupancy`, which meant the next building would need a different
+# predicate and the system would have to guess which — design contract #3. That
+# property and its triples are removed; `rec:maxOccupancy` in the Brick SHACL
+# shapes is untouched.
+#
+# Every figure also carries `ontosage:capacityBasis`, which had ZERO triples in
+# the live graph before today. The schema says why it matters: "A capacity with
+# no basis cannot be told apart from a certified fire capacity, and an estimate
+# quoted as a limit is a safety claim nobody made."
+#
+# NONE of these is certified. The enrichment file this was built from states
+# "Values are approximate; authoritative data should be obtained from Estates".
+# Where the two old declarations disagreed, the LOWER is recorded — exceeding a
+# recorded limit is the dangerous direction — and the superseded figure is kept
+# in the basis so nothing is lost and the reconciliation stays auditable.
+# ─────────────────────────────────────────────────────────────────────────────
+
+bldg:Room1.25
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room1.26
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room2.13
+    hbco:roomCapacity     12 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room2.14
+    hbco:roomCapacity     12 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room2.15
+    hbco:roomCapacity     40 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.13
+    hbco:roomCapacity     12 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.14
+    hbco:roomCapacity     12 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.15
+    hbco:roomCapacity     8 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.16
+    hbco:roomCapacity     8 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.26
+    hbco:roomCapacity     8 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.27
+    hbco:roomCapacity     8 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room4.11
+    hbco:roomCapacity     12 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room4.12
+    hbco:roomCapacity     12 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room4.13
+    hbco:roomCapacity     40 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.15
+    hbco:roomCapacity     40 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.16
+    hbco:roomCapacity     40 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.17
+    hbco:roomCapacity     12 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.18
+    hbco:roomCapacity     12 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room1.04
+    hbco:roomCapacity     25 ;
+    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (25 under hbco:roomCapacity, 50 under the building's own maxOccupancy). The lower is recorded because exceeding a recorded limit is the dangerous direction; the superseded figure was 50. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room2.66
+    hbco:roomCapacity     15 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.17
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room4.70
+    hbco:roomCapacity     15 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.26
+    hbco:roomCapacity     15 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room1.06
+    hbco:roomCapacity     30 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room1.07
+    hbco:roomCapacity     30 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room2.01
+    hbco:roomCapacity     25 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.01
+    hbco:roomCapacity     25 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room4.01
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (20 under hbco:roomCapacity, 25 under the building's own maxOccupancy). The lower is recorded because exceeding a recorded limit is the dangerous direction; the superseded figure was 25. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.01
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (20 under hbco:roomCapacity, 25 under the building's own maxOccupancy). The lower is recorded because exceeding a recorded limit is the dangerous direction; the superseded figure was 25. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.02
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.03
+    hbco:roomCapacity     30 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.04
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.05
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.06
+    hbco:roomCapacity     8 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.07
+    hbco:roomCapacity     8 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.08
+    hbco:roomCapacity     50 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.09
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room5.10
+    hbco:roomCapacity     20 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room4.05
+    hbco:roomCapacity     30 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room3.05
+    hbco:roomCapacity     30 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room2.05
+    hbco:roomCapacity     30 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+
+bldg:Room0.01
+    hbco:roomCapacity     50 ;
+    ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
+

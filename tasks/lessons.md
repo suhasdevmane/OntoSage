@@ -2274,3 +2274,1375 @@ classified exactly as before. The broad pattern moved two of them (57/14 → 55/
 number was the whole signal. **A classifier change silently rewrites the baseline the gate
 compares against**, because the expected kind is DERIVED from the stored answer by that same
 classifier — so "did anything move?" is the only question worth asking, and it is now a test.
+
+## #142 — A generated top-up on top of a LIVE source is a fabrication wearing the data's clothes (2026-09-29)
+
+Tracker row W3-01 said outdoor-weather questions decline and was blocked waiting for the owner to
+say whether a real weather API exists. All three halves of that were wrong. `input/feeds.yaml`
+already declared three Open-Meteo `rest_poll` feeds; the feeds polled; the rows landed; the points
+were registered in GraphDB with their Brick classes; `services/outdoor_readings.py` already bound
+them by class; and the question answered rather than declining. That is the fourth and fifth time a
+row asked for something already built (#133, #136) — but the new part is what was actually broken.
+
+`data-publisher` reads the wide table's columns from `information_schema` and invents a value for
+**every** one of them. Three of those columns belong to a live feed. So every 30 seconds it wrote
+over a real measurement:
+
+```
+15:26:15 UTC   21.90 degC / 71.00 % / 19.40 km/h   <- the feed; Open-Meteo said 22.0 / 70 / 19.4
+15:26:41 UTC   24.06      / 56.80   /  7.08        <- the publisher
+15:27:11 UTC   24.15      / 56.92   /  7.02        <- the publisher
+```
+
+Ten samples in eleven were fabricated. A "right now" question read whichever landed last, so it
+almost always read a number nobody measured — and "23.8 °C in Cardiff this afternoon" is exactly
+plausible enough that no guard objected.
+
+**Generating a value for a sensor with no live source is this service's job (BUG-144). Generating
+one on top of a source that IS live is not a top-up, it is a fabrication.** The difference is
+invisible from inside the publisher, because a column is a column; it is only visible where the two
+facts meet — `feeds.yaml` says what is live, `information_schema` says what exists, and nothing was
+comparing them.
+
+Three things this changes about how to look:
+
+* **"The rows are landing" is not "the answer is from the feed."** `write_records` logged success
+  every five minutes throughout. The write path was never the problem; the *other* writer was. When
+  a store has more than one writer, check the cadence of the values, not the presence of them —
+  a 30-second series where a 300-second one is expected is the whole tell.
+* **A plausible generator hides longer than a crude one.** These three UUIDs were named in the
+  publisher's own `sensor_uuids.json`, so `get_realistic_value` produced weather-shaped weather. Had
+  it fallen through to the type-based fallback and written `1`, CAVEAT-410 would have caught it
+  years earlier.
+* **Check a live reading against the world, not against itself.** Every internal check passed. What
+  found this was one `curl` to `api.open-meteo.com` and one `SELECT ... ORDER BY Datetime DESC LIMIT
+  5` side by side. For any value that claims an external source, the source is the oracle.
+
+The fix derives the protected set from the building's own `feeds.yaml` using the same UUID
+derivation as `FeedRegistry`, and a test asserts the two derivations are equal — because if they
+ever drift, the exclusion set matches no column, nothing is protected, and **nothing fails**. It
+also reports the count it actually removed and warns on zero, since a wrong `BUILDING_ID` derives
+well-formed UUIDs that match nothing and would otherwise read as success (#126).
+
+
+## #143 — A denylist scope can turn a whole register off, and the fallback then denies it exists (2026-09-29)
+
+Two phrasings of one question, routed **identically** (`intent=metadata -> metadata node=sparql
+overrides=[]`), disagreed about whether the building records calibration at all:
+
+    "How many sensors are overdue for calibration?"
+        -> 268 overdue, of the 1,929 sensors that have a calibration regime recorded.
+    "How many sensors are overdue for calibration, and what does that mean for the answers
+     you give me?"
+        -> "it does not contain any field that records whether a sensor is overdue for
+            calibration, nor does it record a calibration schedule or status."
+
+The tracker row called this "two calibration registers". There was one: three predicates,
+1,929 subjects each, one generated file. **The disagreement was two LANES, and the losing one was
+reached by accident.**
+
+`_measurand_tokens` scopes a query by taking every word in the question that is *not* in a
+hand-written stopword set. "mean", "answers", "you" and "give" are not in it, so the lane filtered
+sensor names by those four words, got zero rows, returned `None`, and handed the question to a
+generated query that cannot see the properties — which then denied they exist.
+
+* **A denylist over English cannot be finished.** The stopword set already had ~90 entries and
+  four ordinary words got through. The next phrasing finds the next gap, and the failure is silent
+  every time: an over-narrow scope and an empty register are the same empty result set.
+* **"I scoped it wrongly" must not fall back to a lane that can answer "it doesn't exist."**
+  This is #135 one level down. The guard detected correctly (no rows) and acted too widely
+  (abandon the question) — and the fallback's confident denial is worse than the decline it
+  replaced, because nothing signals it is wrong.
+* **Let the data decide what scopes.** The fix asks the active building's own register which of
+  the candidate tokens name something it holds, in one query, and drops the rest. Building-agnostic,
+  no word list, and a token list that matches nothing means *unscoped* — answer building-wide from
+  the same register — never *abandon*.
+* **Pin it with a test that restores the defect.** `test_the_defect_returns_the_moment_the_check_is_removed`
+  puts the denylist back in charge and asserts the lane goes dark again. Without it, a later session
+  could delete the scope check as "an extra round trip" and every acceptance test would still pass.
+
+The reproduction came first and was worth the twenty minutes: the tracker's own Evidence column
+named the wrong pair of pack answers (#40/#49 — both correct), and building from it would have
+produced a fix for a defect that does not exist. **Ask the running system which two answers
+actually disagree before believing the row that says they do.**
+
+---
+
+## #144 — The term already existed TWICE, and the two disagreed (2026-09-29)
+
+W3-04 asked for `ontosage:designOccupancy` on spaces. Lesson #127 says to look before inventing a
+term. Looking found two:
+
+    <building>:maxOccupancy   29 spaces
+    hbco:roomCapacity         19 spaces
+
+That alone is #127 again. The part worth a new number is what the overlap showed. Six spaces carry
+both, and **three of the six disagree** — Room 1.04 at 50 and 25, Room 4.01 at 25 and 20, Room 5.01
+at 25 and 20 — while `ontosage:capacityBasis`, the property that would say where a figure came
+from, has **zero triples** in the live graph.
+
+* **A resolver that picks one is deciding by accident.** Which number answers a fire-safety or a
+  booking question would have been settled by the order the query returned rows in. So the module
+  keeps every declaration and says "the building states 50 under maxOccupancy, 25 under
+  roomCapacity; nothing says which is authoritative, so I will not pick one." That is a true and
+  actionable answer. "The design occupancy is 50" is a coin toss wearing a fact's clothes.
+* **Grepping for the TERM would have missed the conflict.** `maxOccupancy` appears in one TTL and
+  the disagreement is only visible by JOINING the two properties in the live graph. Grep found the
+  term; only the running system found that it had a rival.
+* **Discover the predicate, do not name it.** Matching any property whose local name normalises to
+  a design-occupancy word, on a subject the ontology types as a location, with a numeric value,
+  found exactly the two — and correctly excluded `capacityLitres` on 24 bins, `alternativeCapacity`
+  on 8 continuity plans and `rec:capacity`'s "about 500 people" on the building. A substring match
+  on "capacity" would have reported a 1,100-litre bin as a room for 1,100 people.
+
+The same session's W3-05 is the mirror image: the pieces to compute a sensor's last-seen time all
+existed (a narrow-adapter `latest_by_uuid`, an admin endpoint, a freshness count) and **no lane
+joined them**, so the live answer to "which sensors stopped reporting" was "none of them appear to
+have stopped reporting" — a confident all-clear over a sensor twelve days dead. **A window of
+readings cannot evidence silence.** A sensor that stopped is absent from the window by definition,
+so any lane reasoning from readings can only ever conclude that everything is fine. Route the
+question to something that asks the store, or do not answer it.
+
+## #145 — A hand-run query that differs from the one the code sends verifies the intent, not the code (2026-09-29)
+
+CAVEAT-892 was logged FIXED, same day, with this verification in the tracker:
+
+> The class-preferred SPARQL run by hand against the live graph returns exactly
+> `bldg:feed_outside_weather_temp` — the Open-Meteo point — where the label path returned
+> `GreenRoof_Ambient_Temp_Sensor`.
+
+Every word of that is true, and the fix did not work. The live re-ask afterwards still bound the
+green-roof sensor. **The query I ran by hand carried one class. The query the code sent carried
+eight**, because `class_hints` is every Brick class of every resolved concept flattened together,
+so it held the specific class *and its parents*. `Outside_Air_Temperature_Sensor` has one
+instance; `Air_Temperature_Sensor` has the roof sensor too. I had typed the query I meant and
+checked that my reasoning was sound, which it was — about a query that never ran.
+
+* **Reconstruct the query from the code, or log the query the code sends.** Not from the design.
+  The two diverged at the one place a summary would never look: a list comprehension upstream.
+* **The log told me and I could not read it.** It printed `_hint_classes[:2]` while the query used
+  `[:8]`, so the two broad classes that caused the bug were never on screen. *A truncated log of
+  the input to a decision is a log of a different decision.* If a value is what the code acted on,
+  print what it acted on or say how much you cut.
+* **The fix made it worse before it made it better**, which is the part worth remembering. Adding
+  the broad classes to a `VALUES` widened the candidate set, and the token filter — which required
+  the word "outdoor" — then *excluded the correctly typed point*, whose label says "outside", and
+  *kept* the mistyped one, whose label says "outdoor reference". Two mechanisms, each defensible,
+  composing into a worse answer than either alone.
+* A resolved class that is narrow enough to be the answer should not also have to pass a word
+  match. **The extracted tokens restate the class** ("Outdoor_Temperature_Sensor"), so they add no
+  information and can only lose points to a vocabulary difference.
+
+## #146 — Lifting a gate proves nothing until you have shown it was the gate that was shut (2026-09-29)
+
+BUG-879's log line names its own cause, which is why it was believed:
+
+    [aggregate] not claimed: measurand=co2 place=True per_sensor=False readings=True
+
+`place=True` looks like the reason, so the veto on named places was lifted — carefully, behind a
+keyword-only caller flag, with a regrouping so the label follows the scope, and thirteen tests.
+Measured afterwards: `summary_ok=True` and the lane **still** declined, for both window sizes.
+
+The flag fed `summary_ok`, and `summary_ok` reaches exactly one of `wants_lane`'s six cases — the
+one that fires when the question parses to *no statistic in particular*. "Compare the **average**
+CO2 in room 5.01 this week against last week" parses cleanly to `stat=mean, group=building`, so it
+skipped that case, matched none of the other five, and was declined by a branch the flag never
+touched. **The log line printed a true fact that was not the cause.** It prints
+`names_a_place(question)` unconditionally, so it could not have revealed whether the flag was
+honoured even in principle.
+
+* **Falsify the gate before moving it:** call the decision function directly with the flag set and
+  check the return. Four lines. It would have cost less than the thirteen tests written for a fix
+  that did nothing.
+* A diagnostic that reports *inputs* cannot distinguish the condition that fired from a condition
+  that merely held. Log the branch taken, not the values available to it.
+* The test that now matters most in that file asserts **the premise**: that the question parses,
+  so `wants_lane`'s summary case is unreachable for it. If that ever stops being true, the second
+  half of the fix is dead code and the test says so.
+
+## #147 — A memory feature can be inert at BOTH ends, and each end reports the other as healthy (2026-09-29)
+
+W5-01 asked for a rolling session summary and W5-02 for it to be carried on every entry point.
+Reading first (lessons #133, #136) found the feature already built — and broken in four separate
+places, none of which any test could see.
+
+    TurnMemoryService constructed:  1 function  (openai_chat_completions)
+    save_turn called:              2 sites     (both inside it)
+    get_older_context called:      1 site      (likewise)
+
+* **The write end.** `/chat`, `/chat/stream` and the `/stream` websocket stored no turn at all, so
+  their read would have returned `""` forever even if they had had one. Open WebUI uses `/v1`; the
+  regression probe uses `/chat`. The feature was live on the endpoint that is demonstrated and
+  absent from the endpoint that is measured.
+* **The read end.** `/v1` built its block and prepended it as a `system` message at index 0. Nothing
+  in `orchestrator/` matches on `role == "system"`, and both readers of `state.messages` take the
+  **last** five or six entries. A block at index 0 is dropped by every reader as soon as the
+  conversation is longer than three turns — which is exactly when long-term memory is the point.
+* **The window.** `OFFSET 20 LIMIT 30` drops turns 1-10 at turn 60, which is the acceptance
+  criterion verbatim, failing by construction.
+* **The units.** `skip_recent=CONVERSATION_MAX_MESSAGES` passes a count of MESSAGES where an offset
+  in TURNS is wanted, while the raw history that reaches a prompt is six messages — three turns.
+  Turns 4 through 20 were in neither window.
+
+Each half reports the other as fine. An empty read looks like "no history yet". An unread injection
+looks like a successful injection. **A feature with a producer and a consumer needs one test that
+crosses the boundary** — here, sixteen that drive the real routes and assert what the *workflow was
+handed*, not what `main.py` says.
+
+And the same shape, one file up: BUG-655 was `prune_inherited` running on `/v1` only. Its comment
+says *"four routes, one helper, because a copy per route is how three of them came to be missing
+it."* That was written four weeks ago in the same file, about the same four routes, and the memory
+feature had the identical hole at the same moment. **Reading the comment above the code you are
+about to extend is cheaper than rediscovering what it says.**
+
+## #148 — A remembered number is a fabrication, and a test had pinned it as correct (2026-09-29)
+
+`get_older_context` carried `result_summary[:150]` per older turn into the prompt, and
+`_extract_result_summary` fills `result_summary` from the analytics lane's `formatted_response` —
+the answer, verbatim, measurements included. The existing test *required* it:
+
+    assert "22.3" in ctx          # row: "Room 5.02: 22.3 deg C current reading"
+
+So a figure produced twenty turns earlier was reinjected with no time basis and no statement that it
+was stale, one paraphrase away from being restated as current. Design contract #4.
+
+* **Redaction is the second line, not the first.** A redactor can have a hole. The structure cannot:
+  `TurnNote` has no field for the answer, and the only thing an answer may contribute is one token
+  from a closed three-word vocabulary. The test that matters asserts the *dataclass shape*.
+* **The hole was there.** `_CLAIM_NUMBER` was `\d{1,3}(?:,\d{3})*`, so a fourth digit needed a comma:
+  `1,240 ppm` was a measurement and `1200 ppm` was not (BUG-904). That is the commonest CO2 value in
+  this building, and `publication_gate.evaluate` publishes anything it finds no claim in — so an
+  unverified four-digit reading went out unchanged on a FAILED verification, which is the one thing
+  that module exists to prevent. Every fixture in the gate's own tests wrote the separator.
+* **A guard's tests inherit its blind spot when they are written from the same intuition as the
+  guard.** This one was found by a different feature feeding it plain integers.
+
+## #149 — Identical filler questions make a memory probe measure nothing, silently and fast (2026-09-29)
+
+The session-summary work (W5-01/W5-02) shipped with 64 offline tests and no live conversation,
+so I wrote a probe: name a room in turn 1, ask six filler questions, then ask a question only
+turn 1 can answer. The filler was `f"What is the temperature on floor {i % 5}?"`.
+
+Second run, the filler turns came back in **0.0, 0.0, 0.0, 0.0, 0.0, 0.1 seconds**. They were
+`resp_cache` hits from the first run. A cached answer is returned *before the workflow runs*,
+so those turns never reached the classifier, never reached a lane, and — the part that matters —
+**never saved a turn to `turn_memory`**. The probe built a conversation of length two and then
+asked it to remember across eight.
+
+* **A probe whose steps can be cached measures the cache.** BUG-662 already says flush before
+  every probe run; this is the sharper form — flushing is not enough if the probe reuses its own
+  questions across runs. Make every step unique per run (a timestamp in the text is enough).
+* **The tell is the timing, and it is easy to skim past.** 0.0 s next to a question that took
+  31 s the run before is not a speed-up, it is a turn that did not happen.
+* Anything that short-circuits ahead of the pipeline — a response cache, a decline gate, a
+  template — removes the side effects of the stages it skips, not just their cost. When a
+  feature's whole job IS a side effect (saving a turn, updating a summary), a short-circuit
+  upstream turns it off without any component reporting a fault.
+
+## #150 — Re-keying a cache does not move the work above it (2026-09-29)
+
+BUG-889 fixed a classifier cache that hit 0 times in 38 calls, by keying it on the decision's
+real inputs — the question, the building, the persona. Verified: 2 hits in 1 call. What that
+did NOT do is change *where the lookup sits*.
+
+`detect_intent` still runs, in order: a GraphDB RAG fetch, a conversation-summarisation LLM
+call, message pruning, and an 18k-character prompt build — and only then computes a cache key
+that depends on **none of them** and returns. Measured by the latency agent on a question that
+hit the cache in all four rounds: dialogue stage 9.5 / 10.4 / 8.8 / 10.6 s, of which the RAG
+fetch alone is 4.27 s. Every cache hit paid full price for work it threw away, and the fix that
+made hits possible is what made that visible.
+
+* **A cache lookup belongs immediately after its key's last input**, not wherever the value
+  happens to be needed. If the key is cheap and the lookup is late, the hit rate is irrelevant
+  to the cost.
+* Making a broken cache work can *reveal* a cost without reducing it, and the metric that
+  improves ("hit rate") is not the metric anyone cares about ("time").
+* **Moving it is not free, and that is the real lesson.** The skipped block also assigns
+  `state.summary`, which a second reader in `_orchestrator.py` uses. A lookup moved above a
+  side effect silently stops that side effect happening on the hot path. Find every reader
+  before moving it — two greps, and the second one is the one that bites.
+
+## #151 — A source-reading test that pins a SUBSTRING pins the formatter too (2026-09-29)
+
+Three assertions broke today without a single behaviour changing, all the same way.
+
+`test_the_hook_is_wired_into_the_response_node` asserts that `_orchestrator.py` contains
+`"absence_second_chance import apply_to_answer"`. The hook was wired the whole time — the
+import is there, `_second_chance` is called — but `black` wrapped the import:
+
+```python
+from orchestrator.services.absence_second_chance import (
+    apply_to_answer as _second_chance,
+)
+```
+
+and the substring stopped being contiguous. My own two were the same shape: one assertion
+windowed at `block[:600]`, then `[:1200]`, broke twice as the explanatory comment above the
+code grew, which tells you nothing about the code.
+
+Source-reading tests are worth having in this repo — they are how `_TRACE_STAGE_MARKERS` and
+`analytics_output` were finally caught. But:
+
+* **Assert on whitespace-normalised text** (`" ".join(source.split())`) unless the layout is
+  the point. A formatter is allowed to reflow anything.
+* **Never window by character count.** `block[:1200]` is a bet on how much prose precedes the
+  code. Slice to the next structural boundary, or search the whole block.
+* If an assertion fails, check whether the BEHAVIOUR moved before changing the code. Here it
+  had not, three times out of three, and "fixing" the source to satisfy the string would have
+  been the wrong direction entirely.
+
+## #152 — The same suite ran 67 minutes and then 16, on the same work (2026-09-29)
+
+`pytest -m unit`, twice on one evening, no meaningful change between them:
+
+    12,879 passed / 3 failed    1h07m15s
+    12,905 passed / 1 failed    16m21s
+
+The first ran while an eight-turn live probe held the stack and a single turn took 3,102
+seconds (CAVEAT-942); the second ran alone. Same tree, four times the wall clock. This is
+CAVEAT-500's shape for the third recorded time, and the standing instruction holds: **do not
+quote a suite duration as a property.**
+
+The failure counts differ too, and that matters more. All three of the first run's failures
+were in one new file, passed 11/11 alone and 226/226 in a slice, and **did not recur** in the
+second run. They were order-dependent flakiness, not defects — and the captured output held
+only its tail, so the tracebacks were lost and an hour was nearly spent chasing a hypothesis
+(a leaked `time` patch) that a two-minute grep disproved. **Redirect a long run through `tee`,
+not `>`**, so a failure that does not recur still leaves its evidence behind.
+
+## #153 — A guard test that fails your fix is doing its job; do not edit it to suit you (2026-09-29)
+
+Hand-reading tail M found seven false declines, and one had a beautifully small cause: the
+register term matcher compiles `\b<term>\b`, so a trailing "s" ends the match.
+
+    "what is the escalation route"    -> Department (32.0)
+    "what are the escalation routes"  -> NOTHING RANKS
+
+The Department register declares "escalation route", "duty officer", "who do i contact" and
+"out of hours". It is well written for the question that failed. One character defeated it,
+and people write plurals constantly, so the cost is far more than the question that exposed it.
+
+The fix is obvious and I wrote it, and it was wrong twice:
+
+* `(?:e?s)?` on every term broke **two tests that exist for exactly this**. "A lift is
+  officially unavailable. Which bookings no longer have a verified route…?" began ranking
+  `WorkspaceProfile` — which `test_the_terms_rejected_for_over_capture_stay_rejected` rejects
+  **by name**, from a measurement someone already made.
+* Narrowing it to multi-word terms took 6 failures to 5. The over-capture survived.
+
+The tempting third move is to update the guard tests. **That is overriding a measured decision
+with an unmeasured one.** Those names are in the test because someone watched the system answer
+the wrong thing. Over-capture is the worse direction here (BUG-893), so the trade on offer was a
+known false decline for an unknown wrong answer — which is not an improvement, it is a
+different defect with less evidence behind it.
+
+* **Revert, and log the attempt.** BUG-948 now carries the reproduction, both failed
+  approaches and the reason each failed. The next session starts where this one stopped instead
+  of re-deriving it.
+* The most useful thing the failures revealed was incidental:
+  `test_precompiled_scores_equal_the_inline_scorer` also went red, so **there are two scorers**
+  pinned to agree, and any real fix has to change both. I would not have found that by reading.
+* A harness that cannot reach the data looks exactly like the defect. From the host,
+  `record_classes()` returns **0** held classes because GraphDB resolves to a container
+  hostname — the same "NOTHING RANKS" symptom, for an entirely unrelated reason. Run the probe
+  where the code runs.
+
+## #154 — Two gates, and widening one looks like a fix if you only check the route (2026-09-30)
+
+"What kind of data is collected?" is the first question anyone asks a system like this, and it
+declined: *"I don't have that specific information on record for Abacws Building. For
+building-specific queries please contact your building's facilities / estates management team.
+Abacws Building does keep Waste collection point records, which I can read for you."*
+
+The system holds 44 record classes and 45 measured modalities, and the reach lane answers "what
+can you measure in this building?" by naming every one.
+
+The gap was one verb. `CAN_MEASURE_RE` alternates over measure|monitor|track|sense|detect|read|
+report|tell me, with no "collect", and the passive "what kind of data IS COLLECTED" names no
+actor at all. I added it, restarted, and asked. The route was right — `intent=observability` —
+and the answer was **"Which space did you mean?"**, because the branch that lists the
+building's measurands is gated on a *different* pattern, `OPEN_QUESTION_RE`.
+
+Had I checked only the route, I would have logged this fixed. It was better than the false
+decline it replaced and still not the answer the system had.
+
+* **When a lane has an entry test and an internal branch test, a vocabulary fix needs both.**
+  Grep for every gate between the question and the sentence you want, not just the first.
+* **Ask the question. Every time.** The route, the log line and the tests all agreed with me.
+  Only the answer disagreed.
+* The narrowing that made it safe is worth copying: "collect" is also what happens to WASTE
+  here — 24 collection points and a schedule — so `collect` is admitted only as a verb the asker
+  attributes to the SYSTEM ("do you collect"), and every added alternative keeps the word "data"
+  in it. **A widening needs a negative case list as much as a positive one**, and "when is the
+  recycling collected?" answering from the waste register is now pinned by a test.
+
+## #155 — A ranking that ties falls back to alphabetical, and nobody reads it as alphabetical (2026-09-30)
+
+`"why is pl 2.5 increasing"` declined with *"the nearest things I can answer are … the readings
+of air quality, carbon monoxide, co2 and damper position."*
+
+Those are the first four modalities in alphabetical order. The building holds **210 PM2.5
+sensors**, and the resolver had already identified the measurand — the same sentence prints
+**PM2.5** in bold. Nothing in the question overlapped anything, every score tied, and
+`nearest_holdings` breaks ties on the building's own order.
+
+* **A tie-break is a silent claim.** "Nearest" that degenerates to "first" tells the reader the
+  opposite of the truth, and there is no way to see it from the answer. If a ranking can tie
+  across the whole set, say so or order by something the reader would accept.
+* **The asker's words are not the building's** — that is the whole reason a resolver exists, and
+  then the resolver's output was not passed to the ranking that needed it most. Look for the
+  place that already knows the answer before adding a way to work it out.
+* `_close("pm2.5", "pm25")` was False. **Punctuation made a measurand unrecognisable as
+  itself.** PM2.5, PM 2.5, pm-2.5 and pm25 are one thing; NO2, CO2 and PM10 are waiting to be
+  the same bug.
+
+## #156 — Narrowing a window correctly can break a downstream rule that depended on it being too wide (2026-09-30)
+
+`"Compare energy use this week against last week"` fetched a fixed 30 days, which the
+per-sensor row cap then cut to the newest **12.1 days** (measured against `sensordb.energy_data`
+with the session pinned to `+00:00`: 1,000 rows per meter reaches back to 18 September, out of
+7,455 rows in the 30 days). The obvious fix is to fetch the two weeks named.
+
+That fix breaks the answer. `series_summary._bucket_size` chooses its bucket unit from the span
+of the **rows**, and needs 1.5 units before it will bucket by that unit. Two weeks, ending at
+NOW because rows cannot reach further, is **9.2 days on a Wednesday** — under the 10.5 days the
+rule requires. So the comparison would have been bucketed by DAY and computed between two
+partial days, which is the 291.7% rise BUG-936's fix exists to prevent. The over-wide fetch was
+accidentally satisfying a threshold, and the correct window removed the accident.
+
+* **Before narrowing a window, find out who measures it downstream.** The wrong window was load
+  bearing. Nothing said so, and the three tests that would have caught the regression were about
+  bucketing, not about fetching.
+* The margin that fixes it (reach one whole period further back, so the span is always at least
+  two units and two clears 1.5 for every unit and every weekday) is now **pinned by a test that
+  calls `_bucket_size` on the span the new bounds produce**, nine (question, unit, weekday)
+  combinations. An accidental dependency you have found is a dependency you can assert.
+* The same shape appeared twice more in one session: a calendar boundary computed on the
+  **store's** clock. `time_windows` matches "overnight" as `HOUR(datetime) >= 22` over a UTC
+  column, and `series_summary._bucket_of` labels ISO weeks from the stored stamp. Both are an
+  hour out for a building on UTC+1, and the fix for one is the fix for all three.
+
+## #157 — A marker on the bus with one reader is not a disclosure (2026-09-30)
+
+`rows_capped` has been written by the SQL lane since BUG-479, with a comment explaining that
+"whoever states a count must be able to see that it is capped". Exactly **one** module ever read
+it: `report_agent`. Grepped 2026-09-30.
+
+So every other answer narrated the cap as completeness, and one said so in as many words:
+*"The most recent reading … was 23.1 °C. **Across all 1,000 readings** taken between 21 Sep
+21:36 …"* — from a turn whose log carries
+`[sql] group temperature_data returned exactly its 1000-row limit — the set is TRUNCATED and its
+size is not a count of what exists`, two lines above.
+
+* **Recording a fact is half a disclosure; the other half is an appender on the path the reader's
+  text actually takes.** The sentence was written into the SQL lane's own `formatted_response`,
+  which is only shown when that prose WINS the response dispatch. The observed failure came from
+  the narration, where it never appeared. The window-substitution disclosure already knew this:
+  it is appended **twice**, once in the lane and once in `_response_node`, guarded on the note's
+  own text.
+* **A fail-open component needs a count of how often it acted** (lesson #126) has a twin: a
+  marker needs a count of how many lanes read it. One reader for four years looks identical to
+  none.
+
+## #158 — Two answers wrong by the same factor on the same quantity need not share a cause (2026-09-30)
+
+BUG-954 said "two rooms are occupied" against a store with ~380 non-zero occupancy series.
+BUG-898 said a seminar room held 4,401.86 occupants. Same quantity, same order of magnitude,
+logged a day apart. The obvious move is to look for one cause. There were two, and they are not
+related:
+
+* **BUG-954** — the aggregate lane *declined*. `parse_intent` needs a statistic word and
+  "occupied" is not one, so `wants_lane` returned None and the count fell to the narrator, which
+  named the five rooms it could list under a headline of five, **beside its own statistics saying
+  131 of 234 read zero**. Every figure it quoted was real and correctly fetched. Only the headline
+  was invented.
+* **BUG-898** — the analytics template read `/app/outputs/data/current_data.json`, a file in the
+  code-executor last written **2025-12-17**, holding 119 rows of an *oxygen* sensor. The rows the
+  turn actually fetched were handed to the same code as `raw_data_json` and never looked at.
+
+What separated them was one measurement that cost nothing: **ask the question twice and compare
+the digits.** BUG-898 came back byte-identical to two decimal places a day later, on a series
+written to every minute. A model inventing a number does not repeat it; a file does. BUG-954's
+figures moved between asks, which is what a real fetch with a bad headline looks like.
+
+* **Repeatability is the cheapest discriminator between a fabrication and a stale read**, and it
+  is one extra ask. Run it before building a theory.
+* **A shared default filename is a shared mutable global with none of the warnings.** The default
+  was `current_data.json`; one caller wrote a per-conversation file and another wrote nothing, so
+  the second read whatever the last process left. It survived nine months because a plausible
+  number is not a crash.
+* **When a figure has a denominator, measure the denominator before the figure.** "234" and "467"
+  looked like symptoms of the same confusion. They are the count of *spaces* with an occupancy
+  series and the count of *series placed in a space* — both correct, both correctly fetched, and
+  neither one the thing being counted. lesson #139's rule applies to diagnosis as well as to
+  answers.
+
+## #159 — `from X import y` binds the object, so a reload detaches every prior importer (2026-09-30)
+
+Three tests passed alone, passed in a 42-test pair, and failed in the full 13,000-test suite:
+they patched `settings.OUTPUT_DATA_DIR` to a `tmp_path` and the product wrote to the real
+output directory anyway.
+
+`tests/test_strict_secrets.py` calls `importlib.reload(shared.config)` — correctly; it is
+testing boot-time validation. Demonstrated directly rather than inferred:
+
+    analytics_agent.settings is shared.config.settings   before reload: True
+    analytics_agent.settings is shared.config.settings   AFTER  reload: False
+
+Every module that did `from shared.config import settings` at import time still holds the OLD
+object. A test that then imports `settings` fresh and patches it is patching something the
+product no longer reads.
+
+* **Patch where it is used, not where it is defined.**
+  `monkeypatch.setattr(module_under_test.settings, "FIELD", value)` patches whatever object that
+  module currently holds, and is right whether or not a reload has happened.
+* **The three that FAILED were the lucky ones.** A patch that silently does nothing usually
+  leaves the test running against the REAL setting, which often still satisfies the assertion —
+  a vacuous pass. **25 such patch sites across 8 files are unaudited.** For each the question is:
+  does the assertion still hold when the patch does nothing? If yes it proves nothing; if no it
+  is order-dependent and will fail the day the suite reorders.
+* This is the third time in two days that the apparatus was the bug — five memory tests pinning a
+  parameter their own fake ignored (CAVEAT-1025), a grader gate passing the regression that
+  decided a freeze (BUG-987), and now this. **When a test fails only in a full run, suspect the
+  test before the code**, and when it passes only in a full run, suspect it harder.
+
+## #160 — A metric can be arithmetically correct and structurally blind (2026-09-30)
+
+BUG-531 sat open as the project's only P1 for eighteen days with a note attached saying the
+fan-out metric "reads 1.00 throughout, because each reference has its own uuid". That sentence
+is *true*, and it is why the bug survived: fan-out counts **copies per UUID**, and 71 sensors
+each carrying two references to two *different* uuids scores a perfect 1.00. The metric was
+answering "is any series duplicated?" while the question was "does any sensor resolve to more
+than one series?" — a different question about a different object.
+
+The query that finds it in one line is a count of **distinct uuids per subject**:
+
+```sparql
+SELECT ?s (COUNT(DISTINCT ?u) AS ?n) WHERE { ?s ?p ?r . ?r ref:hasTimeseriesId ?u } GROUP BY ?s
+```
+
+`{1: 3473, 2: 71}` before, `{1: 3544, 2: 0}` after. **Before trusting a green metric, say out
+loud what it counts and what you wanted counted.** If those are different sentences, the metric
+cannot clear the thing you are worried about — no matter how long it has been green.
+
+## #161 — Bind a variable for a relation your data spells more than one way (2026-09-30)
+
+The linker asked `FILTER NOT EXISTS { ?p ref:hasExternalReference ?r . ?r ref:hasTimeseriesId ?u }`.
+This one building spells that relation **three** ways: `ref:hasExternalReference` (3,515 triples),
+`ashrae:hasExternalReference` (3,640) and `brick:hasExternalReference` (2). So 71 points that
+carried only a non-`ref:` form looked unlinked, and the script gave each a second series in a
+different store. Same shape as BUG-481: a query blind to a predicate that is in active use.
+
+The fix is not a list of two predicates — that only waits for a fourth. It is to ask what
+"linked" **means**: `FILTER NOT EXISTS { ?p ?anyRefPred ?r . ?r ref:hasTimeseriesId ?u }`.
+Reaching a timeseries id is the property that matters; which predicate got you there is not.
+
+## #162 — A balance check proves you did what you intended, not that the intention was whole (2026-09-30)
+
+The removal script printed `retired 70 of 70 — BALANCED` and it was telling the truth. The graph
+then reported **1** remaining duplicate, not 0. The target list had been built by intersecting
+the duplicated sensors with the linker's output file, so it could only ever contain duplicates
+*the linker created* — and one of the 71 had been created by something else. The list was 70 of
+71 **by construction**, and every internal check agreed with it because they were all derived
+from the same list.
+
+**Close the loop against the world, not against your input.** The balance check was worth having
+— it caught an earlier run that removed 38 blocks for a delta of 37 — but only the re-query said
+the job was incomplete. A self-consistent script is consistent with its own premise.
+
+Two smaller things from the same hour, both cheap to re-learn the hard way:
+
+* **A room number contains a dot.** `bldg:<name>[^.]*?ashrae:hasExternalReference` silently
+  failed on 32 of 70 subjects because they carry `brick:isPartOf bldg:Room1.25`, and `[^.]`
+  cannot cross that. One match ran past its own subject. Parse TTL structurally.
+* **Read the CSV header before writing the CSV.** Inventing two column names made
+  `csv.DictWriter` raise *after* it had written every real row; the tracker survived only
+  because the bad row happened to be last.
+
+## #163 — I had it backwards until I measured, and the measurement took two minutes (2026-09-30)
+
+Retiring one of two duplicate references means choosing which survives. The story was obvious:
+`bldg1_enhancements.ttl` authored these points, `link_unlinked_sensors.py` came later and added
+a second series it had no business adding, so the linker's additions are the intruders and go.
+
+The data says the exact reverse. All 71 pre-existing references stopped being written on
+2026-09-16 (328 hours stale); all 71 of the linker's twins were being written within the minute;
+and the 37 references on the same store that have **no** twin are 36/37 live, so the store was
+never the problem. Retiring the "intruders" would have replaced 71 live series with 71 dead ones
+and called it a fix for a P1.
+
+The check was one `MAX(Datetime)` per uuid. **When a fix requires choosing between two things
+that both look plausible, the cost of asking which one is alive is almost always smaller than
+the cost of guessing** — and a plausible history is not evidence about the present.
+
+## #164 — A harness that cannot authenticate looks exactly like a stack that is down (2026-09-30)
+
+I re-ran the 51-case gate after a restart and it produced nothing: no output, and — the part
+that misled me — **zero requests in the orchestrator log**. Health returned 200. My first
+reading was that the restart had broken the endpoint, which would have been a serious
+regression from the change I had just made to the ontology.
+
+It was the invocation. `scripts/regression_answerability.py` takes `--token` and **defaults it
+to the empty string**, while `/v1/chat/completions` is gated by `_oai_auth`, which accepts only
+a non-default `PIPELINE_API_KEY`. Every question returned `{"detail":"Invalid API key"}` in
+milliseconds, so nothing reached a lane and nothing was logged as a turn. Supplying the key
+made case 1 pass in 185 s.
+
+Two things worth keeping:
+
+* **A 401 at the door produces the same silence as a dead service**, because the request never
+  reaches the code that logs. When a harness goes quiet, check the *response body* of one call
+  by hand before concluding anything about the system. `curl` with no `Authorization` header
+  and `curl` with `Authorization: Bearer ` return **different** errors — "Missing Authorization
+  header" versus "Invalid API key" — and that difference is the whole diagnosis.
+* **Run one case before running fifty-one.** `--only 1` would have shown this in three minutes
+  instead of forty, and the same applies to any long harness with a default that can be wrong.
+
+Related: I also started `capture_golden_baseline.py` believing it produced the gate's set. It
+walks the full 2,960-question catalogue — 16 rows in about forty minutes. **Check what a
+harness enumerates before you wait on it**, especially when a smaller harness with a similar
+name exists.
+
+## #165 — A harness that times out creates the contention that times out the next case (2026-09-30)
+
+The regression gate recorded case 9 of 51 as `REGRESSED  answered -> empty  420.0s`. The number
+is the diagnosis: **420.0 is the harness's own `--timeout` default**, to the tenth of a second.
+The system had not failed. The orchestrator was still working on that turn thirteen minutes
+after the harness had given up on it, and its log shows where the time went — one
+`coverage_audit` step enumerating **39,119 located points over 13m15s**.
+
+Two things follow, and the second is the one I had not thought about.
+
+**A verdict whose elapsed time equals the timeout is a timeout.** Read the seconds column
+before believing the verdict. A regression and an abandonment look identical in a pass/fail
+table and are opposite findings — one says the system got worse, the other says the harness got
+impatient.
+
+**Abandonment is not cancellation, and on a single-slot runner that compounds.**
+`OLLAMA_NUM_PARALLEL=1`, so the local model serves one request at a time. When the client walks
+away the turn keeps running and keeps the slot, so the *next* case starts behind it and is more
+likely to time out too — which leaves more abandoned work, and so on. **A run that degrades case
+by case may be measuring that feedback loop rather than anything about the cases.** I stopped the
+run at 9/51 rather than collect verdicts produced under it.
+
+The control that makes all of this legible already existed and I had it: the same 51 cases, same
+build, **earlier the same day — median 30.3 s, max 108.1 s, 27.8 minutes total.** Against that,
+#12 going 48.3 s → 3,412 s and #13 going 28.1 s → timeout are obviously environmental. Without
+it I would have spent the afternoon looking for a regression in an ontology change that removes
+triples. **Keep the previous run's timings, not just its pass count** — a pass count cannot tell
+you the machine changed underneath you.
+
+Corollary for this repo: **run the gate alone.** Not as hygiene — its verdicts, not merely its
+latencies, are unreliable with a unit suite or agents sharing the host.
+
+## #166 — A range over a series' whole life is not a statement about the series now (2026-09-30)
+
+I logged BUG-1150 after measuring a booking-status point at "0..189.48, mean 9.38" against a
+label reading "available=0 / booked=1". Both numbers are real. Both are useless for the claim I
+made with them, which was that the point is *currently* carrying the wrong quantity.
+
+Broken down by day, the same uuid reads:
+
+```
+days with any value > 1 : 26, first 2026-08-22, last 2026-09-16
+LAST 48 HOURS           : 1,088 rows, 0 above 1, range 0.000..1.000
+```
+
+A dated block of bad history, ending at the instant the publish map was regenerated — not a live
+defect. The aggregate hid the boundary because **an aggregate over an interval that spans a
+change describes neither side of it.** I had written exactly this failure into BUG-936 nine days
+earlier (a comparison silently drifting to the wrong two weeks) and then made its mirror image.
+
+**When a measurement supports a claim in the present tense, measure the present.** Group by day
+before quoting a range; if the daily rows fall into eras, the eras *are* the finding. And it
+cost nothing — the per-day query took one round trip and turned a P2 "live wrong quantity" into
+a P3 "dated block, already stopped, do not re-seed."
+
+The same row was wrong a second way, and it is the older lesson: I inferred the class-to-modality
+mapping **from the values I saw** rather than asking the mapper. One call to the script's own
+`class_to_modality()` returns `Occupancy_Status -> occupancy_status` (profile `binary: 1`), so
+the component I blamed had always been right. **Ask the running system what it does before
+writing down what it does** (#133, #136) — including when the data seems to prove it for you,
+because data downstream of four writers over two months proves nothing about any one of them.
+
+## #167 — Measure the process before you explain its behaviour (2026-09-30)
+
+I spent an afternoon explaining why one LLM call took 3,239 seconds. I eliminated, with real
+evidence: runaway generation (the completion was 385 characters), a retry storm (one POST),
+machine sleep (Kernel-Power showed a 13-second suspend, an hour later), a host-wide freeze (the
+data-publisher wrote rows in 55 of the 75 minutes), CPU starvation (nothing else was running),
+and a missing async path (`_agenerate` is native). I wrote a careful P1 saying the mechanism was
+undetermined and listing what it was not.
+
+Then the orchestrator stopped answering, and I measured it:
+
+```
+CPU 3210.31%              MEM 40.02 GiB / 46.64 GiB
+docker ps: "Up 3 hours (healthy)"
+after restart:            1.33 GiB, 6.4%
+```
+
+**Every candidate I eliminated was about the request. None was about the process making it.** An
+event loop on a machine at 86% memory may never reach its timer callbacks, which explains a
+180-second `asyncio.wait_for` not firing without anything being wrong with the timeout code or
+with the model server. It was the cheapest available explanation and I never tested it, because
+`docker ps` said `healthy` and I believed it.
+
+**The health status was frozen.** The check had stopped completing, so the last PASS simply
+stayed, and `docker ps` renders a stale PASS identically to a fresh one. The tell is in
+`docker inspect`: `FailingStreak: 2` beside `Status: healthy`, with `last check` an hour old.
+
+Three rules, in the order they would have saved time:
+
+1. **`docker stats` before `docker logs`** when something is slow or unresponsive. One command,
+   and it would have reframed the day.
+2. **Sample resource use alongside every gate or probe run.** Latency numbers are not
+   interpretable without it — this is CAVEAT-500's complaint with a mechanism attached at last.
+3. **A first error can be a symptom of something three layers away.** The visible failure was
+   `Login Postgres probe failed: TimeoutError`, and Postgres was healthy on 42 MiB. Exactly
+   BUG-481's shape — "concept resolve failed" for an AttributeError two calls away. A timeout
+   names the thing that was waited on, never the thing that was wrong.
+
+## #168 — A performance number measured on a sick process will size your fix wrong (2026-09-30)
+
+I logged BUG-1192 after measuring `coverage_audit` at **13m15s to enumerate 39,119 located
+points** inside one turn, and proposed bounding the candidate set: a seat-choice question does
+not need all 39,119 points. Reasonable, and it would have shipped.
+
+Re-measured on a healthy process, same graph, same 39,119 points, no code change:
+
+```
+10.6 s     14.7 s     17.8 s
+```
+
+**~75x.** The enumeration was never expensive; the process was — a container at 40 GiB and
+3210% CPU (BUG-1194). Had I bounded the scan, the bound would have been sized from a degraded
+process, shipped, and then been **credited with a 75x speedup that was really a restart.** The
+next person would have inherited a number nobody could reproduce and a design constraint nobody
+could justify.
+
+This is CAVEAT-500's rule — never quote a duration as a property — but one level deeper, because
+the duration here wasn't in a report, it was about to become a *design decision*. The same
+suspicion is now owed to CAVEAT-942's 3,102 s and to every latency figure taken during that
+window.
+
+**Before optimising anything, measure the process, then measure the thing.** `docker stats`
+costs one command. And when a row already contains its own counter-evidence — mine said "the
+earlier run's numbers show the lane can do this work in seconds" — that sentence is the finding,
+not a caveat to note and move past.
+
+Corollary, from the same session: two independent `asyncio.wait_for` deadlines — the 180 s LLM
+timeout and the 420 s workflow deadline, nested — were **both silent on the same 3,412 s turn**.
+One `wait_for` failing is a bug worth hunting. Two failing together is not two bugs; it is
+evidence about the loop they both depend on.
+
+## #169 — Typing a flag is not evidence the flag was used (2026-09-30)
+
+I ran a 60-question quality measurement and reported it as "asked as
+facility01@example.com (facility_manager)". It was asked as **`admin@ontosage`, on a different
+endpoint**. `scripts/ask_questions.py` reads `--email` only inside its `if args.v1:` branch;
+without `--v1` the flag is parsed and silently discarded, and the script authenticates through
+`capture_golden_baseline._login()`, whose docstring is *"Session token for /chat"* and whose
+credentials are `ADMIN_USERNAME` / `ADMIN_PASSWORD`.
+
+So the measurement described **`/chat` as an admin**. Real users get **`/v1/chat/completions`
+as a non-admin, streaming**. Two differences at once, in the number I had just offered as the
+basis for a release decision.
+
+What makes this worth writing down is what I *did* check. I verified the container had not
+restarted mid-run (captured `StartedAt` before and after), that the question corpus was the real
+survey rather than our own synthesised catalogue, that the draw excluded every spent tail, and
+that the process was healthy throughout. **I never checked who the harness logged in as** —
+because I had typed the flag, and a typed flag feels like a configured fact.
+
+Three rules:
+
+- **An argument parser that accepts a flag is not an argument parser that honours it.** A CLI
+  can take `--email`, validate it, print it back, and use it in one branch of two. Read the
+  branch.
+- **Confirm identity from the SERVER's log, not the client's command.** The orchestrator prints
+  `[forwarded-user] '<email>' → '<user>' (role=<role>)` on every `/v1` turn. That line is
+  evidence; the shell history is not.
+- **Role changes the answer, so it is part of the measurement.** Five of the twenty-eight
+  failures were an admin being shown how to onboard data — correct behaviour for that reader,
+  and not a defect at all for anyone else. The number moved from 46.7% to 38.3% on that alone.
+
+Same family as #145 (verified with a query the code does not send) and #153's harness lessons:
+**the apparatus was the bug, for the ninth time in this project.** The finding that survived
+untouched is the one that never depended on the apparatus — zero fabricated figures.
+
+## #170 — One word in a keyword list swallowed 3.8% of everything real users ask (2026-09-30)
+
+"What is the average sound level?" was answered *"I couldn't answer that from Abacws Building's
+records"* — about a building holding 235 sound sensors. Six lines of container log give the
+whole thing:
+
+```
+[sparql] class from HBCO concept 'noisy': ontosage:Sound_Level_Sensor   <- 233 instances
+Using template SPARQL (entities=[]):
+  SELECT ?floor ?label WHERE { ?floor a brick:Floor ... }
+GraphDB query returned 8 results                                        <- eight FLOORS
+[analytics] No UUIDs found - no specific sensor type detected           <- it WAS detected
+[response] relevance gate replaced a analytics answer: OFF_TOPIC
+```
+
+`floor_words = [..., "level", "levels"]`, and **"sound LEVEL" matched it.** The branch that
+fired never looked at `concept_class` — which is passed into the same function and had been
+resolved and logged one line earlier.
+
+**Measured before changing anything: 284 questions say "<quantity> level(s)", 269 of them in the
+real survey corpus — 3.8% of everything 96 participants asked. That corpus contains zero
+"level <n>" storey questions.** A single word in a six-item list was eating a twenty-fifth of
+real usage, and it had been there long enough that nobody questioned it.
+
+Three things worth carrying:
+
+**Key the fix on the resolved thing, not on more words.** A stop-list ("sound level", "VOC
+level", …) needs extending for every quantity and still misses the lay terms — "noisy",
+"stuffy" — that the concept resolver exists to handle. The class was already computed, already
+passed in, and merely ignored. Using it also freed "Which floor is the warmest?", which nobody
+had reported.
+
+**A resolved value that is logged and then discarded is the easiest defect to miss.** The log
+line `class from HBCO concept 'noisy': ontosage:Sound_Level_Sensor` reads like success. It is
+the last moment that information exists. Whenever you see a resolution logged, ask what consumes
+it — the answer here was "nothing".
+
+**The guard was right for the third time today.** Eight floors genuinely do not answer a question
+about sound, and the relevance gate rejecting it was correct. Three separate investigations this
+session ended with "the gate is the messenger; the defect is upstream". **When a guard keeps
+firing, the hypothesis to test is that it is right** — twice I set out to fix the guard and both
+times the evidence sent me upstream instead.
+
+And my own two wrong hypotheses, both killed by one query: that the concept had resolved into
+the wrong namespace (`ontosage:` vs `brick:` — it had not, 233 instances), and that the wording
+fix I had already shipped was the cure (it was not; it fixed a real false-absence path this
+question never reached). **Check the cheap thing first: does the class the log names actually
+have instances?**
+
+## #171 — I read a quality measurement off a terminal that was cutting every answer at 400 characters (2026-09-30)
+
+I hand-read 60 live answers to decide whether this system is fit for users, and labelled them
+from `ask_questions.py`'s stdout. That line is:
+
+```python
+print("   " + answer[: args.show].replace("\n", "\n   "))   # --show defaults to 400
+```
+
+**The maximum answer length in my own log is exactly 400.** Twenty-two of the sixty sat at that
+boundary. At least one label was wrong because of it: "Can the building harvest rainwater?" I
+marked WEIRD — "a sustainability blurb, none of which is rainwater" — and the full answer is 649
+characters ending *"(6) Rainwater harvesting for toilet flushing"*. The deciding clause was at
+character 450.
+
+**The full text was in the harness the whole time.** `rows` carries it and writes it to
+`{--out}.jsonl` — but only when `--out` is passed, and I did not pass it. So the evidence was
+constructed, held in memory, and discarded, because a flag has to be remembered.
+
+Three things:
+
+- **A flag that must be remembered to avoid losing evidence will be forgotten.** Fixed by always
+  writing the full answers, to a temp path when `--out` is absent, and printing the destination.
+  Preserving data should not be opt-in.
+- **State your instrument's limits by MEASURING them, not by estimating.** I did flag truncation
+  — as "roughly ten of the longer answers". It was 22. I underestimated my own known limitation
+  by more than half, in the same breath as claiming to be careful about it.
+- **A length distribution that piles up on a round number is a truncation, not a property of the
+  data.** `max = 400` with 22 answers in the 380–402 band should have been visible the moment I
+  looked at the numbers instead of the text.
+
+This is the fourth correction to ONE measurement: the identity it ran as (#169), the cause of its
+largest cluster (#170's neighbours), the tense of one of its findings (#166), and now the text I
+read. **The system under test was never the least reliable thing in the room.** The one finding
+that has survived every correction is the one that never depended on the apparatus: zero
+fabricated figures.
+
+## #172 — Quote lift, never precision: a bucket is easy to hit where its class is common (2026-09-30)
+
+CLAUDE.md said, for two weeks, *"Only the WEIRD bucket is trustworthy (89.1% precision)."* The
+figure reproduces exactly. It is also **in-sample** — measured on the bank the grader was
+calibrated on — and the line never said so.
+
+Audited over 2,868 stored answers and 1,997 hand labels:
+
+| era | WEIRD precision | hand base rate | **lift** | kappa |
+|---|---|---|---|---|
+| phase0 bank (FITTED) | 89.1% | 67.7% | **+21.4 pp** | +0.314 |
+| held-out tails C–L | **35.4%** | 39.7% | **−4.3 pp** | **−0.046** |
+
+GOOD_ANSWER −3.6 pp, GOOD_DECLINE −12.5 pp. **All three buckets carry negative lift out of
+sample**, and a kappa of −0.046 is below chance: on the held-out set, picking at random would
+beat the grader's WEIRD bucket.
+
+**Precision alone hid it, and the reason generalises: a bucket is easier to hit where its hand
+class is common.** 89.1% against a 67.7% base rate is a real +21.4 pp of information. 35.4%
+against 39.7% is less than none. Two figures that look an order of magnitude apart in quality
+differ by *sign* once you subtract the prior. **Report lift, or report nothing.**
+
+Two more things from the same audit:
+
+- **Four implementations of "is this a decline" agree on nothing.** 0 of 2,868 answers are
+  called a decline by all four; 43.1% are contested; one pairwise kappa is negative. The right
+  answer was **not** to unify them: measured against hand labels they sit at different points on
+  a recall/false-decline trade-off, and three are at the right point for their purpose. One is
+  not — `grade_answers_rubric` calls **162 of 535** hand-confirmed *answers* declines, and 128 of
+  those rest on a single pattern. **"Four things disagree, so merge them" was the wrong instinct;
+  "measure each against ground truth and see which one is wrong" was the right one.**
+- **The durable fix is not a better grader.** Nothing the server returns says whether a turn
+  declined, so all four classifiers are reading prose and guessing. A lane that recorded its own
+  outcome on the bus would make every one of them unnecessary. That was filed months ago
+  (CAVEAT-887) and is still unbuilt, while four approximations of it were written.
+
+This sits directly on #20-22 ("the measurement apparatus is usually the bug") and on today's
+#169 and #171. The count for this session alone: the identity a measurement ran as, the cause
+of its largest cluster, the tense of a finding, the 400-character truncation of the text I read,
+and now the in-sample/out-of-sample split of the grader that scored it. **Five defects in the
+apparatus; the system under test was never the least reliable thing in the room.**
+
+## #173 — Fabricate a relationship instead of a figure and no guard sees it (2026-10-01)
+
+A question that had been **5 of 5 wrong** — inventing "six active issues" from a static taxonomy,
+and once a five-step recovery order telling someone to "Restore power to both chargers" — came
+back **0 of 5** after a deterministic guard landed. Decisive, because the pre-fix rate was 100%.
+
+Then two of the five answers said this:
+
+```
+ask 1:  DEP-07 -> DEP-05 -> DEP-06 -> DEP-16 -> DEP-03
+ask 3:  DEP-05 -> DEP-06 -> DEP-03 -> DEP-07 -> DEP-16
+```
+
+Same five records, two different orders, each presented as *the* dependency-aware recovery order.
+Checked against the graph: those records carry label, contact, opening hours, status, owner,
+version — **no ordering predicate of any kind.** The arrows are the fabrication, and the
+disagreement between asks proves the order is arbitrary rather than derived.
+
+**It slipped a guard built for exactly this class of defect, because every family in that guard
+matches nouns and verbs, and an arrow is neither.** "Overcrowded", "crowd control", "alert
+security", "safe capacity" — all lexical. A relationship asserted with punctuation, or with
+"first / then", or with a numbered list, carries no keyword to catch.
+
+Two things follow.
+
+**A relationship is more dangerous than a figure.** A number invites checking — someone asks where
+21.4 °C came from. An arrow reads as *structure*, as though the system had consulted a dependency
+graph. It is the same contract-#4 violation with better camouflage.
+
+**The fix must be measured before it is written, and this cluster has already proved why twice.**
+The obvious rule — "do not emit an ordered list unless the rows carried an order field" — would
+hit every legitimate numbered list: a register's fields, a floor list, ranked results with scores.
+In the same cluster, BUG-1302's one-line prescription would have cost **26 hand-read GOOD
+answers** (including a scripted demo question, on the noun `evacuat\w+`), and the guard's own
+first draft **destroyed two correct refusals** because `overcrowd\w*` reads identically inside a
+claim and inside its denial.
+
+Which is the third rule, and the one I keep relearning: **a scan can triage, only a reading can
+judge.** My own scan counted a refusal as a claim today, having counted a quotation as a claim
+yesterday. Both times the answer was fine and the instrument was not.
+
+---
+
+## #174 — A measurement of the stage I changed said nothing about the path the question takes (2026-10-01)
+
+I fixed the capability lane's subject test so that `"What happens during a power outage?"` would
+no longer be refused by a preposition. Then I measured the fix over 4,060 questions and the
+instrument printed, among its ten gains:
+
+```
+'DROPPED'  ->  'ANSWERS:Fire Safety'   'The fire alarm is sounding. What should I do?'
+```
+
+I asked it live. The reader got a decline about an overdue weekly test on a control panel,
+followed by the model's own generic advice. The route explains why:
+
+```
+[ttl-route] metadata via held record class: FireSafetyAsset (30 instances) — skipping LLM intent call
+Final intent for routing: metadata
+```
+
+**The capability lane never ran.** My measurement replicated `_is_subject` exactly and faithfully
+— and `_is_subject` is a function that is only reached if the question gets to that lane. The
+instrument answered "would this stage permit the answer?" while I read it as "would the reader get
+the answer?" Those are different questions and only one of them matters to a user.
+
+This is #145 one layer out. There I verified a fix with a hand-written SPARQL query that was not
+the query the code sent; here I verified a fix with a hand-built replica of a stage that the
+question does not reach. Both times the replica was correct. Both times the correctness was
+irrelevant.
+
+What makes it insidious is that the measurement was *good*. It covered the whole catalogue, it
+printed moves in both directions, it carried the BUG-601 controls with their baseline verdicts, and
+it caught a variant that would have shipped a wrong answer. An instrument can be careful, honest,
+well-controlled and still be scoped one stage too narrow. Rigour inside the wrong boundary reads
+exactly like rigour.
+
+**The rule: a stage measurement predicts a stage. Before quoting it as an outcome, ask the running
+system the same question and read the route line.** Where the two disagree, the disagreement is
+itself the finding — it was BUG-1393 here, a life-safety question answered with invented
+procedure, and I would not have found it by fixing what I set out to fix.
+
+And the cheap version of that rule: my ten "gains" are nine predictions and one verified answer.
+Only the power-outage case was asked live. I have written the other nine down as predictions in
+BUG-1392, not as results, because the one I did check was wrong.
+
+## #175 — My test passed against a fixture I invented, which is a test of the fixture (2026-10-01)
+
+Writing the regression test for the preposition fix, I needed the fire-safety topic's lay terms.
+I typed what they obviously would be:
+
+```python
+fire = ["fire", "alarm", "evacuate", "evacuation", "emergency", "escape route"]
+assert _is_subject("The fire alarm is sounding. What should I do?", fire)
+```
+
+It passed. It would have kept passing forever. The building declares something else —
+`bldg1_capabilities.ttl` line 22 lists sixteen phrases including `smoke detector`, `sprinkler`,
+`fire warden`, `extinguisher`, `fire door`, `fire suppression` — and my list had neither the
+phrases nor the shape of the real one.
+
+As it happens the verdict is the same under both lists, so the test was not *wrong*. It was
+**unfalsifiable by the thing it claimed to be about**: edit the TTL to remove every fire term and
+my test still goes green, because the data it asserts over lives in the test file. A test like that
+cannot fail when the building changes, which is the only time this assertion has any work to do.
+
+This is the same family as the paper's fabricated inter-rater values and invented participant
+quotes — not dishonesty, but a plausible stand-in for a real artefact, written because the real
+artefact was one grep away and I did not do the grep. The giveaway is identical in both cases: the
+fixture reads cleaner than real data ever does. Six tidy terms, no `fire suppression`, no
+`muster point`.
+
+**The rule: a fixture that stands in for the building's own declarations must be copied from them,
+with the file and line in the docstring.** If it is too long to copy, read it at test time. If it
+is read at test time, keep a counterfactual that fails when the file is empty — otherwise an
+absent declaration and a satisfied one look the same.
+
+## #176 — The third truncation artefact in two days, and this one I inherited (2026-10-01)
+
+An agent reported a live-visible wording defect: a decline that ended mid-air.
+
+```
+Abacws Building does keep
+```
+
+A sentence with no register named — exactly the kind of thing a user would photograph. It came
+from a real failing test, and the agent had read it off that test's own assertion message:
+
+```python
+assert hit, f"Power resilience baseline regressed: {resp.response_text[:200]}"
+```
+
+The prefix is 172 characters. `\n\n` makes 174. `"Abacws Building does keep "` is 26. **200.** The
+register name begins at character 201. Asking the live stack returned the whole sentence,
+correctly terminated: *"…does keep Door and shutter hardware records, which I can read for you."*
+
+Three times now in two days a window has been mistaken for the data: I read sixty quality labels
+off a terminal cutting answers at 400 characters (#171), I had to re-read tail N because of it,
+and now an agent reported a defect that is a slice boundary. The failure survives being warned
+about, because the truncation is in the *instrument's* code and the output looks like prose that
+simply stops.
+
+What is different here is that I nearly fixed it. I had `compose_boundary_pointer` open and a
+guard half-written for a case that cannot occur — `labels` is filtered on a truthy label and
+`and_list` strips, so the only way to render empty is a whitespace-only label, and a probe found
+**0 of 44** classes like that. A guard against an impossible state, added to satisfy a
+misread, in a module whose whole job is to not say things the data does not support.
+
+**The rule: before fixing text a tool printed, print it again without the tool.** For an answer,
+ask the stack and read the whole string. And when a reported string ends suspiciously close to a
+round number — 100, 200, 400, 500 — count the characters before reading anything into where it
+stops.
+
+## #177 — I measured a new defect against a corpus that predates it, and "rare" was an artefact of that (2026-10-01)
+
+BUG-1391 is a fabricated ordering: five records rendered as `DEP-07 → DEP-05 → DEP-06 → DEP-16 →
+DEP-03`, a different order on the next ask, over records carrying no ordering predicate. The row
+said to measure the proposed guard over the stored answers before landing it, because numbered
+lists are common and most are legitimate. So I did, over 2,861 de-duplicated answers:
+
+```
+answers containing an arrow : 58 of 2861 (2.03%)
+place -> place              : 128 of 289 arrow occurrences (44%)
+record-id -> record-id      : 1 of 289 (0.3%)
+```
+
+Two useful things fell out and one trap closed behind me.
+
+The useful things. First, **an arrow in this system almost always means *from X to Y*, not *X
+before Y*** — "Level 0 → 1", "Reception → Level 3 laboratories", "Abacws Building → Floor 0" are
+routes and containments the graph genuinely holds. A guard keyed on arrows would put 58 correct
+answers at risk to catch approximately none. Second, the one `record-id → record-id` hit was
+`effective 2026-08-30 -> 2026-09-02` — a date range my own classifier mis-typed. True count of
+the defect's shape in 2,861 answers: **zero**.
+
+The trap is what I nearly concluded from that zero. For a few minutes I had written *"this shape
+occurs in 0 of 2,861 stored answers, so it is rare"*. It is not rare. Those 2,861 answers are
+responses to the questions we have **already been asking** — tails C through N, the demo path, the
+probe cases. BUG-1391 was found by a stakeholder question about dependency-aware recovery order,
+a shape that barely appears in the corpus at all. **The corpus does not contain the defect because
+it does not contain the questions that produce it.**
+
+This is survivorship applied to a bug log. A historical corpus can bound a *regression* — "would
+this change damage answers we have already given?" is exactly what 2,861 stored answers are good
+for, and that is the question the BUG-1392 measurement asked and answered well. It cannot bound a
+*frequency*, because the sampling frame was never the question space; it was whatever we happened
+to ask.
+
+**The rule: a stored corpus answers "what would this fix break?" and never "how often does this
+happen?"** Frequency needs questions drawn from the population you care about, asked now. And
+when a scan over history returns zero for a defect you have in your hand, the first hypothesis is
+that the scan is looking in the wrong place — not that you got lucky.
+
+Corollary worth keeping: the 2.03% arrow figure is a frequency *for arrows*, and it would read
+perfectly well in a report as a frequency for this defect. Label a measurement with what it
+counted, not with what you went looking for.
+
+## #178 — A guard that defers to another component must use that component's own test (2026-10-01)
+
+The regression gate went 49/51 after a day of fixes that each measured clean on their own. Case
+#4, reproduced deterministically:
+
+```
+Q  "Project the noise level in the atrium for the next 12 hours and show the error of each
+    candidate model."
+[ttl-route] capability via ontology triples: ['Working Hours']
+[routing-contract] capability_measurand_is_data stood down: 1 amenity triples match
+[capability] topics ['Working Hours'] match words but are not the subject — not answering
+A  "I could not find this in <building>'s documents."
+```
+
+Read those three log lines together. The routing contract **stopped** sending a forecast question
+to a data lane, on the grounds that the building's own amenity triples claimed it. One stage
+later the lane holding that claim **discarded it** as not being what the question is about. The
+forecast lane never ran, and the reader was told the building has no documents about it.
+
+'Working Hours' had matched the word "hours" inside "the next 12 hours".
+
+The stand-down was keyed on `len(resolver.resolve(q))` — a count of amenities whose *vocabulary
+the question's words touched*. Its premise, written in its own comment, is that *the building's
+own triples know what this question is about*. Those are different claims, and the second one was
+already being computed — by `capability_agent._is_subject`, one stage too late to change the lane.
+Measured over the 4,060-question bank: of the 2,022 questions that match an amenity and ask for no
+value, **30** have an amenity as their subject. The premise was false for 98.5% of the set the
+rule keyed on.
+
+**The rule: when component A stands down in favour of component B, A must ask the question B will
+ask, not a cheaper proxy for it.** A proxy that is *correlated* with B's answer is the dangerous
+case, because it works until the day it doesn't and the failure looks like neither component's
+fault — the contract logs a reasonable decision, the lane logs a reasonable decision, and the
+answer is wrong.
+
+The fix was to delete the proxy and move B's test somewhere both can call: `topic_is_the_subject`
+now lives beside `leftover_content_words`, and the closure was **removed** rather than copied. A
+copy would have recreated BUG-947 exactly — the decline pointer and the register selector
+disagreed for months because each had its own matcher, and the pointer was the more capable one,
+so declines named the register their own selector could not reach. A test now fails if
+`def _is_subject(` reappears in the lane.
+
+Two other things this cost, both worth keeping:
+
+**I measured and rejected two fixes before this one, and rejecting them was most of the work.**
+Adding a forecast test to the "asks for a value" set moved 107 bank questions, many of them
+amenity and availability questions — the exact class the stand-down exists to protect. Widening
+the forecast regex with a bare `project\w*` matches **projector**, of which this building keeps
+records. Neither would have failed a test; both would have shipped.
+
+**Three of my own test failures were the guards being right, and one was about me.** The
+building-literal guard caught me writing the building's name into a *comment* in the routing
+contract — it scans comments on purpose, because that is how a building-specific assumption gets
+copied into code. And I verified the fix by curl with `X-Forwarded-User: facility01`, got a
+permission decline, and nearly logged it as a routing failure; the server said
+`role 'readonly' lacks access to 'noise'`. The header I typed was not the identity I got
+(lesson #169, second time in two days). The gate's own harness, which logs in properly, returned
+`#4 ok, answered -> answered, 20.4 s`.
+
+## #179 — A counted fact in the prompt is not a fact in the answer, and that is still worth doing (2026-10-01)
+
+The building was asked for a room for 12 and said there wasn't one:
+
+```
+| Rooms that can seat 12 people | 0 |
+| Rooms that have a projector   | 3 (Room 1.06, Room 2.01, Room 3.01) |
+... Because no workspace has a seat count of 12, there is no room that meets the capacity
+requirement.
+```
+
+"No workspace has a seat count **of** 12" was literally true. The `seatCount` values are 6, 8,
+10, 16, 18, 20, 22, 24, 26, 28, 30, 48 — **none is exactly twelve** — and eighteen of the
+twenty-eight are twelve or more, three of them the very rooms that answer had just named as
+having projectors. A request for 12 is satisfied by a room for 30. An exact seat count is a
+coincidence, so an equality reading returns nothing for almost any party size.
+
+The rows were already in the prompt — the lane logged `whole-register fetch: WorkspaceProfile
+(28 instances, 23 fields)`. Nothing was missing. The *arithmetic* was left to the narration,
+which is the exact thing `register_facts` was built to stop (BUG-581), and it had no line for a
+numeric floor.
+
+So I added one, and verified it reaches the prompt:
+
+```
+- THE SIZE IN THE QUESTION IS A MINIMUM, NOT AN EXACT VALUE. 18 of 28 records with a
+  recorded seatCount are 12 or MORE: WS-01 (48), WS-26 (30), ... A record of 48 satisfies a
+  request for 12. NEVER say none meets it because no value equals 12 exactly.
+```
+
+**Then measured what the reader actually gets, three asks, cache flushed before each. The
+fabricated "no" is gone 3 of 3. The right answer appears 1 of 3.** The other two decline
+honestly and never use the count.
+
+The temptation is to call that a failure, and the opposite temptation is to call it a fix. It is
+neither. The defect moved from *confidently wrong* to *inconsistently useful*, and those are not
+the same severity: a wrong "no" is acted on, a missing answer is asked again. This project's own
+framing — a visible failure beats an invisible one — makes that a real gain, and saying so
+honestly requires also saying the question is still only answered a third of the time.
+
+**The rule: a deterministic fact in the prompt bounds what the answer can CLAIM, not what it will
+SAY.** Putting the arithmetic in code reliably removes the fabrication, because the narration can
+no longer compute a contradicting number. It does not reliably produce the answer, because
+nothing compels the narration to read the line. Measure both — the claim and the use — and quote
+them separately. A fix reported as "verified live" on the strength of one good ask would have
+been an overclaim, and the first post-fix ask I ran was in fact one of the declines; I nearly
+attributed that decline to my own change before checking that the counted line was present in
+the prompt regardless.
+
+Corollary for anything written into a facts block: it is competing for attention with everything
+else in a 4,632-character handover. The win is in what it forbids.
+
+## #180 — Sixty-one tests passed every time I ran them and guarded nothing (2026-10-01)
+
+I wrote three test files today, ran each one, and watched 61 tests pass. They were outside the
+suite that gates a commit the entire time.
+
+The `unit` marker in this repo is explicit. `pytest.ini` declares it and `--strict-markers` is on,
+but strict-markers only rejects *unknown* markers — it cannot require that a file carry one, and
+no conftest applies it by filename. So an unmarked file is silently absent from every
+marker-selected run, including `pytest -m unit`, which Workflow rule 8 runs before a commit and
+which is what CI sees.
+
+**The tell was sitting in the summary line of two consecutive runs:**
+
+```
+13742 passed, 76 skipped, 1336 deselected    <- before adding 21 tests
+13742 passed, 76 skipped, 1357 deselected    <- after adding 21 tests
+```
+
+`passed` did not move. `deselected` rose by exactly 21. I only noticed because I was comparing the
+two numbers for an unrelated reason — I expected the count to go up and it hadn't.
+
+This is the same family as the settings-patch finding (a test that patched an object the product
+no longer read) and the vacuous-guard findings before it, and the common shape is the one worth
+naming: **the dangerous half of a test defect is the half that never goes red.** A test that fails
+tells you something. A test that cannot run tells you nothing, and tells it convincingly, because
+the file passes whenever you check it by hand — which is exactly when you check a file you just
+wrote.
+
+**Two rules.**
+
+First, after adding tests, read the pass count, not the word "passed". If it did not rise by the
+number you added, find out where they went. A green run is not evidence that your new tests ran.
+
+Second, the durable fix is derived, not remembered: a test that fails when any file under
+`tests/` contributes zero tests to `-m unit`. The repo already has the right precedent in
+`test_reserved_keys_have_writers.py`, which parses the source to find documented keys with no
+writer rather than trusting the prose that lists them. A note in each new file saying "the marker
+is not automatic" is what I did today, and it is the weaker fix, because it relies on the next
+author reading a file they are about to copy from.
+
+## #181 — A guard can only catch what the answer admits to (2026-10-01)
+
+Asked "What is the barometric pressure in the building?", the system answered:
+
+> **Across the building pressure is averaging 19.1 Pa**, ranging from 0.0 to 51.5 Pa
+
+with a tidy per-floor table of six sensors. The six are all *"Air Handling Unit — Floor N filter
+differential pressure"*, typed `Filter_Differential_Pressure_Sensor` — the pressure drop across
+an air-handling unit's filter, which tells you the filter is clogging. Barometric pressure is
+about **101,325 Pa**. The building holds no barometric sensor at all.
+
+The lane had already noticed. Before answering it logged:
+
+```
+[aggregate] qualifier 'barometric' not carried by all 6 bound sensor names — keeping 'pressure'
+```
+
+It detected the mismatch, dropped the reader's qualifier, and said nothing about having done so.
+The reasoning written beside that branch was that the coarse name is "at least not a claim about
+a quantity nobody measured" — which is true of the *name* and irrelevant to the *figures*.
+
+What interests me is why the answer-relevance gate, which exists to catch exactly this, stayed
+silent. It was not broken and it was not mis-tuned. **The answer called itself "pressure", and
+"pressure" is not off-topic for a question about pressure.** The gate was reading an honest label
+on dishonest contents.
+
+So the fix was not a new guard. It was to make the answer name the quantity the *sensors* carry —
+the words every bound label shares — instead of the coarse word. One restart later:
+
+```
+[aggregate] ... naming what they DO carry: 'AHU Filter DP pressure'
+[response] relevance gate replaced a sensor_data answer: OFF_TOPIC
+           (Provides AHU filter pressure, not barometric pressure.)
+```
+
+The gate declined on its own, and the decline correctly states that the records *were* read.
+
+**The rule: before adding a guard, check whether an existing one is being lied to.** A guard
+reads what the answer says about itself. Upstream mislabelling makes it blind without making it
+wrong, and the symptom — "the guard didn't fire" — points at the guard, which is the one place
+the defect isn't. Today that misdirection was one layer deep; the general form is that every
+suppressor in a pipeline is only as good as the honesty of the stage that labels its input.
+
+Two smaller things from the same fix, both of which cost me a probe each:
+
+**The labels a component judges may not be the labels the graph holds.** The graph's `rdfs:label`
+is the full phrase; the lane receives `metadata[uuid]["label"]`, which live is `'AHU F5 Filter
+DP'` — "differential pressure" abbreviated to "DP". My first version read leftwards from the word
+"pressure" and found nothing, so it changed the behaviour not at all while passing its own tests
+on the labels I had assumed. **A decision log that records its verdict without its inputs cannot
+be diagnosed** — I added the labels to that log line and the cause was obvious in one read.
+
+**And a test I wrote caught me widening it too far.** The fallback "use the words every label
+shares" is meaningless for a single label, where it is just that label's own words — so one
+sensor named for a different quantity would have been read as naming this one. The test asserting
+the old fall-back behaviour failed, correctly, and the guard became "at least two labels".
+
+## #182 — The provider died and the system kept answering honestly, which hid the outage from the measurement (2026-10-01)
+
+Tail O's first pass read 45% acceptable. The second pass, after one fix to the environment, read
+60%. Nothing about the system changed between them.
+
+Ollama had died. The host restarted Docker, took the local model server down with it, and it did
+not come back — `ollama.exe` absent from the process list, `127.0.0.1:11434` returning nothing,
+and the orchestrator logging `circuit breaker is OPEN — the ollama provider has been
+unresponsive` **134 times**. Fourteen of sixty answers were provider failures.
+
+Here is what makes it a lesson rather than an anecdote. **The system did not error.** It returned
+
+> *"I wasn't able to generate an answer just now. Please try asking again in a moment."* (×6)
+> *"Here are the readings themselves. The readings could not be summarised. No conclusion has
+> been drawn from them."* (×8)
+
+Every one of those is honest, well-worded, and correct behaviour for a component whose model is
+unreachable. The circuit breaker worked. The lane fallbacks worked. And that is precisely why the
+outage was invisible in the artefact: **from the answer alone, "the model is down" is
+indistinguishable from "the building cannot answer that."** I labelled fourteen answers against a
+dead provider and would have published the number if I had not noticed that eight of them shared
+a suspiciously specific phrase.
+
+Two rules, and the second is the one I will actually need again.
+
+**Check the provider before and after any quality run, not just the stack.** `/health` returning
+200 says the orchestrator is up; it says nothing about the model behind it. The two cheap checks
+are `curl 127.0.0.1:11434/api/tags` and
+`docker logs --since <run> | grep -c "circuit breaker is OPEN"`. A non-zero breaker count
+invalidates the run. Both take a second and neither was in my procedure.
+
+**And when a quality number moves, suspect the apparatus before the system — including the parts
+of the apparatus that are not instruments.** This project has recorded the measuring apparatus
+being wrong about a dozen times now: a grader, a truncating terminal, a mislabelled identity, an
+in-sample precision figure. The provider is a new member of that family and the widest one yet,
+because it degrades *gracefully*. A broken grader produces an obviously odd number. A dead model
+produces a plausible one.
+
+The corollary worth building: a provider outage currently reaches the reader as fourteen separate
+honest non-answers rather than one visible "the model is unavailable" state. For a trial that
+distinction decides whether a user retries or concludes the building knows nothing. The breaker
+already has the fact; nothing the reader sees carries it (CAVEAT-1409).

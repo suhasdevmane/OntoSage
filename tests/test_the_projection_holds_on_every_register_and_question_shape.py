@@ -104,7 +104,9 @@ def test_a_list_names_each_record_at_most_once(document):
 def test_the_guard_never_raises_on_a_denial_over_any_register(document):
     rows, label = lifted_rows(document)
     narration = "The register does not contain an ownership field.\n\nNo due date is recorded."
-    for question in QUESTIONS[:8]:
+    probes = QUESTIONS[:8]
+    assert len(probes) == 8, f"only {len(probes)} question shapes are declared"
+    for question in probes:
         out = rp.guard_narration(narration, rows, question, label, TODAY)
         assert isinstance(out, str) and out
         assert not _PLACEHOLDER.search(out), (document, question, out)

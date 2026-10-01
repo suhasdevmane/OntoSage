@@ -80,6 +80,11 @@ Reserved keys (do not overwrite):
   file claimed for months and which nothing has ever written to the bus; it is a local
   variable name inside `document_agent` and `main`.
 - `visualization_path` — set by visualization node
+- `session_summary` — set by `main._inject_session_summary` BEFORE the graph runs, on every
+  chat entry point (W5-01/W5-02). The rolling, bounded, figure-free account of turns older
+  than the Redis working window. Read by `dialogue_agent.rewrite_to_standalone`; cleared by
+  `_response_node` because it is rebuilt from `turn_memory` every turn. It carries no text
+  derived from any past ANSWER, so nothing in it may be restated as a current value.
 - `error` — set by _safe_node on failure
 
 ## 4. Error Handling Inside Nodes

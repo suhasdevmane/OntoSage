@@ -79,9 +79,49 @@ def test_the_subject_is_read_from_the_question(question, subject):
     assert aw.subject_of(question) == subject
 
 
-def test_a_question_with_no_recognisable_subject_gets_a_generic_but_honest_sentence():
+def test_a_question_with_no_recognisable_subject_does_not_claim_the_records_are_empty():
+    """BUG-1271. This asserted `"I found nothing in B's records that answers that."` — a claim
+    about the WORLD, emitted on the branch reached when the system cannot tell what the question
+    is ABOUT.
+
+    `_SUBJECT_PATTERNS` are all existence-shaped ("is there a", "how many", "where is"), so any
+    VALUE question falls here. Measured live in one tail-N run, same reader, minutes apart:
+    "What is the average sound level?" got that sentence, while "does the building sound feel
+    good" was answered from 233 sensors — and the graph holds 235 sound/noise sensors with a
+    timeseries. The sentence was false.
+
+    "I could not tell what you are asking about" and "we hold nothing on that" are different
+    facts. Only the second may be worded as a statement about the records, and this branch
+    cannot know it.
+    """
     out = aw.rewrite_semantic_absence(WAVE1_PROSE, "tell me stuff", "B")
-    assert out == "I found nothing in B's records that answers that."
+    assert "found nothing in" not in out, (
+        "this branch cannot know the records are empty — it is reached when the SUBJECT could "
+        f"not be read from the question: {out!r}"
+    )
+    assert out.lower().startswith("i couldn't tie that question to a reading")
+
+
+def test_the_no_subject_sentence_is_still_seen_as_a_decline_by_the_gate():
+    """A new decline phrasing is read as an ANSWER by every consumer that classifies on the
+    first sentence (lessons #141: one question produced three honest decline wordings in a day
+    and moved the measured decline rate without the system changing).
+
+    So the opening above is reused VERBATIM from `too_broad_reply`, which is already in
+    `regression_answerability._DECLINE_MARKERS`. This test fails if that stops being true."""
+    import importlib.util
+    from pathlib import Path
+
+    path = Path(__file__).resolve().parent.parent / "scripts" / "regression_answerability.py"
+    spec = importlib.util.spec_from_file_location("_ra", path)
+    ra = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(ra)
+
+    sentence = aw.absence_sentence("", "Abacws Building").lower()
+    assert any(sentence.startswith(marker) for marker in ra._DECLINE_MARKERS), (
+        "the no-subject sentence no longer opens with a known decline marker, so the "
+        f"regression gate would score it as an ANSWER: {sentence[:90]!r}"
+    )
 
 
 def test_both_phrasings_of_the_same_question_get_the_same_sentence():

@@ -54,9 +54,16 @@ def test_tier_never_changes_the_status_vocabulary():
 def test_personas_do_not_appear_in_the_permission_map():
     """Personas frame; RBAC permits. The moment a persona grants anything, they have merged."""
     persona_words = {"executive", "visitor", "student", "researcher", "occupant_persona"}
+    checked = 0
     for role, perms in ROLE_PERMISSIONS.items():
         for perm in perms:
-            assert perm.split(":")[0] not in persona_words
+            checked += 1
+            assert perm.split(":")[0] not in persona_words, (role, perm)
+    # Without this, an empty (or empty-valued) permission map reports that personas and RBAC
+    # have not merged, having examined no permission (lessons #20, CAVEAT-1115).
+    assert (
+        checked >= len(ROLE_PERMISSIONS) and checked > 0
+    ), f"only {checked} permissions were examined across {len(ROLE_PERMISSIONS)} roles"
 
 
 def test_a_lower_tier_holds_a_subset_not_a_variant():
@@ -74,8 +81,15 @@ def test_a_lower_tier_holds_a_subset_not_a_variant():
 
 
 def test_admin_is_a_superset_of_every_role():
+    assert set(ROLES).issubset(
+        ROLE_PERMISSIONS
+    ), f"the permission map does not cover every role: {sorted(set(ROLES) - set(ROLE_PERMISSIONS))}"
     for role, perms in ROLE_PERMISSIONS.items():
-        assert perms.issubset(ROLE_PERMISSIONS["admin"])
+        assert perms, f"{role} holds no permissions, so 'admin is a superset' is vacuous for it"
+        assert perms.issubset(ROLE_PERMISSIONS["admin"]), (
+            role,
+            sorted(perms - ROLE_PERMISSIONS["admin"]),
+        )
 
 
 def test_no_role_can_see_a_value_another_role_sees_differently():

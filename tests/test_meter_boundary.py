@@ -361,19 +361,64 @@ def test_the_boundary_is_appended_after_persona_formatting():
 def test_the_boundary_also_rides_in_the_payload_for_the_numeric_guard():
     """ "Floor 2" puts a "2" in the prose. The numeric guard checks every number against the
     payload's fields, and an unbacked one suppresses the whole answer (V6-T26)."""
+    import ast
     from pathlib import Path
 
     src = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
-    block = src[src.index("_boundary_line = await self._meter_boundary_line") :][:900]
-    assert '_payload["meter_boundary"] = _boundary_line' in block
+    tree = ast.parse(src)
+    # The statement the boundary call belongs to, in full -- not the first 900 characters
+    # after it, which is a bet on how much code follows (lessons #151).
+    # `get_source_segment`, not `unparse`: unparse normalises quoting, so a needle written
+    # with double quotes silently stops matching its own source.
+    blocks = [
+        ast.get_source_segment(src, n) or ""
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Try) and "self._meter_boundary_line" in (ast.unparse(n) or "")
+    ]
+    assert blocks, "the boundary call is no longer where this test can find it"
+    assert any('_payload["meter_boundary"] = _boundary_line' in b for b in blocks), (
+        "the boundary line reaches the prose but not the payload; the numeric guard will "
+        "read the place name in it as an unbacked figure and suppress the answer"
+    )
 
 
 def test_the_boundary_never_costs_the_answer():
+    """The boundary call must sit inside a `try` that catches `Exception`.
+
+    Read from the parsed tree rather than from a character window. This assertion used to be
+    ``"except Exception" in src[src.index(ANCHOR):][:900]`` and `except Exception` occurs 147
+    times in that file, so the window was one reflow away from being satisfied by a handler
+    belonging to a different statement. The counterfactual was measured -- deleting the
+    boundary's own `try` does currently move the next handler outside 900 characters, so this
+    was not yet a false pass -- but "not yet" is the whole of lesson #151. The structural
+    question (is this call guarded?) is also the question the test's name asks.
+    """
+    import ast
     from pathlib import Path
 
     src = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
-    block = src[src.index("_boundary_line = await self._meter_boundary_line") :][:900]
-    assert "except Exception" in block
+    tree = ast.parse(src)
+
+    guarded = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Try):
+            continue
+        body_src = "\n".join(ast.unparse(s) for s in node.body)
+        if "self._meter_boundary_line" not in body_src:
+            continue
+        catches_everything = any(
+            h.type is None or (isinstance(h.type, ast.Name) and h.type.id == "Exception")
+            for h in node.handlers
+        )
+        guarded.append((node.lineno, catches_everything))
+
+    assert guarded, (
+        "no try/except encloses the call to self._meter_boundary_line; a failure while "
+        "building an optional caveat would now cost the whole answer"
+    )
+    assert all(
+        c for _, c in guarded
+    ), f"the try around self._meter_boundary_line does not catch Exception: {guarded}"
 
 
 def test_an_answer_with_no_figure_gets_no_boundary_line():

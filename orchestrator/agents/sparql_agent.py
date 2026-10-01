@@ -347,8 +347,12 @@ Building Ontology Data:
 Instructions:
 1. Carefully read the building data above
 2. Answer concisely and accurately using what you find
-3. If the user asks for a sensor type that is NOT in the ontology, clearly state:
-   "This building does not have [sensor type] sensors." Then suggest what IS available.
+3. The data above is WHAT ONE QUERY RETURNED, not an inventory of the building. If a sensor
+   type the user asked about is not in it, say so ABOUT THE SEARCH — "I could not find
+   [sensor type] in the records I searched" — and then suggest what IS above. NEVER write that
+   the building does not have it, does not contain it, or has none installed: you cannot see
+   what this query did not ask for. For the same reason, never advise anyone to install,
+   buy or fit equipment.
 4. Only claim a sensor or sensor type exists if it appears in the Building Ontology Data above — never assume sensors that are not shown there (this system serves any building, so the available sensors are whatever the data above lists). Real sensors carry a timeseries UUID + a storedAt reference.
 5. If you find a label (rdfs:label) or definition, include it
 6. Format your answer clearly (use bold for key values, bullets for lists)
@@ -1153,6 +1157,38 @@ Your Answer:"""
                 merged.append(out)
         return {"head": {"vars": columns}, "results": {"bindings": merged}}, columns
 
+    async def _tokens_present_in_register(self, tokens: List[str]) -> List[str]:
+        """Which of these tokens name an instrument the metrology register actually holds.
+
+        Order is preserved, and a token matching no sensor IRI is dropped. One query for
+        the whole list: a scope check that costs a round trip per word would be paid on
+        every calibration question asked.
+
+        On any failure the tokens are returned UNCHANGED — this narrows a scope, and a
+        lookup that could not run must not silently widen one.
+        """
+        if not tokens:
+            return []
+        values = " ".join(f'"{self._escape_literal(t)}"' for t in tokens)
+        query = (
+            "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
+            "SELECT ?tok (COUNT(DISTINCT ?sensor) AS ?n) WHERE {\n"
+            f"  VALUES ?tok {{ {values} }}\n"
+            "  ?sensor ontosage:archivalIntervalS ?iv .\n"
+            "  FILTER(CONTAINS(LCASE(STR(?sensor)), ?tok))\n"
+            "} GROUP BY ?tok"
+        )
+        try:
+            raw = await self._execute_query(query)
+        except Exception as exc:
+            logger.warning(f"[sparql] metrology scope check failed, keeping scope: {exc}")
+            return list(tokens)
+        present = {
+            (row.get("tok") or {}).get("value", "")
+            for row in (raw or {}).get("results", {}).get("bindings", [])
+        }
+        return [t for t in tokens if t in present]
+
     async def _instrument_metrology(self, user_query: str) -> Optional[Dict[str, Any]]:
         """Answer a calibration or reporting-interval question from the declaration.
 
@@ -1183,8 +1219,41 @@ Your Answer:"""
         # was "none of the listed URIs contain a CO2 sensor". Correct about its input and
         # useless, from a graph holding 280 of them.
         tokens = self._scope_tokens(user_query)
+        user_named_the_scope = bool(tokens)
         if not tokens:
             tokens = self._measurand_tokens(user_query)
+
+        # THE SCOPE IS CHECKED AGAINST THE REGISTER BEFORE IT IS USED (W3-02).
+        #
+        # `_measurand_tokens` is a DENYLIST — every word not in a hand-written stopword
+        # set becomes a scope — and a denylist over English cannot be finished. Measured
+        # 2026-09-29 on two phrasings of ONE question, routed identically
+        # (intent=metadata -> node=sparql, no overrides):
+        #
+        #   "How many sensors are overdue for calibration?"
+        #       -> 268 overdue of 1,929 with a regime.       CORRECT
+        #   "How many sensors are overdue for calibration, and what does that mean for
+        #    the answers you give me?"
+        #       -> "it does not contain any field that records whether a sensor is
+        #          overdue for calibration"                  FALSE, about 1,929 records
+        #
+        # The clause the second one built was
+        # FILTER(CONTAINS(...,"mean") || ..."answers" || ..."you" || ..."give"), which
+        # returns zero rows; this method then returned None and the question fell through
+        # to a generated query that cannot see these properties and denied they exist.
+        # Four ordinary words turned the register off.
+        #
+        # So the GRAPH decides what scopes, not a word list: a token that matches no
+        # instrument in the register scopes nothing and is dropped. Building-agnostic —
+        # it asks the active building's own register which of its own names match.
+        matched = await self._tokens_present_in_register(tokens)
+        dropped = [t for t in tokens if t not in matched]
+        if dropped:
+            logger.info(
+                f"[sparql] metrology scope dropped {dropped} — no instrument in the "
+                f"register carries those; kept {matched}"
+            )
+        tokens = matched
         scope = ""
         if tokens:
             clauses = " || ".join(
@@ -1240,6 +1309,16 @@ Your Answer:"""
             f"[sparql] instrument metrology: {len(bindings)} sensor(s) "
             f"{'scoped by ' + ', '.join(tokens) if tokens else 'building-wide'}"
         )
+        # A scope the USER named that matched no instrument is stated, never swallowed.
+        # Dropped MEASURAND guesses are not mentioned: they are this method's inference,
+        # and "no metrology is declared for 'answers'" would be nonsense to a reader.
+        unscoped_note = ""
+        if user_named_the_scope and not tokens:
+            unscoped_note = (
+                " The question named a scope that matches no instrument in this register, "
+                "so these are the BUILDING-WIDE figures. Say so in one clause before giving "
+                "them."
+            )
         guidance = (
             f"{user_query}\n\n"
             "(These are the instrument's DECLARED metrology, read from the building's "
@@ -1248,7 +1327,7 @@ Your Answer:"""
             "the spacing of readings, which reflects whatever window happened to be "
             "fetched. A blank calibration field means the stream is a state or contact "
             "signal that is verified rather than calibrated, not that a calibration is "
-            "missing. Answer only from these rows.)"
+            f"missing. Answer only from these rows.{unscoped_note})"
         )
         results = raw
         # Formatted by the SAME helpers as a generated query, so this reads like every
@@ -1731,7 +1810,9 @@ Your Answer:"""
         try:  # 2D-06: a lookup the rows settle (or a whole-subject state question) skips the model
             from orchestrator.services import register_projection as _rp
             from orchestrator.services.record_registry import record_classes as _rc0
-            from orchestrator.services.requested_interval import building_local_now as _bln0
+            from orchestrator.services.requested_interval import (
+                building_local_now as _bln0,
+            )
 
             _rows_answer = await _rp.answer_before_narration(
                 user_query,
@@ -1766,7 +1847,9 @@ Your Answer:"""
             logger.warning(f"[sparql] completeness line skipped: {type(exc).__name__}: {exc}")
         try:  # W19 + 2D-06: a denial of a field the rows hold is REPLACED by its values.
             from orchestrator.services import register_projection as _rp
-            from orchestrator.services.requested_interval import building_local_now as _bln
+            from orchestrator.services.requested_interval import (
+                building_local_now as _bln,
+            )
 
             if not _rows_answer:
                 _narration = _rp.guard_narration(
@@ -2972,11 +3055,30 @@ SELECT ?sensor ?label ?type ?uuid ?storage WHERE {{
         ]
         _no_equip = not any(w in uq for w in _equip_words_t1)
         _no_zones = not any(w in uq for w in zone_words)
+        # A QUESTION THAT RESOLVED A SENSOR CLASS IS NOT A FLOOR-LISTING QUESTION (BUG-1271).
+        # `floor_words` contains "level", so "What is the average sound LEVEL?" matched here and
+        # was answered with a list of 8 floors. Measured live: the HBCO concept resolved
+        # `ontosage:Sound_Level_Sensor` (233 instances) on the line BEFORE this branch fired, and
+        # this branch never looked at it — then `[analytics] No UUIDs found — no specific sensor
+        # type detected`, the relevance gate correctly called the floor list off-topic, and the
+        # reader was told the building holds nothing about sound. 235 sound sensors do.
+        #
+        # MEASURED over both corpora: **284 questions** say "<quantity> level(s)" — 269 of them in
+        # the REAL survey corpus, 3.8% of everything 96 participants asked. And in that corpus
+        # **zero** questions use "level <n>" for a storey; only the synthetic bank does (22).
+        # So among real users "level" after a quantity word never means storey.
+        #
+        # Keying on the RESOLVED CLASS rather than on a word list is what makes this safe: it
+        # also stops "which floor is the warmest?" being answered with a floor inventory, and it
+        # cannot over-capture, because a genuine "how many floors are there?" resolves no sensor
+        # concept and is untouched.
+        _is_quantity_question = bool(concept_class)
         if (
             any(w in uq for w in floor_words)
             and features["wants_count"]
             and _no_zones
             and _no_equip
+            and not _is_quantity_question
         ):
             return (
                 self._prefix_block()
@@ -2985,7 +3087,13 @@ SELECT (COUNT(DISTINCT ?floor) AS ?count) WHERE {
   { ?floor a brick:Floor . } UNION { ?floor a brick:Level . }
 }"""
             )
-        if any(w in uq for w in floor_words) and not entities and _no_zones and _no_equip:
+        if (
+            any(w in uq for w in floor_words)
+            and not entities
+            and _no_zones
+            and _no_equip
+            and not _is_quantity_question  # BUG-1271, see the note above
+        ):
             return (
                 self._prefix_block()
                 + """
@@ -3989,6 +4097,15 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_
     #: modality; the cap is a guard against a pathological building, not a sample.
     _FLOOR_POINT_CAP = 200
 
+    #: At or below this many readable instances, a resolved class IS the answer and the extracted
+    #: entity tokens are not made a second hurdle (CAVEAT-892). The tokens restate the class
+    #: ("Outdoor_Temperature_Sensor"), so above the cap they narrow and below it they can only
+    #: lose a correctly typed point to a vocabulary difference — which is exactly what happened:
+    #: a one-instance class was overruled because the point's label says "outside" and the
+    #: question said "outdoor". A whole floor's worth of one modality here is 48-56 points, so
+    #: this sits well below "a place's sensors" and well above "the sensor for this quantity".
+    _CLASS_IS_THE_ANSWER_CAP = 12
+
     async def _resolve_floor_structurally(
         self,
         name: str,
@@ -4126,6 +4243,84 @@ SELECT DISTINCT ?s WHERE {{
                 for t in tokens
             )
             hay = 'BIND(LCASE(CONCAT(STR(?s), " ", COALESCE(STR(?l), ""))) AS ?hay)'
+            # THE RESOLVED CLASS OUTRANKS A WORD IN A LABEL (CAVEAT-892).
+            #
+            # The lay-term resolver has already decided which quantity the question is about;
+            # this function was handed that decision as `class_hints` and used it only for
+            # floors. So a label match could beat it. Measured 2026-09-29: "what is the outdoor
+            # temperature right now?" resolved `outdoor_temperature -> Outside_Air_Temperature_
+            # Sensor`, of which this building has exactly one instance — the live Open-Meteo
+            # feed — and then bound `GreenRoof_Ambient_Temp_Sensor` instead, because its label
+            # reads "Ambient Temperature Sensor - Green Roof (OUTDOOR reference)" and the feed's
+            # auto-generated label says "outside". A synthetic roof sensor answered a question
+            # about the weather.
+            #
+            # Tried FIRST and only as a PREFERENCE: no hits means fall straight through to the
+            # label queries below, so a building whose points are typed differently, or a
+            # question whose concept resolved to nothing, behaves exactly as before.
+            # THE FIRST VERSION OF THIS PUT EVERY HINTED CLASS IN ONE `VALUES` AND MADE THE BUG
+            # WORSE, NOT BETTER. `class_hints` is every Brick class of every resolved concept
+            # flattened together, so for the outdoor question it held the SPECIFIC class and the
+            # broad ones — `Outside_Air_Temperature_Sensor`, `Air_Temperature_Sensor`,
+            # `Temperature_Sensor`. Measured against the live graph 2026-09-29:
+            # `Outside_Air_Temperature_Sensor` has exactly ONE instance, the Open-Meteo feed;
+            # `GreenRoof_Ambient_Temp_Sensor` is not that class at all, but IS an
+            # `Air_Temperature_Sensor`. So the broad class let it in, and then the token filter
+            # — which requires the word "outdoor" — threw out the correctly typed feed, whose
+            # label says "outside", and kept the roof sensor, whose label says "outdoor
+            # reference". The class was resolved, included and then overruled by a word.
+            #
+            # Two corrections, both narrowing:
+            #   1. Use the MOST SPECIFIC hinted class that has readable instances, not their
+            #      union. Specificity is asked of the graph (fewest instances) rather than
+            #      guessed from the name, because `class_hints` carries no ordering.
+            #   2. When that class is narrow enough to BE the answer, drop the token filter.
+            #      The tokens are the entity name the classifier extracted
+            #      ("Outdoor_Temperature_Sensor") — a restatement of the class, not extra
+            #      information — so making them a second hurdle can only lose correctly typed
+            #      points to a vocabulary difference. Above the cap the class is too broad to
+            #      stand alone and the tokens still narrow it.
+            _hint_classes = [str(c) for c in (class_hints or []) if str(c).strip()][:8]
+            _typed_hits = []
+            if _hint_classes:
+                _seen_cls = []
+                for _c in _hint_classes:
+                    _q = _c if ":" in _c else f"brick:{_c}"
+                    if _q not in _seen_cls:
+                        _seen_cls.append(_q)
+                _counts = await self._count_readable_instances(_seen_cls, bldg_ns)
+                _ranked = sorted((n, c) for c, n in _counts.items() if n > 0)
+                for _n, _cls in _ranked[:3]:
+                    _tok_filter = (
+                        "" if _n <= self._CLASS_IS_THE_ANSWER_CAP else f"FILTER({filters})"
+                    )
+                    _typed = f"""{self._prefix_block()}
+SELECT DISTINCT ?s WHERE {{
+  ?s a {_cls} ; ref:hasExternalReference ?r .
+  OPTIONAL {{ ?s rdfs:label ?l }}
+  {hay}
+  FILTER(STRSTARTS(STR(?s), '{bldg_ns}'))
+  {_tok_filter}
+}} LIMIT {limit}"""
+                    try:
+                        _typed_hits = await self._select_subjects(_typed, bldg_ns, bldg_pfx)
+                    except Exception as _texc:  # pragma: no cover - the label path still answers
+                        logger.warning(f"[sparql] class-preferred resolution skipped: {_texc}")
+                        _typed_hits = []
+                    if _typed_hits:
+                        _used_cls, _used_n = _cls, _n
+                        break
+                if _typed_hits:
+                    if _used_n > self._CLASS_IS_THE_ANSWER_CAP:
+                        _typed_hits = self._narrow_to_best_match(_typed_hits, user_query)
+                    logger.info(
+                        f"[sparql] '{name}' resolved by CLASS {_used_cls} (n={_used_n}, "
+                        f"tokens {'ignored' if _used_n <= self._CLASS_IS_THE_ANSWER_CAP else 'applied'}) "
+                        f"rather than by label: {_typed_hits[:3]}"
+                    )
+                    resolved.extend(h for h in _typed_hits if h not in resolved)
+                    ts_bearing.update(_typed_hits)
+                    continue
             # Timeseries-bearing points first, then any typed entity.
             queries = [
                 f"""{self._prefix_block()}
@@ -4205,6 +4400,46 @@ SELECT DISTINCT ?e WHERE {{
 
         ns = _active_namespace()
         return [e for e in safe if f"{ns}{e.split(':', 1)[1]}" in found]
+
+    async def _count_readable_instances(
+        self, classes: Sequence[str], bldg_ns: str
+    ) -> Dict[str, int]:
+        """How many readable points each class has in THIS building — the specificity ranking.
+
+        `class_hints` arrives unordered and mixes a concept's specific class with its parents, so
+        something has to say which is narrowest. Asking the graph is right where guessing from the
+        name is not: Brick happens to name subclasses by prefixing their parent
+        (`Outside_Air_Temperature_Sensor` < `Air_Temperature_Sensor`), but a building's own
+        classes need not, and a class the building has never instantiated must rank nowhere at
+        all rather than ahead of one it uses. Counting only points that carry a timeseries
+        reference means the ranking answers the question actually being asked — which class can
+        be READ — not merely which is smallest.
+
+        Returns {} on any failure, which makes the caller fall through to the label path.
+        """
+        if not classes:
+            return {}
+        _values = " ".join(classes)
+        q = f"""{self._prefix_block()}
+SELECT ?cls (COUNT(DISTINCT ?s) AS ?n) WHERE {{
+  VALUES ?cls {{ {_values} }}
+  ?s a ?cls ; ref:hasExternalReference ?r .
+  FILTER(STRSTARTS(STR(?s), '{bldg_ns}'))
+}} GROUP BY ?cls"""
+        try:
+            raw = await self._execute_query(q)
+            out: Dict[str, int] = {}
+            by_uri = {c: c for c in classes}
+            for b in (raw or {}).get("results", {}).get("bindings", []):
+                uri = (b.get("cls") or {}).get("value") or ""
+                local = uri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+                for c in by_uri:
+                    if c.rsplit(":", 1)[-1] == local:
+                        out[c] = int((b.get("n") or {}).get("value") or 0)
+            return out
+        except Exception as e:  # pragma: no cover - the label path still answers
+            logger.warning(f"[sparql] class specificity ranking skipped: {e}")
+            return {}
 
     async def _select_subjects(self, query: str, bldg_ns: str, bldg_pfx: str) -> List[str]:
         """Run a SELECT ?s query and return <prefix>:LocalName forms."""
@@ -4720,6 +4955,86 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
 
         return None
 
+    #: The most rows a labelling round-trip is worth paying for. Above this the answer is a
+    #: listing the narration already truncates, so a second query buys nothing a reader reads.
+    _LABEL_LOOKUP_MAX_ROWS = 40
+
+    #: A variable whose values a reader can already read. If any row carries one of these the
+    #: rows are not bare and nothing is fetched.
+    _LABELLISH_RE = re.compile(r"label|name|title|comment|description", re.IGNORECASE)
+
+    #: Written in full rather than as `rdfs:` so the query needs no prefix block and cannot be
+    #: broken by one.
+    _RDFS_LABEL_IRI = "<http://www.w3.org/2000/01/rdf-schema#label>"
+
+    async def _label_bare_subjects(self, bindings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Give rows that identify things only by IRI a human label (BUG-955).
+
+        Returns the bindings unchanged — the same list object — whenever it cannot help, so
+        every ordinary result is untouched and no answer can be delayed by more than the one
+        bounded lookup this makes.
+
+        FOUR CONDITIONS, all required. The rows must be few enough to be read individually;
+        no variable may already carry something readable; exactly ONE variable may hold IRIs,
+        because with two there is no way to say which one the label belongs to; and the
+        lookup must succeed. Anything else and the rows go through as they are.
+        """
+        rows = [b for b in bindings if isinstance(b, dict)]
+        if not rows or len(rows) > self._LABEL_LOOKUP_MAX_ROWS:
+            return bindings
+        if any(self._LABELLISH_RE.search(str(var)) for row in rows for var in row):
+            return bindings
+
+        uri_vars = {
+            var
+            for row in rows
+            for var, cell in row.items()
+            if isinstance(cell, dict) and cell.get("type") == "uri"
+        }
+        if len(uri_vars) != 1:
+            return bindings
+        var = next(iter(uri_vars))
+        iris = []
+        for row in rows:
+            value = str(((row.get(var) or {}).get("value") or "")).strip()
+            if value.startswith(("http://", "https://")) and value not in iris:
+                iris.append(value)
+        if not iris or len(iris) > self._LABEL_LOOKUP_MAX_ROWS:
+            return bindings
+
+        values = " ".join(f"<{i}>" for i in iris)
+        query = (
+            f"SELECT ?subject ?label WHERE {{ VALUES ?subject {{ {values} }} "
+            f"?subject {self._RDFS_LABEL_IRI} ?label . }}"
+        )
+        try:
+            found = await self._execute_query(query)
+            labels = {
+                str((b.get("subject") or {}).get("value") or ""): str(
+                    (b.get("label") or {}).get("value") or ""
+                )
+                for b in (found.get("results", {}).get("bindings", []) or [])
+            }
+        except Exception as exc:  # a missing label must never cost the answer
+            logger.debug(f"[sparql] label lookup skipped: {type(exc).__name__}: {exc}")
+            return bindings
+        labelled = {k: v for k, v in labels.items() if v}
+        if not labelled:
+            return bindings
+
+        out: List[Dict[str, Any]] = []
+        for row in rows:
+            copy = dict(row)
+            label = labelled.get(str(((row.get(var) or {}).get("value") or "")))
+            if label:
+                copy["label"] = {"type": "literal", "value": label}
+            out.append(copy)
+        logger.info(
+            f"[sparql] labelled {len(labelled)} of {len(iris)} bare IRI(s) in ?{var} "
+            "for the narration"
+        )
+        return out
+
     async def _format_results(
         self,
         results: Dict[str, Any],
@@ -4757,6 +5072,15 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
 
         if not bindings:
             return "No results found for your query."
+
+        # A READER CANNOT ACT ON A HASH (BUG-955). Asked three times, "are there any
+        # unacknowledged alarms?" named its alarms `AlarmEvent_de870f7551565e9db97a0c21168cb124`
+        # in two runs of three — the raw IRI fragment — while the graph carries
+        # "Frost protection trip - Air Handling Unit — Floor 4" on every one. Whether the
+        # reader gets a name depended on whether the generated SELECT happened to ask for
+        # ?label, which is exactly the kind of thing a generator varies between runs. The
+        # rows are labelled here instead, so it no longer depends on that.
+        bindings = await self._label_bare_subjects(bindings)
 
         # Special formatting for label+definition queries
         uq = user_query.lower()
@@ -4834,6 +5158,12 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
         count_note = self._count_meaning(sparql_query)
         if count_note:
             result_text = count_note + "\n\n" + result_text
+        # WHAT THE ROWS ARE, when the query selected them for a MISSING property (BUG-955).
+        # The rows cannot show it: the filter removed every record that carries it, so the
+        # column the narrator needs is the one it will never see.
+        selection_note = self._absence_selection_meaning(sparql_query, len(bindings))
+        if selection_note:
+            result_text = selection_note + "\n\n" + result_text
 
         if len(bindings) > limit:
             result_text += f"\n... and {len(bindings) - limit} more results (truncated for brevity)"
@@ -4965,6 +5295,21 @@ Example 3 (Equipment List):
 
 Generate your response now:"""
 
+        # THE COUNT IS STATED BY THE CODE, NOT BY THE NARRATOR (BUG-955). Empty for every
+        # query that did not select on a missing property, so no other answer gains a line.
+        lead = self._absence_selection_lead(sparql_query, len(bindings))
+
+        def _with_lead(text: str) -> str:
+            """The narration under a count it cannot contradict."""
+            answer = (text or "").strip()
+            if not lead:
+                return answer
+            logger.info(
+                f"[sparql] absence-selected result: stated {len(bindings)} deterministically "
+                f"({', '.join(self._absent_properties(sparql_query))} absent)"
+            )
+            return f"{lead}\n\n{answer}" if answer else lead
+
         if used_template:
             # For template queries, always use LLM formatting for better UX
             try:
@@ -4975,7 +5320,7 @@ Generate your response now:"""
                     f"{len(bindings)} rows"
                 )
                 summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
-                return summary.strip()
+                return _with_lead(summary)
             except Exception as e:
                 logger.warning(f"LLM formatting failed, using structured fallback: {e}")
                 if row_limit is not None:
@@ -4989,7 +5334,7 @@ Generate your response now:"""
 
         try:
             summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
-            return summary.strip()
+            return _with_lead(summary)
         except Exception as e:
             logger.warning(f"LLM summarization failed, fallback to cleaned output: {e}")
             return self._clean_uri_output(result_text)
@@ -5133,6 +5478,127 @@ Generate your response now:"""
         r"\b(?:a|rdf:type)(?:/rdfs:subClassOf\*)?\s+([A-Za-z0-9]+:[A-Za-z_][\w-]*)"
     )
 
+    #: A query that selects records by the ABSENCE of a property, in the three forms the
+    #: generator actually produces: `FILTER NOT EXISTS { … }`, `MINUS { … }`, and an
+    #: `OPTIONAL { … }` binding tested with `!BOUND(?v)`. All three were observed for one
+    #: question on one afternoon (BUG-955), which is why the detector reads all three rather
+    #: than the one that happened to be in the log.
+    _NOT_EXISTS_RE = re.compile(r"\b(?:FILTER\s+NOT\s+EXISTS|MINUS)\s*\{([^{}]*)\}", re.IGNORECASE)
+    _OPTIONAL_BLOCK_RE = re.compile(r"\bOPTIONAL\s*\{([^{}]*)\}", re.IGNORECASE)
+    _UNBOUND_RE = re.compile(r"!\s*BOUND\s*\(\s*(\?\w+)\s*\)", re.IGNORECASE)
+    _TRIPLE_PRED_RE = re.compile(r"\?\w+\s+([A-Za-z][\w.\-]*:[A-Za-z_][\w.\-]*)\s+(\?\w+)")
+
+    @staticmethod
+    def _spaced_local(curie: str) -> str:
+        """``ontosage:AlarmEvent`` -> ``alarm event``; ``''`` when there is nothing to space.
+
+        Used for text the NARRATION sees. A predicate's internal spelling must not reach the
+        reader — the narration prompt already forbids field names in an answer — so the note
+        that explains a filter names it in the same plain words an answer would have to use.
+        """
+        local = str(curie or "").split(":", 1)[-1].replace("_", " ")
+        return re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", local).strip().lower()
+
+    @classmethod
+    def _selected_class(cls, sparql_query: str) -> str:
+        """The class whose instances this query selects, as a CURIE, or ``''``."""
+        found = cls._COUNTED_CLASS_RE.search(sparql_query or "")
+        return found.group(1) if found else ""
+
+    @classmethod
+    def _absent_properties(cls, sparql_query: str) -> List[str]:
+        """Properties this query selects the ABSENCE of, first occurrence first.
+
+        ``[]`` for every ordinary query, so nothing downstream changes for one.
+        """
+        found: List[str] = []
+        for block in cls._NOT_EXISTS_RE.findall(sparql_query or ""):
+            found.extend(pred for pred, _obj in cls._TRIPLE_PRED_RE.findall(block))
+        unbound = set(cls._UNBOUND_RE.findall(sparql_query or ""))
+        if unbound:
+            for block in cls._OPTIONAL_BLOCK_RE.findall(sparql_query or ""):
+                found.extend(
+                    pred for pred, obj in cls._TRIPLE_PRED_RE.findall(block) if obj in unbound
+                )
+        ordered: List[str] = []
+        for pred in found:
+            if pred.lower() != "rdf:type" and pred not in ordered:
+                ordered.append(pred)
+        return ordered
+
+    @classmethod
+    def _absence_selection_meaning(cls, sparql_query: str, row_count: int) -> str:
+        """What rows selected FOR a missing property are, stated for the narration (BUG-955).
+
+        *"Are there any unacknowledged alarms?"* was asked three times with the cache flushed
+        between, and named **1, then 6, then 0** alarms. The fetch was not the problem: the
+        three runs generated three different but individually correct queries — a ``!BOUND``
+        filter, a ``FILTER NOT EXISTS``, and a ``COUNT`` over the same filter — and every one
+        returned the right six. All the variance was in the narration, and after the wording
+        work of 2026-09-30 it moved from the count to something worse:
+
+            "There are **six** active alarm events recorded in the building. None of the
+             records include a field that indicates whether the alarm has been acknowledged,
+             so we cannot say whether any of them have been addressed."
+
+        Two of those six are HIGH priority — a circuit-breaker trip and a frost-protection
+        trip — and the answer declines to call them unacknowledged. The mistake is exact and
+        mechanical: the query FILTERED OUT every record that carries the property, so the
+        rows that come back necessarily lack it, and a narrator reading only the rows sees a
+        column that is never populated and concludes the model does not record it. The rows'
+        emptiness is the ANSWER, and it was read as a gap.
+
+        The same blindness produced "the building's records only tell us that 6 alarm events
+        are stored in the model" from a building holding 270 of them: without the filter, a
+        result-set size looks like a population.
+
+        So the filter is described where the filter is known — in code, from the query's own
+        text — instead of being left for the narrator to infer from rows that cannot show it.
+        """
+        # SILENT FOR A COUNT AGGREGATE, for the same reason the lead is: the single row IS
+        # the six, so calling it "these 1 row(s)" would state the opposite of the truth.
+        # `_count_meaning` owns that shape and carries the same warnings for it.
+        if row_count <= 0 or cls._COUNT_RE.search(sparql_query or ""):
+            return ""
+        absent = cls._absent_properties(sparql_query)
+        if not absent:
+            return ""
+        klass = cls._spaced_local(cls._selected_class(sparql_query))
+        singular = f"{klass} record" if klass else "record"
+        plural = f"{singular}s"
+        missing = ", ".join(f"'{cls._spaced_local(p)}'" for p in absent)
+        return (
+            f"NOTE ON THIS RESULT SET: these {row_count} row(s) are the {plural} that satisfy "
+            f"the question's condition. They are NOT every {singular} the building holds, so "
+            f"never present {row_count} as a total. The query SELECTED FOR the absence of "
+            f"{missing}: every row lacks that BY CONSTRUCTION, and that absence IS what the "
+            "question asked about. Do not report it as the model not recording the property, "
+            "do not say the status cannot be determined from these records, and do not ask "
+            f"the reader to check them individually. State how many there are — {row_count} — "
+            "and name each one by its label."
+        )
+
+    @classmethod
+    def _absence_selection_lead(cls, sparql_query: str, row_count: int) -> str:
+        """The deterministic count line for an absence-selected result, or ``''`` (BUG-955).
+
+        A figure a narrator can get wrong is a figure it should not be deriving (BUG-937).
+        The count is already known when the rows arrive, so it is stated by the code and the
+        narration follows it. It deliberately does not attempt the LIST: a partial list under
+        a correct count is a usable answer, a confident "none" over six live alarms is not.
+
+        Silent for a COUNT aggregate, where the rows ARE the count and ``len(bindings)`` is 1.
+        """
+        if row_count <= 0 or cls._COUNT_RE.search(sparql_query or ""):
+            return ""
+        if not cls._absent_properties(sparql_query):
+            return ""
+        klass = cls._spaced_local(cls._selected_class(sparql_query))
+        noun = f"{klass} record" if klass else "record"
+        if row_count == 1:
+            return f"**1 {noun} matches this question.**"
+        return f"**{row_count} {noun}s match this question.**"
+
     @classmethod
     def _count_meaning(cls, sparql_query: str) -> str:
         """What a COUNT result is a count OF, stated for the narration (BUG-547).
@@ -5151,17 +5617,37 @@ Generate your response now:"""
         grouped = (
             " for that row's group" if re.search(r"\bGROUP\s+BY\b", sparql_query, re.I) else ""
         )
+        # A COUNT UNDER A FILTER IS NOT A POPULATION (BUG-955). Without this clause the note
+        # read "how many matches of type ontosage:AlarmEvent the building model holds", and
+        # `SELECT (COUNT(?r)) WHERE { ?r a ontosage:AlarmEvent . FILTER NOT EXISTS { ?r
+        # ontosage:acknowledgedAt ?t } }` was narrated as "the building model records 6 alarm
+        # events IN TOTAL" — of 270 — followed by "the data set does not include a field that
+        # indicates whether each alarm has been acknowledged". Both halves come from not
+        # knowing the count was filtered.
+        absent = cls._absent_properties(sparql_query)
+        qualifier = ""
+        if absent:
+            missing = ", ".join(f"'{cls._spaced_local(p)}'" for p in absent)
+            qualifier = f" that have NO {missing}"
         pairs = ", ".join(
-            f"{alias} = how many {var if var != '*' else 'matches'}{kind} the building model "
-            f"holds{grouped}"
+            f"{alias} = how many {var if var != '*' else 'matches'}{kind}{qualifier} the "
+            f"building model holds{grouped}"
             for var, alias in counts
         )
-        return (
+        note = (
             f"NOTE ON THESE FIGURES: {pairs}. A count of things in the model is NOT a reading, a "
             "measurement, a duration, an amount or a total over time. If the question asks for "
             "any of those, say plainly that the building model does not hold it, and mention "
             "the count only as what it is — never present it as the quantity asked for."
         )
+        if absent:
+            note += (
+                " This count is of a FILTERED set: it is not how many the building holds "
+                "altogether, so never describe it as a total or as 'in total'. The missing "
+                "property is the SELECTION CRITERION, not a gap in the records — do not say "
+                "the model does not record it or that the status cannot be determined."
+            )
+        return note
 
     #: Columns never hoisted into a group header, because they are what a reader counts,
     #: filters and names records by — even when every row happens to share one value.

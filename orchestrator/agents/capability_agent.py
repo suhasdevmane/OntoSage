@@ -218,6 +218,54 @@ def _boundary_pointer(building_name: str, query: str, held: List[Any]) -> str:
         return ""
 
 
+def _log_selector_gap(query: str, held: List[Any]) -> List[str]:
+    """Name the registers a decline's pointer REACHES that the selector cannot (BUG-947).
+
+    Decides nothing and changes no wording. It exists because the gap it reports was found by
+    hand-reading 62 answers, and a defect found by hand read once is a defect nobody will
+    notice recurring. ``fallback_wording.pointer_only_registers`` states the mechanism.
+
+    WHAT THIS LINE MAY AND MAY NOT BE READ AS, corrected 2026-09-30 (BUG-1073). It used to
+    close "each is one declared lay term short", which made it a work order for a register's
+    vocabulary. Measured over all 2,960 catalogue questions -- the same offline model the
+    register guard tests use, schema on disk and the 2026-09-19 instance snapshot, 42 held
+    classes -- that claim does not survive: the selector is silent on 1,746 of them, and on
+    1,742 of those (99.8%) the pointer still names registers, three of them in 1,684 cases.
+    A signal that fires on 99.8% of the events it watches counts how often a DECLINE happened,
+    not how often a vocabulary gap bit. Two more held classes can only raise that rate, since
+    a register is admitted on ONE shared stem, so the figure understates rather than flatters.
+    On BUG-947's own instances (2) and (28) none of the three names is one term from
+    answering: (2) is a BMS change-control question and the approval register it names holds
+    route, space-use and cost approvals; (28) names three services and spans four registers.
+
+    So this is a pointer/selector DISAGREEMENT, which is a place to look, and one specific
+    cause of it -- a register that declares the singular and not the plural -- is a vocabulary
+    gap worth closing (BUG-973 closed two that way). Confirm against the register before
+    treating any line as a work order.
+
+    The message says the pointer REACHES these registers rather than that the decline prints
+    them, because only one of the two call sites prints any: the honest-boundary decline
+    appends ``_boundary_pointer``, and the documents decline above it names no register at
+    all. The set reported is the same either way -- the top-N the pointer would print.
+    """
+    try:
+        from orchestrator.services.fallback_wording import pointer_only_registers
+
+        gap = pointer_only_registers(query or "", held)
+    except Exception as exc:  # pragma: no cover - a diagnostic never blocks a decline
+        logger.debug(f"[capability] selector-gap check unavailable: {exc}")
+        return []
+    if gap:
+        logger.info(
+            "[capability] REGISTER VOCABULARY GAP: this decline's pointer reaches %s, which "
+            "the register selector could not reach for this question. A place to look, not a "
+            "verdict -- the pointer reaches registers on ~99.8%% of declines, so confirm "
+            "against the register before treating this as a vocabulary gap (BUG-947/1073)",
+            ", ".join(gap[:6]),
+        )
+    return gap
+
+
 def _held_register_note(query: str, held: List[Any]) -> Optional[str]:
     """Name the register this building HOLDS for this question, when it holds one (BUG-749).
 
@@ -593,9 +641,13 @@ class CapabilityAgent:
         # sensors". The class census two blocks below counts by class and holds the right
         # figure — CO2_Sensor 280 — so a class-qualified count belongs to it.
         _class_qualified = names_a_specific_class(state.user_message or "")
-        if not _is_metrology and not _class_qualified and (
-            measurand_of(state.user_message or "")
-            or _is_metrics_question(state.user_message or "")
+        if (
+            not _is_metrology
+            and not _class_qualified
+            and (
+                measurand_of(state.user_message or "")
+                or _is_metrics_question(state.user_message or "")
+            )
         ):
             _decline = await self._absent_referent_decline(state, building_id, building_name)
             if _decline:
@@ -736,28 +788,13 @@ class CapabilityAgent:
                 # nearest, free, …) are removed. Where none qualifies the lane falls through to
                 # the documents and then to the honest "not on record" below, which is the
                 # answer this building can defend.
-                from orchestrator.services.capability_graph_resolver import (
-                    leftover_content_words,
-                )
+                # The test itself now lives beside `leftover_content_words` in
+                # `capability_graph_resolver`, because the ROUTING CONTRACT needs the same
+                # judgement one stage earlier (BUG-1396): it was standing down in favour of
+                # this lane for topics this lane then discarded. One definition, two readers.
+                from orchestrator.services.capability_graph_resolver import subject_facts
 
-                def _is_subject(f) -> bool:
-                    # Judged against the terms the BUILDING declared for this topic, or its
-                    # label when it declared none. A topic with neither is kept: there is
-                    # nothing to judge it by, and dropping it would deny a declared amenity.
-                    phrases = [
-                        p.strip().lower()
-                        for p in str(getattr(f, "lay_terms", "") or "").split(",")
-                        if p.strip()
-                    ] or [
-                        w.lower()
-                        for w in str(getattr(f, "label", "") or "").split()
-                        if len(w) > 2
-                    ]
-                    if not phrases:
-                        return True
-                    return len(leftover_content_words(_q.lower(), phrases)) <= 1
-
-                _subject = [f for f in _facts if _is_subject(f)]
+                _subject = subject_facts(_q, _facts)
                 if _facts and not _subject:
                     logger.info(
                         "[capability] topics %s match words but are not the subject — "
@@ -771,8 +808,8 @@ class CapabilityAgent:
 
                 _by_floor = _floors.capability_answer(
                     state.user_message or "",
-                    [f for f, _ in _pairs if _is_subject(f)],
-                    [w for w in _withheld if _is_subject(w)],
+                    subject_facts(_q, [f for f, _ in _pairs]),
+                    subject_facts(_q, _withheld),
                     building_name,
                 )
                 if _by_floor:
@@ -869,9 +906,7 @@ class CapabilityAgent:
                 # reader to add up to 945 devices in a building that has 523 (CAVEAT-006).
                 # Measured per building rather than assumed, because two classes CAN be
                 # genuinely disjoint here (V12-09).
-                _overlaps = await overlap_notes(
-                    _rows, _active_namespace(), GRAPHDB_QUERY_ENDPOINT
-                )
+                _overlaps = await overlap_notes(_rows, _active_namespace(), GRAPHDB_QUERY_ENDPOINT)
                 _block = render_census(_rows, building_name, overlaps=_overlaps)
                 if _block:
                     state.intermediate_results["capability_result"] = {
@@ -1259,6 +1294,8 @@ class CapabilityAgent:
                 # before here (dialogue_agent's TTL-first short-circuit), and it reaches
                 # this line only when some earlier stage claimed the question for documents.
                 _register_note = _held_register_note(state.user_message or "", _held_classes)
+                if not _register_note:
+                    _log_selector_gap(state.user_message or "", _held_classes)
                 if _register_note:
                     _response = _register_note
                 elif reader_is_admin_in(state):
@@ -1353,6 +1390,8 @@ class CapabilityAgent:
             }
             logger.info("[capability] no source matched — named the register held instead")
             return state
+
+        _log_selector_gap(state.user_message or "", _held_classes)
 
         _q = (state.user_message or "").lower()
         _kind = (

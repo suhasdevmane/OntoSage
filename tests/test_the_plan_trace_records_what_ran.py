@@ -134,13 +134,22 @@ def test_the_stage_table_matches_the_keys_the_executor_writes():
     from orchestrator.workflow._orchestrator import _DELIBERATIVE_STAGES
 
     src = Path("orchestrator/services/deliberation/plan_executor.py").read_text(encoding="utf-8")
+    watched = 0
     for _name, key in _DELIBERATIVE_STAGES:
         if key is None:
             continue
+        watched += 1
         assert f'timings["{key}"]' in src, (
             f"the trace watches for {key!r}, which plan_executor no longer records — that "
             f"stage would vanish from every plan trace without a test failing anywhere else"
         )
+    # `if key is None: continue` can empty this loop, and a stage table whose every entry had
+    # lost its key would report that the table matches the executor having compared nothing
+    # (CAVEAT-1115). This is BUG-510's family: a trace that records almost none of what ran.
+    assert watched >= 3, (
+        f"only {watched} of {len(_DELIBERATIVE_STAGES)} deliberative stages declare a timing "
+        "key; the stage table was barely checked against the executor"
+    )
 
 
 # ── the lane is described where the reference claims to be complete ─────────

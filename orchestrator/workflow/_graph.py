@@ -61,11 +61,15 @@ class WorkflowGraphMixin:
         # ── Shared infrastructure nodes (NOT in intent registry) ─────────────
         # These exist regardless of the intent taxonomy; they back the data
         # pipeline (sparql→sql→analytics) and the entry/exit of every flow.
-        workflow.add_node("dialogue", self._dialogue_node)
+        # `_timed_node`, NOT `_safe_node`: it records the duration and re-raises, so the
+        # error semantics of these two stages are exactly what they were when they were
+        # registered bare. They bracket every turn, and until W6-02 they were the only
+        # stages whose time nothing recorded.
+        workflow.add_node("dialogue", self._timed_node(self._dialogue_node, "dialogue"))
         workflow.add_node("sparql", self._safe_node(self._sparql_node, "sparql"))
         workflow.add_node("sql", self._safe_node(self._sql_node, "sql"))
         workflow.add_node("analytics", self._safe_node(self._analytics_node, "analytics"))
-        workflow.add_node("response", self._response_node)
+        workflow.add_node("response", self._timed_node(self._response_node, "response"))
         # Downstream nodes invoked from the data pipeline, not from dialogue
         # routing — kept hardcoded because they are NOT primary intent targets.
         workflow.add_node("report", self._safe_node(self._report_node, "report"))

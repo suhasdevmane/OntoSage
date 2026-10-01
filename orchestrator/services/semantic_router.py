@@ -430,6 +430,27 @@ _SUBORDINATE_LEAD_QUESTION_RE = _re.compile(
     r"(?:are|is|was|were|do|does|did|can|could|will|would|which|what|who|where|how|when|why)\b",
     _re.IGNORECASE,
 )
+# SAFETY, tail N #5 (2026-09-30, BUG-1241). "if the main exit is blocked by smoke, what is the
+# alternative route" was FILED as an URGENT safety report (REP-F9828F) and the asker was given a
+# ticket number instead of a way out. Two accidents combined: the sentence carries no "?" and it
+# opens with "if", so neither half of `is_question` fired, and "smoke" is a `_REPORT_SAFETY_PHRASES`
+# member — so a question about a HYPOTHETICAL became a statement about a present hazard.
+#
+# A hypothetical asserts nothing. "If the exit is blocked ..." reports no blockage the way "The exit
+# is blocked" does, and CLAUDE.md's own routing rule says questions are not reports.
+#
+# Narrow on purpose, and the narrowing is the whole safety argument:
+#   * the hypothetical opener must be the FIRST thing in the message, so "The exit is blocked by
+#     smoke. If it stays blocked, what do I do?" is still judged on its leading STATEMENT by the
+#     multi-sentence rescue below, and still files;
+#   * the tail must be a WH-word, never a bare auxiliary. "Since the lift is broken, can someone
+#     fix it" keeps filing, which a `can|could|will` alternative would have broken.
+_HYPOTHETICAL_QUESTION_RE = _re.compile(
+    r"^\W*(?:if|in\s+case|in\s+the\s+event(?:\s+(?:that|of))?|should|supposing|suppose|imagine)\b"
+    r"[^?]{0,160}?[,;]?\s*"
+    r"\b(?:what|where|which|who|whom|whose|how|why|when)\b",
+    _re.IGNORECASE,
+)
 _REPORT_QUESTION_STARTS = (
     "is ",
     "are ",
@@ -754,9 +775,21 @@ _COMFORT_FIX_NOT_COMMAND_RE = _re.compile(
 # "Can the building automatically X?", "Could the system detect Y by itself?" —
 # these are T22 capability questions, never actuation commands (guard 2026-06-12).
 # "Can YOU open the door" keeps subject 'you' and is still a command.
+# tail N #52 (2026-09-30, BUG-1246): "Can the building remind me to adjust lighting?" was read as an
+# ACTUATION COMMAND — the verb-target layer saw "adjust lighting" — and answered with a setpoint
+# form ("to request a change I need which setpoint and the value to set"). It is the same
+# automation-capability question this guard exists for; it simply carries no autonomy ADVERB.
+# Being told about something is itself the autonomy cue, so "<building> ... remind/notify/alert/
+# warn/message me" qualifies on its own. The subject stays building/system/it/ontosage, so
+# "can YOU turn the lights off and text me" is still a command, exactly as documented above.
 _AUTOMATION_CAPABILITY_Q_RE = _re.compile(
     r"\b(can|could|will|would|does|should|is)\s+(the\s+)?(building|system|it|ontosage)\b"
-    r".{0,40}\b(automatically|auto-|by itself|on its own|without (me|us|anyone|manual))",
+    r".{0,40}\b(automatically|auto-|by itself|on its own|without (me|us|anyone|manual))"
+    r"|\b(can|could|will|would|does|do|should)\s+(the\s+)?(building|system|it|ontosage)\b"
+    r".{0,40}\b(remind|notify|alert|warn|prompt|nudge|message|email|text)\s+"
+    r"(me|us|staff|occupants|anyone)\b"
+    r"|\b(can|could|will|would|does|do|should)\s+(the\s+)?(building|system|it|ontosage)\b"
+    r".{0,40}\blet\s+(me|us)\s+know\b",
     _re.IGNORECASE,
 )
 
@@ -1011,7 +1044,12 @@ class SemanticRouter:
         q = query.lower().strip()
         if _NAVIGATION_REQUEST_RE.search(q):
             return None
-        is_question = q.endswith("?") or q.startswith(_REPORT_QUESTION_STARTS)
+        is_question = (
+            q.endswith("?")
+            or q.startswith(_REPORT_QUESTION_STARTS)
+            # BUG-1241: a hypothetical that then ASKS is a question, punctuation or not.
+            or bool(_HYPOTHETICAL_QUESTION_RE.search(q))
+        )
 
         # A DECLARATIVE FAULT WITH A REQUEST ATTACHED IS A REPORT (tail L, 2026-09-20): "the waste bin
         # of the cafe is overflowing. can you fix this pronto?" ends in "?", so the whole message was
@@ -1021,8 +1059,10 @@ class SemanticRouter:
         if is_question and not q.startswith(_REPORT_QUESTION_STARTS):
             sentences = [s.strip() for s in _re.split(r"(?<=[.!])\s+", q) if s.strip()]
             lead = " ".join(s for s in sentences[:-1] if not s.endswith("?"))
-            if len(sentences) > 1 and lead and any(
-                p in lead for p in (_REPORT_FAULT_PHRASES | _REPORT_SAFETY_PHRASES)
+            if (
+                len(sentences) > 1
+                and lead
+                and any(p in lead for p in (_REPORT_FAULT_PHRASES | _REPORT_SAFETY_PHRASES))
             ):
                 q, is_question = lead, False
 

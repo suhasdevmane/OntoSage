@@ -553,3 +553,33 @@ intents:
     route_target: general_guidance
     node_method: _general_guidance_node
     cacheable: false
+
+  # A question about the CONVERSATION, not about the building (BUG-941). Measured live
+  # 2026-09-29 and again 2026-09-30: "Remind me which room I said I was looking into, and
+  # why." carries room-shaped and records-shaped vocabulary, so it classifies as a data
+  # question and reaches a lane that reads the graph — while the session summary naming the
+  # room the user actually said sat on the bus of that very turn, unread.
+  #
+  # INTERNAL lane (deterministic rule only — do not classify into this): the routing
+  # contract decides, from `session_recall.is_recall_question`, which is measured at ZERO
+  # false positives over all 4,287 questions this project holds. It is declared here so the
+  # graph auto-wires it and so the registry can see it; the classifier is not asked to pick
+  # it, because the whole defect is that this question LOOKS like a data question.
+  - name: session_recall
+    description: |-
+      INTERNAL lane (deterministic rule only — do not classify into this): the user is
+      asking what THEY said EARLIER IN THIS CONVERSATION — "which room did I say I was
+      looking into?", "what have we discussed so far?". Answered by quoting the user's own
+      earlier questions back to them from this session's record, never from the building's
+      data, and it recalls SUBJECTS and not VALUES — the session record keeps no
+      measurements on purpose. NOT a question about the building's equipment, sensors,
+      spaces, readings or records, even when it refers back to something named earlier.
+    examples:
+      - '"Remind me which room I said I was looking into, and why."'
+      - '"What did I ask about earlier?"'
+      - '"What have we discussed so far?"'
+      - '"Which floor did I mention before?"'
+    pipeline_group: standalone
+    route_target: session_recall
+    node_method: _session_recall_node
+    cacheable: false

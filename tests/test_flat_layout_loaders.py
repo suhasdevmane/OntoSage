@@ -48,6 +48,19 @@ def test_validate_building_input_no_layout_rejected(tmp_path):
 
 
 def test_document_index_all_buildings_flat(tmp_path, monkeypatch):
+    """The flat `input/documents/` folder is indexed under the ACTIVE building's id.
+
+    This used to patch BUILDING_ID to ``"bldg1"`` — which is the value it already has,
+    here and at the `shared/config.py` default — and then assert that "bldg1" came back.
+    An `index_all_buildings` that ignored the setting entirely and hardcoded the name
+    would have passed it. The id below is deliberately one no building in this repo uses,
+    so the assertion is about the plumbing rather than about the default.
+
+    `document_indexer` imports `settings` inside `index_all_buildings`, so it reads the
+    LIVE object; importing it here in the test body (rather than at module scope) resolves
+    the same one after `tests/test_strict_secrets.py` has reloaded `shared.config`
+    (lesson #159).
+    """
     from orchestrator.services import document_indexer as di
     from shared.config import settings
 
@@ -56,11 +69,11 @@ def test_document_index_all_buildings_flat(tmp_path, monkeypatch):
 
     idx = di.DocumentIndexer(qdrant_client=None, embedding_service=None, input_root=str(tmp_path))
     idx.index_building = AsyncMock(return_value="indexed")
-    monkeypatch.setattr(settings, "BUILDING_ID", "bldg1")
+    monkeypatch.setattr(settings, "BUILDING_ID", "bldg_flat_probe")
 
     res = asyncio.run(idx.index_all_buildings())
-    idx.index_building.assert_awaited_once_with("bldg1")
-    assert "bldg1" in res
+    idx.index_building.assert_awaited_once_with("bldg_flat_probe")
+    assert "bldg_flat_probe" in res
 
 
 # ── building_context: read building.yaml from flat input/ ───────────────────

@@ -359,7 +359,12 @@ def test_questions_use_only_referents_the_building_holds():
 def test_every_question_carries_the_behaviour_it_should_produce():
     _skip_if_no_fixture()
     caps, _ = cr.derive_matrix(cr.QUESTION_CLASSES, cr.load_intents(_B4), _measures())
-    for q in cr.build_question_set(cr.QUESTION_CLASSES, caps, _measures()):
+    questions = cr.build_question_set(cr.QUESTION_CLASSES, caps, _measures())
+    # A conformance report whose question set came out empty would state that every question
+    # carries the behaviour it should produce, over no question -- and the report is the
+    # artefact a reviewer reads (CAVEAT-1115).
+    assert questions, "build_question_set produced no questions; the report would be empty"
+    for q in questions:
         assert q.expects.strip(), q.id
         assert q.question_class
         assert q.verdict_at_generation in (cr.SUPPORTED, cr.SUPPORTED_LIMITED, cr.NOT_SUPPORTED)

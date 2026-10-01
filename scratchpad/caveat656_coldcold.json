@@ -1,0 +1,46 @@
+[
+  {
+    "q": "Which floor used the most electricity last week?",
+    "stream_text": "**Floor 4** used the most electricity last week, with a total of 2,196 kWh.  \nThe lowest consumption was on Floor 2, which recorded 2,023 kWh.  \nThe spread between the highest and lowest floors was 173 kWh.  \nFloor 3 followed with 2,118 kWh, Floor 1 with 2,074 kWh, Floor 5 with 2,102 kWh, and Floor 0 with 2,057 kWh.  \nThus, Floor 4 used the most electricity last week.\n\n**Boundary:** summed across 6 meters (Energy_Meter_Floor0, Energy_Meter_Floor1, Energy_Meter_Floor2, Energy_Meter_Floor3, Energy_Meter_Floor4, Energy_Meter_Floor5), covering Floor 0 (Ground Floor), Floor 1 (First Floor), Floor 2 (Second Floor), Floor 3 (Third Floor), Floor 4 (Fourth Floor), Floor 5 (Fifth Floor). The total is the sum of those boundaries — it is not a separate whole-site reading.\n\n---\n**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?\n\n---\n*Sources: `Building model` `Energy Metering System` `Analytics Engine`*",
+    "nonstream_text": "**Floor 4 used the most electricity last week, with a total of 2,196 kWh.**  \nThe lowest consumption was on Floor 2, which recorded 2,023 kWh.  \nThe difference between the highest and lowest totals is 173 kWh.  \nOther floors recorded 2,118 kWh (Floor 3), 2,074 kWh (Floor 1), 2,102 kWh (Floor 5), and 2,057 kWh (Floor 0).  \nThus, Floor 4 had the greatest electricity usage last week.\n\n**Boundary:** summed across 6 meters (Energy_Meter_Floor0, Energy_Meter_Floor1, Energy_Meter_Floor2, Energy_Meter_Floor3, Energy_Meter_Floor4, Energy_Meter_Floor5), covering Floor 0 (Ground Floor), Floor 1 (First Floor), Floor 2 (Second Floor), Floor 3 (Third Floor), Floor 4 (Fourth Floor), Floor 5 (Fifth Floor). The total is the sum of those boundaries — it is not a separate whole-site reading.\n\n---\n**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?\n\n---\n*Sources: `Building model` `Energy Metering System` `Analytics Engine`*",
+    "identical": false,
+    "lane_stream": "analytics",
+    "lane_nonstream": "analytics",
+    "stream_fields": [
+      "ontosage_intent",
+      "ontosage_plan_trace",
+      "ontosage_route"
+    ],
+    "nonstream_fields": [
+      "ontosage_evidence_record",
+      "ontosage_intent",
+      "ontosage_llm_degraded",
+      "ontosage_plan_trace",
+      "ontosage_route"
+    ],
+    "stream_elapsed": 88.55677652359009,
+    "nonstream_elapsed": 41.44903802871704
+  },
+  {
+    "q": "Is there a first aid kit in this building?",
+    "stream_text": "Here is what I found for **Abacws Building**:\n\n\n**Defibrillator (AED) and first aid** — Room 0.01 (Main Reception, floor 0), Room 3.17 (Staff Common Room, floor 3) and Room 5.26 (Staff Break Room / Kitchen, floor 5). Defibrillators (AEDs) are in Room 0.01 (Main Reception, floor 0), Room 3.17 (Staff Common Room, floor 3) and Room 5.26 (Staff Break Room / Kitchen, floor 5). In a medical emergency call 999 first, then Security on the internal emergency number.\n\n**Automated External Defibrillator — Ground Floor Reception** — Room 0.01 — Main Reception, floor 0 (ground floor).\n\n**Automated External Defibrillator — Floor 3 Common Area** — Room 3.17 — Staff Common Room, floor 3.\n\n\n*Answered live from the building's own records.*",
+    "nonstream_text": "Here is what I found for **Abacws Building**:\n\n\n**Defibrillator (AED) and first aid** — Room 0.01 (Main Reception, floor 0), Room 3.17 (Staff Common Room, floor 3) and Room 5.26 (Staff Break Room / Kitchen, floor 5). Defibrillators (AEDs) are in Room 0.01 (Main Reception, floor 0), Room 3.17 (Staff Common Room, floor 3) and Room 5.26 (Staff Break Room / Kitchen, floor 5). In a medical emergency call 999 first, then Security on the internal emergency number.\n\n**Automated External Defibrillator — Ground Floor Reception** — Room 0.01 — Main Reception, floor 0 (ground floor).\n\n**Automated External Defibrillator — Floor 3 Common Area** — Room 3.17 — Staff Common Room, floor 3.\n\n\n*Answered live from the building's own records.*",
+    "identical": true,
+    "lane_stream": "capability",
+    "lane_nonstream": "capability",
+    "stream_fields": [
+      "ontosage_intent",
+      "ontosage_plan_trace",
+      "ontosage_route"
+    ],
+    "nonstream_fields": [
+      "ontosage_evidence_record",
+      "ontosage_intent",
+      "ontosage_llm_degraded",
+      "ontosage_plan_trace",
+      "ontosage_route"
+    ],
+    "stream_elapsed": 6.089048385620117,
+    "nonstream_elapsed": 0.7562267780303955
+  }
+]

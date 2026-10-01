@@ -74,7 +74,12 @@ class _Conn:
 def spec():
     if not _MAP.exists():
         pytest.skip("no plant publish map in this checkout (building not active)")
-    return json.loads(_MAP.read_text(encoding="utf-8"))
+    loaded = json.loads(_MAP.read_text(encoding="utf-8"))
+    # Several tests in this file loop over `spec["groups"]` with every assertion inside, so a
+    # map that parsed to no group would turn each of them green while checking nothing
+    # (CAVEAT-1115). Guarded at the fixture, where every reader inherits it.
+    assert loaded.get("groups"), f"{_MAP.name} parsed but declares no plant groups"
+    return loaded
 
 
 @pytest.fixture(scope="module")
@@ -93,6 +98,13 @@ def samples(spec):
 
 
 def _pairs(spec):
+    # Two tests loop over this generator with every assertion inside, and `if delta:` can
+    # filter the whole publish map out -- a renamed key is enough. "The typical delta
+    # resembles the history" would then be true of no pair (CAVEAT-1115).
+    assert spec["groups"], "the plant publish map declares no groups"
+    assert any(
+        g.get("delta") for g in spec["groups"]
+    ), "no plant group declares a delta; the correlated-pair assertions check nothing"
     for group in spec["groups"]:
         delta = group.get("delta")
         if delta:
@@ -160,13 +172,20 @@ def test_air_temperatures_never_read_zero_when_the_fan_stops(spec, samples):
     Roughly half the stored history did exactly that, which is why the supply-air mean
     reads 8 C against a 20 C median of its non-zero rows.
     """
+    checked = 0
     for group in spec["groups"]:
         for role, entry in group["roles"].items():
             if role not in ("supply_air_temp", "return_air_temp"):
                 continue
             vals = samples.get(entry["uuid"]) or []
             if vals:
+                checked += 1
                 assert min(vals) > 5.0, f"{group['group']}/{role} published {min(vals)} C"
+    # Three filters stack here (role name, then whether the uuid produced samples), so the
+    # loop can run zero assertions against a full publish map. Half the stored history read
+    # 0 C for exactly these two roles, which is what this exists to keep out (CAVEAT-1115).
+    if not checked:
+        pytest.skip("no AHU group published a supply or return air temperature series")
 
 
 def test_flow_does_collapse_with_the_fan(spec, samples):

@@ -80,6 +80,7 @@ def test_registry_standalone_intents_route_to_registered_nodes():
 
     reg = get_intent_registry(None)
     src = _orchestrator_source()
+    wired = 0
     for name in reg.names():
         d = reg.get(name)
         if getattr(d, "pipeline_group", None) != "standalone":
@@ -90,11 +91,15 @@ def test_registry_standalone_intents_route_to_registered_nodes():
         # lab_booking) deliberately fall through the Phase 10G safety net to
         # "response" — only intents that DECLARE a handler must be wired.
         if getattr(d, "node_method", None):
+            wired += 1
             assert f'"{target}"' in src, (
                 f"standalone intent {name} declares node_method "
                 f"{d.node_method!r} but its target {target!r} does not appear "
                 "in _orchestrator.py — likely an unregistered node"
             )
+    # The inner check is the one that matters, and a registry that stopped declaring
+    # node_method anywhere would skip it entirely while the test stayed green.
+    assert wired, "no standalone intent declares a node_method — nothing was verified"
 
 
 def test_registry_intent_nodes_have_response_edge():

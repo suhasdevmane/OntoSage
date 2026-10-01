@@ -283,16 +283,69 @@ bldg:Cap_maintenance_history a ontosage:InformationTopic, ontosage:KnowledgeTopi
     ontosage:documentRef "maintenance_log.md" .
 
 # ── First aid / defibrillator ────────────────────────────────────────────────
-# Backed by this building's OWN graph: bldg:AED_Reception, bldg:AED_Floor3 and
-# bldg:AED_Floor5 are modelled equipment, so this amenity states only what the
-# ontology already asserts. Amenities that cannot be verified for this REAL
-# building (vending, drinking-water points, a green roof) are deliberately NOT
-# declared — an unverified amenity is a fabrication, and the honest decline plus
-# "here is how to add it" is the correct answer until someone confirms.
+# BUG-858 (P1), closed 2026-09-29. This record used to say the defibrillators were
+# "modelled at reception, floor 3 and floor 5" in its ontosage:locationText while its
+# ontosage:answerText stated the same positions as fact. The answer path surfaces both,
+# so a reader saw a safety-critical position asserted and hedged in one breath — and in
+# an emergency the hedge is the part that gets ignored.
+#
+# The positions were never the problem. bldg:AED_Reception, bldg:AED_Floor3 and
+# bldg:AED_Floor5 have carried brick:isPartOf to Room0.01, Room3.17 and Room5.26 since
+# they were declared in bldg1_abacws_metadata.ttl, and all three rooms resolve in the
+# graph. The owner confirmed the three positions on 2026-09-29. So the wording now names
+# the rooms the graph already holds, and the record links to them with the OCBV↔Brick
+# bridge (ontosage:locatedIn) and to the devices themselves (ontosage:aboutEquipment),
+# so nothing downstream has to trust the prose.
+#
+# Amenities that cannot be verified for this REAL building (vending, drinking-water
+# points, a green roof) are deliberately NOT declared — an unverified amenity is a
+# fabrication, and the honest decline plus "here is how to add it" is the correct answer
+# until someone confirms.
 bldg:Cap_first_aid a ontosage:Amenity,
         ontosage:FirstAidPoint ;
     rdfs:label "Defibrillator (AED) and first aid"@en ;
     ontosage:layTerms "defibrillator, aed, first aid, emergency medical, heart attack, cardiac, resuscitation, first aider" ;
-    ontosage:locationText "Defibrillators are modelled at reception, floor 3 and floor 5." ;
+    ontosage:locationText "Room 0.01 (Main Reception, floor 0), Room 3.17 (Staff Common Room, floor 3) and Room 5.26 (Staff Break Room / Kitchen, floor 5)" ;
     ontosage:capabilityCategory "EMERGENCY" ;
-    ontosage:answerText "Defibrillators (AEDs) are located at reception and on floors 3 and 5. In a medical emergency call 999 first, then Security on the internal emergency number." .
+    ontosage:locatedIn bldg:Room0.01, bldg:Room3.17, bldg:Room5.26 ;
+    ontosage:aboutEquipment bldg:AED_Reception, bldg:AED_Floor3, bldg:AED_Floor5 ;
+    ontosage:answerText "Defibrillators (AEDs) are in Room 0.01 (Main Reception, floor 0), Room 3.17 (Staff Common Room, floor 3) and Room 5.26 (Staff Break Room / Kitchen, floor 5). In a medical emergency call 999 first, then Security on the internal emergency number." .
+
+# ── The three devices, typed so a LOCATION question reaches them ──────────────
+# Additive typing, exactly as bldg1_lifts.ttl does for bldg:Lift_1 / bldg:Lift_2: the
+# devices keep their Brick type (brick:Automated_External_Defibrillator, declared in
+# bldg1_abacws_metadata.ttl) and gain the OCBV types, so a Brick-aware reader and the
+# amenity lanes both find them. No new IRIs — these are the individuals that already
+# exist.
+#
+# WHY THIS AND NOT PROSE. "Where is the nearest defibrillator?" is answered by
+# services/amenity_proximity.py, which reads ontosage:locatedIn / ontosage:onFloor off
+# each ontosage:Amenity. Until now the AEDs carried neither, so the ONLY thing that
+# could answer was Cap_first_aid's sentence — one record for three positions, with no
+# floor to be near. Three located records make "nearest" a computation over the
+# building's own graph instead of a reading of its prose.
+#
+# ontosage:FirstAidPoint already declares "defibrillator", "defibrillators", "aed" and
+# "aeds" as class-level lay terms in ontology/ontosage_schema.ttl, and the resolver
+# inherits them, so no per-device layTerms are repeated here.
+
+bldg:AED_Reception a ontosage:FirstAidPoint,
+        ontosage:Amenity ;
+    ontosage:capabilityCategory "EMERGENCY" ;
+    ontosage:locatedIn bldg:Room0.01 ;
+    ontosage:onFloor "Floor0" ;
+    ontosage:locationText "Room 0.01 — Main Reception, floor 0 (ground floor)" .
+
+bldg:AED_Floor3 a ontosage:FirstAidPoint,
+        ontosage:Amenity ;
+    ontosage:capabilityCategory "EMERGENCY" ;
+    ontosage:locatedIn bldg:Room3.17 ;
+    ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Room 3.17 — Staff Common Room, floor 3" .
+
+bldg:AED_Floor5 a ontosage:FirstAidPoint,
+        ontosage:Amenity ;
+    ontosage:capabilityCategory "EMERGENCY" ;
+    ontosage:locatedIn bldg:Room5.26 ;
+    ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Room 5.26 — Staff Break Room / Kitchen, floor 5" .

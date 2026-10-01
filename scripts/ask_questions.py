@@ -25,13 +25,18 @@ from __future__ import annotations
 
 import argparse
 import importlib.util
+import os
 import statistics
 import subprocess
 import sys
+import tempfile
 import time
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
+
+#: One stamp per process, so a run's full answers land in ONE file (CAVEAT-1293).
+_RUN_STAMP = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 REPO = Path(__file__).resolve().parent.parent
 
@@ -332,11 +337,23 @@ def main(argv: List[str]) -> int:
                  "lane": res.get("lane") if args.v1 else None,
                  "route": res.get("route") if args.v1 else None}
             )
-            if args.out:  # a long bank run must not lose every answer to one crash
-                import json
+            # ALWAYS persist the FULL answer, not only when --out was passed (CAVEAT-1293).
+            # The terminal line below prints `answer[:args.show]`, default 400 characters. A
+            # 60-question hand-read measurement was labelled from that stdout alone, and 22 of
+            # the 60 answers were longer than 400 characters — so 22 labels rested on cut text
+            # and at least one was wrong ("Can the building harvest rainwater?" was labelled
+            # WEIRD; its full answer ends "(6) Rainwater harvesting for toilet flushing").
+            # The full text was in `rows` the whole time and was thrown away because a flag was
+            # not passed. A default destination costs nothing and makes the loss impossible.
+            import json
 
-                with open(f"{args.out}.jsonl", "a", encoding="utf-8") as fh:
-                    fh.write(json.dumps(rows[-1], ensure_ascii=False) + "\n")
+            _dest = args.out or os.path.join(
+                tempfile.gettempdir(), f"ask_questions_{_RUN_STAMP}"
+            )
+            with open(f"{_dest}.jsonl", "a", encoding="utf-8") as fh:
+                fh.write(json.dumps(rows[-1], ensure_ascii=False) + "\n")
+            if not args.out and i == 1 and q == qs[0]:
+                print(f"[full answers] {_dest}.jsonl   (stdout below is cut at --show={args.show})")
             print(f"\n[{i}/{args.repeat}] {secs:6.1f}s  {status}  {q}")
             print("   " + answer[: args.show].replace("\n", "\n   "))
 

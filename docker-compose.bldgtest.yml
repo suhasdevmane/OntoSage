@@ -280,11 +280,50 @@ services:
     networks:
       - ontobot-agentic
       - executor-internal # reach the isolated code-executor (internal-only net)
+    # ── BUG-1194: a memory ceiling, and a healthcheck that can actually fail ──
+    #
+    # 2026-09-30: this container ran to 40.02 GiB of the machine's 46.64 GiB at 3210% CPU,
+    # served nothing for an hour, and `docker ps` said `Up 3 hours (healthy)` throughout.
+    # The status was FROZEN -- `docker inspect` showed FailingStreak 2 beside `healthy`
+    # with a last check an hour old, because the probe had stopped completing and a stale
+    # PASS renders identically to a fresh one. Steady state on the same build under a full
+    # 51-case gate load is 1.69-2.01 GiB over 69 samples.
+    #
+    # WHY A HARD LIMIT RATHER THAN AN ALARM. A soft alarm needs someone reading it, and
+    # the failure being fixed is precisely that nobody knew for an hour while the one
+    # automated watcher had frozen. More importantly the runaway starved the HOST, which
+    # is what wedged the probe and everything else; a cgroup limit confines the blast
+    # radius to this one container by construction, which no alarm can do.
+    #
+    # WHAT IT COSTS, stated rather than glossed: an OOM kill ends every in-flight turn
+    # abruptly -- a reset connection, no answer, and exit 137 as the only explanation --
+    # and `restart: unless-stopped` then costs ~4 minutes of cold start during which
+    # nothing is served. A gate or probe run straddling a kill is lost and must be
+    # re-run. That is a real cost; it is smaller than an hour of a wedged process that
+    # reports healthy, loses the same turns, and misdirects triage at the same time.
+    # `docker inspect --format '{{.State.OOMKilled}}'` says which happened, and unlike
+    # the health status it cannot go stale.
+    #
+    # 8 GiB is four times the measured ceiling under full load. If a legitimate workload
+    # ever approaches it the watchdog says so at WARNING from 60% (process_watchdog.py,
+    # every 30 s at INFO below that), so the limit gets raised on evidence rather than
+    # re-guessed. memswap_limit == mem_limit disables swap for this container: swapping
+    # is how a runaway takes an hour to die instead of a second.
+    mem_limit: ${ORCHESTRATOR_MEM_LIMIT:-8g}
+    memswap_limit: ${ORCHESTRATOR_MEM_LIMIT:-8g}
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/ping"]
-      interval: 30s
-      timeout: 5s
-      retries: 5
+      # `--max-time` makes the PROBE bound itself. Docker's own `timeout:` only helps if
+      # the daemon can reap a hung exec, and on 2026-09-30 it could not. curl exiting 28
+      # on its own is a clean failure the health monitor records; a probe the daemon has
+      # to kill is how the status froze.
+      test: ["CMD", "curl", "-fsS", "--max-time", "8", "http://localhost:8000/ping"]
+      # 15s x 3 = unhealthy within ~45-55s of an unresponsive process, against 2.5 minutes
+      # before. Nothing acts on `unhealthy` here (docker restarts on exit, not on health,
+      # outside swarm), so a false positive costs a red flag and nothing else -- and a
+      # /ping unanswered for 45 s is not really a false positive.
+      interval: 15s
+      timeout: 10s
+      retries: 3
       # 60s here was shorter than the app's real cold-start. FastAPI does not serve
       # a request until lifespan completes, and lifespan runs the DWG pipeline and
       # waits on GraphDB warm-up: measured at ~4m15s. So /ping failed for 3.5

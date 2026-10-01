@@ -149,6 +149,40 @@ def test_current_weather_questions_are_recognised_and_forecasts_are_left_to_the_
     assert not cl.is_current_weather_question("how stuffy is Room 1.06?")
 
 
+def test_the_outdoors_as_one_side_of_a_comparison_is_not_a_weather_question():
+    """BUG-945 — W3-01's own acceptance question, answered about something else.
+
+    "How does today compare with the outside temperature?" was answered
+    "**I don't hold a weather forecast.** Abacws Building's outdoor sensors last recorded:
+    outdoor temperature 20.7 ... Those are readings, not a forecast." Five live Open-Meteo
+    variables, all timestamped within two minutes, so the feed was working; the question asks
+    how the building's OWN readings compare with the outdoor ones, and neither an indoor
+    series nor a comparison appeared. A comparison names two things, and answering about one
+    of them is not an answer — the same distinction `_CONFOUNDER_LIST` already draws.
+    """
+    for q in (
+        "How does today compare with the outside temperature?",
+        "How does the temperature in room 5.01 compare with outside?",
+        "Is it colder outside than in the atrium?",
+        "indoor versus outdoor temperature",
+        "what is the difference between inside and outside temperature",
+        "temperature now against the outdoor reading",
+    ):
+        assert not cl.is_current_weather_question(q), q
+
+
+def test_a_plain_question_about_the_weather_still_gets_the_readings():
+    """The guard above must not take the questions the lane exists for."""
+    for q in (
+        "how is the weather outside now?",
+        "is it raining?",
+        "how cold is it outside?",
+        "how humid is it outdoors?",
+        "is it windy out there?",
+    ):
+        assert cl.is_current_weather_question(q), q
+
+
 def test_weather_gives_the_outdoor_readings_the_building_records_with_their_time():
     readings = [
         cl.OutdoorReading("outdoor temperature", 12.34, "°C", "03:50 on 19 Sep"),

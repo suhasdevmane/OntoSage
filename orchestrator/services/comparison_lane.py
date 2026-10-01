@@ -198,6 +198,13 @@ async def try_compare(
             end_date=window.end,
             tz_name=tz_name,
             now=now,
+            # BUG-879. The aggregate lane vetoes any question naming a place, because a
+            # BUILDING-WIDE summary would then answer a different question. That reasoning does
+            # not carry here: both windows are the same place, the place scopes them equally,
+            # and the lane groups by the place so its figures are keyed "Room 5.01 mean" rather
+            # than "building mean". This is the only caller that can know that, which is why the
+            # flag is explicit and never inferred from the question.
+            allow_named_place=True,
             **lane_kwargs,
         )
 

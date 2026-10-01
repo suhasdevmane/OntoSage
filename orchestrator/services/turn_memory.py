@@ -9,13 +9,18 @@ Each completed turn is summarised into one Postgres row:
   - carry_forward  : forecast_result / analytics_result for follow-up viz
 
 On the next turn:
-  - get_carry_forward()  -> injects forecast/analytics artifacts into intermediate_results
-  - get_older_context()  -> builds compact text prefix for LLM long-term memory
+  - get_carry_forward()    -> injects forecast/analytics artifacts into intermediate_results
+  - get_session_summary()  -> the rolling, bounded, figure-free account of the session so
+                              far (W5-01). Replaced get_older_context(), which dropped the
+                              oldest turns outright and carried past ANSWERS — measurements
+                              included — back into the prompt.
 """
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Tuple
 
+from orchestrator.services import session_summary
+from orchestrator.services.session_summary import TurnNote
 from shared.models import ConversationState
 from shared.utils import get_logger
 
@@ -23,6 +28,10 @@ logger = get_logger(__name__)
 
 _CARRY_FORWARD_KEYS = {"forecast_result", "analytics_result"}
 _SUMMARY_MAX_CHARS = 300
+# How many older rows the rolling summary may scan in one turn. Above the Postgres
+# retention cap below, so the scan sees every turn that still exists — the summary
+# COMPRESSES what it cannot show in detail, and can only do that for rows it read.
+_MAX_OLDER_SCAN = 500
 # Per-conversation retention cap: keep only the newest N turns; older rows are
 # pruned on each save so a long-lived conversation can't grow the table without
 # bound. This is the Postgres ROW cap — distinct from CONVERSATION_MAX_MESSAGES
@@ -109,45 +118,79 @@ class TurnMemoryService:
             logger.warning(f"[turn_memory] get_carry_forward failed (non-fatal): {e}")
         return {}
 
-    async def get_older_context(
-        self, conversation_id: str, skip_recent: int = 20, max_older: int = 30
+    async def get_session_summary(
+        self, conversation_id: str, skip_recent: int = session_summary.RECENT_TURNS_KEPT_RAW
     ) -> str:
-        """Return compact text block summarising turns older than skip_recent.
+        """Return the rolling session summary for turns older than ``skip_recent``.
 
-        Capped at ``max_older`` turns (the most-recent among the older set) so a
-        long conversation can't inject an ever-growing block into every LLM prompt
-        — token blow-up / context-window overflow / an unbounded row scan. Returns
-        "" when there are no older turns.
+        Replaces ``get_older_context``, which did two things wrong (W5-01):
+
+        * it read ``OFFSET skip_recent LIMIT 30``, so at turn 60 turns 1-10 were dropped
+          with no trace — the window was a cliff;
+        * it carried ``result_summary[:150]``, the ANSWER verbatim, so a measurement from
+          twenty turns ago was fed back into the prompt with no time basis.
+
+        ``session_summary.build`` compresses rather than truncates, and carries no text
+        derived from an answer at all. The scan is bounded at :data:`_MAX_OLDER_SCAN` rows
+        and every text column is truncated BY THE DATABASE, so a conversation full of
+        10,000-character questions cannot pull megabytes across the wire once per turn.
+        Returns "" when there are no older turns.
+        """
+        return (await self.get_session_context(conversation_id, skip_recent))[0]
+
+    async def get_session_context(
+        self, conversation_id: str, skip_recent: int = session_summary.RECENT_TURNS_KEPT_RAW
+    ) -> Tuple[str, List[TurnNote]]:
+        """The rendered session summary AND the structured turns it was built from.
+
+        Two readers, ONE database round trip. They need different slices of the same rows:
+
+        * the SUMMARY skips the newest ``skip_recent`` turns, because the raw message window
+          still shows them, and compresses everything older than its detail window into a
+          single line naming subjects — which is right for a prompt and lossy for recall,
+          since the compressed line keeps no question text.
+        * the RECALL lane (BUG-941) needs every turn, in full, including the newest ones:
+          "what did I just ask?" is a recall question too, and a user who declared their
+          subject three turns ago is exactly the case the summary hands to the era line.
+
+        So the fetch takes everything and the SLICING happens here. Doing it with two
+        queries would double the per-turn cost of a feature that runs on every turn of every
+        route, and doing it in the caller would put the offset arithmetic back in four
+        places — which is how ``skip_recent`` came to be a MESSAGE count used as a TURN
+        offset and left a seventeen-turn hole (BUG-908).
+
+        Returns ``("", [])`` when there is nothing stored or Postgres is unavailable.
         """
         if not self.pool:
-            return ""
+            return "", []
         try:
             async with self.pool.acquire() as conn:
                 rows = await conn.fetch(
                     """
-                    SELECT turn_index, user_query, intent, result_summary
+                    SELECT turn_index,
+                           LEFT(user_query, 160)     AS user_query,
+                           LEFT(intent, 40)          AS intent,
+                           LEFT(result_summary, 300) AS result_summary
                     FROM turn_memory
                     WHERE conversation_id = $1
                     ORDER BY turn_index DESC
-                    OFFSET $2 LIMIT $3
+                    LIMIT $2
                     """,
                     conversation_id,
-                    skip_recent,
-                    max_older,
+                    _MAX_OLDER_SCAN,
                 )
             if not rows:
-                return ""
-            lines = []
-            for r in reversed(rows):
-                summary = r["result_summary"] or "(no summary)"
-                lines.append(
-                    f"Turn {r['turn_index']} [{r['intent']}]: "
-                    f"Q: {r['user_query'][:80]} -> {summary[:150]}"
-                )
-            return "Earlier conversation context:\n" + "\n".join(lines)
+                return "", []
+            # Oldest-first, which is what `session_summary.build` documents it requires.
+            notes = [session_summary.note_from_row(r) for r in reversed(rows)]
+            # The summary's own window. `LIMIT` above is the retention cap, so this slice
+            # can never drop a row the old `OFFSET skip_recent` would have kept.
+            skip = max(0, int(skip_recent))
+            older = notes[: len(notes) - skip] if skip else notes
+            return (session_summary.build(older) if older else ""), notes
         except Exception as e:
-            logger.warning(f"[turn_memory] get_older_context failed (non-fatal): {e}")
-        return ""
+            logger.warning(f"[turn_memory] get_session_context failed (non-fatal): {e}")
+        return "", []
 
     async def delete_conversation(self, conversation_id: str) -> int:
         """Delete all turn_memory rows for a conversation (e.g. user clears a chat).

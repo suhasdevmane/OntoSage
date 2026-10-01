@@ -225,7 +225,11 @@ def test_no_emitted_predicate_would_infer_the_record_into_another_class(render, 
             if domain not in allowed:
                 wrong[str(p).rsplit("#", 1)[-1]] = str(domain).rsplit("#", 1)[-1]
     assert not wrong, f"{cls} carries predicates whose domain would re-type it: {wrong}"
-    assert (None, O.priority, None) not in g, "ontosage:priority re-types a record as MaintenanceIssue"
+    assert (
+        None,
+        O.priority,
+        None,
+    ) not in g, "ontosage:priority re-types a record as MaintenanceIssue"
 
 
 def test_the_generated_header_is_the_marker_the_provenance_test_reads():
@@ -354,14 +358,22 @@ def test_a_presented_role_is_always_a_declared_role_template():
 
 def test_no_literal_in_access_events_looks_like_a_personal_identifier():
     g = _access_graph()
+    ids, literals = 0, 0
     for _s, p, o in g:
         if p == O.recordId:
             # The EVENT's own identifier, and nothing else: a fixed prefix and eight hex digits
             # of its uuid5. Pinned exactly, so it cannot drift into a credential-shaped number.
+            ids += 1
             assert re.fullmatch(r"ACC-[0-9A-F]{8}", str(o)), o
             continue
         if isinstance(o, Literal) and o.datatype != XSD.dateTime:
+            literals += 1
             assert not _PERSONAL_RE.search(str(o)), f"personal-looking literal: {o!r}"
+    # A privacy assertion that examined nothing reads exactly like one that examined
+    # everything and found nothing (lessons #20, CAVEAT-1115). Count both filtered arms: an
+    # empty graph, or a renderer that stopped emitting recordId, must be a failure here.
+    assert ids, "no access event carries a recordId; the identifier shape was never checked"
+    assert literals, "no non-dateTime literal was examined for a personal identifier"
 
 
 def test_the_personal_identifier_check_would_fire():
@@ -429,7 +441,9 @@ def test_anomaly_output_is_opt_in():
 def test_output_names_are_not_mistaken_for_shared_schema():
     from orchestrator.services.ttl_uploader import _looks_like_schema
 
-    for name in prov.output_names("bldg1", include_anomaly=True).values():
+    names = prov.output_names("bldg1", include_anomaly=True)
+    assert names, "output_names produced nothing, so no name was tested against the filter"
+    for name in names.values():
         assert not _looks_like_schema(name), name
 
 

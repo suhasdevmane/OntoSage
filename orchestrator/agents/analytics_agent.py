@@ -8,6 +8,7 @@ sys.path.append("/app")
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional
+from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 import httpx
@@ -18,6 +19,11 @@ from shared.models import ConversationState
 from shared.utils import extract_code_from_llm_response, get_logger
 
 logger = get_logger(__name__)
+
+#: The name every caller that names no file used to share. A turn that reads it reads whatever
+#: the last writer left, which on the planner path was a file nine months old (BUG-898). Kept as
+#: the parameter default so no caller's signature changes; `analyze` replaces it per call.
+_DEFAULT_DATA_FILE = "current_data.json"
 
 CODE_EXECUTOR_URL = f"http://{settings.CODE_EXECUTOR_HOST}:{settings.CODE_EXECUTOR_PORT}"
 
@@ -99,7 +105,7 @@ class AnalyticsAgent:
         user_query: str,
         data: Optional[Dict[str, Any]] = None,
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
-        data_filename: str = "current_data.json",
+        data_filename: str = _DEFAULT_DATA_FILE,
     ) -> Dict[str, Any]:
         """
         Generate and execute analytics code
@@ -128,6 +134,24 @@ class AnalyticsAgent:
 
             data_count = len(data.get("data", []))
             logger.info(f"📊 Data Records: {data_count}")
+
+            # THE FILE THE GENERATED CODE READS IS THIS TURN'S, OR IT IS NOT READ (BUG-898).
+            #
+            # `data_filename` defaults to one shared name, and the generated code is told to
+            # read `/app/outputs/data/<data_filename>`. Only the main workflow ever WROTE a
+            # file, and it writes a per-conversation one; the planner calls this method with
+            # no filename at all. So a planner turn read the default name — a file last
+            # written on 2025-12-17 — and computed over 119 rows of a sensor nobody asked
+            # for. Measured live 2026-09-30: "how does observed occupancy compare with the
+            # design occupancy of room 1.25?" reported a mean of 5,178.52 "persons" for a
+            # seminar room declared at 20, with the SAME figures to two decimal places on two
+            # runs a day apart, because a static file cannot vary.
+            #
+            # Two changes, and each one alone would have prevented it: the shared name is
+            # replaced by a name unique to this call, and this call writes its own data there.
+            if data_filename == _DEFAULT_DATA_FILE:
+                data_filename = f"turn_{uuid4().hex}_data.json"
+            self._write_turn_data(data, sensor_metadata, data_filename)
 
             # Check if we have any data
             if data_count == 0:
@@ -245,7 +269,11 @@ class AnalyticsAgent:
                 logger.info("[analytics] per-floor figures computed in code — no code generation")
                 result = {"success": True, "code": None, "output": _floor_summary, "error": None}
                 formatted, media = await self._format_analysis(
-                    result, user_query, sensor_metadata, rows=data.get("data", [])
+                    result,
+                    user_query,
+                    sensor_metadata,
+                    rows=data.get("data", []),
+                    declared=self._declared_figures_note(state),
                 )
                 return {
                     "success": True,
@@ -285,7 +313,11 @@ class AnalyticsAgent:
             # Step 3: Format results
             logger.info("\n📝 Step 3: Formatting results...")
             formatted, media = await self._format_analysis(
-                result, user_query, sensor_metadata, rows=data.get("data", [])
+                result,
+                user_query,
+                sensor_metadata,
+                rows=data.get("data", []),
+                declared=self._declared_figures_note(state),
             )
             logger.info(f"✅ Formatted response generated")
             logger.info("=" * 80)
@@ -371,11 +403,40 @@ class AnalyticsAgent:
                 n in query_lower for n in _viz_neg
             )
 
+    @staticmethod
+    def _write_turn_data(
+        data: Dict[str, Any],
+        sensor_metadata: Optional[Dict[str, Dict[str, str]]],
+        data_filename: str,
+    ) -> bool:
+        """Write THIS turn's rows to the file the generated code will be told to read.
+
+        Returns whether it was written. A failure is logged and nothing else: the templates
+        read the rows handed to them in-process first, so a turn whose file cannot be written
+        still computes over its own data rather than over someone else's.
+        """
+        import json
+        import os
+
+        try:
+            os.makedirs(settings.OUTPUT_DATA_DIR, exist_ok=True)
+            path = os.path.join(settings.OUTPUT_DATA_DIR, data_filename)
+            with open(path, "w", encoding="utf-8") as fh:
+                json.dump(
+                    {"data": data.get("data", []), "metadata": sensor_metadata or {}},
+                    fh,
+                    default=str,
+                )
+            return True
+        except Exception as exc:  # writing a scratch file must never cost the turn
+            logger.warning(f"[analytics] turn data not written to {data_filename}: {exc}")
+            return False
+
     def _get_template_code(
         self,
         user_query: str,
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
-        data_filename: str = "current_data.json",
+        data_filename: str = _DEFAULT_DATA_FILE,
     ) -> Optional[str]:
         """
         Try to match user query to a pre-defined analytics template.
@@ -423,11 +484,21 @@ def get_unit(uuid):
 df = pd.DataFrame(columns=['uuid', 'value', 'timestamp'])
 
 # Load data
+#
+# THIS TURN'S OWN ROWS COME FIRST (BUG-898). `raw_data_json` is prepended to this code by
+# the caller and holds exactly the rows this question fetched. The file underneath it is a
+# shared path: nothing on the planner path wrote it, so this template read a file last
+# written on 2025-12-17 and reported a seminar room's occupancy as 4,401.86 persons. The
+# file is kept only for a caller that writes one and passes no rows.
 try:
-    # Read data from standard local file
-    # Using pandas to read JSON to bypass potential sandbox restrictions
-    full_data = pd.read_json('/app/outputs/data/{data_filename}', typ='series')
-    
+    full_data = raw_data_json
+except NameError:
+    full_data = None
+try:
+    if full_data is None:
+        # Using pandas to read JSON to bypass potential sandbox restrictions
+        full_data = pd.read_json('/app/outputs/data/{data_filename}', typ='series')
+
     if 'data' in full_data:
         temp_df = pd.DataFrame(full_data['data'])
         if not temp_df.empty:
@@ -664,7 +735,7 @@ else:
         user_query: str,
         data: Optional[Dict[str, Any]] = None,
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
-        data_filename: str = "current_data.json",
+        data_filename: str = _DEFAULT_DATA_FILE,
         user_id: str = "default_user",
         recipe_hints: Optional[List[Dict[str, Any]]] = None,
     ) -> str:
@@ -837,7 +908,7 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
         user_query: str,
         data: Optional[Dict[str, Any]] = None,
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
-        data_filename: str = "current_data.json",
+        data_filename: str = _DEFAULT_DATA_FILE,
     ) -> Dict[str, Any]:
         """Execute code with automatic error fixing, inside a time budget."""
         import time as _t
@@ -940,7 +1011,7 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
         error: str,
         user_query: str,
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
-        data_filename: str = "current_data.json",
+        data_filename: str = _DEFAULT_DATA_FILE,
     ) -> str:
         """Attempt to fix code based on error"""
 
@@ -995,14 +1066,62 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         logger.info(f"Fixed code:\n{fixed_code}")
         return fixed_code
 
+    @staticmethod
+    def _declared_figures_note(state: Any) -> str:
+        """What the BUILDING MODEL declares for this turn's space, or ``''`` (BUG-953).
+
+        The narration is otherwise blind to it. The declared figure is resolved in the
+        dialogue node and stated by the response node, both of which run outside this agent,
+        so an analytics answer composed in between had no way to know a number it must not
+        contradict already existed — and wrote "The maximum occupancy of Room 2.15 … is 30.00
+        people" two lines under "has a design occupancy of 40 people".
+
+        Read defensively on purpose. The bus payload is owned elsewhere and is being changed;
+        an unexpected shape must cost the answer a hint, never the answer.
+        """
+        try:
+            payload = (getattr(state, "intermediate_results", None) or {}).get("design_occupancy")
+            if not isinstance(payload, dict):
+                return ""
+            space = str(payload.get("space") or "").strip()
+            declared = payload.get("declarations")
+            if not space or not isinstance(declared, dict) or not declared:
+                return ""
+            figures = ", ".join(
+                f"{str(prop).rsplit('#', 1)[-1].rsplit('/', 1)[-1]} = {value}"
+                for prop, value in declared.items()
+            )
+        except Exception:  # pragma: no cover - a hint must never cost the answer
+            return ""
+        conflicted = bool(payload.get("conflicted"))
+        note = (
+            f"\nDECLARED FOR THIS SPACE BY THE BUILDING MODEL (not measured, and already "
+            f"stated in this answer): {space} — {figures}.\n"
+            "That is the answer to a question asking for a declared capacity, limit or design "
+            "figure. Nothing you compute from readings may restate, replace or contradict it: "
+            "a maximum over readings is the highest value observed, never this.\n"
+        )
+        if conflicted:
+            note += (
+                "The model declares MORE THAN ONE of these and does not say which is "
+                "authoritative. Do not choose between them and do not offer a reading as the "
+                "tie-break.\n"
+            )
+        return note
+
     async def _format_analysis(
         self,
         result: Dict[str, Any],
         user_query: str,
         sensor_metadata: Dict[str, Dict[str, str]] = None,
         rows: Optional[List[Dict[str, Any]]] = None,
+        declared: str = "",
     ) -> str:
-        """Format analysis results into natural language"""
+        """Format analysis results into natural language.
+
+        ``declared`` is ``_declared_figures_note``'s output — what the building model states
+        for this space, so a computed extreme cannot be offered in its place (BUG-953).
+        """
 
         if not result.get("success"):
             # Return the pre-formatted user-friendly message if available, otherwise a generic one
@@ -1103,7 +1222,9 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         overview = None
         if not group_summary and sensor_metadata and len(sensor_metadata) > _MAX_SENSOR_LINES:
             try:
-                from orchestrator.services.series_summary import summarise_latest_overview
+                from orchestrator.services.series_summary import (
+                    summarise_latest_overview,
+                )
 
                 overview = summarise_latest_overview(rows or [], sensor_metadata or {})
             except Exception as _ov_err:  # never cost the answer
@@ -1236,7 +1357,7 @@ User Query: {user_query}
 Analysis Output:
 {output}
 {sensor_context}
-{compliance_hint}
+{declared}{compliance_hint}
 Visualization status: {viz_note}
 
 Generate a response that:
@@ -1259,6 +1380,18 @@ Generate a response that:
    every count or average you state must match the items you list beside it. A difference
    between two paired readings (entering and leaving, supply and return) is taken at the SAME
    instant; never subtract one series' minimum from the other's maximum and call it a difference
+11. AN EXTREME OF A SERIES IS AN OBSERVED VALUE, NEVER A DECLARED ONE (BUG-953). A maximum,
+   minimum or peak worked out from readings is the highest or lowest value RECORDED in the
+   window you were given. It is never the capacity, rating, limit, permitted maximum or design
+   figure of a room, a floor or a piece of equipment: those are DECLARED in the building model
+   and are a different quantity that happens to read the same. Write "the highest count
+   observed" or "the highest value recorded" and name the window — never "the maximum
+   occupancy of room X is …". If the question asked for a declared figure and these readings
+   do not carry it, do NOT open with a reading as the answer: say the readings show what was
+   observed, report it as an observation, and do not restate or contradict any declared figure
+   already given in this answer. Measured failures: "The maximum occupancy recorded for this
+   room is 30.00 people", four lines under "has a design occupancy of 40 people"; and "The
+   design occupancy for Room 5.01 is **30 people**", where 30 was the highest reading
 
 Response:"""
 

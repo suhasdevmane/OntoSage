@@ -95,7 +95,12 @@ VERIFIED_BRICK_CLASSES = {
 
 
 def _modalities():
-    return yaml.safe_load(_CONFIG.read_text(encoding="utf-8"))["modalities"]
+    mods = yaml.safe_load(_CONFIG.read_text(encoding="utf-8"))["modalities"]
+    # Three tests in this file are "every modality declares X". With an empty config they all
+    # pass, having declared nothing about nothing (CAVEAT-1115) -- and the same config is what
+    # drives provisioning and the per-room coverage matrix. Guarded once, here.
+    assert mods, f"{_CONFIG.name} declares no modalities"
+    return mods
 
 
 # ── the qualifier itself ─────────────────────────────────────────────────────

@@ -812,7 +812,14 @@ def test_the_hook_is_wired_into_the_response_node() -> None:
     from pathlib import Path
 
     source = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
-    assert "absence_second_chance import apply_to_answer" in source
+    # Whitespace-normalised, because `black` is free to wrap the import across lines and did
+    # (2026-09-29): the hook was wired the whole time and this assertion still failed, which
+    # makes it a test about formatting rather than about wiring. What must hold is that the
+    # module imports this symbol and calls it.
+    flat = " ".join(source.split())
+    assert "absence_second_chance import ( apply_to_answer" in flat or (
+        "absence_second_chance import apply_to_answer" in flat
+    )
     assert "final_response = await _second_chance(" in source
 
 

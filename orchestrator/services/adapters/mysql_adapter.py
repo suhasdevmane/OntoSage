@@ -356,6 +356,113 @@ class MySQLAdapter(DatabaseAdapter):
             )
         return "\nUNION ALL\n".join(blocks)
 
+    #: How many uuid columns go into one per-column MAX query. 683 in a single statement was
+    #: measured to cost the same as 250, so this is a statement-size safety margin rather than
+    #: a performance knob.
+    _LAST_SEEN_CHUNK = 250
+
+    async def latest_by_uuid_exhaustive(self, uuids: List[str]) -> Dict[str, Optional[datetime]]:
+        """Newest timestamp PER SENSOR over a WIDE table, where sensors are COLUMNS (W3-05).
+
+        A wide table has no ``uuid`` column to group by, so per-sensor freshness needs one
+        aggregate per column. Done naively that is unaffordable and the admin endpoint says so
+        outright — it reports the wide store as "not probed per sensor" rather than guess.
+
+        **Measured on bldg1, 2026-09-29, 733,590 rows and 683 declared columns:** an unbounded
+        ``MAX(CASE WHEN col IS NOT NULL THEN ts END)`` over all 683 costs **136.3 s** (six full
+        table scans). The SAME aggregate with ``WHERE ts >= <window>`` costs **0.0 s**, because
+        211 of those rows fall in the last 24 hours and the timestamp is indexed.
+
+        So this runs in two passes:
+
+        1. **Windowed** — one cheap range-scan query per chunk answers for every sensor that has
+           written recently, which in a healthy building is nearly all of them.
+        2. **Unbounded** — only for the columns pass 1 left empty. That is the set the caller is
+           actually asking about, and its size is the number of sensors that have genuinely gone
+           quiet, not the size of the building.
+
+        A caller therefore pays in proportion to how much is WRONG, which is the right shape:
+        the healthy case is free and the expensive case is the one worth paying for.
+
+        A uuid that is not a column of this table is omitted entirely — absent means "not
+        asked", never "dead". A failed query returns ``{}`` for the same reason the narrow
+        adapter does: a present key with a ``None`` value is proof the sensor has no rows, and
+        manufacturing that proof from a transient database error would report a working
+        building as a dead one.
+
+        **Deliberately NOT named ``latest_by_uuid``.** The SQL lane probes for that name on
+        every adapter it touches and skips its store-level check when it finds one, so adding
+        it to the wide adapter would change what every wide-store reading turn sets aside, and
+        could put pass 2's full scan on a chat turn. Callers that want this ask for it by name.
+        """
+        ts_col = await self._timestamp_column()
+        if not ts_col:
+            return {}
+        table = self._wide_table()
+        try:
+            columns = await self.get_columns()
+        except Exception as exc:  # pragma: no cover - schema probe is best-effort
+            logger.warning(f"MySQLAdapter[{table}].latest_by_uuid: schema unavailable: {exc}")
+            return {}
+        known = {str(c) for c in (columns or set())}
+        wanted = [
+            str(u) for u in dict.fromkeys(uuids) if _UUID_RE.match(str(u)) and str(u) in known
+        ]
+        if not wanted:
+            return {}
+
+        out: Dict[str, Optional[datetime]] = {}
+        unresolved: List[str] = []
+        window = f"WHERE `{ts_col}` >= NOW() - INTERVAL {int(self.freshness_window_hours)} HOUR"
+        for pass_no, where in enumerate((window, "")):
+            batch = wanted if pass_no == 0 else unresolved
+            if not batch:
+                break
+            next_unresolved: List[str] = []
+            for i in range(0, len(batch), self._LAST_SEEN_CHUNK):
+                chunk = batch[i : i + self._LAST_SEEN_CHUNK]
+                exprs = ", ".join(
+                    f"MAX(CASE WHEN `{c}` IS NOT NULL THEN `{ts_col}` END) AS `c{j}`"
+                    for j, c in enumerate(chunk)
+                )
+                result = await self.execute_query(f"SELECT {exprs} FROM `{table}` {where}")
+                if not getattr(result, "success", False) or not getattr(result, "data", None):
+                    # Not measured. Leaving these out of `out` keeps them UNKNOWN.
+                    continue
+                row = result.data[0] or {}
+                for j, c in enumerate(chunk):
+                    stamp = self._as_datetime(row.get(f"c{j}"))
+                    if stamp is not None:
+                        out[c] = stamp
+                    else:
+                        next_unresolved.append(c)
+            unresolved = next_unresolved
+        # Pass 2 looked at the whole table, so a column still empty has no rows at all.
+        for uid in unresolved:
+            out[uid] = None
+        return out
+
+    @staticmethod
+    def _as_datetime(raw: Any) -> Optional[datetime]:
+        """A store value as a datetime, or None when it is not one."""
+        if isinstance(raw, datetime):
+            return raw
+        if not raw:
+            return None
+        try:
+            return datetime.fromisoformat(str(raw))
+        except (TypeError, ValueError):
+            return None
+
+    @property
+    def freshness_window_hours(self) -> int:
+        """How far back the cheap per-sensor pass looks before falling back to a full scan.
+
+        Not a staleness threshold — that belongs to the evidence policy, per modality. This is
+        only the cost boundary between the two passes above.
+        """
+        return 24
+
     def _wide_table(self) -> str:
         """The wide table this adapter reads. Configured value first, discovery second.
 

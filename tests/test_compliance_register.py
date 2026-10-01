@@ -51,6 +51,10 @@ def test_forced_overdue_items_are_overdue(rendered):
     ttl, g, now, template = rendered
     due = rdflib.URIRef(_NS + "dueDate")
     completed = rdflib.URIRef(_NS + "completedDate")
+    # The template deciding to force nothing overdue would make "forced overdue items are
+    # overdue" true of no item (CAVEAT-1115), and an overdue-compliance answer is one the
+    # building is asked for directly.
+    assert template["dev_overdue_items"], "the template forces no item overdue"
     for iid in template["dev_overdue_items"]:
         node = rdflib.URIRef(f"http://example.org/testbldg#compliance_{iid}_current")
         due_val = datetime.strptime(str(g.value(node, due))[:19], "%Y-%m-%dT%H:%M:%S")

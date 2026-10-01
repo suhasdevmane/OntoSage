@@ -101,12 +101,19 @@ def test_no_real_building_is_named_anywhere_in_the_fixture():
     fixture and starts being a claim about that building."""
     _skip_if_absent()
     banned = ("abacws", "cardiff.ac.uk", "buildsys.org")
+    read = 0
     for f in sorted(_B4.rglob("*")):
         if not f.is_file() or f.suffix in (".png", ".pdf", ".dxf", ".dwg"):
             continue
+        read += 1
         low = f.read_text(encoding="utf-8", errors="replace").lower()
         for word in banned:
             assert word not in low, f"{f.name} names {word}"
+    # `_skip_if_absent` proves the DIRECTORY is there; nothing proved it had readable files
+    # in it, and a fixture whose text files all moved under an excluded suffix would report
+    # that no real building is named having read none (CAVEAT-1115). The fixture's own
+    # well-formedness test requires building.yaml plus TTL, so the floor is not 1.
+    assert read >= 3, f"only {read} readable files under bldg4/; the scan checked almost nothing"
 
 
 # ── the identity delta must not lie ──────────────────────────────────────────

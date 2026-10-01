@@ -7,8 +7,12 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 ## New session orientation (read this first)
 
-**Current branch:** `development` — last commit `a538bf6` (2026-09-18; before it a45bf47 and the three demo-path checkpoints 2292fd7, 8061c06, 19c4b1b — check `git log`
-for what is pushed). **Everything from the 18 September evening (Stage 2 work, below) is UNCOMMITTED.** **Never commit or push without the user's explicit approval.**
+**Current branch:** `development` — last commit before this one was `e0c14ae` (2026-09-25,
+*"docs: pay the parked-suite debt"*). **This line said `a538bf6` (2026-09-18) until 2026-10-01,
+which was four commits and a week stale — `git log --oneline -3` settles it in one second, so
+read it rather than this sentence.** Everything from 2026-09-26 to 2026-10-01 inclusive is in
+the commit this line was last updated by. **Never commit or push without the user's explicit
+approval.**
 
 **Three files every session must read** (in order):
 1. `CLAUDE.md` (this file) — navigation index, debugging, workflow rules
@@ -23,6 +27,515 @@ for what is pushed). **Everything from the 18 September evening (Stage 2 work, b
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
+- **LATEST (2026-10-01) — SUITE 13,805 pass / 0 fail / 76 skip / 3 xfail (15m39s), bldg1 ACTIVE,
+  measured AFTER every change below. GATE 49/51 → 51/51 after the fix it found, then 50/51 whose
+  ONE flagged case is a correct decline the harness misread (CAVEAT-1402), so **51/51 in
+  substance** — first-pass, median 21.4 s, zero retries, zero cache hits. Tracker 1,103 rows,
+  0 malformed, 14 open P1 (11 of them the measurement-apparatus cluster; only BUG-785, BUG-1319
+  and BUG-1391 are product defects).**
+  **PARKED SUITE — the commit gate (Workflow rule 8) — 13,720 pass / 0 fail / 184 skip / 3 xfail
+  (17m32s), exit 0, measured in the parked state immediately before this commit. It reconciles
+  with the active run exactly: 13,720 + 85 building-dependent skips = 13,805, and the skip count
+  moves 76 → 184 for the same reason.** Tracker 1,109 rows at the point of commit, 0 malformed,
+  CRLF 222.
+  (The count reconciles exactly and that is the point of checking it: 13,742 + 61 newly-marked
+  + 2 new = 13,805, with `deselected` falling 1357 → 1296. Earlier runs the same day gave
+  13,737/0 and 13,742/0. Do not quote the duration as a property — CAVEAT-500.)
+  (An earlier run the same day gave 13,737/0 in 16m27s, before BUG-1396; the +5 is this round's
+  new tests. Do not quote the duration as a property — CAVEAT-500.)
+  **THIRD ROUND — THE USER-PATH QUALITY NUMBER, hand-read. READ THIS BEFORE QUOTING ANY
+  PERCENTAGE.** Tail O: 60 questions drawn from the real survey corpus
+  (`scripts/draw_tail.py --name O --n 60 --seed 20261001`), **excluding all 1,352 questions that
+  appear in any stored answer file** — tails C–N are spent. Mix 53/5/2 against the corpus's own
+  88/9/3. Identity confirmed from the server's own `[forwarded-user] … (role=occupant)` line.
+  Every answer recorded IN FULL (no 400-character window — CAVEAT-1293).
+  **GOOD 24 · DECLINE-OK 12 · DECLINE-BAD 11 · WEIRD 13 · FABRICATED 0.
+  Acceptable 36/60 = 60.0%. Unacceptable 24/60 = 40.0%.**
+  **First pass was 27/60 = 45.0% because 14 answers were PROVIDER failures** — the host killed
+  Ollama mid-run and the breaker logged `OPEN — the ollama provider has been unresponsive`
+  **134 times**. Those 14 were re-asked on a healthy provider; **a re-ask that succeeds is still
+  a first-pass failure**, so both bases are recorded. Host RAM was never the issue (95.2 GiB
+  total, 56.4 GiB free, 40.8% used) — **not** BUG-1194's shape (CAVEAT-1409).
+  **ZERO FABRICATED FIGURES, now for the third independent set of 60 unseen real questions.**
+  **DO NOT read tail O's 60.0% against tail N's 76.7% as a regression.** Two unresolved
+  confounds: tail O excludes 1,352 asked questions and is a harder residue, and the two sets had
+  DIFFERENT readers — a stricter reader lowers the number without the system changing. Settling
+  it needs one reader over both sets (TODO-1404).
+  **FALSE DECLINES ARE THE DOMINANT FAILURE: 11 of 60, and six are provable against the graph**
+  (BUG-1406) — filters denied over **30 cleaning-task records the same question had just
+  enumerated**; "Room available now?" declines while the longer phrasing names 5 of 18 rooms;
+  parking declines over a `parking_data` store; "any movement?" over 501 occupancy series;
+  lighting over a `Lighting` topic; continuity over 12 records. And
+  **"'cafeteria' does not exist in this building"** when another answer in the same run names
+  the café with its opening hours.
+  **BUG-1405 (P1) is the single worst answer:** a headline *"averaging 27.6 °C, ranging from 7.2
+  to **71.0 °C**"* sitting directly above its own table reading 23.0–23.9 °C per floor. The
+  headline contradicts the table in the same answer, and 71 °C is a heating circuit, not room
+  air — BUG-521's quantity-mixing shape. **A test that the headline's min/max lies inside the
+  table's would have caught it**, and that invariant is cheap and lane-agnostic.
+  **BUG-1407:** internal content still reaches readers three times in 60 — raw AutoCAD MTEXT
+  codes as a room label (`\pxqc;{\fArial|b0|…;Kitchen}`), a raw Incident and Near Miss Log
+  dumped for *"Are the doors locked"*, and bare `bldg:access/APG-001` IRIs. **BUG-785's census
+  wording did NOT appear in any of the 60** — that specific defect no longer reproduces; the
+  family does.
+  **WHAT WORKED, STRUCTURALLY, not by luck:** the clarification lane refused "this room"
+  correctly twice, the RBAC refusal named the role and the remedy, privacy was answered
+  correctly when asked directly, and the capability lane was specific and grounded on catering,
+  CCTV, wellbeing, sustainability, HVAC zoning and power resilience.
+  **ALSO FIXED THIS ROUND, both verified live: BUG-1319** (the prompt no longer claims the
+  BUILDING lacks a sensor from one query's result — measured, 11 of 2,861 stored answers made
+  such a claim and **3 were false over 501 occupancy series**; the BINDING half stays open) and
+  **BUG-1403** (barometric pressure answered with **AHU filter differential pressure**, three
+  orders of magnitude out; now declines — and **the fix added no guard, it gave the existing
+  relevance gate the information it needed**, lesson #181).
+  **SECOND ROUND OF THE SAME DAY — the recommendations worked through, and the gate found two
+  more things, one of them in itself.**
+  **BUG-1399 (P1, PARTIALLY_FIXED) — the clearest wrong "no" this system has given.** *"Find a
+  room for 12 with a projector"* → *"Rooms that can seat 12 people | 0 … Because no workspace
+  has a seat count of 12, there is no room that meets the capacity requirement."* **18 of 28
+  workspaces seat 12 or more**, and the three projector rooms hold 30, 25 and 25. "No workspace
+  has a seat count OF 12" was LITERALLY TRUE — the values are 6, 8, 10, 16, 18, 20, 22, 24, 26,
+  28, 30, 48 and **none is exactly twelve** — and an equality reading therefore returns nothing
+  for almost any party size. The rows were already in the prompt (`whole-register fetch:
+  WorkspaceProfile (28 instances, 23 fields)`); the arithmetic was left to the narration, which
+  is what `register_facts` exists to stop (BUG-581). Now counted in code as a FLOOR. **Measured:
+  15 of 4,060 questions name a size (0.37%), and reading all 17 original matches found TWO false
+  positives** — *"passes 200 **person-hours**"* (a unit) and *"will hold 22 **degrees**"* (a
+  temperature). The digit cap is THREE because *"readings for **2026**"* read as a party of 2026.
+  **Live: the fabrication is gone 3 of 3; the right answer appears 1 of 3** — *confidently wrong*
+  → *inconsistently useful*, which is a real gain and not a full fix (lesson #179: a counted fact
+  in the prompt bounds what an answer may CLAIM, not what it will SAY).
+  Also fixed and verified live: **BUG-1395** (BUG-601's own first example had quietly stopped
+  holding — *"Book me a hotel near the building"* answered from the room-booking topic; an
+  off-site vocabulary moves it, **0 questions move across either population**, and the test is on
+  the WORD because lowering the threshold to 0 would refuse the power-outage question too);
+  **CAVEAT-1398** (the gate's saved JSON now records its own verdict — it had shown
+  `"verdict": "GOOD"` on all 51 rows of a 49/51 run). **BUG-1362 NO_LONGER_REPRODUCES**; closed
+  as that, not as fixed, because nothing was changed for it.
+  **FOUR INSTRUMENT ERRORS IN ONE GATE IN ONE DAY, and the fourth is the subtlest:** `--token`
+  defaulting to empty; case #1 answered from cache in 0.1 s; the saved JSON not recording its
+  verdict; and **case #70 reported `REGRESSED declined -> answered` on an answer that DECLINES
+  correctly** — *"there is no air-pressure sensor recorded for Room 2.01"*, verified against the
+  graph (2.01 holds temperature, CO2, humidity, door contact, illuminance, noise, occupancy,
+  window contact; the "Air Pressure Sensor" subjects are Brick CLASS definitions). The classifier
+  was fooled by an appended sampling disclaimer, so **the run is 51/51 in substance** —
+  CAVEAT-1402, and BUG-1401 for the disclaimer itself, which cites three sensing systems the turn
+  never used.
+  **AND 61 OF MY OWN TESTS WERE OUTSIDE THE COMMIT GATE (CAVEAT-1400).** The `unit` marker is
+  EXPLICIT — `--strict-markers` rejects unknown markers but cannot require one, and no conftest
+  auto-marks. Three new files omitted it, passed 61/61 when named directly, and contributed
+  nothing to `pytest -m unit`. **The tell is in the summary line: `passed` did not move while
+  `deselected` rose by exactly the number of tests added.** Marked; 61 now selected. Lesson #180.
+  **MY OWN PROBE WAS WRONG ONCE MORE AND NEARLY PRODUCED A FALSE TRACKER ROW:** it asserted
+  `o: <http://www.ontosage.org/ontology#>` for `WorkspaceProfile`, got zero capacity triples, and
+  printed *"the register really holds nothing at 12 or above"*. The class is not in that
+  namespace. **Match the PREDICATE's local name and assert no namespace** — that is how the 42
+  `roomCapacity` and 28 `seatCount` values were found.
+  **THE GATE EARNED ITS KEEP: it caught a regression the whole unit suite passed through.**
+  **BUG-1396 (P1, fixed, verified through the gate's own harness):** a forecast question —
+  *"Project the noise level in the atrium for the next 12 hours…"* — was answered *"I could not
+  find this in <building>'s documents."* Three log lines hold the whole contradiction:
+  `[ttl-route] capability via ontology triples: ['Working Hours']` ·
+  `[routing-contract] capability_measurand_is_data stood down: 1 amenity triples match` ·
+  `[capability] topics ['Working Hours'] match words but are not the subject — not answering`.
+  **'Working Hours' matched the word "hours" inside "the next 12 hours".** The contract stopped
+  handing a forecast to a data lane in favour of a lane that then discarded the topic, so the
+  forecast lane never ran. The stand-down was keyed on the COUNT of amenities whose vocabulary
+  the question's words touched, while its own stated premise is that the building's triples know
+  what the question is ABOUT. **Measured: of 2,022 bank questions that match an amenity and ask
+  for no value, only 30 have an amenity as their SUBJECT — the premise was false for 98.5% of
+  the set it keyed on.** Fixed by MOVING `topic_is_the_subject`/`subject_facts` out of
+  `capability_agent` into `capability_graph_resolver` and keying the rule on the
+  subject-qualified count: **the closure was DELETED, not copied**, because a second matcher
+  beside the first is exactly how BUG-947's decline pointer came to disagree with its own
+  register selector. Stand-down now fires on 30 of 2,022; all four amenity controls hold
+  (`stood down: 17 of 30 matched amenity triples are what the question is about`).
+  **TWO OTHER FIXES WERE MEASURED AND REJECTED FIRST and the numbers are pinned in the module:**
+  adding a forecast test to `_asks_for_a_value` moves **107** questions, many of them amenity and
+  availability questions; and a bare `project\w*` in `_FORECAST_ASK_RE` matches **PROJECTOR**,
+  of which this building keeps records. Lesson #178: **when A stands down in favour of B, A must
+  ask the question B will ask, not a cheaper proxy** — a proxy that merely correlates with B's
+  answer works until it doesn't, and then neither component's log looks wrong.
+  **BUG-1397 (P2, OPEN) — the other gate failure, and it is NOT attributable to any change made
+  today.** *"What is the evidence behind your answer about the coolest room?"* reaches **two
+  different lanes across identical asks**: `diagnosis`, which runs and produces nothing, or the
+  ranking lane, which answers with scored rooms. **2 of 3 asks decline**, each in a fresh
+  conversation (`ask()` sends a unique `X-Chat-Id` per case, so no ask had a prior turn).
+  A ROUTING instability, and a concrete counter-example to the 2026-09-29 determinism result —
+  which was measured on ten OTHER questions. **THE GATE REPORTED 51/51 IMMEDIATELY AFTER THIS
+  QUESTION HAD DECLINED TWICE: a 51/51 containing a known intermittent is not a clean 51/51.
+  Re-ask #37 explicitly whenever the gate decides anything.**
+  **CAVEAT-1398 (P3):** the gate's saved JSON carries `"verdict": "GOOD"` on **all 51 rows of a
+  49/51 run** — `verdict` is the pack's stored hand-read label and the computed `status` is never
+  written to the file. The artefact of a failing run reads as a pass.
+  **THE THEME OF THE DAY: A SINGLE FUNCTION WORD, TWICE, DECIDED WHETHER THE BUILDING ANSWERED.**
+  **BUG-1392 (fixed, verified live):** `"What happens DURING a power outage?"` was refused while
+  `"What happens IN a power cut?"` was answered — same topic, same declared lay term ("power
+  outage", verbatim), same subject. `leftover_content_words` drops words of ≤2 letters, so the
+  short prepositions were excluded **by accident, not by design**, and `during` was not in
+  `_FRAME_WORDS`. The subject test permits **one** leftover word, so one unlisted function word
+  is disqualifying alone. 52 function words added. **Measured: 10 moves over the 4,060 bank, all
+  declined→answered, 0 lost; 1 over the 2,960 catalogue.** A variant adding degree adverbs moved
+  one more and that one was WRONG ("Which meeting room am I in?" → Quiet Study) — rejected and
+  pinned in the module.
+  **BUG-1393 (P1, fixed, verified live) — found while verifying BUG-1392, and the worst answer
+  the system gave today.** `"The fire alarm is sounding. What should I do?"` was routed to the
+  fire-safety ASSET register, which declined the procedure, reported the control panel's overdue
+  weekly test, and then **wrote its own generic advice** — *"you should follow the building's
+  standard fire-alarm procedures (e.g., evacuate, contact the fire department"* — ending
+  mid-sentence, while `bldg:Cap_evacuation` holds the real steps. Cause: **one character class.**
+  `EMERGENCY_ACTION_RE` joined its halves with `[^?.!]`, so the emergency and the action frame
+  had to share ONE SENTENCE; a comma matched and a full stop did not. **TWO gates read that one
+  predicate** — `dialogue_agent`'s metadata short-circuit (whose own comment says "this return
+  would skip the rule that says so") and `emergency_action_is_a_procedure` — so both stood down
+  together. BUG-1241's shape exactly. Gap is now `[^?!]`; `?` and `!` stay barriers, which is
+  what keeps it narrow. **0 of 4,060 lost; 3 hand phrasings rescued** (sounding alarm, smoke in
+  a corridor, someone collapsed). Live now: assembly point, do not use lifts, the numbered
+  procedure — and `"When was the fire alarm panel last tested?"` **still reaches the register**
+  (9 September 2026, FSA-001).
+  **MEASURED AND DELIBERATELY NOT FIXED — CAVEAT-1394, and it is the biggest number here:**
+  the capability subject test keeps **0 of 1,563** catalogue questions that resolve a topic
+  (20 of 2,150 across the full bank). The graph-topic answer path contributes nothing on the
+  stakeholder catalogue. **This is NOT a claim of 1,563 false declines** — the catalogue is
+  compound questions where a single amenity often genuinely is not the subject, which is what
+  BUG-601 built this test for. The binding constraint is the THRESHOLD, not the word list, and
+  raising it is the over-wide change this cluster has already punished twice. **34 of the drops
+  are one word from answering** and are the cheapest sample to hand-read first.
+  **THREE OF MY OWN CLAIMS WERE WRONG THIS ROUND AND ALL THREE ARE CORRECTED ON THE RECORD.**
+  (1) I predicted the fire-alarm question would answer after BUG-1392; it never reaches that
+  lane — **a stage measurement is not a route measurement** (lessons #174, the same shape as
+  #145). Nine of that fix's ten "gains" are therefore logged as PREDICTIONS, not results,
+  because the one I checked live was wrong. (2) I hypothesised the leading statement made it a
+  safety report; measured, `report_intake_intent` returns **None** — punctuation, not intake.
+  (3) My regression test asserted against a fire-safety lay-term list **I invented**; it passed
+  and proved nothing about this building (lessons #175). Replaced with `bldg1_capabilities.ttl`
+  line 22 verbatim.
+  **AND AN INHERITED MEASUREMENT ARTEFACT, THE THIRD IN TWO DAYS (lessons #176).** An agent
+  reported a live decline ending mid-air — `"Abacws Building does keep "` with no register
+  named. The prefix is 172 chars, `\n\n` makes 174, the fragment is 26: **the test's own
+  `[:200]` cut the register name off at character 201.** Asking the stack returns the complete
+  sentence. I had a guard half-written for a state a probe found in **0 of 44** classes.
+  **When a reported string stops near 100/200/400/500, count the characters before reading
+  anything into it.**
+  Also this round, from the amenity agent: **BUG-1333 fixed** (71 amenities were invisible to the
+  false-absence guard — `held_amenity_classes()` rooted at `o:Amenity`, scored by the SAME
+  matcher to avoid BUG-947's shape; live `lane=capability` in **1.1 s** naming accessible
+  gender-neutral toilets, where it had been a 21.1 s decline) and **BUG-1361 (P1)** — thirty
+  graph facts resolved, logged and discarded because `hbco:empty_space` declares the bare lay
+  term **"available"**; both root-widening and removing that lay term were measured and
+  REJECTED (251 questions newly declined; 122 of 130 questions carry no other occupancy term).
+  New rows: BUG-1392, BUG-1393, CAVEAT-1394, **BUG-1395** (BUG-601's own first example has
+  regressed — "Book me a hotel near the building" answers from the room-booking topic, at
+  baseline, so neither caused nor fixed by today's change), BUG-1361, BUG-1362, CAVEAT-1363/1364.
+  **`csv.writer` CHOOSES CRLF EVEN WITH `newline=""`** — an agent silently rewrote all 1,087
+  rows' line endings on its first tracker write. Pass `lineterminator="\n"` and check the CRLF
+  count (it must stay **222**) after every tracker write.
+- **LATEST (2026-09-30) — SIX waves run in parallel over two rounds,
+  `tasks/FORWARD_PLAN_2026-09-30.md`. FINAL SUITE 13,160 pass / 0 fail / 54 skip (16m14s),
+  bldg1 ACTIVE. Regression gate 51/51 SIX TIMES, zero regressions in any run.
+  14 P1s resolved; 978 tracker rows, no duplicates across six concurrent writers.**
+  **THE APPARATUS WAS THE BUG THREE TIMES IN TWO DAYS, and the third is the widest:**
+  `test_strict_secrets.py` calls `importlib.reload(shared.config)` — correctly — which builds a
+  NEW Settings object while every module that did `from shared.config import settings` at import
+  time still holds the OLD one. Demonstrated: `aa.settings is cfg.settings` is True before the
+  reload and **False after**. So a test that imports `settings` fresh and patches it patches
+  something the product no longer reads. **25 such patch sites across 8 files are UNAUDITED**
+  (CAVEAT-1060) — and the three that FAILED were the lucky ones, because a patch that silently
+  does nothing usually leaves a test running against the real setting and passing VACUOUSLY.
+  The other two: five memory tests pinned a `skip_recent` parameter their own fake then ignored
+  (CAVEAT-1025), and the grader's `--gate` returned GATE PASSED on the very run-pair that decided
+  the freeze (BUG-987, fixed). **When a test fails only in a full run, suspect the test; when it
+  passes only in a full run, suspect it harder** (lessons #159).
+- **(2026-09-30, round four) — FINAL STATE OF THE DAY. All gates green; four things still open.**
+  **SUITE 13,722 pass / 0 fail / 76 skip / 3 xfail (exit 0)** — up from 13,160 at the day's
+  start, +562 tests. **PARKED SUITE 13,402 / 0 — the commit gate (Workflow rule 8), green.**
+  **GATE 51/51 TWICE, alone: median 29.6 s then 27.1 s, memory 1.39–1.55 GiB flat over 65
+  samples.** Zero regressions after ~95 resolved rows touching the schema TTL, 62 parse rules,
+  `sparql_agent`, `aggregate_lane`, `spatial_agent`, `register_projection`, `clarification`,
+  `grounding_guard`, `planner_agent`, `absence_wording`, the anomaly lane and `main.py`.
+  **THE DAY'S PATTERN, and it is the thing to carry: the APPARATUS was wrong more often than the
+  system — five separate times.** (1) A 60-question quality measurement ran as `admin` on
+  `/chat` and was reported as `facility_manager` (#169). (2) The same measurement was hand-read
+  off a terminal cutting every answer at **400 characters**, and 22 of 60 labels rested on cut
+  text — one was wrong (#171). (3) CLAUDE.md's "WEIRD is 89.1% precise" is **in-sample**;
+  held-out it is **35.4% with kappa −0.046, below chance**, and every bucket carries negative
+  lift (#172). (4) The false-absence guard is **structurally blind to all 71 amenities** —
+  `record_registry._DISCOVER_QUERY` roots at `o:Record`, and `ToiletFacility → o:Amenity`
+  (BUG-1333). (5) `COMFORT_RANGES["occupancy"] = {0, 1, "binary"}` was applied to a people
+  count, so it **could only ever fire on series it was the wrong band for** — 650 false
+  high-severity rows, each saying "outside **safe** range", with "safe" coming from the code and
+  quoted back by the model as grounds for "fire-code violations".
+  **THE ONE CLAIM THAT NEVER PASSED THROUGH AN INSTRUMENT SURVIVED EVERY CORRECTION: no
+  fabricated figure confirmed, over two independent sets of 60 unseen real questions.**
+  **FOUR GUARDS WERE RIGHT WHEN I EXPECTED THEM TO BE WRONG.** The answer-relevance gate was
+  correct in five instances with three independent root causes — twice I set out to fix it and
+  the evidence sent me upstream. **But it is NOT a backstop:** "how's the air quality index
+  trending?" SHIPPED a building mean with the gate silent while two sibling questions were
+  caught. Two of three.
+  **STILL OPEN, and none of it is papered over:** BUG-1333 (71 amenities invisible; improved to
+  an honest decline, not answered), BUG-1332 (six static `MaintenanceIssue` KnowledgeTopics
+  narrated as "six active issues ... at the moment"; one ask invented a five-step emergency
+  procedure), BUG-1302 (an invented "exceed 10 occupants" threshold), BUG-1319 (a true-absence
+  guard defeated by one adjective — "workplac"), and **CAVEAT-1346: no grader bucket supports a
+  claim about answers it was not calibrated on.** Any readiness statement has to sit inside that.
+  Lessons #169–#172.
+- **(2026-09-30, round three) — THE USER-FACING PUSH. Read this before promising anyone a date.**
+  **THE MEASUREMENT THAT MATTERS, AND THE ONE I GOT WRONG FIRST.** Tail N — 60 unseen questions
+  drawn from the REAL survey corpus (`paper/Survey analysis and results/corpus/
+  classified_corpus.csv`, 96 participants, one question each, excluding every question in tails
+  C–M), mix 87/12/2 LOOKUP/AGGREGATION/MULTI_STEP against the corpus's own 88/9/3.
+  **Zero fabricated figures in 60 unseen questions** — design contract #4 held. Every failure is
+  a decline that should have answered, or an answer about the wrong thing: both VISIBLE.
+  **But the first run measured `admin` on `/chat`, and I reported it as `facility_manager`.**
+  `scripts/ask_questions.py` reads `--email` ONLY inside `if args.v1:`; without `--v1` the flag
+  is parsed and discarded and it logs in as `ADMIN_USERNAME` against `/chat`. **CONFIRM THE
+  IDENTITY FROM THE SERVER'S `[forwarded-user] … (role=…)` LOG LINE, NEVER FROM THE FLAG YOU
+  TYPED** (lessons #169). Unacceptable was 46.7%, then 38.3% once the admin-only onboarding text
+  was excluded as correct behaviour; the non-admin `/v1` streaming figure is the one that
+  describes a user and is being measured now.
+  **THE THREE FAILURE CLUSTERS, AND TWO OF MY READINGS OF THEM WERE WRONG:**
+  (1) *"Internal text shown to users"* — **NOT a user defect.** `reader_is_admin()` is True only
+  for `admin`; every decline producer was called for every non-admin role with **0 leaks**.
+  (2) *Routing* — REAL. **An evacuation question, "if the main exit is blocked by smoke, what is
+  the alternative route", was FILED AS AN URGENT SAFETY TICKET (REP-F9828F).** Two gates had to
+  fail together: `is_question` tests only `?`/known openers (this starts "if"), and the rule
+  that answers it, `emergency_action_is_a_procedure`, matched no action frame. **Fixing either
+  alone leaves the question with no lane.** Now 3/3 give the escape route (DR-004) or decline
+  honestly, zero tickets. Blast radius measured over **7,196** questions. Parse rules 61 → 62.
+  (3) *"Six false declines, one fix moves six"* — **measurably wrong, and the truth is worse.**
+  **FOUR of the six were NOT declines: the lane ran, bound 275 humidity UUIDs, fetched them, and
+  the ANSWER-RELEVANCE GATE deleted the answer** (`relevance gate replaced a sensor_data answer:
+  OFF_TOPIC`). In at least two the gate was RIGHT — "has humidity CHANGED?" answered with current
+  values IS off-topic — so the defect is UPSTREAM and suppressing it was protective. **A fix that
+  stopped the gate replacing would have shipped wrong answers to users.** BUG-1252 (P1) logged,
+  deliberately NOT fixed, gap made countable instead.
+  **TTL-first fix, measured over all 2,960 catalogue questions: 1 move, a GAIN, 0 lost, 0 changed
+  register, guard set clean before and after.** Bare `visitor` was MEASURED AND REJECTED (30 of
+  2,960 move, most wrong) and is pinned so nobody adds it later on intuition.
+  **Found by re-asking a question we had DELIBERATELY left unfixed: `Unknown agent: deliberate`
+  rendered to the reader above a dump of 354 spaces** (BUG-1261). Leak fixed; the LANE
+  deliberately not, because ranking "overcrowded" needs capacity stamped "estimated … Not
+  certified" against an occupancy count BUG-954 has wrong by ~190x.
+  **Suite 13,365 pass / 0 fail. Gate 51/51 alone, median 29.6 s, memory flat ~2 GiB.**
+- **(2026-09-30, round two) — THE ONLY OPEN P1 IS CLOSED, AND THE WAY IT HID IS THE LESSON.**
+  **BUG-531 fixed and verified live**: 71 sensors each resolved to TWO series, because the
+  linker filtered on `ref:hasExternalReference` while this building spells that relation three
+  ways. The metric that should have caught it (fan-out, copies-per-UUID) read **1.00 before and
+  after** — arithmetically correct, structurally blind. Graph now **{1: 3544, 2: 0}**.
+  **Three of my own claims were overturned by measurement this round, and all three are
+  corrected on their rows** — BUG-947's "one triple would fix it" (the 2,175 records carry ONE
+  `changeKind`, have never closed, and have no approval predicate, so the decline is *correct*);
+  "four of seven declines named the right register — that's the tell" (the pointer names three
+  registers on **96.4%** of declines, so four-of-seven is chance — BUG-1073); and my plan to
+  retire the linker's references as the intruders (the pre-existing side was the **dead** one).
+  **Three agents reported; each overturned something.** Narration: the alarm count had already
+  stopped varying — the defect had moved to *four of five refusing to call the events
+  unacknowledged*, because the query FILTERS OUT the property and the narrator read the
+  resulting empty column as a gap in the records. Test integrity: **15 of 25 settings-patch
+  sites were vacuous and 2 were silently detached** — none went red, which is the worse half.
+  Data quality: **CAVEAT-903's headline was wrong** (0 undeclared, not 69) and chasing it is
+  what found BUG-531's live set.
+  **GATE 51/51 ON A HEALTHY PROCESS, median 29.6 s / total 26.0 min — faster than the 08:52
+  baseline, zero regressions, with every one of today's changes in.**
+  **THE OWED-LIVE-CHECK QUEUE WENT 8 → 1.** Five rows (four P1) discharged by re-ask: BUG-719
+  now asks *"Which meeting room do you mean?"*; BUG-744 answers a route question from the route
+  register instead of ranking rooms; BUG-718 names 22 sensors by real calibration-due date
+  instead of inventing a rationale; BUG-716 discloses that "calm" is not recorded and answers
+  from noise profile; CAVEAT-769's figures are present, not deleted. Then **BUG-955 (P1): 5/5
+  state SIX and 0/5 deny acknowledgement is recorded** (it had gone 1→6→0 across three identical
+  asks), and **BUG-953: 4/4** state the declared figure, disclaim that the SENSOR provides one,
+  and label the peak "the highest count observed". Only TODO-072 is left and it needs a COLD GUI
+  onboarding run, not a question.
+  **One claimed improvement did NOT reproduce, and it is logged rather than folded into the
+  pass:** BUG-955's offline A/B reported "4/4 named all six with location"; live it is **1 of
+  5** — the count and the non-denial are deterministic, the NAMING is not. An A/B that isolates
+  one formatter cannot measure what a whole turn does (CAVEAT-891).
+  **BUG-1150 (mine) was WRONG TWICE and both are corrected on the row.** The linker never mapped
+  `Occupancy_Status` to `occupancy` — its own mapper returns `occupancy_status`, profile
+  `binary: 1`. And "0..189.48" was the series' WHOLE LIFE: the bad era ran 2026-08-22 → 09-16
+  and ENDED; the last 48 h are 1,088 rows, **0 above 1**. P2 → P3, and the recommendation is now
+  *do not re-seed*. Lesson #166.
+  **SUITE, bldg1 ACTIVE, measured after everything above: 13,228 pass / 0 fail / 54 skip /
+  3 xfail, exit 0.** That includes the two real failures the test-integrity agent handed back:
+  `audit_declared_band_conformance.py` opened MySQL without `init_command=UTC_SESSION_INIT`
+  (works until the first silent reconnect, which is the worst way for a clock convention to
+  fail), and the building-literal guard firing on `link_unlinked_sensors.py` — **and the guard
+  was RIGHT**: the explanation had been written inside the SPARQL f-string, so a building
+  literal really was being shipped to GraphDB on every call. Moved to a docstring.
+  **THE PARKED NUMBER IS STILL OWED and is what gates a commit (Workflow rule 8).**
+  **HOW TO RUN THE GATE, because getting this wrong costs an hour and looks like a regression:**
+  ```bash
+  KEY=$(grep '^PIPELINE_API_KEY=' .env | cut -d= -f2- | tr -d '\r')
+  python -u scripts/regression_answerability.py --token "$KEY"      # 51 cases
+  ```
+  **`--token` is NOT optional and its default is the empty string.** `/v1/chat/completions` is
+  gated by `_oai_auth`, which accepts only a non-default `PIPELINE_API_KEY`; without it every
+  question returns `{"detail":"Invalid API key"}`, the script records 51 errors and prints
+  nothing useful, and the orchestrator log shows **no requests at all** — which reads exactly
+  like the stack being down. It is not. Check with one case (`--only 1`) before a full run.
+  **And do NOT run `scripts/capture_golden_baseline.py` expecting the gate** — that walks the
+  full **2,960**-question catalogue and will not finish in a session (16 rows in ~40 minutes).
+  Results land in `scripts/outputs/regression_answerability_*.json`.
+  **RUN THE GATE ALONE. Not "preferably" — its verdicts are unreliable otherwise (CAVEAT-1193).**
+  The same 51 cases ran **median 30.3 s, max 108.1 s, 27.8 min total at 08:52 on 2026-09-30**,
+  and a second run that afternoon — overlapping the unit suite, four agents, and a flushed
+  `cache:sparql*` — took 1h40m to reach case 9, with case #12 going **48.3 s → 3,412 s** and
+  case #13 **28.1 s → a 420.0 s client timeout recorded as `REGRESSED`**. That verdict was an
+  ARTEFACT: the orchestrator had not failed, it was still working on that turn thirteen minutes
+  after the harness gave up. **A `REGRESSED` whose `seconds` equals the timeout is a timeout,
+  not a regression — check the number before believing the verdict.**
+  Worse, it compounds: `OLLAMA_NUM_PARALLEL=1`, so abandoned work still occupies the runner and
+  the next question queues behind it — **a harness that times out CREATES the contention that
+  times out the following case.** That run was stopped at 9/51 for exactly this reason.
+  **THE CONTROLLED RE-RUN SETTLES IT, and this is the line to quote:** after restarting the
+  wedged process and running the gate ALONE with `docker stats` sampled beside it —
+  **51/51, median 29.6 s, max 83.6 s, total 26.0 min, memory 1.69–2.01 GiB flat over 69
+  samples.** Faster than the 08:52 baseline on every measure, with all of today's changes in.
+  One question across three process states: case #12 = **48.3 s baseline → 3,412 s wedged →
+  56.6 s clean**. **~2 GiB steady under a full gate is the number to compare against** — drifting
+  past it mid-run is BUG-1194 recurring, and the sampler that proves it is one background loop.
+  Lessons #160–#163.
+- **(2026-09-30) — four waves, round one.**
+  **Regression gate 51/51, zero regressed, zero intermittent**, after four agents touched eleven
+  production modules and the ontology, on ONE coordinated restart with all three caches flushed.
+  **49 tracker rows resolved across this session; 21 VERIFIED LIVE.**
+  **START HERE: about thirty open rows were logged on 2026-09-18 and had never been re-asked.**
+  Triage found **9 no longer reproduce**, 7 still do, 14 changed, 2 need the owner — and two were
+  provably stale (CAVEAT-844 claimed no weather feed is held; TODO-789 was a freeze that expired
+  eleven days earlier and read as a live prohibition on every change since). **Ask before
+  building** is the rule this keeps proving (lessons #133, #136).
+  **THE OBSERVATION THAT SHOULD SHAPE THE NEXT SESSION: five of the fourteen CHANGED rows moved
+  from a VISIBLE failure to an INVISIBLE one** — a decline became a wrong answer, a decline
+  became a silently mis-bound alert REPORTED AS SUCCESS, a wrong-content answer became a false
+  decline. The jargon and refusal work landed; what replaced it is harder to catch.
+  **TWO NEW P1s, both independently re-verified against the stores.** BUG-954: "which rooms are
+  occupied at the moment" answers TWO; at each series' latest reading **372 of 514 are non-zero**
+  (~190x, the same magnitude as BUG-898 on the same quantity). BUG-955: the same alarm question
+  named **1, then 6, then 0** across three identical asks — and the FETCH IS PERFECT each time,
+  the LLM writing the right SPARQL and the store returning the right six rows. **All the variance
+  is in the narration**, which is the clearest safety-relevant instance of CAVEAT-891: the route
+  is deterministic, the answer is not. Two of the six are HIGH priority.
+  **BUG-947's REAL root cause, which nobody suspected:** the decline's POINTER and the register
+  SELECTOR use different matchers, and the pointer is the more capable one — `content_terms`
+  singularises while `rank_record_classes` matches `<term>`. **So the wording was never
+  ACCIDENTALLY accurate**: the pointer really had found the right register and the selector could
+  not reach it. That is why four of seven false declines name the right register in the same
+  sentence as the refusal. Now logged at INFO and countable.
+  **TWO OF MY OWN PRESCRIPTIONS WERE MEASURED AND DISPROVED**, and the corrections are better than
+  the originals. BUG-948 step 1 cannot work (`_qualifier_score` returns 0.00 for BOTH test
+  questions, which are grammatically identical at the critical phrase); and plural tolerance,
+  measured over all **2,960** catalogue questions instead of two guard cases, is wrong 25 times in
+  79 moves. Reverted; the two real questions fixed TTL-FIRST instead, which cannot over-capture.
+  **A fix that would have RE-BROKEN the previous day's fix was caught and pinned:** fetching
+  exactly the two weeks a question names makes `_bucket_size` compare two partial days (BUG-936's
+  291.7% rise), because it needs 1.5 units and two weeks on a Wednesday is 9.2 days against 10.5.
+  **THE GRADER PASSED THE RUN-PAIR THAT DECIDED THE FREEZE** — `--gate` exited 0 on run5→run6,
+  calling run 6 the best of six where the hand read called it a regression. Now exits 1 when a
+  decline pattern shifts. And what can be defended is narrower than was claimed: the frozen state
+  did NOT beat baseline (p=0.135); run 5 vs run 1 did (28/11, **p=0.009, +11.6 pp**). Only the
+  WEIRD bucket is trustworthy (89.1% precision) and only as a LOWER BOUND; GOOD_ANSWER precision
+  is 38-43%, worse than chance. **Whether a stated absence is TRUE is not checkable from the
+  answer text** — only the graph settles it, which is why tail M's seven false declines needed a
+  hand read.
+  **^ THAT 89.1% IS IN-SAMPLE, AND THIS LINE LICENSED IT FOR TWO WEEKS WITHOUT SAYING SO.**
+  Audited 2026-09-30 over **2,868 stored answers and 1,997 hand labels** across 34 runs
+  (`scripts/audit_measurement_instrument.py`, report in
+  `scripts/outputs/measurement_instrument_audit.md`). The 89.1% reproduces EXACTLY — on the
+  phase0 bank the grader was **calibrated on**. On held-out answers it is **35.4%**, and every
+  bucket carries NEGATIVE lift against the hand base rate it has to beat:
+  | era | WEIRD | GOOD_ANSWER | GOOD_DECLINE | kappa |
+  |---|---|---|---|---|
+  | phase0 bank (FITTED) | 89.1% (+21.4 pp) | — | — | +0.314 |
+  | **held-out tails C–L** | **35.4% (−4.3 pp)** | **23.0% (−3.6 pp)** | **21.3% (−12.5 pp)** | **−0.046** |
+  A kappa of −0.046 is **below chance**: on the held-out set, hand-WEIRD is 295/744 (39.7%) while
+  the grader's WEIRD bucket is right 63/178 (35.4%) — **picking at random would do better.**
+  **Raw precision HID this**, because a bucket is easier to hit where its hand class is common;
+  the LIFT column is what makes it visible. Quote lift, never precision alone.
+  **THE ONE SENTENCE THAT CAN BE DEFENDED:** *no bucket of the automatic grader supports a
+  quality claim about answers it has not been calibrated on.* Every quality percentage this
+  project can defend comes from a HAND READ of specific answers.
+  **And four decline classifiers do not agree: 0 of 2,868 answers are called a decline by all
+  four**, 1,236 (43.1%) are contested, pairwise kappa 0.004–0.484 with one **negative**.
+  They were deliberately NOT unified — measured against hand labels they are four points on a
+  recall/false-decline trade-off (`regression_answerability` 0/535 wrong on confirmed answers;
+  `grade_answers_rubric` **162/535 = 30.3% wrong**, of which 128 rest on `_DECLINE_PATTERNS[0]`
+  alone). Three are at the right point for their purpose; the rubric grader is not.
+  **THE DURABLE FIX IS UNBUILT AND IS NOT A GRADER (CAVEAT-887):** nothing the server returns
+  says whether a turn DECLINED. `ontosage_route` gives the lane, `turn_outcome` whether the
+  machinery ran, and `retrieval_outcome` has the right vocabulary but never reaches `/v1`. Until
+  a lane records its own outcome on the bus, all four classifiers are guessing from prose.
+- **LATEST (2026-09-29) — the 4-day deployment push, `tasks/DEPLOY_PLAN_2026-09-29.md`.**
+  **Suite measured this day with bldg1 ACTIVE, TWICE, and the pair is the lesson (#152):**
+  **12,879 pass / 3 fail in 1h07m**, then **12,905 pass / 1 fail / 54 skip / 3 xfail in
+  16m21s** on the same tree. The first ran while a live probe held the stack and one turn took
+  3,102 seconds (CAVEAT-942); the second ran alone. Four times the wall clock, same work —
+  **DO NOT quote a suite duration as a property** (CAVEAT-500, third recorded instance).
+  All THREE of the first run's failures were in one new instrumentation file, passed 11/11
+  alone and 226/226 in a slice, and **did not recur**: order-dependent flakiness, not defects.
+  The second run's single failure was real and is FIXED — `test_the_hook_is_wired_into_the_
+  response_node` asserted a contiguous substring that `black` had wrapped across lines, so a
+  correctly wired hook failed a test about formatting (lessons #151). Fixed and re-run 63/63,
+  so the expected clean figure is 12,906 / 0 — **not claimed as measured until a run says so.**
+  **The PARKED number is owed and is what gates a commit (Workflow rule 8).**
+  Routing rules re-counted FROM THE MODULE: **60 parse + 2 post + 5 concept**, unchanged.
+  **Eight defects fixed and VERIFIED LIVE** (re-asked after restart, both caches flushed):
+  BUG-936 (P1) — "energy this week vs last week" answered about **W38 vs W39 on a day in W40**
+  and reported a **19% DECREASE where the truth is a 22.7% rise**; the current period is partial
+  by definition, so `_complete_buckets` discarded the very week asked about and the comparison
+  silently became the two newest COMPLETE weeks. BUG-940 (P1) — a follow-up saying "there",
+  six turns after the user said "room 5.01 specifically", was rewritten to
+  **"Telecommunications Room 1.34"**, a room the user never named, and answered with a mean, a
+  range and no hedge; `rewrite_is_safe` returns True whenever the user named no place, BY
+  DESIGN, and that is exactly the case where the rewrite's choice is unopposed. BUG-904 —
+  the publication gate's `_CLAIM_NUMBER` required a COMMA before a fourth digit, so
+  `1,240 ppm` was a claim and **`1200 ppm` was not**, and unverified four-digit readings
+  published on a FAILED verification. Plus BUG-879, BUG-937, CAVEAT-892, CAVEAT-938, BUG-888.
+  **THREE PLAN PREMISES WERE WRONG, and each was checked rather than assumed.** W6-01 wanted
+  routing determinism: measured 10 questions x 5 asks, **0 of 10 unstable — routing was ALREADY
+  deterministic**, so the variance that row was opened about is in GENERATION. W6-02 wanted the
+  median under 30 s: measured **4.46 s p50 over 48 requests**; the register and metadata lanes
+  were never where the time was. W5-01/W5-02 shipped a session summary that IS injected on all
+  four entry points (453 chars, verified in the log) and **nothing consumes it for a referent**
+  (BUG-941, W5-04).
+  **THREE OF MY OWN CLAIMS WERE WRONG AND ARE CORRECTED ON THE RECORD, not quietly.**
+  CAVEAT-892 was logged FIXED on a hand-run SPARQL query **that was not the query the code
+  sent** — one class against eight — so it verified the intent, not the code (lessons #145).
+  BUG-879's first fix lifted a gate that was not the one shut: `summary_ok=True` and the lane
+  still declined (lessons #146). BUG-936's first root cause was a guess that one line of
+  container log disproved. **Read lessons #145-#150 before trusting a verification in this
+  repo, including one written by the last session.**
+  **THE HELD-OUT MEASUREMENT (W7-01), and it is the number to quote:** 62 fresh questions,
+  zero overlap with the 51-question gate, re-asked AFTER the day's fixes and **every answer
+  hand-read**. Good or correct-decline **31/62 (50.0%)**; weird 14 (22.6%); **FALSE DECLINE 7
+  (11.3%)**; weak-decline 10 (16.1%). **Unacceptable = 21/62 = 33.9%.**
+  **CONFIDENTLY WRONG WITH A FABRICATED FIGURE: NONE CONFIRMED** — the failures are declines
+  and misreadings, not invented numbers, which is the distinction a deployment decision turns
+  on. Evidence: `scratchpad/tailM_after_2026-09-29.jsonl` + `scratchpad/tailM_labels.md`.
+  This is WORSE than the 26.6% weird recorded for tails K+L, and two things about that are
+  said rather than explained away: this labelling counts a FALSE DENIAL as unacceptable, and
+  tail M is a harder set of multi-clause stakeholder questions.
+  **The dominant single cause is BUG-947: a lane that IDENTIFIES the right register and does
+  not read it.** Four of the seven false declines name the register in the same sentence as the
+  refusal. One is fixed and verified ("what kind of data is collected?" now names all 45
+  modalities); the other six have at least three distinct causes, each now diagnosed in the
+  tracker rather than lumped together.
+  **Regression gate: 51/51 THREE TIMES** — before the classifier change, after it, and after
+  the observability change. Determinism 0 of 10 unstable.
+  **FINAL SUITE, bldg1 ACTIVE, measured at the end of the day: 12,932 pass / 0 fail / 54 skip /
+  3 xfail (16m47s).** Earlier in the same day the same tree gave 12,879/3 in 1h07m and
+  12,905/1 in 16m21s — the 3 were order-dependent flakes that did not recur, the 1 was a test
+  asserting a substring `black` had wrapped, and the 4x spread in wall clock came from a live
+  probe holding the stack. **Do not quote a suite duration as a property** (CAVEAT-500,
+  lessons #152). The PARKED number is still owed and is what gates a commit (Workflow rule 8).
+  **Two fixes were attempted and REVERTED on purpose, and the attempts are the useful record.**
+  BUG-948: a trailing "s" ends a `<term>` match, so "escalation routes" ranks nothing where
+  "escalation route" ranks Department at 32.0 — the obvious fix broke a guard test that rejects
+  `WorkspaceProfile` BY NAME, because `WorkspaceProfile` carries the generic phrase "eligible
+  alternative" as a NAMING term and scores 40 against Booking's legitimate 8. The module
+  already has `qualifiers` for exactly that and the set is empty, so the fix is two ordered
+  steps. **A guard test that fails your fix is doing its job** (lessons #153).
+  Open and owed: BUG-939 (the fetch ignores the period the question names, then a
+  1000-row-per-sensor cap clips it further), BUG-941, BUG-943, CAVEAT-942.
 - **LATEST (2026-09-23, second session) — Waves 1 and 2 of `tasks/PRODUCTION_TRACKER.csv`.
   W1-01/02/03/05, W2-01, W2-02 DONE; W1-04 PARTIAL. **Committed and pushed 2026-09-25;
   the parked suite measured 12,489 pass / 155 skip / 0 fail that day.**
@@ -38,7 +551,7 @@ for what is pushed). **Everything from the 18 September evening (Stage 2 work, b
   Also fixed: BUG-881 (pack #27 said "No readings were found for Floor_2" of a floor with 42
   instrumented spaces), CAVEAT-882 (a rule reading resolved concepts sat in the parse stage,
   passed 11 offline tests and fired zero times live — lesson #138).
-  **Routing rules are now 60 parse + 2 post + 5 concept.**
+  **Routing rules are now 61 parse + 2 post + 5 concept** (session_recall appended LAST, 2026-09-30, BUG-941).
   **Third session, same day — W2-01/02 DONE, W2-03 PARTIAL. Suite 12,594 pass / 0 fail.
   Gate 50/51 (the one is BUG-866).**
   **BUG-884 (P1):** naming a floor bound the sensors NAMED for it, not the sensors ON it —
@@ -288,7 +801,34 @@ for what is pushed). **Everything from the 18 September evening (Stage 2 work, b
   throughout**, because each reference has its own uuid. V12-34 owns the fix.
   **The owed-live-check queue now stands at eleven** and is owned by V12-32, sequenced
   BEFORE V12-29.
-- **No P1 is open** except BUG-531, logged 2026-09-12 and owned by V12-34. Remaining: TODO-463 (BuildingLexicon built at boot, routing does not
+- **BUG-531 (the P1 this line carried since 2026-09-12) is FIXED AND VERIFIED LIVE, 2026-09-30.**
+  Root cause was one line: `link_unlinked_sensors.py` asked `FILTER NOT EXISTS { ?p
+  ref:hasExternalReference ?r … }` — `ref:` **alone** — while this building spells that relation
+  three ways (`ref:` 3,515 triples, `ashrae:` 3,640, `brick:` 2). 71 points carried only a
+  non-`ref:` form, so all 71 looked UNLINKED and the script minted each a **second** timeseries
+  in a different store. **Why it was invisible is the part worth keeping:** fan-out reads
+  copies-per-UUID, and two references with two *different* uuids give 1.00 — arithmetically
+  right and completely silent, which is why the metric this row cited would have read 1.00
+  before *and* after. **Why it was not harmless:** `sparql_agent`'s prompt MANDATES the other
+  spelling ("Do NOT use 'ref:hasExternalReference' directly on the sensor"), so generated SPARQL
+  — the main data path — got two uuids and the SQL lane merged them. 31 of the 71 pairs were not
+  even the same QUANTITY: a booking-status point read 0/1 on one side and an occupancy count
+  reaching 189 on the other. The filter now binds `?anyRefPred`, and the 71 dead duplicates are
+  retired. Graph: **{1: 3473, 2: 71} → {1: 3544, 2: 0}**. I had the fix BACKWARDS until I
+  measured — the frozen side was the pre-existing one, not the linker's.
+  **The residue is BUG-1150 (P2), and retiring the duplicate did NOT fix it:** for part of the
+  71 the surviving series is still the wrong quantity for the point.
+  **Verify a duplicate with a distinct-uuid-per-subject count, never with fan-out.**
+- **THIS BULLET USED TO SAY "No P1 is open except BUG-531". IT WAS UNDERSTATING BY TWELVE.**
+  Derived from the tracker on 2026-09-30: **13 P1 rows are `OPEN`**, and BUG-531 was not even
+  the oldest. Eight of the thirteen are the measurement-apparatus cluster (CAVEAT-733/784/788/
+  790/791/986/991/993 — graders disagreeing with hand reads, and with each other); the rest are
+  TODO-697, BUG-785, BUG-787, CAVEAT-734 and **BUG-1142**, a live landmine: running
+  `scripts/generate_publish_map.py` today would delete 1,086 of 1,118 entries. **Do not run it.**
+  A hand-written count here went stale the same way the last four did, so do not write a new
+  one — print it:
+  `python -c "import csv;print([r['ID'] for r in csv.DictReader(open('tasks/FIX_TRACKER.csv',encoding='utf-8')) if r['Severity']=='P1' and r['Status']=='OPEN'])"`
+  Remaining non-P1: TODO-463 (BuildingLexicon built at boot, routing does not
   consume it), CAVEAT-467 (floor comparison slow), BUG-482 (a concept rule watches ONE point
   of however many carry the class — now logged and chosen for being live, but still one),
   TODO-484 (audit the other 49 probe cases for markers that decay with the calendar, as the
@@ -363,8 +903,9 @@ for what is pushed). **Everything from the 18 September evening (Stage 2 work, b
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**60** parse-stage + 2 post-stage + 4 concept-stage ordered rules, counted FROM THE MODULE
-  again 2026-09-23; it said 43+2+3 and had gone stale a fourth time;
+  (**62** parse-stage + 2 post-stage + 5 concept-stage ordered rules, counted FROM THE MODULE
+  again 2026-10-01 — it said **61**, so this line has now gone stale a FIFTH time, which is the
+  argument for printing it rather than reading it;
   2026-09-17 — this line said 17+1+1 for weeks after it stopped being true, then 36+1+3 for
   another nine days, which is the same failure twice. Count it, do not read it: `python -c
   "from orchestrator.services import routing_contract as r; print(len(r.PARSE_STAGE_RULES),
@@ -625,6 +1166,8 @@ data bus. **Reserved keys — never overwrite another node's key:**
 `intent`, `entities`, `time_range` (dialogue) · `sparql_result` (sparql) · `sql_result`, `sensor_metadata` (sql; **not** `uuids` — that name is a local, never a bus key)
 · `analytics_result` (analytics — **not** `analytics_output`, which nothing writes; BUG-510) · `visualization_path` (visualization) · `concepts` (concept_resolver)
 · `recipe_hints` (concept_resolver → analytics) · `control_result` (control) · `goal_plan` (planner)
+· `session_summary` (main._inject_session_summary, before the graph — the rolling session summary,
+read by `rewrite_to_standalone`, cleared by `_response_node`)
 · `error` (_safe_node on failure).
 
 ### Storage
@@ -769,6 +1312,40 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
 ---
 
 ## Debugging (common)
+- **Everything looks healthy and nothing responds → CHECK MEMORY FIRST, not the logs** (BUG-1194,
+  2026-09-30). Measured live: the orchestrator at **40.02 GiB of 46.64 GiB and 3210% CPU**,
+  serving nothing for an hour — while `docker ps` said `Up 3 hours (healthy)`. **The health
+  status was FROZEN**: the check had stopped completing, so the last PASS just sat there, and a
+  stale PASS is indistinguishable from a fresh one in `docker ps`. After a restart: **1.33 GiB,
+  6.4%**.
+  ```bash
+  docker logs --since 2m ontosage-orchestrator | grep watchdog   # SILENCE HERE = WEDGED
+  docker stats --no-stream ontosage-orchestrator                 # the real answer
+  docker inspect --format '{{.State.Health.Status}} streak={{.State.Health.FailingStreak}}' ontosage-orchestrator
+  docker inspect --format '{{range .State.Health.Log}}{{.Start}} exit={{.ExitCode}}
+  {{end}}' ontosage-orchestrator                                 # all five, NEWEST LAST
+  ```
+  **The `grep watchdog` line is the best test and needs no exec, no `/health` and no
+  healthcheck** — `process_watchdog` runs on an OS THREAD, not a coroutine, precisely because
+  the failure it instruments is one where asyncio timers did not fire. It logs every 30 s, so
+  nothing in two minutes means wedged. During the incident the logs went silent for an hour and
+  that silence was *ambiguous*: idle and wedged rendered identically. Now it isn't.
+  A non-zero **FailingStreak** beside `healthy`, or a newest probe minutes old, means the status
+  is stale. **`(index .State.Health.Log 0)` is the OLDEST of the last five, not the newest** —
+  this file said to read it and that was wrong; it reported 14:40:10 while the newest was
+  14:41:10. Use the `range` form above.
+  **A PAUSED OR FULLY STARVED CONTAINER STILL DEFEATS THE HEALTHCHECK** (CAVEAT-1202), because
+  the probe runs INSIDE the container: status stays put with `FailingStreak: 0` and the log
+  simply stops growing. `docker ps` labels a paused container `(Paused)`; a wedged one renders
+  `(healthy)` with no clue. The memory ceiling, not the healthcheck, is what stops a process
+  reaching that state. Symptoms it produces, all of which point somewhere else: `/health` and
+  `/auth/login` time out; the logs stop dead mid-stream (even the ECA engine's ~10 s MySQL
+  polling); and the first visible error is `Login Postgres probe failed: TimeoutError`, which
+  reads as a Postgres fault — **Postgres was up, healthy, and using 42 MiB.**
+  **Sample `docker stats` alongside any gate or probe run.** A day was spent this way
+  attributing latency to Ollama, a timeout bug and the deliberation lane before the process
+  itself was measured; on a machine at 86% memory an event loop may never reach its timer
+  callbacks, which is the cheapest explanation for BUG-1191's "the 180 s timeout did not fire".
 - **Orchestrator won't start** → `docker-compose logs --tail=50 orchestrator`; usually an ImportError (a
   module imported before it's defined, or a symbol missing from a package `__init__`).
 - **Wrong intent/node** → check the routing-precedence rules above; inspect `intermediate_results["route_decision"]`; run `tests/test_routing_accuracy.py`.

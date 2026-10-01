@@ -71,14 +71,24 @@ def _any_register():
 def test_serialised_turtle_contains_no_relative_iri_predicate():
     """The end-to-end property: every predicate written out is absolute."""
     doc, result = _any_register()
+    checked = 0
     for line in to_turtle(result).splitlines():
         if not line.startswith("<"):
             continue
+        checked += 1
         predicate = line.split("> <", 1)[1].split(">", 1)[0]
         assert predicate.startswith("http"), (
             f"{doc.name} serialises the relative predicate <{predicate}>. GraphDB will store "
             f"it verbatim and no query for that property will ever match it."
         )
+    # The filter is the whole test: a serialiser that switched to prefixed output, or emitted
+    # nothing, leaves zero lines starting with "<" and reports that every predicate written
+    # out is absolute having inspected none (CAVEAT-1115). `_any_register` already guarantees
+    # the document lifted instances, so zero triple lines is never correct here.
+    assert checked, (
+        f"{doc.name} lifted instances but to_turtle emitted no absolute-IRI triple line; "
+        "nothing was checked"
+    )
 
 
 def test_a_note_column_reaches_the_real_comment_property():

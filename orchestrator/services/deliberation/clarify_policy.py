@@ -66,6 +66,85 @@ class ClarifyDecision:
     reason: str = ""
 
 
+#: Generic English space head-nouns. No building's vocabulary appears here, and a test scans this
+#: module for building literals — a building that calls its rooms something else simply gets no
+#: note, which is the safe direction.
+_SPACE_HEADS = ("room", "area", "space", "zone", "office", "lab", "laboratory", "suite", "hall")
+
+#: Determiners and superlatives that stand before a head noun without naming a TYPE. "which room"
+#: and "the best space" name no kind of space; "meeting room" and "seating area" do.
+_NOT_A_TYPE = frozenset(
+    {
+        "the",
+        "a",
+        "an",
+        "any",
+        "some",
+        "each",
+        "every",
+        "which",
+        "what",
+        "this",
+        "that",
+        "these",
+        "those",
+        "other",
+        "another",
+        "best",
+        "good",
+        "better",
+        "nearest",
+        "next",
+        "first",
+        "second",
+        "available",
+        "free",
+        "eligible",
+        "current",
+        "same",
+        "such",
+    }
+)
+
+
+def unbound_space_type(cqir: CQIR) -> Optional[str]:
+    """The SPACE TYPE the question named and the compiler could not bind, if any (BUG-949).
+
+    Measured at the compiler with all 45 real modalities, 2026-09-29:
+
+        "Which room ON FLOOR 3 is warmest?"          -> spatial=[('on_floor','floor3',…)]
+        "Which eligible PUBLIC SEATING AREA has …"   -> spatial=[]
+        "Which MEETING ROOM has the best natural …"  -> spatial=[]
+
+    `SpatialQualifier.anchor` is documented as "floor label, amenity kind, or space name", and a
+    room TYPE is none of those — so nothing is recorded, and `build_assumptions` (which iterates
+    `cqir.constraints`, all modality constraints) has no signal to disclose from. The live answers
+    ranked Research Laboratories and Academic Offices for both questions above, with an Assumptions
+    line that carefully declared what it DID score and said nothing about the constraint it could
+    not apply. A reader has no way to tell "seating area" was ignored rather than satisfied.
+
+    A QUALIFIER THAT IS A SCORED MODALITY IS NOT A DROPPED FILTER, and excluding those is what
+    makes this safe: "is there a LOW-NOISE area on this floor" names noise, which the lane really
+    does score, so reporting it as unapplied would be a false caveat — worse than none.
+    """
+    if cqir.spatial:
+        return None  # a place was bound; nothing was silently dropped
+    scored = " ".join(
+        f"{c.source_phrase or ''} {c.modality or ''}" for c in (cqir.constraints or [])
+    ).lower()
+    scored_tokens = [t for t in re.split(r"[^a-z0-9]+", scored) if len(t) > 2]
+    low = (cqir.raw_query or "").lower()
+    for head in _SPACE_HEADS:
+        for match in re.finditer(rf"\b([a-z][a-z-]+)\s+{head}s?\b", low):
+            qualifier = match.group(1)
+            if qualifier in _NOT_A_TYPE:
+                continue
+            if any(tok in qualifier or qualifier in tok for tok in scored_tokens):
+                continue  # it names a quantity the lane scores, not a kind of space
+            return f"{qualifier} {head}"
+    return None
+
+
 def build_assumptions(
     cqir: CQIR, anchors: Optional[Dict[str, ScoreAnchor]] = None
 ) -> List[Assumption]:
@@ -89,6 +168,26 @@ def build_assumptions(
     weights = {c.weight for c in cqir.constraints}
     if len(weights) <= 1:
         out.append(Assumption(text="all stated preferences weighted equally", source="default"))
+    # A CONSTRAINT THAT COULD NOT BE APPLIED IS DECLARED, NOT OMITTED (BUG-949).
+    #
+    # The wording follows the forecast-horizon assumption below, which was added for the same
+    # reason and states it well: row 99 of the 2026-09-17 read asked about "next Wednesday after
+    # 2 p.m." and was told the ranking was "forecast 24h ahead from recent history" — a sentence
+    # that reads as though next Wednesday had been projected. The number is the same; the claim it
+    # makes must not be. A ranking over every space is still useful when the asker wanted seating
+    # areas; it just does not mean what it appears to.
+    _dropped = unbound_space_type(cqir)
+    if _dropped:
+        out.append(
+            Assumption(
+                text=(
+                    f"I could not narrow to '{_dropped}' — the building model does not record "
+                    f"which spaces are one — so this ranks every space considered and does not "
+                    f"describe only {_dropped}s"
+                ),
+                source="unbound space type",
+            )
+        )
     if cqir.time.basis == TimeBasis.NOW and not cqir.time.source_phrase:
         out.append(Assumption(text="interpreted as current conditions", source="default"))
     elif cqir.time.basis == TimeBasis.FORECAST:

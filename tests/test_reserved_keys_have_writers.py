@@ -135,9 +135,9 @@ def test_every_documented_reserved_key_has_a_writer():
 def test_uuids_is_not_claimed_as_a_bus_key():
     """The specific false entry, pinned so it cannot come back."""
     body = RULES.read_text(encoding="utf-8", errors="replace")
-    assert "**`uuids` is\n  NOT a bus key**" in body or "NOT a bus key" in body, (
-        "agent-patterns.md must keep stating that `uuids` is a local, not a bus key"
-    )
+    assert (
+        "**`uuids` is\n  NOT a bus key**" in body or "NOT a bus key" in body
+    ), "agent-patterns.md must keep stating that `uuids` is a local, not a bus key"
 
 
 # ── BUG-509: the planner must reach the bus ──────────────────────────────────
@@ -194,9 +194,9 @@ def test_both_planner_exit_paths_publish():
     compound question — the shape whose evidence a reader most needs — invisible while
     looking fixed."""
     src = (ORCH / "agents" / "planner_agent.py").read_text(encoding="utf-8")
-    assert src.count("_publish_context_to_bus(state, context)") >= 2, (
-        "both _execute_plan and _execute_multi_intent must publish"
-    )
+    assert (
+        src.count("_publish_context_to_bus(state, context)") >= 2
+    ), "both _execute_plan and _execute_multi_intent must publish"
 
 
 def test_what_the_planner_publishes_is_cleared_between_turns():
@@ -208,7 +208,13 @@ def test_what_the_planner_publishes_is_cleared_between_turns():
         _PER_TURN_LANE_KEYS,
     )
 
-    for key in PlannerAgent._BUS_KEYS_THE_PLANNER_PRODUCES:
-        assert key in _PER_TURN_LANE_KEYS or key in _CARRIED_FORWARD_ON_PURPOSE, (
-            f"the planner publishes {key!r} but nothing clears it between turns"
-        )
+    keys = PlannerAgent._BUS_KEYS_THE_PLANNER_PRODUCES
+    # BUG-392 was turn 1's answer returned verbatim for turn 2. If this declaration is ever
+    # emptied, the test reports that everything the planner publishes gets cleared -- about
+    # nothing (CAVEAT-1115). The planner's own tests pin what it writes; this pins that the
+    # list reaches the clearing contract.
+    assert keys, "_BUS_KEYS_THE_PLANNER_PRODUCES is empty; no bus key was checked"
+    for key in keys:
+        assert (
+            key in _PER_TURN_LANE_KEYS or key in _CARRIED_FORWARD_ON_PURPOSE
+        ), f"the planner publishes {key!r} but nothing clears it between turns"

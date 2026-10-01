@@ -30,8 +30,15 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
+import shared.config as _cfg
 from orchestrator.services.evidence.assemble import build_evidence_record
-from shared.config import settings
+
+# `assemble` has NO module-level `settings`: it does `from shared.config import settings`
+# INSIDE `_as_datetime`, so it reads whatever `shared.config.settings` is at call time.
+# `tests/test_strict_secrets.py` reloads that module and rebinds the attribute, so a
+# module-level `from shared.config import settings` here would leave this file patching an
+# object `assemble` stopped reading (lesson #159). `_cfg.settings` resolves at call time and
+# is therefore the same object the product reads, before and after any reload.
 
 
 def _fired(rec):
@@ -111,7 +118,20 @@ def test_a_naive_reading_is_read_as_utc_because_that_is_how_it_was_stored(monkey
     Pinned with a non-UTC building timezone so the assertion is about the RULE and not about
     where this building happens to be — under the old behaviour this reads 09:15+05:30.
     """
-    monkeypatch.setattr(settings, "BUILDING_TIMEZONE", "Asia/Kolkata", raising=False)
+    from orchestrator.services.evidence.assemble import _as_datetime
+
+    monkeypatch.setattr(_cfg.settings, "BUILDING_TIMEZONE", "Asia/Kolkata", raising=False)
+
+    # The patch must be IN FORCE, or the rest of this test is vacuous: `_as_observation_time`
+    # ignores the building timezone by design, so the reading assertion below holds whatever
+    # BUILDING_TIMEZONE says. `_as_datetime` is the sibling rule that DOES read it — a human's
+    # "9:15" is building-local — so pinning it here makes the patch load-bearing, proves the
+    # two rules are genuinely different, and fails loudly if the patch ever detaches again.
+    assert _as_datetime("2026-08-22 09:15:00").utcoffset() == timedelta(hours=5, minutes=30), (
+        "the BUILDING_TIMEZONE patch did not reach assemble — this test is then only "
+        "asserting where this building happens to be"
+    )
+
     rec = _rec([{"datetime": "2026-08-22 09:15:00", "value": 21.4}])
     assert rec.latest_evidence_at is not None
     assert rec.latest_evidence_at.tzinfo is not None, "naive timestamps cannot be compared"

@@ -413,3 +413,202 @@ def test_whatif_override_does_not_hijack(query, llm_intent):
     assert (
         whatif_intent_override(query.lower(), llm_intent) is None
     ), f"{query!r} with intent {llm_intent!r} must not be overridden"
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# Tail N, 2026-09-30 — the six wrong lanes out of sixty real survey questions.
+#
+# Every string below is the EXACT text a survey participant typed
+# (`paper/Survey analysis and results/corpus/classified_corpus.csv`), re-asked live on
+# 2026-09-30 and hand-read in `docs/phase0/tail_N_2026-09-30_read.md`. They are kept
+# verbatim — including the missing question mark on #5, which is half of why it failed.
+#
+# The contract half of these lives in `tests/test_routing_contract.py`; what is asserted
+# here is the half this file owns — `_route_from_dialogue` and its inline overrides.
+# ═══════════════════════════════════════════════════════════════════════════════
+
+TAIL_N_QUESTIONS = {
+    "safety_route": "if the main exit is blocked by smoke, what is the alternative route",
+    "repairman": "can you call for a repairman?",
+    "cool_down": "This room is far too hot. Where is a nearby area that I can go to cool down?",
+    "overcrowded": "Can you tell me which areas are currently overcrowded?",
+    "energy_alerts": "are there alerts for unusual energy patterns or wastage?",
+    "remind_lighting": "Can the building remind me to adjust lighting?",
+}
+
+
+# ── BUG-1241 (SAFETY): a question must not become an urgent incident report ───
+
+
+@pytest.mark.parametrize(
+    "start",
+    ["general", "capability", "metadata", "clarification", "recommend", "safety_report"],
+)
+def test_tail_n_safety_question_does_not_reach_the_intake_node(orch, start):
+    """Live 2026-09-30 it answered: "your safety report has been logged as REP-F9828F ...
+    Priority: URGENT". Someone asking where to evacuate got a ticket number.
+
+    Routed here through the CONTRACT first, because that is where the misroute happened:
+    `report_intake_intent` read the question as a statement (no "?", opening "if", the word
+    "smoke") and `report_intake_statement` forced `safety_report` from seven intents.
+    """
+    from orchestrator.services.routing_contract import apply_contract
+
+    q = TAIL_N_QUESTIONS["safety_route"]
+    norm = {"intent": start, "analytics": False, "general": False}
+    apply_contract(q, norm, stage="parse")
+    state = _state(q, norm["intent"])
+    node = orch._route_from_dialogue(state)
+    assert node not in (
+        "safety_report",
+        "maintenance",
+        "complaint",
+    ), f"from {start!r} the evacuation question reached the intake node {node!r}"
+    assert node == "capability", f"from {start!r} it routed to {node!r}"
+
+
+# ── BUG-1242: a report-ID lookup needs something that looks like an ID ────────
+
+
+@pytest.mark.parametrize(
+    "message,expected",
+    [
+        ("can you call for a repairman?", None),
+        # The same over-capture, three other ways, all found in the survey corpus.
+        ("are all the smoke detectors reporting as online right now?", None),
+        ("Can it detect leaks and alert a repairman?", None),
+        ("Which BMS points are physically verified against the assets they represent?", None),
+        # Real identifiers, in every spelling `_normalise_id` supports.
+        ("what is the status of REP-F9828F?", "REP-F9828F"),
+        ("status of rep f9828f", "REP-F9828F"),
+        ("REPF9828F please", "REP-F9828F"),
+    ],
+)
+def test_tail_n_report_id_is_not_any_word_starting_with_rep(message, expected):
+    """Live: "can you call for a repairman?" gave "I couldn't find a report with ID
+    **REP-AIRMAN**. Double-check the ID (format REP-XXXXXX)." The old pattern took six
+    LETTERS after "rep", so "repairman", "reporting" and "represent" were identifiers."""
+    from orchestrator.services.report_intake_service import ReportIntakeService
+
+    svc = ReportIntakeService()
+    assert svc.extract_report_id(message) == expected
+    if expected is None:
+        assert svc.classify_action(message) != "status"
+
+
+# ── BUG-1243: a composed clarification is not a floor-plan request ────────────
+
+
+def test_tail_n_a_composed_clarification_survives_the_floor_plan_keyword_override(orch):
+    """Live route: intent_from_dialogue=clarification, overrides_applied=
+    ["floor_plan_keyword_detection"], answered in 1.2 s with "Ground Floor - Floor 1 ... Which
+    floor would you like to see?".
+
+    The deictic guard had already decided "this room" names no room and composed the question
+    to ask back (BUG-719). Then `is_floor_plan_query` matched the two words "where is".
+    """
+    state = _state(TAIL_N_QUESTIONS["cool_down"], "clarification")
+    state.clarification_question = (
+        "Which room do you mean? Answering about a different one would look right and be wrong."
+    )
+    node = orch._route_from_dialogue(state)
+    assert node != "floor_plan", "a composed clarification was replaced by the floor picker"
+    decision = state.intermediate_results["route_decision"]
+    assert "floor_plan_keyword_detection" not in decision["overrides_applied"]
+
+
+def test_a_bare_clarification_label_still_falls_through_to_the_floor_picker(orch):
+    """The guard is narrowed to a clarification that actually composed a question: with none,
+    the alternative is "Could you please provide more details about your question?"."""
+    state = _state("where is the nearest exit?", "clarification")
+    state.clarification_question = ""
+    node = orch._route_from_dialogue(state)
+    assert node == "floor_plan"
+
+
+def test_the_floor_plan_override_still_claims_a_misclassified_floor_plan_query(orch):
+    state = _state("show me the floor plan of floor 3", "general")
+    assert orch._route_from_dialogue(state) == "floor_plan"
+
+
+# ── BUG-1245 / BUG-1246: alert existence, and an automation question ──────────
+
+
+def test_tail_n_alert_existence_question_reaches_the_automation_lane(orch):
+    """Live: "I haven't created an alert yet. I need the value that should trigger it..." --
+    a configuration form, to someone asking whether alerting exists at all."""
+    from orchestrator.services.routing_contract import apply_contract
+
+    q = TAIL_N_QUESTIONS["energy_alerts"]
+    norm = {"intent": "alert", "analytics": False, "general": False}
+    apply_contract(q, norm, stage="parse")
+    assert norm["intent"] == "automation_capability"
+    state = _state(q, norm["intent"])
+    assert orch._route_from_dialogue(state) == "automation_capability_check"
+
+
+def test_a_standing_alert_request_still_reaches_the_alert_lane(orch):
+    from orchestrator.services.routing_contract import apply_contract
+
+    q = "Alert me if CO2 exceeds 1000 ppm in room 5.01"
+    norm = {"intent": "alert", "analytics": False, "general": False}
+    apply_contract(q, norm, stage="parse")
+    assert norm["intent"] == "alert"
+    assert orch._route_from_dialogue(_state(q, "alert")) == "alert_mgmt"
+
+
+@pytest.mark.parametrize(
+    "start", ["general", "capability", "metadata", "clarification", "automation_capability"]
+)
+def test_tail_n_a_reminder_question_is_not_an_actuation_command(orch, start):
+    """Live: "to request a change I need which setpoint and the value to set" -- a setpoint
+    form, in answer to a question about whether the building can remind anyone of anything.
+    `is_control_command` was True because the verb-target layer saw "adjust lighting"."""
+    from orchestrator.services.routing_contract import apply_contract
+
+    q = TAIL_N_QUESTIONS["remind_lighting"]
+    norm = {"intent": start, "analytics": False, "general": False}
+    apply_contract(q, norm, stage="parse")
+    assert norm["intent"] == "automation_capability", norm["intent"]
+    state = _state(q, norm["intent"])
+    assert orch._route_from_dialogue(state) == "automation_capability_check"
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        "open the windows on floor 3",
+        "can you please unlock the door",
+        "adjust the lighting in room 5.01",
+        "dim the lights in the atrium",
+        "keep the doors unlocked",
+    ],
+)
+def test_a_real_actuation_command_still_reaches_control(command):
+    """The reminder guard keys on the SUBJECT ("the building"), so a command to the assistant
+    is untouched. Measured: 2 of 7,196 questions move, both of the intended shape."""
+    from orchestrator.services.semantic_router import SemanticRouter
+
+    assert SemanticRouter.is_control_command(command) is True
+
+
+# ── #30 "which areas are currently overcrowded?" — NOT fixed, and why ─────────
+
+
+def test_tail_n_overcrowded_is_recorded_as_open_not_silently_routed():
+    """BUG-1244 is deliberately NOT fixed, and this test pins the reason so a later session
+    does not "fix" it by pointing it at a ranking lane.
+
+    Answering it needs occupancy against CAPACITY. The building holds 62 capacity figures,
+    every one carrying `ontosage:capacityBasis` "estimated ... Not certified", over hundreds of
+    occupancy series -- and BUG-954 (P1, open) has the occupancy count itself wrong by ~190x.
+    A ranking built on that would be a safety-adjacent claim nobody made. The live failure is
+    visible (a decline or a wrong lane); a confident "Room X is overcrowded" would not be.
+    """
+    from pathlib import Path
+
+    ttl = Path(__file__).resolve().parent.parent / "input" / "bldg1_occupancy_capacity.ttl"
+    if not ttl.is_file():  # parked building: the claim above is about data, not code
+        pytest.skip("no active building; the capacity file lives under input/")
+    text = ttl.read_text(encoding="utf-8", errors="replace")
+    assert "capacityBasis" in text and "Not certified" in text

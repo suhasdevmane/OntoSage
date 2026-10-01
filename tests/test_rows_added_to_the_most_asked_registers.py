@@ -54,6 +54,10 @@ def _rows(name, heading):
     body = parse_front_matter(_find(name).read_text(encoding="utf-8"))[1]
     for h, rows in parse_tables(body):
         if heading in h.lower():
+            # A table that PARSES to zero rows is the shape that makes every "no event starts
+            # before its doors", "no closure touches a lift" assertion in this file true of
+            # nothing (CAVEAT-1115). Guarded once here rather than at each of the call sites.
+            assert rows, f"{name}: the table under {heading!r} parsed to zero rows"
             return rows
     raise AssertionError(f"{name}: no table under {heading!r}")
 
@@ -159,7 +163,7 @@ def _closures():
     SELECT ?s ?label ?on ?why ?a ?b WHERE {
       ?s a o:ClosurePeriod ; rdfs:label ?label ; o:appliesTo ?on ; o:closureReason ?why ;
          o:startedAt ?a ; o:endedAt ?b }"""
-    return [
+    out = [
         {
             "iri": str(r.s).rsplit("#", 1)[-1],
             "label": str(r.label),
@@ -170,6 +174,11 @@ def _closures():
         }
         for r in g.query(q)
     ]
+    # A query returning nothing -- one renamed predicate is enough -- makes "no closure
+    # touches a lift, an entrance, an escape route or plant" a statement about no closure
+    # (CAVEAT-1115). The file's own sibling test pins seven, so zero is never right.
+    assert out, f"{ttl.name} parsed but the ClosurePeriod query returned no rows"
+    return out
 
 
 def test_seven_closures_parse_and_each_ends_after_it_starts():
@@ -182,16 +191,21 @@ def test_seven_closures_parse_and_each_ends_after_it_starts():
 
 def test_each_carpet_closure_falls_on_or_after_the_day_its_service_is_due():
     schedule = {r["code"]: r for r in _rows("service_schedules.md", "planned service schedule")}
+    matched = 0
     for c in _closures():
         m = re.search(r"\((?:planned maintenance )?(SVC-\d+)\)", c["why"])
         if not m:
             continue
+        matched += 1
         due = date.fromisoformat(schedule[m.group(1)]["next_due"])
         assert timedelta(0) <= c["a"].date() - due <= timedelta(days=30) or c["a"].date() == due, (
             c["iri"],
             due,
         )
         assert "carpet" in schedule[m.group(1)]["task"].lower()
+    # A reworded closure reason stops the regex matching, and then this test checks no
+    # closure at all while still passing.
+    assert matched, "no closure reason named an SVC code — nothing above was checked"
 
 
 def test_the_floor_a_closure_names_is_the_floor_the_schedule_names():

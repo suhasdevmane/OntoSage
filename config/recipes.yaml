@@ -161,8 +161,11 @@ recipes:
     kind: threshold
     description: >
       Classify a floor or space as quiet/moderate/busy/full based on current occupancy
-      vs. known capacity. Capacities: floor0=120, floor1=55, floor2=75,
-      floor3=65, floor4=55, floor5=195.
+      as a share of the capacity the BUILDING MODEL declares for that space
+      (orchestrator/services/design_occupancy.py reads it from the graph). This file is
+      shared by every building, so no capacity figure may be written here: it carried one
+      building's six floor capacities as prose until 2026-09-29, which is design contract
+      rule 3, and nothing ever read them.
     params:
       quiet_pct: 25
       moderate_pct: 50

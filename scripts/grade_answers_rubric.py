@@ -42,8 +42,28 @@ USAGE
     python scripts/grade_answers_rubric.py --grade docs/phase0/phase0_rerun.md.jsonl \
         --bank docs/phase0/phase0_bank.jsonl --out scripts/outputs/rubric_rerun
 
-    # Regression gate: exits non-zero when the weird share rises
+    # Regression gate: exits non-zero when the weird share rises OR when the wording moved
     python scripts/grade_answers_rubric.py --gate new_run.md.jsonl --baseline old_run.md.jsonl
+
+WHAT THIS GRADER MAY AND MAY NOT BE QUOTED FOR (measured 2026-09-30, Wave F)
+---------------------------------------------------------------------------
+Its three buckets are not equally reliable, and the difference is not small. Over the 882
+hand labels of the six recorded runs of the 147-question bank:
+
+* the **WEIRD** bucket is high precision and low recall, so its count is a LOWER BOUND on
+  the weird share and never an estimate of it;
+* the **GOOD_DECLINE** bucket is not usable as evidence of quality at all. Whether a stated
+  absence is TRUE is not checkable from the answer text -- this module's own reason string
+  says so -- and CAVEAT-784 records the consequence: a wording change the system itself
+  started producing ("the register does not record X") matched the first entry of
+  ``_DECLINE_PATTERNS`` and moved that bucket 42 -> 75 in one night while the hand-read
+  weird share barely moved.
+
+So a wave that changes the WORDING of a decline invalidates the comparison, and ``--gate``
+now detects that condition and refuses to pass rather than reporting a share.
+``scripts/audit_grader_calibration.py`` re-derives every figure in this paragraph; none of
+them is restated here as a literal, because a hand-maintained number in a docstring goes
+stale.
 """
 
 from __future__ import annotations
@@ -368,6 +388,13 @@ _DECLINE_PATTERNS = [
     r"\bnot recorded\b",
     r"\bi have no measured series\b",
     r"\bi'?m sorry, but\b",
+    # BUG-1252's lead, from `clarification.lead_read_but_off_topic`. This list did NOT carry
+    # "I couldn't answer that from <building>'s records" either, so the grader has been
+    # scoring the commonest decline in the system as an answer (CAVEAT-887/CAVEAT-952); that
+    # miss is left alone here because widening it is a separate measurement, but the NEW
+    # wording is not allowed to arrive already broken. Verified over 2,985 stored answers:
+    # zero reclassified.
+    r"\bi could ?n[o']?t put an answer together\b",
 ]
 _DECLINE_RE = re.compile("|".join(_DECLINE_PATTERNS), re.I)
 
@@ -1326,8 +1353,85 @@ def weird_share(graded: Sequence[dict]) -> float:
     return sum(1 for g in scored if g["verdict"] == WEIRD) / len(scored)
 
 
-def gate(new_graded: Sequence[dict], old_graded: Sequence[dict]) -> Tuple[bool, dict]:
-    """Compare two graded runs. Returns (ok, detail); ok is False when weird share rises."""
+#: A decline pattern whose firing count moves by at least this many rows AND by at least
+#: this share of its old count is treated as a WORDING CHANGE, which invalidates the
+#: calibration: this grader scores SHAPE, and it was calibrated on 294 answers written
+#: before the wording moved.
+#:
+#: CALIBRATED ON FIVE DELTAS, which is thin, and the thresholds are stated rather than
+#: tuned further. Over the six recorded runs of the 147-question bank these values fire on
+#: run1->run2, run4->run5 and run5->run6 and stay quiet on run2->run3 and run3->run4. The
+#: two that matter: run4->run5 is the wave that INTRODUCED the register-census wording and
+#: inflated the GOOD_DECLINE bucket 42 -> 75 (CAVEAT-784), and run5->run6 is the only delta
+#: where this grader's DIRECTION disagreed with the hand read -- it reported the bank
+#: improving 44 -> 41 weird while a hand read of the same answers measured it regressing
+#: 90 -> 96 (BUG-787). Without this check the gate would have passed that regression.
+#: Re-derive with `python scripts/audit_grader_calibration.py --section direction`.
+SHIFT_MIN_ROWS = 8
+SHIFT_MIN_RELATIVE = 0.10
+
+
+def decline_profile(answers: Sequence[dict]) -> Dict[str, int]:
+    """How many recorded answers each decline pattern fires on.
+
+    Takes the RAW run records (``ask_questions.py --out`` rows, with an ``answer`` key),
+    not graded rows, because the graded row does not carry the answer text.
+    """
+    out: Dict[str, int] = {}
+    for pattern in _DECLINE_PATTERNS:
+        rx = re.compile(pattern, re.I)
+        out[pattern] = sum(1 for rec in answers if rx.search(body_of(rec.get("answer") or "")))
+    return out
+
+
+def wording_shift(
+    old_answers: Sequence[dict],
+    new_answers: Sequence[dict],
+    min_rows: int = SHIFT_MIN_ROWS,
+    min_relative: float = SHIFT_MIN_RELATIVE,
+) -> List[Tuple[str, int, int]]:
+    """Decline patterns whose firing rate moved enough to invalidate the calibration.
+
+    Returns ``(pattern, old_count, new_count)`` for each. An empty list means the two runs
+    phrase their declines the same way, which is the condition under which this grader's
+    buckets may be compared at all (CAVEAT-784, CAVEAT-788).
+    """
+    old_p, new_p = decline_profile(old_answers), decline_profile(new_answers)
+    moved: List[Tuple[str, int, int]] = []
+    for pattern, old_n in old_p.items():
+        new_n = new_p.get(pattern, 0)
+        delta = abs(new_n - old_n)
+        if delta >= min_rows and delta / max(old_n, 1) >= min_relative:
+            moved.append((pattern, old_n, new_n))
+    return moved
+
+
+#: One line the gate and the grade report both print, so a reader cannot take a bucket for
+#: more than it is. Deliberately a POINTER rather than a number: every hand-maintained
+#: figure in this project went stale within days (CLAUDE.md, lessons on static claims).
+BUCKET_LIMITS_NOTE = (
+    "LIMITS: the WEIRD count is a LOWER BOUND on the weird share, not an estimate of it; "
+    "the GOOD_DECLINE bucket is not usable as evidence of quality, because whether a "
+    "stated absence is TRUE cannot be checked from the answer text. Re-derive the "
+    "per-bucket precision with: python scripts/audit_grader_calibration.py "
+    "--section agreement"
+)
+
+
+def gate(
+    new_graded: Sequence[dict],
+    old_graded: Sequence[dict],
+    shift: Optional[Sequence[Tuple[str, int, int]]] = None,
+) -> Tuple[bool, dict]:
+    """Compare two graded runs. Returns (ok, detail); ok is False when weird share rises.
+
+    ``shift`` is :func:`wording_shift` over the two runs' RAW answers. When it is
+    non-empty the gate does not pass, whatever the weird share did: the grader scores
+    shape, so a wave that changed the wording of a decline has moved the thing being
+    measured and the comparison is not calibrated. That is exactly how run 6 came to be
+    reported as the best of six runs by this grader while a hand read of the same 147
+    answers scored it a regression (BUG-787).
+    """
     old_by_q = {g["question"]: g for g in old_graded}
     improved, regressed = [], []
     for g in new_graded:
@@ -1339,6 +1443,7 @@ def gate(new_graded: Sequence[dict], old_graded: Sequence[dict]) -> Tuple[bool, 
         elif prev["verdict"] != WEIRD and g["verdict"] == WEIRD:
             regressed.append((g["question"], prev["verdict"], g["verdict"], g["reason"]))
     new_share, old_share = weird_share(new_graded), weird_share(old_graded)
+    moved = list(shift or ())
     detail = {
         "new_weird_share": new_share,
         "baseline_weird_share": old_share,
@@ -1346,8 +1451,10 @@ def gate(new_graded: Sequence[dict], old_graded: Sequence[dict]) -> Tuple[bool, 
         "improved": improved,
         "regressed": regressed,
         "compared": len([g for g in new_graded if g["question"] in old_by_q]),
+        "wording_shift": moved,
+        "calibrated": not moved,
     }
-    return (new_share <= old_share + 1e-9), detail
+    return (new_share <= old_share + 1e-9) and not moved, detail
 
 
 # ─────────────────────────────────────────────────────────────────────────────────────────
@@ -1606,6 +1713,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             if counts.get(verdict):
                 print(f"{verdict:<14} {counts[verdict]:>4}")
         print(f"weird share: {weird_share(graded):.1%}")
+        print(BUCKET_LIMITS_NOTE)
         return 0
 
     if args.gate:
@@ -1614,7 +1722,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
             return 2
         new_graded = grade_run(Path(args.gate), judge, bank=Path(args.bank), asof=asof)
         old_graded = grade_run(Path(args.baseline), judge, bank=Path(args.bank), asof=asof)
-        ok, detail = gate(new_graded, old_graded)
+        shift = wording_shift(read_jsonl(Path(args.baseline)), read_jsonl(Path(args.gate)))
+        ok, detail = gate(new_graded, old_graded, shift=shift)
         print(f"compared {detail['compared']} questions present in both runs")
         print(f"baseline weird share: {detail['baseline_weird_share']:.1%}")
         print(f"new weird share:      {detail['new_weird_share']:.1%}  ({detail['delta']:+.1%})")
@@ -1624,6 +1733,18 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(f"\nregressed ({len(detail['regressed'])}):")
         for q, before, after, why in detail["regressed"][:40]:
             print(f"  - {before} -> {after}  {q[:70]}\n      {why[:110]}")
+        if shift:
+            print(f"\nWORDING SHIFT ({len(shift)} decline pattern(s) moved materially):")
+            for pattern, old_n, new_n in shift:
+                print(f"  ! {old_n:>4} -> {new_n:<4}  {pattern[:80]}")
+        print(f"\n{BUCKET_LIMITS_NOTE}")
+        if shift:
+            print(
+                "\nGATE NOT CALIBRATED: the wording of the declines moved between these two "
+                "runs, so this grader's buckets are not comparable across them. Hand-read "
+                "the new run instead of quoting a share."
+            )
+            return 1
         if not ok:
             print("\nGATE FAILED: the weird share rose.")
             return 1
