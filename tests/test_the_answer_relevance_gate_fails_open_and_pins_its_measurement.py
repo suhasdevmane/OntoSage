@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import ast
 import asyncio
 import inspect
 import json
@@ -298,9 +299,46 @@ def test_the_gate_sits_after_the_shape_guard_and_before_the_meta_guard_and_befor
         < src.index("_relevance_gated(state, ctx, final_response)")
         < src.index("meta-answer check skipped")
     )
-    # Both endpoints emit the FINAL STATE's message, which this node sets: nothing is streamed early.
+    # Both endpoints emit the FINAL STATE's message, which this node sets: nothing is streamed
+    # early. This used to assert the literal source line
+    # `assistant_message = (\n                    final_state.messages[-1].content`, which broke
+    # when BUG-1221 replaced that read with `_assistant_answer(final_state)` — a change that
+    # STRENGTHENS the property being pinned (it takes the last ASSISTANT message of the same
+    # final state, rather than whatever message happened to be last, which after a
+    # `stream_execute` failure was the user's own question). A test that fails on a fix which
+    # preserves its own intent is pinning the spelling, not the behaviour (lessons #151).
     main_src = (Path(__file__).resolve().parents[1] / "orchestrator" / "main.py").read_text("utf-8")
-    assert "assistant_message = (\n                    final_state.messages[-1].content" in main_src
+    tree = ast.parse(main_src)
+    emits = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "assistant_message" for t in node.targets)
+    ]
+    assert emits, "main.py no longer assigns `assistant_message`; find where the answer is emitted"
+
+    # `/chat` reads `assistant_entry.content`, so the state reference is one hop away — check
+    # that the intermediate is itself taken from a finished state rather than accepting the
+    # name on trust.
+    entry_sources = [
+        ast.get_source_segment(main_src, n.value) or ""
+        for n in ast.walk(tree)
+        if isinstance(n, ast.Assign)
+        and any(isinstance(t, ast.Name) and t.id == "assistant_entry" for t in n.targets)
+    ]
+    assert entry_sources and all(
+        "final_state" in s or "updated_state" in s for s in entry_sources
+    ), f"`assistant_entry` is not taken from a finished state: {entry_sources}"
+
+    for node in emits:
+        seg = ast.get_source_segment(main_src, node.value) or ""
+        assert any(
+            k in seg
+            for k in ("_assistant_answer", "final_state", "updated_state", "assistant_entry")
+        ), (
+            "an endpoint is emitting something other than the finished state's message — the "
+            f"gate in `_response_node` would not reach the reader: {seg[:120]}"
+        )
 
 
 # ── the measurement, pinned ──────────────────────────────────────────────────

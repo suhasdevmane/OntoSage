@@ -11,6 +11,10 @@
 # Abacws metadata enrichment — T07
 # Source: capability.yaml + Abacws building documentation
 # Estimates marked with rdfs:comment "estimated"
+# hbco:roomCapacity was moved out of this file on 2026-09-30 (BUG-896) into
+# input/bldg1_occupancy_capacity.ttl, so there is exactly one capacity record per room and it
+# carries its basis. The space function and the "estimated" comment stay here: they are facts
+# about the room, not about its capacity.
 # ─────────────────────────────────────────────────────────────────────────────
 
 # ── Floor-level metadata ──────────────────────────────────────────────────────
@@ -44,85 +48,66 @@ bldg:Floor5 hbco:spaceFunction  "Research labs, server room and smart-sensor dem
 # Values are approximate; authoritative data should be obtained from Estates.
 
 # Floor 5 rooms (main sensor-equipped research floor)
-bldg:Room5.01 hbco:roomCapacity  20 ;
-              hbco:spaceFunction "Seminar room"^^xsd:string ;
+bldg:Room5.01 hbco:spaceFunction "Seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.02 hbco:roomCapacity  20 ;
-              hbco:spaceFunction "Seminar room"^^xsd:string ;
+bldg:Room5.02 hbco:spaceFunction "Seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.03 hbco:roomCapacity  30 ;
-              hbco:spaceFunction "Lecture / seminar room"^^xsd:string ;
+bldg:Room5.03 hbco:spaceFunction "Lecture / seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.04 hbco:roomCapacity  20 ;
-              hbco:spaceFunction "Seminar room"^^xsd:string ;
+bldg:Room5.04 hbco:spaceFunction "Seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.05 hbco:roomCapacity  20 ;
-              hbco:spaceFunction "Seminar room"^^xsd:string ;
+bldg:Room5.05 hbco:spaceFunction "Seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.06 hbco:roomCapacity  8 ;
-              hbco:spaceFunction "Meeting room / office"^^xsd:string ;
+bldg:Room5.06 hbco:spaceFunction "Meeting room / office"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.07 hbco:roomCapacity  8 ;
-              hbco:spaceFunction "Meeting room / office"^^xsd:string ;
+bldg:Room5.07 hbco:spaceFunction "Meeting room / office"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.08 hbco:roomCapacity  50 ;
-              hbco:spaceFunction "Large seminar / teaching room"^^xsd:string ;
+bldg:Room5.08 hbco:spaceFunction "Large seminar / teaching room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.09 hbco:roomCapacity  20 ;
-              hbco:spaceFunction "Seminar room"^^xsd:string ;
+bldg:Room5.09 hbco:spaceFunction "Seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room5.10 hbco:roomCapacity  20 ;
-              hbco:spaceFunction "Seminar room"^^xsd:string ;
+bldg:Room5.10 hbco:spaceFunction "Seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
 # Floor 4 rooms
-bldg:Room4.01 hbco:roomCapacity  20 ;
-              hbco:spaceFunction "Research lab / seminar room"^^xsd:string ;
+bldg:Room4.01 hbco:spaceFunction "Research lab / seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room4.05 hbco:roomCapacity  30 ;
-              hbco:spaceFunction "Teaching lab"^^xsd:string ;
+bldg:Room4.05 hbco:spaceFunction "Teaching lab"^^xsd:string ;
               rdfs:comment       "estimated" .
 
 # Floor 3 rooms
-bldg:Room3.01 hbco:roomCapacity  25 ;
-              hbco:spaceFunction "Collaborative pod / group study room"^^xsd:string ;
+bldg:Room3.01 hbco:spaceFunction "Collaborative pod / group study room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room3.05 hbco:roomCapacity  30 ;
-              hbco:spaceFunction "Teaching room"^^xsd:string ;
+bldg:Room3.05 hbco:spaceFunction "Teaching room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
 # Floor 2 rooms
-bldg:Room2.01 hbco:roomCapacity  25 ;
-              hbco:spaceFunction "Study room / seminar room"^^xsd:string ;
+bldg:Room2.01 hbco:spaceFunction "Study room / seminar room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room2.05 hbco:roomCapacity  30 ;
-              hbco:spaceFunction "Teaching lab"^^xsd:string ;
+bldg:Room2.05 hbco:spaceFunction "Teaching lab"^^xsd:string ;
               rdfs:comment       "estimated" .
 
 # Floor 1 rooms
-bldg:Room1.04 hbco:roomCapacity  25 ;
-              hbco:spaceFunction "Study room"^^xsd:string ;
+bldg:Room1.04 hbco:spaceFunction "Study room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
-bldg:Room1.06 hbco:roomCapacity  30 ;
-              hbco:spaceFunction "Teaching room"^^xsd:string ;
+bldg:Room1.06 hbco:spaceFunction "Teaching room"^^xsd:string ;
               rdfs:comment       "estimated" .
 
 # Ground floor rooms
-bldg:Room0.01 hbco:roomCapacity  50 ;
-              hbco:spaceFunction "Atrium / reception area"^^xsd:string ;
+bldg:Room0.01 hbco:spaceFunction "Atrium / reception area"^^xsd:string ;
               rdfs:comment       "estimated" .
 
 # ── Fixed asset instances ──────────────────────────────────────────────────────

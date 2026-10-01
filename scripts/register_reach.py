@@ -183,16 +183,27 @@ def split_phrases(values: Iterable[str]) -> List[str]:
 
 # ── the one live read ───────────────────────────────────────────────────────────────────
 
-_COUNT_QUERY = """
+
+#: Instance counts per record class. THE ROOTS ARE NOT RESTATED HERE: they are read from
+#: ``record_registry._RECORD_ROOTS``, because a second copy is how a measurement comes to be taken
+#: over a different class set than the product uses. This file had its own ``VALUES ?root
+#: { o:Record o:IntervalRecord }`` until 2026-10-01, and adding ``o:Amenity`` to the product would
+#: have left every amenity class at count 0 in the snapshot — i.e. measured as ABSENT — so the
+#: comparison would have reported "nothing changed" about a change that changes 71 holdings.
+def _count_query() -> str:
+    """The snapshot's count query, over exactly the roots the product discovers beneath."""
+    roots = " ".join(f"o:{root}" for root in record_registry()._RECORD_ROOTS)
+    return f"""
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX o: <http://ontosage.org/capabilities#>
-SELECT ?cls (COUNT(DISTINCT ?i) AS ?n) WHERE {
-  VALUES ?root { o:Record o:IntervalRecord }
+SELECT ?cls (COUNT(DISTINCT ?i) AS ?n) WHERE {{
+  VALUES ?root {{ {roots} }}
   ?cls rdfs:subClassOf+ ?root .
   FILTER(STRSTARTS(STR(?cls), "http://ontosage.org/capabilities#"))
-  OPTIONAL { ?i a ?cls }
-} GROUP BY ?cls
+  OPTIONAL {{ ?i a ?cls }}
+}} GROUP BY ?cls
 """
+
 
 _AMENITY_LAY_QUERY = """
 PREFIX o: <http://ontosage.org/capabilities#>
@@ -233,7 +244,7 @@ def _select(endpoint: str, query: str) -> List[Dict[str, str]]:
 
 def take_snapshot(endpoint: str = DEFAULT_ENDPOINT) -> dict:
     """Instance counts per record class and the amenity instances, read once."""
-    counts = {_local(r["cls"]): int(r.get("n") or 0) for r in _select(endpoint, _COUNT_QUERY)}
+    counts = {_local(r["cls"]): int(r.get("n") or 0) for r in _select(endpoint, _count_query())}
     amenities: Dict[str, dict] = {}
     for row in _select(endpoint, _AMENITY_LAY_QUERY):
         entry = amenities.setdefault(_local(row["a"]), {"lays": [], "classes": []})

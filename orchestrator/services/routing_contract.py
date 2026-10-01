@@ -784,6 +784,33 @@ def _r_report_request_not_capability(c: _Ctx) -> Optional[str]:
     return "report"
 
 
+def _r_session_recall(c: _Ctx) -> Optional[str]:
+    """A question about the CONVERSATION is not a question about the building (BUG-941).
+
+    Measured live twice, and the second measurement is why this is a routing rule rather than a
+    wording fix. 2026-09-29: "Remind me which room I said I was looking into, and why." declined
+    about the BUILDING's records while the session summary naming the room sat on the bus of that
+    very turn. 2026-09-30, same probe, same question:
+
+        "You mentioned you were looking into Room0.01."
+
+    The user said **room 5.01** and never said Room0.01. The lane had gone from answering the
+    wrong question to asserting a false one ABOUT THE USER (BUG-1020, P1) — and a claim about what
+    someone said is the one claim no live reading can contradict, which makes it the worst place
+    in the system to guess.
+
+    LAST in the stage, because all rules run and the last one wins, and this corrects whatever the
+    classifier guessed rather than one particular wrong guess. Measured rather than assumed: it
+    takes the question under all ten plausible classifications, and across every question this
+    project holds — 4,060 stakeholder catalogue + guard set + demo bank + conformance set, 4,287
+    in all — it moves exactly ONE other, which is itself a recall question ("Remind me which floor
+    I said I liked working on last month.").
+    """
+    from orchestrator.services.session_recall import is_recall_question
+
+    return "session_recall" if is_recall_question(c.query) else None
+
+
 def _r_self_description(c: _Ctx) -> Optional[str]:
     """A question about the ASSISTANT is not open-domain general knowledge.
 
@@ -956,6 +983,70 @@ def _r_automation_needs_a_shape(c: _Ctx) -> Optional[str]:
     if not _STRONG_SHAPE_RE.search(c.query or "") and not _acts_on_a_building_system(c.query):
         return "capability"
     return None
+
+
+#: tail N #50 (2026-09-30, BUG-1245): "are there alerts for unusual energy patterns or wastage?"
+#: was answered *"I haven't created an alert yet. I need the value that should trigger it…"* — a
+#: configuration form, to someone asking whether alerting EXISTS at all.
+#:
+#: `_r_automation_needs_a_shape`, which exists to catch a mislabelled alert intent, cannot: both
+#: its shape tests match on the literal word "alerts", so the question looks like a perfectly
+#: well-formed request to create one. The difference is not the nouns, it is the FRAME — asking
+#: whether something is there, against asking for it to be set up.
+#:
+#: Guarded on both sides. A standing request ("alert me when CO2 goes high") has no existential
+#: frame and is untouched; a question about alarms that HAVE happened keeps `ALARM_HISTORY_RE`'s
+#: route, and so does one scoped to now ("are there any alerts at the moment?"), which asks for
+#: live state rather than for the building's alerting reach.
+#: The SUBJECT decides what "provide" means, and that split is measured rather than assumed.
+#: Over the 7,196 questions this project holds, this rule moves 18; the only false move in the
+#: first draft was *"Could you provide a priority alert to the facilities team if any standby
+#: loads exceed a certain threshold …"* — a request to SET ONE UP, which the first draft read as
+#: an existence question because it admitted "could you … provide". A threshold cue cannot
+#: separate the two (*"are there alerts if energy consumption exceeds expected thresholds?"* is
+#: an existence question carrying the same words); the subject can. So "the building/system/it"
+#: may provide, give, send or issue, and "you/I/we" may only have, get, offer, support or
+#: receive — which keeps "do you have alerts for X" and drops "could you provide an alert".
+_ALERT_EXISTENCE_Q_RE = re.compile(
+    r"\b(?:are|is)\s+there\s+(?:any\s+|currently\s+)?"
+    r"(?:\w+\s+){0,2}(?:alerts?|alarms?|notifications?|warnings?|reminders?)\b"
+    r"|\b(?:do|does|can|could)\s+(?:the\s+(?:building|system)|it)\s+"
+    r"(?:have|offer|provide|support|give|send|issue)\s+(?:any\s+)?"
+    r"(?:\w+\s+){0,2}(?:alerts?|alarms?|notifications?|warnings?|reminders?)\b"
+    r"|\b(?:do|does|can|could)\s+(?:you|i|we)\s+"
+    r"(?:have|get|offer|support|receive)\s+(?:any\s+)?"
+    r"(?:\w+\s+){0,2}(?:alerts?|alarms?|notifications?|warnings?|reminders?)\b"
+    r"|\b(?:what|which)\s+(?:kinds?\s+of\s+|sorts?\s+of\s+|types?\s+of\s+)?"
+    r"(?:alerts?|alarms?|notifications?|warnings?)\s+"
+    r"(?:are|do|does|can|exist|is)\b",
+    re.IGNORECASE,
+)
+
+#: A question scoped to NOW is about live state, not about reach. Kept beside the pattern it
+#: guards so the two cannot drift apart.
+_ALERT_RIGHT_NOW_RE = re.compile(
+    r"\b(?:right\s+now|at\s+the\s+moment|currently|active|ongoing|outstanding|open|unresolved|"
+    r"today|this\s+(?:morning|afternoon|week|month))\b",
+    re.IGNORECASE,
+)
+
+
+def _r_alert_existence_is_a_capability(c: _Ctx) -> Optional[str]:
+    """ "Are there alerts for unusual energy patterns?" asks what EXISTS, not for a new one.
+
+    From-set is deliberately two intents wide — `alert` and `automation_capability` are the only
+    two lanes measured producing the wrong answer for this shape, so the rule cannot move a
+    question any other lane has claimed for a reason of its own.
+    """
+    if c.intent not in ("alert", "automation_capability"):
+        return None
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None
+    if STANDING_ALERT_RE.search(c.query or ""):
+        return None
+    if ALARM_HISTORY_RE.search(c.query or "") or _ALERT_RIGHT_NOW_RE.search(c.query or ""):
+        return None
+    return "automation_capability" if _ALERT_EXISTENCE_Q_RE.search(c.query or "") else None
 
 
 # V4 ARBITER — constraint-recommendation shapes: choose/rank spaces under
@@ -2290,6 +2381,92 @@ def _r_capability_measurand_is_data(c: _Ctx) -> Optional[str]:
     if is_why_question(c.query):
         return None
 
+    # THE BUILDING'S OWN AMENITY TRIPLES OUTRANK A LAY-TERM MEASURAND MATCH (BUG-1333).
+    #
+    # Measured live, 2026-10-01, occupant01 on /v1, caches flushed, one ask:
+    #   Q  "Is a Changing Places toilet available in this building?"
+    #   [ttl-route] capability via ontology triples: 30 matches — twelve of them 'Accessible
+    #               gender-neutral toilet', one per end of each of floors 0-5 — skipping LLM
+    #   [dialogue]  HBCO concepts: ['empty_space']
+    #   [routing-contract] capability_measurand_is_data: 'capability' → 'sensor_data'
+    #   A  "I couldn't tie that question to a reading I can give you, so I have no figure for it."
+    # The graph holds 24 ontosage:ToiletFacility, 12 of them accessible. `hbco:empty_space`
+    # declares the BARE lay term "available", so any question containing that adjective resolves
+    # an occupancy measurand, and this rule then threw thirty graph facts away for it.
+    #
+    # KEYED ON THE GRAPH, NOT ON WORDS, and not fixed in the TTL either — both were measured.
+    # Removing the bare "available" lay term was the obvious TTL-first move and it is WRONG IN
+    # BOTH DIRECTIONS (lesson #141): over 4,060 catalogue and 7,151 real survey questions it
+    # touches 130 and 94, and 122 of the 130 have no other occupancy term, so real occupancy
+    # questions — "can the system notify me if a desk becomes available nearby?", "which rooms
+    # have recently become available?", "a real time map of available spaces" — lose their
+    # measurand, while amenity questions in the same list — "water available?", "coffee
+    # available?", "Is there a fire exit map available on each floor?", "Can I navigate to the
+    # nearest available restroom?" — are the ones being broken today. One word cannot separate
+    # them; the building's own triples can.
+    #
+    # NARROW BY CONSTRUCTION, so BUG-225 (the capability lane absorbing 88% of measurement
+    # questions) is not reopened: a question that asks for a VALUE still moves. "How many parking
+    # bays are free right now?" is a metered quantity and an aggregate shape, and both tests are
+    # the ones their own rules already use, so there is one definition of each and not two.
+    #
+    # AND IT MUST BE AN AMENITY THE QUESTION IS ABOUT, NOT ONE ITS WORDS TOUCHED (BUG-1396).
+    #
+    # This keyed on `capability_amenity_facts` -- the COUNT of matched amenities -- and one live
+    # turn showed what that buys. Gate case #4, reproduced deterministically:
+    #
+    #   Q  "Project the noise level in the atrium for the next 12 hours and show the error of
+    #       each candidate model."
+    #   [ttl-route] capability via ontology triples: ['Working Hours'] — "12 hours"
+    #   [routing-contract] capability_measurand_is_data stood down: 1 amenity triples match
+    #   [capability] topics ['Working Hours'] match words but are not the subject
+    #   A  "I could not find this in <building>'s documents."   (the lane's honest decline)
+    #
+    # The contract stopped handing a FORECAST to a data lane in favour of a lane that then threw
+    # the topic away. So it now reads the subject-qualified count, computed by the same
+    # `subject_facts` the capability lane applies to the same facts -- one definition, two
+    # readers, because a second matcher beside the first is how BUG-947's decline pointer came
+    # to disagree with its own register selector.
+    #
+    # MEASURED over the 4,060-question bank before landing: of the **2,022** questions that match
+    # an amenity and ask for no value, only **30** have an amenity as their subject. The four
+    # questions this stand-down exists for all keep it -- "Is a Changing Places toilet available
+    # in this building?" (30 matches), "Where is the nearest accessible toilet?" (31), "Is there
+    # a prayer room?" (2), "Is drinking water available on floor 3?" (17) -- and so does "Which
+    # accessible toilet is nearest and currently open?" (32). What stops being held reads like
+    # what it is: "What's the CO2 in the lecture theatre right now?", "Show me live setpoints
+    # versus measured temperature for all zones on floor 5", "Is the cafe busy right now?",
+    # "Why was the second floor freezing on Tuesday?" -- data questions the capability lane had
+    # no business keeping, which is BUG-225's shape and the thing this rule exists to prevent.
+    #
+    # ONE CONTROL CHANGES AND IS NOT HIDDEN: "Which quiet rooms are free in the next hour?"
+    # (2 matches, neither the subject) stops standing down. It is genuinely ambiguous -- an
+    # availability question answerable from occupancy data -- and it moves to the data lane.
+    #
+    # TWO OTHER CANDIDATES WERE MEASURED AND REJECTED FIRST, and the numbers are here so neither
+    # is re-proposed: adding a FORECAST test to `_asks_for_a_value` moves 107 bank questions and
+    # many are amenity and availability questions ("Which quiet rooms are free in the next
+    # hour?", "Which accessible toilet is nearest and currently open?", "Book me a hotel near
+    # the building for tomorrow"); and widening `sensor_binder._FORECAST_ASK_RE` with a bare
+    # `project\w*` matches PROJECTOR, of which this building keeps records.
+    #
+    # The bank measurement does not model `intent == capability`, so 2,022 is an upper bound on
+    # live reach, not a live count (lesson #174). Verified by re-asking.
+    if int(c.normalized.get("capability_amenity_subject") or 0) > 0:
+        _asks_for_a_value = (
+            metered_quantity_question(c.query)
+            or measured_reading_question(c.query)
+            or bool(_AGGREGATE_SHAPE_RE.search(c.ql))
+        )
+        if not _asks_for_a_value:
+            logger.info(
+                "[routing-contract] capability_measurand_is_data stood down: "
+                "%d of %d matched amenity triples are what the question is about",
+                int(c.normalized.get("capability_amenity_subject") or 0),
+                int(c.normalized.get("capability_amenity_facts") or 0),
+            )
+            return None
+
     # "Is it stuffy ANYWHERE?" resolves a measurand through its lay term, so the test above
     # says yes — but the answer is a ranking across every room, not a reading (TODO-629).
     # Converted to a data lane it reached 274 sensors and returned the row-budget refusal:
@@ -2694,8 +2871,19 @@ def _r_emergency_action_is_a_procedure(c: _Ctx) -> Optional[str]:
     Claims from `register`/`metadata` as well as the weak intents, because the register is exactly
     where this goes wrong, and runs late so a register rule cannot take it back. A question about
     the EQUIPMENT ("which fire doors are overdue a test?") is excluded by the shape test itself.
+
+    SAFETY, 2026-09-30 (BUG-1241): `safety_report` LEFT the bail-out set. "if the main exit is
+    blocked by smoke, what is the alternative route" was answered with a ticket number, and while
+    the measured path was the contract forcing `safety_report` (fixed in `report_intake_intent`),
+    the classifier can label it that way by itself — and then this rule, the only one that answers
+    it, stood down. What protects a genuine report is the line below, not the label: a STATEMENT
+    ("the fire exit is blocked by smoke") makes `report_intake_intent` return `safety_report` and
+    this rule passes, and so does "The fire exit is blocked. What should I do?", whose leading
+    statement the intake router judges the message on. Only a pure question with no asserted fault
+    moves, which is the case that was being answered with a ticket. `maintenance`, `complaint`,
+    `report` and `control` stay out: none of them is a shape this rule was measured on.
     """
-    if c.intent in ("maintenance", "complaint", "safety_report", "report", "control"):
+    if c.intent in ("maintenance", "complaint", "report", "control"):
         return None  # reporting a fire is not asking what to do about one
     if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
         return None
@@ -3239,6 +3427,15 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "automation/alert label without an automate/alert/notify/standing shape → capability",
         _r_automation_needs_a_shape,
     ),
+    # DIRECTLY AFTER the shape rule, because it corrects it: that rule reads the word "alerts"
+    # as a well-formed alert shape and stands down, which is exactly how an EXISTENCE question
+    # reached the alert-creation form (BUG-1245). Every rule in a stage runs and the last one
+    # wins, so a corrective rule goes after the one it corrects (lesson #122).
+    Rule(
+        "alert_existence_is_a_capability",
+        "'are there alerts for X?' asks what exists → automation_capability, never a new alert",
+        _r_alert_existence_is_a_capability,
+    ),
     Rule(
         "constraint_recommendation",
         "choose/rank spaces under comfort constraints → deliberate (V4 ARBITER)",
@@ -3418,6 +3615,11 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "a weather forecast, financial advice, a joke or other non-building request -> a brief "
         "statement of what the assistant can answer from (BUG-812)",
         _r_scope_boundary,
+    ),
+    Rule(
+        "session_recall",
+        "a question about THIS CONVERSATION -> session_recall, never a data lane (BUG-941)",
+        _r_session_recall,
     ),
 )
 

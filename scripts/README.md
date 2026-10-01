@@ -46,6 +46,9 @@ python scripts/ontosage_qa_suite.py --persona facility_manager # one persona
 | `export_production_corpus.py` | Export production traffic from Qdrant `user_memory` as a G1 six-tuple corpus. |
 | `fine_tune_manager.py` | Federated model fine-tuning manager. |
 | `cache_sensor_map.py` | Build/refresh the sensor label-map cache used to humanise UUIDs in responses. |
+| `grade_answers_rubric.py` | Rubric grader for recorded answers. **Read its "what this may be quoted for" block first** — the WEIRD count is a lower bound on the weird share, the GOOD_DECLINE bucket is not evidence of quality, and `--gate` refuses to pass when the wording of the declines moved between the two runs. |
+| **`audit_grader_calibration.py`** | **Measures the measurement apparatus, offline.** Re-derives the hand-read weird series with intervals, paired exact McNemar with effect size for every run pair, grader-vs-hand agreement and per-bucket precision/recall, whether the grader agrees about the SIGN of each wave delta, which decline pattern put each row in the GOOD_DECLINE bucket, the register-census leak, and the three claim-binding partitions. Proves its own grader call identical to `grade_run` before printing a figure. |
+| **`audit_decline_markers.py`** | Derives the decline leads by PARSING the modules that emit them, then reports which leads each decline classifier fails to recognise, and how each splits the 73 stored evidence-pack answers. `--focus <module>` narrows to one lane; `--strict` exits non-zero on a miss. |
 
 ## 🗄️ Migration (historical — kept for context)
 

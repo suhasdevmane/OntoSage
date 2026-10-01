@@ -92,11 +92,39 @@ bldg:Amenity_PrayerRoom_Floor1
 # timeseries of its own. Nothing tied the two together for a reader, so a question about free bays
 # reached neither. This instance is the place, and it says where the count comes from instead of
 # carrying a number: a count copied into a record is stale the moment it is written.
+#
+# AND THE PRICE IS NOT RECORDED, WHICH IS ITSELF THE ANSWER (W3-03, 2026-09-29).
+#
+# "How much does it cost to park here for a day?" declines, and the tracker row asked whether to
+# add the tariff. Every record the building holds was read before deciding, and none of them
+# carries a parking charge:
+#
+#   * ontosage:Tariff -- 4 instances, all utilities: TAR-ELEC-2026 (0.2847), TAR-GAS-2026 (0.0691),
+#     TAR-WATER-2026 (1.945), TAR-ELEC-2025 (0.3102). No parking tariff.
+#   * ontosage:CostLine -- 24 lines, all OPERATING SPEND (electricity, cleaning, lift maintenance,
+#     security staffing ...). A ledger of what the building pays out; not a price list, and it
+#     could not hold a visitor tariff whatever was added to it.
+#   * input/documents/*.md -- no parking charge in any of them. The one parking row is the
+#     stakeholder register's car park attendant, whose remit is "barrier state, permits,
+#     accessible bays, EV chargers" -- permits, not payment.
+#   * Cap_transport_parking (sourced estates_facilities) is the only record that speaks to paying
+#     to park at all, and it names an ARRANGEMENT rather than a rate: the university car park on
+#     Corbett Road requires a permit for staff, and on-street parking nearby is pay-and-display.
+#
+# So there is no daily rate to record, and a number invented here would be quoted by a visitor
+# standing at a barrier. The schema already says how this ends -- ontosage:Tariff's own comment:
+# "An invented unit rate produces a confident wrong number ... so with no Tariff the honest answer
+# is a decline that names the missing source." The absence is written into answerText so it is a
+# STATED fact rather than a search that came up empty, and it says what the building does hold
+# instead. If the owner confirms a rate, it belongs in an ontosage:Tariff instance with its
+# authority and its validity period, not in this prose.
+# Pinned by tests/test_parking_cost_is_a_recorded_absence.py.
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_Parking_GroundLevel>
     a ontosage:Amenity , ontosage:ParkingArea ;
     rdfs:label "Ground Level Parking — Abacws"@en ;
-    ontosage:layTerms "car park, car parking, parking space, parking spaces, parking bay, parking bays, free parking, park my car, where can i park, visitor parking, staff parking" ;
+    ontosage:layTerms "car park, car parking, parking space, parking spaces, parking bay, parking bays, free parking, park my car, where can i park, visitor parking, staff parking, parking charge, parking charges, parking cost, cost to park, parking fee, parking fees, parking tariff, pay to park, daily parking" ;
     ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Parking_Level_Ground> ;
     ontosage:locationText "Ground Level Parking, at the Abacws site, with six electric-vehicle charging stations on the same level" ;
-    ontosage:answerText "The building records a ground-level parking area with six electric-vehicle charging stations. How many bays are free is measured separately, by the building's parking-occupancy point, so a current count is read from that rather than from this record." .
+    ontosage:answerText "The building records a ground-level parking area with six electric-vehicle charging stations. How many bays are free is measured separately, by the building's parking-occupancy point, so a current count is read from that rather than from this record. NO PARKING CHARGE IS RECORDED: there is no parking line in the building's cost register and no parking tariff among its registered tariffs, so a daily rate cannot be quoted and must not be assumed. What the building does record about paying to park is an arrangement rather than a price — the university car park on Corbett Road requires a permit for staff, and on-street parking near the site is pay-and-display — so anyone needing a figure should ask estates." ;
+    rdfs:comment "No parking charge is recorded for this area in any of the building's records — checked against its 4 registered tariffs, its 24 cost lines and its documents on 2026-09-29. The absence is stated deliberately; a rate belongs in an ontosage:Tariff instance with its authority and validity period if the owner confirms one." .

@@ -334,6 +334,10 @@ def test_no_building_literal_lives_in_this_module():
 def test_every_decision_is_explainable():
     """The mandate: a binder whose verdicts cannot be read back is not reviewable."""
     rep = cb.analyse(ORPHANED, _rows(ORPHAN_ROWS))
+    # A binder that stopped finding figures would satisfy every assertion below by having
+    # nothing to check — the loop simply would not run. "Explainable" has to mean there was
+    # something to explain.
+    assert rep.claims, "no claims were bound at all, so nothing below was checked"
     for c in rep.claims:
         assert c.reason, f"no reason recorded for {c.raw!r}"
         assert c.binding in ("bound", "derived", "unbound", "skipped")

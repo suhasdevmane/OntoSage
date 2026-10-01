@@ -275,6 +275,15 @@ async def test_a_full_fallback_sample_is_marked_as_capped(monkeypatch):
 
     assert len(result["results"]["data"]) == captured["limit"]
     assert result["rows_capped"] is True
+    # BUG-939: and it is SAID. The marker had exactly one reader (`report_agent`) for as long
+    # as it has existed, so every other answer narrated the cap as completeness — live on
+    # 2026-09-29, "Across **all** 1,000 readings taken between 21 Sep 21:36". The span the
+    # rows really cover is carried too, so whoever appends the note elsewhere states the same
+    # period this prose does.
+    said = result["formatted_response"]
+    assert "SAMPLE" in said and "not a count of what the period holds" in said
+    assert result["rows_earliest"] and result["rows_latest"]
+    assert result["rows_earliest"] in said and result["rows_latest"] in said
 
 
 # ── a failed fallback is "no rows", never a failed turn ─────────────────────────────────

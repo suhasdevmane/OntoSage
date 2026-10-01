@@ -569,7 +569,11 @@ class ReportAgent:
         )
 
         sensor_count = int(sections.get("overview", {}).get("sensor_count") or 0)
-        subject = "the sensors for this request" if sensor_count else "a sensor of that kind"
+        # NO ARTICLE. `retrieval_outcome`'s NOT_DECLARED template is "There is no {subject}
+        # recorded for this building", so "a sensor of that kind" produced the ungrammatical
+        # "There is no a sensor of that kind recorded" that reached readers (BUG-1298). The
+        # subject is substituted into a sentence that supplies the determiner itself.
+        subject = "the sensors for this request" if sensor_count else "sensor of that kind"
         outcome = classify(
             declared=bool(sensor_count),
             # The report lane has no series catalogue, so resolution is genuinely UNKNOWN
@@ -644,10 +648,45 @@ Rules about the numbers:
 
 Use factual language. Be concise and specific."""
         try:
-            return await llm_manager.generate(prompt, temperature=0.2)
+            narrative = await llm_manager.generate(prompt, temperature=0.2)
         except Exception as e:
             logger.warning(f"Report narration LLM failed: {e}")
             return "\n".join(sections.get("highlights", []))
+
+        # WHAT A REPORT OVER READINGS MAY NOT CONCLUDE (BUG-1298/1302/1332). The rules above
+        # are the request; this is the part that cannot be declined. On a hit the reader still
+        # gets the computed highlights -- the same text used when the model is unreachable --
+        # so the facts survive and only the inference is dropped (lesson #135).
+        #
+        # DELIBERATELY NOT the whole guard: `REPORT_LANE_FAMILIES` omits the operational-order
+        # family, because item 4 of the prompt above asks this lane for actionable
+        # recommendations on purpose and the stored corpus holds a hand-read-GOOD report doing
+        # exactly that. What it keeps is the set this lane can never support: a capacity, an
+        # occupancy limit, an escalation to people, and a reading narrated as a live fault.
+        # Measured over the 2,912 stored answers: 0 report-lane or recommend-lane answers hit.
+        from orchestrator.services.anomaly.narration_guard import (
+            REPORT_LANE_FAMILIES,
+            reading_lane_claims,
+        )
+
+        hits = reading_lane_claims(
+            narrative or "", sections.get("anomalies") or (), families=REPORT_LANE_FAMILIES
+        )
+        if hits:
+            logger.warning(
+                "[report_narration_guard] ACTED: replaced a %s narration making %d "
+                "unsupported claim(s) %r (BUG-1298/1302/1332)",
+                rtype.value,
+                len(hits),
+                hits[:6],
+            )
+            highlights = "\n".join(sections.get("highlights", []))
+            return (
+                "Here are the computed findings. The report written over them stated "
+                "something the readings do not record, so it was withheld. No conclusion "
+                "has been drawn from them.\n\n" + highlights
+            )
+        return narrative
 
     def _assemble_report(self, rtype: ReportType, sections: Dict, narrative: str) -> Dict[str, Any]:
         """Package final report."""

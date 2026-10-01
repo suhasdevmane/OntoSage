@@ -51,9 +51,9 @@ from orchestrator.services.requested_interval import store_now
 
 # CAP-04: Compliance standards engine
 from orchestrator.services.standards_engine import get_standards_engine
+from orchestrator.services.turn_outcome import Outcome as _Outcome
 from shared.config import settings
 from shared.models import ConversationState, Message
-from orchestrator.services.turn_outcome import Outcome as _Outcome
 from shared.utils import describe_exception, get_logger
 
 # WIRE-A: i18n service (translate query in, response out)
@@ -410,6 +410,50 @@ def _deliberative_steps(dossier: Dict[str, Any]) -> List[str]:
     return steps
 
 
+def _stage_durations(results: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """Per-stage wall time for this turn, slowest first, from `lane_outcomes`.
+
+    One entry per RUN of a stage rather than a sum per stage name: a lane that ran twice
+    because the first attempt timed out is two different facts, and summing them reports a
+    retry as one slow call. `first_pass` carries which is which, and is taken from the
+    record rather than re-derived here (V12-19 is explicit that re-deriving it is how a
+    recovered retry gets folded into a success).
+
+    Never raises. A missing duration is reported as absent, never as zero -- an unrecorded
+    stage and an instant one are not the same claim.
+    """
+    out: List[Dict[str, Any]] = []
+    for entry in results.get("lane_outcomes") or []:
+        if not isinstance(entry, dict):
+            continue
+        ms = entry.get("duration_ms")
+        out.append(
+            {
+                "stage": entry.get("lane"),
+                "ms": int(ms) if isinstance(ms, (int, float)) else None,
+                "outcome": entry.get("outcome"),
+                "first_pass": entry.get("first_pass"),
+            }
+        )
+    out.sort(key=lambda e: (e["ms"] is None, -(e["ms"] or 0)))
+    return out
+
+
+def plan_trace_for_response(results: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+    """The turn's plan trace with `stage_ms` brought up to date, for the HTTP payload.
+
+    The trace is assembled INSIDE the response node, so at the moment it is built the
+    response node has not returned and its own duration is not yet recorded. Narration is
+    one of the two stages most worth attributing, so a trace that structurally cannot
+    contain it would be the wrong instrument. This re-reads `lane_outcomes` after the graph
+    has finished and refreshes that one field; everything else is left exactly as built.
+    """
+    trace = results.get("plan_trace")
+    if not isinstance(trace, dict):
+        return trace
+    return {**trace, "stage_ms": _stage_durations(results)}
+
+
 def build_plan_trace(
     results: Dict[str, Any], executed_stages: Optional[List[str]] = None
 ) -> Dict[str, Any]:
@@ -427,6 +471,11 @@ def build_plan_trace(
         "final_node": rd.get("final_node"),
         "decision_source": rd.get("decision_source"),
         "overrides_applied": list(rd.get("overrides_applied") or []),
+        # W6-02: WHERE the turn's time went, taken from the durations every wrapped node
+        # already records. The trace said which stages ran and never how long any of them
+        # took, so attributing a slow turn meant reading the container log -- and an
+        # interleaved log cannot be attributed at all (see `_timed_node`).
+        "stage_ms": _stage_durations(results),
     }
     dossier = results.get("evidence_dossier") or {}
     if dossier:
@@ -565,6 +614,13 @@ _PER_TURN_LANE_KEYS = (
     "cache_hit",
     "evidence_record",
     "plan_trace",
+    # BUG-1252. The relevance gate's verdict for THIS turn, including whether it deleted an
+    # answer. It was written and never read on the response path, so leaving it behind cost
+    # nothing; `_unanswered_response` now reads `replaced` to decide whether the decline may
+    # say the records were read, which makes a stale one a claim about the PREVIOUS question —
+    # "I did read them" on a turn that read nothing. That is this list's own standing rule:
+    # reading a key on the response path obliges clearing it.
+    "relevance_gate",
 )
 
 
@@ -920,13 +976,17 @@ async def _measured_modality_counts(
         return dict(hit)
     try:
         if specs is None:
-            from orchestrator.services.deliberation.coverage_audit import load_modalities
+            from orchestrator.services.deliberation.coverage_audit import (
+                load_modalities,
+            )
 
             specs = load_modalities(building_id)
         if not specs:
             return None
         if sparql_exec is None:
-            from orchestrator.services.deliberation.live import sparql_exec as _live_exec
+            from orchestrator.services.deliberation.live import (
+                sparql_exec as _live_exec,
+            )
 
             sparql_exec = _live_exec
         loop = asyncio.get_running_loop()
@@ -992,7 +1052,7 @@ def _is_typed_absence(result: Any) -> bool:
     return isinstance(result, dict) and result.get("method") == "typed_absence"
 
 
-async def _closest_holdings(state, timeout_s: float = 5.0) -> Tuple[List[str], List[Any]]:
+async def _closest_holdings(state, timeout_s: float = 5.0) -> Tuple[Optional[List[str]], List[Any]]:
     """What the active building MEASURES and the record classes it HOLDS — live, or empty.
 
     Both halves are derived from the graph, never declared here: `_measured_modality_counts`
@@ -1000,15 +1060,21 @@ async def _closest_holdings(state, timeout_s: float = 5.0) -> Tuple[List[str], L
     classes that have instances. Either half may come back empty (graph slow, graph down, a
     building that declares neither), and an empty half is simply not mentioned — a sentence
     about what the building holds must never be padded with a guess.
+
+    `measured` IS None, NOT [], WHEN THE CATALOGUE COULD NOT BE READ (CAVEAT-951), and the two
+    must not be conflated: "this building measures nothing" and "I could not read what this
+    building measures" are different claims, and only the first is ever safe to imply. The
+    information was never missing — it was discarded one call later, because
+    `_measured_modality_counts` already returns None for unreadable and never zero, and passing
+    that straight into `_measured_names` turned it into an empty list at the door.
     """
-    measured: List[str] = []
+    measured: Optional[List[str]] = None
     records: List[Any] = []
     try:
-        measured = _measured_names(
-            await _measured_modality_counts(
-                timeout_s=timeout_s, building_id=getattr(state, "building_id", None) or None
-            )
+        _counts = await _measured_modality_counts(
+            timeout_s=timeout_s, building_id=getattr(state, "building_id", None) or None
         )
+        measured = None if _counts is None else _measured_names(_counts)
     except Exception as exc:
         logger.debug(f"[holdings] measured modalities unavailable: {describe_exception(exc)}")
     try:
@@ -1064,6 +1130,52 @@ def _intent_in_plain_words(intent: str) -> str:
     return _INTENT_IN_PLAIN_WORDS.get(key, key.replace("_", " "))
 
 
+def _store_rows_read(state) -> int:
+    """How many stored rows this turn is VISIBLY known to have read, or 0.
+
+    BUG-1252. This is NOT `_grounded_evidence_behind` and must not become it. That function
+    decides whether the relevance gate may DELETE an answer, and BUG-1252 records at length why
+    widening it is unsafe: the data lanes are where the gate measures best (its own docstring,
+    sensor_data 17/30 weird flagged with 0/10 good replaced), and on two of the four measured
+    turns the answer it deleted really was about something else. This one decides only what the
+    resulting DECLINE MAY SAY, which cannot restore a wrong answer and cannot lose a right one.
+
+    Positive-only, like its neighbour: a zero means "no row count visible", never "no rows were
+    read", so a caller may use it to WITHHOLD the stronger sentence and never to justify one.
+    Deliberately narrow — only a counted read of a store qualifies, because the sentence it
+    licenses says "I did read them". A lane that ran and fetched nothing (BUG-1271: eight floor
+    labels returned for "what is the average sound level") is not a read of the records and
+    falls back to the older, weaker wording.
+    """
+    results = getattr(state, "intermediate_results", None)
+    if not isinstance(results, dict):
+        return 0
+    rows = 0
+    try:
+        # Reused, not re-derived: `_count_sql_rows` already knows the three shapes the SQL lane
+        # writes, and reading one level too shallow is BUG-508/BUG-477's shared defect.
+        from orchestrator.agents.verifier_agent import _count_sql_rows
+
+        sql = results.get("sql_result")
+        if isinstance(sql, dict):
+            rows += max(0, int(_count_sql_rows(sql)))
+    except Exception as exc:  # a wording decision must never cost an answer
+        logger.debug(f"[response] sql row count unavailable: {describe_exception(exc)}")
+    events = results.get("events_result")
+    if isinstance(events, dict) and events.get("success"):
+        # Only a concrete count. The events lane also returns success=True for
+        # `referent_not_found` and `unrecognised`, which are declines and read nothing.
+        listed = events.get("rows")
+        if isinstance(listed, list):
+            rows += len(listed)
+        else:
+            try:
+                rows += max(0, int(events.get("total") or 0))
+            except (TypeError, ValueError):
+                pass
+    return rows
+
+
 async def _unanswered_response(state, ctx) -> str:
     """What to say when no lane produced anything to say (BUG-355, BUG-706).
 
@@ -1090,7 +1202,10 @@ async def _unanswered_response(state, ctx) -> str:
     claim the building lacks the data: not answering and not holding are different facts,
     and the whole point of this text is to stop presenting one as the other.
     """
-    from orchestrator.services.grounding_guard import reader_is_admin_in, unmatched_terms
+    from orchestrator.services.grounding_guard import (
+        reader_is_admin_in,
+        unmatched_terms,
+    )
 
     results = getattr(state, "intermediate_results", None) or {}
     intent = str(results.get("intent") or "").strip()
@@ -1114,7 +1229,10 @@ async def _unanswered_response(state, ctx) -> str:
     )
 
     measured, records = await _closest_holdings(state)
-    unmatched = unmatched_terms(question, list(measured) + _record_vocabulary(records))
+    # None means the catalogue could not be read; [] means the building measures nothing. Only
+    # the second may be stated as a fact about the building (CAVEAT-951).
+    catalogue_unread = measured is None
+    unmatched = unmatched_terms(question, list(measured or []) + _record_vocabulary(records))
     building = str(getattr(settings, "BUILDING_NAME", "") or "").strip() or "this building"
 
     # The wording lives in `clarification`, which takes the SHAPE the question had (2D-16 wave 2).
@@ -1139,16 +1257,41 @@ async def _unanswered_response(state, ctx) -> str:
             logger.debug(f"[response] outdoor readings unavailable: {describe_exception(exc)}")
             outdoor = []
 
+    # WHICH OF THE TWO THINGS HAPPENED (BUG-1252). "No lane produced anything" and "a lane
+    # produced something and we deleted it" are different facts, and only the first one makes
+    # "I couldn't answer that from <building>'s records" true. `_relevance_gated` writes
+    # `replaced` on the bus BEFORE it calls this function, so the distinction is available here
+    # and does not have to be inferred. The stronger sentence additionally requires a COUNTED
+    # read: the gate also replaces answers built from nothing at all (BUG-1271), and those are
+    # not reads of the building.
+    _gate = results.get("relevance_gate")
+    _gate_replaced = isinstance(_gate, dict) and bool(_gate.get("replaced"))
+    _rows_read = _store_rows_read(state) if _gate_replaced else 0
+    if _gate_replaced:
+        logger.info(
+            "[response] the relevance gate deleted a %s answer; rows visibly read this turn=%d "
+            "-- the decline %s say the records were read",
+            str(_gate.get("lane") or "?"),
+            _rows_read,
+            "WILL" if _rows_read else "will NOT",
+        )
+
     _kind, text = _clar.compose(
         building=building,
         question=question,
         unmatched=unmatched,
-        measured=measured,
+        measured=measured or (),
         records=records,
         outdoor=outdoor,
         entities=entities,
+        read_but_off_topic=bool(_rows_read),
     )
     logger.info(f"[response] clarification shape={_kind}")
+    if catalogue_unread:
+        # Say so rather than let an empty list read as "this building measures nothing".
+        from orchestrator.services.observability import catalogue_unreadable
+
+        text += "\n\n" + catalogue_unreadable(building)
     if error and reader_is_admin_in(state):
         text += f"\n\n- A step reported: {error[:160]}"
     return text
@@ -1189,8 +1332,19 @@ async def _false_absence_from_a_held_register(state, text: str) -> str:
             messages = getattr(state, "messages", None) or []
             question = str(getattr(messages[-1], "content", "")) if messages else ""
         _, records = await _closest_holdings(state)
+        # The AMENITY half of "what the building holds" (BUG-1333). Records alone left the guard
+        # unable to contradict "none of the recorded series refers to a toilet" over 24 toilets,
+        # because a toilet is not an ontosage:Record. Failure is silent and empty: an unread
+        # amenity list must never turn into a claim either way.
+        amenities: List[Any] = []
+        try:
+            from orchestrator.services.record_registry import held_amenity_classes
+
+            amenities = list(await held_amenity_classes())
+        except Exception as exc:  # pragma: no cover - a guard must not need the graph
+            logger.debug(f"[response] amenity holdings unavailable: {describe_exception(exc)}")
         building = str(getattr(settings, "BUILDING_NAME", "") or "").strip() or "this building"
-        note = false_absence_note(text, question, records, building)
+        note = false_absence_note(text, question, records, building, amenities=amenities)
         if note:
             logger.info("[response] a narrated absence named a register the building holds")
             results = getattr(state, "intermediate_results", None)
@@ -1335,7 +1489,9 @@ def _without_retrieval_narration(state, text: str) -> str:
         if not rewritten or not rewritten.strip():
             # A decline is the whole answer: an unrelated listing after it reads as though it
             # were the answer after all (wave 4, the sustainability-tips question).
-            from orchestrator.services.absence_wording import strip_unrelated_body_after_decline
+            from orchestrator.services.absence_wording import (
+                strip_unrelated_body_after_decline,
+            )
 
             trimmed = strip_unrelated_body_after_decline(text, question)
             if trimmed != text and trimmed.strip():
@@ -1394,18 +1550,37 @@ async def _ground_semantic_fallback(state, text: str) -> str:
         return text
 
     from orchestrator.services.grounding_guard import (
+        names_internal_schema,
         plain_prose,
         reader_is_admin_in,
         schema_remediation_reason,
+        strip_internal_schema,
         strip_schema_remediation,
     )
 
+    _is_admin = reader_is_admin_in(state)
     hint = schema_remediation_reason(text)
-    if hint and not reader_is_admin_in(state):
+    if hint and not _is_admin:
         trimmed = strip_schema_remediation(text)
         if trimmed.strip():
             logger.info(f"[response] schema remediation withheld from a non-admin: {hint!r}")
             results["schema_remediation_withheld"] = hint
+            text = trimmed
+
+    # The INSTRUCTION and the VOCABULARY it is written in are two things, and only the first
+    # was being withheld. A model narrating the TBox writes `ref:hasTimeseriesId`,
+    # `brick:hasPoint` or `database_registry.yaml` without ever telling anyone to upload
+    # anything, and a reader who cannot open those files is shown machinery instead of an
+    # answer (design contract 6). Measured on the enablement hint's own item 2, tail N
+    # 2026-09-30. Admins keep it: for them it is the next step.
+    leak = names_internal_schema(text)
+    if leak and not _is_admin:
+        trimmed = strip_internal_schema(text)
+        if trimmed.strip():
+            logger.info(
+                f"[response] internal schema vocabulary withheld from a non-admin: {leak!r}"
+            )
+            results["internal_schema_withheld"] = leak
             text = trimmed
 
     # The claim leads the answer in every measured case, and reading only the head keeps a
@@ -1419,7 +1594,10 @@ async def _ground_semantic_fallback(state, text: str) -> str:
         question = str(getattr(messages[-1], "content", "")) if messages else ""
 
     _, records = await _closest_holdings(state)
-    from orchestrator.services.record_registry import absent_record_class, held_record_class
+    from orchestrator.services.record_registry import (
+        absent_record_class,
+        held_record_class,
+    )
 
     held = held_record_class(question, records)
     if held and held.instances > 0:
@@ -1624,6 +1802,41 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
     # `workflow/_graph.py`'s `WorkflowGraphMixin`.  See the inheritance line
     # above.  All node methods and `_safe_node` remain here because they ARE
     # the orchestrator (the mixin just composes them into a graph).
+
+    def _timed_node(self, node_fn, node_name: str):
+        """Record how long a node took, and change NOTHING else about how it behaves.
+
+        `dialogue` and `response` are registered bare rather than through `_safe_node`,
+        because swallowing an exception there would hand the user a turn with no
+        classification or no answer instead of an error. That is the right call and this
+        wrapper does not revisit it: it re-raises.
+
+        W6-02 (2026-09-29). Measuring the register and metadata lanes from the container log
+        failed, and failed in a way worth recording: under two concurrent turns the log lines
+        of one request close the gaps of another, so the SAME 18,609-character narration
+        prompt was measured at 0.09 s, 0.44 s, 1.62 s and 57.80 s. Wall-clock per stage
+        cannot be recovered from an interleaved log. It can be recorded where it happens, and
+        for every `_safe_node` lane it already was -- but the two stages that bracket every
+        single turn, classification and narration, were the two not recorded.
+        """
+
+        async def wrapper(state: ConversationState) -> ConversationState:
+            _t0 = time.time()
+            try:
+                out = await node_fn(state)
+            except Exception as e:
+                _record_lane_outcome(
+                    state,
+                    node_name,
+                    _classify_failure(e),
+                    describe_exception(e),
+                    int((time.time() - _t0) * 1000),
+                )
+                raise
+            _record_lane_outcome(state, node_name, _Outcome.OK, "", int((time.time() - _t0) * 1000))
+            return out
+
+        return wrapper
 
     def _safe_node(self, node_fn, node_name: str):
         """
@@ -2099,6 +2312,23 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         if "g1_taxonomy" in intent_result:
             state.intermediate_results["g1_taxonomy"] = intent_result["g1_taxonomy"]
 
+        # How many of the building's OWN amenity triples matched this question (BUG-1333).
+        # Written by the deterministic amenity short-circuit in `dialogue_agent`; read by the
+        # concept-stage rule below, which until today converted such a turn to `sensor_data`
+        # because an HBCO lay term ("available") resolved an occupancy measurand.
+        _amenity_facts = int(intent_result.get("capability_amenity_facts") or 0)
+        # And how many of them the question is ABOUT (BUG-1396). The count above says the
+        # building holds something the question's words touched; this one says the question is
+        # about it. The stand-down keys on THIS, because keying on the former made the contract
+        # defer to a lane that then discarded the topic as "not the subject".
+        _amenity_subject = int(intent_result.get("capability_amenity_subject") or 0)
+        if _amenity_facts:
+            state.intermediate_results["capability_amenity_facts"] = _amenity_facts
+            state.intermediate_results["capability_amenity_subject"] = _amenity_subject
+            state.intermediate_results["capability_amenity_labels"] = list(
+                intent_result.get("capability_amenity_labels") or []
+            )
+
         # T05: HBCO lay-term resolution — attach concept matches for SPARQL + analytics.
         # Non-fatal: failure only loses concept enrichment, never breaks routing.
         try:
@@ -2127,6 +2357,14 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 "intent": intent,
                 "concepts": state.intermediate_results.get("concepts", []),
                 "entities": state.intermediate_results.get("entities", []),
+                # THIS DICT IS THE WHOLE OF WHAT A CONCEPT-STAGE RULE CAN SEE, and it held three
+                # keys. So a marker the dialogue agent wrote was invisible here however plainly it
+                # was set — which is how thirty matched amenity triples came to be overruled by
+                # one lay term (BUG-1333). Adding the count, not the labels: a rule decides on
+                # whether the building's own triples claimed the question, never on their words.
+                "capability_amenity_facts": _amenity_facts,
+                # The subject-qualified count, which is what the stand-down reads (BUG-1396).
+                "capability_amenity_subject": _amenity_subject,
             }
             _rc_query = state.messages[-1].content if state.messages else ""
             if _apply_rc(_rc_query, _rc_state, stage="concept"):
@@ -2684,8 +2922,13 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         """
         try:
             from orchestrator.agents.sparql_agent import _active_namespace
-            from orchestrator.services.absence_guard import _MODALITY_ALIASES, _count_query
-            from orchestrator.services.deliberation.coverage_audit import load_modalities
+            from orchestrator.services.absence_guard import (
+                _MODALITY_ALIASES,
+                _count_query,
+            )
+            from orchestrator.services.deliberation.coverage_audit import (
+                load_modalities,
+            )
 
             words = {str(k).lower() for k in (keywords or ())}
             classes = set()
@@ -2854,7 +3097,9 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # agent exactly as before.
         try:
             from orchestrator.services import coverage_gap as _gap
-            from orchestrator.services.deliberation.live import active_identity as _ident
+            from orchestrator.services.deliberation.live import (
+                active_identity as _ident,
+            )
             from orchestrator.services.deliberation.live import sparql_exec as _gap_exec
 
             _gap_answer = await _gap.answer(
@@ -3482,11 +3727,54 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             start_date = state.intermediate_results.get("start_date")
             end_date = state.intermediate_results.get("end_date")
             # 2D-05: a forecast reads history; a window in the future selects rows not yet there.
-            from orchestrator.services.sensor_binder import history_window as _history_window
+            from orchestrator.services.sensor_binder import (
+                history_window as _history_window,
+            )
 
             start_date, end_date = _history_window(
                 latest_message, state.current_intent, start_date, end_date
             )
+
+            # THE BUS MUST CARRY THE WINDOW THE FETCH USED (CAVEAT-1006).
+            #
+            # `sql_agent.resolve_named_window` fixes the bounds inside the lane (BUG-939), but
+            # `time_range` on the bus was left as the classifier wrote it — and `time_range` is
+            # what the analytics node, the verifier and the evidence record all read. So the rows
+            # could come from one period while every downstream consumer described another, which
+            # is the shape of BUG-936 arriving by a different door.
+            #
+            # Safe to call here: `resolve_named_window` is idempotent (verified by its author), so
+            # running it in the node and again inside the lane yields the same bounds. Failing
+            # open is right — a bus label that could not be refreshed is the state before this
+            # existed, whereas a raised exception would cost the answer.
+            try:
+                from orchestrator.agents.sql_agent import resolve_named_window as _rnw
+
+                _s2, _e2, _win = _rnw(latest_message, start_date, end_date)
+                if (_s2, _e2) != (start_date, end_date):
+                    logger.info(
+                        "[sql] window resolved for the bus: %s .. %s (%s)",
+                        _s2,
+                        _e2,
+                        (_win or {}).get("label", "unlabelled"),
+                    )
+                start_date, end_date = _s2, _e2
+                state.intermediate_results["start_date"] = _s2
+                state.intermediate_results["end_date"] = _e2
+                # The window dict carries `source`/`unit`/`offsets`, NOT a prose label — I
+                # wrote `label` first and it would have been the empty string on every turn.
+                # Carry the structured fields a consumer can actually reason about instead of
+                # inventing a sentence here.
+                _w = _win or {}
+                state.intermediate_results["time_range"] = {
+                    "start": _s2,
+                    "end": _e2,
+                    "source": _w.get("source", "resolved"),
+                    "unit": _w.get("unit", ""),
+                    "offsets": _w.get("offsets", []),
+                }
+            except Exception as _rw_err:  # never let a bus label cost an answer
+                logger.debug(f"[sql] window not written back to the bus: {_rw_err}")
 
             # V5-T39 — PROTECT chokepoint: the PDP is consulted BEFORE any row
             # leaves the database. shadow = log only; on = a denial returns a
@@ -3938,7 +4226,9 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # building's name appears in this file.
         _measured = ""
         try:
-            from orchestrator.services.deliberation.coverage_audit import load_modalities
+            from orchestrator.services.deliberation.coverage_audit import (
+                load_modalities,
+            )
 
             _names = sorted(
                 {
@@ -4184,6 +4474,65 @@ Instructions:
                 )
         except Exception as _rh_err:
             logger.debug(f"[analytics_node] recipe hint injection skipped: {_rh_err}")
+
+        # W3-04: what the space was DESIGNED to hold, beside what it holds.
+        #
+        # The building already declares this, twice and under two different property names, and
+        # for three spaces the two DISAGREE. So the hint carries every declaration rather than a
+        # chosen one, and its template states the disagreement where there is one. Without this
+        # the lane answered "The design occupancy for room 1.25 is not provided in the data"
+        # while the graph held 20 (measured 2026-09-29).
+        try:
+            from orchestrator.services.design_occupancy import (
+                compare_observed_with_design,
+                design_occupancy_for,
+                is_design_occupancy_question,
+            )
+
+            if is_design_occupancy_question(latest_message):
+                from orchestrator.services.deliberation.live import (
+                    sparql_exec as _sx_design,
+                )
+
+                _design = await design_occupancy_for(latest_message, _sx_design)
+                if _design is not None:
+                    _existing = state.intermediate_results.get("recipe_hints") or []
+                    state.intermediate_results["design_occupancy"] = {
+                        "space": _design.label,
+                        "declarations": dict(_design.declarations),
+                        "conflicted": _design.conflicted,
+                    }
+                    # The object itself, so `_response_node`'s must-state check (BUG-897) can
+                    # reuse it instead of repeating the SPARQL round trip. Not a published
+                    # result: the underscore keeps it out of anything that serialises the bus.
+                    state.intermediate_results["_design_occupancy_obj"] = _design
+                    state.intermediate_results["recipe_hints"] = _existing + [
+                        {
+                            "recipe_id": "design_occupancy_comparison",
+                            "concept_id": "design_occupancy",
+                            "description": (
+                                "The design occupancy the BUILDING MODEL declares for this "
+                                "space. Compare the observed count against it and state BOTH "
+                                "numbers. Where more than one figure is declared, say so and "
+                                "do not choose between them."
+                            ),
+                            "params": {
+                                "space": _design.label,
+                                "declared": {
+                                    p.rsplit("#", 1)[-1].rsplit("/", 1)[-1]: v
+                                    for p, v in _design.declarations.items()
+                                },
+                                "unit": "persons",
+                            },
+                            "answer_template": compare_observed_with_design(None, _design),
+                        }
+                    ]
+                    logger.info(
+                        f"[analytics_node] design occupancy for {_design.label!r}: "
+                        f"{_design.declarations}" + (" (CONFLICTED)" if _design.conflicted else "")
+                    )
+        except Exception as _do_err:
+            logger.debug(f"[analytics_node] design occupancy hint skipped: {_do_err}")
 
         # T34: What-if / estimate recipe — inject sensitivity factors for the analytics LLM.
         _whatif_rid = state.intermediate_results.get("whatif_recipe")
@@ -4866,6 +5215,33 @@ SELECT ?l WHERE {
             for_admin=reader_is_admin_in(state),
         )
         state.current_intent = "self_description"
+        return state
+
+    async def _session_recall_node(self, state: ConversationState) -> ConversationState:
+        """A question about THIS CONVERSATION, answered from the session record (BUG-941).
+
+        It exists because the alternative got worse rather than better. On 2026-09-29 "Remind me
+        which room I said I was looking into" was routed to a DATA lane and declined — honestly,
+        but about the building's records rather than about what the user had said. On 2026-09-30
+        the same probe answered:
+
+            "You mentioned you were looking into Room0.01."
+
+        The user had said **room 5.01** and had never said Room0.01. A wrong-subject decline had
+        become a FALSE CLAIM ABOUT WHAT THE USER SAID (BUG-1020, P1) — and this is the one place a
+        fabrication has no live reading to contradict it, which makes it the worst possible place
+        to guess.
+
+        So the lane quotes and never interprets: every noun it can emit is a word the user typed,
+        which makes "Room0.01" unreachable BY CONSTRUCTION rather than by a check that could have
+        a hole. It recalls SUBJECTS and not VALUES, and says so — W5-01 deliberately keeps figures
+        out of the session record, because a remembered number restated as current is a
+        fabrication (lessons #148, where a test had pinned the opposite as correct).
+        """
+        from orchestrator.services.session_recall import session_recall_node
+
+        state = await session_recall_node(state)
+        state.current_intent = "session_recall"
         return state
 
     async def _scope_boundary_node(self, state: ConversationState) -> ConversationState:
@@ -5994,6 +6370,38 @@ SELECT ?l WHERE {
         except Exception as exc:
             logger.warning(f"[response] could not attach the substitution note: {exc}")
 
+        # ── A CAPPED FETCH IS SAID TO BE CAPPED (BUG-939, CAVEAT-1002) ──
+        #
+        # Its sibling above discloses a SUBSTITUTED window; this one discloses a TRUNCATED one,
+        # and it is here for the same reason: the lane's own wording never reaches a reader when
+        # the dispatch picks model prose instead. That is exactly how "Across **all** 1,000
+        # readings taken between 21 Sep 21:36..." got published TWO LINES BELOW the lane's own
+        # `the set is TRUNCATED and its size is not a count of what exists` log. The guard fired,
+        # nobody heard it.
+        #
+        # `rows_capped` had been on the bus since BUG-479 with exactly ONE reader (`report_agent`)
+        # — a fact recorded rather than a fact used. Read from the STRUCTURED marker, never from
+        # prose, for the same reason as the substitution note: a check that guessed from wording
+        # would be wrong precisely where the wording is confident and the rows are not complete.
+        try:
+            from orchestrator.services.disclosure_gate import (
+                truncation_in as _truncation_in,
+            )
+            from orchestrator.services.disclosure_gate import (
+                truncation_note as _truncation_note,
+            )
+
+            _cap = _truncation_in(state.intermediate_results)
+            if _cap and final_response:
+                _cnote = _truncation_note(_cap)
+                # Guarded on the note's own text, so a lane that already carried it is not
+                # duplicated and a reworded note cannot slip past a marker-based check.
+                if _cnote and _cnote not in final_response:
+                    final_response = f"{final_response}\n\n{_cnote}"
+                    logger.info("[response] disclosed a capped fetch: %s", _cap.get("row_limit"))
+        except Exception as exc:
+            logger.warning(f"[response] could not attach the truncation note: {exc}")
+
         # ── No answer describes the retrieval (2D-16 wave 2) ──────────────────
         #
         # "The data you received only lists how many sensors are installed in each room",
@@ -6419,11 +6827,10 @@ SELECT ?l WHERE {
             # something the ontology defines no class for. "0 desks available" reads
             # as every desk being taken, about a thing nobody ever modelled. Only
             # rewrites when the graph confirms no such class exists.
+            from orchestrator.services.grounding_guard import reader_is_admin_in
             from orchestrator.services.unmodelled_entities import (
                 guard_answer as _unmodelled_guard,
             )
-
-            from orchestrator.services.grounding_guard import reader_is_admin_in
 
             final_response, _unmodelled = await _unmodelled_guard(
                 final_response, _sx, for_admin=reader_is_admin_in(state)
@@ -6436,7 +6843,9 @@ SELECT ?l WHERE {
         # ── 2D-18: an answer that says the building holds nothing gets ONE second look ──
         # The absence guard above checks a sensing claim against a COUNT; this checks a claim about
         # the building's RECORDS against the registers and prose the failing lane never read.
-        from orchestrator.services.absence_second_chance import apply_to_answer as _second_chance
+        from orchestrator.services.absence_second_chance import (
+            apply_to_answer as _second_chance,
+        )
 
         final_response = await _second_chance(
             state,
@@ -6445,6 +6854,142 @@ SELECT ?l WHERE {
             sparql_exec=self.sparql_agent._execute_query,
             namespace=settings.BUILDING_NAMESPACE,
         )
+
+        # ── A DECLARED DESIGN LIMIT IS STATED, NOT HINTED (BUG-897, BUG-896) ──
+        #
+        # Measured live 2026-09-29, twice, and both answers are the kind this system exists to
+        # prevent:
+        #   "What is the maximum occupancy of room 2.15?"  -> "**30.00 people** ... the highest
+        #       value observed for that location."  The graph declares maxOccupancy 40. A
+        #       maximum OBSERVATION was presented in bold as a design limit.
+        #   "What is the design occupancy of room 5.01?"   -> "The design occupancy value
+        #       itself is not recorded in the data."  The graph declares it TWICE, 25 under
+        #       maxOccupancy and 20 under hbco:roomCapacity.
+        #
+        # The declared figure was already being computed for the first of those: the log shows
+        # `[analytics_node] design occupancy for 'Room 2.15 - Seminar Room'` with maxOccupancy
+        # on the bus. It was offered to the narrator as a RECIPE HINT and the narrator answered
+        # from the sensor anyway. That is the BUG-937 lesson in a more dangerous place: a figure
+        # a narrator can get wrong is a figure it should not be deriving, and a capacity a fire
+        # or booking decision rests on is not a figure to leave to wording.
+        #
+        # Why here rather than in `_analytics_node` where the hint is built: the hook lives
+        # inside that node, so "design occupancy of room 5.01" -- which routed sensor_data ->
+        # sparql -- never reached it at all and produced the false denial above. `_response_node`
+        # is the one place every lane passes through.
+        #
+        # ADDITIVE AND IDEMPOTENT. It prepends only when no declared figure appears in the
+        # answer already, so a lane that did state it is left exactly as it was, and it can
+        # never remove a correct answer. The sentence itself is `compare_observed_with_design`,
+        # which does its own arithmetic and, where the building declares two figures, states
+        # both and refuses to choose between them.
+        try:
+            from orchestrator.services.design_occupancy import (
+                DESIGN_OCCUPANCY_TERMS,
+                describe_design,
+                design_occupancy_for,
+                is_design_occupancy_question,
+            )
+
+            _q_design = state.intermediate_results.get("original_query") or (
+                state.messages[-1].content if state.messages else ""
+            )
+            # NARROWER THAN `is_design_occupancy_question`, DELIBERATELY. That predicate is true
+            # for "how many people are in room 2.15 right now?" — correctly, because it exists to
+            # inject a COMPARISON hint and breadth is right there. Leading such an answer with a
+            # design limit would put the wrong figure first. A question asking for the DECLARED
+            # figure names it the way the ontology does, so the property vocabulary is the test:
+            # "maximum occupancy" and "seating capacity" match, a live count does not.
+            _sq = re.sub(r"[^a-z0-9]+", "", (_q_design or "").lower())
+            _asks_limit = any(t in _sq for t in DESIGN_OCCUPANCY_TERMS)
+            if final_response and _asks_limit and is_design_occupancy_question(_q_design):
+                _dsg = state.intermediate_results.get("_design_occupancy_obj")
+                if _dsg is None:
+                    from orchestrator.services.deliberation.live import (
+                        sparql_exec as _sx_rd,
+                    )
+
+                    _dsg = await design_occupancy_for(_q_design, _sx_rd)
+                if _dsg is not None:
+                    _declared = [f"{v:g}" for v in _dsg.values]
+                    _stmt = describe_design(_dsg)
+                    # IDEMPOTENCY, NOT DETECTION. The first version skipped when any declared
+                    # figure appeared anywhere in the answer, and that is not a test of anything:
+                    # room 5.01 declares 20 and 25, and the sensor answer contained "at 25 Sep
+                    # 01:22" — a DATE — so the check concluded the capacity had been stated and
+                    # said nothing. A bare number matches dates, reading counts and timestamps.
+                    #
+                    # So the only thing skipped is a repeat of this exact sentence. If a lane
+                    # states the figure in its own words we add ours too, which is redundant; the
+                    # trade is deliberate, because omitting a declared capacity that a fire or
+                    # booking decision rests on is far worse than saying it twice.
+                    if _stmt.strip() not in final_response:
+                        # A DECLINE IS REPLACED, NOT PREPENDED TO. Measured 2026-09-29: "What is
+                        # the design occupancy of room 5.01?" had its off-topic sensor answer
+                        # correctly replaced by the relevance gate, so prepending produced "the
+                        # building states 25 under maxOccupancy, 20 under roomCapacity" followed
+                        # immediately by "I couldn't answer that from Abacws Building's records"
+                        # — an answer and a denial of that same answer, in that order.
+                        #
+                        # Matched on the LITERAL leads this codebase emits, not by a classifier:
+                        # `publication_gate.is_decline` returns False for "I couldn't answer that
+                        # from <building>'s records", which is CAVEAT-887's shape and is logged
+                        # as CAVEAT-952. These two strings are in the source (clarification.py
+                        # and capability_agent.py), so matching them is a reference, not a guess.
+                        #
+                        # The third and fourth are BUG-1252's lead, emitted by
+                        # `clarification.lead_read_but_off_topic` when the relevance gate
+                        # deleted an answer this turn had read the records for. It is the same
+                        # decline wearing an honest first sentence, so it must be REPLACED here
+                        # exactly as the other two are — otherwise this fix would reintroduce
+                        # the "answer then denial" pair it was written to stop.
+                        _decline_leads = (
+                            "i couldn't answer that",
+                            "i could not find this in",
+                            "i couldn't put an answer together",
+                            "i could not put an answer together",
+                        )
+                        _low_fr = final_response.lstrip().lower()
+                        _was_decline = any(_low_fr.startswith(m) for m in _decline_leads)
+                        logger.warning(
+                            "[response] a design-occupancy answer did not state the declared "
+                            "figure(s) %s for %r — %s",
+                            _declared,
+                            _dsg.label,
+                            "replacing a decline" if _was_decline else "prepending them",
+                        )
+                        final_response = _stmt if _was_decline else f"{_stmt}\n\n{final_response}"
+        except Exception as _do_err:  # never let this cost an answer
+            logger.debug(f"[response] design-occupancy statement skipped: {_do_err}")
+
+        # ── SAY WHICH PLACE A DEICTIC WAS TAKEN TO MEAN (BUG-943) ──
+        #
+        # BUG-940 stopped a rewrite binding a place the user never named. It did not settle WHICH
+        # of the places they DID name a bare "there" should mean. Measured live 2026-09-29: turn 1
+        # said "I am looking into air quality in room 5.01 specifically", six turns about floor
+        # temperatures followed, and "And what is the humidity in there right now?" was answered
+        # about FLOOR 1 — a place they named twice.
+        #
+        # Deliberately NOT ranked better. Recency is a defensible reading of "there", and a human
+        # asked that same sequence would probably answer about floor 1 too; guessing more
+        # confidently is not an improvement. Saying which one was assumed is: a wrong guess then
+        # costs the user one correction instead of a figure they cannot see is wrong. It is the
+        # same reasoning `build_assumptions` already applies to a forecast horizon — the number is
+        # the same; the claim it makes must not be.
+        #
+        # APPENDED, never prepended: this is a footnote about how the question was read, not the
+        # answer to it, and the lead sentence belongs to the answer.
+        try:
+            from orchestrator.services.context_switch import assumed_place_note
+
+            _cr = state.intermediate_results.get("coref_rewrite") or {}
+            if final_response and _cr.get("original") and _cr.get("rewritten"):
+                _note = assumed_place_note(_cr["original"], _cr["rewritten"])
+                if _note and _note not in final_response:
+                    final_response = f"{final_response}\n\n_{_note}_"
+                    logger.info("[response] disclosed the assumed referent: %s", _note)
+        except Exception as _ap_err:  # never let a footnote cost an answer
+            logger.debug(f"[response] assumed-place note skipped: {_ap_err}")
 
         # ── The ontology RAG fallback answers about CLASSES, not about the building ──
         try:
@@ -6537,7 +7082,9 @@ SELECT ?l WHERE {
         # "that failed" when the honest answer is "ask again" costs them the answer.
         try:
             from orchestrator.services.turn_outcome import Outcome as _TO
-            from orchestrator.services.turn_outcome import from_state as _turn_from_state
+            from orchestrator.services.turn_outcome import (
+                from_state as _turn_from_state,
+            )
 
             _turn = _turn_from_state(state.intermediate_results)
             state.intermediate_results["turn_outcome"] = _turn.as_dict()
@@ -6634,7 +7181,9 @@ SELECT ?l WHERE {
         # result: retrieved records narrated as data the USER "provided", and provenance flags
         # ("simulated: true") the owner's standing rule keeps out of user-visible text.
         try:
-            from orchestrator.services.answer_wording import polish_answer as _polish_answer
+            from orchestrator.services.answer_wording import (
+                polish_answer as _polish_answer,
+            )
 
             final_response = _polish_answer(
                 final_response, state.user_message, intent=state.current_intent
@@ -6777,6 +7326,10 @@ SELECT ?l WHERE {
             "spatial_result",
             "floor_plan_structured",  # consumed by response node; clear after appending
             "floor_context_hint",  # consumed by SPARQL agent; clear so it doesn't bleed across turns
+            # W5-01: rebuilt from `turn_memory` at the start of EVERY turn, on every entry
+            # point. Persisting it would put a second, older copy in the Redis state that a
+            # turn whose injection failed would then silently use.
+            "session_summary",
         ]
         for key in _bulky_keys:
             state.intermediate_results.pop(key, None)
@@ -7353,6 +7906,25 @@ SELECT ?l WHERE {
         # ── Contextual override #2: floor_plan keyword detection ──
         # Don't let a "floor N" mention steal an actuation command ("open the
         # windows on floor 3") or a report ("the toilet on floor 3 is leaking").
+        # tail N #12 (2026-09-30, BUG-1243): "This room is far too hot. Where is a nearby area
+        # that I can go to cool down?" answered with a floor picker — *"Ground Floor • Floor 1 …
+        # Which floor would you like to see?"* — in 1.2 s, before any lane ran.
+        #
+        # Measured route: `intent_from_dialogue=clarification`, `overrides_applied=
+        # ["floor_plan_keyword_detection"]`. The deictic guard in `detect_intent` had already
+        # decided, correctly, that "this room" names no room and had composed the question to
+        # ask back (BUG-719, 5/5 good on unseen questions in the same run). Then
+        # `is_floor_plan_query` matched the two words "where is" and replaced it.
+        #
+        # A COMPOSED clarification is a decision not to answer yet, and a keyword heuristic must
+        # not discard one. Narrowed to that: a bare `clarification` label with no question
+        # composed still falls through to the picker, because the alternative there is the
+        # generic "Could you please provide more details about your question?".
+        #
+        # Measured reach: of 7,196 questions this project holds, 164 trip
+        # `is_floor_plan_query`, and the override can only claim the five META intents
+        # (clarification, general, greeting, planner, self_description) — every data and
+        # standalone intent is already excluded by `_data_intents`.
         _floor_plan_protected = (
             "control",
             "maintenance",
@@ -7361,6 +7933,8 @@ SELECT ?l WHERE {
             "suggestion",
             "feedback",
         )
+        if intent == "clarification" and (getattr(state, "clarification_question", "") or ""):
+            _floor_plan_protected = _floor_plan_protected + ("clarification",)
         if intent == "floor_plan" or (
             floor_plan_service.is_floor_plan_query(user_query)
             and intent not in _data_intents
@@ -8200,7 +8774,9 @@ SELECT ?l WHERE {
             logger.error(f"[deliberate] numeric guard tripped: {violations}")
             # Plain words (wave 5): "narration", "the evidence check" and "the dossier" are the
             # pipeline's vocabulary, and answer_shape treats the old wording as a non-answer.
-            from orchestrator.services.numeric_guard import SUPPRESSION_TEXT as _SUPPRESSED
+            from orchestrator.services.numeric_guard import (
+                SUPPRESSION_TEXT as _SUPPRESSED,
+            )
 
             text = _SUPPRESSED
         state.intermediate_results["deliberate_result"] = {
@@ -8431,6 +9007,55 @@ SELECT ?l WHERE {
         except Exception as _sk_err:
             logger.warning(f"[observability] skill lookup skipped: {_sk_err}")
 
+        # "Which sensors have stopped reporting, and when was each last seen?" (W3-05). A
+        # sensor's silence is a fact about the DATA, so it is DERIVED from the stores on every
+        # ask and never read from a TTL, where it would be wrong the moment it was written.
+        # It runs before the reach matrix because the matrix answers a different question:
+        # whether a modality is measured in a space, not whether the instruments are alive.
+        from orchestrator.services.observability import is_silence_question
+
+        if is_silence_question(question):
+            try:
+                from orchestrator.services.requested_interval import building_tz
+                from orchestrator.services.sensor_silence import (
+                    derive_silence,
+                    format_silence_answer,
+                )
+
+                _report = await derive_silence()
+                state.intermediate_results["observability_result"] = {
+                    "success": _report is not None,
+                    "kind": "sensor_silence",
+                    "silent": 0 if _report is None else len(_report.silent),
+                    "never": 0 if _report is None else len(_report.never),
+                    "declared": 0 if _report is None else _report.declared,
+                    "formatted_response": format_silence_answer(_report, building_tz()),
+                }
+                logger.info(
+                    "[observability] sensor silence: "
+                    + (
+                        "unavailable"
+                        if _report is None
+                        else f"{len(_report.silent)} silent, {len(_report.never)} never, "
+                        f"{_report.reporting} reporting of {_report.declared} declared"
+                    )
+                )
+            except Exception as _sil_err:
+                # Never fall through to the reach matrix on failure: it would answer a question
+                # about silent instruments with a statement about which modalities are measured,
+                # which reads as an all-clear. Saying the check could not run is the honest
+                # outcome.
+                logger.error(f"[observability] sensor silence failed: {_sil_err}", exc_info=True)
+                state.intermediate_results["observability_result"] = {
+                    "success": False,
+                    "kind": "sensor_silence",
+                    "formatted_response": (
+                        "I could not check when each sensor last reported, so I cannot say "
+                        "which have gone silent. That is a gap in the check, not an all-clear."
+                    ),
+                }
+            return state
+
         try:
             from orchestrator.services.deliberation.capability_schema import (
                 build_schema,
@@ -8439,6 +9064,7 @@ SELECT ?l WHERE {
                 load_modalities,
             )
             from orchestrator.services.deliberation.live import sparql_exec
+            from orchestrator.services.grounding_guard import reader_is_admin_in
             from orchestrator.services.observability import (
                 UNINSTRUMENTED,
                 Reach,
@@ -8447,7 +9073,6 @@ SELECT ?l WHERE {
                 present_modalities,
                 reach_from_coverage,
             )
-            from orchestrator.services.grounding_guard import reader_is_admin_in
             from shared.config import settings
 
             # Who is reading decides whether a negative carries its remediation ("upload a
@@ -8823,7 +9448,6 @@ SELECT ?l WHERE {
                 except Exception as pm_err:
                     logger.debug(f"[events] point map skipped: {pm_err}")
             from orchestrator.services.numeric_guard import guard_payload
-
             from orchestrator.services.requested_interval import building_tz
 
             service = EventQueryService(
@@ -9554,7 +10178,9 @@ SELECT ?l WHERE {
                 and is_question_not_a_fault(user_message or "")
             ):
                 # Same treatment as the BUG-548 guard above: answer it from the records.
-                logger.info("[report_intake] a question that states no fault — answering, not filing")
+                logger.info(
+                    "[report_intake] a question that states no fault — answering, not filing"
+                )
                 state.current_intent = "metadata"
                 state.intermediate_results["intent"] = "metadata"
                 state.intermediate_results["report_intake_skipped"] = "question_states_no_fault"
@@ -10168,7 +10794,9 @@ SELECT ?l WHERE {
         try:
             modality, lay = await self._observability_modality(question, state)
             if modality is None:
-                from orchestrator.services.deliberation.coverage_audit import load_modalities
+                from orchestrator.services.deliberation.coverage_audit import (
+                    load_modalities,
+                )
 
                 modality = _modality_named_in(
                     question, [s.name for s in (load_modalities(building_id) or [])]

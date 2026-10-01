@@ -45,7 +45,14 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
+from orchestrator.agents import analytics_agent as _aa  # noqa: E402
 from orchestrator.agents.analytics_agent import AnalyticsAgent  # noqa: E402
+
+# `analytics_agent` binds `settings` at import time, and `tests/test_strict_secrets.py`
+# reloads `shared.config` mid-session, so `shared.config.settings` becomes a DIFFERENT
+# object while this agent keeps the original (lesson #159). Every read and patch of a
+# setting in this file therefore goes through `_aa.settings` — the object the code under
+# test actually reads, whatever the suite order.
 
 
 def _agent_that_always_fails(monkeypatch, elapsed_per_attempt: float):
@@ -113,21 +120,32 @@ def test_the_budget_is_derived_from_the_workflow_deadline():
 
 
 def test_the_budget_leaves_room_for_the_rest_of_the_turn():
-    from shared.config import settings
-
-    total = float(settings.WORKFLOW_TIMEOUT_S)
+    total = float(_aa.settings.WORKFLOW_TIMEOUT_S)
     assert AnalyticsAgent._repair_budget_s() < total, (
         "the repair budget is the whole request budget, so the lane can still consume the "
         "turn and leave nothing for the answer"
     )
 
 
-def test_a_missing_deadline_does_not_remove_the_bound(monkeypatch):
-    """An unset or garbled setting must not silently mean 'unlimited'."""
-    from shared.config import settings
+@pytest.mark.parametrize("missing", [0, None, "", "not-a-number", -30])
+def test_a_missing_deadline_does_not_remove_the_bound(monkeypatch, missing):
+    """An unset or garbled setting must not silently mean 'unlimited'.
 
-    monkeypatch.setattr(settings, "WORKFLOW_TIMEOUT_S", 0, raising=False)
-    assert AnalyticsAgent._repair_budget_s() > 0
+    ``> 0`` was the assertion here, and it holds at the REAL WORKFLOW_TIMEOUT_S too — so
+    when the patch stopped reaching this agent (lesson #159) nothing went red and the test
+    went on proving nothing. Pinning the documented fallback instead means a detached patch
+    fails: the derived budget is half of a live deadline and is never 120.0 by accident.
+    """
+    monkeypatch.setattr(_aa.settings, "WORKFLOW_TIMEOUT_S", missing, raising=False)
+    assert AnalyticsAgent._repair_budget_s() == 120.0
+
+
+def test_a_present_deadline_is_halved_not_ignored(monkeypatch):
+    """The other half of the bound: it is DERIVED, so it has to move with the deadline."""
+    monkeypatch.setattr(_aa.settings, "WORKFLOW_TIMEOUT_S", 300, raising=False)
+    assert AnalyticsAgent._repair_budget_s() == 150.0
+    monkeypatch.setattr(_aa.settings, "WORKFLOW_TIMEOUT_S", 400, raising=False)
+    assert AnalyticsAgent._repair_budget_s() == 200.0
 
 
 def test_it_says_why_it_stopped():

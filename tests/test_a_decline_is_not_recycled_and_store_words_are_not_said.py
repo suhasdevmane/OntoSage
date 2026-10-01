@@ -93,8 +93,32 @@ TRIPLE = (
 
 
 def test_a_sentence_in_the_stores_terms_becomes_the_honest_decline():
+    """TWO defects fixed here, and the second one mattered more than the failure that exposed it.
+
+    (1) The assertion read
+        `out and "triple" not in out.lower() and "found nothing" in out or "does not exist" in out`
+        which Python parses as `(A and B and C) or D`. A true D — the referent-gate wording —
+        made the whole thing pass WITHOUT checking that store vocabulary had been dropped, which
+        is the property this test exists to protect. Parenthesised now.
+
+    (2) `"found nothing"` pinned a sentence that BUG-1271 removed. `absence_sentence` used to
+        emit *"I found nothing in B's records that answers that"* on the branch reached when the
+        SUBJECT could not be read from the question — a claim about the world made where the
+        code cannot know it. It now opens *"I couldn't tie that question to a reading…"*.
+
+    The property is unchanged: whatever comes back must be an honest decline that does not speak
+    in the store's terms. So assert THAT, not one of two spellings of it.
+    """
     out = aw.rewrite_semantic_absence(TRIPLE, "Is the shared meeting booth available?", "B")
-    assert out and "triple" not in out.lower() and "found nothing" in out or "does not exist" in out
+    assert out, "a sentence in the store's terms must be rewritten, not dropped"
+    for store_word in ("triple", "rdf", "sparql", "named graph", "ontology"):
+        assert store_word not in out.lower(), f"the decline still speaks of {store_word!r}: {out!r}"
+    assert aw.is_decline(out) if hasattr(aw, "is_decline") else True
+    # one of the canonical honest openings — not a claim about what the records contain
+    assert (
+        "does not exist in this building" in out
+        or out.lower().startswith("i couldn't tie that question to a reading")
+    ), f"not a recognised honest decline opening: {out!r}"
 
 
 def test_store_vocabulary_is_dropped_from_a_longer_answer_and_the_rest_stays():

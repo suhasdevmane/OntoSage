@@ -23,7 +23,15 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-AGENTS = sorted((Path(__file__).resolve().parents[1] / "orchestrator" / "agents").glob("*.py"))
+# `__init__.py` is excluded because it holds no class, so the check below had nothing to
+# run on it and reported a pass for a file it never examined. It was found by adding the
+# "how many did I actually check" counter, not by reading.
+AGENTS = sorted(
+    p
+    for p in (Path(__file__).resolve().parents[1] / "orchestrator" / "agents").glob("*.py")
+    if p.name != "__init__.py"
+)
+assert AGENTS, "no agent modules were collected — every parametrised case below is empty"
 
 
 def _classes(tree: ast.Module) -> List[ast.ClassDef]:
@@ -79,11 +87,13 @@ def _assigned_on_self(cls: ast.ClassDef) -> Set[str]:
 @pytest.mark.parametrize("path", AGENTS, ids=lambda p: p.name)
 def test_every_self_call_resolves_to_something_the_class_defines(path):
     tree = ast.parse(path.read_text(encoding="utf-8"))
+    checked = 0
     for cls in _classes(tree):
         # Inherited members are invisible to a source read, so a subclass is skipped
         # rather than reported as broken.
         if cls.bases:
             continue
+        checked += 1
         known = _defined(cls) | _assigned_on_self(cls)
         missing = sorted(n for n in _self_attrs_called(cls) if n not in known)
         assert not missing, (
@@ -91,6 +101,10 @@ def test_every_self_call_resolves_to_something_the_class_defines(path):
             "but the class defines no such attribute — check for a method that drifted "
             "out of the class body (BUG-375)"
         )
+    # Every class in the file inheriting from something would skip the whole loop and
+    # report a pass that checked nothing. "Couldn't check" and "checked, found nothing"
+    # must never render identically (lessons #20).
+    assert checked, f"{path.name}: every class here has a base, so nothing was checked"
 
 
 def test_the_spatial_loader_is_a_method_and_not_a_nested_function():
@@ -102,11 +116,13 @@ def test_the_spatial_loader_is_a_method_and_not_a_nested_function():
 
 def test_no_module_level_function_hides_a_would_be_method():
     """A def taking `self` as its first argument does not belong at module scope."""
+    inspected = 0
     for path in AGENTS:
         tree = ast.parse(path.read_text(encoding="utf-8"))
         for node in ast.walk(tree):
             if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 continue
+            inspected += 1
             inner = [
                 n
                 for n in node.body
@@ -118,3 +134,10 @@ def test_no_module_level_function_hides_a_would_be_method():
                 f"{path.name}: {node.name} nests {[n.name for n in inner]}, which takes "
                 "`self` — that is a method that landed inside a function"
             )
+    # The inner `continue` filters every non-function node, so this loop can run zero
+    # assertions over a non-empty AGENTS set -- which is how the __init__.py parameter in the
+    # sibling test passed for a file it never examined (CAVEAT-1115).
+    assert inspected >= len(AGENTS), (
+        f"only {inspected} function definitions across {len(AGENTS)} agent modules were "
+        "inspected; the scan checked almost nothing"
+    )

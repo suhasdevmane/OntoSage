@@ -125,7 +125,24 @@ def active_namespace() -> str:
 
 
 def unlinked_points() -> List[Tuple[str, str, List[str]]]:
-    """(iri, label, classes) for every Point with no timeseries id."""
+    """(iri, label, classes) for every Point with no timeseries id — by ANY predicate.
+
+    THE FILTER BINDS `?anyRefPred`, NOT `ref:hasExternalReference` (BUG-531, P1). This building
+    links points with both `ref:hasExternalReference` (3,515 triples) and
+    `ashrae:hasExternalReference` (3,640) — and a third spelling, `brick:`, on two points. 71
+    points carried ONLY the ashrae: form, so a `ref:`-only filter reported all 71 as unlinked
+    and this script minted each a SECOND series in a different store. 70 then had rows on both
+    sides at once.
+
+    That is not cosmetic, because the sparql agent's prompt MANDATES the ashrae: traversal
+    ("Do NOT use 'ref:hasExternalReference' directly on the sensor"), so a generated query got
+    back two uuids and the SQL lane merged them. Of the 71 pairs, 31 were not even the same
+    QUANTITY: one booking-status point read as a 0/1 flag on one side — its own label says
+    "(available=0 / booked=1)" — and as an occupancy count reaching 189 on the other.
+
+    Naming the predicates here would only wait for a fourth spelling. Reaching a timeseries id
+    is what "linked" means, so that is what the filter asks.
+    """
     rows = sparql(
         f"""PREFIX brick: <https://brickschema.org/schema/Brick#>
             PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
@@ -136,7 +153,7 @@ def unlinked_points() -> List[Tuple[str, str, List[str]]]:
               ?p a ?cls . ?cls rdfs:subClassOf* brick:Point .
               BIND(REPLACE(STR(?cls), "^.*[#/]", "") AS ?cn)
               OPTIONAL {{ ?p rdfs:label ?l }}
-              FILTER NOT EXISTS {{ ?p ref:hasExternalReference ?r . ?r ref:hasTimeseriesId ?u }}
+              FILTER NOT EXISTS {{ ?p ?anyRefPred ?r . ?r ref:hasTimeseriesId ?u }}
             }} GROUP BY ?p"""
     )
     return [

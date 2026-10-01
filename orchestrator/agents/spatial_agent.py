@@ -59,6 +59,26 @@ _COUNT_RE = re.compile(
     re.IGNORECASE,
 )
 _FLOOR_RE = re.compile(r"\bfloor\s*(\d+)\b|\blevel\s*(\d+)\b", re.IGNORECASE)
+
+#: Every word a plain "list the spaces" request may contain: a listing cue, a space noun, a
+#: floor word, or an English function word. Used by `_inventory_was_asked_for`, which is an
+#: ALLOWLIST rather than a denylist of things the plans cannot evaluate — that set is
+#: unbounded, this one is not, and an unknown word therefore produces a decline rather than
+#: the whole-building table. Grammar and building-independent: no name, count or id here.
+_INVENTORY_REQUEST_WORDS = frozenset(
+    # listing cues
+    "list show give tell me us please can could would you i what whats which "
+    "name names display see view get".split()
+    # spaces
+    + "space spaces room rooms area areas zone zones".split()
+    # where they are
+    + "floor floors level levels building buildings here".split()
+    # grammar
+    + (
+        "a an the all every each of in on at for to and or is are was were be been there "
+        "do does did have has had this that these those it its any"
+    ).split()
+)
 _ZONE_RE = re.compile(r"\b(\d+)[.Z](\d{2,3})\b")
 _BLOCK_TYPE_RE = re.compile(
     r"\b(sensor|door|window|fire.?exit|hvac|diffuser|fire.?alarm|light|power.?outlet|equipment)\b",
@@ -378,8 +398,13 @@ class SpatialAgent:
         if typed:
             return typed
 
-        # Default: list rooms of a given type (or all)
-        return self._answer_list(query, manifests)
+        # Default: list rooms of a given type — or, when the question ASKED for the whole
+        # inventory, all of them. A question that merely fell this far gets an honest decline
+        # instead of the building's entire space table (BUG-1292; see
+        # `_inventory_was_asked_for` for what was measured and why the test is an allowlist).
+        if self._detect_space_type(query) or self._inventory_was_asked_for(query):
+            return self._answer_list(query, manifests)
+        return self._list_target_unknown(query, manifests)
 
     async def _answer_superlative(
         self, query: str, manifests: List[FloorPlanManifest]
@@ -406,13 +431,22 @@ class SpatialAgent:
         Names what IS locatable rather than just refusing, and reads that list from the
         manifests instead of a constant — so a building with different amenities advertises
         its own, and nothing here has to change for it.
+
+        IT NAMED NOTHING FOR TWO WEEKS (CAVEAT-1297, found 2026-09-30 while writing the same
+        loop for `_list_target_unknown`). The attribute read was `space_type`; the field on
+        `shared.models.Space` is `type`, and `getattr(..., "space_type", "")` returns the
+        default silently, so `known` was always empty and the "**I can find the nearest:**"
+        sentence has never rendered on any building. The decline was still honest — it just
+        withheld the half that makes it useful, which is the failure this function exists to
+        avoid. "unknown" is `SpaceType`'s default for an untyped space and is excluded: it is
+        not a kind of place and offering it would be worse than saying nothing.
         """
-        kinds = set()
-        for m in manifests or []:
-            for space in getattr(m, "spaces", []) or []:
-                kind = (getattr(space, "space_type", "") or "").strip()
-                if kind:
-                    kinds.add(kind.replace("_", " "))
+        kinds = {
+            str(getattr(space, "type", "") or "").strip().replace("_", " ")
+            for m in manifests or []
+            for space in getattr(m, "spaces", []) or []
+            if str(getattr(space, "type", "") or "").strip() not in ("", "unknown")
+        }
         known = sorted(kinds)[:12]
         lines = [
             "I can only point you to the kinds of place this building's floor plan labels, "
@@ -1193,6 +1227,75 @@ class SpatialAgent:
         return "\n".join(lines)
 
     # ── List spaces ───────────────────────────────────────────────────────────
+
+    def _inventory_was_asked_for(self, query: str) -> bool:
+        """True when the question really is *"list the spaces"* and not a fall-through.
+
+        `_answer_list` is the last branch of `_answer`, so ANYTHING that reaches it and names
+        no space type gets the whole building. Measured live 2026-09-30, eight questions
+        through `resolve()`: all eight returned the identical 3,042-character
+        *"## All spaces — **354** space(s) found"* table, including *"which rooms are the
+        quietest right now?"* and *"which areas are the warmest?"*, which the floor plans
+        cannot answer at all. One of them, *"Can you tell me which areas are currently
+        overcrowded?"*, reached a real user that way (BUG-1292).
+
+        This is BUG-377 one level up. That fix stopped a nearest-question whose target the
+        plans do not label from falling through to *"## All spaces"* — *"wrong in shape, not
+        merely in content: the user asked where ONE thing is and got a list of everything."*
+        The default branch has the same hole and every other unmatched question goes through it.
+
+        The rule is deliberately STRICT, because a strict rule fails toward the decline and a
+        loose one fails toward the inventory, which is the failure being removed: every word of
+        the question must be a listing cue, a space noun, a floor word, a number or a function
+        word. One content word the plans cannot evaluate — *quietest*, *overcrowded*, *warmest*,
+        *available* — and this is not an inventory request.
+
+        A question that names a space TYPE never reaches this test: `_answer_list` filters by
+        that type and "which offices are there?" is a typed list, not a whole-building dump.
+        """
+        words = re.findall(r"[a-z]+", (query or "").lower())
+        return bool(words) and all(w in _INVENTORY_REQUEST_WORDS for w in words)
+
+    def _list_target_unknown(self, query: str, manifests: List[FloorPlanManifest]) -> str:
+        """Decline a question that reached the list branch without asking for a list.
+
+        Says what the floor plans DO hold, read from the manifests rather than restated here,
+        so a building with different plans advertises its own.
+        """
+        # `Space.type`, not `space_type` — see `_nearest_target_unknown` for the measurement
+        # that settled it. "unknown" is the model's default for a space the plan never typed,
+        # and advertising it as a kind of place would be worse than saying nothing.
+        kinds = sorted(
+            {
+                str(getattr(space, "type", "") or "").strip().replace("_", " ")
+                for m in manifests or []
+                for space in getattr(m, "spaces", []) or []
+                if str(getattr(space, "type", "") or "").strip() not in ("", "unknown")
+            }
+        )[:12]
+        # THE FIRST SENTENCE IS DELIBERATELY AN EXISTING DECLINE LEAD, not a new one.
+        # Five consumers key on a decline's opening — `regression_answerability._DECLINE_MARKERS`
+        # ("i couldn't answer that from"), `publication_gate.is_decline`,
+        # `scripts/audit_decline_markers.py`, the grader, and `_orchestrator._decline_leads`
+        # (a `startswith` on "i couldn't answer that", which decides whether a declared-capacity
+        # statement REPLACES this text or is prepended to it, BUG-897). Reusing the lead means no
+        # marker list changes, so the blast radius over the ~2,985 stored answers is zero by
+        # construction rather than by measurement. A fresh wording here would have been read as
+        # an ANSWER by the gate, which is the direction that hides a regression (lessons #141).
+        lines = [
+            "I couldn't answer that from this building's floor plans. They record where each "
+            "space is, what kind of space it is and how big it is — not what is happening in "
+            "it right now.",
+        ]
+        if kinds:
+            lines += ["", "**The plans label these kinds of space:** " + ", ".join(kinds) + "."]
+        lines += [
+            "",
+            "Ask me to list the spaces, or to list one of those kinds, and I will read the "
+            "plans. For anything measured — how warm, how busy, how quiet a space is — ask "
+            "about the quantity and I will read the sensors instead.",
+        ]
+        return "\n".join(lines)
 
     def _answer_list(self, query: str, manifests: List[FloorPlanManifest]) -> str:
         space_type = self._detect_space_type(query)

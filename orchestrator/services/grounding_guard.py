@@ -917,31 +917,172 @@ def schema_remediation_reason(text: str) -> Optional[str]:
     return m.group(0).strip() if m else None
 
 
-def strip_schema_remediation(text: str) -> str:
-    """``text`` with every sentence that tells the reader to edit the model removed.
+#: A line that opens with a list marker — a dash, a bullet, or a step number.
+_LIST_LINE_RE = re.compile(r"^(?:[-*•+]\s+|\d{1,2}[.)]\s+)")
+
+#: A step NUMBER anywhere in a line, whether the list is still laid out one step per line or
+#: has been reflowed into prose. Two digits at most, and never a decimal ("21.4 °C") or part
+#: of a word, because those are readings and this must not touch a reading.
+_ORDINAL_MARK_RE = re.compile(r"(?<![\w.])(\d{1,2})([.)])(?=\s|$)")
+
+
+def _tidy_ordinals(line: str) -> str:
+    """Drop the step NUMBERS a removed step left behind, and renumber what survives.
+
+    THE DEFECT THIS EXISTS FOR, measured live (tail N, 2026-09-30, five of sixty questions).
+    A removal is clause-level, and when the list has been reflowed onto one line the clause
+    is a SENTENCE — so "…no code changes needed: 1. Describe it in the ontology — upload a
+    TTL…" loses the description and keeps the "1.", and the reader is shown
+
+        You can add it — no code changes needed: 1. 2. Point it at its readings — …
+
+    a numbered list whose first item is empty. An orphan is a marker with nothing between it
+    and the next marker (or the end of the line); the rest are renumbered from 1 so the list
+    a reader sees still counts from one.
+
+    Does nothing unless the line holds at least two markers AND one of them is an orphan, so
+    prose that merely contains a number is left exactly as it was.
+    """
+    marks = list(_ORDINAL_MARK_RE.finditer(line))
+    if len(marks) < 2:
+        return line
+    keep = []
+    for i, m in enumerate(marks):
+        tail = line[m.end() : marks[i + 1].start()] if i + 1 < len(marks) else line[m.end() :]
+        if tail.strip():
+            keep.append(i)
+    if len(keep) == len(marks):
+        return line
+    out: List[str] = []
+    cursor = n = 0
+    for i, m in enumerate(marks):
+        out.append(line[cursor : m.start()])
+        cursor = m.end()
+        if i in keep:
+            n += 1
+            out.append(f"{n}{m.group(2)}")
+        else:
+            # Swallow the separator the orphan was sitting in front of.
+            while cursor < len(line) and line[cursor] == " ":
+                cursor += 1
+    out.append(line[cursor:])
+    return re.sub(r" {2,}", " ", "".join(out)).strip()
+
+
+def _renumber_ordered_lines(text: str) -> str:
+    """Renumber each run of ``N.``-prefixed LINES from 1, so a list never starts at 2.
+
+    Removing step 1 of a three-step list leaves "2." and "3.", which reads as a list with a
+    missing first step rather than a two-step list. A blank line continues a run; any other
+    prose ends it.
+    """
+    lines = text.split("\n")
+    n = 0
+    for i, line in enumerate(lines):
+        m = re.match(r"^(\s*)(\d{1,2})([.)])(\s+)(.*)$", line)
+        if m:
+            n += 1
+            lines[i] = f"{m.group(1)}{n}{m.group(3)}{m.group(4)}{m.group(5)}"
+        elif line.strip():
+            n = 0
+    return "\n".join(lines)
+
+
+def _strip_clauses(text: str, pattern_hits: Any) -> str:
+    """``text`` with every clause ``pattern_hits`` matches removed, numbering left readable.
 
     Sentence-level, and line-level for bullets: an instruction is a whole clause, and
     deleting the verb alone leaves a fragment that reads worse than the original. Returns
     the text unchanged when nothing matches, so the common case costs one regex.
+
+    ``pattern_hits`` takes a fragment and returns truthy when that fragment must go.
     """
-    if not _SCHEMA_REMEDIATION_RE.search(plain_prose(text or "")):
+    if not pattern_hits(plain_prose(text or "")):
         return text
     kept_lines: List[str] = []
+    dropped_list_line = False
     for line in (text or "").split("\n"):
-        stripped = line.strip()
-        is_bullet = bool(re.match(r"^(?:[-*•+]\s+|\d+[.)]\s+)", stripped))
-        if is_bullet and _SCHEMA_REMEDIATION_RE.search(plain_prose(line)):
+        is_bullet = bool(_LIST_LINE_RE.match(line.strip()))
+        if is_bullet and pattern_hits(plain_prose(line)):
+            dropped_list_line = True
             continue
         sentences = _SENTENCE_SPLIT_RE.split(line)
-        kept = [s for s in sentences if not _SCHEMA_REMEDIATION_RE.search(plain_prose(s))]
+        kept = [s for s in sentences if not pattern_hits(plain_prose(s))]
         if len(kept) != len(sentences):
-            line = " ".join(s for s in kept if s.strip())
+            line = _tidy_ordinals(" ".join(s for s in kept if s.strip()))
             if not line.strip():
                 continue
         kept_lines.append(line)
     # Collapse the blank runs the removals leave behind.
     out = re.sub(r"\n{3,}", "\n\n", "\n".join(kept_lines))
+    if dropped_list_line:
+        out = _renumber_ordered_lines(out)
     return out.strip("\n")
+
+
+def strip_schema_remediation(text: str) -> str:
+    """``text`` with every sentence that tells the reader to edit the model removed."""
+    return _strip_clauses(text, _SCHEMA_REMEDIATION_RE.search)
+
+
+# ── The model's own vocabulary, which no non-admin reader can act on ─────────────
+#
+# `_SCHEMA_REMEDIATION_RE` catches the INSTRUCTION ("upload a TTL"). It does not catch the
+# VOCABULARY the instruction is written in, and measured on the enablement hint that is the
+# difference between a clean decline and this:
+#
+#     2. Point it at its readings — give each sensor a `ref:hasExternalReference` →
+#        `ref:hasTimeseriesId` (the column/uuid) plus `ref:storedAt` (a key from
+#        `database_registry.yaml`).
+#
+# Not one of those names anything a visitor, an occupant or a facility manager can see, let
+# alone change (design contract 6: users need no SQL/SPARQL/schema knowledge). The
+# deterministic hint is already withheld from them at source; this catches the case where a
+# model writes the same thing in its own words, which is the half no source-level gate reaches.
+#
+# Deliberately NOT here: a Brick CLASS NAME on its own ("Air_Temperature_Sensor"). The same
+# contract says this system also serves experts, an analyst asking which class a point carries
+# is entitled to the answer, and stripping it would be the guard acting wider than the defect.
+_INTERNAL_SCHEMA_RES = (
+    # A namespaced term — the prefix is the tell, whatever follows it.
+    re.compile(r"\b(?:ref|brick|bacnet|ontosage|hbco|s223|qudt|rdfs|owl|xsd):[A-Za-z_][\w-]*"),
+    # A file only someone with the deployment in front of them can open.
+    re.compile(r"\b[\w./-]*\.(?:ttl|yaml|yml|jsonld|rq)\b", re.IGNORECASE),
+    # Query languages and serialisations.
+    re.compile(
+        r"\bSPARQL\b|\bTTLs?\b|\bturtle file\b|\bT-?Box\b|\bA-?Box\b|\bRDF\b|\btriplestore\b",
+        re.IGNORECASE,
+    ),
+    # The identifiers that join the graph to the time-series store.
+    re.compile(r"\buuids?\b|\btimeseries\s*id\b|\bnamed graph\b", re.IGNORECASE),
+)
+
+
+def names_internal_schema(text: str) -> Optional[str]:
+    """The phrase naming the ontology's own machinery, or None.
+
+    Returns the matched text so a caller — or a failing test — can say WHICH phrase, not
+    merely that something matched.
+    """
+    body = plain_prose(text)
+    for bad in _INTERNAL_SCHEMA_RES:
+        m = bad.search(body)
+        if m:
+            return m.group(0).strip()
+    return None
+
+
+def _schema_vocabulary_hit(fragment: str):
+    for bad in _INTERNAL_SCHEMA_RES:
+        m = bad.search(fragment)
+        if m:
+            return m
+    return None
+
+
+def strip_internal_schema(text: str) -> str:
+    """``text`` with every clause naming the ontology's machinery removed."""
+    return _strip_clauses(text, _schema_vocabulary_hit)
 
 
 #: Words that talk ABOUT the exchange rather than about anything a building could hold.

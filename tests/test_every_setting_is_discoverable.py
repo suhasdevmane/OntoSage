@@ -214,6 +214,7 @@ def test_the_two_boot_blocking_secrets_are_named():
 def test_no_real_secret_rides_along_in_the_template():
     """The template carries CODE DEFAULTS, which are placeholders by construction. A value
     that looks like a generated credential means someone pasted a live one in."""
+    examined = 0
     for line in EXAMPLE.read_text(encoding="utf-8", errors="replace").splitlines():
         s = line.strip().lstrip("#").strip()
         if "=" not in s:
@@ -221,15 +222,28 @@ def test_no_real_secret_rides_along_in_the_template():
         key, _, value = (x.strip() for x in s.partition("="))
         if not any(w in key for w in ("PASSWORD", "SECRET", "TOKEN", "API_KEY")):
             continue
+        examined += 1
         low = value.lower()
-        placeholder = any(
-            w in low
-            for w in ("change-me", "change_me", "your_", "_here", "example", "xxx", "todo", "<")
-        ) or not value
+        placeholder = (
+            any(
+                w in low
+                for w in ("change-me", "change_me", "your_", "_here", "example", "xxx", "todo", "<")
+            )
+            or not value
+        )
         assert placeholder or not re.fullmatch(r"[A-Za-z0-9+/=]{20,}", value), (
             f"{key} looks like a real credential rather than a placeholder. "
             "The template carries CODE DEFAULTS only."
         )
+    # Both filters can empty this loop -- a renamed key convention, or a template rewritten
+    # without secret-bearing settings -- and a secret scan that examined nothing renders the
+    # same as one that examined everything (lessons #20, CAVEAT-1115). STRICT_SECRETS refuses
+    # to boot on four of these, so zero is never the right answer.
+    assert examined >= 4, (
+        f"only {examined} secret-bearing settings were examined in {EXAMPLE.name}; "
+        "STRICT_SECRETS alone requires POSTGRES_USER_PASSWORD, MYSQL_PASSWORD, SECRET_KEY "
+        "and GRAPHDB_PASSWORD to be present"
+    )
 
 
 # ── the half that wastes a newcomer's afternoon ──────────────────────────────
@@ -255,9 +269,9 @@ def test_every_documented_name_is_read_by_something():
 
 def test_the_dead_list_does_not_grow_silently():
     """CLOSED at 24 on 2026-09-12. Growth means a new setting nobody can use."""
-    assert len(_READ_BY_NOTHING) <= 24, (
-        "the dead-setting list grew; each entry is a line a newcomer can set to no effect"
-    )
+    assert (
+        len(_READ_BY_NOTHING) <= 24
+    ), "the dead-setting list grew; each entry is a line a newcomer can set to no effect"
 
 
 def test_every_dead_entry_says_why():
@@ -280,9 +294,9 @@ def test_the_workflow_deadline_rule_is_stated_beside_the_value():
     assert "LLM_TIMEOUT_S" in text
 
     cfg = CONFIG.read_text(encoding="utf-8")
-    assert "is not longer than LLM_TIMEOUT_S" in cfg, (
-        "the guard that warns when the deadline cannot outlast one LLM call is gone"
-    )
+    assert (
+        "is not longer than LLM_TIMEOUT_S" in cfg
+    ), "the guard that warns when the deadline cannot outlast one LLM call is gone"
 
 
 def test_the_host_prerequisites_are_named():

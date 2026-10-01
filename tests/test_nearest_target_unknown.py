@@ -15,6 +15,7 @@ manifests so a different building advertises its own amenities with no code chan
 import pytest
 
 from orchestrator.agents.spatial_agent import SpatialAgent
+
 # `_answer` became ASYNC in V10 W0-7: when floor-plan adjacency finds nothing, the nearest
 # path now consults the building's amenity catalogue before declining, and that is a SPARQL
 # round trip. The tests below are unchanged in what they assert.
@@ -24,13 +25,40 @@ pytestmark = pytest.mark.unit
 
 
 class _Space:
+    """The one field the decline reads off a space.
+
+    IT USED TO BE ``space_type``, AND SO DID THE CODE, AND THAT IS WHY THIS FILE WAS GREEN
+    FOR TWO WEEKS WHILE THE SENTENCE IT ASSERTS NEVER RENDERED (CAVEAT-1297, 2026-09-30).
+
+    ``shared.models.Space`` declares ``type: SpaceType`` and no ``space_type`` at all.
+    ``_nearest_target_unknown`` read ``getattr(space, "space_type", "")``, which returns the
+    default silently on a real manifest, so ``known`` was always empty and the
+    "**I can find the nearest:**" branch never ran on any building. This fake agreed with
+    the mistake, so ``test_it_names_what_it_can_actually_find`` passed against a decline that
+    names nothing. Measured live against bldg1's 354 typed spaces: the kinds line was absent
+    before the fix and lists twelve kinds after it.
+
+    The field name is now ASSERTED against the real model below, so the fixture cannot drift
+    away from the thing it stands in for again.
+    """
+
     def __init__(self, space_type):
-        self.space_type = space_type
+        self.type = space_type
 
 
 class _Manifest:
     def __init__(self, types):
         self.spaces = [_Space(t) for t in types]
+
+
+def test_the_fake_space_carries_the_field_the_real_model_declares():
+    """A fake that disagrees with the model tests the fake (CAVEAT-1297)."""
+    from shared.models import Space
+
+    fields = set(Space.model_fields)
+    assert "type" in fields
+    assert "space_type" not in fields
+    assert "type" in vars(_Space("office"))
 
 
 def _agent():
@@ -42,7 +70,9 @@ MANIFESTS = [_Manifest(["toilet", "lift", "staircase", "meeting_room", "office"]
 
 @pytest.mark.asyncio
 async def test_an_unknown_amenity_does_not_return_a_list_of_everything():
-    out = await _agent()._answer("where's the nearest water refill station to Room 3.18?", MANIFESTS)
+    out = await _agent()._answer(
+        "where's the nearest water refill station to Room 3.18?", MANIFESTS
+    )
     assert "All spaces" not in out
     assert "not one of them" in out
 

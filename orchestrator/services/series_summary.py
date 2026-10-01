@@ -105,7 +105,17 @@ def summarise_groups(
         if is_energy:
             parts.append(f"total {_fmt(sum(values))} {unit}")
         parts.append(f"mean {_fmt(mean(values))} {unit}")
-        parts.append(f"range {_fmt(min(values))} to {_fmt(max(values))} {unit}")
+        # THE SPREAD IS GIVEN, NOT LEFT AS A SUBTRACTION (BUG-937). The narrator was handed a
+        # mean and a range and derived the spread itself. Measured live 2026-09-29, "Is floor 3
+        # warmer than floor 4?": "Floor 4 ... range from 20.4 C to 25.4 C. The spread on Floor 4
+        # is 4.0 C compared to 4.6 C on Floor 3, indicating a marginally wider variation on
+        # Floor 4." 25.4 - 20.4 is 5.0, and 4.0 is not wider than 4.6 either, so the sentence
+        # was wrong twice and both halves were checkable without the database. A figure a
+        # narrator can get wrong is a figure it should not be deriving.
+        parts.append(
+            f"range {_fmt(min(values))} to {_fmt(max(values))} {unit} "
+            f"(spread {_fmt(max(values) - min(values))} {unit})"
+        )
         lines.append(f"- {key.capitalize()} {group}: " + "; ".join(parts))
     if is_energy:
         lines.append(
@@ -113,6 +123,34 @@ def summarise_groups(
             "a floor with more readings in the window has more interval energy counted."
         )
     return "\n".join(lines)
+
+
+#: WHAT AN EXTREME OF A SERIES IS, said once beside the figures (BUG-953).
+#:
+#: *"What is the maximum occupancy of room 2.15?"* opened correctly with the room's declared
+#: figure — "has a design occupancy of 40 people" — and then closed with "The maximum occupancy
+#: recorded for this room is **30.00 people**", the highest reading taken over two days. On the
+#: next run the same question BOLDED the 30 as the headline answer, and for room 5.01 a run
+#: asserted "The design occupancy for Room 5.01 is **30 people**" outright. The declared figure
+#: and its contradiction in one reply.
+#:
+#: The cause is not arithmetic: `max(values)` is right every time. It is that a MAX over
+#: readings and a DECLARED limit are different quantities that read identically once a
+#: narrator picks the wording, and nothing beside the figures said which one they were. Adding
+#: the declared figure was tried first and is not enough — it makes both sentences present
+#: rather than replacing the wrong one.
+#:
+#: Deliberately general. The same confusion is available for every quantity a building
+#: declares as well as measures — a rated power, a design flow, a setpoint — so this says what
+#: is true of any extreme rather than naming occupancy.
+OBSERVED_NOT_DECLARED = (
+    "Every figure above is a value RECORDED by the sensor in the window shown. None of them is "
+    "a declared capacity, limit, rating, setpoint or design figure, and the highest reading is "
+    "never 'the maximum <quantity> of' a room, a floor or a piece of equipment — it is the "
+    "highest value observed in that window. Where the quantity is a count of people, write "
+    "'the highest count observed'. If a declared figure has already been stated in this "
+    "answer, do not restate, replace or contradict it with one of these."
+)
 
 
 def summarise_series(
@@ -175,6 +213,8 @@ def summarise_series(
         lines.append(line)
     if len(ordered) > max_series:
         lines.append(f"- …and {len(ordered) - max_series} more series not shown")
+    if lines:
+        lines.append(OBSERVED_NOT_DECLARED)
     return "\n".join(lines), has_energy
 
 
@@ -331,7 +371,8 @@ def summarise_latest_overview(
         "readings fetched (quote these; do not recompute them):",
         f"- mean {_fmt(mean(values))}{unit}; range {_fmt(min(values))} to {_fmt(max(values))}{unit}; "
         f"{zero} of {len(latest)} series read zero.",
-        "- Highest: " + "; ".join(f"{_label(k)} {_fmt(latest[k][1])}{unit}" for k in ranked[:top_n]),
+        "- Highest: "
+        + "; ".join(f"{_label(k)} {_fmt(latest[k][1])}{unit}" for k in ranked[:top_n]),
         "- Lowest: "
         + "; ".join(f"{_label(k)} {_fmt(latest[k][1])}{unit}" for k in ranked[::-1][:top_n]),
         "Each series is one sensor. Do not add readings from different sensors into a total: "
@@ -397,7 +438,12 @@ def _bucket_size(span_hours: float, question: str = "") -> str:
     import re as _re
 
     asked = (question or "").lower()
-    for word, hours in (("year", 24 * 365), ("quarter", 24 * 90), ("month", 24 * 28), ("week", 24 * 7)):
+    for word, hours in (
+        ("year", 24 * 365),
+        ("quarter", 24 * 90),
+        ("month", 24 * 28),
+        ("week", 24 * 7),
+    ):
         if _re.search(rf"\b(?:this|last|previous|prior|past|each|per)\s+{word}\b", asked):
             # Only if the window actually holds more than one of them; otherwise one bucket
             # is the whole answer and says nothing.
@@ -444,6 +490,29 @@ def _complete_buckets(ordered: List[str], per_bucket: Dict[str, List[float]]) ->
         if len(keep) > 2 and len(per_bucket[keep[edge]]) < typical * 0.6:
             keep.pop(edge)
     return keep
+
+
+def _names_this_against_last(question: str, size: str) -> bool:
+    """Does the question name THE CURRENT period against the one before it?
+
+    "Compare energy use this week against last week" names two specific periods. That is a
+    different request from "how has energy use changed", which is about the window as a whole,
+    and answering the second when the first was asked is what BUG-936 was: the current week is
+    always partial, `_complete_buckets` therefore drops it, and the comparison fell back to the
+    two newest COMPLETE weeks — 14-20 Sep against 21-27 Sep, on 29 September. Both figures were
+    right and neither week was the one asked about, and because energy fell across those two
+    while it rose between the two asked for, the headline reported a 19.0% DECREASE where the
+    truth was a 22.7% rise.
+
+    Both halves must be present and must name the same unit: "this week" alone is one period,
+    and "this week against last month" is not a pair this function can order.
+    """
+    import re as _re
+
+    asked = (question or "").lower()
+    has_this = _re.search(rf"\bthis\s+{size}\b", asked)
+    has_last = _re.search(rf"\b(?:last|previous|prior|the\s+previous|preceding)\s+{size}\b", asked)
+    return bool(has_this and has_last)
 
 
 def summarise_periods(
@@ -530,6 +599,26 @@ def summarise_periods(
     # the measurement window as a change in the building (BUG-627).
     whole = _complete_buckets(ordered, per_bucket)
     partial = [b for b in ordered if b not in whole]
+    # WHEN THE QUESTION NAMES ITS TWO PERIODS, THEY ARE THE TWO PERIODS (BUG-936).
+    #
+    # `_complete_buckets` exists to stop a half-finished edge bucket being read as a change in
+    # the building (BUG-627), and it is right for "how has this changed". But the CURRENT period
+    # is partial by definition, so for "this week against last week" it discards the very period
+    # the user asked about and the comparison silently becomes the two newest COMPLETE ones.
+    # Measured live 2026-09-29 (a Tuesday, ISO W40): the answer compared W38 with W39 and stated
+    # a 19.0% decrease; this week against last week is 2229 against 1816 kWh/day, a 22.7% RISE.
+    # Both weeks it named were real and neither was asked for.
+    #
+    # The partial period is not dropped here, it is compared AS A RATE — which `by_rate` below
+    # already does, and which is why this is safe: a shorter period is not reported as a smaller
+    # total, and the narrator is told it is still filling.
+    named_pair = _names_this_against_last(question, size) and len(ordered) >= 2
+    if named_pair:
+        cmp_from, cmp_to = ordered[-2], ordered[-1]
+        # They were asked for by name, so they are no longer "excluded as partial".
+        partial = [b for b in partial if b not in (cmp_from, cmp_to)]
+    else:
+        cmp_from, cmp_to = whole[0], whole[-1]
     # "This week against last week" on a Friday compares five days with seven: the newest
     # bucket passes the count test above (5/7 of the readings) yet is still filling, and its
     # total is smaller because it is shorter, not because the building used less. A SUM over
@@ -537,7 +626,7 @@ def summarise_periods(
     # the bucket is in progress. A mean needs none of this: it is per reading already.
     in_progress = [
         b
-        for b in dict.fromkeys((whole[0], whole[-1]))
+        for b in dict.fromkeys((cmp_from, cmp_to))
         if covered.get(b) is not None and covered[b] < nominal * _WHOLE_COVERAGE
     ]
     by_rate = is_energy and bool(in_progress)
@@ -551,22 +640,41 @@ def summarise_periods(
     else:
         cmp_unit = unit
         _cmp = _stat
-    first, last = _cmp(whole[0]), _cmp(whole[-1])
+    first, last = _cmp(cmp_from), _cmp(cmp_to)
     change = last - first
     direction = "up" if change > 0 else ("down" if change < 0 else "unchanged")
     pct = f" ({change / first * 100:+.1f}%)" if first else ""
     lines.append(
-        f"CHANGE ACROSS THE WINDOW: {_fmt(first)} {cmp_unit} in {whole[0]} to "
-        f"{_fmt(last)} {cmp_unit} in {whole[-1]} — {direction} by "
+        f"CHANGE ACROSS THE WINDOW: {_fmt(first)} {cmp_unit} in {cmp_from} to "
+        f"{_fmt(last)} {cmp_unit} in {cmp_to} — {direction} by "
         f"{_fmt(abs(change))} {cmp_unit}{pct}. This is the answer to how it changed; state it."
     )
     if by_rate:
         for b in in_progress:
-            lines.append(
-                f"IN PROGRESS: {b} covers only {covered[b]:.0f} of {nominal:.0f} hours, so its "
-                f"total is not a {size}'s worth. The change above is a rate per {rate_word}; do "
-                f"not compare the totals, and say that {b} is still in progress."
-            )
+            # A SHORT BUCKET AT EITHER END IS SHORT FOR A DIFFERENT REASON, AND ONLY ONE OF THEM
+            # IS "IN PROGRESS" (BUG-936). `in_progress` is computed over BOTH ends, and the
+            # message said "still in progress" for either. Measured live 2026-09-29: the fetch
+            # was capped at 1000 rows per meter, which cut the window off inside 2026-W38, and
+            # the answer told the user that a week which had ENDED NINE DAYS EARLIER was "still
+            # in progress, covering only 77 of 168 hours". The newest bucket is short because
+            # time has not finished filling it; the oldest is short because the fetch did not
+            # reach back far enough, which is a fact about the QUERY and must be said as one.
+            if b == cmp_to:
+                lines.append(
+                    f"IN PROGRESS: {b} covers only {covered[b]:.0f} of {nominal:.0f} hours "
+                    f"because it is the current {size} and is still filling, so its total is "
+                    f"not a {size}'s worth. The change above is a rate per {rate_word}; do not "
+                    f"compare the totals, and say that {b} is still in progress."
+                )
+            else:
+                lines.append(
+                    f"TRUNCATED AT THE START: {b} covers only {covered[b]:.0f} of "
+                    f"{nominal:.0f} hours because the fetched readings BEGIN INSIDE IT, not "
+                    f"because anything changed in the building. It is a complete {size} in the "
+                    f"past and it is NOT still in progress — never say that it is. The change "
+                    f"above is a rate per {rate_word}; do not compare the totals, and say that "
+                    f"the readings for {b} are incomplete."
+                )
     if partial:
         lines.append(
             f"PARTIAL {size}(s) EXCLUDED from that comparison: {', '.join(partial)} — each holds "
@@ -574,8 +682,9 @@ def summarise_periods(
             f"it. Do not compare them with a whole {size}, and do not present their figure as a "
             f"{size}'s worth."
         )
-    hi = max(whole, key=_cmp)
-    lo = min(whole, key=_cmp)
+    _extremes = whole or [cmp_from, cmp_to]
+    hi = max(_extremes, key=_cmp)
+    lo = min(_extremes, key=_cmp)
     lines.append(
         f"HIGHEST {size}: {hi} at {_fmt(_cmp(hi))} {cmp_unit}. LOWEST: {lo} at "
         f"{_fmt(_cmp(lo))} {cmp_unit}."

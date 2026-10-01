@@ -37,11 +37,19 @@ def _truth(
     network=("strong", "adequate"),
     noise=("quiet", "silent"),
 ):
-    return [
+    out = [
         r
         for r in ground_truth(DOC)
         if r["power"] in power and r["network"] in network and r["noise"] in noise
     ]
+    # A conjunctive filter that matched nothing makes "each row prints the three values the
+    # table holds for it" true of no row, and this file exists because the filter used to be
+    # left to the narration (CAVEAT-1115).
+    assert out, (
+        f"the ground truth holds no row matching power={power} network={network} "
+        f"noise={noise}; the assertions below would check nothing"
+    )
+    return out
 
 
 def _answer(question: str) -> str:

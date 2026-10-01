@@ -75,6 +75,10 @@ def _rows(name: str, heading_contains: str) -> List[Dict[str, str]]:
     body = parse_front_matter(_need(name).read_text(encoding="utf-8"))[1]
     for heading, rows in parse_tables(body):
         if heading_contains in heading.lower():
+            # Zero rows makes "a loan line never says who has them" and "a period is the
+            # calendar month it names" true of no line and no period (CAVEAT-1115). Guarded
+            # here so every caller in this file inherits it.
+            assert rows, f"{name}: the table under {heading_contains!r} parsed to zero rows"
             return rows
     raise AssertionError(f"{name} has no table under a heading containing {heading_contains!r}")
 
@@ -407,7 +411,14 @@ def test_recorded_diversion_is_not_below_the_baseline_an_on_track_target_starts_
         pytest.skip("SUS-WASTE-2027 is no longer in the target register")
     baseline, goal = float(target[0]["baseline_value"]), float(target[0]["target_value"])
     issued = [r for r in _returns() if r["status"] != "Pending"]
-    for month in sorted({r["month"] for r in issued}):
+    # Every return being Pending empties this loop, and a target reported "On track" would
+    # then be checked against no recorded diversion at all (CAVEAT-1115).
+    months = sorted({r["month"] for r in issued})
+    assert months, (
+        "every waste return is Pending, so no recorded diversion was compared with the "
+        "baseline SUS-WASTE-2027 claims to be on track from"
+    )
+    for month in months:
         rows = [r for r in issued if r["month"] == month]
         # Weighted by tonnage, never the mean of the stream percentages: the result is a percentage.
         share = sum(float(r["tonnes"]) * float(r["diverted_pct"]) for r in rows) / sum(

@@ -258,7 +258,16 @@ def test_no_building_literals_in_deliberation_modules():
     """Mirror of test_routing_contract's scan: zero building literals in V4 modules."""
     banned = re.compile(r"abacws|cardiff|bldg[123]\b|buildsys\.org", re.IGNORECASE)
     pkg = Path(__file__).resolve().parents[1] / "orchestrator" / "services" / "deliberation"
-    for py in pkg.glob("*.py"):
+    scanned = sorted(pkg.glob("*.py"))
+    # A moved or renamed package makes the glob empty, and "zero building literals in the V4
+    # modules" is then true of a set of no modules (CAVEAT-1115). The package has held more
+    # than ten modules since V4; a floor of five is well clear of a legitimate consolidation
+    # and well above the empty case this exists to rule out.
+    assert len(scanned) >= 5, (
+        f"only {len(scanned)} modules found under {pkg}; the literal scan covered almost "
+        "nothing, which reads identically to finding nothing"
+    )
+    for py in scanned:
         text = py.read_text(encoding="utf-8")
         hits = [m.group(0) for m in banned.finditer(text)]
         assert not hits, f"building literal(s) {hits} in {py.name}"

@@ -216,8 +216,12 @@ _ROOM_LIKE = re.compile(r"\b\d+\.\d+\b")
 
 def test_no_conversation_template_names_a_room_or_a_floor():
     """Would this run unchanged for bldg2? Only if every place is a placeholder."""
+    assert H.CONVERSATIONS, "the probe defines no conversations; no template was examined"
+    turns = 0
     for conv in H.CONVERSATIONS:
+        assert conv["turns"], f"{conv['id']} carries no turns"
         for turn in conv["turns"]:
+            turns += 1
             blob = " ".join(
                 [turn["question"]]
                 + list(turn.get("expect_any") or [])
@@ -226,6 +230,9 @@ def test_no_conversation_template_names_a_room_or_a_floor():
             stripped = re.sub(r"\{[a-z_]+\}", "", blob)
             assert not _ROOM_LIKE.search(stripped), f"{conv['id']}: literal place in {blob!r}"
             assert "floor " not in stripped.lower(), f"{conv['id']}: literal floor in {blob!r}"
+    # Design contract 3 is what this enforces, and an empty template set satisfies it
+    # trivially (CAVEAT-1115). Counted rather than assumed.
+    assert turns >= len(H.CONVERSATIONS), f"only {turns} turns across the conversations"
 
 
 def test_render_conversations_substitutes_every_placeholder():

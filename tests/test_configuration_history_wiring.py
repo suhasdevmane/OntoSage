@@ -189,16 +189,56 @@ def test_one_sensor_is_caveated_once_even_with_several_uuids():
 # ── reachability: the half that makes the other half true ────────────────────
 
 
+def _method_and_its_helpers(name: str) -> str:
+    """The source of `WorkflowOrchestrator.<name>` plus every sibling method it delegates to.
+
+    These assertions read source text because the defect they guard against is a WIRING one
+    -- a bus key nothing writes, a second query where the first result should be reused --
+    and no unit-level call can observe that. What they must not do is window that text by a
+    character count. `_configuration_caveat` is 773 characters; the 2200-character window
+    this replaces reached 1427 characters past the end of it, so the token it matched was in
+    the next method entirely (lessons #151, CAVEAT-1114, CAVEAT-1120).
+
+    Following one level of `self._helper(...)` is what makes the check survive the refactor
+    that caused this: a method may be split into a wrapper and an `_inner` at any time, and
+    the property being asserted belongs to the pair, not to whichever half keeps the name.
+    """
+    import ast
+    from pathlib import Path
+
+    src = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
+    tree = ast.parse(src)
+    methods = {
+        n.name: n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    assert name in methods, f"{name} is no longer defined in _orchestrator.py"
+
+    node = methods[name]
+    pieces = [ast.get_source_segment(src, node) or ""]
+    for call in ast.walk(node):
+        if not isinstance(call, ast.Call):
+            continue
+        fn = call.func
+        if (
+            isinstance(fn, ast.Attribute)
+            and isinstance(fn.value, ast.Name)
+            and fn.value.id == "self"
+            and fn.attr in methods
+            and fn.attr != name
+        ):
+            pieces.append(ast.get_source_segment(src, methods[fn.attr]) or "")
+
+    joined = "\n".join(pieces)
+    assert joined.strip(), f"{name} resolved to no source at all"
+    return joined
+
+
 class TestReachability:
     """Gap 1. Every assertion above passed for three days while the feature did nothing,
     because no caller existed. These are the tests that would have caught that."""
 
     def test_a_lane_populates_the_bus_key_the_reader_expects(self):
-        from pathlib import Path
-
-        src = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
-        assert "_load_configuration_periods" in src
-        body = src[src.index("async def _load_configuration_periods") :][:2600]
+        body = _method_and_its_helpers("_load_configuration_periods")
         assert 'results["_config_periods"]' in body, (
             "nothing writes the bus key assemble._configuration_periods reads; the trend "
             "integrity verdict will keep seeing an empty list"
@@ -215,22 +255,29 @@ class TestReachability:
         assert load_at < assemble_at
 
     def test_only_contributing_sensors_are_loaded(self):
-        from pathlib import Path
-
-        src = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
-        body = src[src.index("async def _load_configuration_periods") :][:2600]
+        body = _method_and_its_helpers("_load_configuration_periods")
         assert (
             "contributing_uuids" in body
         ), "the loader would caveat an answer with an unrelated sensor's relocation"
 
     def test_the_caveat_reuses_the_loaded_history_rather_than_querying_again(self):
         """Two views of one fact drift apart; this keeps the prose and the evidence record
-        reading the same periods."""
-        from pathlib import Path
+        reading the same periods.
 
-        src = Path("orchestrator/workflow/_orchestrator.py").read_text(encoding="utf-8")
-        body = src[src.index("async def _configuration_caveat") :][:2200]
-        assert "_config_history" in body
+        Read through the delegation on purpose. This assertion used to be
+        ``"_config_history" in src[src.index("async def _configuration_caveat"):][:2200]``,
+        and `_configuration_caveat` is 773 characters long -- so the window spilled 1427
+        characters past the end of the method it names, and the token it found was in the
+        NEIGHBOUR. Measured, not suspected: `_config_history` does not appear anywhere in
+        `_configuration_caveat`, which is now a `try`/`except` wrapper around
+        `_configuration_caveat_inner`. The property held the whole time; the assertion was
+        not the reason (lessons #151, CAVEAT-1120).
+        """
+        body = _method_and_its_helpers("_configuration_caveat")
+        assert "_config_history" in body, (
+            "the caveat no longer reads the history the loader put on the bus; prose and "
+            "evidence record will drift"
+        )
         assert "for_building" not in body, "the caveat queries the graph a second time"
 
     def test_the_caveat_is_appended_after_persona_formatting(self):

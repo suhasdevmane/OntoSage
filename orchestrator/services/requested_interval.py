@@ -39,8 +39,8 @@ is not better than no window.
 from __future__ import annotations
 
 import re
-from datetime import datetime, timedelta
-from typing import Optional, Tuple
+from datetime import date, datetime, timedelta
+from typing import List, Optional, Tuple
 
 #: The wire format every store, builder and formatter in this system speaks.
 STAMP = "%Y-%m-%d %H:%M:%S"
@@ -222,3 +222,167 @@ def interval_hours(start: str, end: str) -> Optional[float]:
     except (TypeError, ValueError):
         return None
     return (b - a).total_seconds() / 3600.0
+
+
+# ── CALENDAR PERIODS LARGER THAN A DAY (BUG-939) ─────────────────────────────
+#
+# `calendar_day_bounds` above resolves "today" and "yesterday". Nothing resolved a WEEK,
+# and the consequence was measured on 2026-09-29: "Compare energy use this week against
+# last week" reached the store as
+#
+#     WHERE datetime >= DATE_SUB(NOW(), INTERVAL 30 DAY) ... ORDER BY datetime DESC
+#     LIMIT 1000                                                             -- per uuid
+#
+# — a fixed 30 days rather than the two weeks named, which the per-sensor row cap then cut
+# to roughly the newest 11 days. Both SQL builders DO honour bounds; the bounds were the
+# classifier's to supply, and measured directly on 2026-09-30 the classifier gives, for
+# questions of exactly this shape:
+#
+#     "Compare energy use this week against last week."              2026-09-16 .. 2026-09-30
+#                                                                    (a rolling 14 days)
+#     "How does the temperature in room 5.01 this week compare
+#      with last week?"                                              null .. null
+#     "Will floor 3 or floor 4 be warmer tomorrow?"                   now .. "now+1d"
+#                                                                    (the end unresolvable)
+#
+# So it is not that the bounds were dropped: the same question shape yields a wrong window,
+# no window, or a window in the future, depending on wording. A named calendar period has
+# one answer and it is arithmetic, so it is computed here instead of asked for.
+#
+# THE PERIOD IS CHOSEN IN THE BUILDING'S ZONE AND CONVERTED TO THE STORES' (UTC) CLOCK, for
+# the reason written above `store_now`: three changes and a P1 were withdrawn in September
+# after a MySQL session in the server's own zone made a TIMESTAMP column look local.
+
+#: Units whose calendar boundaries are not in dispute. A WEEK here is the ISO week, which is
+#: not an assumption: `series_summary._bucket_of` labels buckets `<year>-W<iso week>`, so any
+#: other choice would put these bounds and the buckets computed inside them out of step.
+_PERIOD_UNITS = ("week", "month", "quarter", "year")
+
+#: "this <unit>" — the period in progress.
+_THIS_RE = {u: re.compile(rf"\bthis\s+{u}\b") for u in _PERIOD_UNITS}
+
+#: "last|previous|prior <unit>" — the whole period before the one in progress.
+_LAST_RE = {u: re.compile(rf"\b(?:last|previous|prior|preceding)\s+{u}\b") for u in _PERIOD_UNITS}
+
+#: A TRAILING DURATION WEARING A CALENDAR WORD, which this resolver must refuse.
+#:
+#: "over the last week" almost always means the trailing seven days, not ISO week 39; on a
+#: Wednesday those two differ by three days at each end. The module's rule is that a window
+#: whose boundaries are in dispute gets no window at all, so the compiled range is left
+#: alone — which is what the system did before this function existed, rather than a guess.
+_TRAILING_RE = {
+    u: re.compile(
+        rf"\b(?:over|in|during|for|across|within|the)\s+(?:the\s+)?"
+        rf"(?:last|past|previous|prior)\s+{u}\b"
+        rf"|\bpast\s+{u}\b"
+        rf"|\b\d+\s+{u}s?\b"
+    )
+    for u in _PERIOD_UNITS
+}
+
+
+def _month_start_back(day: date, months: int) -> date:
+    """The first of the month `months` whole months before `day`'s month."""
+    total = (day.year * 12 + (day.month - 1)) - months
+    return date(total // 12, total % 12 + 1, 1)
+
+
+def _unit_start(day: date, unit: str, back: int) -> date:
+    """First DAY of the `unit` that is `back` whole units before the one containing `day`."""
+    if unit == "week":
+        monday = day - timedelta(days=day.isoweekday() - 1)
+        return monday - timedelta(weeks=back)
+    if unit == "month":
+        return _month_start_back(day, back)
+    if unit == "quarter":
+        quarter_first = date(day.year, 3 * ((day.month - 1) // 3) + 1, 1)
+        return _month_start_back(quarter_first, 3 * back)
+    return date(day.year - back, 1, 1)
+
+
+def _unit_end(start: date, unit: str) -> date:
+    """Last DAY of the unit that begins on `start`."""
+    if unit == "week":
+        return start + timedelta(days=6)
+    months = {"month": 1, "quarter": 3, "year": 12}[unit]
+    return _month_start_back(start, -months) - timedelta(days=1)
+
+
+def named_period(text: str) -> Optional[Tuple[str, List[int]]]:
+    """The calendar unit the text names and which instances of it, newest first.
+
+    ``("week", [0, 1])`` means "this week and last week"; ``("month", [1])`` means "last
+    month". None when nothing resolvable is named, when TWO different units are named ("this
+    week against last month" has no single bucket and the comparison lane refuses it too),
+    when a calendar DAY is named (``calendar_day_bounds`` is narrower and already right), or
+    when the phrase is a trailing duration rather than a calendar period.
+    """
+    low = (text or "").lower()
+    if not low or named_day(low) is not None:
+        return None
+    found: List[Tuple[str, List[int]]] = []
+    for unit in _PERIOD_UNITS:
+        if _TRAILING_RE[unit].search(low):
+            continue
+        offsets = []
+        if _THIS_RE[unit].search(low):
+            offsets.append(0)
+        if _LAST_RE[unit].search(low):
+            offsets.append(1)
+        if offsets:
+            found.append((unit, offsets))
+    if len(found) != 1:
+        return None
+    return found[0]
+
+
+def calendar_period_bounds(
+    text: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Optional[Tuple[str, str]]:
+    """Store-clock bounds covering every calendar period the question names (BUG-939).
+
+    Returns ``(start, end)`` as ``STAMP`` strings on the stores' UTC clock, or None when
+    :func:`named_period` finds nothing it will resolve. ``now``, when passed, is
+    building-local wall time.
+
+    WHEN TWO PERIODS ARE NAMED THE SPAN REACHES ONE WHOLE UNIT FURTHER BACK, and that is
+    deliberate rather than slack. The per-period arithmetic downstream chooses its bucket
+    size from the span of the ROWS it is given, and ``series_summary._bucket_size`` needs
+    1.5 units before it will bucket by that unit. A fetch of exactly "this week and last
+    week" holds rows from last Monday to NOW — 9.2 days when asked on a Wednesday, under
+    the 10.5 days that rule requires — so it would be bucketed by DAY and the comparison
+    would be between two partial days. That is the 291.7% rise BUG-936's fix exists to
+    prevent, and narrowing the window "correctly" would have re-introduced it. The surplus
+    period is not analysed as if it were one of the named ones: ``_names_this_against_last``
+    takes the two NEWEST buckets. One period named needs no margin and gets none.
+
+    The margin is not a guess at a threshold: reaching one unit further back makes the row
+    span at least TWO whole units, and two clears 1.5 for every unit and every day of the
+    week — which is why it is applied to all four rather than to the week alone, where the
+    shortfall was first measured. A month pair asked on the 1st fails the same way (745
+    hours against the 1,008 a month bucket needs), and so do a quarter pair and a year
+    pair. The rule is pinned by a test that calls ``_bucket_size`` on the span these bounds
+    produce, so the coupling is checked rather than remembered.
+
+    The end is the last second of the newest named period, because both SQL builders emit
+    ``<=``; for a period still in progress that bound lies ahead of now, which selects
+    exactly the rows that exist so far and keeps the stated window equal to the one named.
+    """
+    named = named_period(text)
+    if named is None:
+        return None
+    unit, offsets = named
+    if now is None:
+        now = local_now(tz_name)
+    today = now.date()
+
+    newest_start = _unit_start(today, unit, min(offsets))
+    margin = 1 if len(offsets) > 1 else 0
+    oldest_start = _unit_start(today, unit, max(offsets) + margin)
+    start_local = datetime(oldest_start.year, oldest_start.month, oldest_start.day, 0, 0, 0)
+    last_day = _unit_end(newest_start, unit)
+    end_local = datetime(last_day.year, last_day.month, last_day.day, 23, 59, 59)
+    return (
+        to_store(start_local, tz_name).strftime(STAMP),
+        to_store(end_local, tz_name).strftime(STAMP),
+    )

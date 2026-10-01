@@ -63,8 +63,11 @@ def test_the_chart_and_the_export_are_withheld_too():
     """B04: a chart of a withheld figure is the same claim with better typography, and a
     spreadsheet outlives the caveat that sat beside it on screen."""
     d = pg.evaluate(
-        intent="analytics", final_response=CLAIM, verification=FAILED,
-        has_chart=True, has_export=True,
+        intent="analytics",
+        final_response=CLAIM,
+        verification=FAILED,
+        has_chart=True,
+        has_export=True,
     )
     assert d.withhold_chart and d.withhold_export
 
@@ -113,6 +116,28 @@ def test_an_ungated_lane_is_left_alone():
         assert d.publish, f"gated a lane outside the declared scope: {intent}"
 
 
+@pytest.mark.parametrize(
+    "reading",
+    [
+        "CO2 in Room 5.01 is 1200 ppm.",
+        "CO2 in Room 5.01 is 1,200 ppm.",
+        "Total consumption was 12345 kWh.",
+        "Illuminance measured 1500 lux.",
+    ],
+)
+def test_a_four_digit_reading_without_a_thousands_separator_is_a_claim(reading):
+    """BUG-904. The integer part was ``\\d{1,3}(?:,\\d{3})*`` — a fourth digit needed a COMMA.
+
+    So "1,240 ppm" was a claim and "1200 ppm" was not, and an unseparated four-digit ppm
+    value is the commonest reading in this building. The gate published it unchanged on a
+    failed verification, which is the one thing this module exists to prevent. Every
+    fixture in this file used a separator, so the gate's own tests could not see it; it was
+    found by the W5-01 redaction tests.
+    """
+    assert pg.has_quantitative_claim(reading)
+    assert not pg.evaluate(intent="report", final_response=reading, verification=FAILED).publish
+
+
 def test_an_identifier_is_not_a_measurement():
     """BUG-191: a grader that counted any digit as a sensor reading scored refusals as PASS
     and manufactured a spurious 39/39. Room 5.01 and floor 3 are names."""
@@ -158,16 +183,14 @@ def test_the_gate_is_actually_CALLED_on_the_response_path():
 
     src = Path(__file__).resolve().parent.parent / "orchestrator" / "workflow" / "_orchestrator.py"
     body = src.read_text(encoding="utf-8")
-    assert "from orchestrator.services.publication_gate import evaluate" in body, (
-        "the publication gate is not imported on the response path"
-    )
+    assert (
+        "from orchestrator.services.publication_gate import evaluate" in body
+    ), "the publication gate is not imported on the response path"
     assert "_pub_evaluate(" in body, "the publication gate is imported but never called"
 
     call_at = body.index("_pub_evaluate(")
     append_at = body.index('role="assistant"')
-    assert call_at < append_at, (
-        "the gate must run BEFORE the answer is appended to the transcript"
-    )
+    assert call_at < append_at, "the gate must run BEFORE the answer is appended to the transcript"
 
     # It must also run after the guards that REWRITE final_response, or it would be
     # judging a string the user never receives.
@@ -197,18 +220,27 @@ def test_a_lane_the_verifier_cannot_assess_is_never_gated():
 
     Caught live: the first deployment withheld a REPORT with 1,000 real rows behind it.
     """
-    blind = {"grounded": False, "confidence": 0.20, "source": "none",
-             "missing": [], "applicable": False}
+    blind = {
+        "grounded": False,
+        "confidence": 0.20,
+        "source": "none",
+        "missing": [],
+        "applicable": False,
+    }
     d = pg.evaluate(intent="report", final_response=CLAIM, verification=blind)
     assert d.publish, "an unassessed lane must not be treated as an unsupported one"
 
 
 def test_an_assessed_lane_that_fails_is_still_gated():
     """The exemption above must not become a way for a real failure to escape."""
-    assessed = {"grounded": False, "confidence": 0.20, "source": "sql",
-                "missing": ["co2 sensor"], "applicable": True}
-    assert not pg.evaluate(intent="report", final_response=CLAIM,
-                           verification=assessed).publish
+    assessed = {
+        "grounded": False,
+        "confidence": 0.20,
+        "source": "sql",
+        "missing": ["co2 sensor"],
+        "applicable": True,
+    }
+    assert not pg.evaluate(intent="report", final_response=CLAIM, verification=assessed).publish
 
 
 def test_the_verifier_counts_sql_rows_at_the_depth_the_lane_writes_them():
@@ -251,16 +283,15 @@ def test_planner_routed_lanes_are_assessable_only_because_the_bus_is_published()
     """
     from pathlib import Path
 
-    from orchestrator.agents.verifier_agent import _ASSESSABLE_INTENTS
     from orchestrator.agents.planner_agent import PlannerAgent
+    from orchestrator.agents.verifier_agent import _ASSESSABLE_INTENTS
 
     for planner_routed in ("report", "export"):
         assert planner_routed in _ASSESSABLE_INTENTS
 
     # ...and the publish that makes that claim true must still exist, at BOTH exits.
     src = (
-        Path(__file__).resolve().parent.parent
-        / "orchestrator" / "agents" / "planner_agent.py"
+        Path(__file__).resolve().parent.parent / "orchestrator" / "agents" / "planner_agent.py"
     ).read_text(encoding="utf-8")
     assert src.count("_publish_context_to_bus(state, context)") >= 2, (
         "report/export are claimed assessable but the planner no longer publishes its "

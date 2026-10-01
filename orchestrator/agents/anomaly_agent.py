@@ -65,10 +65,29 @@ class AnomalyDetectionAgent:
 
         records = self._extract_records(sensor_data)
         if not records:
+            # THE READER IS NOT THE DETECTOR (CAVEAT-396, and BUG-1298 for why it is here).
+            #
+            # "No sensor data available for anomaly detection" describes this method's input.
+            # To a reader it reads as an outage to wait out, and it was returned for a
+            # building holding 514 live occupancy series — four times in ten asks of "which
+            # areas are currently overcrowded?".
+            #
+            # `_anomaly_node` already rewrites this when NOTHING resolved, and that fix is
+            # sound. It is not reached on the planner's path: `planner_agent._run_anomaly`
+            # calls this agent directly, so neither that rewrite nor BUG-395's `too_broad`
+            # check runs, and the internal sentence went straight to the user. The default
+            # itself therefore has to be honest about what it does and does not establish.
             return {
                 "success": False,
                 "anomalies": [],
-                "formatted_response": "No sensor data available for anomaly detection.",
+                "declined_reason": "no_rows_retrieved",
+                "formatted_response": (
+                    "I could not retrieve any readings for this question, so there is "
+                    "nothing to check for anomalies.\n\n"
+                    "_That is a statement about this query, not about the building: it does "
+                    "not mean the sensors are missing or that their readings are not "
+                    "collected — neither follows from an empty result._"
+                ),
             }
 
         logger.info(f"Analyzing {len(records)} records...")
@@ -108,7 +127,25 @@ class AnomalyDetectionAgent:
     # Strategy 1: Threshold-based
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _level_counts(records: List[Dict]) -> Dict[str, int]:
+        """How many distinct numeric values each column takes, over the records given.
+
+        Keyed on the SIGNAL rather than a modality name, the way CAVEAT-405 keyed the sweep's
+        spike detector: a building whose binary points are called something else is covered
+        without a literal.
+        """
+        levels: Dict[str, set] = {}
+        for row in records:
+            for col, val in row.items():
+                if isinstance(val, (int, float)) and not isinstance(val, bool):
+                    seen = levels.setdefault(col, set())
+                    if len(seen) <= 3:  # only the first few matter; stop growing the set
+                        seen.add(float(val))
+        return {col: len(vals) for col, vals in levels.items()}
+
     def _threshold_detection(self, records: List[Dict]) -> List[Dict]:
+        levels = self._level_counts(records)
         anomalies = []
         for row in records:
             ts = row.get("Datetime") or row.get("timestamp") or row.get("time") or ""
@@ -117,6 +154,19 @@ class AnomalyDetectionAgent:
                     continue
                 for sensor_kw, bounds in self.comfort_ranges.items():
                     if sensor_kw.lower() in col.lower():
+                        # A BAND DECLARED `binary` CAN ONLY FIRE WHEN IT DOES NOT APPLY
+                        # (BUG-1298). `occupancy: {min 0, max 1, unit "binary"}` was applied
+                        # to bldg1's occupancy series, which are people COUNTS reaching 21 --
+                        # so every ordinary reading above 1 became a HIGH-severity anomaly
+                        # whose message said "outside safe range", and the narrator read 17 of
+                        # them as "severe overcrowding ... fire-code violations". A genuinely
+                        # binary point never leaves [0, 1], so this bound had no true positive
+                        # to lose: it fired only on series it was the wrong bound for. Skipped
+                        # on the evidence of the signal, not on the modality's name.
+                        if str(bounds.get("unit", "")).lower() == "binary" and (
+                            levels.get(col, 0) > 2
+                        ):
+                            continue
                         lo, hi = bounds["min"], bounds["max"]
                         if val < lo or val > hi:
                             deviation = max(abs(val - lo) / (hi - lo), abs(val - hi) / (hi - lo))
@@ -129,7 +179,12 @@ class AnomalyDetectionAgent:
                                     "timestamp": str(ts),
                                     "type": "threshold",
                                     "severity": severity,
-                                    "message": f"{col}={val}{bounds['unit']} is outside safe range [{lo}, {hi}]",
+                                    # "safe" was the word that licensed the safety claim, and
+                                    # COMFORT_RANGES is a comfort band, not a safety limit.
+                                    "message": (
+                                        f"{col}={val}{bounds['unit']} is outside the "
+                                        f"configured comfort range [{lo}, {hi}]"
+                                    ),
                                 }
                             )
         return anomalies
@@ -197,8 +252,16 @@ class AnomalyDetectionAgent:
                                 "timestamp": str(ts),
                                 "type": "spike",
                                 "pct_change": round(pct_change * 100, 1),
+                                "direction": "rose" if val > prev[col] else "fell",
                                 "severity": "high" if pct_change > 0.75 else "medium",
-                                "message": f"{col} spiked {pct_change*100:.0f}% ({prev[col]} → {val})",
+                                # A FALL IS NOT A SPIKE. `pct_change` is an absolute value, so
+                                # 12.0 -> 1.0 was narrated as "a dramatic 92% spike", which the
+                                # model then read as "a real crowd surge" -- of a reading that
+                                # had DROPPED (BUG-1298).
+                                "message": (
+                                    f"{col} {'rose' if val > prev[col] else 'fell'} "
+                                    f"{pct_change*100:.0f}% ({prev[col]} → {val})"
+                                ),
                             }
                         )
                 prev[col] = val
@@ -229,10 +292,19 @@ class AnomalyDetectionAgent:
     async def _generate_summary(
         self, user_query: str, anomalies: List[Dict], total_records: int
     ) -> str:
+        from orchestrator.services.anomaly.narration_guard import factual_summary, guard
+
         if not anomalies:
             return f"✅ No anomalies detected across {total_records} sensor readings. All values are within acceptable ranges."
 
         top = anomalies[:10]
+        # THE PROMPT ASKED FOR THE SENTENCE THAT WENT WRONG (BUG-1298). Its three requests
+        # were an executive summary, "the most critical issue and recommended action", and
+        # "whether this requires immediate attention (yes/no and why)" -- with no rules at
+        # all, where the report lane's prompt carries six. What came back was
+        # "immediately activate the building's crowd-control protocol ... alert security ...
+        # Yes", about "a monitored zone", from a z-score. The rules below are the request;
+        # `guard()` below them is the part that cannot be declined.
         prompt = f"""Summarize the following sensor anomalies in a building management context.
 
 User Query: "{user_query}"
@@ -244,18 +316,31 @@ Top Anomalies:
 
 Provide:
 1. A 2-sentence executive summary of the anomaly situation
-2. The most critical issue and recommended action
-3. Whether this requires immediate attention (yes/no and why)
+2. The most critical issue and a recommended INVESTIGATION step
+3. Whether this warrants investigation (yes/no and why)
 
-Be concise and actionable."""
+Rules about what these findings do and do not establish:
+- Every statement must follow from the anomalies listed above. Do not add a figure, a
+  threshold, a limit or a place that is not there.
+- NO CAPACITY WAS READ. Never say or imply that a space is overcrowded, busy, at or over
+  capacity, exceeding an occupancy limit, or in breach of a fire code. None of those follow
+  from a reading being unusual, and no capacity figure was supplied to you.
+- A z-score or a step change says only that a value is unusual FOR THAT SENSOR. It does not
+  say the value is unsafe, and it does not say what caused it.
+- Never instruct anyone to alert security, call emergency services, evacuate, activate a
+  protocol, close access points or redirect people. A statistic cannot support an
+  instruction about people.
+- Name only the sensor or column given above. If none names a room or zone, say the location
+  is not recorded — do not write "a monitored zone" or invent one.
+- The findings above may be sensor faults as readily as real events; say so where it applies.
+
+Be concise and factual."""
         try:
-            return await llm_manager.generate(prompt, temperature=0.2)
+            text = await llm_manager.generate(prompt, temperature=0.2)
         except Exception as e:
             logger.warning(f"Anomaly summary LLM failed: {e}")
-            lines = [f"⚠️ {len(anomalies)} anomalies detected in {total_records} readings:"]
-            for a in top:
-                lines.append(f"  • [{a['severity'].upper()}] {a['message']}")
-            return "\n".join(lines)
+            return factual_summary(anomalies, total_records)
+        return guard(text, anomalies, total_records)
 
     # ------------------------------------------------------------------
     # Helper

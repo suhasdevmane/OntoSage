@@ -44,6 +44,15 @@ REPO = Path(__file__).resolve().parent.parent
 #: up here as a diff rather than silently counting as an answer.
 _DECLINE_MARKERS = (
     "i couldn't answer that from",
+    # BUG-1252. `clarification.lead_read_but_off_topic` opens with this when the relevance gate
+    # deleted an answer on a turn that had COUNTED rows out of a store -- the same decline, with
+    # a first sentence that stops asserting the building could not answer. Without these two the
+    # gate would score it as an ANSWER, and a decline counted as an answer is the direction that
+    # HIDES a regression (lessons #141). Verified over 2,985 stored answers (the 73-probe pack
+    # plus every docs/phase0/*.jsonl): zero reclassified by this addition, and zero of them
+    # already contain the lead, so that zero is real and not a vacuous match.
+    "i couldn't put an answer together",
+    "i could not put an answer together",
     "i could not find this in",
     "i don't have that specific information",
     "i couldn't tie that question to a reading",
@@ -79,7 +88,9 @@ _DECLINE_PATTERNS = (
     # asserting the opposite -- and a rule keyed on `installed` alone matched the label
     # "CO2 Level Sensor installed-node 3.07". Requiring "installed/fitted IN|AT|FOR" keeps the
     # claim and rejects both. Checked against every stored pack answer: zero reclassified.
-    re.compile(r"there (?:is|are) no\b[^.]{0,40}?\bsensors?\s+(?:installed|fitted)\s+(?:in|at|for)\b"),
+    re.compile(
+        r"there (?:is|are) no\b[^.]{0,40}?\bsensors?\s+(?:installed|fitted)\s+(?:in|at|for)\b"
+    ),
     # THIRD wording of the same decline, same day: "I don't have any air-pressure data for
     # Room 2.01", followed by a list of the room's OTHER sensors. The asked quantity is still
     # declined, and offering what the building does have does not make it an answer to the
@@ -117,10 +128,21 @@ _PREAMBLES = (
 #: text carried a NON-BREAKING hyphen (U+2011). The identical trap cost a routing rule earlier the
 #: same week (BUG-864, lessons #129): a pattern written with ASCII punctuation silently stops
 #: matching text that was typed, rendered or generated with the typographic form.
-_PUNCT = str.maketrans({
-    "‑": "-", "‐": "-", "‒": "-", "–": "-", "—": "-", "−": "-",
-    "’": "'", "‘": "'", "“": '"', "”": '"', " ": " ",
-})
+_PUNCT = str.maketrans(
+    {
+        "‑": "-",
+        "‐": "-",
+        "‒": "-",
+        "–": "-",
+        "—": "-",
+        "−": "-",
+        "’": "'",
+        "‘": "'",
+        "“": '"',
+        "”": '"',
+        " ": " ",
+    }
+)
 
 
 def classify(answer: str) -> str:
@@ -161,7 +183,11 @@ def pipeline_key() -> str:
 
 
 def load_pack(pack: Path) -> List[Dict[str, Any]]:
-    rows = [json.loads(x) for x in (pack / "answers.jsonl").read_text(encoding="utf-8").splitlines() if x.strip()]
+    rows = [
+        json.loads(x)
+        for x in (pack / "answers.jsonl").read_text(encoding="utf-8").splitlines()
+        if x.strip()
+    ]
     verdicts = json.loads((pack / "review.json").read_text(encoding="utf-8")).get("verdicts", {})
     for r in rows:
         v = verdicts.get(str(r["n"]), ["UNREVIEWED", ""])
@@ -170,8 +196,15 @@ def load_pack(pack: Path) -> List[Dict[str, Any]]:
     return rows
 
 
-def ask(base: str, question: str, model: str, token: str, timeout: int,
-        email: str = "", chat_id: str = "") -> Dict[str, Any]:
+def ask(
+    base: str,
+    question: str,
+    model: str,
+    token: str,
+    timeout: int,
+    email: str = "",
+    chat_id: str = "",
+) -> Dict[str, Any]:
     """One question, one fresh conversation, through the endpoint the browser uses.
 
     THE IDENTITY MATTERS. `/v1/chat/completions` takes the user from `X-OpenWebUI-User-Email`, and
@@ -190,8 +223,11 @@ def ask(base: str, question: str, model: str, token: str, timeout: int,
         r = requests.post(
             f"{base}/v1/chat/completions",
             headers=headers,
-            json={"model": model, "messages": [{"role": "user", "content": question}],
-                  "stream": False},
+            json={
+                "model": model,
+                "messages": [{"role": "user", "content": question}],
+                "stream": False,
+            },
             timeout=timeout,
         )
         r.raise_for_status()
@@ -208,45 +244,66 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--base", default="http://127.0.0.1:8000")
     ap.add_argument("--model", default="ontosage")
     ap.add_argument("--token", default="", help="bearer token if the endpoint needs one")
-    ap.add_argument("--email", default="facility01@example.com",
-                    help="forwarded user; the ROLE comes from this and governs what is allowed")
+    ap.add_argument(
+        "--email",
+        default="facility01@example.com",
+        help="forwarded user; the ROLE comes from this and governs what is allowed",
+    )
     ap.add_argument("--timeout", type=int, default=420)
     ap.add_argument("--only", default="", help="comma list of pack indexes")
-    ap.add_argument("--include-weak", action="store_true",
-                    help="also re-ask the questions that do NOT currently answer, to see if a wave fixed one")
+    ap.add_argument(
+        "--include-weak",
+        action="store_true",
+        help="also re-ask the questions that do NOT currently answer, to see if a wave fixed one",
+    )
     ap.add_argument("--out", default=str(REPO / "scripts" / "outputs"))
     args = ap.parse_args(argv)
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     token = args.token or pipeline_key()
     if not token:
-        print("no PIPELINE_API_KEY in the environment or any .env — every request would be 401",
-              file=sys.stderr)
+        print(
+            "no PIPELINE_API_KEY in the environment or any .env — every request would be 401",
+            file=sys.stderr,
+        )
         return 2
 
     rows = load_pack(Path(args.pack))
     wanted = {int(x) for x in args.only.split(",") if x.strip().isdigit()}
     subjects = [
-        r for r in rows
-        if (not wanted or r["n"] in wanted)
-        and (args.include_weak or r["verdict"] == "GOOD")
+        r
+        for r in rows
+        if (not wanted or r["n"] in wanted) and (args.include_weak or r["verdict"] == "GOOD")
     ]
     if not subjects:
         print("nothing to check")
         return 0
 
     stamp_run = datetime.now().strftime("%H%M%S")
-    print(f"re-asking {len(subjects)} question(s) from {Path(args.pack).name} "
-          f"as {args.email or '(no identity - runs as readonly)'}\n")
+    print(
+        f"re-asking {len(subjects)} question(s) from {Path(args.pack).name} "
+        f"as {args.email or '(no identity - runs as readonly)'}\n"
+    )
     results, regressions, improvements, intermittents = [], [], [], []
     for i, r in enumerate(subjects, 1):
-        got = ask(args.base, r["question"], args.model, token, args.timeout,
-                  email=args.email, chat_id=f"regr-{stamp_run}-{r['n']}")
+        got = ask(
+            args.base,
+            r["question"],
+            args.model,
+            token,
+            args.timeout,
+            email=args.email,
+            chat_id=f"regr-{stamp_run}-{r['n']}",
+        )
         kind = classify(got["answer"]) if not got["error"] else "empty"
         # A GOOD question must keep giving the SAME KIND of reply. An answer that became a decline
         # is the regression this exists for; a decline that became an answer is an improvement.
         ok = kind == r["expected_kind"]
-        status = "ok  " if ok else ("BETTER" if r["verdict"] != "GOOD" and kind == "answered" else "REGRESSED")
+        status = (
+            "ok  "
+            if ok
+            else ("BETTER" if r["verdict"] != "GOOD" and kind == "answered" else "REGRESSED")
+        )
         # CONFIRM A REGRESSION BEFORE REPORTING ONE (2026-09-23).
         #
         # Index 1 -- a two-week humidity forecast -- reported REGRESSED on a build whose changes
@@ -261,8 +318,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         # failure (lessons.md, "report first-pass failures"). The exit code stays 0 because the
         # behaviour is not gone, and the line stays visible because it is not well either.
         if status == "REGRESSED":
-            retry = ask(args.base, r["question"], args.model, token, args.timeout,
-                        email=args.email, chat_id=f"regr-{stamp_run}-{r['n']}-retry")
+            retry = ask(
+                args.base,
+                r["question"],
+                args.model,
+                token,
+                args.timeout,
+                email=args.email,
+                chat_id=f"regr-{stamp_run}-{r['n']}-retry",
+            )
             retry_kind = classify(retry["answer"]) if not retry["error"] else "empty"
             if retry_kind == r["expected_kind"]:
                 status = "FLAKY"
@@ -272,19 +336,55 @@ def main(argv: Optional[List[str]] = None) -> int:
             regressions.append(r["n"])
         elif status == "BETTER":
             improvements.append(r["n"])
-        print(f"[{i:2d}/{len(subjects)}] #{r['n']:<3d} {status:9s} {r['expected_kind']:>8s} -> "
-              f"{kind:<8s} {got['seconds']:6.1f}s  {r['question'][:52]}")
-        results.append({**{k: r[k] for k in ("n", "question", "verdict", "expected_kind")},
-                        "got_kind": kind, "seconds": round(got["seconds"], 1),
-                        "error": got["error"], "answer": got["answer"],
-                        "first_pass_failed": status == "FLAKY"})
+        print(
+            f"[{i:2d}/{len(subjects)}] #{r['n']:<3d} {status:9s} {r['expected_kind']:>8s} -> "
+            f"{kind:<8s} {got['seconds']:6.1f}s  {r['question'][:52]}"
+        )
+        # `status` IS SAVED, AND IT USED NOT TO BE (CAVEAT-1398).
+        #
+        # `verdict` is the PACK's stored hand-read label -- almost always "GOOD", because the
+        # pack is the set of questions that were judged to answer. `status` is what THIS run
+        # computed. Only `verdict` was written to the file, so the artefact of the 49/51 run on
+        # 2026-10-01 showed `"verdict": "GOOD"` on all fifty-one rows: a failing run whose own
+        # record reads as a pass, and whose failures were recoverable only by re-deriving
+        # `expected_kind != got_kind` and knowing to.
+        results.append(
+            {
+                **{k: r[k] for k in ("n", "question", "verdict", "expected_kind")},
+                "status": status.strip(),
+                "got_kind": kind,
+                "seconds": round(got["seconds"], 1),
+                "error": got["error"],
+                "answer": got["answer"],
+                "first_pass_failed": status == "FLAKY",
+            }
+        )
 
     out_dir = Path(args.out)
     out_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     path = out_dir / f"regression_answerability_{stamp}.json"
-    path.write_text(json.dumps({"pack": args.pack, "results": results}, ensure_ascii=False, indent=2),
-                    encoding="utf-8")
+    # The run's own conclusion, in the file, so the artefact cannot read as a pass when it is
+    # not one (CAVEAT-1398). A reader should not have to re-derive the verdict to learn it.
+    path.write_text(
+        json.dumps(
+            {
+                "pack": args.pack,
+                "summary": {
+                    "cases": len(subjects),
+                    "steady": len(subjects) - len(regressions) - len(intermittents),
+                    "regressed": regressions,
+                    "intermittent": intermittents,
+                    "improved": improvements,
+                    "passed": not regressions,
+                },
+                "results": results,
+            },
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
 
     steady = len(subjects) - len(regressions) - len(intermittents)
     print(f"\n{steady} of {len(subjects)} still behave as recorded")
@@ -295,7 +395,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         print(f"IMPROVED (a question that did not answer now does): {improvements}")
     if regressions:
         print(f"REGRESSED: {regressions}")
-        print("A question that used to answer no longer does. Read the saved answers before merging:")
+        print(
+            "A question that used to answer no longer does. Read the saved answers before merging:"
+        )
         print(f"   {path}")
         return 1
     print(f"saved {path}")

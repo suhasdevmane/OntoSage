@@ -381,8 +381,15 @@ class TestScenario8RoleConsistency:
         from shared.persona_registry import get_persona_registry
 
         registry = get_persona_registry()
-        personas = getattr(registry, "personas", None) or getattr(registry, "_personas", {})
-        for name, spec in (personas or {}).items():
+        # This read `getattr(registry, "personas", None) or getattr(registry, "_personas", {})`
+        # and PersonaRegistry has neither attribute, so the chain fell through to `{}` and the
+        # loop ran zero times -- reporting that no persona carries a permission having examined
+        # no persona, while the active building ships twelve (CAVEAT-1115, lessons #20). The
+        # registry's actual API is `all_personas()` over `_registry`.
+        names = registry.all_personas()
+        assert names, "the persona registry loaded nothing; this test would check nothing"
+        for name in names:
+            spec = registry._registry[name]
             blob = str(spec).lower()
             for forbidden in ("permission", "rbac", "allow_role"):
                 assert forbidden not in blob, (

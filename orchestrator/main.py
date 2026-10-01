@@ -58,8 +58,12 @@ from orchestrator.services.ontology_introspector import ontology_introspector
 from orchestrator.services.ontology_validator import ontology_validator
 from orchestrator.services.plugin_registry import PluginRegistry, get_plugin_registry
 from orchestrator.services.response_cache import ResponseCacheService
+from orchestrator.services.session_summary import (
+    strip_previous as _strip_previous_summary,
+)
 from orchestrator.services.sparql_validator import sparql_validator
 from orchestrator.workflow import WorkflowOrchestrator
+from orchestrator.workflow._orchestrator import plan_trace_for_response
 from shared.config import settings, validate_config
 from shared.models import (
     APIResponse,
@@ -1335,10 +1339,28 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"SmartCacheManager initialization failed (non-fatal): {e}")
 
+    # BUG-1194: the process must write down its own size. When this container ran to
+    # 40 GiB and stopped serving, an hour of logs contained not one line saying how big
+    # it was, so the runaway had to be reconstructed from `docker stats` taken by hand
+    # afterwards. The sampler runs in an OS THREAD, not on the loop, because the failure
+    # being instrumented is one where asyncio timers demonstrably did not fire.
+    try:
+        from orchestrator.services.process_watchdog import start_watchdog
+
+        app.state.watchdog = start_watchdog()
+    except Exception as e:
+        logger.warning(f"Process watchdog failed to start (non-fatal): {e}")
+
     yield
 
     # Shutdown
     logger.info("Shutting down OntoSage 2.0 Orchestrator...")
+    try:
+        from orchestrator.services.process_watchdog import stop_watchdog
+
+        stop_watchdog()
+    except Exception as e:
+        logger.warning(f"Process watchdog failed to stop (non-fatal): {e}")
     await redis_manager.close()
     await postgres_manager.close()
     await adapter_registry.close_all()
@@ -2340,6 +2362,9 @@ async def _run_workflow_as_job(
         await job_queue.update_job(job_id, _JobStatus.RUNNING)
         updated_state = await orchestrator.execute(state)
         await redis_manager.save_state(updated_state)
+        # W5-02: /chat returns before its own save when it offloads a report, so without
+        # this the offloaded turn would be the one hole left in the memory.
+        await _save_turn_memory(updated_state, "/chat[job]")
 
         response_text = updated_state.intermediate_results.get("response", "")
         intent = getattr(updated_state, "current_intent", "unknown")
@@ -2430,6 +2455,96 @@ def _prune_inherited_state(
     return dropped
 
 
+# ── ONE session-memory helper for every conversational entry point (W5-01 / W5-02) ───────
+#
+# Long-term memory was READ on /v1/chat/completions and WRITTEN on /v1/chat/completions, and
+# on no other route. So on /chat -- the endpoint the regression probe measures -- the feature
+# did not exist at all: no turn was ever stored, so there was never anything to recall, and
+# every offline test passed because every offline test exercised /v1 or the service alone.
+# That asymmetry is the defect W5-02 names, and it is the same shape as BUG-655 one section
+# up: four routes, one helper, because a copy per route is how three of them came to be
+# missing it.
+#
+# The set below is the contract. `tests/test_the_session_summary_rides_every_chat_entry_point.py`
+# reads it, checks each named function actually calls both helpers, and FAILS when a chat
+# route exists in this file that the set does not name -- so a fifth entry point cannot be
+# added without deciding about memory.
+
+#: route path -> the function in this module that serves it.
+CHAT_ENTRY_POINTS: Dict[str, str] = {
+    "/chat": "chat",
+    "/chat/stream": "chat_stream",
+    "/stream": "websocket_stream",
+    "/v1/chat/completions": "openai_chat_completions",
+}
+
+
+def _turn_memory_service() -> Any:
+    """A TurnMemoryService over the live pool, or over None when Postgres is absent.
+
+    Constructed per call rather than held as a singleton: `postgres_manager.pool` is None
+    until the lifespan opens it, and a service captured before that would keep no-opping
+    for the life of the process.
+    """
+    from orchestrator.services.turn_memory import TurnMemoryService
+
+    return TurnMemoryService(pool=postgres_manager.pool if postgres_manager else None)
+
+
+async def _inject_session_summary(state: Any, conversation_id: str, route: str) -> str:
+    """Put the rolling session summary on the bus for this turn. Never raises.
+
+    Written to `intermediate_results["session_summary"]`, which is this feature's OWN key
+    (agent-patterns rule 3). It is deliberately not a `system` message in `state.messages`:
+    every consumer of that list takes the LAST five or six entries, so a block inserted at
+    index 0 -- which is what /v1 did -- is dropped by every reader as soon as the
+    conversation is longer than three turns, which is exactly when long-term memory is the
+    point. Any such block left in a restored history is stripped here.
+    """
+    try:
+        state.messages = _strip_previous_summary(state.messages)
+    except Exception as exc:  # a cleanup must never sink a turn
+        logger.warning(f"[{route}] stale-summary strip failed: {describe_exception(exc)}")
+    try:
+        # The offset is a TURN count owned by session_summary, not CONVERSATION_MAX_MESSAGES
+        # — which is a MESSAGE count and left a seventeen-turn hole between the raw window
+        # and the summary. See RECENT_TURNS_KEPT_RAW.
+        #
+        # ONE fetch, two keys. `session_summary` is the bounded, figure-free PROSE block the
+        # classification and rewrite prompts read. `session_summary_notes` is the same turns
+        # STRUCTURED, and it exists because BUG-941 showed that prose on a bus is not a
+        # readable datum: the recall lane needs the user's own question text per turn, and
+        # the prose block compresses everything past its detail window into one line that
+        # keeps subjects and drops the sentences. A second query per turn, on every route,
+        # to re-read rows already in hand would be the wrong price for that.
+        summary, notes = await _turn_memory_service().get_session_context(conversation_id)
+    except Exception as exc:
+        logger.debug(f"[{route}] session summary skipped: {describe_exception(exc)}")
+        return ""
+    if notes:
+        # Set even when the prose block is empty (a conversation shorter than
+        # RECENT_TURNS_KEPT_RAW has turns to recall and no summary to show), because
+        # "what did I just ask?" is a recall question about exactly those turns.
+        state.intermediate_results["session_summary_notes"] = notes
+    if not summary:
+        return ""
+    state.intermediate_results["session_summary"] = summary
+    logger.info(f"[{route}] session summary injected ({len(summary)} chars, {len(notes)} turns)")
+    return summary
+
+
+async def _save_turn_memory(state: Any, route: str) -> None:
+    """Persist this completed turn to `turn_memory`. Never raises.
+
+    Without this on a route, `_inject_session_summary` on that route has nothing to read
+    and reports success by returning "" -- a memory feature that is silently empty.
+    """
+    try:
+        await _turn_memory_service().save_turn(state)
+    except Exception as exc:
+        logger.debug(f"[{route}] turn_memory save skipped: {describe_exception(exc)}")
+
+
 @app.post("/chat", response_model=APIResponse)
 async def chat(
     request: ChatRequest,
@@ -2514,6 +2629,11 @@ async def chat(
         # is about a place the user has left — BEFORE this message joins the history, so the
         # look-back compares against earlier turns only.
         _prune_inherited_state(state.intermediate_results, state.messages, user_message, "/chat")
+
+        # W5-02: the rolling session summary, on this route too. It used to exist only on
+        # /v1/chat/completions — so the endpoint the regression probe measures had no
+        # long-term memory of any kind, and no test could see that.
+        await _inject_session_summary(state, conversation_id, "/chat")
 
         # RBAC context for workflow agents (fix 2026-06-12): control, alert and
         # preference nodes read user_role/user_id from intermediate_results, but
@@ -2632,8 +2752,20 @@ async def chat(
         # Save updated state
         await redis_manager.save_state(updated_state)
 
-        # Get assistant response
-        assistant_entry = updated_state.messages[-1] if updated_state.messages else None
+        # W5-02: and the write half — without it this route reads a memory nothing fills.
+        await _save_turn_memory(updated_state, "/chat")
+
+        # Get assistant response — the last ASSISTANT entry, not simply the last entry.
+        # This route calls `execute()`, which appends an assistant message even on failure, so
+        # `messages[-1]` was already the right one here and this is not a bug fix. It is the
+        # same rule as `_assistant_answer` (BUG-1211), applied so that ALL THREE answer-shipping
+        # sites share one rule rather than two of them relying on a precondition a reader has to
+        # go and check. `_assistant_answer` itself is not used because this route also needs the
+        # message's `metadata`, not just its text.
+        assistant_entry = next(
+            (m for m in reversed(updated_state.messages or []) if m.role == "assistant"),
+            None,
+        )
         assistant_message = assistant_entry.content if assistant_entry else "No response generated"
         assistant_metadata = assistant_entry.metadata if assistant_entry else None
         logger.info(f"✅ Assistant Response: {assistant_message[:200]}...")
@@ -2679,8 +2811,10 @@ async def chat(
                 "clarification": updated_state.intermediate_results.get(
                     "needs_clarification_payload"
                 ),
-                # V4-T33: unified plan trace (reflex 1-step or deliberative)
-                "plan_trace": updated_state.intermediate_results.get("plan_trace"),
+                # V4-T33: unified plan trace (reflex 1-step or deliberative).
+                # W6-02: read through the helper so `stage_ms` includes the response
+                # node's own time, which is not yet recorded when the trace is built.
+                "plan_trace": plan_trace_for_response(updated_state.intermediate_results),
                 # V5-BUG-177: None when the LLM behaved; a cause summary otherwise.
                 "llm_degraded": llm_degradation(),
             },
@@ -2758,6 +2892,9 @@ async def chat_stream(
                     state.intermediate_results, state.messages, user_message, "/chat/stream"
                 )
 
+                # W5-02: the rolling session summary, on this route too.
+                await _inject_session_summary(state, conversation_id, "/chat/stream")
+
                 # Propagate fresh_session flag into state so workflow skips memory injection
                 if fresh_session:
                     state.intermediate_results["fresh_session"] = True
@@ -2834,6 +2971,9 @@ async def chat_stream(
 
                 # Save updated state
                 await redis_manager.save_state(updated_state)
+
+                # W5-02: and the write half.
+                await _save_turn_memory(updated_state, "/chat/stream")
 
                 # Deliver final response as token event, then media (if any), then DONE
                 yield f"data: {json.dumps({'type': 'token', 'content': full_response})}\n\n"
@@ -3323,6 +3463,9 @@ async def websocket_stream(websocket: WebSocket):
                 state.intermediate_results, state.messages, user_message, "/stream"
             )
 
+            # W5-02: the rolling session summary, on the websocket too.
+            await _inject_session_summary(state, conversation_id, "/stream")
+
             # RBAC context for in-pipeline nodes (control/alert/preference),
             # mirroring the /chat endpoint. Proxy-mode identity is untrusted →
             # readonly, so privileged actions are declined unless a real user
@@ -3375,10 +3518,18 @@ async def websocket_stream(websocket: WebSocket):
             # Save state
             await redis_manager.save_state(final_state)
 
-            # Get response
-            assistant_message = (
-                final_state.messages[-1].content if final_state.messages else "No response"
-            )
+            # W5-02: and the write half.
+            await _save_turn_memory(final_state, "/stream")
+
+            # Get response.
+            # `/chat/stream` runs `stream_execute` exactly as `/v1/chat/completions` does, and
+            # appends the user turn to `state.messages` before the graph — so it shared BUG-1211
+            # precisely: on a raising graph `messages[-1]` is the USER'S OWN QUESTION, and this
+            # endpoint streamed it back as the assistant's answer. The `/v1` fix did not reach
+            # here because the defect was found and pinned on that endpoint alone. `/chat`
+            # (line ~2548) does NOT share it — it calls `execute()`, which appends an assistant
+            # message on failure — so it is deliberately left as it is.
+            assistant_message = _assistant_answer(final_state)
 
             await redis_manager.save_message(conversation_id, "assistant", assistant_message)
 
@@ -3395,7 +3546,7 @@ async def websocket_stream(websocket: WebSocket):
                     "clarification": final_state.intermediate_results.get(
                         "needs_clarification_payload"
                     ),
-                    "plan_trace": final_state.intermediate_results.get("plan_trace"),
+                    "plan_trace": plan_trace_for_response(final_state.intermediate_results),
                 }
             )
 
@@ -3627,6 +3778,45 @@ async def generate_report(
 # ==================== OpenAI Compatibility Layer ====================
 
 
+#: What a turn says when the workflow failed before it produced one. Identical to
+#: `WorkflowOrchestrator._user_friendly_error`'s default so the two branches of
+#: /v1/chat/completions read the same on a failure.
+_NO_ANSWER = "I wasn't able to process your request. Could you try rephrasing your question?"
+
+
+def _assistant_answer(state: Any, error: Optional[str] = None) -> str:
+    """The answer to ship, taken from the last ASSISTANT message of the finished state.
+
+    CAVEAT-656. Both branches used to read `messages[-1]`, which is the answer only when
+    the turn produced one. It does not when the workflow raises: `stream_execute` catches
+    the exception and yields ``{"error": <str>, "state": state}``, whose state is the
+    PRE-graph one — and main.py appends the current user turn to `state.messages` before
+    the graph runs. So `messages[-1]` was the user's own question, and the streaming branch
+    sent it back as the assistant's answer, at 200, with `finish_reason: "stop"`.
+
+    Measured against the real `WorkflowOrchestrator` on a graph that raises: `execute()`
+    returned "I wasn't able to process your request…" and `stream_execute()` produced
+    "What is the temperature in room 7.42?" for the same question.
+
+    Reading the last ASSISTANT message rather than the last message fixes that shape
+    wherever it occurs, not just on this one error path. `error` is the description
+    `stream_execute` yielded, mapped through the same wording `execute()` uses.
+    """
+    for message in reversed(list(getattr(state, "messages", None) or [])):
+        if getattr(message, "role", None) == "assistant":
+            content = getattr(message, "content", None) or ""
+            if content.strip():
+                return content
+    if error:
+        try:
+            from orchestrator.workflow._orchestrator import WorkflowOrchestrator
+
+            return WorkflowOrchestrator._user_friendly_error(RuntimeError(error))
+        except Exception:  # pragma: no cover - the mapping is a convenience, not the answer
+            pass
+    return _NO_ANSWER
+
+
 def _resolved_intent(state: Any) -> Optional[str]:
     """The lane a finished turn was routed to — the value /chat returns as `intent`.
 
@@ -3829,10 +4019,10 @@ async def openai_chat_completions(
         )
         logger.info(f"[/v1/chat/completions] loaded {len(prior_messages)} prior turns into state")
 
-        # Turn memory service — wraps the Postgres pool for per-turn summaries
-        from orchestrator.services.turn_memory import TurnMemoryService as _TMS
-
-        _turn_memory = _TMS(pool=postgres_manager.pool if postgres_manager else None)
+        # Turn memory service — wraps the Postgres pool for per-turn summaries. Built by
+        # the same factory the shared helpers use, so there is one place that decides what
+        # happens when the pool is not open yet.
+        _turn_memory = _turn_memory_service()
 
         # Carry forward forecast/analytics artifacts from the previous turn.
         # Primary source: Postgres turn_memory (persistent across Redis restarts).
@@ -3871,22 +4061,12 @@ async def openai_chat_completions(
         if carry_forward:
             state.intermediate_results.update(carry_forward)
 
-        # Inject older turn summaries as system-context prefix for long-term memory
-        older_context = ""
-        try:
-            older_context = await _turn_memory.get_older_context(
-                conversation_id,
-                skip_recent=settings.CONVERSATION_MAX_MESSAGES,
-            )
-        except Exception as _oe:
-            logger.debug(f"[/v1/chat/completions] older_context skipped: {_oe}")
-
-        # Prepend older turn summaries as system message for long-term memory
-        if older_context:
-            state.messages.insert(
-                0,
-                Message(role="system", content=older_context, timestamp=datetime.now()),
-            )
+        # W5-01/W5-02: the rolling session summary, through the same helper the other three
+        # routes call. This block used to build its own and prepend it as a `system` message
+        # at index 0 — which every reader of `state.messages` then dropped, because they all
+        # take the LAST five or six entries. It also carried past ANSWERS verbatim,
+        # measurements included; the summary now carries none.
+        await _inject_session_summary(state, conversation_id, "/v1/chat/completions")
 
         # Add the current message to the history so the agent can see it
         state.messages.append(Message(role="user", content=user_message, timestamp=datetime.now()))
@@ -3895,31 +4075,32 @@ async def openai_chat_completions(
         show_status = bool(data.get("show_status", True))
 
         if stream:
+            created_ts = int(datetime.now().timestamp())
+            chunk_id = f"chatcmpl-{conversation_id}"
+
+            # Defined OUTSIDE event_generator so the failure handler below can frame a
+            # chunk too — a stream that dies must still be able to speak (CAVEAT-656).
+            def sse_chunk(content=None, role=None, finish_reason=None, extra=None):
+                payload = {
+                    "id": chunk_id,
+                    "object": "chat.completion.chunk",
+                    "created": created_ts,
+                    "model": data.get("model", "ontobot-pipeline"),
+                    "choices": [{"index": 0, "delta": {}, "finish_reason": finish_reason}],
+                }
+                # Extension fields ride at the TOP level of a chunk, never inside
+                # `delta`: a client reads `delta.content`/`delta.role` and ignores what
+                # it does not know, exactly as it ignores OpenAI's own top-level
+                # `system_fingerprint` and `usage` on a chunk.
+                for _k, _v in (extra or {}).items():
+                    payload.setdefault(_k, _v)
+                if role:
+                    payload["choices"][0]["delta"]["role"] = role
+                if content is not None:
+                    payload["choices"][0]["delta"]["content"] = content
+                return f"data: {json.dumps(payload)}\n\n"
 
             async def event_generator():
-                created_ts = int(datetime.now().timestamp())
-                chunk_id = f"chatcmpl-{conversation_id}"
-
-                def sse_chunk(content=None, role=None, finish_reason=None, extra=None):
-                    payload = {
-                        "id": chunk_id,
-                        "object": "chat.completion.chunk",
-                        "created": created_ts,
-                        "model": data.get("model", "ontobot-pipeline"),
-                        "choices": [{"index": 0, "delta": {}, "finish_reason": finish_reason}],
-                    }
-                    # Extension fields ride at the TOP level of a chunk, never inside
-                    # `delta`: a client reads `delta.content`/`delta.role` and ignores what
-                    # it does not know, exactly as it ignores OpenAI's own top-level
-                    # `system_fingerprint` and `usage` on a chunk.
-                    for _k, _v in (extra or {}).items():
-                        payload.setdefault(_k, _v)
-                    if role:
-                        payload["choices"][0]["delta"]["role"] = role
-                    if content is not None:
-                        payload["choices"][0]["delta"]["content"] = content
-                    return f"data: {json.dumps(payload)}\n\n"
-
                 # Initial role chunk
                 yield sse_chunk(role="assistant")
 
@@ -3975,18 +4156,23 @@ async def openai_chat_completions(
 
                 # Extract final state from last streamed step (avoid re-executing)
                 final_state = state
+                # `stream_execute` reports a workflow failure as a step carrying an `error`
+                # key alongside the pre-graph state. Kept, so the answer below can say what
+                # happened instead of echoing the question (CAVEAT-656).
+                step_error: Optional[str] = None
                 if last_step and isinstance(last_step, dict):
                     for node_name, node_state in last_step.items():
-                        if isinstance(node_state, ConversationState):
+                        if node_name == "error" and isinstance(node_state, str):
+                            step_error = node_state
+                        elif isinstance(node_state, ConversationState):
                             final_state = node_state
                         elif isinstance(node_state, dict) and "messages" in node_state:
                             final_state = ConversationState(**node_state)
 
-                assistant_message = (
-                    final_state.messages[-1].content
-                    if final_state.messages
-                    else "No response generated"
-                )
+                if step_error:
+                    logger.error(f"[/v1/chat/completions] streamed turn failed: {step_error}")
+
+                assistant_message = _assistant_answer(final_state, error=step_error)
 
                 # Persist state to Redis so the next turn can carry forward
                 # intermediate_results (e.g. forecast_result for viz requests)
@@ -3995,29 +4181,39 @@ async def openai_chat_completions(
                 except Exception as _rse:
                     logger.debug(f"[/v1/chat/completions] Redis save skipped: {_rse}")
 
-                # Save to Postgres if available
-                if postgres_manager and postgres_manager.pool:
-                    if username not in _pipeline_users_created:
-                        await postgres_manager.create_user(
-                            username,
-                            "placeholder_hash",
-                            "placeholder_salt",
-                            metadata={"source": "open_webui"},
-                            role="readonly",  # external identity — cannot log in, least-privilege
+                # Save to Postgres if available.
+                #
+                # BEST-EFFORT, and that matters here in a way it does not on the
+                # non-streamed body: this block sits between the assembled answer and the
+                # first content chunk, so an exception in it used to abort the generator —
+                # the reader lost the whole ANSWER because the TRANSCRIPT could not be
+                # written. A store being down is not a reason to withhold a computed answer.
+                try:
+                    if postgres_manager and postgres_manager.pool:
+                        if username not in _pipeline_users_created:
+                            await postgres_manager.create_user(
+                                username,
+                                "placeholder_hash",
+                                "placeholder_salt",
+                                metadata={"source": "open_webui"},
+                                # external identity — cannot log in, least-privilege
+                                role="readonly",
+                            )
+                            _pipeline_users_created.add(username)
+                        await postgres_manager.save_message(
+                            conversation_id, "user", user_message, username
                         )
-                        _pipeline_users_created.add(username)
-                    await postgres_manager.save_message(
-                        conversation_id, "user", user_message, username
-                    )
-                    await postgres_manager.save_message(
-                        conversation_id, "assistant", assistant_message, username
+                        await postgres_manager.save_message(
+                            conversation_id, "assistant", assistant_message, username
+                        )
+                except Exception as _pse:
+                    logger.warning(
+                        "[/v1/chat/completions] transcript save skipped: "
+                        f"{describe_exception(_pse)}"
                     )
 
                 # Persist structured turn summary to Postgres for long-term memory
-                try:
-                    await _turn_memory.save_turn(final_state)
-                except Exception as _tse:
-                    logger.debug(f"[/v1/chat/completions] turn_memory save skipped: {_tse}")
+                await _save_turn_memory(final_state, "/v1/chat/completions")
 
                 # Stream final response in chunks (helps UI show gradual output)
                 chunk_size = 200
@@ -4034,11 +4230,57 @@ async def openai_chat_completions(
                         "ontosage_intent": _resolved_intent(final_state),
                         # W04: WHY it went there — the rules behind the lane above.
                         "ontosage_route": _route_record(final_state),
+                        # W6-02: and what it cost, per stage.
+                        "ontosage_plan_trace": plan_trace_for_response(
+                            final_state.intermediate_results
+                        ),
+                        # CAVEAT-656: the two fields the non-streamed body has always
+                        # carried and this one did not. Open WebUI streams by DEFAULT, so
+                        # they were absent from exactly the turns real users produce —
+                        # a grader could not quarantine a streamed outage apology, and a
+                        # streamed answer stated nothing about what it rests on.
+                        "ontosage_llm_degraded": llm_degradation(),
+                        "ontosage_evidence_record": final_state.intermediate_results.get(
+                            "evidence_record"
+                        ),
                     },
                 )
                 yield "data: [DONE]\n\n"
 
-            return StreamingResponse(event_generator(), media_type="text/event-stream")
+            async def guarded_event_generator():
+                """Never end a stream by simply stopping.
+
+                CAVEAT-656: `event_generator` had no handler, and the endpoint's own
+                `try/except` cannot help — the generator body runs after the handler has
+                returned its StreamingResponse. An exception therefore truncated the SSE
+                body: no error, no `finish_reason`, no `[DONE]`, and a client rendering
+                whatever had arrived as a finished answer.
+                """
+                try:
+                    async for piece in event_generator():
+                        yield piece
+                except asyncio.CancelledError:
+                    raise  # the client went away; nothing to tell it
+                except Exception as _ge:
+                    detail = describe_exception(_ge)
+                    logger.error(f"[/v1/chat/completions] stream aborted: {detail}", exc_info=True)
+                    yield sse_chunk(content=f"\n\n{_NO_ANSWER}")
+                    yield sse_chunk(
+                        finish_reason="stop",
+                        extra={
+                            "ontosage_intent": None,
+                            "ontosage_route": None,
+                            "ontosage_plan_trace": None,
+                            "ontosage_llm_degraded": llm_degradation(),
+                            "ontosage_evidence_record": None,
+                            # The answer above is an apology, not an answer. Say so in a
+                            # field, so a grader can drop the row rather than score it.
+                            "ontosage_stream_error": detail,
+                        },
+                    )
+                    yield "data: [DONE]\n\n"
+
+            return StreamingResponse(guarded_event_generator(), media_type="text/event-stream")
 
         # Non-streaming: Execute workflow (with per-request timeout to prevent cascade failures)
         try:
@@ -4079,13 +4321,14 @@ async def openai_chat_completions(
                 # TODO-657: present on every non-streamed body; no lane finished here.
                 "ontosage_intent": None,
                 "ontosage_route": None,
+                # W6-02: null, not an empty list. A turn that timed out did not spend
+                # zero time in every stage; nothing recorded where it spent it.
+                "ontosage_plan_trace": None,
             }
 
-        assistant_message = (
-            updated_state.messages[-1].content
-            if updated_state.messages
-            else "No response generated"
-        )
+        # The same extraction the streamed branch uses, so the two cannot drift: the answer
+        # is the last ASSISTANT message, never simply the last message (CAVEAT-656).
+        assistant_message = _assistant_answer(updated_state)
 
         # Persist state to Redis (non-streaming path)
         try:
@@ -4108,10 +4351,7 @@ async def openai_chat_completions(
                 conversation_id, "assistant", assistant_message, username
             )
 
-        try:
-            await _turn_memory.save_turn(updated_state)
-        except Exception as _tse:
-            logger.debug(f"[/v1/chat/completions] turn_memory save skipped: {_tse}")
+        await _save_turn_memory(updated_state, "/v1/chat/completions")
 
         return {
             "id": f"chatcmpl-{conversation_id}",
@@ -4142,6 +4382,11 @@ async def openai_chat_completions(
             "ontosage_intent": _resolved_intent(updated_state),
             # W04: the rules that produced that lane (bounded copy of `route_decision`).
             "ontosage_route": _route_record(updated_state),
+            # W6-02: WHERE the turn's time went, per stage. /v1 is the endpoint the
+            # deployment actually uses, and it was the one that could not be attributed:
+            # it carried the lane and the reason for the lane, and nothing about cost.
+            # Prefixed like the fields above so it cannot collide with a field OpenAI adds.
+            "ontosage_plan_trace": plan_trace_for_response(updated_state.intermediate_results),
         }
 
     except Exception as e:

@@ -81,15 +81,53 @@ _DECLINE_MARKERS = (
     "i couldn't verify",
     "i could not verify",
     "unable to answer",
+    # BUG-1252's lead (`clarification.lead_read_but_off_topic`) was built on THIS line on
+    # purpose, so this list needed no change at all to recognise the new decline.
+    #
+    # THE UNCONTRACTED FORM WAS ADDED HERE AND TAKEN BACK OUT, and the measurement is the
+    # reason. "could not put an answer together" — the pairing every other lead in this file
+    # has ("i couldn't verify" / "i could not verify") — moves 33 stored answers, because the
+    # RETIRED `_unanswered_response` text read "I understood the question but could not put an
+    # answer together for it." Those 33 really are declines and this classifier really does
+    # miss them, but that is a separate finding with its own number (CAVEAT-1281); folding it
+    # into a wording change would be lessons #141 a fourth time. The emitter only ever writes
+    # the contraction, so nothing is lost by leaving it out.
     "couldn't put an answer together",
+    # THE COMMONEST DECLINE THIS SYSTEM EMITS WAS NOT IN THIS LIST (CAVEAT-952, BUG-992).
+    #
+    # `clarification.compose_abstract` opens with "I couldn't answer that from <building>'s
+    # records", and it appears on six of 62 held-out answers. `is_decline` returned False for all
+    # three of its surface forms, which cost two different things:
+    #   * inside `evaluate` it was INERT — the next guard, `has_quantitative_claim`, catches a
+    #     decline anyway because a decline carries no figure;
+    #   * in `session_summary.outcome_of`, the only other caller, it was LIVE: a turn that ended
+    #     in that decline was remembered as `answered`, and that summary goes into the
+    #     classification prompt on every `/v1` turn. The system was telling itself it had answered
+    #     questions it had declined.
+    #
+    # CLAUDE.md's rule for this list was followed rather than assumed: every change is checked
+    # against all 73 stored answers, because an intermediate broader pattern moved two of them and
+    # was rejected for it (lessons #141). These two move FIVE — pack indexes 1, 4, 27, 37 and 51 —
+    # and every one of the five OPENS with exactly this decline, so the move is the point.
+    # `"answer that from"` was tried and REJECTED: it also captures "I can answer that from the
+    # building's records: the mean is 22.9 C", which is an answer.
+    "i couldn't answer that",
+    "i could not answer that",
 )
 
 #: A figure that makes an answer a quantitative claim. Bare integers are NOT enough on
 #: their own -- "floor 3" and "Room 5.01" are identifiers, not measurements -- so a unit or
 #: a decimal is required. This is the BUG-191 lesson: a grader that counted any digit as a
 #: reading scored refusals as PASS and manufactured a perfect run.
+#:
+#: BUG-904: the integer part was `\d{1,3}(?:,\d{3})*`, which requires a COMMA before a
+#: fourth digit. So "1,240 ppm" was a claim and "1200 ppm" was not -- and an unseparated
+#: four-digit ppm value is the commonest reading in this building. `has_quantitative_claim`
+#: returned False for it, so `evaluate` published it unchanged on a FAILED verification,
+#: which is the one thing this module exists to prevent. Found by the W5-01 redaction
+#: tests, not by the gate's own, because the gate's fixtures all used "1,240".
 _CLAIM_NUMBER = re.compile(
-    r"\b\d{1,3}(?:,\d{3})*(?:\.\d+)?\s*"
+    r"\b\d+(?:,\d{3})*(?:\.\d+)?\s*"
     r"(ppm|ppb|°?c\b|°?f\b|celsius|kwh|kw\b|wh\b|pa\b|kpa|%|percent|lux|db\b|dba|"
     r"m2|m²|m3|m³|l/s|litres?|liters?|people|occupants?)",
     re.IGNORECASE,
@@ -118,6 +156,35 @@ def is_decline(text: str) -> bool:
 def has_quantitative_claim(text: str) -> bool:
     """True when the answer states a measurement, as opposed to naming things."""
     return bool(_CLAIM_NUMBER.search(text or ""))
+
+
+#: What a redacted measurement is replaced with. Deliberately digit-free, so a
+#: redacted string can never re-form a match with the text around it.
+REDACTED_QUANTITY = "[value]"
+
+#: A redaction pass can only shrink the text, and the marker carries no digits, so
+#: this loop reaches a fixed point immediately in every case observed. The bound
+#: exists so a pathological input cannot spin here.
+_REDACTION_PASSES = 3
+
+
+def redact_quantities(text: str) -> str:
+    """Remove every measurement-shaped figure, leaving identifiers intact.
+
+    ``has_quantitative_claim(redact_quantities(x))`` is False for every ``x`` — that
+    is the point, and ``tests/test_a_remembered_turn_carries_no_figure.py`` pins it.
+    Used by the rolling session summary (W5-01), which must be able to name what a
+    past turn was ABOUT without carrying a number that a later turn could restate as
+    current. ``brick:Room 5.01`` and ``floor 3`` survive, because ``_CLAIM_NUMBER``
+    requires a unit — the BUG-191 lesson, one definition of "this is a measurement".
+    """
+    out = text or ""
+    for _ in range(_REDACTION_PASSES):
+        folded = _CLAIM_NUMBER.sub(REDACTED_QUANTITY, out)
+        if folded == out:
+            return out
+        out = folded
+    return out
 
 
 @dataclass

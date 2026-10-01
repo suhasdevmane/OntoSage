@@ -46,15 +46,20 @@ def test_there_are_tracked_examples_to_check():
 @pytest.mark.parametrize("path", _examples(), ids=lambda p: p.name)
 def test_no_example_configures_a_host_that_does_not_resolve(path):
     text = path.read_text(encoding="utf-8", errors="ignore")
+    configured = 0
     for line_no, line in enumerate(text.splitlines(), 1):
         stripped = line.strip()
-        if stripped.startswith("#"):
+        if stripped.startswith("#") or "=" not in stripped:
             continue  # a comment naming the dead host is documentation, not configuration
+        configured += 1
         for dead in _DEAD_HOSTS:
             assert dead not in stripped.split("#", 1)[0], (
                 f"{path.name}:{line_no} configures {dead}, which has no DNS record. A clone "
                 f"using this file fails every hosted LLM call. See BUG-406."
             )
+    # The sibling above proves the FILES exist; this proves this one had settings in it. An
+    # example emptied or fully commented out would otherwise report clean (CAVEAT-1115).
+    assert configured, f"{path.name} configures nothing, so no host was examined"
 
 
 def test_the_code_default_is_the_working_host():

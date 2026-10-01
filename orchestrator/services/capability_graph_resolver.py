@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 import time
 from dataclasses import dataclass
-from typing import Awaitable, Callable, Dict, List, Optional
+from typing import Any, Awaitable, Callable, Dict, List, Optional
 
 from shared.utils import describe_exception, get_logger
 
@@ -460,7 +460,36 @@ _FRAME_WORDS = frozenset(
     "open located location building floor level ground first second third fourth fifth here "
     "somewhere anywhere inside outside around one ones "
     # cost framing: "is it free", "do I have to pay / buy" asks about the amenity itself
-    "free paid pay buy cost costs charge need must".split()
+    "free paid pay buy cost costs charge need must "
+    # FUNCTION WORDS LONGER THAN TWO LETTERS (BUG-1392).
+    #
+    # The short prepositions were already excluded by accident, not by design:
+    # `leftover_content_words` drops every word of two letters or fewer, so "in", "on", "at",
+    # "of" never reach this set. "during" is six letters and did. With the subject threshold at
+    # ONE leftover word, that single preposition decided an answer:
+    #
+    #     "What happens IN a power cut?"        leftover {happens}          -> ANSWERED
+    #     "What happens DURING a power outage?" leftover {during, happens}  -> DECLINED
+    #
+    # Same topic, same subject, same declared lay term ("power outage", verbatim). The building
+    # holds the UPS and generator answer and the reader was told it was not on record.
+    #
+    # Only words that cannot be the SUBJECT of any question are listed: prepositions,
+    # conjunctions, auxiliaries, and the "what happens" framing verbs. Deliberately NOT here are
+    # words that scope a question to a time or a place -- today, now, tomorrow, tonight -- because
+    # those change WHICH answer is right, and a static topic answering them is a different defect.
+    #
+    # MEASURED before landing, because every word added makes the subject test MORE permissive
+    # and this set is what stops a topic answering a question it is not about (BUG-601).
+    # Over the full 4,060-question bank: 10 questions move, ALL of them DROPPED -> ANSWERS,
+    # 0 previously-answered questions lost. Over the 2,960-question stakeholder catalogue: 1.
+    # BUG-601's three real cases stay DROPPED. A variant adding degree adverbs (also, just,
+    # only, currently, ...) moved one more and that one was WRONG -- "Which meeting room am I
+    # in?" answered from Quiet Study -- so the adverbs are deliberately excluded.
+    "during while after before until since within without into onto upon over under between "
+    "among across through along behind beside besides despite about than and but nor yet "
+    "because though although whether unless whilst should shall might may been being were had "
+    "happens happen happening tell know let say says mean means".split()
 )
 
 
@@ -490,6 +519,70 @@ def leftover_content_words(query_lc: str, lay_phrases: List[str]) -> List[str]:
         and w.rstrip("s") not in declared
         and not any(w.startswith(d) or d.startswith(w) for d in declared if len(d) > 4)
     ]
+
+
+#: Things a building is not, and that none of its topics may answer for (BUG-1395).
+#:
+#: Building-agnostic by construction: these are categories of OFF-SITE commercial premises, not
+#: this building's rooms, amenities or namespaces. Nothing here could become true of a building
+#: by onboarding it differently, which is the test for whether a word belongs in this set.
+_NOT_THIS_BUILDING = frozenset(
+    "hotel hotels motel hostel airbnb airport restaurant takeaway pub".split()
+)
+
+
+def topic_is_the_subject(question: str, fact: Any) -> bool:
+    """True when this topic is what the question is ABOUT, not merely a word it contains.
+
+    Judged against the terms the BUILDING declared for the topic, or its label when it declared
+    none. A topic with neither is kept: there is nothing to judge it by, and dropping it would
+    deny a declared amenity.
+
+    LIVED IN `capability_agent` AS A CLOSURE UNTIL 2026-10-01, and it is here now because a
+    SECOND reader needed it (BUG-1396). The routing contract's amenity stand-down keyed on the
+    COUNT of matched amenities, so one live turn produced this:
+
+        [routing-contract] capability_measurand_is_data stood down: 1 amenity triples match
+        [capability]       topics ['Working Hours'] match words but are not the subject
+                           — not answering from them
+
+    The contract stopped handing a forecast question to a data lane in favour of a lane that
+    then refused it, because 'Working Hours' matched the word "hours" inside "the next 12
+    hours". Both stages now ask the same question of the same facts, in one place — the
+    alternative was a second matcher beside the first, which is exactly how BUG-947's decline
+    pointer came to disagree with its own register selector.
+    """
+    phrases = [
+        p.strip().lower() for p in str(getattr(fact, "lay_terms", "") or "").split(",") if p.strip()
+    ] or [w.lower() for w in str(getattr(fact, "label", "") or "").split() if len(w) > 2]
+    if not phrases:
+        return True
+    leftover = leftover_content_words((question or "").lower(), phrases)
+    if len(leftover) > 1:
+        return False
+    # ONE LEFTOVER WORD NAMING SOMETHING THE BUILDING IS NOT DISQUALIFIES THE TOPIC (BUG-1395).
+    #
+    # "Book me a hotel near the building" leaves exactly {hotel}, which is WITHIN the threshold,
+    # so the room-booking topic qualified and answered it. That is BUG-601's own first example,
+    # and it had quietly stopped holding -- found only because BUG-1392's measurement printed
+    # the four BUG-601 cases with their BASELINE verdict beside the candidate one.
+    #
+    # Lowering the threshold to 0 is the answer-destroying direction: it would also refuse
+    # "What happens during a power outage?", whose single leftover is {happens}. So the test is
+    # on the WORD, not the count.
+    #
+    # The set is deliberately tiny and deliberately excludes everything a campus might hold --
+    # not "parking" (this kind of building has ground-level parking), not "cafe" (catering
+    # amenities), not "train" or "bus" (a transport topic legitimately covers getting here).
+    # MEASURED over the 2,960-question catalogue AND the full 4,060-question bank: **0 questions
+    # move in either.** The logged case moves correctly (Bookings Reservations -> declined) and
+    # the controls hold: cafe, visitor parking, power outage, nearest accessible toilet.
+    return not any(w in _NOT_THIS_BUILDING for w in leftover)
+
+
+def subject_facts(question: str, facts: Any) -> List[Any]:
+    """The matched topics the question is actually ABOUT, in the order given."""
+    return [f for f in (facts or ()) if topic_is_the_subject(question, f)]
 
 
 def _score(query_lc: str, lay_phrases: List[str]) -> int:

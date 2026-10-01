@@ -204,9 +204,13 @@ def test_a_question_naming_no_place_is_invisible_to_the_gate(query):
 
 
 def test_space_heads_are_generic_english_not_a_building_vocabulary():
+    assert rr._SPACE_HEADS, (
+        "_SPACE_HEADS is empty, so 'the space heads are generic English' is a claim about "
+        "no vocabulary at all -- and an empty head list also disables the referent gate"
+    )
     for head in rr._SPACE_HEADS:
         assert head.islower() and head.isalpha(), head
-        assert not any(b in head for b in ("bldg", "abacws", "buildsys"))
+        assert not any(b in head for b in ("bldg", "abacws", "buildsys")), head
 
 
 # ── the gate covers the whole capability answer, not just its metrics branch ──

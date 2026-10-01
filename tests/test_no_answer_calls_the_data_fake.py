@@ -28,7 +28,9 @@ _needs_documents = pytest.mark.skipif(
     not _DOCUMENTS.is_dir(), reason="no active building: input/documents is absent (parked tree)"
 )
 
-_FAKE_WORDS = re.compile(r"\b(simulated|synthetic|fictional|not\s+real|fake|dummy)\b", re.IGNORECASE)
+_FAKE_WORDS = re.compile(
+    r"\b(simulated|synthetic|fictional|not\s+real|fake|dummy)\b", re.IGNORECASE
+)
 
 #: The phrases that used to reach a user, named individually so re-adding one fails loudly.
 _RETIRED_CAPTIONS = (
@@ -91,9 +93,15 @@ def test_a_retired_caption_is_gone_from_the_answer_path(caption):
         Path("orchestrator/services/deliberation/saturation.py"),
         Path("scripts/generate_record_documents.py"),
     ]
-    for path in roots:
-        if not path.exists():
-            continue
+    scanned = [p for p in roots if p.exists()]
+    # Every one of these is a module that renders user-visible text. A rename or a move turns
+    # `if not path.exists(): continue` into a silent skip, and the test then reports that the
+    # retired caption is gone from the answer path having read none of it (CAVEAT-1115).
+    assert len(scanned) == len(roots), (
+        f"these render paths no longer exist, so they were not scanned: "
+        f"{[str(p) for p in roots if not p.exists()]}"
+    )
+    for path in scanned:
         for line in path.read_text(encoding="utf-8").split("\n"):
             code = line.split("#", 1)[0]  # a comment may describe what was removed
             assert caption not in code, f"{path}: {line.strip()}"

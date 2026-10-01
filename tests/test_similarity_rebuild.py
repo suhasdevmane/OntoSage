@@ -14,9 +14,17 @@ from __future__ import annotations
 import pytest
 
 from orchestrator.services import ontology_manager as om
-from shared.config import settings
 
 pytestmark = pytest.mark.unit
+
+# Patch WHERE IT IS USED (lesson #159). `ontology_manager` did
+# ``from shared.config import settings`` at import time, so it holds that object for the
+# life of the process; `tests/test_strict_secrets.py` reloads `shared.config` and rebinds
+# the module attribute to a NEW instance. A test that imports `settings` for itself is
+# then patching an object nobody reads, and — because every assertion below still holds
+# at the real GRAPHDB_USE_SIMILARITY — it would pass while proving nothing.
+# Reading the flag through `om.settings` keeps test and product on one object whatever
+# the suite order.
 
 
 class _Resp:
@@ -35,7 +43,7 @@ class _Resp:
 @pytest.mark.asyncio
 async def test_rebuild_recreates(monkeypatch):
     """rebuild deletes then recreates the index (in that order) and reports 'rebuilding'."""
-    monkeypatch.setattr(settings, "GRAPHDB_USE_SIMILARITY", True)
+    monkeypatch.setattr(om.settings, "GRAPHDB_USE_SIMILARITY", True)
     calls = []
 
     async def _del(index, base, auth, client):
@@ -56,7 +64,7 @@ async def test_rebuild_recreates(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_rebuild_reports_create_failure(monkeypatch):
-    monkeypatch.setattr(settings, "GRAPHDB_USE_SIMILARITY", True)
+    monkeypatch.setattr(om.settings, "GRAPHDB_USE_SIMILARITY", True)
 
     async def _del(index, base, auth, client):
         return True
@@ -73,7 +81,7 @@ async def test_rebuild_reports_create_failure(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_rebuild_disabled_is_noop(monkeypatch):
-    monkeypatch.setattr(settings, "GRAPHDB_USE_SIMILARITY", False)
+    monkeypatch.setattr(om.settings, "GRAPHDB_USE_SIMILARITY", False)
     called = {"n": 0}
 
     async def _cre(*a, **k):
@@ -105,8 +113,8 @@ class _RestClient:
 
 @pytest.mark.asyncio
 async def test_ensure_noop_when_present(monkeypatch):
-    monkeypatch.setattr(settings, "GRAPHDB_USE_SIMILARITY", True)
-    c = _RestClient([{"name": settings.GRAPHDB_SIMILARITY_INDEX}])
+    monkeypatch.setattr(om.settings, "GRAPHDB_USE_SIMILARITY", True)
+    c = _RestClient([{"name": om.settings.GRAPHDB_SIMILARITY_INDEX}])
     res = await om.ensure_similarity_index(client=c)
     assert res["ok"] and res["exists"] and not res["created"]
     assert c.posted is None  # already present → no create
@@ -114,18 +122,18 @@ async def test_ensure_noop_when_present(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_ensure_creates_when_missing(monkeypatch):
-    monkeypatch.setattr(settings, "GRAPHDB_USE_SIMILARITY", True)
+    monkeypatch.setattr(om.settings, "GRAPHDB_USE_SIMILARITY", True)
     c = _RestClient([])  # empty listing → must create
     res = await om.ensure_similarity_index(client=c)
     assert res["ok"] and res["created"] and not res["exists"]
     assert c.posted["url"].endswith("/rest/similarity")  # correct GraphDB 10.x path
-    assert c.posted["json"]["name"] == settings.GRAPHDB_SIMILARITY_INDEX
+    assert c.posted["json"]["name"] == om.settings.GRAPHDB_SIMILARITY_INDEX
     assert c.posted["json"]["type"] == "text"
 
 
 @pytest.mark.asyncio
 async def test_ensure_disabled_is_noop(monkeypatch):
-    monkeypatch.setattr(settings, "GRAPHDB_USE_SIMILARITY", False)
+    monkeypatch.setattr(om.settings, "GRAPHDB_USE_SIMILARITY", False)
     c = _RestClient([])
     res = await om.ensure_similarity_index(client=c)
     assert res["ok"] and not res["created"]

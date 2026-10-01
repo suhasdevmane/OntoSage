@@ -26,6 +26,28 @@ data look for shape. A drift detector comparing a sensor against its peers, or a
 detector fitting a daily profile, learns nothing from uniform random numbers and would report
 whatever it found as an anomaly.
 
+ONE VALUE MODEL, NOT TWO (BUG-1139)
+-----------------------------------
+This module used to carry its own ``_shape`` -- a diurnal sine with a small jitter, applied to
+every point and then rounded. For a 0/1 flag with a swing of 0.9 the jitter is far too small to
+move ``int(round())`` except at the crossing, so the value was 0 whenever the centre sat below
+0.5 and 1 whenever it sat above: a perfect square wave, switching at exactly 07:00 and 19:00,
+IDENTICAL for all 234 presence flags. Measured in the store over 2026-09-25..28 the hourly mean
+of those flags was 0.00 from 20:00 to 05:00 and 1.00 from 08:00 to 17:00, pooled range 1.000 --
+while the live days either side sat at 0.45..0.56. The same series therefore answered "was room
+X occupied last Friday" from a tidy working day and "is room X occupied now" from a coin.
+
+The live publisher's generator already had the branch this one lacked. Rather than add a second
+copy of it here -- two near-identical range and diurnal tables are how the two came to disagree
+in the first place -- this module now imports ``sensor_signal`` and calls the SAME function the
+publisher calls. A backfilled row and a live row are produced by one model, which is the only
+way the two can be kept from drifting apart again.
+
+The rows already written are NOT repaired: they are dev-mode data, the owner has ruled generated
+data a deliberate development input, and rewriting history to match a later model destroys the
+evidence that the disagreement existed (CAVEAT-1131). What is fixed here is what a FUTURE
+backfill writes.
+
 DEV-MODE ONLY. Generated readings for a development stack, so questions about the recent past
 are answerable while the real feed is absent. The synthetic points are already marked
 ``ontosage:isSimulated true`` in the ontology and the evidence record carries that into the
@@ -39,9 +61,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import os
-import random
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -54,8 +74,24 @@ from shared.db_clock import UTC_SESSION_INIT
 
 REPO = Path(__file__).resolve().parent.parent
 
-#: (low, high, decimals) per value_col — the same ranges the live publisher uses, so a
-#: backfilled row is indistinguishable in kind from one written a minute ago.
+#: The LIVE publisher's generator, imported rather than reimplemented (BUG-1139). This is a
+#: hard dependency on purpose: falling back to a local copy of the value model is exactly the
+#: arrangement that produced two contradictory models for one series, and a silent fallback
+#: would restore it the moment the path moved.
+_PUBLISHER_DIR = REPO / "mysql-dummy-publish-dev"
+if str(_PUBLISHER_DIR) not in sys.path:
+    sys.path.insert(0, str(_PUBLISHER_DIR))
+try:
+    import sensor_signal  # noqa: E402
+except ImportError as exc:  # pragma: no cover - a moved directory, not a code path
+    raise ImportError(
+        f"backfill_narrow_gap needs the publisher's value model at {_PUBLISHER_DIR}. "
+        f"Re-implementing it here is what BUG-1139 was; fix the path instead. ({exc})"
+    ) from exc
+
+#: (low, high, decimals) per value_col — a BAND table, not a value model. Used only for points
+#: whose publish-map entry carries no lo/hi of its own; the shape of the series comes from
+#: sensor_signal, the same place the live publisher gets it.
 _RANGES = {
     "kwh": (1.0, 6.0, 2),
     "occupancy": (0, 30, 0),
@@ -73,20 +109,10 @@ _RANGES = {
     "generic": (0.0, 100.0, 2),
 }
 
-#: How strongly each modality follows the working day. 0 = flat, 1 = full swing across the
-#: range. Occupancy and CO2 track people; temperature drifts mildly; a door contact does not
-#: follow a sine wave at all and is left to its own coin-flip.
-_DIURNAL = {
-    "occupancy": 0.9,
-    "co2_ppm": 0.7,
-    "lux": 0.8,
-    "noise_db": 0.5,
-    "kwh": 0.5,
-    "voc": 0.4,
-    "temp_c": 0.3,
-    "rh_pct": 0.3,
-    "contact": 0.0,
-}
+# A `_DIURNAL` table used to sit here, duplicating `sensor_signal.DIURNAL`. It is gone
+# deliberately: the duplication is what let the two writers disagree (BUG-1139). The single
+# copy is `sensor_signal.DIURNAL`, and `tests/test_backfill_uses_one_value_model.py` fails if
+# a second one reappears in this file.
 
 
 def _point_range(point: dict) -> tuple:
@@ -105,26 +131,20 @@ def _point_range(point: dict) -> tuple:
     return lo, hi, dec, col
 
 
-def _value_from(point: dict, when: datetime, phase: float) -> float:
+def _value_from(point: dict, when: datetime, step_s: float) -> float:
+    """One reading, from the publisher's generator (BUG-1139).
+
+    The per-sensor offset is NOT passed in any more: `sensor_signal` derives a stable one from
+    the uuid, which gives every sensor its own phase instead of the seven this module used to
+    share out by list position. State is held per uuid inside that module, so a sensor's gap
+    must be walked in time order -- which is what `main` does.
+
+    `step_s` is this backfill's interval, which is NOT the modality's live cadence. A binary
+    point's hold-and-flip rate is a probability per write, so it has to be told how far apart
+    the writes are or the day it draws comes out flattened.
+    """
     lo, hi, dec, col = _point_range(point)
-    return _shape(lo, hi, dec, col, when, phase)
-
-
-def _value(value_col: str, when: datetime, phase: float) -> float:
-    lo, hi, dec = _RANGES.get(value_col, _RANGES["generic"])
-    return _shape(lo, hi, dec, value_col, when, phase)
-
-
-def _shape(lo: float, hi: float, dec: int, value_col: str, when: datetime, phase: float) -> float:
-    swing = _DIURNAL.get(value_col, 0.2)
-    # Daytime peak around 13:00, trough overnight.
-    hours = when.hour + when.minute / 60.0
-    cycle = (math.sin((hours - 7.0) / 24.0 * 2 * math.pi) + 1) / 2  # 0..1
-    centre = lo + (hi - lo) * (0.5 * (1 - swing) + swing * cycle)
-    jitter = (hi - lo) * 0.06
-    val = random.uniform(centre - jitter, centre + jitter)  # nosec B311 - dev data only
-    val = max(lo, min(hi, val + phase * jitter))
-    return int(round(val)) if dec == 0 else round(val, dec)
+    return sensor_signal.next_value(str(point["uuid"]), col, lo, hi, dec, when, step_s=step_s)[0]
 
 
 def main(argv: List[str]) -> int:
@@ -185,15 +205,18 @@ def main(argv: List[str]) -> int:
             newest = {str(u): t for u, t in cur.fetchall()}
 
             rows = []
-            for i, p in enumerate(pts):
+            for p in pts:
                 last = newest.get(p["uuid"])
                 start = max(last + step, floor) if last else floor
                 if start >= gap_end:
                     continue  # no hole for this sensor
-                phase = (i % 7) / 7.0 - 0.5  # a stable per-sensor offset, so peers differ
+                # sensor_signal holds per-uuid state, so start each sensor from a clean slate
+                # and walk its gap forward in time. A binary point is a held state, not a
+                # function of the timestamp, and out-of-order calls would make it meaningless.
+                sensor_signal.reset_state()
                 when = start
                 while when < gap_end:
-                    rows.append((p["uuid"], when, _value_from(p, when, phase)))
+                    rows.append((p["uuid"], when, _value_from(p, when, step.total_seconds())))
                     when += step
 
             if not rows:

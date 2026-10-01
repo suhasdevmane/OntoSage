@@ -52,8 +52,14 @@ async def test_an_aggregate_answer_is_returned_instead_of_the_refusal(registry, 
 
     monkeypatch.setattr(SQLAgent, "_try_aggregate_lane", fake_lane)
     uuids = [f"sensor-{i:04d}-aaaa" for i in range(700)]  # over the 600-sensor budget
+    # The question deliberately names NO calendar period. It used to say "this week", and
+    # since BUG-939 a named week is resolved from the calendar before any lane reads it, so
+    # the bound asserted below would be the resolved week rather than the one passed in —
+    # which is the wrong thing for this test to pin. What it pins is that the lane is asked
+    # FIRST and is handed the window; that the window is the RESOLVED one is pinned in
+    # tests/test_the_period_a_question_names_is_the_period_fetched.py.
     out = await _agent().fetch_data_for_uuids(
-        uuids, "Which floor had the highest CO2 this week?", {}, "2026-09-13 23:00:00", None, {}
+        uuids, "Which floor had the highest CO2?", {}, "2026-09-13 23:00:00", None, {}
     )
     assert out["aggregate_lane"] and out["formatted_response"] == "answered in the store"
     assert "too_broad" not in out

@@ -71,7 +71,12 @@ def test_no_alias_collides_with_its_own_source_variable():
     """SPARQL rejects `(SAMPLE(?x) AS ?x)`. This is WHY the aliases exist, and re-introducing
     the collision to satisfy the reader would break the query instead."""
     proj = _class_listing_projection()
-    for source, alias in re.findall(r"SAMPLE\(\?(\w+)\) AS \?(\w+)", proj):
+    pairs = re.findall(r"SAMPLE\(\?(\w+)\) AS \?(\w+)", proj)
+    # The aliases are WHY this projection exists. If the regex stops matching -- a whitespace
+    # change, a switch to MIN(), the projection rebuilt without SAMPLE -- the loop runs zero
+    # times and reports that no alias collides, having found no alias (CAVEAT-1115).
+    assert pairs, f"no SAMPLE(?x) AS ?y pair found in the projection: {proj!r}"
+    for source, alias in pairs:
         assert source != alias, f"(SAMPLE(?{source}) AS ?{alias}) is not valid SPARQL"
 
 

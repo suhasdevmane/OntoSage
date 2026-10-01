@@ -22,7 +22,15 @@ facts:
     note: an injured person needs a location, not a policy
   - id: defibrillator
     label: Defibrillator (AED)
-    classes: [Defibrillator, AedPoint, AED]
+    # FirstAidPoint is the class this ontology actually declares, and it was missing here.
+    # `owner_facts_report.py::held()` counts instances of `ontosage:<cls>`, and none of
+    # Defibrillator / AedPoint / AED is declared in ontology/ontosage_schema.ttl or instantiated
+    # in any building — so this fact could only ever be matched by lay term and reported 0
+    # instances however many defibrillators a building declared. For a checklist whose own note
+    # reads "minutes matter; a wrong position is worse than none", that is the wrong direction to
+    # fail in. The unused names are kept so a building that types its devices differently still
+    # matches (CAVEAT-900).
+    classes: [FirstAidPoint, Defibrillator, AedPoint, AED]
     must_state: the exact position on each floor that has one, and whether it is checked
     note: minutes matter; a wrong position is worse than none
   - id: assembly_point

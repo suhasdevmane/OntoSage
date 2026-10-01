@@ -330,11 +330,28 @@ def test_outages_never_start_in_the_future():
     from orchestrator.services.deliberation.synthetic_events import outages_for_day
 
     now = datetime(2026, 8, 25, 12, 0)
-    assets = [(f"Lift{i}", "lift") for i in range(40)]
+    # 200, not 40. Measured: at a 0.06 daily rate, 40 lifts produce ZERO outages across all
+    # three offsets, so this test asserted its property over an empty list every run
+    # (CAVEAT-1115). 200 gives day 0 three outages and the two later days none, which is the
+    # split the test exists to check.
+    assets = [(f"Lift{i}", "lift") for i in range(200)]
+    per_offset = {}
     for offset in (0, 1, 3):
         day = datetime(2026, 8, 25) + timedelta(days=offset)
-        for e in outages_for_day("b", assets, day, now):
+        episodes = outages_for_day("b", assets, day, now)
+        per_offset[offset] = len(episodes)
+        for e in episodes:
             assert e["start_dt"] <= now, e
+    assert per_offset[0], (
+        f"the current day produced no outage at all, so no start_dt was compared with now: "
+        f"{per_offset}"
+    )
+    # The other half, and the reason the count above is non-zero rather than merely positive:
+    # a day that has not begun must contribute nothing, which is the `start > now` filter
+    # doing its job rather than the rate being low.
+    assert (
+        per_offset[1] == 0 and per_offset[3] == 0
+    ), f"a future day produced outages that have not started: {per_offset}"
 
 
 def test_outages_both_clear_and_linger():

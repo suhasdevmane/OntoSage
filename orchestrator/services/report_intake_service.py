@@ -113,7 +113,18 @@ class ReportIntakeService:
 
     def __init__(self, postgres_manager=None):
         self.postgres = postgres_manager
-        self._report_re = re.compile(r"\bREP[- ]?[A-Z0-9]{6}\b", re.IGNORECASE)
+        # tail N #40 (2026-09-30, BUG-1242): "can you call for a repairman?" was answered
+        # *"I couldn't find a report with ID **REP-AIRMAN**. Double-check the ID"*. The old
+        # pattern was `REP[- ]?[A-Z0-9]{6}` — an optional separator and SIX LETTERS — so
+        # "rep" + "airman" was an identifier, and so were "reporting" and "represent". That
+        # is a `classify_action` result as well as a lookup: any message containing one of
+        # those words became a report-STATUS request.
+        #
+        # An id is `_new_report_id`'s output: "REP-" + `uuid4().hex[:6]`, which is HEX.
+        # Requiring hex costs nothing real and rejects every English word tested — "repairman",
+        # "reporting", "represent", "replacement", "repeated". `_normalise_id` still accepts
+        # the separator-less and space forms, so "REPF9828F" and "rep f9828f" keep working.
+        self._report_re = re.compile(r"\bREP[-_ ]?[0-9A-F]{6}\b", re.IGNORECASE)
 
     # ── Public: create ─────────────────────────────────────────────────────────
 

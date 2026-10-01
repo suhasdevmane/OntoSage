@@ -72,6 +72,30 @@ _CONFOUNDER_LIST = re.compile(
     r"regardless\s+of|because\s+of|due\s+to|net\s+of)\s+(?:\w+\s+){0,3}(?:weather|outdoor)\b)",
     re.IGNORECASE,
 )
+#: THE OUTDOORS AS ONE SIDE OF A COMPARISON, WHICH IS NOT THE SUBJECT EITHER (BUG-945).
+#:
+#: "How does today compare with the outside temperature?" was answered with
+#: "**I don't hold a weather forecast.** Abacws Building's outdoor sensors last recorded:
+#: outdoor temperature 20.7 ... Those are readings, not a forecast." Every figure was live and
+#: correct, the feed was plainly working, and the question was never answered: it asks how the
+#: building's own readings compare with the outdoor ones, and neither the indoor series nor any
+#: comparison appears. The decline is honest and it is about a different question.
+#:
+#: This is the same distinction `_CONFOUNDER_LIST` already draws one line up — the weather as
+#: something the question mentions rather than something it is about — applied to the other
+#: shape it takes. A comparison names TWO things; answering about one of them is not an answer.
+#:
+#: Narrow on purpose: a comparison word must be present AND be joined to the outdoor term.
+#: "Is it colder outside than in the atrium?" is claimed by this; "how cold is it outside?"
+#: is not, and still gets the readings it asks for.
+_COMPARED_WITH_OUTDOORS = re.compile(
+    r"\b(?:compare[sd]?|comparison|versus|vs\.?)\b"
+    r"|\b(?:hotter|colder|warmer|cooler|higher|lower|wetter|drier|damper|different)\s+than\b"
+    r"|\bdifference\s+between\b"
+    r"|\b(?:against|relative\s+to|compared\s+(?:with|to))\b",
+    re.IGNORECASE,
+)
+
 _MAX_WEATHER_QUESTION_WORDS = 16
 
 
@@ -79,12 +103,15 @@ def is_current_weather_question(question: str) -> bool:
     """True for a present-tense question ABOUT the weather outside (a forecast is C's statement).
 
     The weather has to be the SUBJECT: a short question that names it, not a long one that lists it
-    among the things to be accounted for.
+    among the things to be accounted for, and not one side of a comparison with the building's own
+    readings (BUG-945).
     """
     q = question or ""
     if not _WEATHER.search(q) or _FUTURE.search(q):
         return False
     if _CONFOUNDER_LIST.search(q) or len(q.split()) > _MAX_WEATHER_QUESTION_WORDS:
+        return False
+    if _COMPARED_WITH_OUTDOORS.search(q):
         return False
     if _WEATHER_WORD.search(q):
         return True
@@ -271,6 +298,41 @@ def phrases_for(question: str, unmatched: Sequence[str], limit: int = 2) -> List
     return out
 
 
+def lead_read_but_off_topic(name: str, about: str = "") -> str:
+    """The first sentence when the building WAS read and the answer was judged off the point.
+
+    BUG-1252 (P1). The default lead — "I couldn't answer that from <building>'s records" — is a
+    statement about the BUILDING, and it is false on a turn that has just read 275 humidity
+    series or 1,000 water-meter rows and then had that answer deleted by the answer-relevance
+    gate. Four of tail N's six investigated false declines were exactly this, and the reader saw
+    a refusal whose next paragraph named the very quantity the turn had read.
+
+    THE GATE IS NOT WRONG TO FIRE and this does not stop it (BUG-873 scoped its ACTION; BUG-1252
+    deliberately did not widen `_grounded_evidence_behind`, because the data lanes are where the
+    gate measures best and in at least two of the four the answer really was about something
+    else). What changes is only the sentence: "I read them, and what I could make of them did
+    not answer you" is true where "I couldn't answer that from the records" is not.
+
+    THE OPENING IS LOAD-BEARING. Five consumers classify a decline from its text —
+    `regression_answerability._DECLINE_MARKERS`, `publication_gate._DECLINE_MARKERS`,
+    `grade_answers_rubric._DECLINE_PATTERNS`, `scripts/audit_decline_markers.py` and
+    `_orchestrator`'s `_decline_leads` — and a new opening they do not know is read as an
+    ANSWER, which silently moves every decline-rate measurement in the project (lessons #141:
+    one question produced three honest decline wordings in a day). So the opening is
+    "I couldn't put an answer together", which `publication_gate` ALREADY carries, and the four
+    lists that did not were updated in the same change. Measured over 2,985 stored answers
+    (the 73-probe pack plus every `docs/phase0/*.jsonl`): the additions reclassify NONE of them,
+    and no stored answer contains this lead, so that zero is not hiding a move.
+
+    ``about`` is inserted AFTER the marker, never before it — a referent spliced into the middle
+    of a fixed marker is BUG-876's exact shape.
+    """
+    return (
+        f"I couldn't put an answer together{about} from {name or 'this building'}'s records — "
+        "I did read them, but what I could make of them did not answer the question you asked."
+    )
+
+
 def compose_abstract(
     building: str,
     question: str,
@@ -278,8 +340,13 @@ def compose_abstract(
     measured: Sequence[str],
     records: Sequence[Any],
     entities: Sequence[str] = (),
+    read_but_off_topic: bool = False,
 ) -> str:
-    """No question back: what found nothing, and the nearest things the building can answer."""
+    """No question back: what found nothing, and the nearest things the building can answer.
+
+    ``read_but_off_topic`` says the caller KNOWS this turn read the building and had its answer
+    taken away — see `lead_read_but_off_topic` for why that needs a different first sentence.
+    """
     name = building or "this building"
     # No fragment of the question is quoted back as though it were a topic. `phrases_for` paired an
     # unmatched word with whichever word stood next to it, which produced "nothing came back about
@@ -287,8 +354,19 @@ def compose_abstract(
     # tokens presented as the subject. The only thing named is an entity a lane actually resolved.
     named = readable_names(entities)
     about = f" about **{', '.join(named[:3])}**" if named else ""
-    lead = f"I couldn't answer that{about} from {name}'s records."
-    names, labels = nearest_holdings(question, measured, records, max_measured=4, max_records=3)
+    lead = (
+        lead_read_but_off_topic(name, about)
+        if read_but_off_topic
+        else f"I couldn't answer that{about} from {name}'s records."
+    )
+    # `named` is what a lane already resolved, and it is printed in bold one line above.
+    # Ranking the holdings against it too is what stops the list being alphabetical
+    # (BUG-950): 'why is pl 2.5 increasing' offered air quality, carbon monoxide, co2 and
+    # damper position while the building holds 210 PM2.5 sensors and the answer had
+    # already said **PM2.5**.
+    names, labels = nearest_holdings(
+        question, measured, records, max_measured=4, max_records=3, resolved=named
+    )
     near: List[str] = []
     if labels:
         near.append(f"the {and_list(labels, 3)} records")
@@ -298,9 +376,14 @@ def compose_abstract(
         return (
             lead + " Naming one room, floor, record or date usually gives me enough to answer from."
         )
+    # The closing used to end "…or tell me which record this should be in", immediately after
+    # naming the records. BUG-947: four of the seven false declines hand-read on tail M named
+    # the right register in the same sentence as the refusal, and this wording then asked the
+    # reader to name a record the sentence had just named for them. Asking a question whose
+    # answer is printed one clause earlier is what makes a decline read as a brush-off.
     return (
         f"{lead}\n\nThe nearest things I can answer are {' and '.join(near)}. Ask about one of "
-        "those, or tell me which record this should be in."
+        "those and I will read them."
     )
 
 
@@ -327,13 +410,24 @@ def compose(
     records: Sequence[Any] = (),
     outdoor: Optional[Sequence[OutdoorReading]] = None,
     entities: Sequence[str] = (),
+    read_but_off_topic: bool = False,
 ) -> Tuple[str, str]:
-    """``(kind, text)``. ``outdoor`` is None when nobody tried to read the outdoor sensors."""
+    """``(kind, text)``. ``outdoor`` is None when nobody tried to read the outdoor sensors.
+
+    ``read_but_off_topic`` reaches only the two shapes that assert something about the records
+    (BUG-1252). The weather shape names the outdoor readings it did find and the referent shape
+    asks which one is meant; neither says the building could not answer, so neither is the
+    falsehood this flag exists to stop.
+    """
     kind = classify(question, unmatched)
     if kind == KIND_WEATHER:
         return kind, compose_weather(building, outdoor or (), tried=outdoor is not None)
     if kind == KIND_REFERENT:
         return kind, compose_referent(building, referent_noun(question), records)
     if kind == KIND_ABSTRACT:
-        return kind, compose_abstract(building, question, unmatched, measured, records, entities)
-    return kind, compose_abstract(building, question, (), measured, records, entities)
+        return kind, compose_abstract(
+            building, question, unmatched, measured, records, entities, read_but_off_topic
+        )
+    return kind, compose_abstract(
+        building, question, (), measured, records, entities, read_but_off_topic
+    )

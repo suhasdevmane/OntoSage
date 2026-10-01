@@ -10,6 +10,7 @@ Requires: pip install PyMySQL
 from __future__ import annotations
 
 import glob
+import hashlib
 import json
 import os
 import random
@@ -1164,6 +1165,118 @@ def connect_mysql(cfg) -> pymysql.connections.Connection:
     )
 
 
+# ── Columns a LIVE FEED owns (BUG-888) ──────────────────────────────────────
+#
+# A rest_poll feed declared in the building's feeds.yaml writes REAL measurements into the
+# wide table, through the same adapter registry every other write uses. This publisher reads
+# the wide table's columns from information_schema and invents a value for EVERY one of them,
+# so it was overwriting those real readings every PUBLISH_INTERVAL seconds.
+#
+# Measured on bldg1, 2026-09-29: the three Open-Meteo feeds poll Cardiff every 300 s and wrote
+# 21.90 degC / 71.00 % / 19.40 km/h at 15:26:15 UTC -- matching the live API to a tenth. The
+# publisher then wrote 24.06 / 56.80 / 7.08 at 15:26:41, and again at :27:11, :27:41 and
+# :28:11. Ten samples in eleven were fabricated, so "what is the outdoor temperature right
+# now?" answered from a number nobody measured while the measured one sat four rows down.
+#
+# A generated top-up for a sensor with no live source is this service's job (BUG-144). A
+# generated value on top of a source that IS live is not a top-up, it is a fabrication, and
+# design contract 4 forbids it. So: whatever a feed feeds, the publisher leaves alone.
+#
+# Nothing here names a building. The feed ids come from the building's own feeds.yaml and the
+# UUIDs are derived exactly as FeedRegistry._derive_uuid derives them.
+
+#: Feed types that write telemetry into a store. A file-based institutional source is read
+#: once and owns no live column, and a disabled feed writes nothing at all.
+_LIVE_FEED_TYPES = ("rest_poll",)
+
+
+def _feeds_yaml_path() -> Optional[str]:
+    """The active building's feeds.yaml, flat layout first then nested — or None."""
+    override = os.environ.get("FEEDS_YAML", "").strip()
+    if override:
+        return override if os.path.exists(override) else None
+    for candidate in ("/app/input/feeds.yaml", *sorted(glob.glob("/app/input/*/feeds.yaml"))):
+        if os.path.exists(candidate):
+            return candidate
+    return None
+
+
+def _feed_building_id(feeds_path: str) -> str:
+    """The building whose feeds these are: BUILDING_ID, else the nested directory name.
+
+    The derived UUID is md5("<building_id>:<feed_id>"), so getting the id wrong derives a
+    UUID that matches no column and the exclusion silently does nothing. That is why a wrong
+    id is reported rather than assumed away.
+    """
+    env_id = os.environ.get("BUILDING_ID", "").strip()
+    if env_id:
+        return env_id
+    parent = os.path.basename(os.path.dirname(feeds_path))
+    return "" if parent in ("input", "", "/") else parent
+
+
+def _derive_feed_uuid(building_id: str, feed_id: str) -> str:
+    """Mirror of orchestrator FeedRegistry._derive_uuid — the two MUST agree."""
+    digest = hashlib.md5(  # noqa: S324 - non-security: deterministic point id
+        f"{building_id}:{feed_id}".encode()
+    ).hexdigest()
+    return f"{digest[:8]}-{digest[8:12]}-{digest[12:16]}-{digest[16:20]}-{digest[20:]}"
+
+
+def feed_owned_uuids(feeds_path: Optional[str] = None, building_id: Optional[str] = None) -> set:
+    """UUIDs written by an enabled live feed — columns this publisher must not touch.
+
+    Returns an empty set and says WHY when it cannot read the file: an empty set restores the
+    old, wrong behaviour, so it must never pass silently.
+    """
+    path = feeds_path if feeds_path is not None else _feeds_yaml_path()
+    if not path:
+        print(
+            "[py-dummy] no feeds.yaml found — assuming no live feed owns a wide column. "
+            "If this building HAS live feeds, their readings will be overwritten (BUG-888).",
+            flush=True,
+        )
+        return set()
+    try:
+        import yaml  # noqa: PLC0415 - optional at import time, required only here
+    except ImportError:
+        print(
+            "[py-dummy] PyYAML missing — CANNOT read feeds.yaml, so live-feed columns are "
+            "NOT protected and their real readings will be overwritten (BUG-888). "
+            "Add pyyaml to this image.",
+            file=sys.stderr,
+            flush=True,
+        )
+        return set()
+    try:
+        with open(path, "r", encoding="utf-8") as fh:
+            data = yaml.safe_load(fh) or {}
+    except Exception as exc:
+        print(
+            f"[py-dummy] could not parse {path}: {exc} — live-feed columns NOT protected",
+            flush=True,
+        )
+        return set()
+
+    bid = building_id if building_id is not None else _feed_building_id(path)
+    owned = set()
+    for entry in data.get("feeds") or []:
+        if not isinstance(entry, dict):
+            continue
+        # `enabled: no` is False in YAML and `enabled:` absent defaults to on, the same way
+        # FeedSpec reads it.
+        if entry.get("enabled", True) is False:
+            continue
+        if str(entry.get("type", "")).strip() not in _LIVE_FEED_TYPES:
+            continue
+        feed_id = str(entry.get("id", "")).strip()
+        if not feed_id:
+            continue
+        declared = str(entry.get("uuid", "") or "").strip()
+        owned.add(declared or _derive_feed_uuid(bid, feed_id))
+    return owned
+
+
 def load_columns(conn, cfg) -> Tuple[str, List[Dict[str, object]]]:
     with conn.cursor() as cur:
         cur.execute(
@@ -1196,6 +1309,27 @@ def load_columns(conn, cfg) -> Tuple[str, List[Dict[str, object]]]:
             )
         ts_col = ts["cname"]
     value_cols = [r for r in rows if r["cname"] != ts_col]
+
+    # A live feed's column is not this publisher's to invent (BUG-888).
+    owned = feed_owned_uuids()
+    if owned:
+        kept = [r for r in value_cols if str(r["cname"]) not in owned]
+        # COUNT WHAT IT ACTUALLY EXCLUDED, not what it was asked to. A feed whose column does
+        # not exist in this table excludes nothing, and a silent zero here is the difference
+        # between "protected" and "looked like it was protected" (lesson #126).
+        removed = len(value_cols) - len(kept)
+        print(
+            f"[py-dummy] live-feed columns held back from the wide table: {removed} "
+            f"of {len(owned)} feed uuid(s) declared in feeds.yaml",
+            flush=True,
+        )
+        if removed == 0:
+            print(
+                "[py-dummy] WARNING: feeds.yaml declares live feeds but NONE of their uuids "
+                f"is a column of `{cfg['table']}` — check BUILDING_ID and the derived uuids",
+                flush=True,
+            )
+        value_cols = kept
     return ts_col, value_cols
 
 

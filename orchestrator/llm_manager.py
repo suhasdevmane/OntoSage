@@ -57,6 +57,80 @@ LLM_TIMEOUT_S = float(os.environ.get("LLM_TIMEOUT_S", "60"))
 LLM_BACKOFF_BASE_S = float(os.environ.get("LLM_BACKOFF_BASE_S", "1.0"))
 LLM_BACKOFF_FACTOR = float(os.environ.get("LLM_BACKOFF_FACTOR", "2.0"))
 
+#: Log a completed LLM call at WARNING once it has taken this long (BUG-1191).
+#:
+#: A 3,239-second call was found by reading two adjacent log lines and subtracting their
+#: timestamps by hand, because nothing recorded a duration. p50 on this stack is 4.5 s and
+#: the slowest legitimate lane measured 83.6 s, so 60 s flags the tail without narrating
+#: ordinary work.
+LLM_SLOW_CALL_WARN_S = float(os.environ.get("LLM_SLOW_CALL_WARN_S", "60"))
+
+
+def _transport_timeout_s() -> float:
+    """Seconds after which the HTTP CLIENT abandons an LLM request, independent of asyncio.
+
+    `generate` already wraps every attempt in `asyncio.wait_for(LLM_TIMEOUT_S)`. On
+    2026-09-30 that bound did not bind: a single call ran 3,239 s with no TimeoutError and
+    no retry, and the 420 s `WORKFLOW_TIMEOUT_S` wrapped around it was equally silent
+    (BUG-1191). Two independent deadlines written in the same idiom failing on the same
+    turn is not two bugs in `wait_for`; it is a loop that was not running its timer
+    callbacks, on a process that was later measured at 40 GiB (BUG-1194).
+
+    So a second deadline is set in a different place. The default deliberately OUTLASTS
+    `LLM_TIMEOUT_S`, so under a healthy loop `wait_for` still fires first and every
+    existing retry path behaves exactly as before; this one only acts when that one did
+    not. It also covers `astream_generate`, which has no `wait_for` at all -- though that
+    method has NO CALLERS today, checked rather than assumed, so that is future cover and
+    not a hole being closed.
+
+    MEASURED end to end on 2026-09-30, inside the running container, against a socket that
+    accepts the connection and never writes a byte -- BUG-1191's exact shape:
+
+        WITHOUT client_kwargs: still hanging at 40.0s, no deadline fired
+        WITH    client_kwargs: ReadTimeout('') after 12.0s
+
+    Note the empty message on that exception. It is why `_is_retryable` and
+    `classify_llm_error` match these by TYPE NAME: a text check would have bucketed a
+    transport timeout as "other" and refused to retry it.
+
+    HONEST LIMIT, stated because the alternative is a false sense of cover: httpx
+    implements its own timeouts with anyio, which on the asyncio backend is still an
+    event-loop timer. This layer catches a silent provider on a healthy loop -- which is
+    the shape actually observed, since the connection was open and nothing arrived for 54
+    minutes. It does not survive a fully starved loop. The memory ceiling on the container
+    is what covers that case.
+    """
+    raw = (os.environ.get("LLM_TRANSPORT_TIMEOUT_S") or "").strip()
+    if raw:
+        try:
+            return float(raw)
+        except ValueError:
+            logger.warning(f"LLM_TRANSPORT_TIMEOUT_S={raw!r} is not a number; deriving instead")
+    return LLM_TIMEOUT_S * 1.5 + 15.0
+
+
+def _ollama_client_kwargs() -> Dict[str, Any]:
+    """`client_kwargs` for OllamaLLM that give its httpx clients a real deadline.
+
+    MEASURED against the installed packages on 2026-09-30, not assumed: `ollama` 0.6.3's
+    `BaseClient.__init__` types `timeout` as `Any` defaulting to **None** and hands it
+    straight to httpx -- so out of the box an Ollama request has NO transport timeout at
+    all. `langchain_ollama` 0.2.3 carries a `client_kwargs` field and does
+    `Client(host=..., **client_kwargs)` / `AsyncClient(host=..., **client_kwargs)`, so a
+    timeout set here reaches both.
+    """
+    total = _transport_timeout_s()
+    timeout: Any = total
+    try:
+        import httpx
+
+        # Connect must be short: a refused or unroutable model server is a fast failure,
+        # and the long budget belongs to the read, where the 54-minute silence happened.
+        timeout = httpx.Timeout(total, connect=min(10.0, total))
+    except Exception:  # pragma: no cover - httpx is a hard dependency of the stack
+        pass
+    return {"timeout": timeout}
+
 
 # How long to wait for a crashed LOCAL model runner to come back before retrying. Measured
 # on this machine: llama-server reloads in 5.0-14.0s after a CUDA fault (CAVEAT-619).
@@ -182,6 +256,23 @@ _llm_failures: contextvars.ContextVar[Optional[List[Dict[str, Any]]]] = contextv
 
 RATE_LIMIT_MARKERS = ("429", "rate limit", "quota", "too many requests", "requires a subscription")
 
+#: httpx's timeout exceptions, by NAME rather than by import.
+#:
+#: `str(httpx.ReadTimeout())` is frequently the EMPTY STRING — httpx re-raises whatever
+#: message httpcore gave it, and that is often nothing. Every classifier here works on
+#: `str(error).lower()`, so a transport timeout would fall through to "other" and, in
+#: `_is_retryable`, to non-retryable. Matching the type name costs no import and cannot be
+#: defeated by an empty message (BUG-1191).
+_TRANSPORT_TIMEOUT_TYPES = frozenset(
+    {
+        "TimeoutException",
+        "ConnectTimeout",
+        "ReadTimeout",
+        "WriteTimeout",
+        "PoolTimeout",
+    }
+)
+
 
 def classify_llm_error(error: BaseException) -> str:
     """Bucket an LLM failure into a cause a grader can act on."""
@@ -190,6 +281,8 @@ def classify_llm_error(error: BaseException) -> str:
         return "rate_limit"
     if isinstance(error, EmptyCompletionError):
         return "empty_completion"
+    if type(error).__name__ in _TRANSPORT_TIMEOUT_TYPES:
+        return "timeout"
     if isinstance(error, (asyncio.TimeoutError, TimeoutError)) or "timed out" in text:
         return "timeout"
     if "circuit breaker" in text:
@@ -388,11 +481,18 @@ class LLMManager:
         try:
             from langchain_openai import ChatOpenAI
 
+            # `timeout` is the transport deadline (BUG-1191). NOTE, and it is a real
+            # residual: the OpenAI SDK retries twice on its own, so the worst case on this
+            # path is three transport timeouts, not one. `wait_for` still bounds it under a
+            # healthy loop. Left alone because this is not the active provider and the
+            # change is unmeasurable from here.
+            _timeout_s = _transport_timeout_s()
             self.client = ChatOpenAI(
                 model=self.config["model"],
                 api_key=self.config["api_key"],
                 temperature=self.config["temperature"],
                 max_tokens=4096,
+                timeout=_timeout_s,
             )
             fast_model = self.config.get("model_fast", "gpt-4o-mini")
             self.client_fast = ChatOpenAI(
@@ -400,6 +500,7 @@ class LLMManager:
                 api_key=self.config["api_key"],
                 temperature=self.config["temperature"],
                 max_tokens=2048,
+                timeout=_timeout_s,
             )
             logger.info(
                 f"Initialized OpenAI LLMs: complex={self.config['model']}, fast={fast_model}"
@@ -417,6 +518,17 @@ class LLMManager:
             # requests; num_ctx sets the context window. Both env-driven (building-agnostic).
             _keep_alive = os.environ.get("OLLAMA_KEEP_ALIVE", "30m")
             _num_ctx = int(os.environ.get("OLLAMA_NUM_CTX", "8192"))
+            # A transport-level deadline, because the asyncio one did not bind (BUG-1191).
+            # If a future langchain-ollama drops the field, say so rather than losing the
+            # protection silently -- an unbounded call is exactly what cost a day.
+            _transport: Dict[str, Any] = {}
+            if "client_kwargs" in getattr(OllamaLLM, "model_fields", {}):
+                _transport = {"client_kwargs": _ollama_client_kwargs()}
+            else:
+                logger.warning(
+                    "langchain-ollama has no `client_kwargs` field — the local LLM client "
+                    "is running with NO transport timeout (BUG-1191 protection absent)"
+                )
             self.client = OllamaLLM(
                 base_url=self.config["base_url"],
                 model=self.config["model"],
@@ -424,11 +536,13 @@ class LLMManager:
                 keep_alive=_keep_alive,
                 num_ctx=_num_ctx,
                 **_ollama_generation_cap(),
+                **_transport,
             )
             self.client_fast = self.client  # same model
             logger.info(
                 f"Ollama options: keep_alive={_keep_alive} num_ctx={_num_ctx} "
-                f"num_predict={_ollama_generation_cap().get('num_predict', 'unlimited')}"
+                f"num_predict={_ollama_generation_cap().get('num_predict', 'unlimited')} "
+                f"transport_timeout={_transport_timeout_s():g}s"
             )
             logger.info(
                 f"Initialized Ollama LLM: {self.config['model']} at {self.config['base_url']}"
@@ -448,6 +562,7 @@ class LLMManager:
                 api_key=self.config["api_key"],
                 temperature=self.config["temperature"],
                 max_tokens=4096,
+                timeout=_transport_timeout_s(),  # BUG-1191
                 **self._reasoning_kwargs(),
             )
             self.client_fast = self.client  # same model for cloud Ollama
@@ -485,6 +600,10 @@ class LLMManager:
     def _is_retryable(self, error: Exception) -> bool:
         """Check if an error is transient and should be retried."""
         if isinstance(error, EmptyCompletionError):
+            return True
+        # A transport timeout is exactly as transient as an asyncio one, and its message
+        # is often empty, so it must be matched by type before any text check (BUG-1191).
+        if type(error).__name__ in _TRANSPORT_TIMEOUT_TYPES:
             return True
         error_str = str(error).lower()
         # OpenAI rate limit (429) or server errors (500/502/503)
@@ -583,6 +702,7 @@ class LLMManager:
                             await asyncio.sleep(OPENAI_RATE_LIMIT_DELAY - elapsed)
                         self.last_request_time = time.time()
 
+                _started = time.monotonic()
                 result = await asyncio.wait_for(
                     self._generate_once(
                         prompt,
@@ -593,6 +713,24 @@ class LLMManager:
                     ),
                     timeout=LLM_TIMEOUT_S,
                 )
+                _elapsed = time.monotonic() - _started
+                # BUG-1191: a 3,239 s call was discovered by subtracting two log
+                # timestamps by hand. Every call now states its own duration, and one
+                # that outlasts the configured bound says so in the same line -- because
+                # "elapsed 3239.0s > LLM_TIMEOUT_S 180.0s" is the entire diagnosis.
+                if _elapsed >= LLM_SLOW_CALL_WARN_S:
+                    _overran = (
+                        f" — OVERRAN LLM_TIMEOUT_S={LLM_TIMEOUT_S:g}s WITHOUT FIRING"
+                        if _elapsed > LLM_TIMEOUT_S
+                        else ""
+                    )
+                    logger.warning(
+                        f"LLM [{client_label}] slow call: {_elapsed:.1f}s "
+                        f"(prompt {len(prompt or '')} chars, "
+                        f"completion {len(result or '')} chars){_overran}"
+                    )
+                else:
+                    logger.debug(f"LLM [{client_label}] call took {_elapsed:.1f}s")
                 if not (result or "").strip():
                     # A local model that spends its whole budget on reasoning, or one
                     # whose prompt crowds out the context window, returns an empty
@@ -607,12 +745,20 @@ class LLMManager:
                 return result
 
             except asyncio.TimeoutError:
+                _elapsed = time.monotonic() - _started
                 last_error = TimeoutError(f"LLM [{client_label}] timed out after {LLM_TIMEOUT_S}s")
                 logger.warning(
-                    f"LLM [{client_label}] timeout (attempt {attempt}/{LLM_MAX_RETRIES})"
+                    f"LLM [{client_label}] timeout after {_elapsed:.1f}s "
+                    f"(limit {LLM_TIMEOUT_S:g}s, attempt {attempt}/{LLM_MAX_RETRIES})"
                 )
                 self._breaker.record_failure()
             except Exception as e:
+                _elapsed = time.monotonic() - _started
+                if _elapsed >= LLM_SLOW_CALL_WARN_S:
+                    logger.warning(
+                        f"LLM [{client_label}] failed after {_elapsed:.1f}s: "
+                        f"{type(e).__name__}: {e}"
+                    )
                 last_error = e
                 self._breaker.record_failure()
                 if not self._is_retryable(e) or attempt == LLM_MAX_RETRIES:

@@ -292,3 +292,63 @@ def missing_floors_note(all_floors: Sequence[str], present: Iterable[str], noun:
     names = [f"Floor {f}" for f in missing]
     joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + f" and {names[-1]}"
     return f"No figure for {joined}: none of the {noun} sensors matched there returned a reading."
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Is anyone there: a COUNT OF PLACES, not a statistic over readings (BUG-954)
+# ─────────────────────────────────────────────────────────────────────────────
+
+#: The frame that asks for a SET of spaces: "which rooms…", "how many zones…". A question about
+#: ONE named space ("is room 1.25 occupied?") is a lookup and is deliberately not matched — this
+#: shape exists to produce a count over a stated denominator, and one room has no denominator.
+_ASK_SPACES = re.compile(
+    r"\b(?:which|what|how\s+many|list|name|show\s+me|tell\s+me)\b(?:\W+\w+){0,4}?\W+"
+    r"(?:rooms?|spaces?|zones?|areas?|offices?|labs?|laboratories)\b",
+    re.IGNORECASE,
+)
+
+#: NOBODY IS THERE. "unoccupied" is matched here and not by `_OCCUPIED`, which is why this is
+#: tested first and why `_OCCUPIED` carries a negative lookbehind as well.
+#: "free" and "available" are deliberately absent: "which rooms are free at 2pm" is a booking
+#: question about a calendar, not a question about what the occupancy sensors read.
+_EMPTY_STATE = re.compile(
+    r"\b(?:empty|unoccupied|vacant|unused|nobody\s+in|no\s?[- ]one\s+in)\b", re.IGNORECASE
+)
+
+#: SOMEONE IS THERE.
+_OCCUPIED_STATE = re.compile(
+    r"(?<!un)\boccupied\b|\bin\s+use\b|\bbeing\s+used\b"
+    r"|\b(?:has|have|with)\s+(?:anyone|someone|people|occupants)\s+in\b",
+    re.IGNORECASE,
+)
+
+
+def presence_question(question: str) -> Optional[str]:
+    """ "occupied", "empty", or None: is this a question about WHICH SPACES have anyone in them?
+
+    A presence question asks for a COUNT OF PLACES over a stated denominator, which is a different
+    shape from every statistic this lane computes — it has no maximum, no mean and no ranking, and
+    `parse_intent` therefore returns None for it. That decline is what left BUG-954's count to the
+    narrator, which named the five rooms it could list beside its own statistics saying 103.
+
+    Returns None for a question that names another quantity: "which zones show sustained elevated
+    CO2 during an approved occupied period?" holds both the frame and the word, and is an
+    exceedance question about CO2. The caller enforces that with the question's own measurands;
+    here the shape alone is decided.
+    """
+    q = question or ""
+    if not _ASK_SPACES.search(q):
+        return None
+    if names_a_period(q):
+        # "Which rooms were occupied YESTERDAY?" is not this shape. A presence count is over each
+        # series' NEWEST reading, so answering a question that names a past period from it would
+        # be BUG-480's defect in a new place: a figure about now, captioned with another day.
+        # What "occupied yesterday" even means -- at any moment, or most of the day -- is a
+        # second question the records do not settle, so this declines and leaves the lane as it
+        # was rather than choosing one.
+        return None
+    if _EMPTY_STATE.search(q):
+        return "empty"
+    if _OCCUPIED_STATE.search(q):
+        return "occupied"
+    return None

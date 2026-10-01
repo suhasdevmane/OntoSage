@@ -82,6 +82,18 @@ DERIVED_KEYS = (
 #: propagation, and a lane records the fact rather than composing the sentence itself.
 SUBSTITUTION_KEY = "window_substituted"
 
+#: The sub-key a data lane already writes when its fetch hit the per-sensor row cap.
+#:
+#: Written since BUG-479 and read, until BUG-939, by exactly ONE module (`report_agent`).
+#: Every other answer narrated the cap as completeness, and on 2026-09-29 one said so in as
+#: many words: "Across **all** 1,000 recorded values". A cap does not fail, it under-reports,
+#: and in prose it stops looking like a cap at all.
+#:
+#: It belongs beside the substitution for the same reason: both are facts about the ROWS that
+#: the narration cannot see and would not invent, and both have to be said whichever lane's
+#: text wins the dispatch. The lane records; this composes.
+TRUNCATION_KEY = "rows_capped"
+
 
 @dataclass
 class DisclosureDecision:
@@ -229,6 +241,71 @@ def substitution_note(marker: Optional[Dict[str, Any]]) -> str:
             f"the requested period held no readings, and the detail of the period they do "
             f"come from could not be read ({exc}). Treat them as the latest available, not "
             f"as current._"
+        )
+
+
+def truncation_in(results: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """The row cap a lane recorded on this turn's bus, or None (BUG-939).
+
+    Structured marker, never prose — the same rule as `window_substitution_in`. The returned
+    dict carries what the sentence needs: the per-sensor limit, the span the rows actually
+    cover, and the window the question asked for.
+    """
+    if not isinstance(results, dict):
+        return None
+    for key in LANE_RESULT_KEYS:
+        payload = results.get(key)
+        if not isinstance(payload, dict):
+            continue
+        if not payload.get(TRUNCATION_KEY):
+            continue
+        window = payload.get("requested_window")
+        return {
+            "capped": True,
+            "row_limit": payload.get("row_limit"),
+            "rows": len((payload.get("results") or {}).get("data") or [])
+            or len(payload.get("data") or []),
+            "requested_label": (window or {}).get("label", "") if isinstance(window, dict) else "",
+            "actual_earliest": payload.get("rows_earliest", ""),
+            "actual_latest": payload.get("rows_latest", ""),
+        }
+    return None
+
+
+def truncation_note(marker: Optional[Dict[str, Any]]) -> str:
+    """The sentence that stops a capped fetch being read as a complete one.
+
+    Two facts, because either alone is misleading. The COUNT is the size of a sample, so no
+    figure derived from its length is a count of what the period holds; and the rows are the
+    NEWEST ones, so the period actually covered begins later than the period asked for. An
+    answer that says "across all 1,000 recorded values" has both of those wrong at once.
+
+    Never raises: a disclosure that failed to render would leave the capped figures on screen
+    with nothing beside them, which is what this exists to prevent.
+    """
+    if not isinstance(marker, dict) or not marker.get("capped"):
+        return ""
+    try:
+        limit = marker.get("row_limit")
+        per = f"{limit} rows" if isinstance(limit, int) and limit > 0 else "its row limit"
+        earliest = str(marker.get("actual_earliest") or "").strip()
+        latest = str(marker.get("actual_latest") or "").strip()
+        span = f" The readings used run from {earliest} to {latest}." if earliest and latest else ""
+        asked = str(marker.get("requested_label") or "").strip()
+        shortfall = (
+            f" That is the newest part of {asked}, not the whole of it." if asked and span else ""
+        )
+        return (
+            f"\n\n_At least one sensor returned the full {per} this question reads per "
+            f"sensor, so these readings are a SAMPLE of the newest data and their number is "
+            f"not a count of what the period holds.{span}{shortfall}_"
+        )
+    except Exception as exc:  # the cap is disclosed even when its detail is not
+        return (
+            f"\n\n_At least one sensor's readings were cut off at this question's per-sensor "
+            f"row limit, so the figures above are computed over a sample of the newest data "
+            f"and their number is not a count of what the period holds; the detail of the "
+            f"cap could not be read ({exc})._"
         )
 
 

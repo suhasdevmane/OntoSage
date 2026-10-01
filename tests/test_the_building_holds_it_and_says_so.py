@@ -190,7 +190,15 @@ def test_the_added_vocabulary_is_declared_on_the_class(reach, class_name, terms)
 
 
 def test_no_building_literal_entered_the_vocabulary(reach):
-    """A term naming one building's rooms, floors or name would not travel (contract 3)."""
+    """A term naming one building's rooms, floors or name would not travel (contract 3).
+
+    The non-emptiness check is the point of the first line: a harness that cannot reach the
+    graph returns nothing held, the loop never runs, and a green result says "no building
+    literal entered the vocabulary" about a vocabulary it never read. lessons #153 recorded
+    exactly that failure (``record_classes()`` returning 0 from the host) in its other
+    direction, where it looked like a defect instead.
+    """
+    assert reach.held, "nothing is held — this test read no vocabulary at all"
     forbidden = ("abacws", "cardiff", "senghennydd", "bldg1", "room 1.06", "room 0.01")
     for record in reach.held:
         for term in record.terms:

@@ -3,7 +3,10 @@
 
 import pytest
 
-from orchestrator.services.grounding_guard import meta_answer_reason, reword_handover_phrasing
+from orchestrator.services.grounding_guard import (
+    meta_answer_reason,
+    reword_handover_phrasing,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -31,23 +34,64 @@ def test_clean_text_is_left_to_the_caller():
     assert reword_handover_phrasing("Floor 5 used 12% more energy overnight.") is None
 
 
-def test_the_response_node_rewords_only_when_the_verifier_says_grounded():
+def _response_node_ast():
+    """`_response_node` parsed, so these checks read STRUCTURE and not a character window.
+
+    Both assertions below used to slice the source by count -- `block[:400]`, `src[i:i+900]`
+    -- which is a bet on how much code and comment sits around the line of interest.
+    lessons #151: three such assertions broke in one day without a single behaviour
+    changing, one of them "fixed" by widening the window twice. A condition found by
+    walking the tree cannot be moved by `black`.
+    """
+    import ast
     import inspect
+    import textwrap
 
     from orchestrator.workflow._orchestrator import WorkflowOrchestrator
 
-    src = inspect.getsource(WorkflowOrchestrator._response_node)
-    block = src[src.index("reword_handover_phrasing(final_response)") - 200:]
-    assert 'get("grounded") is True' in block[:400]
+    src = textwrap.dedent(inspect.getsource(WorkflowOrchestrator._response_node))
+    return ast, ast.parse(src)
+
+
+def test_the_response_node_rewords_only_when_the_verifier_says_grounded():
+    ast, tree = _response_node_ast()
+
+    guards = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.IfExp)
+        and isinstance(node.body, ast.Call)
+        and ast.unparse(node.body.func) == "reword_handover_phrasing"
+    ]
+    assert guards, "_response_node no longer rewords the handover phrasing at all"
+    for guard in guards:
+        condition = ast.unparse(guard.test)
+        assert "grounded" in condition, (
+            "the reword is no longer gated on the verifier calling the answer grounded: "
+            + condition
+        )
 
 
 def test_a_whole_register_answer_is_exempt_from_the_pivot_marker():
     """BUG-564: the register narration's required 'what they do record' tripped the pivot guard."""
-    import inspect
+    ast, tree = _response_node_ast()
 
-    from orchestrator.workflow._orchestrator import WorkflowOrchestrator
+    def _clears_meta(node):
+        return any(
+            isinstance(stmt, ast.Assign)
+            and any(isinstance(t, ast.Name) and t.id == "_meta" for t in stmt.targets)
+            and isinstance(stmt.value, ast.Constant)
+            and stmt.value.value is None
+            for stmt in ast.walk(node)
+        )
 
-    src = inspect.getsource(WorkflowOrchestrator._response_node)
-    i = src.index("_meta = meta_answer_reason(final_response)")
-    block = src[i : i + 900]
-    assert '_sr.get("method") == "whole_register"' in block and "_meta = None" in block
+    exemptions = [
+        node
+        for node in ast.walk(tree)
+        if isinstance(node, ast.If)
+        and "whole_register" in ast.unparse(node.test)
+        and _clears_meta(node)
+    ]
+    assert (
+        exemptions
+    ), "no branch clears the pivot marker for a whole-register answer — BUG-564 is back"

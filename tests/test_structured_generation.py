@@ -246,7 +246,10 @@ def _set_flag(monkeypatch, value: bool):
     from shared.config import settings
 
     targets = [settings]
-    for name in ("orchestrator.agents.dialogue_agent", "orchestrator.services.deliberation.compiler"):
+    for name in (
+        "orchestrator.agents.dialogue_agent",
+        "orchestrator.services.deliberation.compiler",
+    ):
         module = importlib.import_module(name)
         held = getattr(module, "settings", None)
         if held is not None and all(held is not t for t in targets):
@@ -388,6 +391,10 @@ def test_a_schema_valid_payload_is_one_the_parser_accepts():
     from jsonschema import Draft202012Validator
 
     schema = compiler._cqir_schema()
+    # The two halves agreeing is the property; with no directions the loop asserts it over
+    # nothing (CAVEAT-1115). `_DIRECTIONS` is what the schema's enum is built from, so an
+    # empty set would also make the schema permit no direction at all.
+    assert compiler._DIRECTIONS, "compiler._DIRECTIONS is empty; no payload shape was compiled"
     for direction in sorted(compiler._DIRECTIONS):
         payload = {
             "decision": "list_matching",

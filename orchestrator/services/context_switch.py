@@ -37,8 +37,9 @@ is what makes the rare positive meaningful.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from orchestrator.services.referent_resolver import (
     KIND_FLOOR,
@@ -126,6 +127,115 @@ def prune_inherited(
     kept = {k: v for k, v in inherited.items() if k not in PLACE_BOUND_KEYS}
     dropped = [k for k in inherited if k in PLACE_BOUND_KEYS]
     return kept, dropped
+
+
+#: Place head-nouns, for rendering a bound referent the way the question wrote it. Generic
+#: English, never this building's vocabulary — a building that calls them "pods" still gets the
+#: bare identifier, which is honest, rather than a word invented for it.
+_PLACE_HEADS = ("room", "zone", "floor", "level", "storey", "space", "area", "wing", "lab")
+
+
+def assumed_place_note(original: str, rewritten: str) -> Optional[str]:
+    """One line naming the place a co-reference rewrite BOUND, when the user named none.
+
+    WHY DISCLOSE RATHER THAN CHOOSE BETTER (BUG-943). Measured live 2026-09-29: turn 1 said "I am
+    looking into air quality in room 5.01 specifically", six turns about floor temperatures
+    followed, and then "And what is the humidity in there right now?" was answered about FLOOR 1.
+    Floor 1 is a place the user named twice, so this is not a fabrication — BUG-940 fixed that —
+    and recency is a defensible reading of "there": a human asked the same sequence would very
+    likely answer about floor 1 too.
+
+    So the fix is not better ranking, which would be guessing more confidently. It is saying which
+    one was assumed. A wrong guess then costs the user one correction instead of a figure they
+    cannot see is wrong, and the reasoning is the project's own: the number is the same; the claim
+    it makes must not be.
+
+    Returns None — no note at all — in the three cases where a note would be noise: the user named
+    the place themselves (nothing was assumed), the rewrite bound no place (nothing to name), or no
+    deictic word can be found to quote back (nothing was resolved on their behalf).
+    """
+    if place_of(original or ""):
+        return None  # they named it; nothing was assumed on their behalf
+    bound = place_of(rewritten or "")
+    if bound is None:
+        return None  # no place was bound, so there is nothing to disclose
+
+    # Punctuation-insensitive, because it is what defeats this kind of match every time:
+    # " there " is not in " and there? ", so the note vanished on the commonest phrasing there
+    # is. The same shape cost a register its plurals (BUG-948) and made "pm2.5" unrecognisable
+    # as "pm25" (BUG-950).
+    low = " " + re.sub(r"[^a-z0-9]+", " ", (original or "").lower()).strip() + " "
+    word = next(
+        (
+            w
+            for w in ("there", "that", "those", "these", "them", "it", "the same")
+            if f" {w} " in low
+        ),
+        None,
+    )
+    if word is None:
+        return None  # nothing deictic to quote back; a note would read as a non-sequitur
+
+    token = bound.split(":", 1)[-1].replace("|", " ").strip()
+    # Render it as the REWRITE wrote it where possible — "room 5.01" reads, "5.01" does not — by
+    # looking for a place head-noun immediately before the identifier in the rewritten text.
+    shown = token
+    core = token.split()[-1] if token else ""
+    if core:
+        rl = (rewritten or "").lower()
+        at = rl.find(core)
+        if at > 0:
+            before = rl[:at].rstrip().split()
+            if before and before[-1] in _PLACE_HEADS:
+                shown = f"{before[-1]} {core}"
+    return f'Taking "{word}" as {shown}.'
+
+
+def rewrite_invents_a_place(latest: str, rewritten: str, user_texts: Sequence[str]) -> bool:
+    """True when the rewrite BINDS a place the user never named — so it must be refused.
+
+    `rewrite_is_safe` guards the case where the user named a place and the rewrite changed it.
+    This guards the case it explicitly does not cover, and which its own docstring calls "the
+    case the rewrite exists for": the user named NO place, so anything the rewrite chooses is
+    unopposed.
+
+    Measured live 2026-09-29 (BUG-940). An eight-turn conversation: turn 1 "I am looking into
+    air quality in room 5.01 specifically", six turns about floor temperatures, then "And what
+    is the humidity in THERE right now?". The rewrite produced:
+
+        "What is the current humidity in Telecommunications Room 1.34 on Floor 1?"
+
+    Room 1.34 appears in no message the user wrote. The prompt asks the model to resolve a
+    reference to "the concrete entity mentioned earlier", and the six messages it can see
+    include the ASSISTANT's own answers, which name dozens of rooms — so "there" bound to a
+    room from the previous answer rather than to the subject the user had declared. The reply
+    then reported room 1.34's humidity with a mean, a range and a timestamp, and no hedge;
+    room 5.01 has a humidity sensor of its own, so this was not an absence handled badly. The
+    building has 287 of them and one was chosen.
+
+    Nothing downstream can catch this. The rewrite REPLACES the user's message for
+    classification, entity extraction, SPARQL and the referent existence gate itself, so a
+    room that exists passes every check — the same laundering `rewrite_is_safe` was built for,
+    arriving through the door it leaves open.
+
+    THE RULE: a rewrite may bind only a referent the USER named, in this session, in their own
+    words. Not one an answer mentioned. `user_texts` is therefore the user's messages and the
+    session summary (itself built only from user questions), never the assistant's replies.
+    """
+    if place_of(latest or ""):
+        return False  # the user named one; `rewrite_is_safe` owns that case
+    added = place_of(rewritten or "")
+    if added is None:
+        return False  # nothing was bound, so nothing was invented
+    for text in user_texts:
+        if place_of(text or "") == added:
+            return False
+    # `place_of` returns ONE place per text, so a message naming two ("floor 3 and floor 4")
+    # would hide the second from the check above. Fall back to the token itself.
+    token = added.split(":", 1)[-1].replace("|", " ").strip()
+    if token and token in " ".join(t or "" for t in user_texts).lower():
+        return False
+    return True
 
 
 def rewrite_is_safe(latest: str, rewritten: str) -> bool:

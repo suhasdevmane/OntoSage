@@ -1218,6 +1218,119 @@ def _threshold_lines(rows, columns):
     return lines
 
 
+#: "a room for 12", "space for 12 people", "12 of us", "a team of 25", "seats at least 12".
+#:
+#: A SIZE IN A REQUEST IS A FLOOR, NOT AN EQUALITY (BUG-1399). Live, and the clearest wrong "no"
+#: this register lane has produced:
+#:
+#:     Q  "Find a room for 12 with a projector, free 2-4pm today, near the cafe."
+#:     A  "| Rooms that can seat 12 people | 0 |  ...  Because no workspace has a seat count of
+#:         12, there is no room that meets the capacity requirement."
+#:
+#: "no workspace has a seat count OF 12" was literally true -- the values are 6, 20, 22, 24, 26,
+#: 28, 30, 48 and none is exactly twelve -- and the conclusion drawn from it was false. EIGHTEEN
+#: of the twenty-eight seat 12 or more, three of them the very rooms the same answer had just
+#: named as having projectors (30, 25 and 25 seats).
+#:
+#: An exact seat count is a coincidence, so an equality reading returns nothing for almost any
+#: party size. The rows were in the prompt and the arithmetic was left to the narration, which is
+#: what this whole module exists to stop (BUG-581).
+_AT_LEAST_RE = re.compile(
+    # "for 12", "for a 12-person workshop", "capacity of 12", "a team of 25"
+    r"\b(?:for|seats?|seating|holds?|fits?|accommodates?|capacity\s+(?:of|for)|team\s+of|"
+    r"group\s+of|party\s+of)\s+(?:an?\s+)?"
+    r"(?:at\s+least\s+|about\s+|around\s+|up\s+to\s+|min(?:imum)?\s+)?"
+    # The negative lookahead is what keeps a TIME or a DURATION out: "free 2-4pm", "for 2
+    # hours", "for 3 days" must not be read as a party size, and `_DURATION_RE` in
+    # `register_projection` already owns the duration shape.
+    r"(\d{1,3})\b(?!\s*(?:am|pm|:|\.\d|%|°|hours?|hrs?|minutes?|mins?|days?|weeks?|months?"
+    r"|degrees?|deg\b|celsius|ppm|lux|db\b|kwh?\b))"
+    # MEASURED OVER THE 4,060-QUESTION BANK: 17 questions name a size (0.42%), and reading
+    # all seventeen found TWO false positives, both now excluded above and both real bank
+    # questions: "passes 200 PERSON-HOURS since last clean" (a unit, not a party) and
+    # "will hold 22 DEGREES and low noise" (a temperature). A unit after the number is the
+    # tell in both cases.
+    # THREE DIGITS, NOT FOUR, AND THE REASON IS A YEAR: `for 2026` was read as a party size
+    # of 2026 ("readings for 2026"). No room in a building's vocabulary seats a thousand, so
+    # the cap costs nothing real and excludes every four-digit year outright.
+    # "12 people", "12 of us", "a 12-person workshop"
+    r"|\b(\d{1,3})\s*[-\s]\s*person\b(?!\s*[-\s]?\s*hours?)"
+    r"|\b(\d{1,3})\s+(?:of\s+us|people|persons|staff|students|attendees|delegates|seats)\b",
+    re.IGNORECASE,
+)
+
+#: Columns whose VALUE is a number of people. Matched on the column's own words, never on a
+#: building's spelling of them, so a register that calls it `seatCount` and one that calls it
+#: `roomCapacity` are both read.
+_SIZE_WORDS = frozenset(
+    "seat seats seatcount capacity occupancy occupants people persons headcount size places".split()
+)
+
+
+def _at_least_lines(rows: List[Dict], columns: List[str], question: str) -> List[str]:
+    """How many records meet a size the question asks for, counted as a MINIMUM (BUG-1399).
+
+    Returns no line unless the question names a size AND the register holds a numeric column of
+    people. Silence is the right answer where either half is missing: a count against a floor
+    nobody asked for is noise, and inventing a capacity column is worse.
+    """
+    m = _AT_LEAST_RE.search(question or "")
+    if not m:
+        return []
+    try:
+        wanted = int(next(g for g in m.groups() if g))
+    except (StopIteration, TypeError, ValueError):
+        return []
+    if wanted <= 0 or wanted > 10000:
+        return []
+
+    out: List[str] = []
+    for col in columns:
+        # `[A-Za-z][a-z]+`, NOT `[A-Za-z]+`: the latter matches camelCase as a SINGLE token, so
+        # `roomCapacity` came back as {"roomcapacity"} and matched nothing while `seatCount`
+        # happened to match because "seatcount" was in the set. The module's other column
+        # matcher already splits it this way; using a second spelling is how two matchers for
+        # one judgement start to disagree (BUG-947).
+        col_words = {w.lower() for w in re.findall(r"[A-Za-z][a-z]+", col)}
+        if not (col_words & _SIZE_WORDS) and col.lower() not in _SIZE_WORDS:
+            continue
+        sized = []
+        for r in rows:
+            raw = _value(r, col)
+            try:
+                sized.append((float(raw), _ident(r)))
+            except (TypeError, ValueError):
+                continue
+        if not sized:
+            continue
+        meet = sorted((v for v in sized if v[0] >= wanted), reverse=True)
+        line = (
+            f"- THE SIZE IN THE QUESTION IS A MINIMUM, NOT AN EXACT VALUE. {len(meet)} of "
+            f"{len(sized)} records with a recorded {col} ({_plain(col)}) are {wanted} or MORE"
+        )
+        if meet:
+            named = ", ".join(
+                f"{who} ({int(v) if v == int(v) else v})" for v, who in meet[:MAX_IDS_LISTED]
+            )
+            line += f": {named}"
+            if len(meet) > MAX_IDS_LISTED:
+                line += f", and {len(meet) - MAX_IDS_LISTED} more"
+            line += (
+                f". A record of {int(max(v for v, _ in meet))} satisfies a request for {wanted}. "
+                f"NEVER say none meets it because no value equals {wanted} exactly, and never "
+                f"report a count of records whose {col} is exactly {wanted}."
+            )
+        else:
+            line += (
+                f". The largest recorded {col} is "
+                f"{int(max(v for v, _ in sized)) if sized else 0}, so none reaches {wanted} — "
+                f"say that, and say it as a shortfall against the largest, not as 'no record "
+                f"has {wanted}'."
+            )
+        out.append(line)
+    return out
+
+
 def register_facts(
     rows: List[Dict],
     question: str,
@@ -1299,6 +1412,8 @@ def register_facts(
         # Checked even when the column is filled everywhere: a present value can still SAY
         # there is none, which is the department case (BUG-613).
         lines.extend(_absence_lines(rows, col, question))
+
+    lines.extend(_at_least_lines(rows, columns, question))
 
     # A QUESTION ASKING WHICH RECORDS HAVE **NO** X (BUG-613). "Which departments have no
     # out-of-hours route?" was answered "every department has an out-of-hours route value

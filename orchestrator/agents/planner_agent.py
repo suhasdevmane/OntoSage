@@ -618,8 +618,26 @@ Rules:
             return result
 
         else:
-            logger.warning(f"[planner] Unknown agent type: {agent}")
-            return {"success": False, "error": f"Unknown agent: {agent}"}
+            # The `error` value is RENDERED TO THE READER, so it may not carry an internal
+            # lane name. Measured live 2026-09-30: "Can you tell me which areas are currently
+            # overcrowded?" produced a user-visible answer containing the literal line
+            # `Unknown agent: deliberate` above a dump of 354 spaces. `deliberate` is a real,
+            # declared intent (intent_definitions.yaml) — a multi-constraint space
+            # recommendation, which is exactly what that question is — but this dispatch has no
+            # branch for it, so a legitimate plan step fell through to a debug string.
+            #
+            # DELIBERATELY NOT ADDING A `deliberate` BRANCH HERE. Answering "which areas are
+            # overcrowded" needs occupancy against CAPACITY, and every capacity figure the
+            # building holds is stamped "estimated ... Not certified" while BUG-954 (P1, open)
+            # has the occupancy count wrong by ~190x. A ranking built on that is a
+            # safety-adjacent claim nobody made, and it is INVISIBLE where this failure is
+            # visible (BUG-1244 pins that decision). The fix here is the leak, not the lane.
+            logger.warning(f"[planner] Unknown agent type: {agent!r} — step cannot run")
+            return {
+                "success": False,
+                "error": "a step of this request could not be carried out",
+                "unrunnable_agent": agent,  # for the trace and the logs, never for the reader
+            }
 
     # ------------------------------------------------------------------
     # Result assembly

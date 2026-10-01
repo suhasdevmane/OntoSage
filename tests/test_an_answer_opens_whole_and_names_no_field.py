@@ -59,11 +59,33 @@ def test_each_orphan_opener_is_removed_when_a_sentence_was_removed(orphan):
 
 
 def test_when_nothing_of_substance_is_left_the_honest_decline_stands_in():
+    """The property is that an honest decline STANDS IN — not which of its spellings appears.
+
+    This asserted `"does not exist" in out or "I found nothing" in out`. The second spelling was
+    removed by BUG-1271: `absence_sentence` used to emit "I found nothing in <building>'s records
+    that answers that" on the branch reached when the SUBJECT could not be read from the
+    question, which is a claim about the world made where the code cannot know it. It now opens
+    "I couldn't tie that question to a reading…".
+
+    Asserting a disjunction of literals makes every wording change look like a behaviour
+    change (lessons #151, and #141 for why decline wordings are load-bearing). So assert the
+    property: whatever stands in must be a recognised honest decline, and the substance-free
+    fragment must be gone.
+    """
     out = aw.mend_opening(
         "They only record closures.", "Removed sentence. They only record closures.", Q
     )
-    assert "does not exist" in out or "I found nothing" in out
-    assert "They only" not in out
+    assert "They only" not in out, "the substance-free fragment survived"
+    assert out.strip(), "nothing stood in for it"
+    # one of the canonical honest openings — kept as a set so a new one is added HERE, once
+    assert any(
+        marker in out.lower()
+        for marker in (
+            "does not exist in this building",
+            "i couldn't tie that question to a reading",
+            "i couldn't put an answer together",
+        )
+    ), f"not a recognised honest decline: {out!r}"
 
 
 def test_a_strict_opener_is_an_orphan_even_when_nothing_was_removed():

@@ -96,6 +96,10 @@ def waste_series(waste_doc):
 
 
 def _roles(waste_doc):
+    # Every test in this file is a loop over this generator with all its assertions inside.
+    # An empty bin list makes each of them report that fill stays a percentage, that weight
+    # tracks fill, and that a collection empties a bin -- about no bin (CAVEAT-1115).
+    assert waste_doc["bins"], "the waste publish map declares no bins"
     for b in waste_doc["bins"]:
         yield b, b["roles"]["fill"]["uuid"], b["roles"]["weight"]["uuid"]
 
@@ -179,9 +183,9 @@ def test_weight_does_not_wander_while_a_bin_sits_still(waste_doc, waste_series):
         ]
         if steady:
             # A tenth of one percent of the bin's capacity is a generous noise floor.
-            assert max(steady) < cap * 0.02, (
-                f"{b['bin']}: weight moved {max(steady):.2f} kg while the fill did not"
-            )
+            assert (
+                max(steady) < cap * 0.02
+            ), f"{b['bin']}: weight moved {max(steady):.2f} kg while the fill did not"
 
 
 def test_an_empty_bin_still_weighs_something(waste_doc, waste_series):
@@ -202,9 +206,7 @@ def test_the_two_streams_do_not_share_one_density(waste_doc, waste_series):
     assert len(set(capacity.values())) > 1, "both streams share a capacity"
     per_stream = {}
     for b, fill_id, weight_id in _roles(waste_doc):
-        full = [
-            w for f, w in zip(waste_series[fill_id], waste_series[weight_id]) if f > 80.0
-        ]
+        full = [w for f, w in zip(waste_series[fill_id], waste_series[weight_id]) if f > 80.0]
         if full:
             per_stream.setdefault(b["stream"], []).append(max(full))
     if len(per_stream) > 1:

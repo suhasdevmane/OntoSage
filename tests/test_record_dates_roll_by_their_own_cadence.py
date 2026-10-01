@@ -109,6 +109,10 @@ def _refreshed_rows(tmp_path: Path, **kwargs) -> dict:
             continue
         cells = [c.strip() for c in line.strip().strip("|").split("|")]
         rows[cells[0]] = dict(zip(["code", "frequency", "last", "next", "status"], cells))
+    # A refresh that emitted no FX- row leaves "no completion is recorded in the future" true
+    # of no completion (CAVEAT-1115); the per-code lookups below would raise, but the loop
+    # over .items() would pass silently. The fixture writes four tasks.
+    assert len(rows) >= 4, f"the refreshed register carries only {len(rows)} rows: {sorted(rows)}"
     return rows
 
 

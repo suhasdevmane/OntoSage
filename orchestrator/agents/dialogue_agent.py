@@ -25,6 +25,89 @@ from shared.utils import describe_exception, generate_hash, get_logger
 
 logger = get_logger(__name__)
 
+#: Typographic forms folded before the classification decision is keyed. A browser sends a
+#: curly apostrophe where a CLI sends a straight one, and BUG-864 showed that difference alone
+#: changing a routing decision. Folding them means both spellings of one question reach the same
+#: cached decision instead of two separate LLM calls that may disagree.
+_KEY_FOLD = str.maketrans(
+    {
+        "‘": "'",
+        "’": "'",
+        "“": '"',
+        "”": '"',
+        "‐": "-",
+        "‑": "-",
+        "‒": "-",
+        "–": "-",
+        "—": "-",
+        " ": " ",
+        " ": " ",
+        " ": " ",
+    }
+)
+
+_CONTRACT_FP: Optional[str] = None
+
+
+def _routing_contract_fingerprint() -> str:
+    """A short hash of the routing contract's rule NAMES and ORDER.
+
+    The cached value is stored AFTER `apply_contract` has run over it, so a cached decision
+    embeds the contract that produced it. Change a rule and every cached decision is stale —
+    silently, and for the whole TTL. Putting the contract in the key retires the old decisions
+    the moment the contract changes, which is cheaper and safer than remembering to flush.
+    """
+    global _CONTRACT_FP
+    if _CONTRACT_FP is None:
+        try:
+            from orchestrator.services import routing_contract as _rc
+
+            names = [
+                r.name
+                for stage in (_rc.PARSE_STAGE_RULES, _rc.POST_STAGE_RULES, _rc.CONCEPT_STAGE_RULES)
+                for r in stage
+            ]
+            _CONTRACT_FP = generate_hash("|".join(names))[:10]
+        except Exception:  # pragma: no cover - a missing contract must not break classification
+            _CONTRACT_FP = "nocontract"
+    return _CONTRACT_FP
+
+
+def decision_cache_key(query: str, building_id: Optional[str], persona: Optional[str]) -> str:
+    """The key a classification DECISION is cached under (W6-01, BUG-889).
+
+    WHAT THIS REPLACED, AND WHY IT NEVER WORKED. The previous key was `hash(prompt)`, and the
+    prompt is built from the question PLUS the retrieved ontology context, the conversation
+    history and the memory context. All three vary per conversation, so the same question asked
+    in a new chat produced a different prompt, a different hash, a miss, and a fresh LLM call
+    free to classify differently. Measured over a full 51-question gate run on 2026-09-29: the
+    intent cache hit **0 times against 38 classification calls**. It was a prompt cache, and a
+    prompt cache cannot make routing deterministic.
+
+    WHAT IS IN THE KEY, AND WHY EACH ONE BELONGS:
+
+    * the **normalised query** — and it is safe to key on the question alone because
+      `rewrite_to_standalone` has already run and REPLACED `messages[-1].content` with a
+      self-contained query before classification (`_orchestrator.py` :1951 then :1996). The
+      conversation dependence is folded into the text by then.
+    * **building_id** — intents are per-building; bldg1 carries a `lab_booking` overlay that
+      another building does not have.
+    * **persona** — personas bias classification by design (core contract #5), so the same
+      question from a different persona may legitimately classify differently.
+    * the **routing-contract fingerprint** — see `_routing_contract_fingerprint`.
+
+    What is deliberately NOT in the key: ontology context, conversation history, memory context.
+    Those are the three that varied, and none of them should change what a self-contained
+    question MEANS.
+    """
+    q = str(query or "").translate(_KEY_FOLD)
+    q = re.sub(r"\s+", " ", q).strip().lower()
+    return (
+        f"cache:intent:{building_id or '-'}:{persona or '-'}:"
+        f"{_routing_contract_fingerprint()}:{generate_hash(q)}"
+    )
+
+
 #: BUG-557: conditions a SENSOR measures (thermal and air), as opposed to attributes a
 #: register records. Noise, light and daylight are deliberately absent: the workspace
 #: register records noise profile and daylight aspect.
@@ -660,10 +743,28 @@ class DialogueAgent:
         if history == "(No previous conversation)":
             return None
 
+        # W5-01: the rewrite's history is the last SIX messages — three turns. At turn 60 a
+        # reference back to turn 3 has nothing to resolve against, and the rewrite silently
+        # returns the deictic message unchanged. The rolling session summary is the only
+        # record of those turns that still exists, so it is offered here and only here: it
+        # names past SUBJECTS and carries no measurement (session_summary.py), and
+        # `rewrite_is_safe` below still refuses any rewrite that CHANGES a referent the user
+        # named — so a remembered room cannot displace the one in front of it.
+        session_recall = str(state.intermediate_results.get("session_summary") or "").strip()
+        recall_block = ""
+        if session_recall:
+            recall_block = (
+                "Subjects from earlier in this session, for resolving a reference that the "
+                "conversation above no longer shows. These are past questions, not data: "
+                "never use them to state a value, and never let them replace anything the "
+                f"latest message names.\n{session_recall}\n\n"
+            )
+
         prompt = (
             "You rewrite a user's latest message into a fully self-contained "
             "question for a smart-building assistant.\n\n"
             f"Conversation so far:\n{history}\n\n"
+            f"{recall_block}"
             f'Latest user message: "{latest}"\n\n'
             "Rewrite the latest message so it can be understood with NO prior "
             'context. Resolve references such as "there", "that", "it", '
@@ -698,11 +799,34 @@ class DialogueAgent:
         #
         # This only fires when the user named a place themselves. A follow-up that names
         # none is the case the rewrite exists for.
-        from orchestrator.services.context_switch import rewrite_is_safe
+        from orchestrator.services.context_switch import rewrite_invents_a_place, rewrite_is_safe
 
         if not rewrite_is_safe(latest, rewritten):
             logger.warning(
                 "[coref] rewrite REJECTED — it changed the referent the user named: " "%r -> %r",
+                latest,
+                rewritten,
+            )
+            return None
+
+        # ...AND IT MAY NOT INVENT ONE EITHER (BUG-940).
+        #
+        # `rewrite_is_safe` returns True whenever the user named no place, by design — that is
+        # the case the rewrite exists for. But it is also the case where the rewrite's choice
+        # is completely unopposed, and the model is shown the last six messages, half of which
+        # are the ASSISTANT's own answers naming dozens of rooms. Measured 2026-09-29: "what is
+        # the humidity in there right now?", six turns after the user said "room 5.01
+        # specifically", was rewritten to "Telecommunications Room 1.34 on Floor 1" — a room
+        # the user never mentioned — and answered with a mean, a range and no hedge.
+        #
+        # Only the USER's own words count as having named a place. The assistant's replies are
+        # excluded deliberately: they are where the invented referent came from.
+        _user_texts = [m.content for m in msgs if getattr(m, "role", "") == "user"]
+        if session_recall:
+            _user_texts.append(session_recall)
+        if rewrite_invents_a_place(latest, rewritten, _user_texts):
+            logger.warning(
+                "[coref] rewrite REJECTED — it bound a place the user never named: %r -> %r",
                 latest,
                 rewritten,
             )
@@ -881,25 +1005,26 @@ class DialogueAgent:
         from orchestrator.services.asset_state_service import (
             is_asset_state_question as _is_asset_state_question,
         )
-        from orchestrator.services.observability import (
-            is_observability_question as _is_observability_question,
-        )
         from orchestrator.services.emergency_procedure import (
             is_emergency_action_question as _is_emergency_action,
         )
         from orchestrator.services.guidance_shape import (
             is_general_guidance_question as _is_general_guidance,
         )
-        from orchestrator.services.routing_contract import _METROLOGY_RE, _READINESS_RE
-        from orchestrator.services.routing_contract import (
-            maintenance_record_question as _maintenance_record_question,
+        from orchestrator.services.observability import (
+            is_observability_question as _is_observability_question,
         )
+        from orchestrator.services.routing_contract import _METROLOGY_RE, _READINESS_RE
         from orchestrator.services.routing_contract import DELIBERATE_RE as _DELIB_RE
-        from orchestrator.services.scope_policy import out_of_scope_kind as _out_of_scope_kind
-        from orchestrator.services.routing_contract import events_question as _events_question
         from orchestrator.services.routing_contract import WAYFIND_RE as _WAYFIND_RE
         from orchestrator.services.routing_contract import (
             consumption_question as _consumption_question,
+        )
+        from orchestrator.services.routing_contract import (
+            events_question as _events_question,
+        )
+        from orchestrator.services.routing_contract import (
+            maintenance_record_question as _maintenance_record_question,
         )
         from orchestrator.services.routing_contract import (
             plant_point_question as _plant_point_question,
@@ -909,6 +1034,9 @@ class DialogueAgent:
         )
         from orchestrator.services.routing_contract import (
             report_request_about_data as _report_request_about_data,
+        )
+        from orchestrator.services.scope_policy import (
+            out_of_scope_kind as _out_of_scope_kind,
         )
         from orchestrator.services.semantic_router import (
             SemanticRouter as _SR,  # local import avoids cycle
@@ -1166,6 +1294,47 @@ class DialogueAgent:
                         "analytics": False,
                         "sparql_query": "",
                         "response": "",
+                        # WHY THIS IS RECORDED AND NOT ONLY LOGGED (BUG-1333, 2026-10-01).
+                        #
+                        # These facts are the building's OWN triples saying it holds the thing
+                        # asked about. Until today the count existed for exactly the length of the
+                        # log line above: measured live, "Is a Changing Places toilet available in
+                        # this building?" logged THIRTY matches — twelve of them accessible
+                        # gender-neutral toilets, one per end of each of floors 0-5 — and the very
+                        # next log line was
+                        #   [dialogue] HBCO concepts: ['empty_space']
+                        #   [routing-contract] capability_measurand_is_data: 'capability' →
+                        #     'sensor_data'
+                        # because `hbco:empty_space` declares the bare lay term "available". The
+                        # reader was then told "I couldn't tie that question to a reading I can
+                        # give you". Thirty graph facts resolved, logged, and discarded — lesson
+                        # #170 exactly, one layer up.
+                        #
+                        # So the count goes on the bus, where the concept-stage rule can see it.
+                        # A marker with no reader is not a disclosure (lesson #157), which is why
+                        # the reader is added in the same change: `_orchestrator` forwards it into
+                        # the concept-stage context and `_r_capability_measurand_is_data` consults
+                        # it. Labels are carried for the log and the tracker, never for matching.
+                        "capability_amenity_facts": len(_facts),
+                        # HOW MANY OF THOSE MATCHES THE QUESTION IS ACTUALLY ABOUT (BUG-1396).
+                        #
+                        # The count above says the building holds something whose vocabulary the
+                        # question touched. It does NOT say the question is about it: 'Working
+                        # Hours' matched the word "hours" inside "the next 12 hours", and the
+                        # stand-down that reads this count then kept a FORECAST question in the
+                        # capability lane, which declined it. Measured over the 4,060-question
+                        # bank: of the 2,022 questions that match an amenity and ask for no
+                        # value, only 30 have an amenity as their SUBJECT.
+                        #
+                        # Same function the capability lane applies to the same facts, so the two
+                        # stages cannot disagree (BUG-947's shape, avoided deliberately).
+                        "capability_amenity_subject": len(
+                            __import__(
+                                "orchestrator.services.capability_graph_resolver",
+                                fromlist=["subject_facts"],
+                            ).subject_facts(user_query, _facts)
+                        ),
+                        "capability_amenity_labels": [f.label for f in _facts[:8]],
                     }
                 # THE PROSE FALLBACK USED TO RETURN FROM HERE. It does not any more.
                 #
@@ -1195,6 +1364,41 @@ class DialogueAgent:
             except Exception as e:
                 logger.warning(f"[ttl-route] check failed (non-fatal): {e}")
 
+        # THE LOOKUP BELONGS WHERE ITS KEY IS COMPLETE, NOT WHERE ITS VALUE IS WANTED
+        # (BUG-921).
+        #
+        # The key depends on the question, the building and the persona — and on nothing
+        # below. It used to be computed AFTER a GraphDB RAG fetch, a conversation-
+        # summarisation LLM call and an 18k-character prompt build, all of which a hit then
+        # threw away. Measured 2026-09-29 on a question that hit the cache in all four
+        # rounds: dialogue stage 9.5 / 10.4 / 8.8 / 10.6 s, of which the RAG fetch alone is
+        # 4.27 s (862 triples retrieved, 30 context lines kept). BUG-889 made the cache work
+        # and thereby made this visible: a hit rate went from 0/38 to useful while the cost
+        # of a hit did not move at all.
+        #
+        # ONE SIDE EFFECT IS DELIBERATELY SKIPPED ON A HIT, and it is the reason this is not
+        # a trivial move: the block below also assigns `state.summary`, which
+        # `_orchestrator.py` reads when it builds its own history block. On a hit the summary
+        # is therefore one turn staler than it would have been. That is acceptable and this
+        # is why: a hit means this exact question, building and persona were classified
+        # before, `state.summary` is refreshed on the next miss, and W5-01's session summary
+        # now covers long-range recall on its own. It is NOT acceptable silently, hence this
+        # paragraph and the test that pins it.
+        _personas_list = list(getattr(state, "personas", []) or [])
+        if _personas_list:
+            _persona_label = "+".join(_personas_list[:3])
+        else:
+            _persona_label = getattr(state, "persona", "general") or "general"
+        # Keyed on the DECISION's inputs, not on the prompt — see `decision_cache_key` for
+        # why the prompt key hit 0 times in 38 calls (BUG-889, W6-01).
+        cache_key = decision_cache_key(
+            user_query, getattr(state, "building_id", None), _persona_label
+        )
+        cached_result = await redis_manager.get_cache(cache_key)
+        if cached_result:
+            logger.info(f"✅ Cache hit for intent detection: {cache_key.rsplit(':', 1)[-1]}")
+            return cached_result
+
         # Retrieve ontology context from RAG service
         logger.info("🔍 Retrieving ontology context from GraphDB RAG...")
         ontology_context = await self._retrieve_ontology_context(user_query, top_k=5)
@@ -1222,13 +1426,9 @@ class DialogueAgent:
         # Phase 10 — pass the conversation's building_id so the prompt scope
         # rule uses the right per-building name/timezone instead of the
         # process-global active building's settings.
-        # Phase 14A: if `state.personas` (list) is non-empty, pass it as a
-        # joined label so the prompt's persona hint reflects the blend.
-        _personas_list = list(getattr(state, "personas", []) or [])
-        if _personas_list:
-            _persona_label = "+".join(_personas_list[:3])
-        else:
-            _persona_label = getattr(state, "persona", "general") or "general"
+        # Phase 14A: `_persona_label` is computed ABOVE, beside the cache lookup, because the
+        # key needs it (BUG-921). It is a joined label when `state.personas` is non-empty, so
+        # the prompt's persona hint reflects the blend.
         prompt = self._build_intent_detection_prompt(
             user_query=user_query,
             ontology_context=ontology_context,
@@ -1237,15 +1437,6 @@ class DialogueAgent:
             memory_context=memory_context,
             building_id=getattr(state, "building_id", None),
         )
-
-        # Check cache
-        prompt_hash = generate_hash(prompt)
-        cache_key = f"cache:intent:{prompt_hash}"
-        cached_result = await redis_manager.get_cache(cache_key)
-
-        if cached_result:
-            logger.info(f"✅ Cache hit for intent detection: {prompt_hash}")
-            return cached_result
 
         # Call LLM to detect intent
         logger.info("🧠 Calling LLM for intent detection and query generation...")

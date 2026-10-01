@@ -66,7 +66,9 @@ def test_every_role_listed_in_a_tier_actually_holds_its_permission():
 
 def test_every_tier_permission_is_a_real_permission():
     """A typo here silently maps a tier to a permission nothing grants."""
-    for tier in all_tiers().values():
+    tiers = all_tiers()
+    assert tiers, "all_tiers() returned nothing, so 'every tier' checked no tier at all"
+    for tier in tiers.values():
         assert tier.requires_permission in ALL_PERMISSIONS, tier.requires_permission
 
 

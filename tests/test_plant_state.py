@@ -259,7 +259,12 @@ class TestPlantRouting:
         from orchestrator.services.routing_contract import _plant_measurand_re
 
         pattern = _plant_measurand_re().pattern
-        for mod in plant_modalities():
+        mods = plant_modalities()
+        # The portability claim is that a SEVENTH equipment-scoped modality is recognised
+        # without a code change. An empty vocabulary satisfies "every modality contributed to
+        # the pattern" while proving the opposite (CAVEAT-1115).
+        assert mods, "plant_modalities() is empty; no measurand was checked against the pattern"
+        for mod in mods:
             head = re.escape(mod.split("_")[0])
             assert head in pattern, f"{mod} contributed nothing to the pattern"
 
