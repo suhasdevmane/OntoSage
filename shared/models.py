@@ -7,7 +7,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Dict, List, Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # ==================== Message Models ====================
 
@@ -787,6 +787,27 @@ class Space(BaseModel):
         ..., description="Zone/room identifier, as the building's own model spells it"
     )
     label: str = Field(..., description="Human-readable label extracted from the floor plan")
+
+    @field_validator("label", "aliases", mode="before")
+    @classmethod
+    def _clean_drawing_markup(cls, v):
+        """A CAD formatting directive is not a room name (BUG-1407).
+
+        Applied on the MODEL rather than at the places that print a label, because the
+        manifests on disk already carry the codes — 26 of 354 spaces in this repository's
+        floor plans — and nothing stripped them on the way out. Every consumer validates
+        through here, so a new reader cannot reintroduce the leak.
+
+        `mode="before"` so it runs on the raw JSON value as the manifest is loaded.
+        """
+        from shared.utils import strip_drawing_markup
+
+        if isinstance(v, str):
+            return strip_drawing_markup(v)
+        if isinstance(v, list):
+            return [strip_drawing_markup(x) if isinstance(x, str) else x for x in v]
+        return v
+
     aliases: List[str] = Field(default_factory=list)
     type: SpaceType = Field(default="unknown")
     tags: List[str] = Field(default_factory=list)

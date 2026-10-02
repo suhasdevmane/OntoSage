@@ -81,7 +81,10 @@ _FACET_PATTERNS: List[Tuple[str, str]] = [
     ),
     (
         "type",
-        r"\bwhat (?:type|kind|sort) of building\b|\bis (?:this|it) a (?:commercial|residential|office|educational|industrial|retail|public)\b|\bbuilding type\b|\bwhat type residence\b|\bprimary function\b",
+        r"\bwhat (?:type|kind|sort) of building\b|\bis (?:this|it) a (?:commercial|residential|office|educational|industrial|retail|public)\b|\bbuilding type\b|\bwhat type residence\b|\bprimary function\b"
+        # BUG-1406: "What is the function of your building?" was answered from air-quality
+        # sensors; the building declares brick:buildingPrimaryFunction.
+        r"|\bfunction of (?:the|this|your|our) building\b|\bbuilding'?s? function\b",
     ),
     ("owner", r"\bwho owns\b|\bowner of\b|\bwho is the owner\b|\bowned by\b"),
     (
@@ -106,7 +109,7 @@ _FACET_PATTERNS: List[Tuple[str, str]] = [
     ),
     (
         "purpose",
-        r"\bwhat is (?:this|the) building for\b|\bpurpose of (?:this|the) building\b|\bwhat (?:is|are) (?:it|this) used for\b|\bwhat happens (?:here|in this building)\b",
+        r"\bwhat is (?:this|the|your) building (?:used )?for\b|\bpurpose of (?:this|the|your) building\b|\bbuilding'?s? purpose\b|\bwhat (?:is|are) (?:it|this) used for\b|\bwhat happens (?:here|in this building)\b",
     ),
     ("storeys", r"\bhow many (?:storeys|storys|stories)\b|\bnumber of storeys\b"),
     # A CAPACITY is a fact the building records about itself, not a count of who is inside now.

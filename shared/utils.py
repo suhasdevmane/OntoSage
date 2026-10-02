@@ -341,3 +341,44 @@ def describe_exception(exc: BaseException) -> str:
         # the original entirely. Caught by this function's own test.
         return f"{name} (unprintable)"
     return f"{name}: {text}" if text else f"{name} (no message)"
+
+
+def strip_drawing_markup(text: str) -> str:
+    """Drop AutoCAD MTEXT formatting codes from a label, keeping the words (BUG-1407).
+
+    THE DEFECT, live. "in this kitchen area, how much vampire power do appliances draw after
+    hours?" returned a spatial table whose Label column read, verbatim:
+
+        \pxqc;{\fArial|b0|i0|c0|p34;\H1.6x;0.16\P\H0.625x;Kitchen}
+
+    That is a CAD text-formatting directive — paragraph alignment, font, height multipliers —
+    presented to a reader as the name of a room. Measured across this building's floor-plan
+    manifests: **26 of 354 spaces** carry such codes in their stored label.
+
+    The DWG pipeline has always stripped these at ingest; the manifests on disk predate that or
+    were written by another path, and nothing stripped them on the way OUT. So this lives in
+    `shared` and is applied by the `Space` model itself, which every consumer goes through,
+    rather than at each of the places that happen to print a label today.
+
+    One definition, two readers: `dwg_pipeline` calls this too, so the ingest and the read can
+    never disagree about what a label is (the mistake BUG-947 and BUG-1396 both came down to).
+
+    Pure and building-agnostic: it knows the CAD grammar and nothing about any building.
+    """
+    s = str(text or "")
+    if "\\" not in s and "{" not in s:
+        return s.strip()
+    # Inline directives: \H1.6x; \fArial|b0|...; \pxqc; \W1.2; — a backslash, a letter, then
+    # everything up to the terminating semicolon.
+    # PARAGRAPH BREAKS FIRST, and the order matters. `\P` is itself "a backslash then a letter",
+    # so the directive pattern below swallows `\P\H0.625x;` whole and the words either side run
+    # together — measured: "0.18Boardroom" instead of "0.18 Boardroom".
+    s = re.sub(r"\\[PpNnLl](?![a-z0-9]*;)", " ", s)
+    s = re.sub(r"\\[A-Za-z][^;]*;", "", s)
+    # Any break the directive pattern left behind.
+    s = re.sub(r"\\[PpNnLl]", " ", s)
+    # Grouping braces carry no text of their own.
+    s = s.replace("{", "").replace("}", "")
+    # An escaped literal keeps its character.
+    s = re.sub(r"\\(.)", r"\1", s)
+    return re.sub(r"\s+", " ", s).strip()

@@ -67,7 +67,17 @@ def _routing_contract_fingerprint() -> str:
                 for stage in (_rc.PARSE_STAGE_RULES, _rc.POST_STAGE_RULES, _rc.CONCEPT_STAGE_RULES)
                 for r in stage
             ]
-            _CONTRACT_FP = generate_hash("|".join(names))[:10]
+            # CAVEAT-1413: names and order are not the contract. A rule's BODY or a keyword
+            # list it reads (BUILDING_INFO_KWS) changed on 2026-10-02 and every cached decision
+            # stayed valid for an hour across two restarts, so a routing fix proven offline was
+            # invisible live. The module's source is what the decision depended on; hash that.
+            import inspect as _inspect
+
+            try:
+                body = _inspect.getsource(_rc)
+            except Exception:  # pragma: no cover - a frozen or bytecode-only install
+                body = ""
+            _CONTRACT_FP = generate_hash("|".join(names) + "|" + body)[:10]
         except Exception:  # pragma: no cover - a missing contract must not break classification
             _CONTRACT_FP = "nocontract"
     return _CONTRACT_FP

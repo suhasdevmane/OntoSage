@@ -284,7 +284,9 @@ ontosage:WastePoint ontosage:layTerms "recycling point", "recycling points",
 ontosage:AccessibilityFeature ontosage:layTerms "hearing loops", "induction loop",
     "induction loops", "tactile paving", "changing places", "accessible toilet",
     "accessible toilets", "accessible wc", "disabled toilet", "disabled toilets",
-    "accessible parking", "disabled parking", "blue badge parking", "power assisted door",
+    "accessible parking", "disabled parking", "blue badge parking", "handicapped parking",
+    "handicap parking", "handicapped bays", "handicapped bay", "disabled bays", "disabled bay",
+    "accessible bays", "accessible bay", "power assisted door",
     "power-assisted door", "height adjustable desk", "adjustable desk" .
 
 # ── A.2 Knowledge topics (non-physical) ────────────────────────────────────────────────────────
@@ -2853,7 +2855,11 @@ ontosage:AssetStatus ontosage:layTerms "asset status", "equipment status",
 
 # NARROWED 2026-09-17: bare "closure"/"closures" (34 captures) was the closure of an ACTION, of
 # fieldwork or of evidence at least as often as a closed space. The named closures remain.
+# BUG-1406: a question about areas under maintenance restrictions was filed as a report;
+# the closures are recorded here.
 ontosage:ClosurePeriod ontosage:layTerms "closed period",
+    "maintenance restriction", "maintenance restrictions", "under maintenance",
+    "closed for maintenance", "out of action", "off limits",
     "closed periods", "shutdown", "out of use", "temporarily closed",
     "when does it reopen", "planned closure", "planned closures", "official closure",
     "temporary closure", "building closure", "room closure", "closure notice" .
@@ -3364,7 +3370,15 @@ ontosage:FireSafetyAsset ontosage:layTerms "fire door", "fire doors", "fire alar
     "fire stopping", "escape route", "escape routes", "means of escape", "fire precaution",
     "fire precautions", "emergency lighting", "fire safety asset" .
 
+# BUG-1406: a filter-maintenance question ranked only the cleaning tasks and denied filters;
+# the service frequency is recorded HERE.
 ontosage:ServiceSchedule ontosage:layTerms "service schedule", "service schedules",
+    "filter change", "filter changes", "filters changed", "filter replacement",
+    "filters cleaned", "filters maintained", "filter cleaning", "filter maintenance",
+    "how often are the filters", "how often are filters", "ahu filters", "air filters",
+    "service frequency", "service interval", "servicing frequency", "servicing interval",
+    "maintenance frequency", "maintenance interval", "how often is it serviced",
+    "how often are they serviced", "how often is it maintained", "how often are they maintained",
     "planned maintenance", "planned preventive maintenance", "ppm", "maintenance schedule",
     "next due", "last completed", "servicing schedule", "scheduled service",
     "when is it next serviced", "due for service",
@@ -3649,12 +3663,19 @@ ontosage:ContinuityProvision rdfs:subClassOf ontosage:Record ; a owl:Class ;
     # NARROWED 2026-09-17: bare "unavailable" (56 captures) and "resilience" (15) named a
     # continuity provision in about one question in eight — an unavailable DOOR or LIFT, a
     # platform that is down, "resilience value" in a space appraisal.
+# BUG-1406: a question about keeping the most important systems running found no register
+# while 12 of these records answer it. "resilience" and "redundancy" were measured and
+# rejected (20 compound stakeholder questions hijacked, 3 from CostLine, 1 from Contract).
 ontosage:ContinuityProvision ontosage:layTerms "continuity", "business continuity",
     "alternative location", "alternative site", "fallback location", "failover",
     "if unavailable", "if it is unavailable", "if it becomes unavailable", "resilient",
     "disaster recovery", "standby location", "backup location", "backup site",
     "operating capacity", "critical service", "critical services",
-    "displaced", "displacement" .
+    "displaced", "displacement",
+    "keep running", "keeps running", "stay running", "stays running", "keep operating",
+    "keeps operating", "essential systems", "important systems", "critical systems",
+    "priority services", "priority systems", "ride-through",
+    "ride through", "if the power fails", "if power fails", "in an outage", "during an outage" .
 
 ontosage:servesService a owl:DatatypeProperty ;
     rdfs:domain ontosage:ContinuityProvision ; rdfs:range xsd:string ;

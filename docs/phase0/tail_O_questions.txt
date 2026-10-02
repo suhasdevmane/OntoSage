@@ -1,0 +1,60 @@
+and how can i planted in the roof top
+Are there locations to get food in this Building?
+if you had a favorite room, which one would it be ?
+Does the building have any type of security cameras?
+what is the temperature in this room?
+Did you detect aby unusual activity today?
+are lights automatically adjusting properly to current conditions?
+what happens to parking lot security during a power failure?
+Does this building use a chiller or some other more sophisticated HVAC system? I'm concerned about high power use in winter and summer.
+Are there any areas currently under maintenance restrictions?
+Is it possible to set different detection thresholds for different chemicals you may want more accurate detection of?
+Do you like having people inside you?
+how do we prevent over heating
+Is there adequate handicapped parking?
+humidity safe
+Are all doors equipped with sensors?
+what role does mold play in indoor pollution?
+Which meeting room is available immediately?
+Can the energy meter keep notes about why we had spikes for future year reference?
+power saved?
+Are the doors locked
+what am i supposed to accomplish herh?
+How about hearing everything? Even when whispered to?
+are you religious?
+How does "Ozone" get inside a building if it’s usually in the atmosphere?
+Will this building help me save money or only saving cost for the company?
+What is the purity of the drinking water?
+what's the currents voltage and is it stable?
+Is there a warmer area than the lobby?
+Is this a gun-free site?
+IS THIS ROOM WARMER THAN THE OTHER ROOMS IN THE BUILDING ?
+Is any area overheating right now?
+can you turn off lights in rooms that are not being used?
+Which workspace has the best air circulation at the moment?
+Is my data safe?
+I want to know more about flow rate and how those sensors can be used to save residents' money.
+do you have to be very intelligent
+VOC detected?
+Do you adjust temperature based on how crowded it is?
+Are systems running efficiently?
+Can the lifts "learn" that the cafeteria floor is the priority destination at exactly 12:05 PM?
+What is the function of your building?
+Are there any free parking spots available right now?
+what kind of cement using for buidings?
+is the building currently using renewable energy
+how often are the filters cleaned and maintained?
+NO2 present?
+What jobs can you do?
+any movement?
+how does the building communicate with is owner?
+are the CO2 sensors forcing extra ventilation n raising energy use
+Can I program fresh air boosts on schedule?
+Room available now?
+How does the flow sensor know if a toilet is leaking or running to much, that is, how does it know for that particular toilet model, since it's not clear it has the model information?
+How many emergency fire pull stations are in your building?
+Is the people count used to monitor employee activity?
+How does it ensure that the most important systems keep running?
+in this kitchen area, how much vampire power do appliaces draw after hours?
+is there a way to compare different areas based on comfort and usage?
+how does indoor humidity vary across different floors?

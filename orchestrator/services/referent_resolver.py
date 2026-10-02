@@ -955,7 +955,13 @@ class ReferentResolver:
         # "which wing?" is a real question) is that the building has typed something as an AMENITY
         # of that kind (`ontosage:ParkingArea`): the graph itself says it offers this thing, and
         # the modifier is a way of asking for it, not a different place.
-        if head_exists and not exists and not numbered:
+        # BUG-1406: "cafeteria" appears in NO field of this building -- that is what a lay
+        # term is for -- and `ontosage:Cafe` declares it while the building holds a Cafe. The
+        # check used to require the head word to exist textually first, which no lay term
+        # can satisfy; the ontology's own statement of what a thing is called is enough.
+        # A measured QUANTITY is never an amenity, and the lay-term lookup is a REGEX scan the
+        # quantity path deliberately avoids for long words; it is skipped for that kind.
+        if not exists and not numbered and typed.kind != KIND_MEASURAND:
             try:
                 if await self._holds_amenity_kind(typed.head, namespace):
                     return ReferentResolution(status=SKIPPED, referent=typed.phrase)
@@ -993,8 +999,17 @@ class ReferentResolver:
             "  FILTER NOT EXISTS { VALUES ?root { o:Record o:IntervalRecord } "
             "?cls rdfs:subClassOf+ ?root }\n"
             '  FILTER(!REGEX(STR(?cls), "(Sensor|Meter|Detector|Point|Status)$"))\n'
-            '  BIND(LCASE(REPLACE(REPLACE(STR(?cls), "^.*#", ""), "([a-z])([A-Z])", "$1 $2")) AS ?w)\n'
-            f'  FILTER(REGEX(?w, "(^|[^a-z0-9]){word}s?([^a-z0-9]|$)"))\n'
+            "  {\n"
+            '    BIND(LCASE(REPLACE(REPLACE(STR(?cls), "^.*#", ""), "([a-z])([A-Z])", "$1 $2")) AS ?w)\n'
+            f'    FILTER(REGEX(?w, "(^|[^a-z0-9]){word}s?([^a-z0-9]|$)"))\n'
+            "  } UNION {\n"
+            # BUG-1406: "cafeteria" is a lay term the TBox declares on ontosage:Cafe, and the
+            # building holds a Cafe -- so the word is held even though no CLASS NAME says it.
+            # The class's layTerms (and an instance's own) are the ontology's statement of what
+            # the thing is called; matching them keeps the test on the schema, not on English.
+            "    { ?cls o:layTerms ?lay } UNION { ?s o:layTerms ?lay }\n"
+            f'    FILTER(REGEX(LCASE(STR(?lay)), "(^|[^a-z0-9]){word}s?([^a-z0-9]|$)"))\n'
+            "  }\n"
             "} LIMIT 1"
         )
         return len(_bindings(await self._exec(q))) > 0

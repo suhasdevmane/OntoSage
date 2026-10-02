@@ -1389,7 +1389,50 @@ def _grounded_evidence_behind(state) -> str:
     if isinstance(forecast, dict) and forecast.get("success") and forecast.get("forecast"):
         model = str(forecast.get("model") or forecast.get("model_name") or "a model")
         return f"a fitted {model} forecast over {len(forecast.get('forecast') or [])} steps"
+    # THE READING LANE WAS MISSED TOO (tail O re-ask, 2026-10-02). "Is any area overheating
+    # right now?" bound the 288 room-air temperature sensors, summarised them (max 25.9 degC)
+    # and was deleted as OFF_TOPIC because the summary "does not give a direct yes/no" -- an
+    # objection to the SHAPE of a grounded answer, and the decline that replaced it was untrue.
+    # The same turn had logged `rows visibly read this turn=288`; it is counted here.
+    # Narrow on purpose, because `tests/test_the_relevance_gate_gap_tail_n_measured.py` pins the
+    # measured reason the gate keeps its action on the data lanes (0 of 10 good answers replaced,
+    # 17 of 30 weird ones caught): only a yes/no THRESHOLD question about a measured quantity is
+    # protected -- the shape where a min/max summary IS the answer -- and never one that asks
+    # about CHANGE or a COMPARISON, because "has humidity changed?" answered with current values
+    # is off-topic and there the deletion protects the reader (BUG-1252). Measured over the
+    # 4,060 bank: the threshold shape matches 12 questions.
+    try:
+        question = str(getattr(state, "user_message", "") or "")
+        if _THRESHOLD_YESNO_RE.search(question) and not _CHANGE_OR_COMPARISON_RE.search(question):
+            read = _store_rows_read(state)
+            if read:
+                return f"readings from {read} bound sensors of the quantity asked for"
+    except Exception:  # pragma: no cover - evidence that cannot be counted is not claimed
+        pass
     return ""
+
+
+#: "Is any area overheating right now?", "humidity safe", "Are the CO2 levels normal?" -- a
+#: yes/no question whose answer is a reading against a limit.
+_THRESHOLD_YESNO_RE = re.compile(
+    r"^\s*(?:is|are)\s+(?:any|anything|anywhere|it|there|the|this|our|my|all|every|some|"
+    r"anyone)?\b[^?]{0,60}?\b(?:overheat\w*|too\s+(?:warm|hot|cold|cool|humid|dry|noisy|loud|"
+    r"stuffy|bright|dark|high|low)|safe|unsafe|ok|okay|fine|normal|acceptable|comfortable|"
+    r"within\s+(?:limits?|range|the\s+band)|above\s+(?:the\s+)?(?:limit|threshold)|"
+    r"below\s+(?:the\s+)?(?:limit|threshold)|at\s+risk|dangerous|healthy)\b[^?]*\??\s*$"
+    r"|^\s*\w+\s+safe\??\s*$",
+    re.IGNORECASE,
+)
+
+
+#: Questions whose answer must say how something MOVED or DIFFERS; a current-values answer to
+#: one of these is the gate's own correct catch (BUG-1252) and is not protected above.
+_CHANGE_OR_COMPARISON_RE = re.compile(
+    r"\b(?:chang\w*|compar\w*|than|versus|vs\.?|trend\w*|since|increas\w*|decreas\w*|"
+    r"differ\w*|improv\w*|worsen\w*|risen|rising|fallen|falling|earlier|before|yesterday|"
+    r"last\s+(?:week|month|year|night)|over\s+the\s+(?:last|past)|this\s+week\s+vs)\b",
+    re.IGNORECASE,
+)
 
 
 async def _relevance_gated(state, ctx, text: str) -> str:
@@ -5421,11 +5464,24 @@ SELECT ?l WHERE {
             # Fall back to any draft the classifier produced, else a graceful note. The draft came
             # from the model too, so it carries the same label.
             fallback = state.intermediate_results.get("general_knowledge_draft")
+            # SAY WHICH THING FAILED (CAVEAT-1409). "I wasn't able to generate an answer" is
+            # true whether the model is down or the question is simply unanswerable, and a
+            # reader cannot tell those apart — only the first is worth retrying. Measured on
+            # 2026-10-01: the local model server was killed mid-run, the breaker logged OPEN
+            # 134 times, and 14 of 60 answers carried this text with no hint of the cause.
+            from orchestrator.services.circuit_breaker import model_is_unavailable
+
             state.intermediate_results["dialogue_response"] = (
                 _gk.labelled(fallback)
                 if fallback
-                else "I wasn't able to generate an answer just now. Please try asking "
-                "again in a moment."
+                else (
+                    "The language model this assistant uses is not responding at the moment, "
+                    "so I can't write an answer. This is not a gap in the building's records — "
+                    "the same question should work once it is back. Please try again shortly."
+                    if model_is_unavailable()
+                    else "I wasn't able to generate an answer just now. Please try asking "
+                    "again in a moment."
+                )
             )
             state.intermediate_results["error"] = f"general_knowledge: {e}"
         return state
@@ -6391,7 +6447,14 @@ SELECT ?l WHERE {
                 truncation_note as _truncation_note,
             )
 
+            from orchestrator.services.disclosure_gate import gives_a_figure as _gives_a_figure
+
             _cap = _truncation_in(state.intermediate_results)
+            # BUG-1401: a turn that states NO figure has nothing for the note to qualify; on
+            # "there is no such sensor" it only implied that readings informed the absence.
+            if _cap and final_response and not _gives_a_figure(final_response):
+                logger.info("[response] capped fetch not disclosed: the answer states no figure")
+                _cap = None
             if _cap and final_response:
                 _cnote = _truncation_note(_cap)
                 # Guarded on the note's own text, so a lane that already carried it is not
@@ -6795,6 +6858,8 @@ SELECT ?l WHERE {
                 _reg = getattr(self, "datasource_registry", None)
                 _stores = state.intermediate_results.get("_prov_stores", [])
                 _tags = _prov.build_tags(_stores, _reg)
+                # BUG-1401: an answer that states no figure cites no reading source.
+                _tags = _prov.tags_for_answer(_tags, final_response)
                 if _tags:
                     state.intermediate_results["sources"] = _prov.tags_to_dicts(_tags)
                     final_response += _prov.render_chips(_tags)

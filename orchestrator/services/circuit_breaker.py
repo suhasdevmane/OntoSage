@@ -162,3 +162,33 @@ def all_breaker_statuses() -> list:
     """Return status dicts for every registered breaker (for health endpoint)."""
     with _registry_lock:
         return [b.status() for b in _breakers.values()]
+
+
+def model_is_unavailable() -> bool:
+    """True when the LLM breaker is tripped, i.e. the model — not the building — is the problem.
+
+    WHY A READER NEEDS THIS (CAVEAT-1409, measured 2026-10-01). The host killed the local model
+    server mid-measurement. The system behaved correctly: the breaker tripped, the lanes fell
+    back, and 14 of 60 answers came back as honest non-answers —
+
+        "I wasn't able to generate an answer just now. Please try asking again in a moment."
+        "Here are the readings themselves. The readings could not be summarised."
+
+    Every one of those is true. None of them says WHY, and from the answer alone "the model is
+    down" is indistinguishable from "the building cannot answer that". The breaker logged
+    `OPEN - the ollama provider has been unresponsive` 134 times while the reader was told
+    nothing. Only one of those two situations is worth retrying, and the reader is the one who
+    has to decide.
+
+    Reads the registry rather than taking a breaker as an argument, so a caller that has no
+    `llm_manager` to hand can still ask. Never raises: a fallback path must not fail while
+    explaining a failure.
+    """
+    try:
+        with _registry_lock:
+            breaker = _breakers.get("llm")
+        if breaker is None:
+            return False
+        return breaker.state is not CircuitState.CLOSED
+    except Exception:  # pragma: no cover - a status check may not break the answer
+        return False

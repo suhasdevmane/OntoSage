@@ -190,6 +190,23 @@ BUILDING_INFO_KWS = (
     "about the building",
     "tell me about this building",
     "what is this building",
+    # "What is the function of your building?" (tail O #42, BUG-1406) was read as a sensor
+    # question and answered from air-quality points. The building declares its primary
+    # function (brick:buildingPrimaryFunction) and the profile lane reads it.
+    "function of the building",
+    "function of this building",
+    "function of your building",
+    "purpose of the building",
+    "purpose of this building",
+    "purpose of your building",
+    "building's function",
+    "building's purpose",
+    "what is the building used for",
+    "what is this building used for",
+    "what is the building for",
+    "what is this building for",
+    "what type of building",
+    "what kind of building",
 )
 
 FORECAST_KWS = (
@@ -498,9 +515,22 @@ def _r_countable_metadata(c: _Ctx) -> Optional[str]:
         "general",
         "general_knowledge",
         "capability",
+        "metadata",  # only the type/purpose facet below acts on it; the census route is a no-op
     ):
         return None
-    return "metadata" if _is_countable_meta(c.ql) else None
+    if not _is_countable_meta(c.ql):
+        return None
+    # BUG-1406: "What is the function of your building?" is a building-identity question and
+    # was forced to metadata, whose SPARQL lane answered it from air-quality sensors. The
+    # profile answerer (brick:buildingPrimaryFunction) lives in the capability lane and runs
+    # first there. Only the type/purpose facets go that way: measured over the 4,060 bank, the
+    # whole-profile and owner facets match nine compound questions the register lane may own.
+    if _any(c.ql, BUILDING_INFO_KWS):
+        from orchestrator.services.building_profile import detect_facet
+
+        if detect_facet(c.query or "") in ("type", "purpose"):
+            return "capability"
+    return "metadata"
 
 
 def _r_room_count_is_spatial(c: _Ctx) -> Optional[str]:

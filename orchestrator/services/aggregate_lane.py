@@ -1443,6 +1443,49 @@ def _floor_sort(key: str) -> Tuple[int, str]:
     return (int(key), key) if key.lstrip("-").isdigit() else (10**9, key)
 
 
+def _measurand_classes(measurand: Optional[str]) -> List[str]:
+    """The Brick class local names the building's catalogue declares for ``measurand``."""
+    if not measurand:
+        return []
+    try:
+        from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+        wanted = {measurand.lower(), measurand.lower().replace(" ", "_")}
+        for spec in load_modalities(None):
+            if str(getattr(spec, "name", "")).lower() in wanted:
+                return [str(c) for c in (getattr(spec, "brick_classes", None) or [])]
+    except Exception:  # pragma: no cover - the config is optional
+        pass
+    return []
+
+
+def _floor_name(key: str) -> str:
+    """A floor key a reader can read: the local name of an IRI, never the IRI (BUG-1407).
+
+    Measured live. A temperature answer printed, in its table AND in its closing sentence:
+
+        | Floor http://<the building's namespace>#Rooftop | 50.6 | 7.2 | 71.0 | 8 |
+        Floor http://<the building's namespace>#Rooftop is the highest of the 7 floors
+
+    Most floors group under a bare number ("3"), so nobody saw this until a named location —
+    the rooftop plant area — became a group. The grouping KEY is left alone because sorting and
+    matching use it; only the rendering changes.
+
+    Building-agnostic: it splits on the IRI delimiters and never on a namespace, so it reads the
+    same for any building. `camelCase` and `snake_case` local names are spaced out, because
+    "Rooftop" is readable and "Plant_Room_2" is not.
+    """
+    text = str(key or "").strip()
+    if not text:
+        return text
+    if "://" in text or "#" in text:
+        text = re.split(r"[#/]", text)[-1] or text
+    text = text.replace("_", " ").strip()
+    # "RooftopPlant" -> "Rooftop Plant", leaving "3" and "Rooftop" untouched
+    text = re.sub(r"(?<=[a-z0-9])(?=[A-Z])", " ", text)
+    return text or str(key)
+
+
 def facts_from(
     uuids: Sequence[str], metadata: Dict[str, Dict[str, Any]], places: Dict[str, Place]
 ) -> Dict[str, Facts]:
@@ -1697,7 +1740,7 @@ def _n(x: Optional[float], digits: int = 0) -> str:
 
 def _place_name(group: str, key: str) -> str:
     if group == "floor":
-        return f"Floor {key}"
+        return f"Floor {_floor_name(key)}"
     return key
 
 
@@ -1915,7 +1958,7 @@ def render_exceedance(
             lines.append(
                 "By floor: "
                 + "; ".join(
-                    f"Floor {f.key} {f.exceed_readings:,}"
+                    f"Floor {_floor_name(f.key)} {f.exceed_readings:,}"
                     for f in sorted(per_floor, key=lambda f: _floor_sort(f.key))
                 )
                 + " readings above the limit."
@@ -2050,14 +2093,14 @@ def render_summary(
         lines.append("|---|---|---|---|---|")
         for g in sorted(ranked, key=lambda g: _floor_sort(g.key)):
             lines.append(
-                f"| Floor {g.key} | {_n(g.value, 1)} | {_n(g.low, 1)} | {_n(g.high, 1)} "
+                f"| Floor {_floor_name(g.key)} | {_n(g.value, 1)} | {_n(g.low, 1)} | {_n(g.high, 1)} "
                 f"| {g.sensors} |"
             )
         lines.append("")
         top = ranked[0]
         lines.append(
-            f"Floor {top.key} is the highest of the {len(ranked)} floors at {_n(top.value, 1)}{u}; "
-            f"Floor {ranked[-1].key} the lowest at {_n(ranked[-1].value, 1)}{u}."
+            f"Floor {_floor_name(top.key)} is the highest of the {len(ranked)} floors at {_n(top.value, 1)}{u}; "
+            f"Floor {_floor_name(ranked[-1].key)} the lowest at {_n(ranked[-1].value, 1)}{u}."
         )
     lines.append("")
     lines.append(
@@ -3017,18 +3060,43 @@ async def try_answer(
             )
 
             all_floors = parse_floors(await sparql_exec(build_floors_query()))
-            if intent.stat == "summary" and len(ranked) == 1 and len(all_floors) > 1:
+            # Which floors HOLD a sensor of this kind is the graph's fact, not the fetch's: a
+            # capped candidate list handed this lane 8 of 280 CO2 points on 2026-10-02 and the
+            # sentence below declared five floors sensorless. None when it cannot be read, and
+            # then nothing is claimed about sensors.
+            floors_with: Optional[List[str]] = None
+            try:
+                from orchestrator.services.aggregate_support import (
+                    build_floors_with_class_query,
+                )
+
+                _classes = _measurand_classes(measurand)
+                if _classes:
+                    floors_with = parse_floors(
+                        await sparql_exec(build_floors_with_class_query(_classes))
+                    )
+            except Exception as exc:  # pragma: no cover - then nothing is claimed about sensors
+                logger.debug(f"[aggregate] floors-with-sensor lookup skipped: {exc}")
+            present = [g.key for g in ranked]
+            if (
+                intent.stat == "summary"
+                and len(ranked) == 1
+                and len(all_floors) > 1
+                and floors_with is not None
+                and set(floors_with) <= {str(ranked[0].key)}
+            ):
                 # "No figure for Floor 0, 1, 2, 3 and 4" is true and reads like a fault. The
                 # building simply does not measure this quantity anywhere else, and that is a
-                # fact about the building rather than a gap in the answer.
+                # fact about the building rather than a gap in the answer -- said only when the
+                # graph agrees.
                 extra.append(
                     f"This building records {display_name(measurand)} on one floor only "
-                    f"(Floor {ranked[0].key}); the other {len(all_floors) - 1} floors have no "
+                    f"(Floor {_floor_name(ranked[0].key)}); the other {len(all_floors) - 1} floors have no "
                     "sensor of this kind."
                 )
             else:
                 note = missing_floors_note(
-                    all_floors, [g.key for g in ranked], display_name(measurand)
+                    all_floors, present, display_name(measurand), floors_with
                 )
                 if note:
                     extra.append(note)
@@ -3404,7 +3472,7 @@ async def _answer_energy(
         table = (
             "| Floor | Total |\n|---|---|\n"
             + "\n".join(
-                f"| Floor {g.key} | {_n(g.value)} {unit} |"
+                f"| Floor {_floor_name(g.key)} | {_n(g.value)} {unit} |"
                 for g in sorted(groups, key=lambda g: _floor_sort(g.key))
             )
             + "\n\n"

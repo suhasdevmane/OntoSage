@@ -122,6 +122,20 @@ _RETROSPECTIVE = re.compile(
     re.IGNORECASE,
 )
 
+#: A question about what the ASSISTANT said -- its previous answer, the evidence behind it, how
+#: it arrived at it (BUG-1397). "What is the evidence behind your answer about the coolest room?"
+#: asked with no prior turn routed to the diagnosis lane, which ran and produced nothing, on two
+#: asks of three. This conversation's own record is the one lane that can say whether there WAS
+#: an answer and quote the question it answered.
+_ABOUT_MY_ANSWER = re.compile(
+    r"\b(?:your|that|the\s+(?:previous|last|earlier))\s+(?:previous\s+|last\s+|earlier\s+)?"
+    r"(?:answer|response|reply|conclusion)s?\b"
+    r"|\bwhat\s+you\s+(?:just\s+)?(?:said|told\s+me|answered|replied)\b"
+    r"|\bhow\s+did\s+you\s+(?:get|arrive\s+at|come\s+up\s+with|work\s+out|calculate)\b"
+    r"|\bevidence\s+(?:behind|for)\s+(?:your|that|the\s+last)\b",
+    re.IGNORECASE,
+)
+
 #: The question must be a REQUEST TO RECALL, not a statement containing one. Without this,
 #: "I told you about room 5.01." — a declaration — would route here.
 _RECALL_REQUEST = re.compile(
@@ -325,6 +339,8 @@ def is_recall_question(query: str) -> bool:
     text = (query or "").strip()
     if not text:
         return False
+    if _ABOUT_MY_ANSWER.search(text) and _RECALL_REQUEST.search(text):
+        return True
     retro = _RETROSPECTIVE.search(text)
     if not retro:
         return False

@@ -283,15 +283,73 @@ def parse_floors(result: Dict[str, Any]) -> List[str]:
     return sorted(out, key=lambda v: (int(v), v))
 
 
-def missing_floors_note(all_floors: Sequence[str], present: Iterable[str], noun: str) -> str:
-    """One sentence naming the floors that have no figure, or "" when every floor has one."""
+def build_floors_with_class_query(classes: Sequence[str]) -> str:
+    """SPARQL: the floors (by number) that hold at least one point of any of ``classes``.
+
+    The point's floor is the fact the building STATES -- point -> space -> floor -- the same
+    path `scripts/floor_modality_matrix.py` reads. Class names are matched by local name, so
+    `CO2_Level_Sensor` finds the class whatever prefix the building's TTL gives it.
+    """
+    safe = [c for c in classes if re.fullmatch(r"[A-Za-z0-9_.\-]{1,80}", str(c or ""))]
+    values = " ".join(f'"{c}"' for c in safe) or '""'
+    return (
+        "PREFIX brick: <https://brickschema.org/schema/Brick#>\n"
+        "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
+        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+        "SELECT DISTINCT ?floorNum WHERE {\n"
+        f"  VALUES ?local {{ {values} }}\n"
+        "  ?p rdf:type/rdfs:subClassOf* ?cls .\n"
+        '  FILTER(STRENDS(STR(?cls), CONCAT("#", ?local)) || '
+        'STRENDS(STR(?cls), CONCAT("/", ?local)))\n'
+        "  ?p brick:hasLocation|brick:isPointOf|brick:isPartOf ?space .\n"
+        "  ?space brick:isPartOf* ?f .\n"
+        "  ?f a brick:Floor .\n"
+        '  BIND(REPLACE(STR(?f), "^.*[Ff]loor", "") AS ?floorNum)\n'
+        "} ORDER BY ?floorNum"
+    )
+
+
+def _join_floors(floors: Sequence[str]) -> str:
+    names = [f"Floor {f}" for f in floors]
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + f" and {names[-1]}"
+
+
+def missing_floors_note(
+    all_floors: Sequence[str],
+    present: Iterable[str],
+    noun: str,
+    floors_with_sensor: Optional[Sequence[str]] = None,
+) -> str:
+    """One sentence per kind of gap, or "" when every floor has a figure.
+
+    MEASURED 2026-10-02: "Are the CO2 levels normal?" was answered over 8 CO2 sensors fetched
+    through a 40-candidate template, and the lane wrote "the other 5 floors have no sensor of
+    this kind" -- while the graph holds 280 CO2 points across the floors. A floor's ABSENCE of a
+    sensor is a fact only the graph can state, so it is said only for floors
+    ``floors_with_sensor`` does not list; a floor that has sensors the fetch did not include is
+    said to have been NOT READ. With no graph answer at all (None), nothing is claimed about
+    sensors, only about figures.
+    """
     have = set(present)
     missing = [f for f in all_floors if f not in have]
     if not missing:
         return ""
-    names = [f"Floor {f}" for f in missing]
-    joined = names[0] if len(names) == 1 else ", ".join(names[:-1]) + f" and {names[-1]}"
-    return f"No figure for {joined}: none of the {noun} sensors matched there returned a reading."
+    if floors_with_sensor is None:
+        return f"No figure for {_join_floors(missing)} from this read."
+    with_sensor = set(floors_with_sensor)
+    none_there = [f for f in missing if f not in with_sensor]
+    not_read = [f for f in missing if f in with_sensor]
+    parts: List[str] = []
+    if none_there:
+        parts.append(
+            f"The building records no {noun} sensor on {_join_floors(none_there)}."
+        )
+    if not_read:
+        parts.append(
+            f"{_join_floors(not_read)} also record{'s' if len(not_read) == 1 else ''} {noun}, "
+            "but those sensors were not in this read."
+        )
+    return " ".join(parts)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

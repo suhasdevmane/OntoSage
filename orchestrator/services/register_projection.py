@@ -2255,7 +2255,9 @@ async def answer_before_narration(
         or deterministic_answer(
             rows, question, register_label, today, register_terms=register_terms
         )
-        or out_of_scope_decline(rows, question, register_label, today)
+        or out_of_scope_decline(
+            rows, question, register_label, today, register_terms=register_terms
+        )
     )
 
 
@@ -2328,6 +2330,7 @@ def out_of_scope_decline(
     question: str,
     register_label: str = "",
     today: Optional[date] = None,
+    register_terms: Sequence[str] = (),
 ) -> str:
     """One sentence naming the register searched and what it records, for a question it cannot answer.
 
@@ -2344,7 +2347,12 @@ def out_of_scope_decline(
     try:
         if not rows:
             return ""
-        res = resolve(rows, question, register_label, today)
+        # BUG-1406: "How does it ensure that the most important systems keep running?" reached
+        # ContinuityProvision THROUGH its lay terms ("important systems", "keep running") and
+        # was then declined with "nothing about ensure, important and running" -- the words that
+        # had selected the register counted as beyond it. `resolve` already discounts them when
+        # it is told the terms; this call simply was not.
+        res = resolve(rows, question, register_label, today, register_terms=register_terms)
         prep = res.prep or prepare(question)
         beyond = sorted(set(res.unanswered))
         # "not directly comparable" is a negation in the question's WORDS; with six or more words

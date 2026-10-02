@@ -529,6 +529,17 @@ Your Answer:"""
             #
             # Bounded by MAX_RECORD_ROWS: this is only correct while a register is small
             # enough to hand over whole, and a bigger one must fall back to querying.
+            # "How many kitchens are in the building?" (BUG-1410) resolved the entity
+            # "Kitchen" to the two waste-bin POINTS whose names carry the word and answered
+            # "two kitchens", while "Where is the kitchen?" had answered three from the room
+            # records a minute earlier. A count of instruments is not a count of the rooms
+            # they stand in (BUG-877B). The room records already answer the "which rooms /
+            # how many <kind>" shape one lane over; they are asked first. Measured over the
+            # 4,060-question bank: the lookup claims none of them, so this acts only on the
+            # plain shape it was written for.
+            rooms_of_kind = await self._rooms_of_kind(user_query)
+            if rooms_of_kind is not None:
+                return rooms_of_kind
             deterministic = await self._whole_register(state, user_query)
             if deterministic is not None:
                 return deterministic
@@ -1358,6 +1369,35 @@ Your Answer:"""
             "method": "instrument_metrology",
         }
 
+    async def _rooms_of_kind(self, user_query: str) -> Optional[Dict[str, Any]]:
+        """'Which rooms are kitchens' / 'how many kitchens': the graph's own room records.
+
+        None whenever the question names no room kind the graph types or labels, which is
+        the ordinary result and leaves the path exactly as it was (BUG-1410).
+        """
+        try:
+            from orchestrator.services.room_type_lookup import answer_live
+
+            text = await answer_live(user_query, only="rooms")
+        except Exception as exc:  # pragma: no cover - never block on this
+            logger.debug(f"[sparql] room records unavailable: {exc}")
+            return None
+        if not text:
+            return None
+        logger.info("[sparql] answered from the room records, not from points (BUG-1410)")
+        return {
+            "success": True,
+            "query": "",
+            "results": {"results": {"bindings": []}},
+            "error": None,
+            "formatted_response": text,
+            "standardized": {},
+            "context": [],
+            "analytics_required": False,
+            "llm_reasoning": "Deterministic room-records answer (BUG-1410)",
+            "method": "room_records",
+        }
+
     async def _whole_register(
         self, state: ConversationState, user_query: str
     ) -> Optional[Dict[str, Any]]:
@@ -1823,6 +1863,9 @@ Your Answer:"""
                 lambda cls: self._register_rows(cls, _build_for),
                 _bln0(getattr(state, "building_id", None)).date(),
                 bool(second_label) or len(_primary_rows) < record.instances,
+                # BUG-1406: the register's own lay terms, so a question that reached it
+                # through them is not declined for using them.
+                register_terms=tuple(getattr(record, "terms", ()) or ()),
             )
         except Exception as exc:  # pragma: no cover - the narration still answers
             logger.warning(f"[sparql] projected answer skipped: {type(exc).__name__}: {exc}")
@@ -1861,6 +1904,10 @@ Your Answer:"""
                 )
         except Exception as exc:  # pragma: no cover - the narration still answers
             logger.warning(f"[sparql] false-absence check skipped: {type(exc).__name__}: {exc}")
+        # BUG-1391: an order the rows do not hold is rendered as a list, never as arrows.
+        from orchestrator.services.register_facts import unsequence as _unsequence
+
+        _narration = _unsequence(_narration, _primary_rows, record.label or record.local_name)
 
         return {
             "success": True,

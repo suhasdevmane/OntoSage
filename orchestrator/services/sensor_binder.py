@@ -40,7 +40,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timedelta
 from typing import (
     Any,
@@ -124,6 +124,38 @@ def _local(iri: str) -> str:
 # ── data ─────────────────────────────────────────────────────────────────────────────
 
 
+#: Brick classes that measure a medium other than the air a room is in (BUG-1405).
+#:
+#: Standard Brick vocabulary, so this is building-agnostic by construction — nothing here names
+#: a building, a namespace or an instance, and the same eight-of-296 split would hold anywhere
+#: these classes are used. A quantity that declares one of these itself is exempt, so a future
+#: "boiler water temperature" modality reads its own points normally.
+#: The reader naming a medium other than room air, which lifts the guard (BUG-1405).
+#:
+#: "the heat pump water loop", "boiler flow temperature", "chilled water" — each is an explicit
+#: request for the thing the guard otherwise keeps out of an air mean. Deliberately requires the
+#: medium or the plant to be NAMED: "temperature" alone, which is the defect's question, matches
+#: nothing here.
+_FOREIGN_MEDIUM_ASK_RE = re.compile(
+    r"\b(?:water|boiler|chiller|chilled|heat\s*pump|flow\s+and\s+return|"
+    r"(?:entering|leaving|supply|return)\s+water|loop|condenser|calorifier|plant\s+room)\b",
+    re.IGNORECASE,
+)
+
+_FOREIGN_MEDIUM = frozenset(
+    {
+        "water_temperature_sensor",
+        "entering_water_temperature_sensor",
+        "leaving_water_temperature_sensor",
+        "hot_water_temperature_sensor",
+        "chilled_water_temperature_sensor",
+        "condenser_water_temperature_sensor",
+        "return_water_temperature_sensor",
+        "supply_water_temperature_sensor",
+    }
+)
+
+
 @dataclass(frozen=True)
 class QuantitySpec:
     """One measured quantity: Brick/OCBV class local names plus the modality's label filters."""
@@ -137,11 +169,39 @@ class QuantitySpec:
     #: be able to measure it. Only such a quantity can support "this place has no such sensor":
     #: an arbitrary concept class ("fire alarm", "lift") missing from a room is not an absence.
     catalogued: bool = True
+    #: True when the QUESTION named a medium other than room air ("the heat pump water loop",
+    #: "boiler flow temperature"). Lifts the foreign-medium guard, because a reader who asks for
+    #: water temperature should get water temperature (BUG-1405).
+    medium_named: bool = False
 
     def matches(self, class_locals: Iterable[str], text: str) -> bool:
         """True when a sensor with these classes and this name-text is this quantity."""
         wanted = {c.lower() for c in self.classes}
-        if not wanted & {str(c).lower() for c in class_locals}:
+        have = {str(c).lower() for c in class_locals}
+        if not wanted & have:
+            return False
+        # A DIFFERENT MEDIUM IS A DIFFERENT QUANTITY (BUG-1405).
+        #
+        # Brick puts `Water_Temperature_Sensor` under `Temperature_Sensor`, so a question about
+        # temperature bound this building's boiler, chiller and heat-pump water points along with
+        # its room air. Measured live, the answer to "Do you adjust temperature based on how
+        # crowded it is?" read:
+        #
+        #   "**Across the building temperature is averaging 27.6 °C**, ranging from 7.2 to 71.0 °C"
+        #   | Floor http://…#Rooftop | 50.6 | 7.2 | 71.0 | 8 |
+        #
+        # 71.0 °C is boiler LEAVING water and 7.2 °C is chilled water. Folding them into room air
+        # lifted the building mean from ~23.8 °C to 27.6 °C and presented plant water as a floor's
+        # temperature — BUG-521's shape, which averaged 900 ppm of CO2 with 21.5 °C.
+        #
+        # Keyed on the BRICK CLASS, not on this building's names, so it holds for any building:
+        # 8 of the 296 points a temperature question binds here carry one of these classes, and
+        # 288 do not. The rule is "do not mix media", not "never read water", so it stands down
+        # two ways: a quantity that DECLARES a water class reads its own points, and a question
+        # that NAMES the medium lifts it via `medium_named` — which is how
+        # "What is the current temperature of the heat pump water loop?" still binds both water
+        # points. That case has its own test and it failed this fix's first version, correctly.
+        if not self.medium_named and not (wanted & _FOREIGN_MEDIUM) and (have & _FOREIGN_MEDIUM):
             return False
         hay = (text or "").lower()
         if self.label_excludes and any(s.lower() in hay for s in self.label_excludes):
@@ -401,6 +461,11 @@ def detect_quantities(
         return []
     specs = _modalities(building_id)
     found: List[QuantitySpec] = []
+    #: Did the reader name a medium other than room air? Decided here, where the question is in
+    #: hand, and carried on the spec so `matches()` stays a pure function of classes and label
+    #: (BUG-1405). English words only, no building names — the litmus is that this line reads the
+    #: same for any building.
+    medium_named = bool(_FOREIGN_MEDIUM_ASK_RE.search(question or ""))
 
     for cm in concepts or []:
         if not isinstance(cm, dict):
@@ -408,21 +473,24 @@ def detect_quantities(
         classes = tuple(dict.fromkeys(_local(c) for c in (cm.get("brick_classes") or []) if c))
         if not classes:
             continue
-        home = next(
-            (s for s in specs if {c.lower() for c in classes} & _lower(s.brick_classes)), None
-        )
+        home = _home_modality(classes, specs)
         label = _pretty_modality(home.name) if home else _pretty_class(classes[0])
         found.append(
             QuantitySpec(
                 name=str(cm.get("concept_id") or label),
                 label=label,
                 classes=classes,
+                # The catalogue's own discriminators travel with the concept (BUG-1411): a
+                # concept whose classes the catalogue splits BY LABEL ("parking_free" is an
+                # Occupancy_Count_Sensor whose label says parking) would otherwise bind the
+                # whole superclass population -- 512 occupancy points for a parking question.
+                label_contains=_inherited_discriminator(classes, specs),
                 label_excludes=_sibling_excludes(home, specs) if home else (),
                 catalogued=home is not None,
             )
         )
     if found:
-        return _dedupe_specs(found)
+        return _stamp_medium(_dedupe_specs(_prefer_label_split(found)), medium_named)
 
     q = (question or "").lower()
     words = _modality_words(specs)
@@ -430,7 +498,83 @@ def detect_quantities(
     for name, ws in words.items():
         if any(re.search(r"(?<![a-z0-9])" + re.escape(w) + r"(?![a-z0-9])", q) for w in ws):
             found.append(_spec_from_modality(by_name[name], specs))
-    return _dedupe_specs(found)
+    return _stamp_medium(_dedupe_specs(found), medium_named)
+
+
+def _home_modality(classes: Sequence[str], specs: Sequence[Any]) -> Optional[Any]:
+    """The catalogue modality a concept's classes belong to: the one sharing MOST of them.
+
+    `next(... if overlap)` took the first modality in catalogue order, so a concept mapped to
+    {Occupancy_Count_Sensor, Parking_Occupancy_Sensor} was homed on plain occupancy (one class
+    in common) rather than on parking (both) -- and took on none of parking's label test.
+    A TIE falls to the modality WITHOUT a label discriminator: a concept that names only the
+    shared class ("how many people" -> Occupancy_Count_Sensor) is the generic quantity, and
+    homing it on the label-split sibling would hand a people question parking's label test.
+    """
+    wanted = {c.lower() for c in classes}
+    best, best_key = None, (0, 0)
+    for s in specs:
+        overlap = len(wanted & _lower(s.brick_classes))
+        key = (overlap, 0 if s.label_contains else 1)
+        if overlap and key > best_key:
+            best, best_key = s, key
+    return best
+
+
+def _inherited_discriminator(classes: Sequence[str], specs: Sequence[Any]) -> Tuple[str, ...]:
+    """The home modality's label discriminator, or () when the home is AMBIGUOUS.
+
+    `unexpected_open_window` maps to {Contact_Sensor, Open_Close_Status}; door_contact and
+    window_contact both own exactly those classes and are told apart only by label. Picking the
+    first would hand a WINDOW question the word "door". When more than one modality ties for the
+    home, no discriminator is inherited and the concept binds the whole class population, which
+    is what it did before BUG-1411 and is the honest reading of an ambiguous mapping.
+    """
+    home = _home_modality(classes, specs)
+    if home is None or not home.label_contains:
+        return ()
+    wanted = {c.lower() for c in classes}
+    overlap = len(wanted & _lower(home.brick_classes))
+    rivals = [
+        s
+        for s in specs
+        if s is not home and s.label_contains and len(wanted & _lower(s.brick_classes)) == overlap
+    ]
+    return () if rivals else tuple(home.label_contains)
+
+
+def _prefer_label_split(specs: List[QuantitySpec]) -> List[QuantitySpec]:
+    """Drop a generic spec when a LABEL-SPLIT sibling of it was asked for (BUG-1411).
+
+    "Are there any free parking spots available right now?" resolves two concepts: parking
+    availability (a label-split sibling of occupancy) and the bare "available", which the
+    HBCO maps to every occupancy class. Keeping both bound 512 occupancy points beside the one
+    parking point, and the narration answered the car park from two EV-charger status flags.
+    The catalogue's own structure decides: a spec that carries a label discriminator names the
+    specific thing the reader asked for, and a spec sharing one of its classes with NO
+    discriminator is that thing's whole superclass. A question about both (rare) would need to
+    name the generic one by a word of its own, which it still may: only specs that share a
+    class are affected.
+    """
+    specific = [s for s in specs if s.label_contains]
+    if not specific:
+        return specs
+    covered: Set[str] = set()
+    for s in specific:
+        covered |= _lower(s.classes)
+    return [s for s in specs if s.label_contains or not (_lower(s.classes) & covered)]
+
+
+def _stamp_medium(specs: List[QuantitySpec], medium_named: bool) -> List[QuantitySpec]:
+    """Carry the question's medium intent onto every spec, on ONE path (BUG-1405).
+
+    `QuantitySpec.matches()` is a pure function of a sensor's classes and label, which is what
+    makes it testable; the question is not in scope there. Stamping here, at the single exit of
+    `detect_quantities`, keeps it that way and means no future return path can forget it.
+    """
+    if not medium_named:
+        return specs
+    return [replace(s, medium_named=True) for s in specs]
 
 
 def _lower(items: Iterable[str]) -> Set[str]:
@@ -791,8 +935,7 @@ def _declared_sensors_query(scope_iri: str) -> str:
 
 def _zone_sensors_query(scope_iri: str) -> str:
     return (
-        _PREFIXES
-        + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?zone ?zlabel WHERE {\n"
+        _PREFIXES + "SELECT DISTINCT ?sensor ?label ?uuid ?storage ?cls ?zone ?zlabel WHERE {\n"
         f"  ?zone (brick:hasPart|brick:feeds) <{scope_iri}> .\n"
         "  ?zone rdf:type/rdfs:subClassOf* brick:Zone .\n"
         "  OPTIONAL { ?zone rdfs:label ?zlabel }\n"
@@ -1188,6 +1331,85 @@ def absence_text(binding: Binding) -> str:
 # ── the seam with the sparql lane ────────────────────────────────────────────────────
 
 
+#: A LABEL that names a medium other than room air. The same English words as the ask regex:
+#: a label such as "Gas Boiler 1 leaving water temperature" says what the point is in, and no
+#: building name is needed to read it.
+_FOREIGN_MEDIUM_LABEL_RE = re.compile(
+    r"\b(?:water|boiler|chiller|chilled|heat\s*pump|condenser|calorifier|flow\s+and\s+return|"
+    r"(?:entering|leaving|supply|return)\s+water)\b",
+    re.IGNORECASE,
+)
+
+
+def _row_names_foreign_medium(row: Dict[str, Any]) -> bool:
+    """True when the row is a WATER TEMPERATURE point: its class is one of the water
+    temperature classes, or its label or IRI local name says both a foreign medium and
+    "temperature". The entity-less template returns no label column, so the IRI's local name
+    (``Boiler_1_Entering_Water_Temperature``) is read too. Requiring "temperature" keeps a
+    water FLOW sensor out of this rule: for a flow question it is the thing asked for.
+    """
+    for name, cell in (row or {}).items():
+        val = str(cell.get("value") if isinstance(cell, dict) else cell or "")
+        if not val:
+            continue
+        low = name.lower()
+        if low in ("type", "cls", "class") and _local(val).lower() in _FOREIGN_MEDIUM:
+            return True
+        text = val if low in ("label", "name") else _local(val).replace("_", " ")
+        if (
+            low in ("label", "name", "sensor", "s", "point", "iri")
+            and "temperature" in text.lower()
+            and _FOREIGN_MEDIUM_LABEL_RE.search(text)
+        ):
+            return True
+    return False
+
+
+def drop_foreign_medium_rows(result: Dict[str, Any], question: str) -> Dict[str, Any]:
+    """The sparql result without rows for water or plant points, unless the question names
+    such a medium. Air rows are never touched; a result with no label column is returned as
+    it was. Never raises."""
+    try:
+        if _FOREIGN_MEDIUM_ASK_RE.search(question or ""):
+            return result
+        if not isinstance(result, dict):
+            return result
+        # The sparql lane returns {"results": <SPARQL document>}, so the bindings sit two
+        # levels down; a bare SPARQL document is accepted too.
+        envelope = result.get("results")
+        nested = isinstance(envelope, dict) and isinstance(envelope.get("results"), dict)
+        rows = _bindings(envelope) if nested else _bindings(result)
+        if not rows:
+            return result
+        kept = [r for r in rows if not _row_names_foreign_medium(r)]
+        dropped = len(rows) - len(kept)
+        if not dropped or not kept:
+            return result
+        out = dict(result)
+        if nested:
+            doc = dict(envelope)
+            inner = dict(doc.get("results") or {})
+            inner["bindings"] = kept
+            doc["results"] = inner
+            out["results"] = doc
+        else:
+            env = dict(envelope) if isinstance(envelope, dict) else {}
+            env["bindings"] = kept
+            out["results"] = env
+        std = out.get("standardized")
+        if isinstance(std, dict) and isinstance(std.get("results"), list):
+            std_rows = [r for r in std["results"] if not _row_names_foreign_medium(r)]
+            out["standardized"] = {**std, "results": std_rows}
+        logger.info(
+            f"[sensor_binder] dropped {dropped} water/plant point(s) from a {len(rows)}-row "
+            "result: the question names no medium other than room air (BUG-1405)"
+        )
+        return out
+    except Exception as exc:  # the seam must never cost the answer
+        logger.debug(f"[sensor_binder] medium row filter skipped: {exc}")
+        return result
+
+
 def _has_timeseries_ids(result: Dict[str, Any]) -> bool:
     """Did the retrieval return at least one timeseries id?"""
     uuid_re = re.compile(r"^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$", re.I)
@@ -1271,6 +1493,15 @@ async def apply_to_result(
     try:
         bus = state.intermediate_results
         intent = str(getattr(state, "current_intent", "") or bus.get("intent") or "")
+        if isinstance(result, dict):
+            # BUG-1405, the half the binder could not reach: a concept that resolves to the
+            # broad class (`setpoint_recommendation` -> Temperature_Sensor) fetches every
+            # subclass instance directly, water included, on ANY lane -- the recommend lane
+            # answered "averaging 25.8 degC, ranging from 6.4 to 71.7" over 296 sensors on
+            # 2026-10-02 while the binder's own exclusion sat unused because `recommend` is
+            # not a binder intent. The rows are filtered here, before the intent gate, so the
+            # rule holds wherever a sparql result goes.
+            result = drop_foreign_medium_rows(result, question)
         if intent not in BINDER_INTENTS or not isinstance(result, dict):
             return result
         if result.get("method") in _DETERMINISTIC_METHODS:
