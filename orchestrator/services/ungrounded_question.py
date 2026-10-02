@@ -60,8 +60,7 @@ _GROUNDING_RE = re.compile(
     r"past\s+\d+|recent(?:ly)?|lately|so\s+far|next\s+(?:week|month|year)|\d{1,2}\s?(?:am|pm)|"
     r"(?:mon|tues|wednes|thurs|fri|satur|sun)day)\b"
     # a NAMED place
-    r"|\b(?:room|rm|floor|level|zone|storey|wing|block)\s*[\d.]+"
-    r"|\b\d{1,2}\.\d{1,3}\b"
+    r"|\b(?:room|rm|floor|level|zone|storey|wing|block)\s*[\d.]+" r"|\b\d{1,2}\.\d{1,3}\b"
     # this / our building, or "here"
     r"|\b(?:this|our)\s+(?:building|site|campus|estate|atrium|library|canteen|reception|roof|"
     r"basement|car\s+park|floors?|rooms?|spaces?|zones?)\b"
@@ -212,6 +211,45 @@ def requirements_question(question: str) -> bool:
     return bool(REQUIREMENTS_RE.search(q)) and not has_grounding(q) and not _DATA_WORDS_RE.search(q)
 
 
+#: "How does the building prevent overheating?", "how are water leaks detected?", "what systems
+#: are in place to keep the server room cool?", "are lights automatically adjusting?" -- a question
+#: about HOW a thing is done. The answer is a procedure, a regime or a topic the building wrote
+#: down; a table of readings is the right subject and the wrong kind of answer. MEASURED
+#: 2026-10-02: 11 of the 4,060 bank questions, 3 of tail O, 8 of tail P -- and 8 of tail P's 14
+#: WEIRD answers were this shape answered by the reading lane.
+_MECHANISM_RE = re.compile(
+    r"^\s*(?:"
+    r"how\s+(?:does|do|is|are|would|will|can|could)\s+(?:the\s+|this\s+|your\s+|our\s+|it\s+)?"
+    r"(?:building|system|it|you|we|they|[a-z]+\s+(?:sensors?|system|units?))?\b[^?]{0,80}?"
+    r"\b(?:manag\w*|control\w*|detect\w*|monitor\w*|kept|keep\w*|maintain\w*|prevent\w*|"
+    r"ensur\w*|handl\w*|regulat\w*|respond\w*|react\w*|adjust\w*|know\w*|decide\w*|protect\w*|"
+    r"work\w*|operat\w*|track\w*|measur\w*|cope\w*|deal\w*)\b"
+    r"|what\s+(?:does|do)\s+(?:the\s+)?(?:building|system|ai|it)\s+do\s+(?:if|when|to|about)"
+    r"|what\s+happens\s+(?:if|when)"
+    r"|can\s+(?:you|the\s+building|the\s+system|it)\s+(?:keep|maintain|control|regulate)\b"
+    r")"
+    r"|\bwhat\s+(?:systems?|measures?|mechanisms?|controls?|provisions?)\s+(?:are|is)\s+in\s+place\b"
+    r"|\b(?:are|is|do|does)\b[^?]{0,40}\bautomatically\b"
+    r"|\bwhere\s+does\b[^?]{0,40}\bcome\s+from\b",
+    re.IGNORECASE,
+)
+#: A mechanism question that ALSO asks for a present value keeps the data lane: "how is the
+#: temperature controlled and what is it right now?" wants the reading too.
+_MECHANISM_VALUE_RE = re.compile(
+    r"\b(?:right\s+now|currently|at\s+the\s+moment|today|this\s+(?:week|month)|yesterday|"
+    r"how\s+(?:much|many|hot|cold|warm|high|low|busy)|what\s+is\s+the\s+(?:current|latest|"
+    r"average|mean|max|min)|reading|value|level\s+(?:is|of)|trend\w*|compare\w*)\b",
+    re.IGNORECASE,
+)
+
+
+def mechanism_question(question: str) -> bool:
+    """True when the question asks HOW something is done, managed or detected (a procedure,
+    regime or topic), and not for a present value."""
+    q = question or ""
+    return bool(_MECHANISM_RE.search(q)) and not _MECHANISM_VALUE_RE.search(q)
+
+
 def handoff(question: str) -> Optional[str]:
     """The lane a fetch-bound question should go to instead, or None when the fetch may keep it.
 
@@ -221,6 +259,8 @@ def handoff(question: str) -> Optional[str]:
     """
     if suitable_space_question(question):
         return "metadata"
+    if mechanism_question(question):
+        return "capability"
     if design_standard_question(question):
         return "capability"
     if requirements_question(question) or adequacy_question(question):

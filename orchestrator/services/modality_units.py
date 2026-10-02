@@ -192,6 +192,13 @@ def unit_for_sensor(
         logger.debug(f"[modality_units] modality config unavailable: {exc}")
         specs = []
 
+    # The MOST SPECIFIC matching modality names the unit (CAVEAT-1412). `parking_free`
+    # declares "bays" and shares Occupancy_Count_Sensor with `occupancy`, which declares
+    # "persons" and is listed first; taking the first match narrated a bay count as
+    # "2.78 people". A spec that discriminates by label is the specific one, so a match
+    # with a label discriminator outranks a match without -- the same rule the binder
+    # applies when it homes a concept (BUG-1411).
+    matched = []
     for spec in specs:
         # Same class+label discrimination the auditor uses. Matching on class
         # alone would give every Particulate_Matter_Sensor whichever of PM1,
@@ -200,9 +207,11 @@ def unit_for_sensor(
             if spec.matches(local, text):
                 unit = display_unit((spec.sat or {}).get("unit"))
                 if unit:
-                    return unit
+                    matched.append((1 if getattr(spec, "label_contains", None) else 0, unit))
         except Exception:  # pragma: no cover — a malformed spec must not break an answer
             continue
+    if matched:
+        return max(matched, key=lambda m: m[0])[1]
     return _ontology_unit(local)
 
 

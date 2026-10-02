@@ -127,6 +127,37 @@ def build_tags(store_keys: List[str], registry: Optional[Any]) -> List[Provenanc
     return tags
 
 
+#: Stores whose tag says "readings were used". A decline that states no figure did not use
+#: them, whatever it fetched, so they are not cited on it (BUG-1401, the Sources half).
+_READING_STORES = ("mysql", "postgres", "timescale", "cassandra", "influx", "mongo", "compute")
+
+
+def is_reading_source(tag: ProvenanceTag) -> bool:
+    """True for a time-series or analytics source, False for the model and the documents."""
+    store = (tag.store or "").lower()
+    return tag.source_id in ("live_sensors", "analytics") or store.startswith(_READING_STORES)
+
+
+def tags_for_answer(tags: List[ProvenanceTag], answer: str) -> List[ProvenanceTag]:
+    """The tags an answer may cite: all of them when it states a figure, else only the
+    non-reading ones.
+
+    MEASURED 2026-10-02 over 2,554 stored answers: 322 cite a sensing or metering system and
+    12 of those state no figure -- every one a decline ("no purity measurement is
+    available", "the data only includes energy consumption; power factor is not present").
+    Listing `Occupancy Sensing System` under such an answer tells the reader that readings
+    informed a conclusion drawn from their absence.
+    """
+    try:
+        from orchestrator.services.disclosure_gate import gives_a_figure
+
+        if gives_a_figure(answer or ""):
+            return list(tags)
+        return [t for t in tags if not is_reading_source(t)]
+    except Exception:  # pragma: no cover - provenance must never cost the answer
+        return list(tags)
+
+
 def render_chips(tags: List[ProvenanceTag]) -> str:
     """Markdown footer listing sources (text fallback; the GUI uses the color hex).
 

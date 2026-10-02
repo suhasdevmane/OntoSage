@@ -27,6 +27,92 @@ approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
+- **LATEST (2026-10-02 morning, the "complete what remains for an open invite" round) — SUITE
+  14,054 pass / 0 fail / 76 skip / 3 xfail (17m52s). GATE 51/51 (one run read 50/51 on case #70,
+  a correct decline the classifier misread; the cause — the SQL lane appending the sampling note
+  to its own prose — is fixed and the case passes the classifier too). Tracker 1,119 rows,
+  CRLF 222. **PARKED SUITE — the commit gate — 13,947 pass / 0 fail / 184 skip / 3 xfail, exit 0**, measured in the parked state before this commit. Nothing committed — awaiting the owner's push approval.**
+  **THE READINESS NUMBER: tail Q, 60 never-asked questions (zero overlap with O/P), read
+  41/60 = 68.3% acceptable, FABRICATED 0** (`docs/phase0/tail_Q_2026-10-02_read.md`); tail P on
+  the previous build 65.0%. **Six independent unseen sets now carry zero fabricated figures.**
+  31 of tail Q's 60 are honest declines of things the building cannot know; 7 are false declines;
+  12 WEIRD, of which three are NEW shapes with rows: questions routed to `control` and refused as
+  commands (BUG-1417), **a question filed as a maintenance TICKET** (BUG-1418 — testers will leave
+  REP-* rows), and "nearest bathroom" answered from an ASSUMED location (BUG-1419).
+  **FIXED AND VERIFIED LIVE: BUG-1415 (P1)** — *"how does the building do X"* is a MECHANISM
+  question (`ungrounded_question.mechanism_question`, 12 of 4,060 bank matches) handed to the
+  capability lane, and `topic_is_the_subject` discounts the mechanism frame words for that shape
+  only; 7 of 10 such questions now answer from the Lighting topic, the HVAC regime (REG-008 car
+  park ventilation) or the continuity register, 3 decline honestly instead of inventing a
+  procedure. **BUG-1397** — a question about the ASSISTANT'S previous answer is a session-recall
+  question (4 bank moves; "can I see the last RESULT" measured as a data question and excluded).
+  **BUG-1401** both halves.
+  **QA ACCESS SETTING (owner decision, NOTE-1416):** `input/role_datasource_access.yaml` now
+  grants every role every data source; the per-role lists are kept in its header comment and
+  must be restored before any non-trial deployment. The 60 accounts are in the gitignored
+  `user_credentials_bldg1.csv`; an unregistered Open WebUI email still chats as `readonly`
+  (RBAC unchanged: readonly cannot control or create alerts, which is right). Verified: viewer01
+  (readonly) answered "How many people are inside right now?" from the six floor counters.
+  **Concurrency is deliberately NOT addressed** (owner: one user at a time): `OLLAMA_NUM_PARALLEL=1`,
+  so two testers asking at once queue; p50 22 s, p90 ~50 s, 3 of 51 over a minute.
+- **LATEST (2026-10-02, overnight autonomous round; NOTHING committed — the user said "don't park,
+  commit, push yet") — SUITE **14,024 pass / 0 fail / 76 skip / 3 xfail (15m52s)**, measured LAST, after every change below (13,805 at the start of the round; +219 = 16 new test files; one tracked test's assertion updated on evidence, with its reason in the file), bldg1 ACTIVE. GATE **51/51 twice tonight, alone** (median 24.4 s then 23.2 s, max ~104 s, ~24 min, memory ~1.0 GiB flat over 47 and 52 samples). Tracker 1,114 rows, 0 malformed,
+  CRLF 222, 12 open P1 (10 are the grader CAVEATs; BUG-785 and BUG-787 the product ones).
+  16 new test files, lessons #184–#186.**
+  **THE TWO NUMBERS, AND WHICH ONE TO QUOTE.** Tail O (same 60 / reader / identity / endpoint) read
+  **60.0% → 70.0% → 85.0%** acceptable across the three builds, false declines **11 → 11 → 4**,
+  FABRICATED 0 throughout (`docs/phase0/tail_O_2026-10-02_read.md`). It has been fixed against
+  three times and is TUNED-ON. **Tail P — 60 questions never asked before** (`draw_tail.py --name P
+  --seed 20261002`, sha `d0c47eb6…`) — read **39/60 = 65.0%** on the same build: GOOD 13,
+  DECLINE-OK 26, DECLINE-BAD 7, WEIRD 14, FABRICATED 0 (`tail_P_2026-10-02_read.md`). **Quote 65%.**
+  Zero fabricated figures now holds across FIVE independent sets of ~60 unseen real questions.
+  **Verdict unchanged in kind: measurably better, not an open invitation.** One in three unseen
+  questions still gets a wrong-shape answer or a false refusal. The dominant WEIRD shape in tail P
+  (8 of 14) is a *"how does the building do X"* question answered by the reading lane with a table
+  of readings — a ROUTING class, and the next thing to work.
+  **FIXED AND VERIFIED LIVE, each keyed on a class or the catalogue's structure, no building words:**
+  BUG-1411 (a parking question binds the ONE parking point; a concept is homed on the modality
+  sharing MOST of its classes and inherits its label discriminator; a tie between two
+  discriminated siblings — door/window — inherits nothing); BUG-1391 (`unsequence`: arrows over
+  record ids are rendered as a list unless the rows carry an order field or link to each other;
+  live the question now declines honestly instead); BUG-1401 (no sampling note on a no-figure turn;
+  the Sources footer cites no reading source on one — measured 12 of 322, all declines); BUG-1410
+  (the metadata lane asks the room records before resolving a room kind to points: three kitchens);
+  BUG-1407 (a document never answers "are the doors locked" — `is_live_state_question`, 2 of 4,060
+  bank matches); **BUG-1406 six of eleven, each its own mechanism** — continuity (lay terms AND
+  the register decline now honours the terms that selected it, two call sites), filters (quarterly,
+  from ServiceSchedule), cafeteria (the referent gate reads a class's `layTerms` even when the word
+  is in no field), building function (vocabulary + facet + the override gate + a THIRD cache),
+  closures, parking; **BUG-1405 part 2** (water points dropped from every lane's result ROWS — the
+  binder's rule had only run on its population path; tail P found 71.7 °C in a `recommend`
+  aggregate the same night); **BUG-1414, P1** ("the other 5 floors have no sensor of this kind"
+  was computed from 8 of 280 CO2 points a 40-candidate template handed the lane — the sentence now
+  asks the GRAPH which floors hold the class and says "not in this read" for the rest);
+  CAVEAT-1412 (bays, not people: the label-discriminated modality names the unit); **CAVEAT-1413**
+  (`cache:intent:*` replays a stored classification and skips the parse-stage contract — the
+  fingerprint in the key hashed rule NAMES and ORDER only, so a changed rule BODY left every cached
+  decision valid for an hour across two restarts; it now hashes the module's SOURCE); BUG-1252
+  partial (the relevance gate may not delete a bound-readings answer to a yes/no THRESHOLD question
+  — 12 of 4,060 match the shape — while `test_the_relevance_gate_gap_tail_n_measured.py` stays
+  pinned for every other shape).
+  **MEASURED AND REJECTED, pinned in modules or rows:** "resilience"/"redundancy" as continuity lay
+  terms (25 bank moves, 20 hijacked, 3 from CostLine); `automation_capability` for "are lights
+  adjusting automatically" (would contradict the Lighting topic); a compare→trend rule (164 bank
+  matches by vocabulary, blast radius unmeasurable offline); the gate branch in its first wide form
+  (would have shipped the return-air case the gate caught correctly).
+  **FLUSH THREE CACHES, NOT TWO.** `resp_cache:*`, `cache:sparql*` AND `cache:intent:*` — the
+  third cost two restarts and three re-asks before the log line `Cache hit for intent detection`
+  was read. The fingerprint fix makes a RESTART retire routing decisions by itself; a change made
+  without a restart still needs the flush.
+  **FOUR OF MY OWN TOOLS WERE WRONG TONIGHT:** `gives_a_figure` called 29.81 and "13 persons" no
+  figure (a bare two-decimal room-id stripper, a date pattern with no month); a heredoc turned
+  `\b` into BACKSPACE bytes a THIRD time (write Python with the file tools, the rule has not
+  changed); `black tests/` reformatted 133 files I had not touched (reverted); and the row filter
+  took three attempts because the sparql lane returns `{"results": <SPARQL document>}` and the
+  entity-less template returns no `label` column. Lesson #186.
+  **NOT ACTED ON:** `docs/plan/see if this improves or not.md` is a supervisor-agent architecture
+  proposal (evolve LangGraph, add a capability catalog); it is a multi-week change and was read,
+  not started.
 - **LATEST (2026-10-01) — SUITE 13,805 pass / 0 fail / 76 skip / 3 xfail (15m39s), bldg1 ACTIVE,
   measured AFTER every change below. GATE 49/51 → 51/51 after the fix it found, then 50/51 whose
   ONE flagged case is a correct decline the harness misread (CAVEAT-1402), so **51/51 in
@@ -43,6 +129,53 @@ approval.**
   13,737/0 and 13,742/0. Do not quote the duration as a property — CAVEAT-500.)
   (An earlier run the same day gave 13,737/0 in 16m27s, before BUG-1396; the +5 is this round's
   new tests. Do not quote the duration as a property — CAVEAT-500.)
+  **FOURTH ROUND — THE FIRST VALID BEFORE/AFTER THIS PROJECT HAS, and the readiness verdict.**
+  Tail O re-asked after the round's fixes: **same 60 questions, same reader, same identity,
+  same endpoint, same labels — nothing differs but the build.** That is what makes it a trend
+  and why tail N vs tail O was NOT one (different sets AND different readers).
+  | label | before | after | delta |
+  |---|---|---|---|
+  | GOOD | 24 | 26 | +2 |
+  | DECLINE-OK | 12 | 16 | +4 |
+  | **DECLINE-BAD** | **11** | **11** | **0** |
+  | **WEIRD** | 13 | **7** | **−6** |
+  | **FABRICATED** | **0** | **0** | **0** |
+  | **ACCEPTABLE** | **60.0%** | **70.0%** | **+10.0 pp** |
+  7 moved in, 1 moved out, 44 unchanged. Both bases are second-pass; the AFTER run had **zero**
+  breaker-open lines, verified before and after (lesson #182).
+  **ONLY ABOUT THREE OF THE SEVEN GAINS ARE ATTRIBUTABLE TO THE FIXES** — the kitchen markup
+  (BUG-1407), water purity and temperature-by-crowding (BUG-1403/1405). Mould, movement, filters
+  and flow-sensor leak detection moved with nothing aimed at them: CAVEAT-891 variance, and it
+  cuts both ways.
+  **WHAT DID NOT MOVE IS THE NUMBER THAT MATTERS: false declines are FLAT at 11 of 60 (18.3%)
+  and are now the single dominant failure mode** (BUG-1406), six of them provable against the
+  graph.
+  **AND A NEW CONFIDENTLY-WRONG ANSWER APPEARED — BUG-1411 (P1), the worst shape there is:**
+  *"**There are no free parking spots available at the moment.** The latest readings from the EV
+  charger status sensors … show a value of 0 for each charger"* — a definite, actionable claim
+  about the car park from **two EV charger status points** whose unit the same answer admits is
+  unrecorded. On this question the previous pass was *less* harmful: it answered with
+  meeting-room bookings, which was useless and asserted nothing.
+  **THE VERDICT, and it is the one to quote: MEASURABLY BETTER, NOT READY FOR AN OPEN
+  INVITATION.** Three questions in ten still return something wrong or falsely refused, the
+  dominant failure did not budge, and the round introduced a confident falsehood. **Zero
+  fabricated figures now holds across four independent sets of ~60 unseen real questions**, which
+  is what makes a supervised trial defensible and an open one not.
+  Fixed and verified live this round: **BUG-1405 (P1)** — boiler, chiller and heat-pump WATER
+  temperatures (71.0 °C and 7.2 °C) were averaged with room air because Brick files
+  `Water_Temperature_Sensor` under `Temperature_Sensor`, putting the building at 27.6 °C against
+  ~23.8; now 288 sensors / 23.3 °C, and asking for "the heat pump water loop" still returns the
+  water (64.2 °C) because the rule is *do not MIX media*, not *never read water* — the first
+  version lacked that lift and an existing guard test caught it. **BUG-1407** (part) — a bare IRI
+  as a floor name at seven render sites, and raw AutoCAD MTEXT as a room label, which **26 of 354
+  spaces** carried; stripped on the `Space` MODEL so every consumer goes through it, with
+  `dwg_pipeline` delegating to the same function. **CAVEAT-1409** — a dead model now says
+  *"the language model … is not responding … This is not a gap in the building's records"*.
+  **MY DIAGNOSIS OF BUG-1405 WAS WRONG FIRST AND THE TRUTH WAS WORSE.** I logged "a headline
+  contradicting its own table"; my own dump had cut the answer at 330 characters and hidden a
+  SEVENTH row that supported the range exactly. **Fourth truncation-induced error in one
+  session** (lesson #183). New: BUG-1410 (three kitchens from the room records, two counted from
+  waste-bin sensor names, a minute apart).
   **THIRD ROUND — THE USER-PATH QUALITY NUMBER, hand-read. READ THIS BEFORE QUOTING ANY
   PERCENTAGE.** Tail O: 60 questions drawn from the real survey corpus
   (`scripts/draw_tail.py --name O --n 60 --seed 20261001`), **excluding all 1,352 questions that
@@ -1352,7 +1485,7 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
 - **SPARQL empty** → test GraphDB directly (`.claude/rules/sparql-patterns.md`); empty = ontology not loaded; results-but-empty = `sparql_agent._retrieve_context`.
 - **Floor plan empty / `area_m2=null`** → DWG pipeline off (`dwg2dxf`/libredwg missing → PDF-only); manifest `schema_version` should be "2.0"; reingest `POST /api/v1/floor-plans/reingest`.
 - **Capability not answering** → capabilities are triples now. SPARQL GraphDB: `SELECT ?a ?lay WHERE { { ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } ; ontosage:layTerms ?lay }` — empty = `<id>_capabilities.ttl` not loaded (check `ttl_uploader`). Match miss = the query's lay-term isn't in any `ontosage:layTerms`; add it via the admin Capabilities GUI. Prose manual not surfacing = document score below the 0.50 (local) honesty floor in `capability_agent._search_documents`.
-- **Stale answers after a code fix** → flush `resp_cache:*` in Redis (`redis-cli --scan --pattern "resp_cache:*" | xargs redis-cli del`) before re-testing. Real container name: `redis-memory-store` (not `ontosage-redis`).
+- **Stale answers after a code fix** → flush ALL THREE caches in Redis before re-testing: `resp_cache:*` (answers), `cache:sparql*` (rows) and `cache:intent:*` (the ROUTING DECISION — it replays a stored classification and skips the parse-stage contract, CAVEAT-1413): `for p in "resp_cache:*" "cache:sparql*" "cache:intent:*"; do redis-cli --scan --pattern "$p" | xargs -r redis-cli DEL; done`. Real container name: `redis-memory-store` (not `ontosage-redis`). A restart retires the intent cache by itself since the key now carries the contract's source hash; a change made without a restart does not.
 - **Feed not updating** → check `docker logs … | grep FeedRegistry` for `loaded=N`; missing feed = feeds.yaml absent or disabled flag.
 - **ECA rule not firing** → check Redis keys `rules:breach_start:*` and `rules:fired:*`; verify `sensor_uuid` matches a UUID in MySQL `sensor_data`.
 - **Concept not resolving** → SPARQL `SELECT ?c WHERE { ?c a hbco:Concept; hbco:layTerm "stuffy" }` against GraphDB; empty = hbco_mappings.ttl not uploaded.

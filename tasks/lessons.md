@@ -3646,3 +3646,177 @@ The corollary worth building: a provider outage currently reaches the reader as 
 honest non-answers rather than one visible "the model is unavailable" state. For a trial that
 distinction decides whether a user retries or concludes the building knows nothing. The breaker
 already has the fact; nothing the reader sees carries it (CAVEAT-1409).
+
+## #183 — I truncated the evidence, diagnosed the wrong defect, and the real one was worse (2026-10-01)
+
+I logged a P1 reading: *a headline contradicting its own table*. The answer began
+
+> **Across the building temperature is averaging 27.6 °C**, ranging from 7.2 to 71.0 °C
+
+above a table showing 23.0–23.9 °C per floor. Obvious, I thought: the lead figure and the range
+disagree with the rows beneath them.
+
+They didn't. My dump printed the first 330 characters. The full answer has a **seventh row**:
+
+```
+| Floor http://<the building's namespace>#Rooftop | 50.6 | 7.2 | 71.0 | 8 |
+```
+
+The range was supported exactly. Worse, I had already read `aggregate_lane` and found a guard
+that checks the mean against the range — working correctly, which should have made me suspicious
+rather than reassured, because a working guard and a contradicted headline cannot both be true.
+
+The real defect was in the eight sensors behind that row: Gas Boiler 1 and 2, Chiller 1 and Heat
+Pump 1 **entering and leaving water** temperatures. Brick files `Water_Temperature_Sensor` under
+`Temperature_Sensor`, so a question about temperature bound boiler water at 71 °C and chilled
+water at 7.2 °C alongside room air, and the building mean came out 3.8 °C too high. That is not
+an inconsistency a reader could spot — it is a plausible number that is wrong, which is the
+harder failure and the one I would have left in place.
+
+**The rule, which I have now written three times in one day and still broke: read the whole
+artefact before you name the defect.** Not the first 200, 330 or 400 characters of it. A
+truncation does not announce itself; it produces a shorter thing that reads like a complete one.
+This session's tally: an inherited `[:200]` reported as a dangling sentence, a `--show 400` that
+corrupted sixty quality labels, a `[:330]` that invented this contradiction, and a `[:430]` that
+nearly hid a kitchen count disagreeing with itself.
+
+Two smaller things, both of which cost a cycle.
+
+**A guard test that fails your fix is the cheapest review you will get.** My first version
+excluded water unconditionally, and
+`test_the_heat_pump_loop_temperature_binds_both_water_points` went red — a test written for a
+capability I had not thought about, naming exactly what I had broken. The fix became "do not MIX
+media" rather than "never read water", which is the rule I should have written first.
+
+**And the fix's own prose broke two project rules in ten minutes:** a building literal in a
+docstring (the literal guard caught it, third time today) and a shell heredoc that turned
+`\f` into a form feed and `\(.)` into `\(.)` — the latter still a *valid* regex, so it would
+have matched nothing and failed silently. Write Python with the file tools. The rule is in
+CLAUDE.md, I have broken it four times today, and the only reason I noticed this time is that
+one of the three mangled patterns happened to raise.
+
+## #184 — Four guard tests went red on my vocabulary edits, and every one of them was right (2026-10-01)
+
+Adding lay terms to the shared TBox and the HBCO mappings is the TTL-first move this project
+asks for, and it is also where I made five mistakes in forty minutes, each caught by something
+already in the repository rather than by me.
+
+**The blast radius of a lay term is measured, not guessed, and generic words lose.** The first
+draft of the continuity terms carried "resilience" and "redundancy". Over the 4,060 bank they
+moved **25** primary registers, 20 of them compound stakeholder questions those two words
+hijacked — three stolen from CostLine, one from Contract. Without them: 6 moves, five plainly
+right. A term that is a whole concept on its own ("resilience") is not a name for a register;
+"keep running" and "if the power fails" are.
+
+**A comment inside a Turtle object list is a lay term to a textual test.**
+`test_no_unreviewed_lay_term_is_claimed_by_two_registers` reported ServiceSchedule claiming
+"cleaned" — a word that appears only in the `#` comment I had written between two literals.
+rdflib ignores it; the test reads the block as text and does not. Comments go ABOVE the
+statement. The same test then found a real duplicate I had added ("out of service" already
+belongs to AssetStatus, correctly), and `test_no_lay_term_belongs_to_two_concepts` found
+another ("occupancy pattern" is `occupancy_trend`'s). Both removed; the registers that own
+those words were right to.
+
+**A generated file says so in its first line, and I edited it anyway.** `ontology/hbco_mappings.ttl`
+opens with `DO NOT EDIT manually — regenerate via csv_to_hbco.py after editing the CSV`, and
+`test_the_ttl_is_generated_from_the_csv_and_not_edited_by_hand` exists precisely for the person
+who does not read line one. The CSV is `ontology/mining/concept_terms_raw.csv`; the TTL is
+`python ontology/mining/csv_to_hbco.py`.
+
+**Measuring in the container has three traps, and I hit all three.** A resolver pass over
+4,060 questions takes longer than the 30-minute background cap, so the host-side `docker exec`
+is killed while the container-side process lives on with a dead stdout pipe; `/app/scripts` is
+mounted read-only, so the detached re-run must write to `/tmp`; and a kill loop that greps
+`/proc/*/cmdline` for the script's name finds its own shell first — `sh -c '… _measure.py …'`
+carries the pattern in its own command line — and exit 143 is the loop killing itself. Build the
+pattern at runtime from pieces, skip `$$`, and `nohup … > /tmp/x.out &`.
+
+**The hook's blast radius was zero on the bank, which is a reason to land it, not to doubt it.**
+`room_type_lookup` claims **0 of 4,060** bank questions — those are compound stakeholder
+phrasings — and answers "How many kitchens are in the building?" with three rooms from the room
+records where the metadata lane had counted two waste-bin sensors (BUG-1410). A change that acts
+only on the plain shape it was written for is the kind this cluster has needed.
+
+## #185 — A routing fix that is provably right offline can be invisible live for a third reason (2026-10-02)
+
+"What is the function of your building?" kept answering from air-quality sensors through two
+restarts, each time with the fix in the tree. Offline, `apply_contract` sent it to `capability`
+on every intent. Live, the route showed `overrides_applied: []`. The log line was there the whole
+time and I filtered it out twice: `Cache hit for intent detection: 78175c3607997af2`.
+
+`dialogue_agent` caches the classification DECISION keyed on the question (BUG-889), and the
+parse-stage contract runs only on the uncached path — so a routing rule is not deployed for any
+question that was asked during the cache's lifetime. The two caches every runbook names
+(`resp_cache:*`, `cache:sparql*`) do not touch it. Flushing `cache:intent:*` fixed it in one ask.
+CAVEAT-1413 says where the real fix belongs (apply the contract AFTER the cache read; it is cheap
+and deterministic). Until then: three flushes, not two, after ANY routing change.
+
+**A fix that lands in the right place can still need a second fix one step downstream.** The
+continuity question reached its register through the new lay terms and was then DECLINED by the
+register's out-of-scope rule for using "important" and "running" — the words that selected it.
+`resolve()` already discounted a register's own terms; one caller did not pass them, and the lane
+did not pass them to that caller either. Two call sites, one missing argument each. A stage
+measurement would have shown the register selected and called it fixed (lesson #174 again).
+
+**Three guard tests were right about my vocabulary and one was right about my test.**
+"out of service" belongs to AssetStatus, "occupancy pattern" to `occupancy_trend`, a comment
+inside a Turtle literal list is a term to a textual test, and "used for" was already the
+PURPOSE facet's phrase, not TYPE's — the suite told me each one.
+
+**And a tie between two label-split siblings must inherit nothing.** door_contact and
+window_contact own exactly the same two classes; my first inheritance rule gave a WINDOW
+concept the word "door" because door came first. Measured over the bank before it shipped (6 of
+the 155 changed questions were that), fixed, pinned.
+
+**`black tests/` touched 133 files I had not changed.** Format the files you wrote, by name.
+
+## #186 — A rule that lives in one lane's path is a rule for that lane, not for the building (2026-10-02)
+
+BUG-1405's "do not mix media" was landed in the binder on 2026-10-01, verified live, and tail P
+produced *"averaging 25.8 °C, ranging from 6.4 to 71.7"* the same night — the same eight boiler
+and chiller water points, on the `recommend` lane. The binder's exclusion ran only on its
+POPULATION path; a concept that resolves to the broad `Temperature_Sensor` class is fetched by
+the sparql agent directly, 296 rows, and `recommend` is not a binder intent. The fix that
+holds is the one applied to the RESULT ROWS at the seam every lane passes through, before any
+intent gate. The same lesson a second time the same hour: `_grounded_evidence_behind` listed
+four lanes' evidence keys and the reading lane's was not among them, so the gate deleted a
+correct 288-sensor answer. **When a rule is about the data, put it where the data flows, not
+where the first bug was seen.**
+
+Landing the row filter took three attempts, each a shape I had not checked: the sparql lane
+returns `{"results": <SPARQL document>}` so the bindings sit two levels down; the entity-less
+template returns no `label` column, so the IRI's local name is what says "Water_Temperature".
+The log line that settled each one was the absence of my own `[sensor_binder] dropped` line —
+a fix that cannot be seen in the log is a fix that has not run.
+
+**A coverage sentence is a claim about the building; the fetch cannot support it.** "The other
+5 floors have no sensor of this kind" was computed from the eight sensors a 40-candidate
+template had handed the lane, while the graph held 280. Only the graph can say a floor is
+empty; the lane now asks it, and says "not in this read" for the rest. BUG-881's shape, found
+again by asking one question whose answer could be checked by a count.
+
+**And the number to give the user is the one from the set nobody tuned on.** Tail O went
+60 → 70 → 85% across three builds that were each fixed against its failures. Tail P, never
+asked before, read 65% the same night. Both are true; only the second describes a user.
+
+## #187 — The gate caught my own fix being half-landed, and the set nobody tuned on is still the number (2026-10-02)
+
+BUG-1401 was "fixed and verified" overnight: the response node checks `gives_a_figure` before
+appending the sampling note. The morning gate flagged case #70 — the air-pressure decline —
+still carrying the note. The SQL lane appends that same note to its own prose, before the
+response node runs; I had guarded one of two append sites and called it done. The gate's
+"regression" was the classifier misreading a correct decline (CAVEAT-1402), but the reason it
+could misread it was real. **When a disclosure is produced in two places, a guard in one is a
+guard in neither** — the same shape as the medium rule in #186, one layer up.
+
+The routing class that dominated tail P's WEIRD answers — "how does the building do X" — took
+one detector (12 of 4,060 bank matches) and one discount in the subject test, and 7 of 10 such
+questions now answer from what the building wrote down. Tail Q, drawn fresh after the fix, read
+68.3%; tail P before it 65.0%. Different questions, so consistent-with, not proof. The honest
+sentence for the owner is still the one from the unseen set: about one question in three gets
+a decline that should have answered or a wrong-shape answer, and none gets an invented number.
+
+Three new shapes came out of tail Q and were logged, not fixed: a QUESTION routed to `control`
+and refused as a command, a question filed as a maintenance TICKET (a side effect testers will
+see), and a "nearest" answer computed from an assumed location. Each needs its blast radius
+measured first; the control/report precedence has been tuned twice already.

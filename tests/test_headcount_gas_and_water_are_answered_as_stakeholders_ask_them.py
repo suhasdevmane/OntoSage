@@ -228,7 +228,9 @@ async def test_a_floor_that_returned_no_reading_is_named_not_dropped():
         sparql(ROOMS, {}, floors=list("0123")),
         budget_hit=True,
     )
-    assert "No figure for Floor 0 and Floor 1" in res["formatted_response"]
+    # BUG-1414: the fake graph places counters on floors 2 and 3 only, so the honest sentence
+    # names floors 0 and 1 as having no counter -- a fact the graph states, not the fetch.
+    assert "records no occupancy sensor on Floor 0 and Floor 1" in res["formatted_response"]
 
 
 async def test_a_weeks_headcount_is_never_built_from_the_peaks_of_rooms():

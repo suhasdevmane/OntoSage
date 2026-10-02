@@ -510,6 +510,34 @@ def _shared_terms(topic: Set[str], text: str) -> Tuple[Tuple[str, ...], Tuple[st
     return shared, best
 
 
+#: "Are the doors locked", "Is the lift working?", "Is the heating on today?" -- a yes/no
+#: question about the PRESENT STATE of a physical thing. A document records procedures and
+#: past events; it cannot say whether that is so now. Measured 2026-10-01 over the 4,060-question
+#: bank: 2 matches, both live-state asks. "open"/"closed" count only with an explicit "now",
+#: because "Is the building open today?" is an opening-hours question a document does answer.
+_LIVE_STATE_RE = re.compile(
+    r"^\s*(?:is|are)\s+(?:the|all|every|any|our|my|this|that|these|those|it|they)\b"
+    r"(?:\s+[\w'-]+){0,4}\s+"
+    r"(?:(?:locked|unlocked|on|off|running|working|operational|secured|secure|armed|"
+    r"disarmed|occupied|vacant|broken|down|lit|dark|active|enabled|disabled|free|available)"
+    r"(?:\s+(?:right\s+now|now|currently|at\s+the\s+moment|today|at\s+present))?"
+    r"|(?:open|opened|closed|shut)\s+(?:right\s+now|now|currently|at\s+the\s+moment))"
+    r"\s*\??\s*$",
+    re.IGNORECASE,
+)
+
+
+def is_live_state_question(question: str) -> bool:
+    """True for a yes/no question about whether a physical thing is in a state NOW.
+
+    "Are the doors locked" was answered **"Yes, the door was secured; access log reviewed"**
+    from an incident-log passage (tail O, 2026-10-01): a past event, about one door, read as
+    the present state of all of them. No passage can answer this shape, so the composer is
+    not asked.
+    """
+    return bool(_LIVE_STATE_RE.search(question or ""))
+
+
 def document_is_named(question: str, hits: Sequence[Dict[str, Any]]) -> bool:
     """True when some hit's DOCUMENT NAME carries a subject term of the question.
 

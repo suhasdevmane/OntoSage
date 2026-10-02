@@ -1184,6 +1184,14 @@ Return ONLY the SQL query, no markdown, no explanations.
             # BUG-939's live example came from; `disclosure_gate.truncation_note` is the half
             # the response node appends there, exactly as it does for the substitution.
             _cap_earliest, _cap_latest = ("", "")
+            from orchestrator.services.disclosure_gate import gives_a_figure
+
+            # BUG-1401: a prose that states NO figure ("there is no air-pressure sensor recorded
+            # for Room 2.01") has nothing for the sampling note to qualify; the response node
+            # applies the same test to its own append, and this is the other place it is made.
+            if rows_capped and not gives_a_figure(formatted):
+                logger.info("[sql_agent] capped fetch not disclosed: the prose states no figure")
+                rows_capped = False
             if rows_capped:
                 from orchestrator.services.disclosure_gate import truncation_note
 
@@ -1990,6 +1998,16 @@ Response:"""
             summary = await llm_manager.generate(summary_prompt, task_type=TaskType.GENERAL)
         except Exception as e:
             logger.warning(f"[sql_agent] LLM summary generation failed, returning raw results: {e}")
+            # CAVEAT-1409: say WHY when the model is the problem, so the reader knows the
+            # readings are the building's and the missing summary is worth retrying for.
+            from orchestrator.services.circuit_breaker import model_is_unavailable
+
+            if model_is_unavailable():
+                return _facts_only(
+                    "The language model that writes the summary is not responding at the "
+                    "moment, so the readings are listed without one. This is not a gap in the "
+                    "building's records; the same question should summarise once it is back."
+                )
             return _facts_only("The readings could not be summarised.")
 
         summary = (summary or "").strip()

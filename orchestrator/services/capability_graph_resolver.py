@@ -453,6 +453,21 @@ class CapabilityGraphResolver:
 
 
 #: Words that locate or frame a question about an amenity without changing what it is about.
+#: Words that ask HOW a thing is done, discounted from the subject test only for a
+#: mechanism-shaped question (see `topic_is_the_subject`). No noun that could be a subject.
+_MECHANISM_FRAME = frozenset(
+    "how does do is are would will can could manage managed manages managing control "
+    "controlled controls controlling detect detected detects detecting monitor monitored "
+    "monitors monitoring kept keep keeps keeping maintain maintained maintains maintaining "
+    "prevent prevented prevents preventing ensure ensured ensures ensuring handle handled "
+    "handles handling regulate regulated regulates respond responds responded react reacts "
+    "adjust adjusted adjusts adjusting know knows knew decide decides protect protected "
+    "protects work works working operate operates operating track tracks tracked "
+    "automatically automatic properly current conditions condition often place systems "
+    "system measures mechanism mechanisms provisions happens happen gets get too bad if when "
+    "come from".split()
+)
+
 _FRAME_WORDS = frozenset(
     "a an the is are was be there any some this that these those in on at of for to from by with "
     "near nearest closest nearby where what which who how when do does did can could would will "
@@ -558,6 +573,17 @@ def topic_is_the_subject(question: str, fact: Any) -> bool:
     if not phrases:
         return True
     leftover = leftover_content_words((question or "").lower(), phrases)
+    # A MECHANISM QUESTION IS JUDGED ON ITS SUBJECT, NOT ON ITS FRAME (2026-10-02). "Are lights
+    # automatically adjusting properly to current conditions?" left [automatically, adjusting,
+    # properly, current, conditions] against the Lighting topic -- five words, none of them a
+    # second subject, all of them the way one asks HOW a thing behaves -- and the topic that
+    # says "lights automatically adjust to maintain target lux levels" was discarded. The
+    # frame words of that shape are removed first; a real second subject ("pollen exposure
+    # during the spring" against Smart Controls) still leaves three and still fails.
+    from orchestrator.services.ungrounded_question import mechanism_question
+
+    if mechanism_question(question or ""):
+        leftover = [w for w in leftover if w not in _MECHANISM_FRAME]
     if len(leftover) > 1:
         return False
     # ONE LEFTOVER WORD NAMING SOMETHING THE BUILDING IS NOT DISQUALIFIES THE TOPIC (BUG-1395).

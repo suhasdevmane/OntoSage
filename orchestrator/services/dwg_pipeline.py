@@ -146,14 +146,17 @@ def _classify_block_type(block_name: str) -> str:
 
 
 def _strip_mtext_codes(text: str) -> str:
-    """Remove AutoCAD MTEXT formatting codes, preserving visible content."""
-    # Strip inline code directives like \H2.5; \W1.2; \f...; etc.
-    text = re.sub(r"\\[A-Za-z][^;]*;", "", text)
-    # Strip braces but keep their contents
-    text = text.replace("{", "").replace("}", "")
-    # Strip paragraph/line codes \P \p \N \n \L \l
-    text = re.sub(r"\\[PpNnLl]", " ", text)
-    return text.strip()
+    """Remove AutoCAD MTEXT formatting codes, preserving visible content.
+
+    DELEGATES to `shared.utils.strip_drawing_markup` (BUG-1407). This function stripped at
+    INGEST while the manifests already on disk kept their codes and nothing stripped them on
+    the way out, so a reader was shown `\pxqc;{\fArial|...;Kitchen}` as a room name. The
+    `Space` model now strips on load, and both ends call the same function so the ingest and
+    the read cannot disagree about what a label is.
+    """
+    from shared.utils import strip_drawing_markup
+
+    return strip_drawing_markup(text)
 
 
 async def _run_in_executor(fn, *args):

@@ -1848,3 +1848,102 @@ def strip_leaked_code_line(text: str) -> str:
             return "\n".join(lines[:i] + lines[i + 1 :]).lstrip("\n")
         break
     return text
+
+
+# ── An order the rows do not hold (BUG-1391) ───────────────────────────────────────────────
+#
+# "Which dependency-aware recovery order should incident leaders adopt?" over 20 Department
+# records answered DEP-07 -> DEP-05 -> DEP-06 -> DEP-16 -> DEP-03 on one ask and
+# DEP-05 -> DEP-06 -> DEP-03 -> DEP-07 -> DEP-16 on the next, each presented as THE order. The
+# records carry no ordering field; the arrows were the model's. A number invites checking and
+# an arrow reads as structure, which is why this is caught in code rather than asked for in a
+# prompt (BUG-709's rule against "a recovery order" held on three asks of four and not the
+# fourth).
+#
+# MEASURED before landing, as the row required: over 2,554 de-duplicated stored answers, a chain
+# of record ids joined by arrows occurs in NONE -- the guard cannot cost a stored answer. It is
+# keyed on RECORD IDS, not on arrows: 44% of arrows in the corpus are routes between rooms, and
+# a route is an order the floor plan does hold.
+
+_ARROW = r"\s*(?:->|→|⟶|=>|-->)\s*"
+_REC_ID = r"[A-Z]{2,5}-\d{1,6}"
+_ID_CHAIN_RE = re.compile(rf"\b{_REC_ID}(?:{_ARROW}{_REC_ID})+\b")
+#: A field whose NAME says the rows carry a sequence or a priority. A register that records one
+#: may be narrated in that order; the test is on the data so a register that gains such a field
+#: lifts the guard by itself.
+_ORDER_FIELD_RE = re.compile(
+    r"(order|sequence|priority|rank|step|position|precedes|follows|predecessor|successor|"
+    r"criticality|dependsOn|dependency)",
+    re.I,
+)
+
+
+def _field_values(rows: List[Dict]) -> Dict[str, List[str]]:
+    out: Dict[str, List[str]] = defaultdict(list)
+    for row in rows or ():
+        for key, cell in (row or {}).items():
+            val = cell.get("value") if isinstance(cell, dict) else cell
+            if val not in (None, ""):
+                out[str(key)].append(str(val))
+    return out
+
+
+def rows_record_an_order(rows: List[Dict]) -> bool:
+    """True when the rows themselves carry an ordering, so a sequence may be narrated.
+
+    Either a field is NAMED for it (``priority``, ``sequence``, ``criticality``, ``dependsOn``),
+    or the rows LINK to each other -- some field holds another row's record id, which is a
+    dependency the register does state. Department rows do neither: ``escalatesTo`` names a
+    role, not a record.
+    """
+    values = _field_values(rows)
+    if any(_ORDER_FIELD_RE.search(name) for name in values):
+        return True
+    ids = {v for v in values.get("recordId", ()) if re.fullmatch(_REC_ID, v)}
+    if not ids:
+        return False
+    for name, vals in values.items():
+        if name == "recordId":
+            continue
+        if any(v in ids for v in vals):
+            return True
+    return False
+
+
+def unsequence(narration: str, rows: List[Dict], register_label: str = "") -> str:
+    """The narration with any record-id chain the rows cannot support rendered as a LIST.
+
+    Only chains of this register's own record ids are touched (``DEP-07 -> DEP-05``); routes,
+    arrows between rooms and every other arrow are left exactly as written. Returns the text
+    unchanged when the rows record an order, when no chain is present, or on any error.
+    """
+    if not narration or not rows:
+        return narration
+    try:
+        if rows_record_an_order(rows):
+            return narration
+        held = set(_field_values(rows).get("recordId", ()))
+        touched = 0
+
+        def _flatten(m: "re.Match[str]") -> str:
+            nonlocal touched
+            ids = re.findall(_REC_ID, m.group(0))
+            if not held or not all(i in held for i in ids):
+                return m.group(0)
+            touched += 1
+            return ", ".join(ids)
+
+        out = _ID_CHAIN_RE.sub(_flatten, narration)
+        if touched:
+            label = register_label or "register"
+            out += (
+                f"\n\n_The {label} records no order, priority or dependency between these "
+                "records, so they are listed, not sequenced._"
+            )
+            logger.info(
+                f"[register_facts] unsequenced {touched} record-id chain(s) the rows do not order"
+            )
+        return out
+    except Exception as exc:  # pragma: no cover - the narration still answers
+        logger.warning(f"[register_facts] unsequence skipped: {type(exc).__name__}: {exc}")
+        return narration

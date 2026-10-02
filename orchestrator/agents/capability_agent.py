@@ -1212,6 +1212,30 @@ class CapabilityAgent:
             # explicit way to say the passage does not contain one. That escape hatch is
             # what makes this safe — without it the model would fill the gap from its own
             # knowledge, which is the fabrication this project guards against hardest.
+            from orchestrator.services.passage_relevance import is_live_state_question
+
+            if doc_hits and is_live_state_question(state.user_message or ""):
+                # BUG-1407: "Are the doors locked" -> "Yes, the door was secured; access log
+                # reviewed", composed from an incident-log passage. A document records
+                # procedures and past events, never whether something is so right now.
+                _cited = sorted({h["doc_name"].replace("_", " ").title() for h in doc_hits})
+                state.intermediate_results["capability_result"] = {
+                    "success": True,
+                    "response": (
+                        "I can't tell you whether that is the case right now from "
+                        f"{building_name}'s documents: they record procedures and past "
+                        f"events ({', '.join(_cited)}), not the current state. If the "
+                        "building records a live point for it, ask for that point's current "
+                        "reading."
+                    ),
+                    "provenance": "document_cannot_answer_live_state",
+                    "building_name": building_name,
+                    "documents": _cited,
+                }
+                logger.info(
+                    f"[capability] live-state question not answered from documents: {_cited}"
+                )
+                return state
             if doc_hits:
                 composed, _decided = await self._answer_from_passages(
                     state.user_message or "", doc_hits

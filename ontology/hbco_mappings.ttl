@@ -449,6 +449,14 @@ hbco:busyness rdf:type hbco:CompositeConcept ,
     hbco:layTerm "people counting"^^xsd:string ;
     hbco:layTerm "head count"^^xsd:string ;
     hbco:layTerm "footfall"^^xsd:string ;
+    hbco:layTerm "workplace occupancy"^^xsd:string ;
+    hbco:layTerm "occupancy peaks"^^xsd:string ;
+    hbco:layTerm "peaks and troughs"^^xsd:string ;
+    hbco:layTerm "peak times"^^xsd:string ;
+    hbco:layTerm "peak periods"^^xsd:string ;
+    hbco:layTerm "quiet periods"^^xsd:string ;
+    hbco:layTerm "busy periods"^^xsd:string ;
+    hbco:layTerm "usage peaks"^^xsd:string ;
     hbco:mapsToBrickClass brick:Occupancy_Count_Sensor ;
     hbco:mapsToBrickClass brick:Occupancy_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;

@@ -48,6 +48,7 @@ restatement of the single-identity one.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+import re
 from typing import Any, Dict, List, Optional
 
 #: Bus keys a lane writes when it refuses. Each carries `denied_by_policy` — the policy
@@ -270,6 +271,40 @@ def truncation_in(results: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]
             "actual_latest": payload.get("rows_latest", ""),
         }
     return None
+
+
+#: What is NOT a figure: dates, clock times, record ids, room and floor numbers, an image link.
+_NOT_A_FIGURE = (
+    re.compile(r"\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?"),
+    re.compile(r"\b\d{1,2}:\d{2}(?::\d{2})?\b"),
+    # A day-of-month needs a MONTH NAME: "13 persons" is a figure, "13 October" is not.
+    re.compile(
+        r"\b\d{1,2}\s+(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*"
+        r"(?:\s+\d{4})?\b",
+        re.I,
+    ),
+    re.compile(r"\b[A-Z]{2,5}-\d{1,6}\b"),
+    # A room id only where a place word precedes it: a bare "29.81" is a reading.
+    re.compile(r"\b(?:room|zone|space|rm|floor|level|storey)\s*\d+(?:\.\d+)?[A-Za-z]?\b", re.I),
+    re.compile(r"!\[[^\]]*\]\([^)]*\)"),
+)
+_ANY_NOTE_RE = re.compile(r"_?At least one sensor(?:'s readings were cut off| returned the full)")
+
+
+def gives_a_figure(text: str) -> bool:
+    """True when the answer states a number a reader could act on (BUG-1401).
+
+    "There is no air-pressure sensor recorded for Room 2.01" gives none: the only digits are
+    a room number. The sampling disclaimer exists so a truncated sample is not read as a total;
+    attached to an answer that states no total, it tells the reader that readings informed a
+    conclusion drawn from their absence. Any note already in the text is cut first, because
+    the note's own "60 rows" is a number.
+    """
+    body = _ANY_NOTE_RE.split(text or "", 1)[0]
+    body = re.sub(r"\*Sources:.*", "", body, flags=re.S)
+    for rx in _NOT_A_FIGURE:
+        body = rx.sub(" ", body)
+    return bool(re.search(r"\d", body))
 
 
 def truncation_note(marker: Optional[Dict[str, Any]]) -> str:
