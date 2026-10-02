@@ -1,0 +1,2661 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/V10_REVIEW_AND_PLAN/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>V10 — Codebase review: building-agnostic QA, what is wrong, why, and how to fix it - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#v10-codebase-review-building-agnostic-qa-what-is-wrong-why-and-how-to-fix-it" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              V10 — Codebase review: building-agnostic QA, what is wrong, why, and how to fix it
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-verdict-in-five-sentences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0. Verdict in five sentences
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-live-evidence-bldg1-2026-09-06-cache-flushed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Live evidence — bldg1, 2026-09-06, cache flushed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-what-is-actually-built-maturity-honestly" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. What is actually built (maturity, honestly)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. What is actually built (maturity, honestly)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#21-arbiter-servicesdeliberation-17-modules-46k-loc-servicesevidence-25-modules-68k-loc" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.1 ARBITER (services/deliberation/, 17 modules, ~4.6k LOC; services/evidence/, 25 modules, ~6.8k LOC)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#22-orchestrator-workflow_orchestratorpy-8064-lines-routing_contractpy-2011" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.2 ORCHESTRATOR (workflow/_orchestrator.py 8,064 lines; routing_contract.py 2,011)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#23-ontology-layer-ontologyontosage_schemattl-2915-lines-97-classes-292-properties-572-layterms-on-40-classes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.3 ONTOLOGY layer (ontology/ontosage_schema.ttl 2,915 lines; 97 classes, 292 properties, 572 layTerms on 40 classes)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#24-building-agnostic-code-audit-orchestrator-shared-rag-service-frontend" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.4 Building-agnostic code audit (orchestrator, shared, rag-service, frontend)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#25-deployment-and-measurement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2.5 Deployment and measurement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-why-six-systemic-causes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Why — six systemic causes
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-improvement-plan-v10-make-agnosticism-structural-then-measure-it-on-bldg3" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Improvement plan V10 — make agnosticism structural, then measure it on bldg3
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Improvement plan V10 — make agnosticism structural, then measure it on bldg3">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phase-a-stop-the-live-wrong-answers-12-days" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase A — stop the live wrong answers (1–2 days)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-b-derive-vocabulary-and-identity-from-the-active-building-1-week" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase B — derive vocabulary and identity from the active building (1 week)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-c-a-building-gets-what-bldg1-has-by-construction-12-weeks" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase C — a building gets what bldg1 has, by construction (1–2 weeks)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-d-the-arbiter-earns-its-name-or-its-size-1-week-after-ac" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase D — the arbiter earns its name or its size (1 week, after A–C)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#phase-e-measure-on-a-building-that-is-not-bldg1-ongoing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase E — measure on a building that is not bldg1 (ongoing)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-not-to-do" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What not to do
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-sizing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Sizing
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/V10_REVIEW_AND_PLAN.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="v10-codebase-review-building-agnostic-qa-what-is-wrong-why-and-how-to-fix-it">V10 — Codebase review: building-agnostic QA, what is wrong, why, and how to fix it<a class="headerlink" href="#v10-codebase-review-building-agnostic-qa-what-is-wrong-why-and-how-to-fix-it" title="Permanent link">&para;</a></h1>
+<p><strong>Written:</strong> 2026-09-06 · <strong>Branch:</strong> <code>development</code> (V9 work committed locally, nothing pushed)
+<strong>Active building during review:</strong> bldg1 · <strong>Model:</strong> local <code>gpt-oss:20b</code>
+<strong>Method:</strong> five parallel read-only reviews (arbiter, orchestrator/routing, building-agnostic
+literals, ontology layer, onboarding + measurement), a 12-question live probe with the response
+cache flushed, GraphDB/MySQL spot checks, and the offline unit suite.</p>
+<hr />
+<h2 id="0-verdict-in-five-sentences">0. Verdict in five sentences<a class="headerlink" href="#0-verdict-in-five-sentences" title="Permanent link">&para;</a></h2>
+<p>The <strong>intent</strong> — connect one building's TTL + documents, ask anything, get grounded
+building-specific answers — is right, and the parts of the system built to that contract
+(record registers lifted from documents, the capability graph resolver, the evidence ledger,
+the honesty gates) are genuinely well designed. But the system is <strong>not building-agnostic in
+practice</strong>: it is a bldg1 system whose second, third and fourth buildings receive the skeleton
+and none of the flesh, and whose routing, prompts and lexicons carry Abacws's vocabulary in
+~800 hard-coded strings that a literal-scan test cannot see. The <strong>ARBITER</strong> is a disciplined
+symbolic ranking lane on 1 of 37 intents, never executed end-to-end by any test, and not the
+brain the V4 plan describes. The <strong>orchestrator</strong> is a 50-rule, 5-stage deterministic expert
+system that overrides the LLM classifier and frequently never calls it; its single most
+dangerous construct is a pre-LLM capability short-circuit with 16 exception clauses. On the
+development building itself, <strong>5 of 12 basic questions came back wrong or as non-answers</strong> with
+every V9 fix in place — so the first job is not more registers, it is making the six systemic
+causes below impossible by construction.</p>
+<p>The unit suite is green: <strong>5,004 passed, 44 skipped</strong> (7m51s, parked-state safe).</p>
+<hr />
+<h2 id="1-live-evidence-bldg1-2026-09-06-cache-flushed">1. Live evidence — bldg1, 2026-09-06, cache flushed<a class="headerlink" href="#1-live-evidence-bldg1-2026-09-06-cache-flushed" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>Question</th>
+<th>Intent</th>
+<th>Result</th>
+<th>Root cause (verified)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>How many temperature sensors are in the building?</td>
+<td>metadata</td>
+<td>OK</td>
+<td>—</td>
+</tr>
+<tr>
+<td>2</td>
+<td>How many sensors are there in total?</td>
+<td>metadata</td>
+<td><strong>Inconsistent</strong></td>
+<td>"2,720 declared", "2,763 reported in 24 h" (more reporting than exist), "Floors: 8" — GraphDB types <code>Rooftop</code> and <code>Parking_Level_Ground</code> as <code>brick:Floor</code>. Modelling smell surfaced as fact.</td>
+</tr>
+<tr>
+<td>3</td>
+<td>CO₂ in room 5.01 right now?</td>
+<td>sensor_data</td>
+<td>OK, provenance broken</td>
+<td>Sources rendered as <code>Unknown Source</code>; "served zone link not validated" caveat shown.</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Temperature in Room 9.99?</td>
+<td>sensor_data</td>
+<td>Honest but slow (46 s)</td>
+<td>Referent-existence check timed out on a non-existent room; the decline blames time, not absence. Regression probe fails the same case.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Which rooms are on floor 2?</td>
+<td><strong>capability</strong></td>
+<td><strong>WRONG</strong></td>
+<td>Answered 6 rooms from <em>Cleaning Task Register / Public Event Register / Timetabled Sessions</em>. GraphDB holds <strong>47</strong> rooms on Floor 2. The pre-LLM capability short-circuit (<code>dialogue_agent.py:832-960</code>) ate a structural question.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Is the lift working?</td>
+<td>asset_state</td>
+<td><strong>WRONG</strong></td>
+<td>"No lifts recorded." <code>bldg:status_lift_0 a ontosage:AssetStatus; statusOf bldg:Lift_Main</code> IS in the graph, but <strong><code>bldg:Lift_Main</code> has no triples</strong> — the generator wrote a status for an asset it never declared; <code>_status_query</code> requires <code>?asset a ontosage:Lift</code> (<code>asset_state_service.py:228-253</code>). Dangling reference, not caught by validation. Lesson #87 recorded this exact symptom as fixed.</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Nearest accessible toilet to room 3.10?</td>
+<td>planner</td>
+<td><strong>Non-answer</strong></td>
+<td>Returned the Floor 3 plan for 3.10. Wayfinding never ran.</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Which permits are open?</td>
+<td>metadata</td>
+<td>OK</td>
+<td>Register lane, 3 of 15, correct.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Compare avg CO₂ floor 1 vs floor 3, last week</td>
+<td>compare</td>
+<td><strong>WRONG + recommendation</strong></td>
+<td>155 ppm vs 110 ppm, floor 3 "75–78 ppm" — physically impossible (outdoor air is ~420). <code>co2_data</code> narrow table has min 400 / avg 853. The wide-table top-up publisher falls to a type-based random range for any sensor name not matching <code>_WIDE_RANGES</code> substrings (<code>mysql_dummy_publisher.py:315-345</code>, 37% of names measured 2026-09-03). No plausibility band exists outside the deliberation scorer. Then it recommended an HVAC upgrade. 118 s.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>What is this building and who runs it?</td>
+<td><strong>privacy_refusal</strong></td>
+<td><strong>WRONG refusal</strong></td>
+<td><code>INDIVIDUAL_PRESENCE_RE</code> clause <code>\b(?:and|but)\s+who\b</code> (<code>privacy/inference_classes.py:41</code>) fires on "…and who runs it". The governance register that answers this (commit <code>cd324de</code>) never ran.</td>
+</tr>
+<tr>
+<td>11</td>
+<td>Which rooms are stuffy right now?</td>
+<td>sensor_data</td>
+<td><strong>Broken</strong></td>
+<td>HBCO maps "stuffy" → CO₂, but the generated SPARQL returned sensor counts per space and the LLM narrated <em>"the data you've provided only tells us how many sensors…if you can run a query…"</em> — developer-facing chatter reached the user; no guard caught a meta-answer.</td>
+</tr>
+<tr>
+<td>12</td>
+<td>Show me floor 3</td>
+<td>floor_plan</td>
+<td>OK</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Read this table before reading any coverage percentage.</strong> Four of the five failures are
+not data gaps; they are routing and guard defects that a register cannot fix.</p>
+<hr />
+<h2 id="2-what-is-actually-built-maturity-honestly">2. What is actually built (maturity, honestly)<a class="headerlink" href="#2-what-is-actually-built-maturity-honestly" title="Permanent link">&para;</a></h2>
+<h3 id="21-arbiter-servicesdeliberation-17-modules-46k-loc-servicesevidence-25-modules-68k-loc">2.1 ARBITER (<code>services/deliberation/</code>, 17 modules, ~4.6k LOC; <code>services/evidence/</code>, 25 modules, ~6.8k LOC)<a class="headerlink" href="#21-arbiter-servicesdeliberation-17-modules-46k-loc-servicesevidence-25-modules-68k-loc" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Real and disciplined:</strong> CQ-IR compile (one LLM call, temp 0, JSON-validated field by field),
+  admission gate over a live per-request SPARQL schema, clarify policy, deterministic scorer with
+  cited bands, coverage ledger, dossier, numeric guard. Zero building literals in the package.</li>
+<li><strong>Not a brain:</strong> it is one graph node (<code>_deliberate_node</code>, <code>_orchestrator.py:5793-6053</code>)
+  reached by a regex (<code>DELIBERATE_RE</code>, <code>routing_contract.py:697-720</code>) plus two intent sets.
+  <strong>36 of 37 intents never touch it.</strong> <code>build_plan_trace</code> (<code>_orchestrator.py:356-401</code>) emits a
+  constant six-step list regardless of what ran — V4-T33 "brain routes everything" is cosmetic.</li>
+<li><strong>Never executed end-to-end by a test.</strong> <code>grep _deliberate_node tests/</code> returns nothing;
+  every deliberation test injects fakes. V4-T26 (the flagship e2e gate) is marked done.</li>
+<li><strong>Determinism claim rests on a Redis cache.</strong> <code>compiler.py:145-148</code>: "cache OFF … the honest
+  wobble, 3/8." With the cache on (default), <code>plan_fingerprint</code> measures the cache.</li>
+<li><strong>Specific defects:</strong> stability sentence computed by a different scorer than the ranking
+  (<code>scorer.py:353-390</code> vs <code>287-303</code>); <code>simulated</code> never mentioned in prose, only a collapsed
+  table (<code>dossier.py:324-331</code>); a failed SQL table is skipped with a log line and no ledger entry
+  (<code>fetch.py:71-73</code>); <code>deliberate_result</code> absent from <code>_LANE_KEYS_FOR_DIAGNOSIS</code>
+  (<code>_orchestrator.py:428-439</code>) so its failures cannot be named; gating env vars
+  <code>DELIBERATE_CLARIFY_OFF</code> / <code>CQIR_COMPILE_CACHE</code> exist in no <code>.env*</code> and no <code>Settings</code>.</li>
+<li><code>ONTOSAGE.md</code> (126 KB) contains <strong>zero</strong> occurrences of "ARBITER" or "dossier".</li>
+</ul>
+<h3 id="22-orchestrator-workflow_orchestratorpy-8064-lines-routing_contractpy-2011">2.2 ORCHESTRATOR (<code>workflow/_orchestrator.py</code> 8,064 lines; <code>routing_contract.py</code> 2,011)<a class="headerlink" href="#22-orchestrator-workflow_orchestratorpy-8064-lines-routing_contractpy-2011" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Decision flow for one question:</strong> (A) two pre-LLM short-circuits in <code>detect_intent</code>
+  (record-class probe → <code>metadata</code>; capability doc-score ≥ 0.50 → <code>capability</code>, guarded by 16
+  <code>and not</code> predicates) → (B) LLM classification → (C) 36 ordered contract rules, <strong>last match
+  wins</strong> (<code>routing_contract.py:1857-1876</code>; the docstring says the opposite) → (D) 1 post rule →
+  (E) 3 concept rules → (F) inline overrides in <code>_dialogue_node</code> → (G) 7 more overrides in
+  <code>_route_from_dialogue_impl</code> before the registry. <strong>≈50 rule objects over ≈800 literal
+  strings/patterns.</strong> The LLM's label is a filter input, not the decision.</li>
+<li><strong>Methods:</strong> <code>_dialogue_node</code> 695 lines, <code>_response_node</code> 663, <code>_route_from_dialogue_impl</code>
+  634, <code>_sql_node</code> 446, <code>_sparql_node</code> 428. Node list maintained in three places
+  (<code>_route_from_dialogue_impl:5327-5357</code>, <code>_graph.py:209,243</code>).</li>
+<li><strong>Response dispatch fragility:</strong> <code>dialogue_response</code> is checked <em>second</em> (<code>:4189</code>), above
+  every computed lane — any node that writes it pre-empts a richer result in the same turn.
+  <code>analytics_result</code>/<code>forecast_result</code> are deliberately carried across turns (<code>:457</code>).</li>
+<li><strong>Referent gate</strong> (<code>apply_referent_gate</code>, <code>:486</code>) runs in <strong>2 of ~18 lanes</strong> (sparql, events)
+  and fails open on exception. Register, asset_state, observability, readiness, diagnosis,
+  deliberate, capability, spatial, floor_plan, analytics all bypass it.</li>
+<li><strong>Building leakage is vocabulary, not names</strong> — invisible to
+  <code>test_contract_is_building_agnostic</code> (greps six strings): <code>EVENTS_RE</code> needs
+  <code>lecture|teaching session|timetabled</code>; <code>_READINESS_RE</code> needs <code>class|lecture|seminar</code>;
+  <code>REGISTER_RE</code> needs <code>legionella|LOLER|PAT test|F-gas</code>; <code>_SPACE_NOUNS</code> has <code>lab</code>;
+  <code>_SPATIAL_BYPASS_PHRASES</code> is UK English (<code>lift</code>, <code>toilet</code> — "elevator"/"restroom" get no
+  wayfinding); <code>_ROOM_ID_RE</code>/<code>_ZONE_ID_RE</code> assume <code>\d+\.\d+</code> (<code>semantic_router.py:45-60</code>);
+  <code>_DATA_ANALYTIC_WORDS</code> (~60 measurands) and <code>_DATA_KW</code> (17) are bldg1's modality set;
+  <code>_MODALITY_STOPWORDS</code> (<code>routing_contract.py:1892-1908</code>) hand-tuned to bldg1 names.
+  <code>metered_vocabulary()</code> and <code>_plant_measurand_re()</code> are config-derived — the right pattern,
+  used twice.</li>
+<li><strong>The overlay tiers collapse under the flat layout.</strong> <code>intents/registry.py:349-369</code> and
+  <code>persona_loader.py:54-55</code> implement three tiers (<code>_defaults</code> → <code>input/</code> → <code>input/&lt;id&gt;/</code>), but
+  swap-by-rename means tier 3 never exists and tier 2 <em>is</em> the active building. So
+  <code>input/intents.yaml</code> holding bldg1's <code>lab_booking</code> intent is correct placement, not a leak
+  (an earlier draft of this review said otherwise); the per-<code>building_id</code> cache in
+  <code>get_intent_registry</code> offers the interface of multi-tenancy over a filesystem that cannot
+  deliver it. Collapse the dead tier and document that <code>input/intents.yaml</code> is the building's own.</li>
+<li><strong>Un-namespaced caches</strong> (<code>cache:concept:hbco_all</code>, 24 h, <code>concept_resolver.py:37-38</code>;
+  <code>record_registry._CACHE["_active"]</code>; <code>_active_namespace()</code> / <code>run_sparql_select</code> with no
+  <code>building_id</code>) are <strong>consistent with the v1 one-building-per-process contract</strong>. They are not
+  bugs today; they are the concrete blockers for the v2 simultaneous-buildings path that
+  <code>swap_building.py:32-38</code> anticipates, and a stale-after-swap risk if Redis is not flushed.</li>
+</ul>
+<h3 id="23-ontology-layer-ontologyontosage_schemattl-2915-lines-97-classes-292-properties-572-layterms-on-40-classes">2.3 ONTOLOGY layer (<code>ontology/ontosage_schema.ttl</code> 2,915 lines; 97 classes, 292 properties, 572 layTerms on 40 classes)<a class="headerlink" href="#23-ontology-layer-ontologyontosage_schemattl-2915-lines-97-classes-292-properties-572-layterms-on-40-classes" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Record lane is the best-designed thing in the repo:</strong> class list discovered by SPARQL,
+  predicates and enumerations read live from instances and <code>rdfs:comment</code>, mapping ships with
+  the ontology (<code>record_documents/*.yaml</code>, 34 of 39 record classes). <code>held_record_class</code>
+  scoring is real (length-weighted, compound-aware).</li>
+<li><strong>But 34 of 39 record classes have zero TTL instances in every building</strong> — they exist only
+  after lifting <code>input/documents/*.md</code>. bldg1: 37 register documents. bldg2: 10. <strong>bldg3: 1.
+  bldg4: 1.</strong> The "37 catalogues" coverage is one building's hand-authored document set.</li>
+<li><code>AlarmEvent</code>/<code>AnomalyEvent</code>/<code>AccessEvent</code>: declared, lay-termed, <strong>no mapping, no instances,
+  no reader</strong> — unfillable. <code>SustainabilityTarget</code> has a mapping but sits outside
+  <code>_DISCOVER_QUERY</code>'s roots (<code>record_registry.py:72-80</code>) — undiscoverable even when lifted.</li>
+<li><strong>SPARQL prompt is bldg1 few-shot:</strong> <code>sparql_agent.py:1371,1390,1426,1458,1513,3458-3466</code>
+  and 4/17 entries of <code>data/few_shot_library.json</code> teach <code>Room_5.01</code>, <code>CO2_Level_Sensor_5.08</code>,
+  <code>CONTAINS "5.08"</code>. <code>prompt_builder.py:5</code> claims to have eliminated these.</li>
+<li><strong><code>ontosage:</code> is missing from <code>sparql_validator._PREFIX_INJECT</code></strong> (<code>:71-77</code>) — the project's
+  own vocabulary fails pre-flight unless the LLM emits the PREFIX itself (lesson #89's residue).</li>
+<li><strong>Validation cannot see an empty ontology layer.</strong> Swap/boot checks: parses, <code>bldg:</code> prefix
+  matches <code>ontology_namespace</code>, optional SHACL WARN. <strong>A building with valid Brick and zero
+  <code>ontosage:</code> triples boots green and declines every capability, record and knowledge
+  question.</strong> bldg4 is nearly that building. Nothing checks dangling object references
+  (<code>statusOf</code> → untyped IRI, the lift defect).</li>
+<li><code>swap_building.py:346-372</code> archives a hard-coded file list; any other TTL the old building
+  dropped in <code>input/</code> is loaded for the new one.</li>
+<li>Hygiene: <code>owl:versionInfo "2.1.0"</code> unchanged across seven later modules; module letter J used
+  twice, no L; <code>layTerms</code> comma-packed in instances but one-per-triple in the TBox (resolver
+  handles only the instance form); <code>_SHARED_SCHEMA_TOKENS</code> matches <code>"rec"</code> as a substring.</li>
+<li><strong>278 of 429 declared <code>ontosage:</code>/<code>hbco:</code> terms have no literal reader</strong> in <code>orchestrator/</code>.
+  ~55 are legitimately declarative, ~180 are reached generically (needs RDFS inference ON),
+  and the remainder are answerable data with no reader: <code>AccessibilityFeature</code> properties
+  (8 instances render as bare labels), <code>ServedZone</code> + 5 properties, Module K sensor/equipment
+  classes with instances (<code>Soil_Moisture_Sensor</code>, <code>Heat_Pump</code>, <code>Emergency_Generator</code>…).
+  <code>scripts/audit_unread_stores.py</code> covers SQL only; the RDF half of lesson #90 was never scripted.</li>
+</ul>
+<h3 id="24-building-agnostic-code-audit-orchestrator-shared-rag-service-frontend">2.4 Building-agnostic code audit (orchestrator, shared, rag-service, frontend)<a class="headerlink" href="#24-building-agnostic-code-audit-orchestrator-shared-rag-service-frontend" title="Permanent link">&para;</a></h3>
+<p>141 raw hits for <code>bldg[1-4]|abacws|cardiff</code>; <strong>15 real defects (A)</strong>, 12 harmless (B), ~114
+comments (C). The (A) list:</p>
+<table>
+<thead>
+<tr>
+<th>file:line</th>
+<th>defect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>floor_plan_service.py:237-239</code></td>
+<td><strong>Invents</strong> rooms <code>f"{floor}.{n:02d}"</code> for n=1..14 when PDF text is empty — fabricates referents in Abacws's grammar. Contract 3 <em>and</em> 4.</td>
+</tr>
+<tr>
+<td><code>anomaly/diagnosis.py:394</code></td>
+<td>literal <code>stored_at: "plant_data"</code> — only bldg1's registry defines it; plant diagnosis dark elsewhere.</td>
+</tr>
+<tr>
+<td><code>building_context.py:124-125</code></td>
+<td>reads <code>building_prefix</code>/<code>building_timezone</code>; every building.yaml writes <code>ontology_prefix</code>/<code>timezone</code>; admin_config writes the latter. Silently falls to env defaults.</td>
+</tr>
+<tr>
+<td><code>sparql_agent.py:1390,1514</code></td>
+<td>prompt exemplars <code>Room_5.01</code>, <code>CONTAINS "5.08"</code>.</td>
+</tr>
+<tr>
+<td><code>self_correction_engine.py:253</code></td>
+<td>repair query defaults namespace to <code>http://example.com/building#</code> → zero rows, no error.</td>
+</tr>
+<tr>
+<td><code>adapters/registry.py:448-464</code></td>
+<td>no-YAML path hardcodes <code>database1</code>/<code>database2</code>.</td>
+</tr>
+<tr>
+<td><code>shared/config.py:452,457</code></td>
+<td><code>ABOX_FILE</code> default <code>trial/dataset/bldg1_protege.ttl</code>, alias <code>BLDG1_ABOX_FILE</code>.</td>
+</tr>
+<tr>
+<td><code>frontend/.../TopNav.js:21</code>, <code>Home.js:33,57</code></td>
+<td>"Abacws SmartBot", "3D-Abacws Service".</td>
+</tr>
+<tr>
+<td><code>FloorPlanViewer.js:122</code></td>
+<td><code>manifest?.building_id \|\| "abacws"</code>.</td>
+</tr>
+<tr>
+<td><code>admin/OntologyTab.js:4-5</code></td>
+<td>TTL editor placeholder pre-seeds bldg1's namespace — the footgun <code>input/README.md</code> warns about, wired into the onboarding GUI.</td>
+</tr>
+<tr>
+<td><code>rag-service/graphdbRAG/Get llm response.py:46,61,204</code></td>
+<td><code>PREFIX bldg: &lt;…abacws#&gt;</code> three times.</td>
+</tr>
+<tr>
+<td><code>docker-compose.yml:357</code></td>
+<td><code>./data/bldg1:/staging:ro</code> — survives every swap.</td>
+</tr>
+<tr>
+<td><code>scripts/check_building_literals.py</code></td>
+<td>the guard scans <code>orchestrator/</code>+<code>shared/</code> only, has no room-id rule despite its docstring, misses <code>cardiff</code>/<code>example.com</code>/table names — reports "clean".</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Path resolution:</strong> 16 call sites use <code>shared/building_paths</code>; <strong>60+ hardcode
+<code>Path("/app/input")</code>/<code>Path("input")</code></strong>; six services re-implement the nested/flat search with
+only the nested form (<code>rules.yaml</code>, <code>channels.yaml</code>, <code>recipes.yaml</code>, <code>goals.yaml</code>,
+<code>actuation</code>, <code>feeds</code>) — same logic written seven ways.</p>
+<p><strong>Input divergence</strong> (what bldg1 has that the others do not):</p>
+<table>
+<thead>
+<tr>
+<th>lane / data</th>
+<th>bldg1</th>
+<th>bldg2</th>
+<th>bldg3</th>
+<th>bldg4</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>register documents lifted</td>
+<td>37</td>
+<td>10</td>
+<td>1</td>
+<td>1</td>
+</tr>
+<tr>
+<td><code>KnowledgeTopic</code> / <code>Amenity</code></td>
+<td>48 / 47</td>
+<td>14 / 23</td>
+<td>12 / 27</td>
+<td>5 / 2</td>
+</tr>
+<tr>
+<td><code>ConfigurationPeriod</code></td>
+<td>2,175</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td><code>AssetStatus</code></td>
+<td>128</td>
+<td>6</td>
+<td>6</td>
+<td>2</td>
+</tr>
+<tr>
+<td>AV/Alarm/Network/ServiceSchedule/Accessibility/Closure/Parking…</td>
+<td>✅</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>saturation modalities</td>
+<td>10</td>
+<td>12</td>
+<td>9</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>floor plans</td>
+<td>6 real DWG+PDF</td>
+<td>3 stub</td>
+<td>4 stub</td>
+<td><strong>none</strong></td>
+</tr>
+<tr>
+<td>feeds / rules / channels / intents / RBAC datasource yaml / timetable / <code>floors/</code></td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><code>*_policies.ttl</code> (PROTECT) / <code>*_compliance.ttl</code></td>
+<td>✅ / 82</td>
+<td>✅ / 82</td>
+<td>✅ / 82</td>
+<td><strong>❌ / 0</strong></td>
+</tr>
+<tr>
+<td>real telemetry</td>
+<td>1 source (snapshot + dev top-up)</td>
+<td>0</td>
+<td>0</td>
+<td>0</td>
+</tr>
+<tr>
+<td>question bank / regression baseline</td>
+<td>4,060 / ✅</td>
+<td>0 / ✅</td>
+<td>0 / ✅</td>
+<td>0 / ❌</td>
+</tr>
+</tbody>
+</table>
+<p><code>input/_templates/</code> ships <strong>5</strong> files. <strong>24 of bldg1's 39 TTLs have no template and no
+generator.</strong> A new building gets identity + storage routing and nothing else.</p>
+<h3 id="25-deployment-and-measurement">2.5 Deployment and measurement<a class="headerlink" href="#25-deployment-and-measurement" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Fresh machine blockers:</strong> MySQL is a host prerequisite listed nowhere (<code>docker-compose.yml:554-574</code>
+  disabled; <code>data/mysql-init/*.sql</code> mounted in no compose file; <code>docs/DEPLOYMENT.md</code> lists no DB);
+  <code>.env.example</code> lacks <strong>31</strong> settings the live <code>.env</code> uses and contradicts compose on 4;
+  fixed <code>container_name</code>s and host ports → one building per host; <code>PUBLISH_WIDE=true</code> ships
+  (<code>:599</code>); the OnboardingTab React screen is <strong>not in the deployed stack</strong> (frontend service
+  disabled <code>:937-953</code>; <code>config-panel/html/app.js</code> never calls <code>/admin/onboarding/status</code>).
+  TODO-072 is <code>FIXED_UNVERIFIED</code>; the cold run defined in <code>COLD_START_VERIFICATION.md</code> was
+  never executed; bldg4 has no tracked <code>.env4.example</code> or compose file.</li>
+<li><code>scripts/onboard_building.py</code> sets <strong>none</strong> of the 7 per-building env settings and scaffolds a
+  nested layout the swap procedure does not consume; <code>/new-building</code> command calls it with a
+  flag it rejects (<code>--building-id</code> vs <code>--id</code>) and queries repository <code>ontosage</code> (real: <code>bldg</code>).</li>
+<li><strong>Grader:</strong> <code>_heuristic_grade</code> never reads the question (<code>corpus_replay.py:384-385</code>);
+  <code>has_counted_records</code> is <code>\b\d+\s+[a-z]{3,}</code>; judge exceptions silently downgrade mid-run;
+  <code>--building</code> defaults to <code>"bldg1"</code>; 572 of 2,960 headline rows carry <code>provider=model=unrecorded</code>;
+  V9 Phase D2 (re-capture under the corrected grader) not done; <code>V9_PLAN.md</code>/<code>V8_REPORT.md</code> say
+  CAVEAT-418 open, <code>FIX_TRACKER.csv</code> says FIXED same day.</li>
+<li><strong>Tests:</strong> 4,180 functions; 156 files (40.6%) mention <code>abacws</code>/<code>bldg1</code>; routing tests use
+  <code>room 5.01</code> shapes throughout — they prove routing on bldg1 grammar and nothing about <code>RM-204</code>.</li>
+<li><code>CLAUDE.md</code>'s orientation block says branch <code>main</code>, V6 state, 2,488 tests. Reality: branch
+  <code>development</code>, V9, 5,004 tests. Three plans stale.</li>
+</ul>
+<hr />
+<h2 id="3-why-six-systemic-causes">3. Why — six systemic causes<a class="headerlink" href="#3-why-six-systemic-causes" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Building-agnostic was asserted by a grep, so it was achieved as a grep.</strong> The guard and the
+   contract test look for six literal strings. The real coupling is <em>vocabulary</em> (UK-HE facilities
+   lexicon, <code>N.NN</code> room grammar, bldg1's modality names, bldg1 few-shot in prompts). Nothing
+   derived those from the active graph, so every rule that was tuned against bldg1's corpus
+   encoded bldg1.</li>
+<li><strong>Routing was debugged into existence one incident at a time.</strong> Every rule has a measured
+   failure behind it (the comments are exemplary), but the aggregate is five override stages,
+   last-match-wins, and a pre-LLM veto that needs an exception per lane. New lanes are discovered
+   to be shadowed only by a live wrong answer (floor-2 rooms → cleaning register is today's).</li>
+<li><strong>bldg1 was hand-built; the pipeline that would rebuild it does not exist.</strong> Generators exist
+   for 15 of 39 TTLs and templates for 5. Registers are hand-authored Markdown. So "drop TTL in"
+   produces a building that declines what bldg1 answers — and no validator says why.</li>
+<li><strong>Honesty gates are lane-local, not universal.</strong> Referent gate in 2 of 18 lanes; plausibility
+   bands only in the deliberation scorer; privacy regex with a bare <code>and who</code> clause; no
+   meta-answer guard on LLM narration. Each lane re-implements or skips the guard.</li>
+<li><strong>Data integrity is not validated at the reference level.</strong> <code>statusOf</code> → undeclared IRI;
+   <code>Rooftop a brick:Floor</code>; wide-table top-up falling to random type ranges for unmatched names.
+   The two-half rule is checked for sensors; nothing equivalent exists for records, statuses or
+   value plausibility.</li>
+<li><strong>Measurement is one building, one model, and half-attributed</strong>, and the plan documents
+   disagree with the tracker. Coverage numbers cannot be compared across buildings because no
+   other building has a bank, and cannot be trusted on bldg1 until D1/D2 land.</li>
+</ol>
+<hr />
+<h2 id="4-improvement-plan-v10-make-agnosticism-structural-then-measure-it-on-bldg3">4. Improvement plan V10 — make agnosticism structural, then measure it on bldg3<a class="headerlink" href="#4-improvement-plan-v10-make-agnosticism-structural-then-measure-it-on-bldg3" title="Permanent link">&para;</a></h2>
+<p>Ordering principle: <strong>nothing in Phase C (more data for bldg1) until Phase A and B make a
+second building behave like the first for the data it has.</strong> The acceptance test for every
+item is stated against <strong>bldg3 or bldg4</strong>, never bldg1.</p>
+<h3 id="phase-a-stop-the-live-wrong-answers-12-days">Phase A — stop the live wrong answers (1–2 days)<a class="headerlink" href="#phase-a-stop-the-live-wrong-answers-12-days" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>change</th>
+<th>files</th>
+<th>acceptance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1</td>
+<td>Referent gate becomes universal: run <code>apply_referent_gate</code> in <code>_safe_node</code> (or top of <code>_response_node</code>) for every lane that names a space/floor/zone; fail <strong>closed</strong> on timeout with "could not verify"; cache the space IRI set per building for the request.</td>
+<td><code>_orchestrator.py:486,748</code></td>
+<td>"Room 9.99" declines in &lt; 5 s on all lanes; "vibration on floor 9" declines in register/asset/spatial lanes.</td>
+</tr>
+<tr>
+<td>A2</td>
+<td>Invert the capability short-circuit: probe documents <strong>after</strong> classification + contract, as a target with a threshold, never as a pre-LLM gate. Delete the 16 <code>and not</code> clauses.</td>
+<td><code>dialogue_agent.py:832-960</code></td>
+<td>"Which rooms are on floor 2?" returns 47 from the graph; the register/observability/readiness bypass regexes are no longer imported into <code>dialogue_agent</code>.</td>
+</tr>
+<tr>
+<td>A3</td>
+<td>Privacy regex: drop <code>\b(?:and|but)\s+who\b</code>; require a presence predicate. Add "who runs/manages/owns/is responsible" to a governance allow-list.</td>
+<td><code>privacy/inference_classes.py:41</code></td>
+<td>"What is this building and who runs it?" answers from the governance register.</td>
+</tr>
+<tr>
+<td>A4</td>
+<td>Plausibility bands per measurand, applied in <strong>every</strong> numeric lane (sql, compare, analytics, deliberate): move <code>DEFAULT_ANCHORS</code> to <code>ontology/measurand_kinds.ttl</code> as <code>ontosage:physicalMin/Max</code>; a value outside the band is reported as implausible, never averaged, never turned into a recommendation.</td>
+<td><code>scorer.py:50-61</code>, <code>measurand_kinds.ttl</code>, compare/sql lanes</td>
+<td>The floor 1 vs 3 CO₂ question either reports valid figures or says which sensors returned implausible values.</td>
+</tr>
+<tr>
+<td>A5</td>
+<td>Meta-answer guard: reject LLM narration matching "the data you've provided / run a query / if you can" and re-route to <code>_unanswered_response</code>.</td>
+<td><code>_response_node</code>, <code>grounding_guard.py</code></td>
+<td>"Stuffy rooms" never emits developer chatter.</td>
+</tr>
+<tr>
+<td>A6</td>
+<td>Reference-integrity validator: every <code>ontosage:statusOf</code>, <code>servesSpace</code>, <code>locatedIn</code>, <code>hasPart</code> object must be a typed subject in the same namespace; report as HARD_FAIL on swap and as WARN in the admin Ontology tab. Fix <code>bldg1_synthetic_status.ttl</code> (declare <code>Lift_Main a ontosage:Lift</code>) and the generator.</td>
+<td><code>input_validators.py</code>, <code>provision_synthetic_sources.py</code></td>
+<td>"Is the lift working?" answers "operational, simulated, observed 2026-08-21".</td>
+</tr>
+<tr>
+<td>A7</td>
+<td><code>Rooftop</code>/<code>Parking_Level_Ground</code> retyped (<code>brick:Space</code>/<code>brick:Outside</code>), or the floor count excludes non-<code>Floor_N</code> subclasses.</td>
+<td><code>bldg1_*.ttl</code></td>
+<td>"Floors: 6".</td>
+</tr>
+<tr>
+<td>A8</td>
+<td>Wide-table top-up: unmatched sensor names <strong>skip</strong> rather than fall to type ranges; list the unmatched names at publisher start.</td>
+<td><code>mysql_dummy_publisher.py:395-410</code></td>
+<td>Zero wide columns with 7-day CO₂/temp/RH averages outside physical bands.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-b-derive-vocabulary-and-identity-from-the-active-building-1-week">Phase B — derive vocabulary and identity from the active building (1 week)<a class="headerlink" href="#phase-b-derive-vocabulary-and-identity-from-the-active-building-1-week" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>change</th>
+<th>acceptance (bldg3 active)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>B1</td>
+<td><strong>Vocabulary from the graph, not from code.</strong> Build <code>BuildingLexicon</code> once per building (cached under <code>building_id</code>): measurand words from the modality config + HBCO layTerms; room-ID regex learned from the actual <code>brick:Room</code> labels/IRIs (<code>\d+\.\d+</code>, <code>RM\d+</code>, <code>L\d-\w+</code>…); space nouns from Brick subclasses present; asset kinds from <code>ontosage:</code> classes instantiated. Replace <code>_DATA_ANALYTIC_WORDS</code>, <code>_DATA_KW</code>, <code>_ROOM_ID_RE</code>, <code>_ZONE_ID_RE</code>, <code>_SPACE_NOUNS</code>, <code>_MODALITY_STOPWORDS</code> with lexicon lookups. Keep <code>EVENTS_RE</code>/<code>_READINESS_RE</code>/<code>REGISTER_RE</code> but source their nouns from the layTerms of classes that <em>have instances</em>.</td>
+<td>A synthetic bldg with <code>RM-204</code> rooms and an <code>NO2</code> modality routes "NO2 in RM-204" to sensor_data. <code>test_contract_is_building_agnostic</code> replaced by a <strong>two-fixture test</strong> that boots the lexicon on two different room grammars.</td>
+</tr>
+<tr>
+<td>B2</td>
+<td>Flush-on-swap made structural: key <code>cache:concept:*</code>, <code>record_registry._CACHE</code> and the response cache by <code>building_id</code> so a swap cannot serve the previous building's concepts or record classes. (Full <code>building_id</code> plumbing through <code>_active_namespace()</code>/<code>run_sparql_select</code> is v2 work; not required for v1.)</td>
+<td>Swapping bldg1 → bldg3 without a manual Redis flush produces no bldg1 concept or record class.</td>
+</tr>
+<tr>
+<td>B3</td>
+<td>SPARQL prompt: delete all <code>5.01</code>/<code>5.08</code> exemplars; generate the few-shot <strong>from the live graph</strong> (one real room IRI, one real sensor IRI, one real record class) at boot. Add <code>ontosage:</code> to <code>sparql_validator._PREFIX_INJECT</code>.</td>
+<td>Prompt dump on bldg3 contains only bldg3 IRIs; a generated query using <code>ontosage:</code> passes validation.</td>
+</tr>
+<tr>
+<td>B4</td>
+<td>One path resolver: replace the 60+ <code>Path("input")</code> literals and the 6 re-implementations with <code>building_paths</code>. Fix <code>building_context.py</code> keys (<code>ontology_prefix</code>, <code>timezone</code>).</td>
+<td><code>grep -c 'Path("input\|/app/input' orchestrator shared</code> == count inside <code>building_paths.py</code>.</td>
+</tr>
+<tr>
+<td>B5</td>
+<td>Fix the 15 (A) literals from §2.4; extend <code>check_building_literals.py</code> to frontend/rag-service/compose, add room-id, <code>cardiff</code>, <code>example.com</code>, table-name rules, and a <em>vocabulary</em> rule (any regex/frozenset &gt; 10 English nouns in <code>routing_contract</code>/<code>semantic_router</code> must cite a lexicon source).</td>
+<td>Guard fails on the current tree, then passes.</td>
+</tr>
+<tr>
+<td>B6</td>
+<td>Collapse the overlay tiers to what the flat layout can deliver: <code>input/intents.yaml</code> and <code>input/personas/</code> are the active building's own files; drop the dead <code>input/&lt;id&gt;/</code> tier from <code>intents/registry.py</code> and <code>persona_loader.py</code> and document the contract in <code>input/README.md</code>.</td>
+<td>Registry and persona loaders have one search path; <code>test_intent_overlays.py</code> asserts the flat file wins.</td>
+</tr>
+<tr>
+<td>B7</td>
+<td>Response dispatch: <code>dialogue_response</code> moves <strong>below</strong> computed lanes; <code>analytics_result</code>/<code>forecast_result</code> carry-over becomes explicit (a "that" co-reference sets a flag) instead of default.</td>
+<td>A turn that computes a register result and a clarification shows the register result.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-c-a-building-gets-what-bldg1-has-by-construction-12-weeks">Phase C — a building gets what bldg1 has, by construction (1–2 weeks)<a class="headerlink" href="#phase-c-a-building-gets-what-bldg1-has-by-construction-12-weeks" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>change</th>
+<th>acceptance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td><strong>Ontology-layer readiness validator.</strong> On swap/boot and in the admin Onboarding view: for each <code>ontosage:</code> class with layTerms, instance count in this building; for each record mapping, whether a document of that <code>record_type</code> exists; for each lane, GREEN/EMPTY. Nothing is a hard fail, but the report is the answer to "why does bldg4 decline everything".</td>
+<td><code>certify_building.py --preflight-only</code> on bldg4 prints 34 EMPTY record classes and the missing <code>_policies.ttl</code>.</td>
+</tr>
+<tr>
+<td>C2</td>
+<td><strong>Register scaffolder.</strong> <code>scripts/scaffold_registers.py --building bldgN</code> writes one <strong>empty, front-mattered</strong> register per mapping (columns from the mapping, <code>simulated: true</code>, building name from <code>building.yaml</code>) plus an optional <code>--synthetic N</code> rows mode — the same generator that produced bldg1's registers, made building-agnostic.</td>
+<td>bldg3 with <code>--synthetic 10</code> computes "which permits are open" and "which cleaning tasks are due".</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Templates for the 24 TTLs with no path: <code>knowledge</code>, <code>building_facts</code>, <code>site</code>, <code>description</code>, <code>synthetic_status</code> (with typed assets), <code>synthetic_hours/schedules/accessibility/amenity_state</code>, <code>zone_room_links</code>, <code>policies</code>, <code>compliance</code>. Each template is the generator's output for an empty building; <code>onboard_building.py</code> writes them <strong>flat</strong>, sets all 7 env settings, and is what <code>/new-building</code> calls (fix flags + repository name).</td>
+<td><code>onboard_building.py --id bldg5 --namespace …</code> + <code>swap_building.py --to bldg5</code> boots to <code>/health</code> 200 with every lane EMPTY-but-declared, not dark.</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>Fill the three unfillable record classes (<code>AlarmEvent</code>, <code>AnomalyEvent</code>, <code>AccessEvent</code>) with mappings or remove their layTerms; put <code>SustainabilityTarget</code> under <code>ontosage:Record</code>; script the RDF half of the reader audit (<code>audit_unread_terms.py</code>) and add readers for <code>AccessibilityFeature</code> properties and <code>ServedZone</code>.</td>
+<td>Audit lists 0 answerable classes with no reader.</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>Deployment truth: MySQL in compose (or a documented host prerequisite + DDL step run by compose init); <code>.env.example</code> regenerated from the union of <code>.env*</code> with per-building keys marked; <code>PUBLISH_WIDE=false</code> default; parametrise <code>container_name</code>/ports by <code>COMPOSE_PROJECT_NAME</code>; remove <code>./data/bldg1:/staging</code>; ship <code>.env4.example</code> + <code>docker-compose.bldg4.yml</code>; make the OnboardingTab reachable (config-panel calls <code>/admin/onboarding/status</code>) or delete it. Then <strong>run the cold start in <code>COLD_START_VERIFICATION.md</code> on bldg4</strong> and close TODO-072 with evidence.</td>
+<td>Fresh clone → <code>onboard</code> → <code>up -d</code> → 5 sensor questions answer on bldg4 with no host MySQL pre-existing.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-d-the-arbiter-earns-its-name-or-its-size-1-week-after-ac">Phase D — the arbiter earns its name or its size (1 week, after A–C)<a class="headerlink" href="#phase-d-the-arbiter-earns-its-name-or-its-size-1-week-after-ac" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>change</th>
+<th>acceptance</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>D1</td>
+<td>One end-to-end test of <code>_deliberate_node</code> with a fake LLM and a seeded in-memory graph; <code>deliberate_result</code> added to <code>_LANE_KEYS_FOR_DIAGNOSIS</code>; failed-table ledger entry; <code>simulated</code> share in prose; <code>_plain_rank</code> uses the same anchors as the ranking. <code>DELIBERATE_CLARIFY_OFF</code>/<code>CQIR_COMPILE_CACHE</code> become <code>Settings</code>.</td>
+<td>Test fails when any of the five is reverted.</td>
+</tr>
+<tr>
+<td>D2</td>
+<td>Decide the brain question honestly: either (a) the CQ-IR compile + admission gate + plan trace run for <strong>every data intent</strong> (sensor_data, compare, trend, analytics, metadata) and <code>build_plan_trace</code> reports real steps — or (b) rename the lane <code>ranking</code> and delete the "brain routes everything" claim from V4 docs and <code>ONTOSAGE.md</code>. Recommendation: <strong>(a) for the admission gate only</strong> (it is cheap, deterministic, and would have caught floor-2-from-cleaning-register and the untyped lift), (b) for the rest.</td>
+<td>Plan trace on a <code>compare</code> turn names the gate decision.</td>
+</tr>
+<tr>
+<td>D3</td>
+<td>Delete <code>amenities.py</code>, <code>saturation.py</code>, <code>scenarios.py</code>, <code>synthetic_signals.py</code> from <code>deliberation/</code> (script-only) and <code>matrix.py</code>/<code>omissions.py</code> duplication in <code>evidence/</code>, or wire them.</td>
+<td>No module under <code>orchestrator/</code> with zero importers.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="phase-e-measure-on-a-building-that-is-not-bldg1-ongoing">Phase E — measure on a building that is not bldg1 (ongoing)<a class="headerlink" href="#phase-e-measure-on-a-building-that-is-not-bldg1-ongoing" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>E1</td>
+<td><strong>Portable question bank:</strong> template the 4,060 questions over the lexicon (room ids, modalities, register names substituted from the active building) so bldg3/bldg4 can be captured with the same grader.</td>
+</tr>
+<tr>
+<td>E2</td>
+<td>Land V9 D1 (grader reads the question; <code>has_counted_records</code> tightened) and D2 (full re-capture) — but run D2 on <strong>bldg1 and bldg3</strong>, report both. Reconcile <code>FIX_TRACKER.csv</code> with <code>V8_REPORT</code>/<code>V9_PLAN</code> on CAVEAT-418. Record provider/model on every row.</td>
+</tr>
+<tr>
+<td>E3</td>
+<td>Regression probe gains a <strong>bldg3 leg</strong> and the 12 probe questions from §1 as a permanent smoke set, run before any coverage claim.</td>
+</tr>
+<tr>
+<td>E4</td>
+<td>Refresh <code>CLAUDE.md</code> orientation (branch, plan, suite count) and add "ARBITER" to <code>ONTOSAGE.md</code>. Rewrite <code>input/README.md</code> to list every input the code reads (§2.4 undocumented list: <code>datasources.yaml</code>, <code>saturation_modalities.yaml</code>, <code>recipes.yaml</code>, <code>goals.yaml</code>, <code>role_datasource_access.yaml</code>, <code>evidence_policy.yaml</code>, <code>access_tiers.yaml</code>, <code>&lt;id&gt;_policies.ttl</code> exact-name rule, <code>floors/</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="what-not-to-do">What not to do<a class="headerlink" href="#what-not-to-do" title="Permanent link">&para;</a></h3>
+<ul>
+<li>Do not add registers C1–C4 from <code>V9_PLAN.md</code> before Phase A/B: today's floor-2 answer shows a
+  new register can <em>lower</em> accuracy by feeding the capability short-circuit.</li>
+<li>Do not fix the probe failures by adding a 17th <code>and not</code> clause, a 37th contract rule, or a
+  bldg1-shaped regex. Every one of those is the disease.</li>
+<li>Do not publish another coverage number until E2 runs on two buildings with attributed rows.</li>
+<li>Do not delete <code>bldg1</code>'s hand-built data; make it reproducible instead (C2/C3).</li>
+</ul>
+<hr />
+<h2 id="5-sizing">5. Sizing<a class="headerlink" href="#5-sizing" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>phase</th>
+<th>effort</th>
+<th>blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A</td>
+<td>1–2 days</td>
+<td>everything — these are live wrong answers</td>
+</tr>
+<tr>
+<td>B</td>
+<td>~1 week</td>
+<td>C's acceptance on bldg3</td>
+</tr>
+<tr>
+<td>C</td>
+<td>1–2 weeks</td>
+<td>the deployment claim</td>
+</tr>
+<tr>
+<td>D</td>
+<td>~1 week</td>
+<td>V4 claims in the paper</td>
+</tr>
+<tr>
+<td>E</td>
+<td>ongoing</td>
+<td>any coverage number</td>
+</tr>
+</tbody>
+</table>
+<p>Nothing here is committed. Per project rule, no commit or push without explicit approval.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

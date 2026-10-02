@@ -1,0 +1,60 @@
+do the building interact with other buildings?
+What is the top source of indoor pollution?
+how does an occupancy sensor choose to adjust when multiple types of people are in a room?  who does it chose to cater to if they have different likes or dislikes?
+what is the carbon monoxide reading near the boiler room?
+Can you automatically prepare a meeting room before use?
+What does AI do if the air quality in the building gets too bad?
+If you could change anythink about your algorith what would it be
+which zones have recently reported comfort complaints?
+What is the best way for someone to use you or take advantage of what you can do?
+can I personalize the building to suit my perference?
+what sustainability certtifications does the building hold?
+Can you look for any energy usage spikes?
+indoor transport should be a matchable one
+Is there a green space and disposal plan for service dog waste?
+acoustics  will be allowed or not
+How is access to the server room restricted?
+How can you manage air quality in the car park?
+what do you do to protect hvac units from damage?
+is there any equipment currently using excessive power?
+What limitations are there in achieving personal comfort when there are varied types of occupants in a shared location?
+How does the building control pollen exposure during the spring?
+How would the building know if there was too much noise in just one section of the open plan office?
+Where does the background noise from the Building come from, is it overhead and can it be directed?
+What kind of alerts can be seet?
+How does it take in to account the amount of people in the room?
+is there any smell or gas leak detected in this area?
+CAN YOU PLAY FOOTBALL ?
+what type of parts use of the building?
+Can the temp in my unit be controlled individually?
+are the elevators operating normally without delays?
+Is the track lighting versatile enough to highlight different exhibits?
+Should the building's target temperature shift slightly based on what people are wearing (e.g., higher in summer, lower in winter) to save energy?
+how is the air quality in this area today?
+Would powering up elevators from completely off to on every time people are nearing save energy or actually cost more?
+What is the current standby load at this server rack, or do we have all servers powered off as expected?
+What would you recommend for thermal comfort for people?
+If noises are expected are certain times can we train the system to know that it is okay and not to flag it?
+how to the microphones adapt to those that are loud spoken and soft spoken
+how is water safety managed to prevent legionella?
+Can you keep temperature stable?
+during a lockdown, how do we keep fire escape routes usable?
+how are water leak detected in hard to see areas?
+is the boiler gas or electric? is solar incorporated into the system?
+What is your favourite colour?
+On a very hot summer day, what systems are in place to ensure that the server room does not overheat? I assume there is a team of on-site experts, but this may not always be possible.
+Which entrances are currently open?
+How is the air quality right now
+can you notify me if this area becomes to warm or too cold?
+What is the noise level of a ship?
+What is the current sound level?
+How are common areas manages to maintain comfort during busy times?
+What is 2+2?
+how often are lights adjusted automatically in this building?
+How many people are inside right now?
+How many smart plugs do you have?
+does green roof or terrace mean plants?
+in this kitchen area, how much vampire power do appliaces draw after hours?
+How user-friendly is the people count sensor?
+How does the cost of hidden energy waste compare vs traditional buildings?
+how do weekends compare to weekdays for enery use?
