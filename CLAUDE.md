@@ -7,11 +7,13 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 ## New session orientation (read this first)
 
-**Current branch:** `development` — last commit before this one was `e0c14ae` (2026-09-25,
-*"docs: pay the parked-suite debt"*). **This line said `a538bf6` (2026-09-18) until 2026-10-01,
-which was four commits and a week stale — `git log --oneline -3` settles it in one second, so
-read it rather than this sentence.** Everything from 2026-09-26 to 2026-10-01 inclusive is in
-the commit this line was last updated by. **Never commit or push without the user's explicit
+**Current branch:** `development` — last commit before this one was `ab6c081` (2026-10-02,
+*"fix(readiness): mechanism questions reach the building's own topics..."*). **This line said
+`e0c14ae` (2026-09-25) until 2026-10-04, which was a week and six days of accumulated work
+stale — `git log --oneline -3` settles it in one second, so read it rather than this
+sentence.** Everything from 2026-09-26 to 2026-10-04 inclusive — the whole QA-trial plan and
+trial-readiness plan push, D4/E2/E4/H3 and BUG-1441 among the last of it — is in the commit
+(`39c05c9`) this line was last updated by. **Never commit or push without the user's explicit
 approval.**
 
 **Three files every session must read** (in order):
@@ -27,7 +29,63 @@ approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **LATEST (2026-10-03, the trial-readiness plan + its first execution wave; NOTHING
+- **LATEST (2026-10-04, trial-readiness plan continued and PUSHED — commit `39c05c9` on
+  `development`) — of the 77-row plan: 35 DONE, 10 PARTIAL (each honestly scoped), 4
+  INVESTIGATED_NOT_IMPLEMENTED (their own stated premise didn't survive contact with the live
+  code — see each row's Notes), 2 DEFERRED by the plan's own design, 26 TODO. SUITE **14,389
+  pass / 0 fail / 76 skip / 4 xfail**, active, measured LAST; **PARKED SUITE 14,280 pass / 0
+  fail / 186 skip / 3 xfail**, measured in the parked state immediately before this commit —
+  the reconciliation is the usual one (skip count moves with building-dependent tests). GATE
+  **50/51, the one flagged case (#37, "evidence behind your answer about the coolest room") is
+  the SAME pre-existing apparatus artifact as 2026-10-03's case #37** (BUG-1397's shape — read
+  the saved JSON before trusting the verdict; this run's answer is `session_recall` correctly
+  declining a fresh chat with no prior turn, not a crash or a fabrication).
+  **D4** — `sources`/`turn_outcome`/`retrieval_outcome` now ride on all four `/v1`-family
+  envelopes (`/chat`, websocket, `/v1` streamed and non-streamed); new
+  `retrieval_outcome.from_state()` deliberately does NOT reuse `evidence.assemble.infer_lane` —
+  that function's whole point is to skip a lane with no evidence, and a typed absence is
+  stamped on exactly such a lane. PARTIAL: the generic decline producers
+  (`absence_wording`/`_unanswered_response`) still don't stamp a typed outcome — mapping their
+  many distinct failure reasons onto one of seven states would be a guess.
+  **E4** — `precedence.resolve()` can now represent a same-tier disagreement: two
+  authoritative claims with different values used to collapse to ONE confident value with
+  `disagreement=False`, the one path in this wave that could ship a confidently-wrong answer.
+  New `_settle_tie()` tries `supersedes`, then `effective_from` (only when EVERY tied claim
+  states one), then reports `"unresolved"` rather than picking by arrival order.
+  **E2** — `scripts/fact_conflicts.py`, a complete cross-source conflict scanner with a
+  standing test and NO caller, is now routed. Measured the vocabulary-only approach the plan's
+  own text warned against (`register_projection._CROSS_SOURCE_RE` alone: 115 of 4,060 bank
+  questions match it, nearly all physical/scheduling conflicts with nothing to do with two
+  STATED facts disagreeing) and built a narrower "which is right/correct" + "differs depending
+  on who" detector instead — 0 moves over the full bank, reported honestly. **LIVE-VERIFIED
+  THREE WAYS through `/v1`**, including finding a REAL stated disagreement already in bldg1's
+  own documents (Cardiff Grounds Care vs Taff Valley Grounds as the grounds provider, named
+  with file:line, declined to pick one) and correctly NOT hijacking a phrasing the existing
+  metadata/register lane already answers well.
+  **H3** — the leak half is done: `_NOT_USER_FACING` held 5 names while deterministic-only
+  intents had grown to 10, so 5 (6 counting this session's own `fact_conflict`) fell through
+  `self_description`'s "Other" bucket and printed their raw internal name to "what can I ask
+  you?" — measured live at 13. Sorted each into a real capability group or the internal set,
+  gave `session_recall`/`fact_conflict` a hand-written bullet (same pattern D14 used for
+  provenance), and a new test derives the completeness check from the LIVE registry so this
+  can't quietly recur. PARTIAL: the Open WebUI prompt-suggestions/model-description config
+  edit was not attempted — deliberately, while the gate needed to run alone.
+  **BUG-1441 (new, found by the full suite, fixed):** a tracker-id-shaped citation
+  ("BUG-194") was shipping as REAL `rdfs:comment` graph DATA — not a developer comment — in
+  both a new file this session wrote and, more importantly, the shared, building-AGNOSTIC
+  `ontology/ontosage_schema.ttl` itself, reaching every building via `ttl_uploader`. Fixed
+  both; regenerated and re-uploaded the TTL live (SHA changed, confirmed zero matches via
+  SPARQL after); widened the shipped-TTL walk test to cover the schema file, since it was
+  never in its glob despite reaching more buildings than any single `bldg1_*.ttl`.
+  Three pytest failures from an earlier checkpoint in the same session were confirmed, by
+  re-running each fresh and standalone, to be tree-pinning artifacts from editing `main.py`
+  mid-run (lessons #101/#107) — not real, and did not recur.
+  **TODO is dominated by owner-decision rows** (D9/D10 evidence retention, E6/F9 capacity
+  authority and conversation TTL, F6/F10) and one investigated-but-untouched mechanism gap:
+  D12 (populate `contributing_uuids` for the sparql/register/capability lanes) has no safe
+  generic UUID extraction from their heterogeneous result shapes without risking a WRONG
+  per-sensor attribution — left for a session that can build it carefully, not guessed here.
+- **(2026-10-03, the trial-readiness plan + its first execution wave; NOTHING
   committed — push approval owed) — a 76-row plan (`tasks/TRIAL_READINESS_PLAN_2026-10-02.md`
   + `tasks/TRIAL_TRACKER.csv`) was built from a six-reader code inventory, then adversarially
   reviewed by five more readers before any row was trusted. 15 rows executed this session
@@ -1129,8 +1187,9 @@ approval.**
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**65** parse-stage + 2 post-stage + 5 concept-stage ordered rules, counted FROM THE MODULE
-  again 2026-10-04 — it said **62**, so this line has now gone stale a SIXTH time, which is the
+  (**66** parse-stage + 2 post-stage + 5 concept-stage ordered rules — `cross_source_precedence`
+  (E2) appended LAST, counted FROM THE MODULE immediately after adding it, 2026-10-04 — it said
+  **65** earlier the SAME day, so this line has now gone stale a SEVENTH time, which is the
   argument for printing it rather than reading it;
   2026-09-17 — this line said 17+1+1 for weeks after it stopped being true, then 36+1+3 for
   another nine days, which is the same failure twice. Count it, do not read it: `python -c
