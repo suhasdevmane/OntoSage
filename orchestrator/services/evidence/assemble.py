@@ -81,12 +81,23 @@ _LANE_SEMANTICS: Sequence[tuple] = (
     ("register_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.OBSERVED),
     ("capability_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.OBSERVED),
     ("document_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.OBSERVED),
+    # E2 (2026-10-04): the cross-source conflict scanner reads the SAME two stores as
+    # document_result (documents/*.md and authored TTL) and is classified identically --
+    # it reports what those sources state, never a measurement.
+    ("fact_conflict_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.OBSERVED),
     # Geometry IS measured -- from the surveyed floor plan rather than from a sensor.
     # spatial_result must be tried BEFORE floor_plan_result: the spatial lane also renders
     # through the floor-plan channel for display, so testing floor_plan first would label
     # every geometry computation as a floor-plan lookup.
     ("spatial_result", Operation.OBSERVATION, AnswerStatus.OBSERVED),
     ("floor_plan_result", Operation.OBSERVATION, AnswerStatus.OBSERVED),
+    # D17 (2026-10-04): a store-side GROUP BY is arithmetic the STORE did, not a sensor
+    # reading -- the same reasoning CALCULATION already applies to analytics_result.
+    # Absent from this table entirely, aggregate_result fell through to sql_result below
+    # it and every aggregate answer was stamped OBSERVATION/OBSERVED. Must precede
+    # sql_result: the two keys are set TOGETHER on the same turn (2D-10,
+    # _orchestrator.py's sql node), and the table is read in order.
+    ("aggregate_result", Operation.CALCULATION, AnswerStatus.CALCULATED),
     ("sql_result", Operation.OBSERVATION, AnswerStatus.OBSERVED),
     ("sparql_result", Operation.AUTHORITATIVE_LOOKUP, AnswerStatus.OBSERVED),
 )
@@ -197,13 +208,21 @@ def _sources_from(results: Dict[str, Any]) -> List[EvidenceSource]:
     degrade to `simulated=None` (undeclared) rather than to False. None and False are NOT
     the same claim -- False asserts the data is real, None says nobody said.
     """
+    from orchestrator.services.provenance import label_for_string_entry, readable_source_label
+
     out: List[EvidenceSource] = []
     for tag in results.get("_prov_stores") or []:
         try:
             if isinstance(tag, dict):
+                _sid = str(tag.get("source_id") or tag.get("store") or "unknown")
                 out.append(
                     EvidenceSource(
-                        source_id=str(tag.get("source_id") or tag.get("store") or "unknown"),
+                        source_id=_sid,
+                        # D15 (QA-trial plan, 2026-10-02): a renderer that prints source_id
+                        # verbatim would show a raw record IRI or a timeseries UUID to every
+                        # reader (BUG-1407's shape at the evidence layer). A lane that knows
+                        # a reader-facing name says so; otherwise one is derived from the id.
+                        label=str(tag.get("label") or readable_source_label(_sid)),
                         kind=str(tag.get("kind") or "sensor"),
                         store=str(tag.get("store") or ""),
                         simulated=tag.get("synthetic", tag.get("simulated")),
@@ -218,13 +237,51 @@ def _sources_from(results: Dict[str, Any]) -> List[EvidenceSource]:
                     )
                 )
             elif isinstance(tag, str):
-                out.append(EvidenceSource(source_id=tag, kind="sensor", store=tag))
+                out.append(
+                    EvidenceSource(
+                        source_id=tag,
+                        label=label_for_string_entry(tag),
+                        kind="sensor",
+                        store=tag,
+                    )
+                )
         except Exception:  # one malformed tag must not cost the whole record
+            continue
+
+    # D8 (QA-trial plan, 2026-10-02): the deliberation lane never calls `_prov.record` --
+    # its evidence is the dossier, not a store key list -- so its answers were the single
+    # largest group of records carrying ZERO sources (32 of 70 non-declined zero-source
+    # records measured live). `evidence_dossier.evidence` already carries exactly the
+    # fields a source needs: `sensor_uuid`, `stored_at` and `latest` (the observed-at
+    # timestamp gap 7 names as separately missing on 150 of 200 records). This is an
+    # extension of an EXISTING dossier reader (`:omitted_criteria` already reads
+    # `coverage_excluded` from the same object), not a new one.
+    _dossier_rows = (results.get("evidence_dossier") or {}).get("evidence") or []
+    for _row in _dossier_rows:
+        if not isinstance(_row, dict):
+            continue
+        _uuid = str(_row.get("sensor_uuid") or "")
+        if not _uuid or any(s.source_id == _uuid for s in out):
+            continue
+        try:
+            out.append(
+                EvidenceSource(
+                    source_id=_uuid,
+                    label=readable_source_label(_uuid),
+                    kind="sensor",
+                    store=str(_row.get("stored_at") or ""),
+                    simulated=_row.get("simulated"),
+                    observed_at=_as_datetime(_row.get("latest")) if _row.get("latest") else None,
+                )
+            )
+        except Exception:
             continue
 
     for uuid in contributing_uuids(results)[:25]:
         if not any(s.source_id == uuid for s in out):
-            out.append(EvidenceSource(source_id=uuid, kind="sensor"))
+            out.append(
+                EvidenceSource(source_id=uuid, label=readable_source_label(uuid), kind="sensor")
+            )
     return out
 
 
@@ -251,6 +308,17 @@ def contributing_uuids(results: Dict[str, Any]) -> List[str]:
     if isinstance(meta, dict):
         for u in meta:
             if isinstance(u, str) and u not in seen:
+                seen.add(u)
+                out.append(u)
+    # D8/D12 (QA-trial plan, 2026-10-02): the deliberation lane binds real timeseries uuids
+    # (`DossierEvidenceRow.sensor_uuid`) and never writes `sensor_metadata`, so this returned
+    # [] for every deliberate turn and the spatial-adequacy grader skipped all of them on the
+    # "zero contributing uuids" conjunct of its guard. One more reader of the same dossier
+    # object `_sources_from` already reads, not a new store.
+    for _row in (results.get("evidence_dossier") or {}).get("evidence") or []:
+        if isinstance(_row, dict):
+            u = _row.get("sensor_uuid")
+            if isinstance(u, str) and u and u not in seen:
                 seen.add(u)
                 out.append(u)
     return out
@@ -608,10 +676,7 @@ def _causal_verdict(results: Dict[str, Any], rec: EvidenceRecord) -> List[Any]:
         if not text.strip():
             return verdicts
 
-        from orchestrator.services.evidence.causal_guard import (
-            causal_gate,
-            support_from_evidence,
-        )
+        from orchestrator.services.evidence.causal_guard import causal_gate, support_from_evidence
         from orchestrator.services.evidence.policy import load_policy
 
         n_series = sum(1 for s in rec.sources if s.kind == "sensor") or len(
@@ -681,14 +746,9 @@ def _trend_integrity_verdict(results: Dict[str, Any], rec: EvidenceRecord) -> Li
         if not (results.get("forecast_result") or results.get("trend_result")):
             return verdicts
         from orchestrator.services.evidence.gates import GateVerdict
-        from orchestrator.services.evidence.history import (  # noqa: F401
-            ConfigurationPeriod,
-        )
+        from orchestrator.services.evidence.history import ConfigurationPeriod  # noqa: F401
         from orchestrator.services.evidence.policy import load_policy
-        from orchestrator.services.evidence.trend_integrity import (
-            TrendVerdict,
-            assess_trend,
-        )
+        from orchestrator.services.evidence.trend_integrity import TrendVerdict, assess_trend
 
         tr = results.get("time_range") or {}
         start = _as_datetime(tr.get("start")) if isinstance(tr, dict) else None
@@ -747,28 +807,33 @@ def _configuration_periods(results: Dict[str, Any]):
 def _precedence_verdicts(results: Dict[str, Any], rec: EvidenceRecord) -> List[Any]:
     """V6-T21: a measurement never overrides a system of record, and disagreement is stated.
 
-    Runs whenever more than one tier contributed. The winning tier is recorded on the answer
-    so a reader can see WHAT KIND of thing answered them, which is half of R-7; the other
-    half is that a lower-tier disagreement is narrated rather than dropped.
+    Runs whenever at least one source contributed — the winning tier is recorded on the
+    answer so a reader can see WHAT KIND of thing answered them (W4-02), which is half of
+    R-7 and is answered even when only one tier led. The other half, a lower-tier
+    disagreement narrated rather than dropped, still needs two tiers to disagree about
+    anything, and `resolve()` reports that on its own.
     """
     verdicts: List[Any] = []
     try:
         from orchestrator.services.evidence.gates import GateVerdict
         from orchestrator.services.evidence.policy import load_policy
-        from orchestrator.services.evidence.precedence import (
-            claims_from_sources,
-            resolve,
-        )
+        from orchestrator.services.evidence.precedence import claims_from_sources, resolve
 
-        if len(rec.sources) < 2:
+        # D6 (QA-trial plan, 2026-10-02): this USED to return before `rec.source_tier` was
+        # ever set, whenever fewer than two sources or fewer than two tiers contributed —
+        # which measured live was 327 of 400 stored records (81.8%), so the field that
+        # answers "what kind of thing answered you" (W4-02) was empty on almost every turn.
+        # `resolve()` already degrades correctly with one claim (`winning_tier` set, no
+        # disagreement, reason "only X evidence contributed"), so there is nothing here that
+        # needed two sources in the first place — only the CONFLICT reporting below does.
+        if not rec.sources:
             return verdicts
         policy = load_policy()
         claims = claims_from_sources(
             rec.sources, _latest_values_by_uuid(results), policy.source_tiers()
         )
-        tiers = {c.tier for c in claims}
-        if len(tiers) < 2:
-            return verdicts  # one tier answered; nothing to order
+        if not claims:
+            return verdicts
 
         modality = _modality_of(results)
         verdict = resolve(claims, policy.agreement_tolerance(modality))
@@ -1030,19 +1095,25 @@ def _available_gates(
 
         grades = results.get("_spatial_grades") or {}
         if grades:
+            # D13 (QA-trial plan, 2026-10-02): the lowest rank is a `.get` default, not a
+            # `[cand]` lookup, so a future grade this dict does not name cannot KeyError
+            # here. The starting value is UNGRADED, not NONE: if every candidate grade fails
+            # to parse, "no sensor covers this space" would be a false MEASUREMENT asserted
+            # from zero real grades -- the same default-vs-measurement collision this row
+            # exists to remove, reproduced inside this very loop.
             order = {
                 SpatialAdequacy.IN_ROOM: 3,
                 SpatialAdequacy.SERVED_ZONE: 2,
                 SpatialAdequacy.PROXY: 1,
                 SpatialAdequacy.NONE: 0,
             }
-            best, reason = SpatialAdequacy.NONE, ""
+            best, reason = SpatialAdequacy.UNGRADED, ""
             for g in grades.values():
                 try:
                     cand = SpatialAdequacy(str(g.get("grade")))
                 except ValueError:
                     continue
-                if order[cand] > order[best]:
+                if order.get(cand, -1) > order.get(best, -1):
                     best, reason = cand, str(g.get("reason") or "")
             verdicts.append(
                 spatial_gate(

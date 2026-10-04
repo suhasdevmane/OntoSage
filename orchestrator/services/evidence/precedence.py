@@ -35,7 +35,7 @@ put the ordering back into the least auditable place.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, Optional, Sequence, Tuple
 
 from shared.utils import get_logger
 
@@ -82,13 +82,27 @@ _DEFAULT_KIND_TIER: Dict[str, str] = {
 
 @dataclass
 class SourceClaim:
-    """One source's answer to the same question, with the identity to name it."""
+    """One source's answer to the same question, with the identity to name it.
+
+    ``supersedes`` and ``effective_from`` (E4/E6, QA-trial plan 2026-10-04) are the ONLY
+    evidence `resolve()` may use to pick between two claims tied at the same tier — never
+    arrival order in the input sequence. Both default to None/"" because, before E6 lands a
+    reader that populates them from the schema's own ``ontosage:supersedes`` and
+    ``ontosage:effectiveFrom`` predicates, no claim carries either, and a same-tier tie is
+    then correctly reported as UNRESOLVED rather than silently decided by whichever claim
+    happened to be built first.
+    """
 
     source_id: str
     tier: str
     value: Optional[float] = None
     label: str = ""
     kind: str = ""
+    #: The source_id of another same-tier claim this one explicitly supersedes, or "".
+    supersedes: str = ""
+    #: ISO date/datetime string, or "" when unknown. A later value wins a same-tier tie
+    #: that no `supersedes` link settles.
+    effective_from: str = ""
 
     @property
     def rank(self) -> int:
@@ -102,20 +116,49 @@ class SourceClaim:
 
 @dataclass
 class PrecedenceVerdict:
-    """Which tier answered, and whether a lower tier disagreed with it."""
+    """Which tier answered, and whether a lower tier — or an equal one — disagreed with it."""
 
     winning_tier: str = "unknown"
     winner: Optional[SourceClaim] = None
     overridden: List[SourceClaim] = field(default_factory=list)
     disagreement: bool = False
     reason: str = ""
+    #: E4: TWO claims at the WINNING tier disagreed on the value. Distinct from
+    #: `disagreement`, which is a LOWER tier contradicting the winner — this is the one
+    #: path that can produce a confidently-wrong answer rather than a missing disclosure,
+    #: because sorting by tier alone has no way to represent "two systems of record,
+    #: same rank, different values" at all.
+    same_tier_disagreement: bool = False
+    #: How a same-tier tie was settled: "" (no tie), "supersedes", "effective_from", or
+    #: "unresolved" (tied, no evidence to settle it — the winner is still ONE of them,
+    #: picked by rank-stable order, and `same_tier_disagreement` says that pick is not
+    #: backed by evidence).
+    tiebreak: str = ""
+    #: The other same-tier claim(s) that disagreed with the winner, when unresolved or
+    #: resolved by evidence (kept separate from `overridden`, which is lower-tier only).
+    tied_with: List[SourceClaim] = field(default_factory=list)
 
     @property
     def has_authority(self) -> bool:
         return self.winning_tier == "authoritative"
 
     def describe(self) -> str:
-        """The sentence an answer uses when tiers disagree. Empty when they do not."""
+        """The sentence an answer uses when tiers (or tied sources) disagree. Empty when
+        nothing disagreed."""
+        if self.same_tier_disagreement and self.winner is not None:
+            others = "; ".join(c.describe() for c in self.tied_with)
+            if self.tiebreak == "unresolved":
+                return (
+                    f"Two {self.winning_tier} sources disagree and neither states which "
+                    f"supersedes the other: {self.winner.describe()} is shown; {others} "
+                    "also claims this. This is not resolved — it is reported as a "
+                    "disagreement between equally-ranked sources."
+                )
+            return (
+                f"{self.winner.describe()} is the current {self.winning_tier} value "
+                f"({self.tiebreak.replace('_', ' ')}); the superseded source disagreed: "
+                f"{others}."
+            )
         if not self.disagreement or self.winner is None:
             return ""
         others = "; ".join(c.describe() for c in self.overridden)
@@ -146,12 +189,24 @@ def resolve(claims: Sequence[SourceClaim], tolerance: Optional[float] = None) ->
     ranked = sorted([c for c in claims if c], key=lambda c: -c.rank)
     if not ranked:
         return PrecedenceVerdict(reason="no sources contributed")
-    winner = ranked[0]
+
+    top_rank = ranked[0].rank
+    tied = [c for c in ranked if c.rank == top_rank]
+    winner, tied_with, tiebreak = _settle_tie(tied)
     lower = [c for c in ranked[1:] if c.rank < winner.rank]
 
     verdict = PrecedenceVerdict(winning_tier=winner.tier, winner=winner)
+    if tied_with:
+        verdict.same_tier_disagreement = True
+        verdict.tiebreak = tiebreak
+        verdict.tied_with = tied_with
     if not lower:
-        verdict.reason = f"only {winner.tier} evidence contributed"
+        verdict.reason = (
+            f"only {winner.tier} evidence contributed; {len(tied_with)} same-tier source(s) "
+            f"disagree ({tiebreak})"
+            if tied_with
+            else f"only {winner.tier} evidence contributed"
+        )
         return verdict
 
     # A lower tier is only a DISAGREEMENT when it actually says something different. Two
@@ -169,7 +224,52 @@ def resolve(claims: Sequence[SourceClaim], tolerance: Optional[float] = None) ->
         if differing
         else f"{winner.tier} evidence leads; lower-tier sources agree"
     )
+    if tied_with:
+        verdict.reason += f"; {len(tied_with)} same-tier source(s) also disagree ({tiebreak})"
     return verdict
+
+
+def _settle_tie(tied: List[SourceClaim]) -> Tuple[SourceClaim, List[SourceClaim], str]:
+    """Pick the winner among claims tied at the top rank, and say how (E4).
+
+    Evidence order, never arrival order: an explicit ``supersedes`` link first, then the
+    later ``effective_from``. A tie this cannot settle still returns a winner — one of the
+    tied claims has to be reported as THE value — but marks it "unresolved" so the caller
+    knows that pick carries no evidentiary weight, rather than quietly presenting whichever
+    claim happened to sort first as if it had been decided.
+    """
+    if len(tied) <= 1:
+        return tied[0], [], ""
+
+    by_id = {c.source_id: c for c in tied}
+    # 1) An explicit supersedes link among the tied claims.
+    for c in tied:
+        if c.supersedes and c.supersedes in by_id and by_id[c.supersedes] is not c:
+            disagreeing = [
+                o
+                for o in tied
+                if o is not c and (o.value is None or c.value is None or o.value != c.value)
+            ]
+            if disagreeing:
+                return c, disagreeing, "supersedes"
+
+    # 2) The values may simply agree — not every tie is a disagreement.
+    values = {c.value for c in tied if c.value is not None}
+    if len(values) <= 1:
+        return tied[0], [], ""
+
+    # 3) A later effective_from, when every tied claim states one.
+    if all(c.effective_from for c in tied):
+        newest = max(tied, key=lambda c: c.effective_from)
+        disagreeing = [c for c in tied if c is not newest and c.value != newest.value]
+        if disagreeing:
+            return newest, disagreeing, "effective_from"
+        return newest, [], ""
+
+    # 4) No evidence to settle it. Still differing values -> genuinely unresolved.
+    winner = tied[0]
+    disagreeing = [c for c in tied[1:] if c.value != winner.value]
+    return winner, disagreeing, "unresolved" if disagreeing else ""
 
 
 def claims_from_sources(

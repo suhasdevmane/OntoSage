@@ -8,8 +8,21 @@
 #      (urn:ontosage:ds:<id>) — the named graph IS the on/off switch
 #   3. unlocks the question classes listed under `unlocks`
 #
-# All sources are SYNTHETIC and disabled by default. UUIDs are auto-derived
-# deterministically from (building_id, source id, point local) when omitted.
+# All sources are SYNTHETIC and DISABLED BY DEFAULT here — a deliberate seed
+# invariant pinned by tests/test_datasource_registry.py::test_seed_manifest_is_valid:
+# no CAPABILITY-GATING source (non-empty `unlocks`) may ship enabled. The `sat_*`
+# saturation legs and `events_store` ARE enabled by default on purpose (V4-T31) --
+# they gate nothing (`unlocks: []`) and exist only so a provenance chip can render
+# "· simulated" against them.
+#
+# A3 (QA-trial plan, 2026-10-04): the plan's own premise was wrong, corrected rather
+# than acted on. It claimed this tracked file should be edited to match the live
+# trial's runtime state (volumes/bldg1/artifacts/.datasource_state.json, all 17
+# enabled there) — but that state is a RUNTIME override an admin/toggle made for
+# THIS trial, persisted in the volume, and it survives a restart on its own. Baking
+# it into the TRACKED seed would make a brand-new bldg1 deployment ship with every
+# capability unlocked by default, which is the exact thing this seed invariant exists
+# to prevent. Left unchanged; the guard test caught the first attempt at this edit.
 #
 # See tasks/IMPLEMENTATION_PLAN_DATASOURCE_TOGGLES_AND_PROVENANCE.md
 # ============================================================================

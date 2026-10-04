@@ -297,12 +297,19 @@ class AgentMemoryService:
         if not memories:
             return ""
 
+        # F2 (QA-trial plan, 2026-10-04): redact at READ time too, not only at the write
+        # site -- store_success() started redacting answer_summary the same day, but
+        # points written before that change are still sitting in Qdrant with their
+        # figures intact, and this is what makes retrieval of THOSE safe immediately,
+        # with no backfill migration needed.
+        from orchestrator.services.publication_gate import redact_quantities
+
         lines = ["**Relevant memories from this user's history:**"]
         for m in memories[:RETRIEVE_TOP_K]:
             lines.append(
                 f'- Q: "{m.query}" → Intent: {m.intent}, '
                 f"Entities: {', '.join(m.entities) or 'none'}, "
-                f"Answer: {m.answer_summary[:120]}..."
+                f"Answer: {redact_quantities(m.answer_summary[:120])}..."
             )
         return "\n".join(lines)
 

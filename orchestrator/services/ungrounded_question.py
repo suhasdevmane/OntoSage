@@ -250,6 +250,36 @@ def mechanism_question(question: str) -> bool:
     return bool(_MECHANISM_RE.search(q)) and not _MECHANISM_VALUE_RE.search(q)
 
 
+#: G2 (QA-trial plan, 2026-10-04): "How many bathrooms do you have and where are they
+#: located." declined although "bathrooms" IS a declared ToiletFacility lay term. The
+#: leftover words were ["many", "they"] -- "many" quantifies the counted noun, "they"
+#: refers back to it -- and the subject test's one-leftover-word threshold refused at
+#: two. Deliberately narrow to the "how many ... and where/is/are/do they/it" shape: a
+#: bare "many"/"they" subtracted everywhere would also excuse a genuine second subject
+#: ("how many complaints have THEY made about the lift" -- "they" there is a different
+#: party, not the lift).
+_QUANTIFIER_RE = re.compile(
+    r"\bhow\s+many\b[^?.!]{0,60}\b(?:do\s+you\s+have|are\s+there|is\s+there|"
+    r"where\s+(?:are|is)\s+they|where\s+(?:are|is)\s+it|they\s+located|it\s+located)\b",
+    re.IGNORECASE,
+)
+#: Subtracted ONLY when quantifier_question() matches AND a genuine back-reference
+#: pronoun is already in the leftover -- never applied on the question's shape alone.
+QUANTIFIER_FRAME = frozenset("many they them their".split())
+#: The pronoun half of the frame above -- confirms a counting BACK-REFERENCE is really
+#: present before "many" (which, alone, is too generic a word to drop unconditionally) is
+#: also dropped. See capability_graph_resolver.topic_is_the_subject for the measured false
+#: positive this guards against.
+QUANTIFIER_PRONOUNS = frozenset("they them their".split())
+
+
+def quantifier_question(question: str) -> bool:
+    """True for a 'how many <counted noun> ... and where are they/is it' shape, where a
+    bare quantifier or back-reference pronoun is part of the COUNTING frame, not a second
+    subject."""
+    return bool(_QUANTIFIER_RE.search(question or ""))
+
+
 def handoff(question: str) -> Optional[str]:
     """The lane a fetch-bound question should go to instead, or None when the fetch may keep it.
 

@@ -572,6 +572,7 @@ _PER_TURN_LANE_KEYS = (
     "asset_state_result",
     "observability_result",
     "readiness_result",
+    "fact_conflict_result",
     "privacy_refusal_result",
     # A refusal is as stale as an answer: the previous turn's "Room 9.99 does not
     # exist" must not answer this turn's question about a room that does.
@@ -614,6 +615,17 @@ _PER_TURN_LANE_KEYS = (
     "cache_hit",
     "evidence_record",
     "plan_trace",
+    # D1 (QA-trial plan, 2026-10-02). None of these three was here, and the response path
+    # reads all three: `_prov_stores` builds the Sources footer and the evidence record's
+    # source list; `sources` is the structured array both /chat and the websocket envelope
+    # return; `claim_binding` is stored onto the evidence record and read by the panel this
+    # plan adds. A resumed conversation could therefore render a footer, a `sources` array
+    # and a claim-binding verdict built from the PREVIOUS turn's stores -- which is worse
+    # than rendering nothing, because it is a citation attached to the wrong answer. This
+    # list's own standing rule: reading a key on the response path obliges clearing it.
+    "_prov_stores",
+    "sources",
+    "claim_binding",
     # BUG-1252. The relevance gate's verdict for THIS turn, including whether it deleted an
     # answer. It was written and never read on the response path, so leaving it behind cost
     # nothing; `_unanswered_response` now reads `replaced` to decide whether the decline may
@@ -976,17 +988,13 @@ async def _measured_modality_counts(
         return dict(hit)
     try:
         if specs is None:
-            from orchestrator.services.deliberation.coverage_audit import (
-                load_modalities,
-            )
+            from orchestrator.services.deliberation.coverage_audit import load_modalities
 
             specs = load_modalities(building_id)
         if not specs:
             return None
         if sparql_exec is None:
-            from orchestrator.services.deliberation.live import (
-                sparql_exec as _live_exec,
-            )
+            from orchestrator.services.deliberation.live import sparql_exec as _live_exec
 
             sparql_exec = _live_exec
         loop = asyncio.get_running_loop()
@@ -1202,10 +1210,7 @@ async def _unanswered_response(state, ctx) -> str:
     claim the building lacks the data: not answering and not holding are different facts,
     and the whole point of this text is to stop presenting one as the other.
     """
-    from orchestrator.services.grounding_guard import (
-        reader_is_admin_in,
-        unmatched_terms,
-    )
+    from orchestrator.services.grounding_guard import reader_is_admin_in, unmatched_terms
 
     results = getattr(state, "intermediate_results", None) or {}
     intent = str(results.get("intent") or "").strip()
@@ -1532,9 +1537,7 @@ def _without_retrieval_narration(state, text: str) -> str:
         if not rewritten or not rewritten.strip():
             # A decline is the whole answer: an unrelated listing after it reads as though it
             # were the answer after all (wave 4, the sustainability-tips question).
-            from orchestrator.services.absence_wording import (
-                strip_unrelated_body_after_decline,
-            )
+            from orchestrator.services.absence_wording import strip_unrelated_body_after_decline
 
             trimmed = strip_unrelated_body_after_decline(text, question)
             if trimmed != text and trimmed.strip():
@@ -1637,10 +1640,7 @@ async def _ground_semantic_fallback(state, text: str) -> str:
         question = str(getattr(messages[-1], "content", "")) if messages else ""
 
     _, records = await _closest_holdings(state)
-    from orchestrator.services.record_registry import (
-        absent_record_class,
-        held_record_class,
-    )
+    from orchestrator.services.record_registry import absent_record_class, held_record_class
 
     held = held_record_class(question, records)
     if held and held.instances > 0:
@@ -2114,9 +2114,16 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         _fresh_session = state.intermediate_results.get("fresh_session", False)
         from orchestrator.services.agent_memory import CROSS_SESSION_MEMORY_ENABLED
 
+        # F1 (QA-trial plan, 2026-10-04, P1 PRIVACY): "openwebui_user" is main.py
+        # resolve_forwarded_user()'s least-privilege FALLBACK identity -- every request
+        # Open WebUI cannot attribute to a real account shares this one id. Retrieving
+        # cross-session memory under it means tester B's prompt gets primed with tester
+        # A's prior question and answer, figures included, because the filter below only
+        # checks THIS field, never who it actually belongs to.
         if (
             self.agent_memory
             and state.user_id
+            and state.user_id != "openwebui_user"
             and CROSS_SESSION_MEMORY_ENABLED
             and not _fresh_session
         ):
@@ -2196,6 +2203,28 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 _affirm_fired = True
         except Exception as _aff_err:
             logger.debug(f"[affirm] follow-up handling skipped: {_aff_err}")
+
+        # F7 (QA-trial plan, 2026-10-04): remember a declared location for the SESSION,
+        # on EVERY turn, not only follow-ups. This must sit here, not inside
+        # rewrite_to_standalone: that function returns early for a turn with no PRIOR
+        # message (`len(msgs) < 2`), so a location stated as the very first thing a
+        # user types -- "I am in room 3.01" -- never reached it, and the live two-turn
+        # check that found this bug confirmed it: turn 1 logged no remember-line and
+        # turn 2's "nearest toilet" fell back to the entrance default. Carried forward
+        # via turn_memory._CARRY_FORWARD_KEYS so it survives on /v1, where state is
+        # rebuilt fresh each turn.
+        try:
+            from orchestrator.services.context_switch import _LOCATION_STATEMENT_RE
+
+            _latest_raw = state.messages[-1].content if state.messages else ""
+            _loc_m = _LOCATION_STATEMENT_RE.match(_latest_raw or "")
+            if _loc_m:
+                _token = re.sub(r"\s+", " ", _loc_m.group("place").strip().lower())
+                _token = re.sub(r"^rm\.?\s*", "room ", _token)
+                state.intermediate_results["remembered_location"] = _token
+                logger.info(f"[coref] remembered location for the session: {_token!r}")
+        except Exception as _loc_err:  # a guard must never block the turn it is helping
+            logger.debug(f"[coref] location remember skipped: {_loc_err}")
 
         # ── Co-reference resolution ───────────────────────────────────────────
         # Rewrite context-dependent follow-ups ("and humidity there?") into
@@ -2392,9 +2421,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # it is not available at the earlier stages — so the rule that keeps
         # building questions out of the open-domain answerer runs here.
         try:
-            from orchestrator.services.routing_contract import (
-                apply_contract as _apply_rc,
-            )
+            from orchestrator.services.routing_contract import apply_contract as _apply_rc
 
             _rc_state = {
                 "intent": intent,
@@ -2408,6 +2435,15 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 "capability_amenity_facts": _amenity_facts,
                 # The subject-qualified count, which is what the stand-down reads (BUG-1396).
                 "capability_amenity_subject": _amenity_subject,
+                # A clarification the dialogue agent RAISED on purpose -- "which of the three
+                # kitchens?" (Phase 1.2) -- is the grounded answer, and the rescue below turned
+                # it into a building-wide analytics table on the live re-ask (2026-10-02)
+                # because, as with BUG-735, it could not see why the clarification was raised.
+                "clarification_raised": [
+                    r
+                    for r in (intent_result.get("routing_rules_applied") or [])
+                    if r in ("ambiguous_follow_up", "unbound_spatial_deixis")
+                ],
             }
             _rc_query = state.messages[-1].content if state.messages else ""
             if _apply_rc(_rc_query, _rc_state, stage="concept"):
@@ -2637,9 +2673,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     )
 
                     if is_inventory_question(_raw_q):
-                        from orchestrator.services.building_context import (
-                            resolve_building_context,
-                        )
+                        from orchestrator.services.building_context import resolve_building_context
 
                         _bname = resolve_building_context(
                             state.building_id or settings.BUILDING_ID
@@ -2647,12 +2681,8 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                         # Same overlap caveat the capability path gets — the two census
                         # answers must not disagree about whether their own categories
                         # can be added together (V12-09, CAVEAT-006).
-                        from orchestrator.agents.sparql_agent import (
-                            GRAPHDB_QUERY_ENDPOINT as _EP,
-                        )
-                        from orchestrator.agents.sparql_agent import (
-                            _active_namespace as _ns,
-                        )
+                        from orchestrator.agents.sparql_agent import GRAPHDB_QUERY_ENDPOINT as _EP
+                        from orchestrator.agents.sparql_agent import _active_namespace as _ns
 
                         _generic = render_census(
                             _census,
@@ -2829,10 +2859,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         _register_answerable = False
         if settings.MULTI_INTENT_ENABLED and state.current_intent not in _skip_decompose:
             try:
-                from orchestrator.services.record_registry import (
-                    held_record_class,
-                    record_classes,
-                )
+                from orchestrator.services.record_registry import held_record_class, record_classes
 
                 _q_for_record = state.messages[-1].content if state.messages else ""
                 _register_answerable = bool(
@@ -2852,9 +2879,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             and not _register_answerable
         ):
             try:
-                from orchestrator.services.multi_intent_detector import (
-                    MultiIntentDetector,
-                )
+                from orchestrator.services.multi_intent_detector import MultiIntentDetector
 
                 _detector = MultiIntentDetector()
                 _user_q = state.messages[-1].content if state.messages else ""
@@ -2965,13 +2990,8 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         """
         try:
             from orchestrator.agents.sparql_agent import _active_namespace
-            from orchestrator.services.absence_guard import (
-                _MODALITY_ALIASES,
-                _count_query,
-            )
-            from orchestrator.services.deliberation.coverage_audit import (
-                load_modalities,
-            )
+            from orchestrator.services.absence_guard import _MODALITY_ALIASES, _count_query
+            from orchestrator.services.deliberation.coverage_audit import load_modalities
 
             words = {str(k).lower() for k in (keywords or ())}
             classes = set()
@@ -3082,9 +3102,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     extra_classes=_resolved_classes,
                 )
                 if _q:
-                    from orchestrator.services.deliberation.live import (
-                        sparql_exec as _sx,
-                    )
+                    from orchestrator.services.deliberation.live import sparql_exec as _sx
 
                     _repaired = await _sx(_q)
                     _rb = (_repaired or {}).get("results", {}).get("bindings", [])
@@ -3140,9 +3158,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # agent exactly as before.
         try:
             from orchestrator.services import coverage_gap as _gap
-            from orchestrator.services.deliberation.live import (
-                active_identity as _ident,
-            )
+            from orchestrator.services.deliberation.live import active_identity as _ident
             from orchestrator.services.deliberation.live import sparql_exec as _gap_exec
 
             _gap_answer = await _gap.answer(
@@ -3206,10 +3222,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # the process-global default.  Pair with reset in `finally` so the
         # ContextVar is unbound even on exceptions, preventing leak into the
         # next request on the same event loop.
-        from orchestrator.agents.sparql_agent import (
-            reset_request_bctx,
-            set_request_bctx,
-        )
+        from orchestrator.agents.sparql_agent import reset_request_bctx, set_request_bctx
 
         _bctx_token = set_request_bctx(getattr(state, "building_id", None))
         try:
@@ -3539,9 +3552,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 from orchestrator.services.privacy import enforcement as _protect
 
                 _n_sensors = len(state.intermediate_results.get("uuids") or []) or None
-                from orchestrator.services.privacy.sampling import (
-                    requested_resolution_s,
-                )
+                from orchestrator.services.privacy.sampling import requested_resolution_s
 
                 _verdict = await _protect.consult(
                     "sparql",
@@ -3770,9 +3781,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             start_date = state.intermediate_results.get("start_date")
             end_date = state.intermediate_results.get("end_date")
             # 2D-05: a forecast reads history; a window in the future selects rows not yet there.
-            from orchestrator.services.sensor_binder import (
-                history_window as _history_window,
-            )
+            from orchestrator.services.sensor_binder import history_window as _history_window
 
             start_date, end_date = _history_window(
                 latest_message, state.current_intent, start_date, end_date
@@ -3852,9 +3861,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                         )
                     except ValueError:
                         _age_min = 0.0
-                from orchestrator.services.privacy.sampling import (
-                    requested_resolution_s,
-                )
+                from orchestrator.services.privacy.sampling import requested_resolution_s
 
                 _verdict = await _protect.consult(
                     "sql",
@@ -4269,9 +4276,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # building's name appears in this file.
         _measured = ""
         try:
-            from orchestrator.services.deliberation.coverage_audit import (
-                load_modalities,
-            )
+            from orchestrator.services.deliberation.coverage_audit import load_modalities
 
             _names = sorted(
                 {
@@ -4368,9 +4373,7 @@ Instructions:
         # keywords. Uses ForecastAgent (ARIMA, Holt-Winters, Linear Trend) instead
         # of ad-hoc LLM code generation for statistically valid predictions.
         from orchestrator.agents.forecast_agent import ForecastAgent as _ForecastAgent
-        from orchestrator.services.forecasting.horizon_parser import (
-            parse_horizon as _parse_horizon,
-        )
+        from orchestrator.services.forecasting.horizon_parser import parse_horizon as _parse_horizon
 
         _FORECAST_TRIGGER_KWS = (
             "predict",
@@ -4533,9 +4536,7 @@ Instructions:
             )
 
             if is_design_occupancy_question(latest_message):
-                from orchestrator.services.deliberation.live import (
-                    sparql_exec as _sx_design,
-                )
+                from orchestrator.services.deliberation.live import sparql_exec as _sx_design
 
                 _design = await design_occupancy_for(latest_message, _sx_design)
                 if _design is not None:
@@ -4581,9 +4582,7 @@ Instructions:
         _whatif_rid = state.intermediate_results.get("whatif_recipe")
         if _whatif_rid:
             try:
-                from orchestrator.services.recipe_registry import (
-                    recipe_registry as _rr_wi,
-                )
+                from orchestrator.services.recipe_registry import recipe_registry as _rr_wi
 
                 _wi_recipe = _rr_wi.get(_whatif_rid)
                 if _wi_recipe:
@@ -4604,9 +4603,7 @@ Instructions:
         _bench_rid = state.intermediate_results.get("benchmark_recipe")
         if _bench_rid:
             try:
-                from orchestrator.services.recipe_registry import (
-                    recipe_registry as _rr_bm,
-                )
+                from orchestrator.services.recipe_registry import recipe_registry as _rr_bm
 
                 _bm_recipe = _rr_bm.get(_bench_rid)
                 if _bm_recipe:
@@ -5361,9 +5358,7 @@ SELECT ?l WHERE {
                 state.intermediate_results["live_data_route"] = route_source
                 kind, arg = need
                 try:
-                    from orchestrator.services.live_data_service import (
-                        get_live_data_service,
-                    )
+                    from orchestrator.services.live_data_service import get_live_data_service
 
                     svc = get_live_data_service()
                     if kind == "weather" and getattr(settings, "WEATHER_ENABLED", False) and arg:
@@ -6167,6 +6162,7 @@ SELECT ?l WHERE {
         _observability_result = state.intermediate_results.get("observability_result") or {}
         _referent_refusal = state.intermediate_results.get("referent_refusal_result") or {}
         _readiness_result = state.intermediate_results.get("readiness_result") or {}
+        _fact_conflict_result = state.intermediate_results.get("fact_conflict_result") or {}
         _register_result = state.intermediate_results.get("register_result") or {}
         _asset_state_result = state.intermediate_results.get("asset_state_result") or {}
         _diagnosis_result = state.intermediate_results.get("diagnosis_result") or {}
@@ -6202,6 +6198,11 @@ SELECT ?l WHERE {
             # checklist in .claude/rules/agent-patterns.md, and it is the step this
             # codebase has now forgotten twice. Registered at the same time as the node.
             final_response = _readiness_result["formatted_response"]
+        elif _fact_conflict_result.get("formatted_response"):
+            # E2 (QA-trial plan, 2026-10-04): same reason as readiness_result immediately
+            # above -- a node that computes an answer nothing collects produces the generic
+            # "I processed your request" line. Registered at the same time as the node.
+            final_response = _fact_conflict_result["formatted_response"]
         elif _observability_result.get("formatted_response"):
             # V6-T10: the reach lane. A deterministic statement about what this building can
             # and cannot observe, read off the coverage matrix. Registered here because a node
@@ -6440,14 +6441,9 @@ SELECT ?l WHERE {
         # prose, for the same reason as the substitution note: a check that guessed from wording
         # would be wrong precisely where the wording is confident and the rows are not complete.
         try:
-            from orchestrator.services.disclosure_gate import (
-                truncation_in as _truncation_in,
-            )
-            from orchestrator.services.disclosure_gate import (
-                truncation_note as _truncation_note,
-            )
-
             from orchestrator.services.disclosure_gate import gives_a_figure as _gives_a_figure
+            from orchestrator.services.disclosure_gate import truncation_in as _truncation_in
+            from orchestrator.services.disclosure_gate import truncation_note as _truncation_note
 
             _cap = _truncation_in(state.intermediate_results)
             # BUG-1401: a turn that states NO figure has nothing for the note to qualify; on
@@ -6651,9 +6647,7 @@ SELECT ?l WHERE {
             _bid = _fc.get("building_id") or settings.BUILDING_ID
             if _zone and "floor-plans" not in final_response:
                 try:
-                    from orchestrator.services.floor_plan_service import (
-                        floor_plan_service,
-                    )
+                    from orchestrator.services.floor_plan_service import floor_plan_service
 
                     _fp_link = floor_plan_service.suggest_floor_plan_link(_zone, _bid)
                     if _fp_link:
@@ -6877,9 +6871,7 @@ SELECT ?l WHERE {
         # COUNT before letting the claim reach the user. Fails OPEN and silent-free:
         # if the count cannot be run, the answer is left exactly as it was.
         try:
-            from orchestrator.services.absence_guard import (
-                guard_answer as _absence_guard,
-            )
+            from orchestrator.services.absence_guard import guard_answer as _absence_guard
             from orchestrator.services.deliberation.live import sparql_exec as _sx
 
             final_response, _absence_violation = await _absence_guard(
@@ -6893,9 +6885,7 @@ SELECT ?l WHERE {
             # as every desk being taken, about a thing nobody ever modelled. Only
             # rewrites when the graph confirms no such class exists.
             from orchestrator.services.grounding_guard import reader_is_admin_in
-            from orchestrator.services.unmodelled_entities import (
-                guard_answer as _unmodelled_guard,
-            )
+            from orchestrator.services.unmodelled_entities import guard_answer as _unmodelled_guard
 
             final_response, _unmodelled = await _unmodelled_guard(
                 final_response, _sx, for_admin=reader_is_admin_in(state)
@@ -6908,9 +6898,7 @@ SELECT ?l WHERE {
         # ── 2D-18: an answer that says the building holds nothing gets ONE second look ──
         # The absence guard above checks a sensing claim against a COUNT; this checks a claim about
         # the building's RECORDS against the registers and prose the failing lane never read.
-        from orchestrator.services.absence_second_chance import (
-            apply_to_answer as _second_chance,
-        )
+        from orchestrator.services.absence_second_chance import apply_to_answer as _second_chance
 
         final_response = await _second_chance(
             state,
@@ -6970,9 +6958,7 @@ SELECT ?l WHERE {
             if final_response and _asks_limit and is_design_occupancy_question(_q_design):
                 _dsg = state.intermediate_results.get("_design_occupancy_obj")
                 if _dsg is None:
-                    from orchestrator.services.deliberation.live import (
-                        sparql_exec as _sx_rd,
-                    )
+                    from orchestrator.services.deliberation.live import sparql_exec as _sx_rd
 
                     _dsg = await design_occupancy_for(_q_design, _sx_rd)
                 if _dsg is not None:
@@ -7109,15 +7095,9 @@ SELECT ?l WHERE {
         try:
             _snap = state.intermediate_results.get("_graph_snapshot")
             if _snap is not None:
-                from orchestrator.services.graph_snapshot import (
-                    compare as _snap_compare,
-                )
-                from orchestrator.services.graph_snapshot import (
-                    mapping_snapshot as _snap_of,
-                )
-                from orchestrator.services.graph_snapshot import (
-                    repository_fingerprint as _snap_fp,
-                )
+                from orchestrator.services.graph_snapshot import compare as _snap_compare
+                from orchestrator.services.graph_snapshot import mapping_snapshot as _snap_of
+                from orchestrator.services.graph_snapshot import repository_fingerprint as _snap_fp
 
                 _now = _snap_of(
                     state.intermediate_results.get("storage_map") or _snap.mapping,
@@ -7147,9 +7127,7 @@ SELECT ?l WHERE {
         # "that failed" when the honest answer is "ask again" costs them the answer.
         try:
             from orchestrator.services.turn_outcome import Outcome as _TO
-            from orchestrator.services.turn_outcome import (
-                from_state as _turn_from_state,
-            )
+            from orchestrator.services.turn_outcome import from_state as _turn_from_state
 
             _turn = _turn_from_state(state.intermediate_results)
             state.intermediate_results["turn_outcome"] = _turn.as_dict()
@@ -7246,9 +7224,7 @@ SELECT ?l WHERE {
         # result: retrieved records narrated as data the USER "provided", and provenance flags
         # ("simulated: true") the owner's standing rule keeps out of user-visible text.
         try:
-            from orchestrator.services.answer_wording import (
-                polish_answer as _polish_answer,
-            )
+            from orchestrator.services.answer_wording import polish_answer as _polish_answer
 
             final_response = _polish_answer(
                 final_response, state.user_message, intent=state.current_intent
@@ -7291,6 +7267,53 @@ SELECT ?l WHERE {
             # honesty check into an outage -- strictly worse than the defect it guards.
             logger.warning(f"[claim_binder] skipped: {_cb_err}", exc_info=True)
 
+        # D11 (QA-trial plan, 2026-10-02) -- THE OWNER'S STATED PRIORITY: every
+        # figure-bearing answer carries its own evidence, not only on request. Appended
+        # HERE and only here, for the same reason claim binding is: AFTER polish_answer and
+        # claim_binder so it never gets edited as if it were a claim about the building, and
+        # BEFORE the bulky-key cleanup below, which pops the very record this reads.
+        #
+        # The SAME renderer that answers "how do you know that?" (answer_provenance.render)
+        # is called again here, inline, on THIS turn's own record -- not a second renderer,
+        # which is the BUG-947 shape (two readers of one question disagreeing). Two lanes
+        # already carry their own evidence block and must not get a second one glued on:
+        # the deliberation lane (`evidence_dossier` on the bus, its own dossier panel
+        # appended earlier in this same node) and the provenance lane itself, whose WHOLE
+        # answer already IS a render() of the PREVIOUS turn's record (capability_agent.py)
+        # -- appending here would print the same heading twice, the second time describing
+        # the read-back itself. Tested by checking the rendered heading already present in
+        # the text, not by lane name, so a third such lane cannot slip through unnoticed.
+        try:
+            if not results.get("evidence_dossier") and "arrived at**" not in final_response:
+                from orchestrator.services.answer_provenance import render as _render_evidence
+                from orchestrator.services.grounding_guard import reader_is_admin_in
+
+                _panel = _render_evidence(
+                    results.get("evidence_record"),
+                    for_admin=reader_is_admin_in(state),
+                    inline=True,
+                )
+                if _panel:
+                    final_response += _panel
+        except Exception as _ev_panel_err:
+            # Fails OPEN, like every other guard on this path: an evidence panel that could
+            # take an answer down with it would be strictly worse than the answer with no
+            # panel.
+            logger.debug(f"[response] inline evidence panel skipped: {_ev_panel_err}")
+
+        # G4/G6 (2026-10-04): count-only, never-edit detectors for an answer contradicting
+        # its own printed numbers (headline range outside its own table; "met all standards"
+        # beside a printed non-compliance marker). Measured 1/2,179 real stored answers
+        # before being wired in here -- the one hit is the live defect this module exists
+        # to catch, not noise. See narration_contradiction.py for why this stays advisory
+        # rather than joining narration_validators.py's active-editing pipeline.
+        try:
+            from orchestrator.services.narration_contradiction import log_contradictions
+
+            log_contradictions(logger, final_response)
+        except Exception:
+            pass
+
         # Add to messages
         state.messages.append(
             Message(
@@ -7328,7 +7351,11 @@ SELECT ?l WHERE {
 
         # B.3: Store successful interaction in agent memory for future context retrieval
         # Phase 5: Also store failures so the correction corpus grows.
-        if self.agent_memory and state.user_id:
+        # F1 (QA-trial plan, 2026-10-04, P1 PRIVACY): never WRITE under the shared
+        # "openwebui_user" fallback identity either -- the matching guard on the retrieve
+        # side above is only half the fix if new points keep landing in that one shared
+        # partition for every unrecognised tester to read back.
+        if self.agent_memory and state.user_id and state.user_id != "openwebui_user":
             try:
                 # BUG-682: what the user TYPED. messages[-2] is by now the co-reference
                 # rewrite (or folded / translated text), which the user never wrote.
@@ -7340,12 +7367,18 @@ SELECT ?l WHERE {
                 _has_error = bool(state.intermediate_results.get("error"))
 
                 if _is_grounded and not _has_error and not _degraded:
+                    # F2 (QA-trial plan, 2026-10-04): redact_quantities is the SAME function
+                    # session_summary already uses to keep a figure from one turn being
+                    # restated as current in a later one -- answer_summary was the one
+                    # cross-session summary still stored with its numbers intact.
+                    from orchestrator.services.publication_gate import redact_quantities
+
                     await self.agent_memory.store_success(
                         user_id=state.user_id,
                         query=original_query,
                         intent=state.current_intent or "general",
                         entities=entities if isinstance(entities, list) else [],
-                        answer_summary=final_response[:200],
+                        answer_summary=redact_quantities(final_response[:200]),
                     )
                 else:
                     # Phase 5 — capture failure for correction corpus
@@ -7360,16 +7393,15 @@ SELECT ?l WHERE {
                         error_summary=str(error_info)[:200],
                         persona=getattr(state, "persona", "general") or "general",
                     )
-                # ── Phase 7.4-B: Detect and persist user preferences ──────────
-                if original_query:
-                    try:
-                        await self.agent_memory.detect_and_store_preferences(
-                            user_id=state.user_id,
-                            query=original_query,
-                            answer_summary=final_response[:200],
-                        )
-                    except Exception as _pref_err:
-                        logger.debug(f"Preference detection skipped: {_pref_err}")
+                # F8 (QA-trial plan, 2026-10-02): "Phase 7.4-B: Detect and persist user
+                # preferences" called a method AgentMemoryService has never had, on every
+                # single turn, and the AttributeError was swallowed at DEBUG -- so nothing
+                # was ever stored by it. Preferences ARE read and written elsewhere
+                # (services/user_preference_store.py, the preference_management lane),
+                # which is the real, reachable capability; this was a second, phantom one.
+                # Removed rather than implemented: a caller naming a method absent from its
+                # target is the class of defect tests/test_reserved_keys_have_writers.py
+                # exists to catch for bus keys, and the same shape here is a dead call.
             except Exception as _mem_err:
                 logger.debug(f"Agent memory store skipped: {_mem_err}")
 
@@ -7408,10 +7440,7 @@ SELECT ?l WHERE {
         shared with the capability path so the two cannot disagree.
         """
         try:
-            from orchestrator.agents.sparql_agent import (
-                GRAPHDB_QUERY_ENDPOINT,
-                _active_namespace,
-            )
+            from orchestrator.agents.sparql_agent import GRAPHDB_QUERY_ENDPOINT, _active_namespace
             from orchestrator.services.ontology_inventory import class_census
 
             return await class_census(query, _active_namespace(), GRAPHDB_QUERY_ENDPOINT)
@@ -7893,9 +7922,7 @@ SELECT ?l WHERE {
         # deterministic override because the LLM misclassifies these across
         # sensor_data / discovery / capability (FIX-003).
         try:
-            from orchestrator.services.building_metrics import (
-                is_inventory_count_question,
-            )
+            from orchestrator.services.building_metrics import is_inventory_count_question
 
             if is_inventory_count_question(user_query):
                 logger.info(
@@ -8578,9 +8605,7 @@ SELECT ?l WHERE {
         from orchestrator.services.deliberation import clarify_policy as _cp
         from orchestrator.services.deliberation.candidates import live_geometry
         from orchestrator.services.deliberation.capability_schema import build_schema
-        from orchestrator.services.deliberation.capability_schema import (
-            validate as _admit,
-        )
+        from orchestrator.services.deliberation.capability_schema import validate as _admit
         from orchestrator.services.deliberation.compiler import compile_query
         from orchestrator.services.deliberation.coverage_audit import load_modalities
         from orchestrator.services.deliberation.dossier import (
@@ -8591,9 +8616,7 @@ SELECT ?l WHERE {
         )
         from orchestrator.services.deliberation.live import active_identity
         from orchestrator.services.deliberation.live import sparql_exec as _live_sparql
-        from orchestrator.services.deliberation.plan_executor import (
-            execute as _exec_plan,
-        )
+        from orchestrator.services.deliberation.plan_executor import execute as _exec_plan
 
         query = state.messages[-1].content if state.messages else ""
         user_ctx = dict(state.intermediate_results.get("user_context", {}) or {})
@@ -8839,9 +8862,7 @@ SELECT ?l WHERE {
             logger.error(f"[deliberate] numeric guard tripped: {violations}")
             # Plain words (wave 5): "narration", "the evidence check" and "the dossier" are the
             # pipeline's vocabulary, and answer_shape treats the old wording as a non-answer.
-            from orchestrator.services.numeric_guard import (
-                SUPPRESSION_TEXT as _SUPPRESSED,
-            )
+            from orchestrator.services.numeric_guard import SUPPRESSION_TEXT as _SUPPRESSED
 
             text = _SUPPRESSED
         state.intermediate_results["deliberate_result"] = {
@@ -8965,11 +8986,7 @@ SELECT ?l WHERE {
 
         from orchestrator.agents.sparql_agent import _active_namespace
         from orchestrator.services.deliberation.live import sparql_exec
-        from orchestrator.services.readiness_check import (
-            compose,
-            render,
-            upcoming_sessions,
-        )
+        from orchestrator.services.readiness_check import compose, render, upcoming_sessions
 
         async def _run(query: str, limit: int = 200):
             return await sparql_exec(query)
@@ -9031,6 +9048,29 @@ SELECT ?l WHERE {
         except Exception as exc:
             logger.error(f"[readiness] compose failed: {describe_exception(exc)}", exc_info=True)
             state.intermediate_results["error"] = f"readiness_check: {describe_exception(exc)}"
+        return state
+
+    async def _fact_conflict_node(self, state: ConversationState) -> ConversationState:
+        """E2 (QA-trial plan, 2026-10-04): "which source is right?" -> the cross-source
+        conflict scanner's own findings.
+
+        Routed here only by routing_contract._r_cross_source_precedence, never by the
+        classifier (the intent is declared INTERNAL for exactly that reason). Deterministic:
+        the answer is scripts.fact_conflicts' own extraction of this building's documents and
+        TTL, never a model asked to adjudicate between two things it was not shown.
+        """
+        question = state.messages[-1].content if state.messages else ""
+        building_id = state.building_id or settings.BUILDING_ID
+        logger.info(f"[fact_conflict] q={question[:70]!r} building={building_id}")
+
+        from orchestrator.services.fact_conflict_lane import answer_precedence_question
+
+        try:
+            result = await answer_precedence_question(question, building_id)
+        except Exception as exc:
+            logger.error(f"[fact_conflict] failed: {describe_exception(exc)}", exc_info=True)
+            result = {"success": False, "formatted_response": "", "fact_conflict_matches": 0}
+        state.intermediate_results["fact_conflict_result"] = result
         return state
 
     async def _observability_node(self, state: ConversationState) -> ConversationState:
@@ -9122,12 +9162,8 @@ SELECT ?l WHERE {
             return state
 
         try:
-            from orchestrator.services.deliberation.capability_schema import (
-                build_schema,
-            )
-            from orchestrator.services.deliberation.coverage_audit import (
-                load_modalities,
-            )
+            from orchestrator.services.deliberation.capability_schema import build_schema
+            from orchestrator.services.deliberation.coverage_audit import load_modalities
             from orchestrator.services.deliberation.live import sparql_exec
             from orchestrator.services.grounding_guard import reader_is_admin_in
             from orchestrator.services.observability import (
@@ -9257,9 +9293,7 @@ SELECT ?l WHERE {
                     )
                 # The building's own name, resolved — never a literal, and never the id.
                 try:
-                    from orchestrator.services.building_context import (
-                        resolve_building_context,
-                    )
+                    from orchestrator.services.building_context import resolve_building_context
 
                     _bname = (
                         getattr(
@@ -9498,9 +9532,7 @@ SELECT ?l WHERE {
                 # V5-T21: sensor uuid -> (room, modality) so anomaly episodes
                 # narrate WHERE they happened, not bare uuids
                 try:
-                    from orchestrator.services.deliberation.capability_schema import (
-                        build_schema,
-                    )
+                    from orchestrator.services.deliberation.capability_schema import build_schema
 
                     schema = await build_schema(
                         building_id, namespace, sparql_exec, load_modalities(building_id)
@@ -9694,9 +9726,7 @@ SELECT ?l WHERE {
         question = state.messages[-1].content if state.messages else ""
         logger.info(f"[register] q={question[:60]!r}")
         try:
-            from orchestrator.services.compliance_register_service import (
-                ComplianceRegisterService,
-            )
+            from orchestrator.services.compliance_register_service import ComplianceRegisterService
             from orchestrator.services.deliberation.live import sparql_exec
             from orchestrator.services.numeric_guard import guard_payload
             from shared.config import settings
@@ -9908,10 +9938,7 @@ SELECT ?l WHERE {
                 # table covers 8, so sound level, illuminance and PM2.5 reached
                 # the narration unitless while the config named their unit in one
                 # line (BUG-257).
-                from orchestrator.services.modality_units import (
-                    qudt_unit_display,
-                    unit_for_sensor,
-                )
+                from orchestrator.services.modality_units import qudt_unit_display, unit_for_sensor
 
                 unit = unit_val or qudt_unit_display(qunit_val)
                 if not unit:
@@ -10038,6 +10065,12 @@ SELECT ?l WHERE {
             agent = get_spatial_agent()
             from orchestrator.services.grounding_guard import reader_is_admin_in
 
+            # F7 (QA-trial plan, 2026-10-04): a location the tester stated earlier in the
+            # session, read from the carried-forward bus key (turn_memory._CARRY_FORWARD_
+            # KEYS). agent is a module-level singleton, so this is set immediately before
+            # the call and consumed-and-cleared inside _answer_nearest_inner -- the same
+            # narrow-scope convention _assumed_start_label already uses on the output side.
+            agent._remembered_place_token = state.intermediate_results.get("remembered_location")
             markdown = await agent.resolve(
                 user_query, building_id, floor, for_admin=reader_is_admin_in(state)
             )
@@ -10187,9 +10220,7 @@ SELECT ?l WHERE {
         user_message = state.messages[-1].content if state.messages else state.user_message
         logger.info(f"[report_intake] intent={intent}")
         try:
-            from orchestrator.services.report_intake_service import (
-                get_report_intake_service,
-            )
+            from orchestrator.services.report_intake_service import get_report_intake_service
 
             service = get_report_intake_service(self.postgres_manager)
             category = service.category_for_intent(intent)
@@ -10804,9 +10835,7 @@ SELECT ?l WHERE {
                     user_id, category, pref_min=pref_min, pref_max=pref_max, raw=query
                 )
                 if success:
-                    from orchestrator.services.user_preference_store import (
-                        _CATEGORY_META,
-                    )
+                    from orchestrator.services.user_preference_store import _CATEGORY_META
 
                     meta = _CATEGORY_META.get(category, {"label": category, "unit": ""})
                     rng_str = ""
@@ -10859,9 +10888,7 @@ SELECT ?l WHERE {
         try:
             modality, lay = await self._observability_modality(question, state)
             if modality is None:
-                from orchestrator.services.deliberation.coverage_audit import (
-                    load_modalities,
-                )
+                from orchestrator.services.deliberation.coverage_audit import load_modalities
 
                 modality = _modality_named_in(
                     question, [s.name for s in (load_modalities(building_id) or [])]
@@ -11073,9 +11100,7 @@ SELECT ?l WHERE {
                 # the way out too; the pass is idempotent, so a fresh entry is unchanged.
                 _cached_text = cached["response"]
                 try:
-                    from orchestrator.services.answer_wording import (
-                        polish_answer as _polish_answer,
-                    )
+                    from orchestrator.services.answer_wording import polish_answer as _polish_answer
 
                     _cached_text = _polish_answer(
                         _cached_text, state.user_message, intent=cached.get("intent")

@@ -252,6 +252,37 @@ def _result(outcome: RetrievalOutcome, subject: str, internal_suffix: str = "") 
     )
 
 
+def from_state(results: Optional[dict]) -> Optional[dict]:
+    """The retrieval outcome a lane classified for THIS turn, for a reader that only has
+    the bus (D4, QA-trial plan 2026-10-04).
+
+    Producers stamp ``retrieval_outcome`` on their OWN result dict (sparql_agent.py:502,
+    sensor_binder.py:1578) — there is no flat bus key, so a reader of `/v1` has never been
+    able to see it. Deliberately does NOT reuse ``evidence.assemble.infer_lane``: that
+    function's whole point is to skip a lane that produced no evidence, and a typed
+    absence is stamped PRECISELY on a lane that produced none — reusing it here would
+    almost always find nothing, for the one case this field exists to describe. Walks
+    ``T02_LANES`` in its own order instead, so the lane order stays the one place that
+    ordering is defined.
+
+    Returns None when no lane classified a nothing — most turns, which answered — so a
+    reader must treat None as "not applicable", never as a sixth outcome.
+    """
+    if not results:
+        return None
+    try:
+        from orchestrator.services.evidence.assemble import T02_LANES
+    except Exception:
+        return None
+    for key in T02_LANES:
+        lane_result = results.get(key)
+        if isinstance(lane_result, dict):
+            outcome = lane_result.get("retrieval_outcome")
+            if isinstance(outcome, dict):
+                return outcome
+    return None
+
+
 def describe(result: RetrievalResult, for_admin: bool = False) -> str:
     """The user-facing sentence, with the remedy this reader can act on.
 

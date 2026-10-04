@@ -26,7 +26,15 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
-_CARRY_FORWARD_KEYS = {"forecast_result", "analytics_result"}
+_CARRY_FORWARD_KEYS = {
+    "forecast_result",
+    "analytics_result",
+    # F7 (QA-trial plan, 2026-10-04): a declared "I am in room 3.01" persists for the
+    # SESSION, not just the next turn, and /v1 rebuilds state fresh each turn -- without
+    # this carry-forward the token set by dialogue_agent.rewrite_to_standalone would
+    # never survive past the one turn that stated it.
+    "remembered_location",
+}
 _SUMMARY_MAX_CHARS = 300
 # How many older rows the rolling summary may scan in one turn. Above the Postgres
 # retention cap below, so the scan sees every turn that still exists — the summary
@@ -185,8 +193,17 @@ class TurnMemoryService:
             notes = [session_summary.note_from_row(r) for r in reversed(rows)]
             # The summary's own window. `LIMIT` above is the retention cap, so this slice
             # can never drop a row the old `OFFSET skip_recent` would have kept.
+            #
+            # F3 (QA-trial plan, 2026-10-02): `notes[: len(notes) - skip]` goes NEGATIVE
+            # when the conversation has fewer turns than `skip_recent` keeps raw, and a
+            # negative stop slices from the END, not "nothing yet". Measured live: a
+            # 2-turn conversation rendered turn 1 under "Earlier in this session" while
+            # the raw recent-window block was ALSO showing that same turn -- a duplicated
+            # turn presented as history -- and a 3-turn conversation got an empty summary
+            # it should have gotten nothing from either way. When the conversation has not
+            # yet grown past the raw window, there IS no "older" to summarise.
             skip = max(0, int(skip_recent))
-            older = notes[: len(notes) - skip] if skip else notes
+            older = notes[: len(notes) - skip] if len(notes) > skip else []
             return (session_summary.build(older) if older else ""), notes
         except Exception as e:
             logger.warning(f"[turn_memory] get_session_context failed (non-fatal): {e}")

@@ -205,6 +205,16 @@ def spatial_gate(
     if grade.value in set(allowed):
         return GateVerdict("spatial_adequacy", True, mode, f"{grade.value} evidence for a {scope}")
 
+    # D13 (QA-trial plan, 2026-10-02): UNGRADED means grading never ran for this answer, not
+    # that it ran and found nothing. Falling through to the generic failing branch below would
+    # refuse or downgrade an answer purely because the grader never reached it -- the exact
+    # promotion the plan calls "actively harmful" while the grading guard (D12) still skips
+    # most turns. Only a MEASURED NONE may trigger the gate.
+    if grade is SpatialAdequacy.UNGRADED:
+        return GateVerdict(
+            "spatial_adequacy", True, mode, "spatial adequacy was not assessed for this answer"
+        )
+
     if grade is SpatialAdequacy.NONE:
         return GateVerdict(
             "spatial_adequacy",

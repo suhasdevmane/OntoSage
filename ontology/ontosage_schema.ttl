@@ -2027,7 +2027,7 @@ ontosage:currencyThresholdDays a owl:DatatypeProperty ;
 ontosage:derivedFromDocument a owl:DatatypeProperty ;
     rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;
     rdfs:label "derived from document"@en ;
-    rdfs:comment "Set on every fact LIFTED from a record document. A document is a statement ABOUT a system of record, not the record itself, so these rank below authored TTL in precedence — without the marker a stale Markdown table silently outranks a live register, which is exactly what BUG-194 was."@en .
+    rdfs:comment "Set on every fact LIFTED from a record document. A document is a statement ABOUT a system of record, not the record itself, so these rank below authored TTL in precedence — without the marker a stale Markdown table could silently outrank a live register."@en .
 
 ontosage:liftedByMapping a owl:DatatypeProperty ;
     rdfs:domain ontosage:IntervalRecord ; rdfs:range xsd:string ;

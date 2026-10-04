@@ -88,9 +88,25 @@ def test_text_without_an_id_is_returned_unchanged_and_non_strings_pass_through()
 def test_no_building_record_id_is_mistaken_for_a_tracker_id():
     """Register ids a building holds must never be stripped from an answer."""
     ids = [
-        "AEP-001", "REG-007", "CL-2026-006", "WS-06", "RTE-010", "ACT-0042-2", "CMP-ROOF",
-        "WCP-008", "CF-01", "EV-003", "APR-032", "WO-015", "CHK-102", "AV-106-PRJ", "HO-BMS-COMM",
-        "REP-7420E1", "RTE-015", "ACT-0043-2", "CL-2026-016",
+        "AEP-001",
+        "REG-007",
+        "CL-2026-006",
+        "WS-06",
+        "RTE-010",
+        "ACT-0042-2",
+        "CMP-ROOF",
+        "WCP-008",
+        "CF-01",
+        "EV-003",
+        "APR-032",
+        "WO-015",
+        "CHK-102",
+        "AV-106-PRJ",
+        "HO-BMS-COMM",
+        "REP-7420E1",
+        "RTE-015",
+        "ACT-0043-2",
+        "CL-2026-016",
     ]
     for record_id in ids:
         assert not ph.contains_tracker_id(record_id), record_id
@@ -106,8 +122,18 @@ def test_no_id_the_shipped_ttl_carries_is_mistaken_for_a_tracker_id():
     """
     import rdflib
 
-    files = sorted(REPO.glob("input/bldg1_*.ttl")) + sorted(REPO.glob("bldg1/bldg1_*.ttl"))
-    files = [f for f in files if f.stat().st_size < 2_000_000]  # the Brick/Protege dumps are not ids
+    # ontosage_schema.ttl is building-AGNOSTIC and ships into every building's graph (via
+    # ttl_uploader, as urn:ontosage:ttl:ontosage_schema.ttl) -- a tracker-id-shaped literal
+    # there was caught here once already (BUG-194 inside derivedFromDocument's own
+    # rdfs:comment, found 2026-10-04) and reaches more buildings than any one bldg1_*.ttl.
+    files = (
+        sorted(REPO.glob("input/bldg1_*.ttl"))
+        + sorted(REPO.glob("bldg1/bldg1_*.ttl"))
+        + [REPO / "ontology" / "ontosage_schema.ttl"]
+    )
+    files = [
+        f for f in files if f.is_file() and f.stat().st_size < 2_000_000
+    ]  # not the Brick dumps
     if not files:
         pytest.skip("no building TTL on disk")
     shape = re.compile(r"\b[A-Z]{2,6}-[A-Z0-9]+(?:-[A-Z0-9]+)*\b")

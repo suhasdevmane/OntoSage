@@ -23,7 +23,17 @@ yarn-error.log*
 pnpm-debug.log*
 coverage/
 dist/
-docs/
+# A2 (QA-trial plan, 2026-10-04): the bare "docs/" rule was meant for build output
+# (/docs/_build/, /docs/.vitepress/dist/ -- neither exists in this repo today) but swallowed
+# every evidence write-up under docs/phase0/ instead -- 21 tail-read .md/.jsonl files were
+# untracked and would have stayed that way through any future commit. Un-ignore only the
+# markdown write-ups one level under phase0/ (the curated evidence); raw .jsonl dumps,
+# .sha256 files and the conversations/ subdirectory stay ignored -- they are measurement
+# OUTPUT, not evidence, same distinction this project already draws elsewhere.
+docs/*
+!docs/phase0/
+docs/phase0/*
+!docs/phase0/*.md
 
 build/
 !/rasa-frontend/build/
@@ -244,6 +254,11 @@ deleted_backup_ext/
 *.bak
 *.backup
 *_backup.*
+# A2: the pattern above also matches a real test's filename --
+# tests/test_consequence_and_backup.py -- which has never been trackable since this rule
+# was added. Narrowed with a directory-scoped negation, not a rewording of the pattern
+# itself, so every OTHER *_backup.* match (actual backup files, anywhere else) is unchanged.
+!tests/*_backup.*
 *_old.*
 *.orig
 

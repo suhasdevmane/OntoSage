@@ -584,6 +584,83 @@ curl -s http://localhost:6333/collections/capability_bldg1 \
 
 ---
 
+## Weekly QA Trial Ritual
+
+H7 (QA-trial plan, 2026-10-04). Phase 2 of the trial depends on a weekly rhythm that
+existed as four separate scripts and a paragraph scattered across planning docs. This
+section is the ordered sequence, runnable from this repo's root with the stack up.
+**Two numbers only come out of it**: the hand-read acceptable rate on this week's
+unseen sample, and the gate's pass/fail. Everything else here exists to produce those
+two honestly, not to add a third number to track.
+
+1. **Export the week's turns** (every real conversation since the last run):
+
+   ```bash
+   python scripts/export_trial_turns.py --since 2026-09-27 \
+     --out docs/phase0/trial/turns_$(date +%Y%m%d).jsonl \
+     --exclude suhasdevmanemech@gmail.com
+   ```
+
+   Read the printed summary's `unjoined_feedback` count (H4) — a rising number across
+   weeks means ratings are failing to reach a turn, not that nobody is rating.
+
+2. **Draw this week's unseen sample** — a fresh tail, never reusing a question any
+   earlier tail or week already measured (tails C–Q are spent; name the next letter):
+
+   ```bash
+   python scripts/draw_weekly_tail.py --turns docs/phase0/trial/turns_$(date +%Y%m%d).jsonl \
+     --name <next-letter> --n 60 --seed <today's-date-as-an-integer>
+   ```
+
+3. **Hand-read it IN FULL** — every answer, not a truncated terminal window
+   (CAVEAT-1293's lesson: a 400-character cut has produced wrong labels before).
+   Record GOOD / DECLINE-OK / DECLINE-BAD / WEIRD / FABRICATED per question, same
+   labels every week so trend lines mean something.
+
+4. **Count gate deletions since the last ritual run**:
+
+   ```bash
+   python scripts/count_gate_deletions.py --since 168h
+   ```
+
+   A rising count without a matching code change is itself a finding (CAVEAT-1402's
+   shape) — the relevance gate silently discarding more answers, not necessarily more
+   wrong ones.
+
+5. **Run the 51-case regression gate, ALONE** (CAVEAT-1193: its verdicts are
+   unreliable with anything else hitting the stack at the same time):
+
+   ```bash
+   KEY=$(grep '^PIPELINE_API_KEY=' .env | cut -d= -f2- | tr -d '\r')
+   python -u scripts/regression_answerability.py --token "$KEY"
+   ```
+
+   Read any `REGRESSED` row's saved JSON before believing the verdict — the gate's own
+   classifier has been wrong before (CAVEAT-1402, CAVEAT-1415), and a `seconds` value
+   equal to the client timeout is a timeout, not a regression.
+
+6. **Run both unit suites** (active building, then parked — Workflow rule 8 before
+   any commit):
+
+   ```bash
+   pytest -m unit -q                          # bldg1 active
+   # park, then:
+   pytest -m unit -q                          # the committed-tree view
+   ```
+
+7. **Write the week's two numbers** into `tasks/TRIAL_TRACKER.csv`'s running log (or
+   wherever this week's CLAUDE.md snapshot lives) and move on — this ritual does not
+   itself decide whether the trial continues, it only keeps the readiness number
+   current enough that someone else can.
+
+### What this section does NOT cover
+
+C1/C2 (backup/restore) and H1 (the watchdog's own schedule) are separate, standing
+infrastructure, not weekly steps — see `scripts/daily_trial_check.py` (H5) for the
+thing that runs every day instead of every week.
+
+---
+
 ## Disaster Recovery
 
 ### Complete Data Loss Recovery

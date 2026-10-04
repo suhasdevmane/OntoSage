@@ -158,6 +158,11 @@ def best_verdict(target_space: str, candidates: Sequence[PointFacts]) -> Adequac
     """
     if not candidates:
         return AdequacyVerdict(SpatialAdequacy.NONE, "no sensor relates to this space")
+    # D13 (QA-trial plan, 2026-10-02): `classify()` only ever returns the four grades below,
+    # never UNGRADED -- that state belongs to a record that was never graded at all, not to
+    # a verdict this function computes. `.get` with the lowest rank is defensive: it keeps
+    # this ranking total over the whole enum rather than depending on that invariant holding
+    # forever, without inventing a reason to prefer an ungraded candidate over a measured one.
     rank = {
         SpatialAdequacy.IN_ROOM: 3,
         SpatialAdequacy.SERVED_ZONE: 2,
@@ -165,8 +170,8 @@ def best_verdict(target_space: str, candidates: Sequence[PointFacts]) -> Adequac
         SpatialAdequacy.NONE: 0,
     }
     scored = [(classify(target_space, c), c) for c in candidates]
-    best = max(rank[v.grade] for v, _ in scored)
-    tied = [(v, c) for v, c in scored if rank[v.grade] == best]
+    best = max(rank.get(v.grade, -1) for v, _ in scored)
+    tied = [(v, c) for v, c in scored if rank.get(v.grade, -1) == best]
     if len(tied) == 1:
         return tied[0][0]
     # Several candidates share the best grade -- typically two proxies in different spaces.

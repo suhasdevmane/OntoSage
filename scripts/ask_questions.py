@@ -193,6 +193,11 @@ def _ask_v1_stream(messages: List[Dict], base_url: str, key: str, chat_id: str, 
         return {"answer": "".join(parts), "status": f"ERROR {type(exc).__name__}"}
     text = _re.sub(r"<details>\s*<summary>Pipeline steps</summary>.*?</details>\s*", "",
                    "".join(parts), count=1, flags=_re.S)
+    # D11 (QA-trial plan, 2026-10-02): strip the inline evidence panel too, the same way
+    # scripts/export_trial_turns.py does, so a hand read and a figure-coverage count see
+    # the answer text and the panel separately rather than as one blob.
+    text = _re.sub(r'<details type="evidence">\s*<summary>How I know this</summary>.*?</details>\s*', "",
+                   text, count=1, flags=_re.S)
     return {"answer": text, "status": "OK" if text.strip() else "EMPTY",
             "first_byte": first_byte, "lane": lane, "route": route}
 

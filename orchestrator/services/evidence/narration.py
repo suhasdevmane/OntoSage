@@ -132,7 +132,12 @@ def status_badge(status: AnswerStatus) -> str:
 
 
 def adequacy_note(grade: SpatialAdequacy, reason: str = "") -> str:
-    """One line stating how well the evidence matches the place asked about."""
+    """One line stating how well the evidence matches the place asked about.
+
+    D13 (QA-trial plan, 2026-10-02): UNGRADED ("grading never ran") is distinct from NONE
+    ("grading ran and found nothing"). `.get` with a safe fallback, not `[grade]`, so adding
+    a state to the enum cannot KeyError a caller that has not been told about it.
+    """
     return {
         SpatialAdequacy.IN_ROOM: "",
         SpatialAdequacy.SERVED_ZONE: (
@@ -141,7 +146,8 @@ def adequacy_note(grade: SpatialAdequacy, reason: str = "") -> str:
         ),
         SpatialAdequacy.PROXY: reason or "Based on a nearby sensor, not one in this space.",
         SpatialAdequacy.NONE: "No sensor covers this space.",
-    }[grade]
+        SpatialAdequacy.UNGRADED: "",
+    }.get(grade, "")
 
 
 def collect_omissions(

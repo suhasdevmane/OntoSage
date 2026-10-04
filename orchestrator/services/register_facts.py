@@ -1529,12 +1529,19 @@ def _within_budget(lines: List[str]) -> str:
 
 
 def passed_due_not_marked(rows: List[Dict], question: str, today: Optional[date]) -> List[str]:
-    """Records past a ``…Due`` date whose recorded status is not 'overdue', for an overdue question.
+    """Records past a ``…Due`` date whose recorded status is not 'overdue'.
 
     BUG-589: with these listed in the facts, the narration still reported only the two
     records MARKED overdue in 4 of 4 runs. The answer's own completeness is not left to it.
+
+    E3 (QA-trial plan, 2026-10-04): this used to run only when the QUESTION's wording matched
+    `_OVERDUE_RE` -- so "is this approval still valid?" never saw the six of forty-three
+    records this function already finds in the rows the lane fetched for ANY register
+    question. `question` is kept in the signature for the existing call site; nothing here
+    reads it any more, because whether a record is overdue-but-unmarked is a fact about the
+    ROWS, not about which word the user happened to type.
     """
-    if today is None or not rows or not _OVERDUE_RE.search(question or ""):
+    if today is None or not rows:
         return []
     columns = sorted({k for r in rows for k in r.keys()})
     out: List[str] = []

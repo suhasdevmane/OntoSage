@@ -91,6 +91,15 @@ def test_capabilities_come_from_the_registry_not_a_fixed_list():
     assert "lab booking" in grown, "a per-building intent must appear without a code change"
 
 
+def test_d14_names_the_provenance_capability():
+    """D14 (QA-trial plan, 2026-10-04): 'what can you ask me' is the one place that
+    enumerates capabilities, and it said nothing about provenance -- the only route
+    to 'how do you know that?' was guessing a phrasing the detector happens to
+    recognise (D7)."""
+    out = describe(_registry(["sensor_data", "floor_plan"]), "Test Building")
+    assert "how I know" in out.lower() or "sources an answer used" in out.lower()
+
+
 def test_an_ungrouped_intent_is_still_listed():
     """Grouping is presentation, never a filter — a new intent cannot be hidden."""
     out = describe(_registry(["sensor_data", "something_brand_new"]), "Test Building")
@@ -101,6 +110,31 @@ def test_plumbing_intents_are_not_offered_to_the_user():
     out = describe(_registry(["sensor_data", "clarification", "greeting", "planner"]), "T")
     for internal in ("clarification", "greeting", "planner"):
         assert internal not in out
+
+
+def test_h3_every_live_registry_intent_is_grouped_or_declared_internal():
+    """H3 (QA-trial plan, 2026-10-04): a registry intent must land in a real _GROUPS
+    bucket or in _NOT_USER_FACING -- never fall through to "Other" by omission.
+
+    "Other" exists so a NEW intent is never silently hidden (test_an_ungrouped_intent_
+    is_still_listed, above); it must not become where TEN deterministic-only lanes
+    accumulate their raw internal names because nobody updated this file when adding
+    one. Measured live, 2026-10-02: "what can I ask you?" printed 11 such names (13 by
+    the time this test was written). This test fails the moment a new one is added
+    without being placed, so the count can never creep back up unnoticed.
+    """
+    from orchestrator.intents.registry import get_intent_registry
+    from orchestrator.services.self_description import _GROUPS, _NOT_USER_FACING
+
+    registry = get_intent_registry()
+    names = {i.name for i in registry.intents}
+    grouped = {n for _label, ns in _GROUPS for n in ns}
+    leftover = sorted(names - _NOT_USER_FACING - grouped)
+    assert leftover == [], (
+        f"{leftover} would print its raw internal name under 'Other' -- add it to a "
+        "_GROUPS bucket (if it is a real capability) or to _NOT_USER_FACING (if it is "
+        "plumbing the classifier should never be asked to pick)"
+    )
 
 
 def test_the_building_is_named_and_its_own_figures_are_used():

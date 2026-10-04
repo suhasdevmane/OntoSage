@@ -63,8 +63,22 @@ _DECLINE_MARKERS = (
     "no data found for your query",
     "i couldn't match that room name",
     "there is no air-pressure sensor data",
+    # Found running the gate 2026-10-03 (unrelated to that day's product changes -- the
+    # decline text alone, with no evidence panel appended, was already misclassified): the
+    # live wording for this exact question had drifted to "There is no recorded
+    # air-pressure sensor for Room 2.01." sometime after the marker above was written, and
+    # nothing had re-asked gate case #70 with this wording until now.
+    "there is no recorded air-pressure sensor",
     "there is no solar irradiance measurement",
     "no readings were found for",
+    # A6 (QA-trial plan, 2026-10-02). `session_recall`'s own decline when a provenance or
+    # recall question is asked with no prior turn in the conversation -- gate case #37,
+    # "What is the evidence behind your answer about the coolest room?", classified
+    # `answered` (`got_kind=answered, status=ok`) against a `None` first turn. The classifier
+    # cannot fail either direction on the one case that is Wave D's own subject matter until
+    # this is here. Verified: zero of the 73 stored pack answers already contain it, so this
+    # is zero reclassified, not a vacuous match.
+    "nothing has been asked in this conversation yet",
 )
 
 #: Declines whose wording carries the REFERENT in the middle, so no fixed substring spans them.

@@ -857,15 +857,20 @@ def stored_sources(results: Dict[str, Any]) -> List[str]:
     ``'str' object has no attribute 'get'`` on every turn that followed a WorkspaceProfile answer —
     the second look silently inactive on exactly the path it exists for, caught only because it
     fails safe and logs.
+
+    D2 (QA-trial plan, 2026-10-02): this was one of THREE places reading this one bus shape and
+    is now the thin one — the extraction itself lives in ``provenance.source_id_of``, shared
+    with ``provenance.build_tags`` and ``evidence.assemble._sources_from``, so the shape cannot
+    drift between readers again.
     """
-    out: List[str] = []
+    from orchestrator.services.provenance import source_id_of
+
     entries = results.get("_prov_stores")
-    for entry in entries if isinstance(entries, (list, tuple)) else []:
-        if isinstance(entry, str):
-            out.append(entry)
-        elif isinstance(entry, dict):
-            out.append(str(entry.get("source_id") or ""))
-    return out
+    return [
+        source_id_of(entry)
+        for entry in (entries if isinstance(entries, (list, tuple)) else [])
+        if isinstance(entry, (str, dict))
+    ]
 
 
 def used_classes(results: Dict[str, Any]) -> Set[str]:

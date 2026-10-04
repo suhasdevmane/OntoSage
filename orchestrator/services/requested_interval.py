@@ -52,10 +52,27 @@ STAMP = "%Y-%m-%d %H:%M:%S"
 #: "this morning" is a part-day, "the weekend" is two days and which two depends on where
 #: you are — none of those belong here, and guessing at them would trade one wrong window
 #: for another.
+#: G7 (QA-trial plan, 2026-10-04, BUG-1430): checked in INSERTION order, longer phrases
+#: FIRST. "the day before yesterday" contains the word "yesterday" as a substring, so if
+#: the bare "yesterday" entry were checked first (or this dict were unordered), the
+#: compound phrase would match it and resolve to ONE day back instead of two -- exactly
+#: the live defect: a follow-up asking for two days back was answered with yesterday's
+#: window, narrated as "the day before" over data that was not it.
 _CALENDAR_DAYS = {
+    "day before yesterday": 2,
+    "two days ago": 2,
+    "2 days ago": 2,
+    "the day before yesterday": 2,
     "yesterday": 1,
     "today": 0,
 }
+
+#: The reverse of the map above, for a resolver that must NAME the day it means rather
+#: than only measure how far back it is. Builds from _CALENDAR_DAYS so the two can never
+#: disagree; "the day before yesterday" is inserted last among the days_back=2 phrases
+#: above so it is the one a dict comprehension's last-write-wins picks here -- the most
+#: natural phrase to substitute for "yesterday" in a rewritten question.
+_DAYS_BACK_TO_PHRASE = {back: phrase for phrase, back in _CALENDAR_DAYS.items()}
 
 
 #: THE STORES ARE UTC. Every one of them, and every reader sees them that way (BUG-403).

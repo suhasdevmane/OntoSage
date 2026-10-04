@@ -3820,3 +3820,171 @@ Three new shapes came out of tail Q and were logged, not fixed: a QUESTION route
 and refused as a command, a question filed as a maintenance TICKET (a side effect testers will
 see), and a "nearest" answer computed from an assumed location. Each needs its blast radius
 measured first; the control/report precedence has been tuned twice already.
+
+## #188 — Five resolvers passed 32 unit tests and three of them never ran live, because a gate upstream had already said no (2026-10-02)
+
+The multi-turn battery showed the shape: every follow-up that supplies a value works, every
+one that points at the assistant's previous reply fails. I wrote deterministic resolvers for the
+five shapes, tested each against the exact replies from the battery, and placed them inside
+`rewrite_to_standalone` after the existing checks. The first live pass fixed c06, c13 and c19
+and left c02, c05 and c08 exactly as they were. No log line, no error. The resolvers were
+right; `_is_followup_query` had decided, three lines earlier, that "what is the temperature in
+the first one?" was not a follow-up — it split on whitespace, so "one?" was not "one" — and
+returned None before the resolvers were reached. A location statement has no marker word at
+all. Lessons #145 and #174 said this already in other words: **a stage measurement is not a
+route measurement.** The new form: when you add a step to a function, read every `return`
+above it, because a unit test calls the step and the system calls the function.
+
+Then the fix for c03 — ask which kitchen instead of guessing — fired, logged "asking which",
+and the turn still ran the analytics lane building-wide. The concept-stage rescue rule
+(`building_question_not_general`) converted the clarification to analytics, and it could not
+have done otherwise: the concept stage is handed a fresh dict with the keys the orchestrator
+chooses to put in it, and the marker that said WHY the clarification was raised was not one of
+them. That is BUG-735's shape (the deixis clarification, which the rule now re-derives from the
+query) and BUG-1333's (thirty amenity triples invisible to the same stage). Third instance;
+the dict grew one more key. **A marker set on the bus is only a marker where the bus is
+read.** The place to look is the call site that builds the dict, not the rule.
+
+And the model's rewrite, when it was allowed through, bound the right room as the register's
+LABEL — "Level 1 computer lab 1.06 (WS-02)" — whose words then matched two knowledge topics and
+the TTL route skipped the classifier. A correct binding in the wrong spelling is a wrong
+route. The deterministic resolver writes the plain token the lanes parse, which is the
+argument for resolving the explicit shapes without a model at all.
+
+
+## #189 — A multi-agent review of my own plan found a renderer that would ship bare UUIDs to every reader, and a site I had named in three different wrong places (2026-10-03)
+
+Wrote a 72-row implementation plan from a six-reader inventory, then ran a second,
+adversarial multi-agent review of the PLAN itself before touching code. It was worth more
+than the inventory. Two findings mattered most.
+
+**The append site for the inline evidence panel was wrong in the plan three times over,
+and each wrong answer looked plausible on its own.** The plan's Approach said "the SAME
+site that already appends the dossier" (a different FUNCTION, `_deliberate_node`, which
+only ever sees deliberation-lane turns); its own Files list separately cited the chip
+block (`:6865`, inside a feature flag whose code default is `False`); the eventual correct
+site — after claim-binding, before the message is stored — was found only by a reviewer
+who ran `awk` for every `async def` boundary in the file and read what was actually between
+them. **A file:line citation is not a verified site until something has walked the function
+boundaries around it.**
+
+**`answer_provenance.render()` — the renderer I was about to call unchanged — prints
+`src.get('source_id', '?')` verbatim.** Live records hold `ontology`, `store:energy_data`,
+and bare timeseries UUIDs. Calling it from a new site without reading what it actually
+emits would have shipped BUG-1407's defect (raw IRIs reaching readers) at a new layer, on
+every answer, the day it shipped — not a hypothetical, a certainty, found only because the
+review read the renderer's own code rather than trusting its docstring.
+
+**The gate found a third thing neither I nor the review caught: its own decline marker
+had gone stale.** "There is no recorded air-pressure sensor for Room 2.01" — the system's
+CURRENT, correct wording — matched no marker in `regression_answerability.py`, because the
+registered marker was an older phrasing ("there is no air-pressure sensor data") that the
+system had since rephrased. The gate reported a REGRESSION on an answer that was, and had
+always been, an honest decline. Isolating the decline text from the day's own panel change
+and classifying it ALONE (`classify(decline_text_only)`) is what proved the gate — not the
+product — was behind: the misclassification was there before any of today's code ran.
+
+**The practice that generalises:** before trusting a renderer, a call site, or an
+instrument's verdict, read what it actually does with real input — not what its name, its
+docstring, or its prior verification claimed. A second adversarial pass, with its own
+default-to-disbelief, found three load-bearing errors a single careful pass had not.
+
+## #190 — The feature worked in every unit test and was invisible in the one real conversation I tried (2026-10-03)
+
+D11's inline evidence panel had 7 source-pinned tests, all green, confirming the code was
+appended at the right site, read the right flag, and skipped the right lanes. Then a live
+conversation through the running stack showed no panel on any answer. The cause was not
+the panel — it was my OWN measurement harness, correctly stripping the panel before
+display, exactly as I had built it to earlier the same session. A quick diagnostic (a raw
+curl to `/v1/chat/completions`, bypassing the harness entirely) showed the panel was there
+all along.
+
+That diagnostic also surfaced something the harness's stripping had hidden from view: a
+genuine two-turn conversation asking "how do you know that?" — the exact phrasing D7
+widened the detector for — never reached the provenance lane at all, because the
+co-reference rewrite ran first and turned it into a question about a room. The rewrite is
+a SEPARATE pipeline stage from the detector, upstream of it, and nothing in D7's own
+test suite exercises that stage. The same shape as lesson #188, found by the same method:
+trust a feature only as far as a real round trip through the actual entry point, not
+through a harness whose own correctness you have not separately checked, and not only
+through a unit test that drives the function directly.
+
+**The practice that generalises, again:** when a live check shows nothing, do not treat
+silence as a disproof — check whether the thing producing the silence is the feature or
+the instrument. A raw request with no harness in the way settles it in one call.
+
+## #191 — The bare `pytest` command silently produced zero output and exit 1 (2026-10-04)
+
+Running the full suite with the bare `pytest -m unit -q` command (not `python -m pytest`)
+produced NOTHING — no collection line, no warnings, no summary — and exited 1, twice, in
+both a foreground and a backgrounded invocation. `pytest --version` did the same. The
+console-script shim was broken in a way that failed before printing anything, and the
+silence looked exactly like a hung or crashed process. `python -m pytest --version`
+worked immediately (`pytest 9.0.1`) in the same shell, same directory, same environment.
+Single-file runs earlier in the session had all used `python -m pytest` already (matching
+this repo's own documented convention), so the bug was in my own later shorthand, not the
+suite. **When a command that always prints something prints nothing at all, suspect the
+shim/launcher before the thing it launches** — a crash with no output is a different
+failure mode from a crash with a traceback, and deserves a different first hypothesis.
+
+## #192 — Fixing the rewrite layer does not fix the lane that never reads what it rewrote (2026-10-04)
+
+BUG-1430: "and the day before?" was answered with yesterday's window because the
+co-reference rewrite's free-form LLM text ("the day before yesterday") collided with a
+substring match on "yesterday" in an unordered phrase table. Fixed precisely: the table is
+now checked longest-phrase-first, and a new deterministic resolver rewrites the bare
+follow-up before the LLM ever sees it — confirmed live via the coref log line, confirmed by
+eleven unit tests, confirmed in isolation that `calendar_day_bounds` now returns the
+correct date two days back, not one.
+
+The live re-ask still failed. Asking "yesterday" and "the day before yesterday" as two
+fresh, independent questions returned a **byte-identical** answer for both — because the
+lane that actually computes energy totals for this question shape (`analytics_agent`, an
+LLM-code-generation path) never calls `calendar_day_bounds` at all, unlike the two sibling
+lanes (`aggregate_lane`, `sql_agent`) that do. The rewrite now correctly NAMES two days
+back; nothing downstream was ever reading the name.
+
+This is lesson #174's shape again ("a stage measurement is not a route measurement") one
+level removed: fixing a stage and verifying that stage in isolation is not the same claim
+as fixing what the user experiences, when a DIFFERENT, unexamined stage sits between the
+fix and the answer. The generalizable check: after fixing stage N, trace the SAME live
+request all the way to the lane that actually produces the final text, not just to the
+point where stage N's own output looks correct in a log line.
+
+## #193 — `.gitignore` cannot re-include a file whose PARENT DIRECTORY is excluded (2026-10-04)
+
+A bare `docs/` rule was swallowing an entire evidence subtree. The first fix attempt was a
+single line, `!docs/phase0/*.md`, added after the bare rule — and it changed nothing,
+because `docs/` as a directory pattern prunes the directory from traversal entirely; git
+never even looks inside it to evaluate a later per-file negation. The working fix needed
+three lines in sequence: `docs/*` (ignore direct children, so the parent directory itself
+is no longer pruned), `!docs/phase0/` (allow descending into that one child), then
+`docs/phase0/*` + `!docs/phase0/*.md` (ignore everything one level inside it except the
+markdown files). Verified with plain `git check-ignore path; echo $?` — NOT `-v`, whose
+printed match can be the negation itself while the exit code still needs reading
+separately; a literal reading of `-v`'s output line, without checking the exit code, would
+have reported the fix as working when the first, broken attempt was tested the same way.
+
+## #194 — `isort --profile black` silently uses 88 columns, not this project's 100 (2026-10-04)
+
+The final clean suite run of the night found exactly one failure:
+`test_d11_panel_is_wired_into_response_node.py` asserted a one-line import string that no
+longer existed verbatim — `isort` had wrapped it into a three-line parenthesized import with
+a trailing comma, which `black --line-length 100` then could not collapse back (a trailing
+comma is `black`'s own signal to keep an import exploded, "the magic trailing comma").
+
+The import fit in 97 characters at its actual indentation — under this project's 100-column
+limit, over `isort`'s bundled 88-column default. Every lint command run tonight used
+`isort --profile black -q <files>` with no `--line-length` flag, so `black` (invoked with
+`--line-length 100`) left 90-97-character lines alone while `isort` (silently defaulting to
+88 regardless of the `--profile black` name sounding like it should match) kept rewrapping
+them back on every pass. Swept all seventeen files touched tonight with
+`isort --profile black --line-length 100` and `black --line-length 100` together; seven had
+the same latent wrap, none behavior-changing, all caught only because one of them happened to
+be pinned by a literal-string test.
+
+**The practice that generalises:** `--profile black` configures *style* (quote conventions,
+trailing commas, blank-line rules) — it does not inherit a *project's* line-length override.
+Pairing it with `black --line-length N` requires passing `--line-length N` to `isort` too, or
+the two tools will fight on every file near the boundary between their two defaults, and nothing
+will surface it except a test that happens to pin an exact line.

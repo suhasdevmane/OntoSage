@@ -17,6 +17,7 @@ a registry is available — so it never changes behaviour when the flag is off.
 
 from __future__ import annotations
 
+import re
 from typing import Any, Dict, List, Optional
 
 from orchestrator.services.datasource_registry import BUILTIN_PROVENANCE
@@ -104,23 +105,112 @@ def _tag_from_database_key(key: str) -> Optional[ProvenanceTag]:
     return None
 
 
-def build_tags(store_keys: List[str], registry: Optional[Any]) -> List[ProvenanceTag]:
-    """Map recorded store keys to ProvenanceTags (deduped by source_id)."""
+#: Capability-lane `"provenance"` values that ANSWER the question, mapped to the BUILTIN key
+#: that describes what was actually read (D3, QA-trial plan 2026-10-02). The lane writes 15
+#: distinct strings (`capability_agent.py`) and none was a `BUILTIN_PROVENANCE` key, so every
+#: capability-lane answer lost its chip silently — build_tags returned `[]` for all of them,
+#: including the provenance lane's own answers. Values NOT listed here are declines or honest
+#: absences (`referent_unverified`, `referent_not_found`, `building_profile_absent`,
+#: `scenario_out_of_scope`, `absent_system_of_record`, `document_cannot_answer_live_state`,
+#: `documents_do_not_answer`, `no_match`) and are deliberately left unmapped: a decline must
+#: not cite a source (BUG-1401). `answer_provenance` — the provenance lane's own self-answer,
+#: reading the PREVIOUS turn's stored record rather than any store — is also left unmapped on
+#: purpose: it names no new data source, so the inline evidence panel (not a chip) is what
+#: should ever speak for it.
+_CAPABILITY_PROVENANCE_ALIASES = {
+    "building_profile": "ontology",
+    "live_metrics": "live_sensors",
+    "capability_graph": "ontology",
+    "ontology_inventory": "ontology",
+    "document_answered": "documents",
+    "held_register_named": "ontology",
+}
+
+
+def readable_source_label(source_id: str) -> str:
+    """A label for a raw record id ("ontosage:WorkOrder", a timeseries UUID) that does not
+    put the bare identifier in front of a reader (BUG-780, BUG-1407's shape at the chip layer).
+    A UUID yields a generic noun; anything else yields its local name, spaced and titled."""
+    local = source_id.rsplit("#", 1)[-1].rsplit(":", 1)[-1].rsplit("/", 1)[-1]
+    if re.fullmatch(r"[0-9a-fA-F-]{32,36}", local):
+        return "Sensor reading"
+    spaced = re.sub(r"(?<!^)(?=[A-Z])", " ", local).replace("_", " ").strip()
+    return spaced.title() if spaced else "Building record"
+
+
+def label_for_string_entry(key: str) -> str:
+    """The reader-facing label for a STRING `_prov_stores` entry, without needing a
+    registry. Prefers the real label of a known system (`BUILTIN_PROVENANCE`, through the
+    capability-lane alias map) over the generic derivation, because "Building model" is a
+    better label than "Ontology" even though `readable_source_label` would produce the
+    latter safely. Falls through to `readable_source_label` for anything unrecognised,
+    including a `store:<table>` key -- resolving THAT to its registered datasource label
+    needs the registry, which `evidence.assemble` does not hold; a readable fallback here is
+    still strictly better than the bare key.
+    """
+    resolved = _CAPABILITY_PROVENANCE_ALIASES.get(key, key)
+    if resolved in BUILTIN_PROVENANCE:
+        return BUILTIN_PROVENANCE[resolved].label
+    if key.startswith("store:"):
+        return readable_source_label(key[len("store:") :])
+    return readable_source_label(key)
+
+
+def source_id_of(entry: Any) -> str:
+    """The id of one `_prov_stores` entry, whichever shape a lane wrote it in (D2, QA-trial
+    plan 2026-10-02). `_prov_stores` carries two shapes: a raw STORE KEY string (the original
+    contract) and a dict a lane writes when it has owner/authority/version to say
+    (`sparql_agent.py:1826`). THREE readers consume this one bus shape -- `build_tags` above,
+    `absence_second_chance.stored_sources`, and `evidence.assemble._sources_from` -- and one
+    of them already drifted once (`stored_sources`'s own docstring: reading only the dict
+    shape raised `'str' object has no attribute 'get'` on every string-shape turn). Extracting
+    ONE definition, used by all three, is what stops a second drift."""
+    if isinstance(entry, dict):
+        return str(entry.get("source_id") or entry.get("store") or "")
+    if isinstance(entry, str):
+        return entry
+    return ""
+
+
+def build_tags(store_keys: List[Any], registry: Optional[Any]) -> List[ProvenanceTag]:
+    """Map recorded store entries to ProvenanceTags (deduped by source_id).
+
+    `_prov_stores` carries two shapes (D2, QA-trial plan 2026-10-02): a raw STORE KEY string
+    (the original contract) and a dict a lane writes when it has owner/authority/version to
+    say (`sparql_agent.py:1826`). The dict shape used to reach `if key in BUILTIN_PROVENANCE`
+    unconditionally — `TypeError: unhashable type: 'dict'`, raised inside the caller's bare
+    `except Exception` logged at DEBUG, which silently dropped the ENTIRE footer (and the
+    structured `sources` array built from the same list) on every register-lane turn,
+    including correctly-recorded string keys sitting in the same list. A dict entry now
+    builds its own tag from its own fields — it already knows more than any of the five
+    BUILTIN keys could say about it — rather than being forced through a lookup meant for a
+    handful of system-level stores.
+    """
     tags: List[ProvenanceTag] = []
     seen = set()
-    for key in store_keys or []:
+    for entry in store_keys or []:
         tag: Optional[ProvenanceTag] = None
-        if key in BUILTIN_PROVENANCE:
-            tag = BUILTIN_PROVENANCE[key]
-        elif key.startswith("store:"):
-            table = key[len("store:") :]
-            tag = None
-            if registry is not None:
-                tag = registry.provenance_for_table(table)
-            if tag is None:
-                tag = _tag_from_database_key(table)
-            if tag is None:
-                tag = UNKNOWN_PROVENANCE
+        if isinstance(entry, dict):
+            sid = str(entry.get("source_id") or entry.get("store") or "unknown_source")
+            tag = ProvenanceTag(
+                source_id=sid,
+                label=str(entry.get("label") or readable_source_label(sid)),
+                color="#6B7280",
+                synthetic=bool(entry.get("synthetic") or entry.get("simulated") or False),
+                store=str(entry.get("store") or ""),
+            )
+        elif isinstance(entry, str):
+            key = _CAPABILITY_PROVENANCE_ALIASES.get(entry, entry)
+            if key in BUILTIN_PROVENANCE:
+                tag = BUILTIN_PROVENANCE[key]
+            elif key.startswith("store:"):
+                table = key[len("store:") :]
+                if registry is not None:
+                    tag = registry.provenance_for_table(table)
+                if tag is None:
+                    tag = _tag_from_database_key(table)
+                if tag is None:
+                    tag = UNKNOWN_PROVENANCE
         if tag is not None and tag.source_id not in seen:
             tags.append(tag)
             seen.add(tag.source_id)
