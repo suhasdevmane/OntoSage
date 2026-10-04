@@ -58,20 +58,12 @@ from orchestrator.services.ontology_introspector import ontology_introspector
 from orchestrator.services.ontology_validator import ontology_validator
 from orchestrator.services.plugin_registry import PluginRegistry, get_plugin_registry
 from orchestrator.services.response_cache import ResponseCacheService
-from orchestrator.services.session_summary import (
-    strip_previous as _strip_previous_summary,
-)
+from orchestrator.services.session_summary import strip_previous as _strip_previous_summary
 from orchestrator.services.sparql_validator import sparql_validator
 from orchestrator.workflow import WorkflowOrchestrator
 from orchestrator.workflow._orchestrator import plan_trace_for_response
 from shared.config import settings, validate_config
-from shared.models import (
-    APIResponse,
-    ChatRequest,
-    ConversationState,
-    DataSourceSpec,
-    Message,
-)
+from shared.models import APIResponse, ChatRequest, ConversationState, DataSourceSpec, Message
 from shared.utils import describe_exception, generate_conversation_id, get_logger
 
 # All valid personas (must match shared/models.py ConversationState.persona Literal)
@@ -246,12 +238,7 @@ def _detect_persona(messages: list, explicit_persona: str) -> tuple:
 
 # E.9 — Prometheus metrics (optional; graceful degradation if unavailable)
 try:
-    from prometheus_client import (
-        CONTENT_TYPE_LATEST,
-        Counter,
-        Histogram,
-        generate_latest,
-    )
+    from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 
     _PROM_REQUESTS = Counter(
         "ontosage_http_requests_total",
@@ -910,9 +897,7 @@ async def lifespan(app: FastAPI):
     # V5-T19: anomaly scanner — scheduled sweep persisting episodes to the events store
     if settings.ANOMALY_SCAN_INTERVAL_SECS > 0:
         try:
-            from orchestrator.services.anomaly.scanner import (
-                AnomalyScanner as _AScanner,
-            )
+            from orchestrator.services.anomaly.scanner import AnomalyScanner as _AScanner
 
             async def _anomaly_scan_loop() -> None:
                 await asyncio.sleep(180)  # let GraphDB/adapters warm up after boot
@@ -955,14 +940,8 @@ async def lifespan(app: FastAPI):
                 await asyncio.sleep(180)  # let GraphDB warm up, as the scanner does
                 from orchestrator.agents.sparql_agent import _active_namespace
                 from orchestrator.services.deliberation.live import sparql_exec
-                from orchestrator.services.notification_service import (
-                    get_notification_service,
-                )
-                from orchestrator.services.readiness_check import (
-                    compose,
-                    render,
-                    upcoming_sessions,
-                )
+                from orchestrator.services.notification_service import get_notification_service
+                from orchestrator.services.readiness_check import compose, render, upcoming_sessions
 
                 async def _run(query: str, limit: int = 200):
                     return await sparql_exec(query)
@@ -1289,9 +1268,7 @@ async def lifespan(app: FastAPI):
         # stays invisible until a user gets an empty answer. Enumerates whatever
         # exists, so a building onboarded tomorrow is covered too.
         try:
-            from orchestrator.services.embedding_consistency import (
-                check_embedding_consistency,
-            )
+            from orchestrator.services.embedding_consistency import check_embedding_consistency
 
             await check_embedding_consistency(
                 _doc_qdrant_client_ref,
@@ -2250,25 +2227,32 @@ async def clear_user_history(
 
         # Clear from Redis
         if redis_manager:
-            # Delete all conversations for this user
+            # F5 (QA-trial plan, 2026-10-04): KEYS blocks the whole Redis event loop while
+            # it scans, on an endpoint any authenticated user can call on demand -- the
+            # delete_user path was deliberately moved to scan_iter for exactly this reason
+            # (auth_manager.py delete_user). SCAN is the non-blocking, incremental
+            # equivalent: same keys found, no stall for every other connection meanwhile.
             pattern = f"conversation:*:{username}"
-            keys = await redis_manager.client.keys(pattern)
-
-            for key in keys:
+            async for key in redis_manager.client.scan_iter(match=pattern, count=200):
                 await redis_manager.client.delete(key)
                 deleted_count += 1
 
             # Delete messages
             msg_pattern = f"messages:*:{username}"
-            msg_keys = await redis_manager.client.keys(msg_pattern)
-
-            for key in msg_keys:
+            async for key in redis_manager.client.scan_iter(match=msg_pattern, count=200):
                 await redis_manager.client.delete(key)
+
+        # F4 (QA-trial plan, 2026-10-04): this endpoint deleted Redis conversations and
+        # Postgres's `conversations` table, but NOT `turn_memory` -- 10,411 per-turn rows
+        # could survive a user being told "History cleared successfully", which is worse
+        # than no erasure at all because the user is told it worked.
+        turns_deleted = await _turn_memory_service().delete_user_turns(username)
 
         return APIResponse(
             success=True,
             data={
                 "deleted_conversations": deleted_count,  # This might be just Redis count
+                "deleted_turn_records": turns_deleted,
                 "message": "History cleared successfully",
             },
         )
@@ -2808,6 +2792,11 @@ async def chat(
                 # deliberate-lane dossier and only the ranking lane produces it, so merging
                 # them would make an absent dossier indistinguishable from an absent record.
                 "evidence_record": updated_state.intermediate_results.get("evidence_record"),
+                # D4 (QA-trial plan, 2026-10-04): turn_outcome says whether the MACHINERY
+                # ran (CAVEAT-887) -- an honest decline on a healthy stack is still "ok".
+                # It is NOT a fifth answer-quality classifier; do not read it as one.
+                "turn_outcome": updated_state.intermediate_results.get("turn_outcome"),
+                "retrieval_outcome": _retrieval_outcome_from_state(updated_state),
                 "clarification": updated_state.intermediate_results.get(
                     "needs_clarification_payload"
                 ),
@@ -3543,6 +3532,9 @@ async def websocket_stream(websocket: WebSocket):
                     "sources": final_state.intermediate_results.get("sources", []),
                     "evidence": final_state.intermediate_results.get("evidence_dossier"),
                     "evidence_record": final_state.intermediate_results.get("evidence_record"),
+                    # D4: the same two fields /chat now carries, on the websocket too.
+                    "turn_outcome": final_state.intermediate_results.get("turn_outcome"),
+                    "retrieval_outcome": _retrieval_outcome_from_state(final_state),
                     "clarification": final_state.intermediate_results.get(
                         "needs_clarification_payload"
                     ),
@@ -3601,6 +3593,10 @@ async def delete_conversation(
         # Delete state and messages
         await redis_manager.redis.delete(f"conversation:{conversation_id}")
         await redis_manager.redis.delete(f"messages:{conversation_id}")
+        # F4 (QA-trial plan, 2026-10-04): turn_memory.delete_conversation existed with no
+        # caller -- deleting the Redis state left the per-turn Postgres rows for this
+        # conversation behind.
+        await _turn_memory_service().delete_conversation(conversation_id)
 
         return APIResponse(
             success=True, data={"message": f"Conversation {conversation_id} deleted"}
@@ -3855,6 +3851,18 @@ def _route_record(state: Any) -> Optional[Dict[str, Any]]:
         "final_node": rd.get("final_node"),
         "overrides_applied": overrides,
     }
+
+
+def _retrieval_outcome_from_state(state: Any) -> Optional[Dict[str, Any]]:
+    """D4 (QA-trial plan, 2026-10-04): the kind of nothing a lane classified, for every
+    envelope. None on most turns — those that answered. See
+    `retrieval_outcome.from_state` for why this cannot reuse `_route_record`'s matcher.
+    """
+    try:
+        from orchestrator.services.retrieval_outcome import from_state as _ro_from_state
+    except Exception:
+        return None
+    return _ro_from_state(getattr(state, "intermediate_results", None) or {})
 
 
 async def _rehydrate_prior_messages(
@@ -4243,6 +4251,15 @@ async def openai_chat_completions(
                         "ontosage_evidence_record": final_state.intermediate_results.get(
                             "evidence_record"
                         ),
+                        # D4 (QA-trial plan, 2026-10-04): sources, turn_outcome and
+                        # retrieval_outcome were on /chat and the websocket and absent
+                        # from the two envelopes real users hit -- Open WebUI streams by
+                        # default. Same extension-field convention as the fields above.
+                        "ontosage_sources": final_state.intermediate_results.get("sources", []),
+                        "ontosage_turn_outcome": final_state.intermediate_results.get(
+                            "turn_outcome"
+                        ),
+                        "ontosage_retrieval_outcome": _retrieval_outcome_from_state(final_state),
                     },
                 )
                 yield "data: [DONE]\n\n"
@@ -4273,6 +4290,11 @@ async def openai_chat_completions(
                             "ontosage_plan_trace": None,
                             "ontosage_llm_degraded": llm_degradation(),
                             "ontosage_evidence_record": None,
+                            # D4: null alongside the others above -- the stream aborted
+                            # before any lane could classify anything.
+                            "ontosage_sources": [],
+                            "ontosage_turn_outcome": None,
+                            "ontosage_retrieval_outcome": None,
                             # The answer above is an apology, not an answer. Say so in a
                             # field, so a grader can drop the row rather than score it.
                             "ontosage_stream_error": detail,
@@ -4324,6 +4346,11 @@ async def openai_chat_completions(
                 # W6-02: null, not an empty list. A turn that timed out did not spend
                 # zero time in every stage; nothing recorded where it spent it.
                 "ontosage_plan_trace": None,
+                # D4: the same reasoning as ontosage_plan_trace -- nothing classified.
+                "ontosage_sources": [],
+                "ontosage_turn_outcome": None,
+                "ontosage_retrieval_outcome": None,
+                "ontosage_evidence_record": None,
             }
 
         # The same extraction the streamed branch uses, so the two cannot drift: the answer
@@ -4387,6 +4414,13 @@ async def openai_chat_completions(
             # it carried the lane and the reason for the lane, and nothing about cost.
             # Prefixed like the fields above so it cannot collide with a field OpenAI adds.
             "ontosage_plan_trace": plan_trace_for_response(updated_state.intermediate_results),
+            # D4 (QA-trial plan, 2026-10-04): the structured sources array was on /chat and
+            # the websocket and in NEITHER /v1 branch, while Open WebUI posts to /v1
+            # (CAVEAT-887's own gap). turn_outcome records whether the MACHINERY ran, not
+            # whether the answer declined -- an honest decline on a healthy stack is "ok".
+            "ontosage_sources": updated_state.intermediate_results.get("sources", []),
+            "ontosage_turn_outcome": updated_state.intermediate_results.get("turn_outcome"),
+            "ontosage_retrieval_outcome": _retrieval_outcome_from_state(updated_state),
         }
 
     except Exception as e:
@@ -4569,10 +4603,7 @@ async def index_status(
             # Import the resolver's OWN prefix rather than restating the IRI:
             # a count that silently disagrees with the resolver's namespace
             # would report 0 amenities for a building that has them.
-            from orchestrator.services.capability_graph_resolver import (
-                _ONTO,
-                _default_sparql_exec,
-            )
+            from orchestrator.services.capability_graph_resolver import _ONTO, _default_sparql_exec
 
             data = await _default_sparql_exec(
                 _ONTO + "SELECT ?kind (COUNT(DISTINCT ?s) AS ?n) WHERE { "
@@ -4725,10 +4756,7 @@ async def observability_matrix(
     from orchestrator.services.deliberation.capability_schema import build_schema
     from orchestrator.services.deliberation.coverage_audit import load_modalities
     from orchestrator.services.deliberation.live import sparql_exec
-    from orchestrator.services.observability import (
-        present_modalities,
-        reach_from_coverage,
-    )
+    from orchestrator.services.observability import present_modalities, reach_from_coverage
 
     building_id = settings.BUILDING_ID
     namespace = settings.BUILDING_NAMESPACE
@@ -5001,10 +5029,7 @@ async def drop_ontology_graph(
     """Delete a named graph from GraphDB. For a file graph (``urn:ontosage:ttl:<file>``)
     the backing ``input/<file>`` is MOVED to input/.trash/ (reversible) so the drop stays
     applied after restart; otherwise only the GraphDB triples are removed."""
-    from orchestrator.services.input_ttl_store import (
-        filename_from_graph_uri,
-        trash_ttl_file,
-    )
+    from orchestrator.services.input_ttl_store import filename_from_graph_uri, trash_ttl_file
     from orchestrator.services.ontology_manager import drop_named_graph
 
     filename = filename_from_graph_uri(graph_id)
@@ -5159,11 +5184,7 @@ async def list_access_policies(
     ``editable: false`` marks the individual-privacy rules, which the GUI must not
     offer to change — the system explains the building, it never tracks individuals.
     """
-    from orchestrator.services.policy_admin import (
-        POLICY_FORM_SCHEMA,
-        known_roles,
-        list_policies,
-    )
+    from orchestrator.services.policy_admin import POLICY_FORM_SCHEMA, known_roles, list_policies
 
     bid = building_id or settings.BUILDING_ID
     policies = await list_policies(bid)
@@ -6573,7 +6594,15 @@ async def sensors_health(
                         stamps = []
                 else:
                     stamps = [ts]
-            h = assess_sensor(u, stamps, local_now.replace(tzinfo=None), max_age)
+            # H6 (QA-trial plan, 2026-10-04): this read `local_now` (the BUILDING's local
+            # zone, BST = UTC+1 here) with its tzinfo stripped, against `stamps` values
+            # that are naive UTC (every store is UTC, BUG-403) -- a systematic ~60-minute
+            # offset that called EVERY sensor "stale" regardless of how fresh the data
+            # really was. Measured live: MAX(datetime) for a co2 sensor was 1 minute old
+            # in UTC; this endpoint reported it 60 minutes stale, for all 2,860 assessed
+            # sensors uniformly. `now` (above) is already UTC; `local_now` has no reason
+            # to appear in a UTC-vs-UTC comparison at all.
+            h = assess_sensor(u, stamps, now.replace(tzinfo=None), max_age)
             healths.append(
                 {
                     "uuid": u,

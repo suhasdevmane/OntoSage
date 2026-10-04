@@ -373,6 +373,29 @@ intents:
     pipeline_group: standalone
     node_method: _readiness_check_node
 
+  # INTERNAL lane (deterministic rule only — do not classify into this): the routing
+  # contract decides, from routing_contract._r_cross_source_precedence (E2, QA-trial plan
+  # 2026-10-04), which fires on the "which source is right?" / "differs depending on who I
+  # ask" SHAPE. It is declared here so the graph auto-wires it and the registry can see it;
+  # the classifier is not asked to pick it, because this shape reads like an ordinary data
+  # question until the routing rule's own narrower pattern catches it.
+  - name: fact_conflict
+    description: |-
+      INTERNAL lane (deterministic rule only — do not classify into this): the user is
+      asking which of two things THIS SYSTEM already told them, or which of two things
+      this building's own records state, is correct — "the reception hours differ
+      depending on who I ask, which is right?", "which record is accurate?". Answered
+      from scripts/fact_conflicts.py's scan of this building's own documents and TTL for
+      a fact stated with more than one value, naming every value and where it was found.
+      NOT for a live sensor reading disagreeing with another sensor or a dashboard — that
+      has no entry in this building's documents or TTL to find.
+    examples:
+      - '"The reception hours differ depending on who I ask -- which is right?"'
+      - '"Which record is accurate -- the one on the website or the one you just gave me?"'
+    pipeline_group: standalone
+    route_target: fact_conflict
+    node_method: _fact_conflict_node
+
   - name: privacy_refusal
     description: |-
       INTERNAL refusal lane (deterministic rule only — do not classify into

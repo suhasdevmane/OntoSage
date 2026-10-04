@@ -221,12 +221,26 @@ def test_a_floor_number_is_read_not_assumed(text, expected):
 async def test_an_amenity_with_no_floor_sorts_last_not_nearest():
     """Treating "unknown" as "here" is how a confident wrong answer is built."""
     rows = [
-        ("x#far", "Accessible WC - Floor 5", "Floor5", "", "accessible", f"{_NS}AccessibilityFeature", "true"),
-        ("x#nowhere", "Accessible WC - location unrecorded", "", "", "accessible", f"{_NS}AccessibilityFeature", "true"),
+        (
+            "x#far",
+            "Accessible WC - Floor 5",
+            "Floor5",
+            "",
+            "accessible",
+            f"{_NS}AccessibilityFeature",
+            "true",
+        ),
+        (
+            "x#nowhere",
+            "Accessible WC - location unrecorded",
+            "",
+            "",
+            "accessible",
+            f"{_NS}AccessibilityFeature",
+            "true",
+        ),
     ]
-    hits = await nearest_by_floor(
-        _exec(rows), _NS, ["wc"], from_floor=3, accessible_only=True
-    )
+    hits = await nearest_by_floor(_exec(rows), _NS, ["wc"], from_floor=3, accessible_only=True)
     assert [h.local for h in hits] == ["far", "nowhere"]
 
 
@@ -269,15 +283,14 @@ def test_the_fallback_runs_after_the_adjacency_search_not_instead_of_it():
 
     from orchestrator.agents.spatial_agent import SpatialAgent
 
-    src = inspect.getsource(SpatialAgent._answer_nearest)
+    src = inspect.getsource(SpatialAgent._answer_nearest_inner)
     # The floor-only branch ("nearest toilet on floor 1") has no room to search from, so it asks
     # the catalogue directly; the FALLBACK is the call made after the adjacency search failed.
-    assert src.index("rf.nearest(") < src.index(
-        "fallback = await self._nearest_from_amenities("
-    ), (
+    assert src.index("rf.nearest(") < src.index("fallback = await self._nearest_from_amenities("), (
         "the catalogue is consulted before the floor plan, so a real adjacency route "
         "would be replaced by a floor count"
     )
+
 
 # ── the floor the asker is on (found by the live probe, 2026-09-07) ──────────
 
@@ -300,15 +313,15 @@ def test_the_reference_floor_comes_from_the_manifest_not_the_zone_id():
 
     from orchestrator.agents.spatial_agent import SpatialAgent
 
-    caller = inspect.getsource(SpatialAgent._answer_nearest)
-    assert "int(_m.floor)" in caller, (
-        "the reference floor is no longer read from the manifest that contains the space"
-    )
+    caller = inspect.getsource(SpatialAgent._answer_nearest_inner)
+    assert (
+        "int(_m.floor)" in caller
+    ), "the reference floor is no longer read from the manifest that contains the space"
 
     helper = inspect.getsource(SpatialAgent._nearest_from_amenities)
-    assert "floor_number(getattr(" not in helper, (
-        "the helper derives the floor from the zone id again; `3.10` reads as floor 10"
-    )
+    assert (
+        "floor_number(getattr(" not in helper
+    ), "the helper derives the floor from the zone id again; `3.10` reads as floor 10"
     assert "from_floor" in inspect.signature(SpatialAgent._nearest_from_amenities).parameters
 
 

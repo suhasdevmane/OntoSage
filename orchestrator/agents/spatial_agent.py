@@ -674,7 +674,41 @@ class SpatialAgent:
 
     # ── Wayfinding ────────────────────────────────────────────────────────────
 
-    async def _answer_nearest(
+    async def _answer_nearest(self, *args, **kwargs) -> str:
+        """`_answer_nearest_inner`, with the start it ASSUMED stated in the first line.
+
+        BUG-1419 (tail Q, 2026-10-02): "where's the nearest bathroom?" was answered "**The
+        bathroom nearest Room 0.01 is on the same floor**" -- the asker never said where they
+        were, the lane measured from the building's entrance, and nothing in the answer said so.
+        The clarification lane refuses "this room" and "here" for exactly this reason; a
+        "nearest" with no anchor is the same question in a different shape. The default start
+        is kept (it is the honest best guess for a visitor), and the guess is now SAID.
+        """
+        self._assumed_start_label = None
+        self._assumed_from_remembered = False
+        text = await self._answer_nearest_inner(*args, **kwargs)
+        label = self._assumed_start_label
+        from_remembered = self._assumed_from_remembered
+        self._assumed_start_label = None
+        self._assumed_from_remembered = False
+        if label and text and not text.startswith("I can look up"):
+            if from_remembered:
+                # F7: a remembered "I am in room 3.01" statement, not the entrance guess --
+                # a different disclosure, not the BUG-1419 one, because this one is not a
+                # guess about a stranger's likely starting point.
+                lead = (
+                    f"_Based on what you told me earlier, this is measured from **{label}**. "
+                    "Say a different room or floor if you have moved._\n\n"
+                )
+            else:
+                lead = (
+                    f"_You did not say where you are, so this is measured from **{label}** -- the "
+                    "building's entrance. Tell me your room or floor for an answer from there._\n\n"
+                )
+            return lead + text
+        return text
+
+    async def _answer_nearest_inner(
         self,
         query: str,
         manifests: List[FloorPlanManifest],
@@ -738,8 +772,31 @@ class SpatialAgent:
                 )
                 if _by_floor:
                     return _by_floor
-            src_zone, _default_label = await self._default_start(manifests, zone_to_space)
-            anchor_label = anchor_label or _default_label
+            # F7 (QA-trial plan, 2026-10-04): the question names no place, but the TESTER
+            # already stated one earlier in the session ("I am in room 3.01") -- the
+            # orchestrator's spatial node sets this instance attribute from the carried-
+            # forward remembered-location key before calling resolve(). Reusing
+            # _extract_waypoint over a synthetic "from <token>" string, the exact parser
+            # a stated "from room 3.01" already goes through, rather than writing a
+            # second resolver for the same token shape. Tried BEFORE the generic entrance
+            # default, which is what BUG-1419 exists to disclose -- a remembered place is
+            # a better guess than "the entrance" and must be said as such, never silently.
+            _remembered = getattr(self, "_remembered_place_token", None)
+            self._remembered_place_token = None
+            if _remembered:
+                _rz = self._extract_waypoint(f"from {_remembered}", manifests, role="source")
+                if _rz is not None and _rz in zone_to_space:
+                    src_zone = _rz
+                    self._assumed_start_label = zone_to_space[src_zone].label or _remembered
+                    self._assumed_from_remembered = True
+            if src_zone is None or src_zone not in zone_to_space:
+                src_zone, _default_label = await self._default_start(manifests, zone_to_space)
+                anchor_label = anchor_label or _default_label
+                if src_zone is not None:
+                    # BUG-1419: the wrapper states this assumption in the answer's first line.
+                    self._assumed_start_label = (
+                        anchor_label or zone_to_space[src_zone].label or "the entrance"
+                    )
         if src_zone is None:
             return (
                 f"I can look up the nearest {target_word}, but I need a starting point — "
@@ -1365,9 +1422,7 @@ class SpatialAgent:
     def _load_manifests(self, building_id: str, floor: Optional[int]) -> List[FloorPlanManifest]:
         """Load manifests from registry (alias-aware over both PDF and DWG floors)."""
         try:
-            from orchestrator.services.floor_plan_registry import (
-                get_floor_plan_registry,
-            )
+            from orchestrator.services.floor_plan_registry import get_floor_plan_registry
 
             registry = get_floor_plan_registry()
             candidates = self._candidate_building_ids(building_id)

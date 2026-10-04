@@ -386,7 +386,7 @@ def _is_followup_query(query: str) -> bool:
     q = (query or "").strip().lower()
     if not q:
         return False
-    words = q.split()
+    words = re.findall(r"[a-z0-9']+", q)  # "one?" is "one" (Phase 1.2)
     if len(words) <= 4:
         return True
     if any(q.startswith(p) for p in _FOLLOWUP_START_PREFIXES):
@@ -567,28 +567,16 @@ _TIME_KW = (
 
 # Question-shape keyword sets moved to the routing contract (TODO-050) — re-exported
 # here under their historical names for tests and backward compatibility.
-from orchestrator.services.routing_contract import (
-    BUILDING_INFO_KWS as _BUILDING_INFO_KWS,
-)
-from orchestrator.services.routing_contract import (
-    COUNT_TRIGGER_KWS as _COUNT_TRIGGER_KWS,
-)
-from orchestrator.services.routing_contract import (
-    COUNTABLE_DEVICE_KWS as _COUNTABLE_DEVICE_KWS,
-)
+from orchestrator.services.routing_contract import BUILDING_INFO_KWS as _BUILDING_INFO_KWS
+from orchestrator.services.routing_contract import COUNT_TRIGGER_KWS as _COUNT_TRIGGER_KWS
+from orchestrator.services.routing_contract import COUNTABLE_DEVICE_KWS as _COUNTABLE_DEVICE_KWS
 from orchestrator.services.routing_contract import FORECAST_KWS as _FORECAST_KWS
 from orchestrator.services.routing_contract import (
     MAINTENANCE_SCHEDULE_KWS as _MAINTENANCE_SCHEDULE_KWS,
 )
-from orchestrator.services.routing_contract import (
-    ROOM_GEOMETRY_KWS as _ROOM_GEOMETRY_KWS,
-)
-from orchestrator.services.routing_contract import (
-    SENSOR_METRIC_KWS as _SENSOR_METRIC_KWS,
-)
-from orchestrator.services.routing_contract import (
-    STRUCTURE_COUNT_KWS as _STRUCTURE_COUNT_KWS,
-)
+from orchestrator.services.routing_contract import ROOM_GEOMETRY_KWS as _ROOM_GEOMETRY_KWS
+from orchestrator.services.routing_contract import SENSOR_METRIC_KWS as _SENSOR_METRIC_KWS
+from orchestrator.services.routing_contract import STRUCTURE_COUNT_KWS as _STRUCTURE_COUNT_KWS
 
 
 def _derive_g1_taxonomy(
@@ -746,11 +734,141 @@ class DialogueAgent:
         if len(msgs) < 2 or not msgs[-1]:  # need at least one prior turn
             return None
         latest = (msgs[-1].content or "").strip()
-        if not latest or not _is_followup_query(latest):
+        if not latest:
             return None
-
         history = format_conversation_history(msgs, max_messages=6)
         if history == "(No previous conversation)":
+            return None
+
+        # D7-LIVE (QA-trial plan, 2026-10-03): found live, verifying D7's own fix. "how do you
+        # know that?" is the canonical provenance phrasing (answer_provenance.PROVENANCE_RE
+        # matches it), but this rewrite ran FIRST and turned it into "How do you know the
+        # temperature in room 2.01?" -- a plausible-looking rewrite that is categorically
+        # wrong, because "that" here means "your previous answer's reasoning", not an entity
+        # needing resolution, and the rewritten text no longer matches the provenance
+        # detector at all. Lesson #188's shape again: a detector correct in isolation, never
+        # reached because an earlier stage already transformed its input. No rewrite is the
+        # correct behaviour here -- `_r_answer_provenance` routes the ORIGINAL text.
+        try:
+            from orchestrator.services.answer_provenance import is_provenance_question
+
+            if is_provenance_question(latest):
+                return None
+        except Exception:  # a guard must never block the rewrite it is protecting
+            pass
+
+        # DETERMINISTIC FIRST (Phase 1.2), and BEFORE the follow-up gate: an ordinal into the
+        # previous reply's list, "that report" after a reply that filed one, "I am in room 3.01"
+        # after a nearest question, "the two" after two user-named rooms -- each resolved from
+        # the conversation verbatim, no model, no guess. `_is_followup_query` did not pass
+        # "the first one?" (it split on whitespace, so "one?" was not "one") or a bare
+        # location statement, so on the live re-ask (2026-10-02) none of these ever reached
+        # the resolvers. `_previous_reply` is the assistant message the user is replying to.
+        from orchestrator.services.context_switch import (
+            _BARE_IT_RE,
+            _LOCATIVE_ANAPHOR_RE,
+            acts_on_previous_result,
+            ambiguous_reference,
+            place_of,
+            places_in_reply,
+            resolve_location_statement,
+            resolve_ordinal,
+            resolve_pair_reference,
+            resolve_relative_day_followup,
+            resolve_report_reference,
+            resolve_sole_floor_or_amenity_anaphor,
+            resolve_sole_room_anaphor,
+        )
+
+        _previous_reply = next(
+            (m.content for m in reversed(msgs[:-1]) if getattr(m, "role", "") == "assistant"),
+            "",
+        )
+        _earlier_user = [m.content for m in msgs[:-1] if getattr(m, "role", "") == "user"]
+        _previous_user_q = _earlier_user[-1] if _earlier_user else ""
+        for _resolver, _context in (
+            (resolve_report_reference, _previous_reply),
+            (resolve_ordinal, _previous_reply),
+            (resolve_sole_room_anaphor, _previous_reply),
+            (resolve_location_statement, _previous_user_q),
+            (resolve_relative_day_followup, _previous_user_q),
+            (resolve_pair_reference, _earlier_user),
+        ):
+            _fixed = _resolver(latest, _context)
+            if _fixed and _fixed != latest:
+                logger.info(f"[coref] resolved from the previous reply: {latest!r} -> {_fixed!r}")
+                return _fixed
+        # F11 (QA-trial plan, 2026-10-04): "and what time does it close?" after a reply
+        # naming one amenity (a café, say), or one bare floor with no amenity -- the ROOM
+        # resolver above found nothing (a room always wins; it runs first), and amenity
+        # vocabulary needs a graph read, which is why this is deliberately NOT folded into
+        # the uniform synchronous loop above. Pre-gated on ROOM only, not floor: a floor
+        # may legitimately be present in the SAME reply as the amenity ("The Café is on
+        # Floor 0, open 08:00-16:00"), and resolve_sole_floor_or_amenity_anaphor itself
+        # decides amenity-over-floor precedence -- gating on "no floor" here would stand
+        # this whole step down exactly when the amenity case needs it most.
+        if (
+            "?" in latest
+            and not place_of(latest)
+            and not acts_on_previous_result(latest)
+            and (_LOCATIVE_ANAPHOR_RE.search(latest) or _BARE_IT_RE.search(latest))
+            and not places_in_reply(_previous_reply)
+        ):
+            try:
+                from orchestrator.services.record_registry import held_amenity_classes
+
+                _classes = await held_amenity_classes()
+                # The CLASS label ("Café / catering") rarely appears verbatim in a
+                # rendered answer, which names the actual amenity ("Cafe — Abacws Cafe,
+                # ground floor") -- found live, re-measuring this exact fix: the class
+                # label matched nothing, while "cafe" (one of the class's OWN declared
+                # lay terms) is a literal word in that rendered reply. Lay terms are
+                # NOUN PHRASES or VERB PHRASES ("buy a coffee"); phrases of 3+ words are
+                # excluded, since inserting "the buy a coffee" as an anchor would be
+                # grammatically broken.
+                #
+                # AT MOST ONE candidate per CLASS: a class can declare several synonyms
+                # ("cafe", "canteen", "coffee shop", ...), and if a reply happened to use
+                # two of them, amenities_in_reply would see two DIFFERENT strings and
+                # decline as ambiguous -- the same class counted twice. Picking the first
+                # candidate that actually appears in THIS reply keeps the final list at
+                # one entry per class, never per synonym.
+                _reply_lc = (_previous_reply or "").lower()
+                _labels = []
+                for _c in _classes:
+                    _candidates = [getattr(_c, "label", "")] + [
+                        t for t in getattr(_c, "terms", ()) if len(t.split()) <= 2
+                    ]
+                    for _cand in _candidates:
+                        if (
+                            _cand
+                            and len(_cand) >= 3
+                            and re.search(rf"\b{re.escape(_cand.lower())}\b", _reply_lc)
+                        ):
+                            _labels.append(_cand)
+                            break
+                _fixed = resolve_sole_floor_or_amenity_anaphor(latest, _previous_reply, _labels)
+                if _fixed and _fixed != latest:
+                    logger.info(
+                        f"[coref] resolved from the previous reply (floor/amenity): "
+                        f"{latest!r} -> {_fixed!r}"
+                    )
+                    return _fixed
+            except Exception as _amenity_err:  # a guard must never block the rewrite
+                logger.debug(f"[coref] amenity anaphor resolve skipped: {_amenity_err}")
+        # "how warm is it there?" after a reply naming THREE kitchens: the model's rewrite
+        # chose one of them ("room 2.66", then "the kitchen") -- a guess either way. When the
+        # reply named more than one room and the follow-up asks a value of "there"/"it", ask
+        # which, before any model runs. A plot/forecast/compare follow-up is left alone: those
+        # lanes carry the previous result forward and are not asking about one room.
+        if "?" in latest and not acts_on_previous_result(latest):
+            _options = ambiguous_reference(latest, _previous_reply)
+            if _options:
+                logger.info(f"[coref] ambiguous follow-up over {_options} — asking which")
+                state.intermediate_results["coref_ambiguous_places"] = _options
+                return None
+
+        if not _is_followup_query(latest):
             return None
 
         # W5-01: the rewrite's history is the last SIX messages — three turns. At turn 60 a
@@ -835,6 +953,22 @@ class DialogueAgent:
         if session_recall:
             _user_texts.append(session_recall)
         if rewrite_invents_a_place(latest, rewritten, _user_texts):
+            # ...UNLESS it is the place the PREVIOUS REPLY named for this very anaphor (Phase
+            # 1.2): the only room in that reply for "there"/"it", the Nth for an ordinal. Six
+            # turns back (BUG-940) is still refused; the reply being replied to is not.
+            from orchestrator.services.context_switch import previous_reply_named_it
+
+            if previous_reply_named_it(latest, rewritten, _previous_reply):
+                logger.info(
+                    "[coref] rewrite bound the place the previous reply named: %r -> %r",
+                    latest,
+                    rewritten,
+                )
+                return keep_the_asked_action(latest, rewritten, msgs)
+            _options = ambiguous_reference(latest, _previous_reply)
+            if _options:
+                # Several places were named and the user said "there": ask, do not guess.
+                state.intermediate_results["coref_ambiguous_places"] = _options
             logger.warning(
                 "[coref] rewrite REJECTED — it bound a place the user never named: %r -> %r",
                 latest,
@@ -974,6 +1108,30 @@ class DialogueAgent:
             names_a_specific_space,
         )
 
+        # Phase 1.2: "how warm is it there?" after a reply naming three kitchens. The rewrite
+        # could not choose and said so on the bus; the honest answer is to ask which.
+        _ambiguous = state.intermediate_results.pop("coref_ambiguous_places", None)
+        if _ambiguous:
+            _listed = ", ".join(f"Room {p}" for p in _ambiguous[:6])
+            logger.info(f"[dialogue] ambiguous follow-up over {_ambiguous} — asking which")
+            return {
+                "intent": "clarification",
+                "entities": [],
+                "required_analytics": [],
+                "time_range": {"start": None, "end": None},
+                "general": False,
+                "analytics": False,
+                "sparql_query": "",
+                "start_date": None,
+                "end_date": None,
+                "response": "",
+                "clarification_question": (
+                    f"Which one do you mean — {_listed}? My last answer named more than one, "
+                    "and I would rather ask than answer about the wrong one."
+                ),
+                "explanation": "The follow-up refers to one of several places the last answer named.",
+                "routing_rules_applied": ["ambiguous_follow_up"],
+            }
         _deixis = detect_space_deixis(user_query)
         if (
             _deixis
@@ -1009,9 +1167,7 @@ class DialogueAgent:
         # amenity-info question — it must reach the deliberate pipeline, so it
         # bypasses the capability short-circuit (same guard family as the
         # data/report/control bypasses above it).
-        from orchestrator.services.anomaly.diagnosis import (
-            is_why_question as _is_why_question,
-        )
+        from orchestrator.services.anomaly.diagnosis import is_why_question as _is_why_question
         from orchestrator.services.asset_state_service import (
             is_asset_state_question as _is_asset_state_question,
         )
@@ -1030,24 +1186,18 @@ class DialogueAgent:
         from orchestrator.services.routing_contract import (
             consumption_question as _consumption_question,
         )
-        from orchestrator.services.routing_contract import (
-            events_question as _events_question,
-        )
+        from orchestrator.services.routing_contract import events_question as _events_question
         from orchestrator.services.routing_contract import (
             maintenance_record_question as _maintenance_record_question,
         )
         from orchestrator.services.routing_contract import (
             plant_point_question as _plant_point_question,
         )
-        from orchestrator.services.routing_contract import (
-            register_question as _register_q,
-        )
+        from orchestrator.services.routing_contract import register_question as _register_q
         from orchestrator.services.routing_contract import (
             report_request_about_data as _report_request_about_data,
         )
-        from orchestrator.services.scope_policy import (
-            out_of_scope_kind as _out_of_scope_kind,
-        )
+        from orchestrator.services.scope_policy import out_of_scope_kind as _out_of_scope_kind
         from orchestrator.services.semantic_router import (
             SemanticRouter as _SR,  # local import avoids cycle
         )
@@ -1062,10 +1212,7 @@ class DialogueAgent:
         # a building without a permit register is unaffected and nothing here is a literal.
         _held_record = None
         try:
-            from orchestrator.services.record_registry import (
-                held_record_class,
-                record_classes,
-            )
+            from orchestrator.services.record_registry import held_record_class, record_classes
 
             _held_record = held_record_class(user_query, await record_classes())
         except Exception as _rr_err:  # pragma: no cover - never block routing on this
@@ -1091,11 +1238,7 @@ class DialogueAgent:
         # temperature data for a building with 288 temperature sensors. Only thermal and
         # air-quality words hand over: power, Wi-Fi, noise profile and daylight are
         # attributes the register records, and those questions stay with it.
-        from orchestrator.services.routing_contract import (
-            _READINESS_RE,
-            DELIBERATE_RE,
-            WAYFIND_RE,
-        )
+        from orchestrator.services.routing_contract import _READINESS_RE, DELIBERATE_RE, WAYFIND_RE
 
         # A ROUTE request is not a register question either (BUG-559): "How do I get to the
         # seminar room from reception?" matched PublicEvent on "seminar" and was answered
@@ -1293,10 +1436,27 @@ class DialogueAgent:
                 )
 
                 _facts = await get_capability_graph_resolver().resolve(user_query)
-                if _facts:
+                # G3 (QA-trial plan, 2026-10-04): a room LABEL in the question ("Level 1
+                # computer lab 1.06") matched two knowledge topics BY WORDS, so `_facts`
+                # was non-empty and this short-circuit skipped the LLM classifier entirely
+                # on a question the topics were not actually about -- BUG-1396's shape one
+                # layer up, where a stand-down rule READING this same subject count kept a
+                # forecast off the capability lane; here the ROUTE itself never asked.
+                # `subject_facts` is the SAME function that rule now uses (BUG-947's shape
+                # avoided deliberately) -- no second matcher, just the existing one asked
+                # BEFORE the fast path commits, not only after.
+                _subject = (
+                    __import__(
+                        "orchestrator.services.capability_graph_resolver",
+                        fromlist=["subject_facts"],
+                    ).subject_facts(user_query, _facts)
+                    if _facts
+                    else []
+                )
+                if _subject:
                     logger.info(
                         f"[ttl-route] capability via ontology triples: "
-                        f"{[f.label for f in _facts]} — skipping LLM intent call"
+                        f"{[f.label for f in _subject]} — skipping LLM intent call"
                     )
                     return {
                         "intent": "capability",
@@ -1337,13 +1497,9 @@ class DialogueAgent:
                         # value, only 30 have an amenity as their SUBJECT.
                         #
                         # Same function the capability lane applies to the same facts, so the two
-                        # stages cannot disagree (BUG-947's shape, avoided deliberately).
-                        "capability_amenity_subject": len(
-                            __import__(
-                                "orchestrator.services.capability_graph_resolver",
-                                fromlist=["subject_facts"],
-                            ).subject_facts(user_query, _facts)
-                        ),
+                        # stages cannot disagree (BUG-947's shape, avoided deliberately). Reuses
+                        # _subject computed above (G3) rather than calling subject_facts twice.
+                        "capability_amenity_subject": len(_subject),
                         "capability_amenity_labels": [f.label for f in _facts[:8]],
                     }
                 # THE PROSE FALLBACK USED TO RETURN FROM HERE. It does not any more.
@@ -1462,9 +1618,7 @@ class DialogueAgent:
             # ── Routing contract, post stage (TODO-050) ────────────────────────
             # Data-query promotion runs after parsing (covers the JSON-parse
             # fallback path too), exactly where the historical override ran.
-            from orchestrator.services.routing_contract import (
-                apply_contract as _apply_rc,
-            )
+            from orchestrator.services.routing_contract import apply_contract as _apply_rc
 
             # V5-T24 fix: the JSON-parse FALLBACK path returns intent 'general'
             # without ever running the parse-stage rules, so post-stage
@@ -1986,9 +2140,7 @@ Return ONLY the JSON object.
                 # specific, checkable case rather than taking over time parsing.
                 try:
                     _tz = None
-                    from orchestrator.services.building_context import (
-                        resolve_building_context,
-                    )
+                    from orchestrator.services.building_context import resolve_building_context
 
                     _bctx = resolve_building_context(getattr(state, "building_id", None))
                     _tz = getattr(_bctx, "timezone", None) if _bctx else None

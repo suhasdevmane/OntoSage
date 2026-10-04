@@ -27,6 +27,99 @@ approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
+- **LATEST (2026-10-03, the trial-readiness plan + its first execution wave; NOTHING
+  committed — push approval owed) — a 76-row plan (`tasks/TRIAL_READINESS_PLAN_2026-10-02.md`
+  + `tasks/TRIAL_TRACKER.csv`) was built from a six-reader code inventory, then adversarially
+  reviewed by five more readers before any row was trusted. 15 rows executed this session
+  (F3, F8, D1, D2, D3, D6, D7, D8, D11, D13, D15, D16, D18, D19, E1), each with its own test
+  file. SUITE **14,229 pass / 0 fail / 76 skip / 3 xfail**, measured LAST. GATE **49/51, both
+  flagged cases confirmed as pre-existing apparatus artifacts, not regressions** (case #37:
+  the pack's own stored answer for "evidence behind your answer about the coolest room" was
+  captured with a preceding turn the gate's fresh-chat-only harness can never reproduce —
+  BUG-1397's shape; case #70: the air-pressure decline's wording varies between asks,
+  CAVEAT-891's shape, confirmed across three distinct live phrasings — CAVEAT-1415, OPEN,
+  deliberately not chased with more string markers).
+  **THE OWNER'S STATED TOP PRIORITY — every answer carries its own evidence — is live and
+  VERIFIED against the running stack, not only unit-tested.** `answer_provenance.render()`
+  gained an `inline` mode and is now called from `_response_node` right after claim-binding;
+  a raw `curl` to `/v1/chat/completions` (bypassing every harness) confirms a figure-bearing
+  answer carries a collapsible `<details type="evidence">` panel with labelled sources
+  ("Building model", "Database1 Floors04", "Sensor reading" — never a bare UUID or IRI, D15),
+  the authority tier that led (D6), and is correctly ABSENT on the deliberation lane's own
+  dossier panel (checked directly, no second block). **D19, found and fixed during that same
+  live check:** a real two-turn conversation's "how do you know that?" was being rewritten by
+  co-reference resolution into a room-specific data question BEFORE the provenance detector
+  (D7) ever saw it — the exact shape lesson #188 names, caught only because the panel's
+  apparent absence was investigated with a raw request rather than trusted from a harness
+  that (correctly, by design) strips it for readability.
+  **FIXED, EACH LIVE-OR-UNIT-VERIFIED:** the `TypeError` that silently killed the entire
+  Sources footer on every register-lane turn (D2); 6 of the capability lane's 15 provenance
+  values mapped to a real chip (D3); `source_tier` now set whenever ≥1 source contributed,
+  not only on a 2-tier disagreement — was empty on 327 of 400 live records (D6); 5 phrasings
+  that reached NEITHER the provenance nor the recall detector, added without reopening
+  BUG-1397 (D7); the single largest zero-source group, the deliberation lane (32 of 70
+  measured live, D8); a non-monotonic session-summary slice that was duplicating turn 1 under
+  "Earlier in this session" on every 2-turn conversation (F3); a phantom method call that had
+  failed silently on every single turn for months (F8); `SpatialAdequacy.UNGRADED` separated
+  from the MEASURED `NONE`, which 400 of 400 live records had been defaulting to (D13); the
+  current-turn conflict disclosure (E1), done for free as a side effect of D11/D18.
+  **INVESTIGATED AND DELIBERATELY NOT IMPLEMENTED:** the reviewed plan's fix for "which doors
+  do you have records for?" (add bare "door"/"doors" to DoorHardware's layTerms) would have
+  REVERSED a deliberate, measured 2026-09-17 decision recorded in
+  `ontology/ontosage_schema.ttl:3608-3610` ("bare door/doors asked about door HARDWARE in
+  about two of seven read"). The review's own recommendation had not checked that comment.
+  **THE REVIEW ITSELF FOUND THREE LOAD-BEARING ERRORS IN THE PLAN BEFORE A LINE OF PRODUCT
+  CODE WAS WRITTEN** (lesson #189): the panel's append site was named in three different
+  wrong places across the plan (a different function, a flag-gated block); the renderer the
+  plan said to call unchanged prints a bare UUID; and the gate's own decline marker had gone
+  stale independent of anything that session touched.
+  **61 remaining tracker rows are untouched**, including the two owner-decision waves
+  (B-exposure: secrets, signup, the spoofable role header; and the backup/restore work in
+  C-durability) — see the plan's own section 5 for what needs the owner before Waves B/C/F/H
+  can proceed.
+  approval owed) — SUITE 14,127 pass / 0 fail / 76 skip / 3 xfail (15m38s), bldg1 ACTIVE,
+  measured LAST. An earlier run the same evening gave 14,123 / 4: two source tests reading the
+  `_answer_nearest` WRAPPER instead of `_answer_nearest_inner`, and two wave-2 register cases that
+  the 1.1 rule had been pre-empting (narrowed, see below). GATE 51/51 alone, zero REGRESSED,
+  memory 1.41 GiB flat over 39 samples. Tracker 1,132 rows, 0 malformed, CRLF 222. Routing rules
+  **65 parse + 2 post + 5 concept** (print it, do not read it). Lesson #188. PARKED suite NOT
+  re-measured since this morning's 13,947 / 0 — owed before any commit (Workflow rule 8).**
+  **THE MULTI-TURN NUMBER (new instrument):** a 20-conversation battery
+  (`docs/phase0/conversations/`, `scripts/run_conversations.py`, occupant01 confirmed from the
+  server's `[forwarded-user]` line, every answer in full) read **14 of 27 follow-up turns
+  acceptable** before, **9 of 11 re-asked follow-ups acceptable** after — TUNED-ON, and said so
+  in `docs/phase0/conversations_2026-10-02_read.md`. Every follow-up that SUPPLIED a value
+  worked; every one that POINTED AT THE PREVIOUS REPLY failed, four distinct causes (BUG-1420).
+  **FIXED AND VERIFIED LIVE:** six deterministic resolvers in `context_switch` (ordinal into the
+  reply's list, "that report" → the REP id, "it"/"there" → the reply's ONLY room as the plain
+  token, "I am in room X" → the previous nearest question from there, "the two" → the user's two
+  rooms, and ASK which when the reply named several), run BEFORE `_is_followup_query`; a REP id
+  routes to the intake node's status lookup (BUG-1421); "what can I ask you?" is a self-question
+  (BUG-1422); a which-rooms question naming two DISTINCT quantities reaches the deliberation lane
+  (BUG-1423, counted with both lanes' vocabularies, collapsed through `_SAME_QUANTITY`); the
+  assumed start of a "nearest" answer is stated in its first line (BUG-1419); the gate's
+  deletions are countable (`scripts/count_gate_deletions.py`, TODO-1431).
+  **THREE THINGS WERE RIGHT OFFLINE AND INVISIBLE LIVE, each its own mechanism (lesson #188):**
+  the resolvers were placed AFTER the follow-up gate, which had already returned None ("one?"
+  split on whitespace is not "one"); the raised clarification was converted to analytics by the
+  concept-stage rescue, which sees only the dict the orchestrator builds (now carries
+  `clarification_raised` — BUG-735/BUG-1333's shape, third instance); and the model's rewrite
+  bound the right room as the register's LABEL, whose words matched two topics and the TTL route
+  skipped the classifier (BUG-1425, open; mitigated by the plain-token resolver).
+  **THE 1.1 RULE WAS NARROWED BY THE FULL SUITE:** `question_is_not_a_report` had also moved every
+  information question to capability, pre-empting the intake node's own skip to the REGISTER
+  ("Show me the maintenance schedule" declined in capability where the register answers). It now
+  fires on the self-acting shape only; the graffiti case is unchanged.
+  **OPEN, LOGGED, NOT FIXED:** BUG-1424 (a deliberation row carrying a value AND "no data" for the
+  same modality; 60 dB called quiet), BUG-1426 (the café's closing time answered with the
+  BUILDING's hours), BUG-1427 (provenance of the previous answer has no lane), BUG-1428 ("last
+  comfortable" asserts what its own paragraph denies), BUG-1429 (door records → a refuge point),
+  BUG-1430 (energy by named day unstable across asks), BUG-1432 (events lane intermittent on "free
+  this afternoon": 1 decline, 1 answer, identical input). c21 is route-unstable between
+  `deliberate` and `events` because the from-set is intent-gated; widening it was NOT done
+  unmeasured. **Phase 1.6 is deliberately not started**: the trial export (177 turns) holds only
+  the gate's own cases and these batteries — no tester has asked anything yet; "bathrooms" IS
+  already a ToiletFacility lay term.
 - **LATEST (2026-10-02 morning, the "complete what remains for an open invite" round) — SUITE
   14,054 pass / 0 fail / 76 skip / 3 xfail (17m52s). GATE 51/51 (one run read 50/51 on case #70,
   a correct decline the classifier misread; the cause — the SQL lane appending the sampling note
@@ -1036,8 +1129,8 @@ approval.**
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**62** parse-stage + 2 post-stage + 5 concept-stage ordered rules, counted FROM THE MODULE
-  again 2026-10-01 — it said **61**, so this line has now gone stale a FIFTH time, which is the
+  (**65** parse-stage + 2 post-stage + 5 concept-stage ordered rules, counted FROM THE MODULE
+  again 2026-10-04 — it said **62**, so this line has now gone stale a SIXTH time, which is the
   argument for printing it rather than reading it;
   2026-09-17 — this line said 17+1+1 for weeks after it stopped being true, then 36+1+3 for
   another nine days, which is the same failure twice. Count it, do not read it: `python -c

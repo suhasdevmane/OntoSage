@@ -120,6 +120,29 @@ def test_it_matches_a_word_not_a_substring(q):
     assert calendar_day_bounds(q, now=NOW) is None
 
 
+class TestG7TheDayBeforeYesterdayIsTwoDaysNotOne:
+    """BUG-1430: 'and the day before?' after a question about yesterday was answered with
+    YESTERDAY's window, because the LLM rewrite's "the day before yesterday" contains the
+    word "yesterday" as a substring and the old unordered check matched that first."""
+
+    def test_the_day_before_yesterday_is_two_days_back_not_one(self):
+        start, end = calendar_day_bounds("energy use the day before yesterday", now=NOW)
+        assert (start, end) == ("2026-09-05 00:00:00", "2026-09-05 23:59:59")
+
+    def test_bare_day_before_yesterday_without_the_leading_article(self):
+        start, end = calendar_day_bounds("energy use day before yesterday", now=NOW)
+        assert (start, end) == ("2026-09-05 00:00:00", "2026-09-05 23:59:59")
+
+    def test_two_days_ago_resolves_the_same_as_the_day_before_yesterday(self):
+        a = calendar_day_bounds("energy use two days ago", now=NOW)
+        b = calendar_day_bounds("energy use the day before yesterday", now=NOW)
+        assert a == b
+
+    def test_plain_yesterday_is_unaffected_by_the_new_compound_entries(self):
+        start, end = calendar_day_bounds("energy use yesterday", now=NOW)
+        assert (start, end) == ("2026-09-06 00:00:00", "2026-09-06 23:59:59")
+
+
 def test_case_and_punctuation_do_not_matter():
     assert calendar_day_bounds("Give me a report on CO2 YESTERDAY.", now=NOW) is not None
 

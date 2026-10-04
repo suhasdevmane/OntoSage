@@ -68,13 +68,22 @@ class TestScenario1RoomSensorRemoved:
         assert SpatialAdequacy.NONE is not SpatialAdequacy.PROXY
 
     def test_the_evidence_record_carries_the_grade(self):
-        """A grade the record cannot hold is a grade no answer can state."""
+        """A grade the record cannot hold is a grade no answer can state.
+
+        D13 (QA-trial plan, 2026-10-02) INVERTS this test's old assertion on purpose.
+        NONE used to be the default on the reasoning "evidence must start out claiming a
+        location it lacks" -- but NONE is itself a claim, "no sensor covers this space",
+        and measured live it was NEVER a real grade: 400 of 400 stored records read NONE
+        because nothing had ever written a real grade onto the field, the default was
+        just sitting there unexamined. UNGRADED is the humbler default: it claims nothing,
+        not even that no sensor covers the space.
+        """
         from shared.models import EvidenceRecord, SpatialAdequacy
 
         assert "spatial_adequacy" in EvidenceRecord.model_fields
         assert (
-            EvidenceRecord().spatial_adequacy is SpatialAdequacy.NONE
-        ), "the default is not NONE; evidence would start out claiming a location it lacks"
+            EvidenceRecord().spatial_adequacy is SpatialAdequacy.UNGRADED
+        ), "the default is not UNGRADED; a record that was never graded would read as a real measurement"
 
     def test_a_lane_labels_proxy_evidence_in_the_answer(self):
         """A grade recorded and never said out loud protects nobody."""

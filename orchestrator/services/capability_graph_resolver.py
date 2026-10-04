@@ -580,10 +580,27 @@ def topic_is_the_subject(question: str, fact: Any) -> bool:
     # says "lights automatically adjust to maintain target lux levels" was discarded. The
     # frame words of that shape are removed first; a real second subject ("pollen exposure
     # during the spring" against Smart Controls) still leaves three and still fails.
-    from orchestrator.services.ungrounded_question import mechanism_question
+    from orchestrator.services.ungrounded_question import (
+        QUANTIFIER_FRAME,
+        QUANTIFIER_PRONOUNS,
+        mechanism_question,
+        quantifier_question,
+    )
 
     if mechanism_question(question or ""):
         leftover = [w for w in leftover if w not in _MECHANISM_FRAME]
+    # G2 (2026-10-04): "how many bathrooms ... and where are they located" left
+    # [many, they] -- the counting frame, not a second subject. MEASURED before landing
+    # (over the 4,060-question bank): dropping "many" whenever the question merely LOOKS
+    # like a count moved a wrong case too -- "how many open work orders are there, and
+    # which are overdue?" against the "Lift out of order" topic left [many, overdue], and
+    # losing "many" alone made "overdue" cross the threshold, qualifying a topic the
+    # question is not about. Narrowed to require a genuine BACK-REFERENCE PRONOUN
+    # already in the leftover -- the thing "many" is standing beside in the one case this
+    # exists for -- not merely the question's shape. 0 moves rejected are shown; this is
+    # the version that shipped.
+    if quantifier_question(question or "") and any(w in QUANTIFIER_PRONOUNS for w in leftover):
+        leftover = [w for w in leftover if w not in QUANTIFIER_FRAME]
     if len(leftover) > 1:
         return False
     # ONE LEFTOVER WORD NAMING SOMETHING THE BUILDING IS NOT DISQUALIFIES THE TOPIC (BUG-1395).

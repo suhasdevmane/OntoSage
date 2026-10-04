@@ -65,8 +65,19 @@ def test_operation_covers_the_eight_acts_the_catalogues_require():
 
 
 def test_spatial_adequacy_is_graded_not_binary():
-    """Master 8 permits proxy data LABELLED as context while forbidding substitution."""
-    assert {s.value for s in SpatialAdequacy} == {"in_room", "served_zone", "proxy", "none"}
+    """Master 8 permits proxy data LABELLED as context while forbidding substitution.
+
+    "ungraded" (D13, QA-trial plan 2026-10-02) is a fifth MEMBER but a fourth STATE, not a
+    fourth grade: it is the default meaning "grading never ran", distinct from "none"
+    (grading ran and measured that nothing covers the space).
+    """
+    assert {s.value for s in SpatialAdequacy} == {
+        "in_room",
+        "served_zone",
+        "proxy",
+        "none",
+        "ungraded",
+    }
 
 
 def test_restricted_is_distinct_from_missing():
@@ -82,12 +93,14 @@ def test_an_empty_record_is_not_assessable():
     """The default must be the humble one.
 
     A record defaulting to OBSERVED would let any lane that forgot to populate it present
-    a guess as a measurement.
+    a guess as a measurement. D13 (2026-10-02): the same rule for `spatial_adequacy` means
+    the default is UNGRADED, not NONE -- NONE is itself a measurement ("no sensor covers
+    this space"), and an empty record has not measured anything.
     """
     r = EvidenceRecord()
     assert r.status is AnswerStatus.NOT_ASSESSABLE
     assert r.is_answerable() is False
-    assert r.spatial_adequacy is SpatialAdequacy.NONE
+    assert r.spatial_adequacy is SpatialAdequacy.UNGRADED
     assert r.calibration_state == "unknown"
     assert r.completeness is None
 

@@ -487,12 +487,21 @@ class SpatialAdequacy(str, Enum):
     proxy data *labelled as context* while forbidding silent substitution, so a
     three-way distinction is needed: "the corridor outside 2.15 read 900 ppm" is a good
     answer, "900 ppm" is a lie, and "I don't know" throws away real evidence.
+
+    D13 (QA-trial plan, 2026-10-02): UNGRADED is a FOURTH state, not a fourth grade. NONE
+    is a MEASUREMENT -- "no sensor covers the space asked about", computed by `classify()`.
+    Before this, every record defaulted to NONE whether or not grading had ever run, so a
+    turn the grader never reached was indistinguishable from a turn it graded and found
+    nothing for (measured live: 400 of 400 stored records read `none`, because nothing
+    had ever written a REAL grade onto the record field at all). A default and a
+    measurement sharing one value means the field carries zero bits either way.
     """
 
     IN_ROOM = "in_room"  # sensor inside the space asked about
     SERVED_ZONE = "served_zone"  # validated serving relation, not mere adjacency
     PROXY = "proxy"  # nearby only - must be named and its limits stated
-    NONE = "none"  # nothing relevant
+    NONE = "none"  # MEASURED: nothing relevant covers the space asked about
+    UNGRADED = "ungraded"  # the DEFAULT: grading never ran for this answer
 
 
 class OmissionReason(str, Enum):
@@ -543,6 +552,14 @@ class EvidenceSource(BaseModel):
     """One contributing source, with the provenance the Master Report requires."""
 
     source_id: str = Field(..., description="Sensor UUID, register id, document id, feed name")
+    label: str = Field(
+        default="",
+        description="A reader-facing name for this source ('Energy Metering System', "
+        "'Work Order'), never the raw source_id. D15 (QA-trial plan, 2026-10-02): a renderer "
+        "that printed source_id verbatim put bare timeseries UUIDs and record IRIs in front "
+        "of every reader -- BUG-1407's shape at the evidence layer. Empty means no lane "
+        "supplied one; a renderer must derive a safe label rather than fall back to the id.",
+    )
     kind: str = Field(..., description="'sensor' | 'authoritative' | 'document' | 'human_report'")
     store: str = Field(default="", description="Backing store, e.g. 'mysql:co2_data'")
     simulated: Optional[bool] = Field(
@@ -584,7 +601,7 @@ class EvidenceSource(BaseModel):
         description="'calibrated' | 'expired' | 'uncalibrated' | 'unknown'. Absent metadata is "
         "'unknown', never an assumed-good default.",
     )
-    spatial_adequacy: SpatialAdequacy = Field(default=SpatialAdequacy.NONE)
+    spatial_adequacy: SpatialAdequacy = Field(default=SpatialAdequacy.UNGRADED)
 
 
 class EvidenceRecord(BaseModel):
@@ -629,7 +646,7 @@ class EvidenceRecord(BaseModel):
     completeness: Optional[float] = Field(
         default=None, ge=0.0, le=1.0, description="Share of expected samples actually present"
     )
-    spatial_adequacy: SpatialAdequacy = Field(default=SpatialAdequacy.NONE)
+    spatial_adequacy: SpatialAdequacy = Field(default=SpatialAdequacy.UNGRADED)
     calibration_state: str = Field(default="unknown")
     conflicts: List[str] = Field(
         default_factory=list,

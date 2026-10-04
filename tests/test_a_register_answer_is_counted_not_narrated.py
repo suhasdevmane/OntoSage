@@ -20,18 +20,57 @@ def _row(**kw):
 
 
 WORK_ORDERS = (
-    [_row(recordId=f"WO-{i:03}", recordStatus="completed", effectiveFrom="2026-05-01") for i in range(1, 16)]
-    + [_row(recordId=i, recordStatus="open", effectiveFrom="2026-05-20") for i in ("WO-016", "WO-017", "WO-018")]
-    + [_row(recordId=f"WO-{i}", recordStatus="in_progress", effectiveFrom="2026-06-01") for i in range(19, 25)]
+    [
+        _row(recordId=f"WO-{i:03}", recordStatus="completed", effectiveFrom="2026-05-01")
+        for i in range(1, 16)
+    ]
+    + [
+        _row(recordId=i, recordStatus="open", effectiveFrom="2026-05-20")
+        for i in ("WO-016", "WO-017", "WO-018")
+    ]
+    + [
+        _row(recordId=f"WO-{i}", recordStatus="in_progress", effectiveFrom="2026-06-01")
+        for i in range(19, 25)
+    ]
 )
 
 EVACUATION = [
-    _row(recordId="EV-001", provisionKind="refuge point", recordStatus="active", reviewDue="2026-11-14"),
-    _row(recordId="EV-002", provisionKind="refuge point", recordStatus="active", reviewDue="2026-11-14"),
-    _row(recordId="EV-003", provisionKind="refuge point", recordStatus="defective", reviewDue="2026-11-14"),
-    _row(recordId="EV-006", provisionKind="evacuation chair", recordStatus="active", reviewDue="2026-12-11"),
-    _row(recordId="EV-007", provisionKind="evacuation chair", recordStatus="defective", reviewDue="2026-12-11"),
-    _row(recordId="EV-011", provisionKind="personal plan", recordStatus="overdue", reviewDue="2026-08-29"),
+    _row(
+        recordId="EV-001",
+        provisionKind="refuge point",
+        recordStatus="active",
+        reviewDue="2026-11-14",
+    ),
+    _row(
+        recordId="EV-002",
+        provisionKind="refuge point",
+        recordStatus="active",
+        reviewDue="2026-11-14",
+    ),
+    _row(
+        recordId="EV-003",
+        provisionKind="refuge point",
+        recordStatus="defective",
+        reviewDue="2026-11-14",
+    ),
+    _row(
+        recordId="EV-006",
+        provisionKind="evacuation chair",
+        recordStatus="active",
+        reviewDue="2026-12-11",
+    ),
+    _row(
+        recordId="EV-007",
+        provisionKind="evacuation chair",
+        recordStatus="defective",
+        reviewDue="2026-12-11",
+    ),
+    _row(
+        recordId="EV-011",
+        provisionKind="personal plan",
+        recordStatus="overdue",
+        reviewDue="2026-08-29",
+    ),
 ]
 
 
@@ -45,7 +84,9 @@ def test_every_status_is_counted_with_its_ids():
 
 def test_overdue_with_no_due_date_is_stated_as_not_recorded():
     facts = register_facts(
-        WORK_ORDERS, "How many open work orders are there, and which are overdue?", date(2026, 9, 15)
+        WORK_ORDERS,
+        "How many open work orders are there, and which are overdue?",
+        date(2026, 9, 15),
     )
     assert "OVERDUE IS NOT RECORDED" in facts
     # an effective date is not a deadline, and the block says so
@@ -65,7 +106,9 @@ def test_status_is_split_within_each_kind_so_a_chair_is_not_a_refuge_point():
 
 
 def test_a_due_column_yields_the_records_whose_date_has_passed():
-    facts = register_facts(EVACUATION, "Which provisions are overdue for review?", date(2026, 9, 15))
+    facts = register_facts(
+        EVACUATION, "Which provisions are overdue for review?", date(2026, 9, 15)
+    )
     assert "reviewDue already passed on 2026-09-15 for 1 record(s)" in facts
     assert "EV-011 (2026-08-29)" in facts
     assert "NOT RECORDED" not in facts
@@ -92,9 +135,9 @@ def test_a_sentence_that_starts_with_a_code_is_kept():
 
 
 def test_the_register_handover_uses_the_facts_and_the_strip():
-    src = (Path(__file__).resolve().parent.parent / "orchestrator" / "agents" / "sparql_agent.py").read_text(
-        encoding="utf-8"
-    )
+    src = (
+        Path(__file__).resolve().parent.parent / "orchestrator" / "agents" / "sparql_agent.py"
+    ).read_text(encoding="utf-8")
     assert "register_facts(" in src and "strip_leaked_code_line(" in src
 
 
@@ -121,21 +164,57 @@ def test_past_due_records_the_narration_left_out_are_stated_by_the_system():
     assert missing == ["FSA-010 (nextTestDue 2026-09-14, recorded active)"]
     assert "FSA-010" in completeness_line("Only FSA-001 is overdue.", missing)
     assert completeness_line("FSA-001 and FSA-010 ...", missing) == ""
-    assert passed_due_not_marked(rows, "Which assets are active?", date(2026, 9, 15)) == []
+    # E3 (2026-10-04): this used to assert [] here, gated on the question's own wording --
+    # "is this approval still valid?" never saw the six of forty-three unmarked-overdue
+    # records this function already finds in the rows. Un-gated on purpose: whether a
+    # record is past due is a fact about the ROWS, not about which word was typed.
+    assert passed_due_not_marked(rows, "Which assets are active?", date(2026, 9, 15)) == [
+        "FSA-010 (nextTestDue 2026-09-14, recorded active)"
+    ]
+
+
+def test_e3_a_plain_validity_question_still_surfaces_the_unmarked_overdue_record():
+    """E3's own acceptance criterion: 'is this approval still valid?' names no overdue
+    wording at all, and must still see the record that is past due but not marked so."""
+    from orchestrator.services.register_facts import passed_due_not_marked
+
+    rows = [
+        _row(recordId="APP-001", recordStatus="active", reviewDue="2026-09-10"),
+        _row(recordId="APP-002", recordStatus="active", reviewDue="2026-12-01"),
+    ]
+    missing = passed_due_not_marked(rows, "Is this approval still valid?", date(2026, 9, 15))
+    assert missing == ["APP-001 (reviewDue 2026-09-10, recorded active)"]
+
+
+def test_e3_a_plain_question_with_nothing_past_due_adds_nothing():
+    from orchestrator.services.register_facts import passed_due_not_marked
+
+    rows = [_row(recordId="APP-003", recordStatus="active", reviewDue="2026-12-01")]
+    assert passed_due_not_marked(rows, "Is this approval still valid?", date(2026, 9, 15)) == []
 
 
 REGIMES = [
     _row(recordId="REG-001", recordStatus="active", operatingWindow="Mon-Fri 07:00-19:00"),
-    _row(recordId="REG-002", recordStatus="active", operatingWindow="Mon-Fri 07:00-20:00",
-         approvedException="extends to 22:00 in assessment weeks"),
-    _row(recordId="REG-003", recordStatus="active", operatingWindow="continuous",
-         approvedException="continuous is the approved regime"),
+    _row(
+        recordId="REG-002",
+        recordStatus="active",
+        operatingWindow="Mon-Fri 07:00-20:00",
+        approvedException="extends to 22:00 in assessment weeks",
+    ),
+    _row(
+        recordId="REG-003",
+        recordStatus="active",
+        operatingWindow="continuous",
+        approvedException="continuous is the approved regime",
+    ),
     _row(recordId="REG-004", recordStatus="under_review", operatingWindow="Mon-Fri"),
 ]
 
 
 def test_a_field_the_question_names_is_counted_with_its_records():
-    facts = register_facts(REGIMES, "Which HVAC systems run outside normal hours, and is each exception approved?")
+    facts = register_facts(
+        REGIMES, "Which HVAC systems run outside normal hours, and is each exception approved?"
+    )
     line = next(l for l in facts.splitlines() if "approvedException" in l)
     assert "recorded for 2 of 4 records: REG-002, REG-003" in line
 
@@ -146,13 +225,19 @@ def test_a_field_nobody_asked_about_is_not_counted():
 
 
 def test_provenance_fields_are_never_counted_as_content():
-    rows = [_row(recordId="A", recordStatus="active", recordOwner="X"), _row(recordId="B", recordStatus="active")]
+    rows = [
+        _row(recordId="A", recordStatus="active", recordOwner="X"),
+        _row(recordId="B", recordStatus="active"),
+    ]
     assert "recordOwner" not in register_facts(rows, "Who is the record owner of each?")
 
 
 DEPARTMENTS = [
-    _row(recordId=f"DEP-{i:02}", recordStatus="active",
-         outOfHoursRoute=("No cover, next working day" if i % 2 else "Security control room"))
+    _row(
+        recordId=f"DEP-{i:02}",
+        recordStatus="active",
+        outOfHoursRoute=("No cover, next working day" if i % 2 else "Security control room"),
+    )
     for i in range(1, 21)
 ]
 
@@ -201,8 +286,7 @@ def test_a_question_word_that_is_also_a_status_gets_both_readings():
 def test_the_opening_sentence_does_not_call_a_non_room_register_a_room():
     """The same rule, fired by a register that has nothing to do with rooms."""
     permits = [
-        {"recordStatus": "open" if i % 3 else "closed", "id": f"PTW-{i:03d}"}
-        for i in range(1, 10)
+        {"recordStatus": "open" if i % 3 else "closed", "id": f"PTW-{i:03d}"} for i in range(1, 10)
     ]
     facts = register_facts(permits, "Which permits are open?")
     careful = [l for l in facts.splitlines() if l.startswith("- CAREFUL")]
@@ -216,12 +300,24 @@ def test_a_question_that_does_not_use_a_status_word_gets_no_warning():
 
 
 PLANT = [
-    _row(recordId="AEP-015", recordStatus="active", lastVisited="2026-06-08",
-         inspectionIntervalDays="365"),
-    _row(recordId="AEP-016", recordStatus="active", lastVisited="2025-10-15",
-         inspectionIntervalDays="365"),
-    _row(recordId="AEP-017", recordStatus="active", lastVisited="2025-09-12",
-         inspectionIntervalDays="180"),
+    _row(
+        recordId="AEP-015",
+        recordStatus="active",
+        lastVisited="2026-06-08",
+        inspectionIntervalDays="365",
+    ),
+    _row(
+        recordId="AEP-016",
+        recordStatus="active",
+        lastVisited="2025-10-15",
+        inspectionIntervalDays="365",
+    ),
+    _row(
+        recordId="AEP-017",
+        recordStatus="active",
+        lastVisited="2025-09-12",
+        inspectionIntervalDays="180",
+    ),
 ]
 
 
@@ -229,8 +325,11 @@ def test_longest_unseen_is_computed_not_read_off_the_interval_column():
     """Probe: 'which rarely visited plant areas have the longest blind intervals?' named the two
     meters with a 365-day INTERVAL, neither of them due, over an exhaust fan 369 days unseen
     against a 180-day interval."""
-    facts = register_facts(PLANT, "Which rarely visited plant areas have the longest blind intervals?",
-                           date(2026, 9, 16))
+    facts = register_facts(
+        PLANT,
+        "Which rarely visited plant areas have the longest blind intervals?",
+        date(2026, 9, 16),
+    )
     elapsed = next(l for l in facts.splitlines() if "Days since lastVisited" in l)
     assert elapsed.index("AEP-017") < elapsed.index("AEP-016") < elapsed.index("AEP-015")
     assert "AEP-017 369d (+189d" in elapsed

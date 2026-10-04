@@ -102,10 +102,18 @@ def test_the_evidence_record_does_not_caption_the_deployment_stage():
 
 
 def test_every_source_is_still_named():
-    """Dropping the caption must not drop the citation — that would be the real loss."""
+    """Dropping the caption must not drop the citation — that would be the real loss.
+
+    D15 (QA-trial plan, 2026-10-02) INVERTS the exact strings this test checks for, on
+    purpose: the bare ids it used to assert ("ontosage:Permit", "uuid-1") are BUG-1407's
+    shape at the evidence layer — a raw record IRI and a raw UUID printed in front of
+    every reader. A source is still named; it is named by a reader-facing label derived
+    from the id, not by the id itself.
+    """
     text = render(RECORD)
-    assert "ontosage:Permit" in text
-    assert "uuid-1" in text
+    assert "Permit" in text
+    assert "ontosage:Permit" not in text
+    assert "Uuid-1" in text
     assert "Sources (2)" in text
 
 

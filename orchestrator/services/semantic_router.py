@@ -425,6 +425,32 @@ _NAVIGATION_REQUEST_RE = _re.compile(
 # clause holding an action verb and then ASKS. The verb-target layer read "start a long acquisition"
 # as a command and queued a setpoint request (tail M). A question after the comma makes it a question;
 # "If it gets hot, turn off the AHU" has a verb after the comma and stays a command.
+#: Verbs that open a COMMAND. An auxiliary followed by one of these is an order ("do open
+#: the window"); followed by anything else and ending in "?" it is a question ("do ozone
+#: sensors alert people?"). MEASURED 2026-10-02 over the 4,060 bank: 326 questions open with an
+#: auxiliary and a bare word, and NONE of those words is in this list.
+_COMMAND_VERBS = (
+    "open|close|shut|turn|switch|set|adjust|increase|decrease|dim|raise|lower|lock|unlock|"
+    "start|stop|enable|disable|reduce|boost|activate|deactivate|put|make|keep|send|email|"
+    "call|notify|book|reserve|schedule|cancel|override|run|trigger|reset|restart|fix|clean"
+)
+#: "Do ozone sensors alert people or just activate ventilation?" (BUG-1417): an auxiliary, then a
+#: bare subject the pronoun list above does not know, then a question mark. The question mark is
+#: required -- without it the same opener can be an imperative.
+_AUX_BARE_SUBJECT_QUESTION_RE = _re.compile(
+    r"^\W*(?:do|does|did|is|are|was|were|has|have|had|can|could|will|would|should)\s+"
+    rf"(?!(?:{_COMMAND_VERBS}|you|please|u|someone|somebody)\b)[a-z][a-z-]*\b[^?]*\?\s*$",
+    _re.IGNORECASE,
+)
+#: "If 3 people enter a room and the sensors see 2 leave do the lights turn off?" (BUG-1417): a
+#: subordinate lead with NO comma. The comma form below stays for the no-"?" case (BUG-1241);
+#: this one requires the question mark and that no command verb follows the lead.
+_SUBORDINATE_LEAD_NO_COMMA_QUESTION_RE = _re.compile(
+    r"^\s*(?P<lead>(?:before|after|once|when|while|if|since|as|unless)\b[^?]*)"
+    r"\b(?:are|is|was|were|do|does|did|can|could|will|would|which|what|who|where|how|when|why)\s+"
+    rf"(?!(?:{_COMMAND_VERBS})\b)[a-z][^?]*\?\s*$",
+    _re.IGNORECASE,
+)
 _SUBORDINATE_LEAD_QUESTION_RE = _re.compile(
     r"^\s*(?:before|after|once|when|while|if|since|as)\b[^?]*?,\s*"
     r"(?:are|is|was|were|do|does|did|can|could|will|would|which|what|who|where|how|when|why)\b",
@@ -1105,6 +1131,19 @@ class SemanticRouter:
         probe = _FAIL_MODE_RE.sub(" ", query)
         if _INFORMATION_QUESTION_RE.search(probe) or _MODAL_OR_INFO_REQUEST_RE.search(probe):
             return True
+        if _AUX_BARE_SUBJECT_QUESTION_RE.search(probe):
+            return True
+        m_lead = _SUBORDINATE_LEAD_NO_COMMA_QUESTION_RE.search(probe)
+        if m_lead:
+            # "Since the lift is broken, when will it be fixed?": the lead REPORTS a fault, and
+            # the report wins -- the same test the comma form below applies.
+            lead = m_lead.group("lead").lower()
+            return not any(
+                p in lead
+                for p in (
+                    _REPORT_FAULT_PHRASES | _REPORT_SAFETY_PHRASES | _REPORT_COMPLAINT_PHRASES
+                )
+            )
         m = _SCOPED_QUESTION_RE.search(probe)
         if not m:
             return False
@@ -1146,6 +1185,10 @@ class SemanticRouter:
         probe = _FAIL_MODE_RE.sub(" ", query)
         if _INFORMATION_QUESTION_RE.search(probe) or _SUBORDINATE_LEAD_QUESTION_RE.search(probe):
             return False
+        if _AUX_BARE_SUBJECT_QUESTION_RE.search(
+            probe
+        ) or _SUBORDINATE_LEAD_NO_COMMA_QUESTION_RE.search(probe):
+            return False  # BUG-1417: a question about behaviour, not an order
         if any(p in probe.lower() for p in _CONTROL_COMMAND_PHRASES):
             return True
         if _CONTROL_VERB_TARGET_RE.search(probe):

@@ -304,6 +304,12 @@ def test_precedence_order_is_pinned():
         "building_profile_question",
         "history_question_not_report",
         "comfort_question_not_report",
+        # BUG-1418: a QUESTION the classifier called a report is answered, never filed. After
+        # the comfort rule so a comfort question still reaches analytics.
+        "question_is_not_a_report",
+        # Phase 1.2 (2026-10-02): a report id in a question is a status lookup for the intake
+        # node; after question_is_not_a_report, which exempts the same shape.
+        "report_id_is_a_status_lookup",
         # TODO-490: an alarm that already happened is a record to read. Immediately before
         # standing_alert_request, which owns the opposite shape — the future one.
         "alarm_history_is_a_record",
@@ -328,6 +334,8 @@ def test_precedence_order_is_pinned():
         # TODO-629: the same question without a space noun in it — "is it stuffy
         # anywhere?" — which fell to a lane that reads 274 sensors and gives up.
         "existential_comfort_is_deliberate",
+        # Phase 1.5: two measured quantities over a set of spaces is a ranking, not a reading.
+        "two_quantities_over_spaces",
         # 2026-09-19: "is the temperature the same across the space?" asks for a SPREAD. Asked as a
         # reading it reached every temperature sensor and was refused as too wide; the per-floor
         # comparison answers it. Beside the deliberate rules because it is the same kind of
@@ -435,6 +443,10 @@ def test_precedence_order_is_pinned():
         # 4,287 questions the project holds, it moves exactly one other — itself a recall
         # question. Added 2026-09-30 in the same change as the rule, per the contract.
         "session_recall",
+        # LAST on purpose (E2, QA-trial plan 2026-10-04), same reasoning as session_recall
+        # immediately above: it catches a "which source is right?" shape no earlier rule
+        # names. Measured over the 4,060-question bank: 0 moves.
+        "cross_source_precedence",
     ]
     assert [r.name for r in rc.POST_STAGE_RULES] == [
         "data_query_promotion",

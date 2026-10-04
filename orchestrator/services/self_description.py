@@ -48,6 +48,10 @@ _SELF_RE = re.compile(
     r"|\bwhat (?:kind|sort|type)s? of (?:questions?|things?) can i ask\b"
     r"|\bwhat are your (?:capabilities|features|abilities)\b"
     r"|\bwhat (?:questions?|else) can i ask\b"
+    # "what can I ask you?" -- the first thing a trial user types (battery c20, 2026-10-02);
+    # it reached general_knowledge and was declined. The pronoun keeps "what can I ask about
+    # the building" where it is.
+    r"|\bwhat (?:can|could|do|should) i ask you\b"
     # "What kind of user friendly features do you have?" — asked of the assistant, answered live
     # as a general chatbot ("I can summarize long documents, translate text, generate ideas"),
     # which is neither this system nor this building (2026-09-19). The pronoun is required, so
@@ -62,21 +66,60 @@ _SELF_RE = re.compile(
 )
 
 # Intent names that are plumbing rather than something a person would ask for.
-_NOT_USER_FACING = {"general", "greeting", "clarification", "planner", "self_description"}
+#
+# H3 (QA-trial plan, 2026-10-04): this list held five names for weeks while the number of
+# INTERNAL deterministic-rule-only intents (declared as such in their own
+# intent_definitions.yaml description -- "do not classify into this") grew to ten, so the
+# five not listed here fell through `_capabilities()`'s "Other" bucket and printed their raw
+# internal name to a reader asking "what can I ask you?" -- measured live, 2026-10-02,
+# 11 names (13 as of this session's own fact_conflict addition). Every intent below is one
+# the classifier is never asked to pick; a GENUINE capability among them (what you said
+# earlier, which source is right) gets its own hand-written bullet in `describe()` instead
+# of its bare intent name, the same way D14 added "How I know" for provenance.
+_NOT_USER_FACING = {
+    "general",
+    "greeting",
+    "clarification",
+    "planner",
+    "self_description",
+    "privacy_refusal",
+    "scope_boundary",
+    "general_guidance",
+    "session_recall",
+    "fact_conflict",
+}
 
-# Grouped so the list reads as capabilities rather than as 28 internal labels. An
-# intent missing from every group still appears, under "other" — the grouping is
-# presentation, never a filter, so a new intent cannot be silently hidden.
+# Grouped so the list reads as capabilities rather than as internal labels. An intent
+# missing from every group still appears, under "Other" — the grouping is presentation,
+# never a filter, so a new intent cannot be silently hidden; it can only be MISNAMED by
+# landing in "Other" instead of a real group, which is what _NOT_USER_FACING above and the
+# test deriving this list from the live registry both exist to catch.
 _GROUPS: List[tuple] = [
     ("Live sensor data", ("sensor_data", "trend", "forecast", "visualization", "export")),
-    ("Analysis", ("analytics", "compare", "anomaly", "compliance", "recommend", "report")),
-    ("The building's structure", ("metadata", "discovery", "spatial_query", "floor_plan")),
-    ("Facilities and policies", ("capability", "automation_capability")),
+    (
+        "Analysis",
+        (
+            "analytics",
+            "compare",
+            "anomaly",
+            "compliance",
+            "recommend",
+            "report",
+            "deliberate",
+            "diagnosis",
+        ),
+    ),
+    (
+        "The building's structure",
+        ("metadata", "discovery", "spatial_query", "floor_plan", "observability"),
+    ),
+    ("Facilities and policies", ("capability", "automation_capability", "asset_state")),
     (
         "Reporting a problem",
         ("maintenance", "complaint", "safety_report", "feedback", "suggestion"),
     ),
     ("Alerts and control", ("alert", "control", "preference_management")),
+    ("Bookings and records", ("events", "register", "readiness_check", "lab_booking")),
 ]
 
 
@@ -210,6 +253,21 @@ def describe(
         for label, names in groups:
             lines.append(f"- **{label}** — {', '.join(_pretty(n) for n in names)}")
         lines.append("")
+        # D14 (QA-trial plan, 2026-10-04): the only place that enumerates what this
+        # system can do said nothing about provenance -- the only route to it was
+        # guessing a phrasing the detector happens to recognise (D7). One line,
+        # multiplying D7's value for free.
+        lines.append(
+            "- **How I know** — ask how I know something, or which sources an answer used\n"
+        )
+        # H3: session_recall and fact_conflict are real capabilities, routed by a
+        # deterministic rule rather than the classifier -- they get a plain bullet here
+        # instead of leaking their internal lane name under "Other".
+        lines.append("- **What we discussed** — ask what you said earlier in this conversation\n")
+        lines.append(
+            "- **Which is right** — ask which of two things I told you, or two things "
+            "this building's own records state, is correct\n"
+        )
 
     # The connected building goes LAST and is clearly framed as the current
     # connection, so the capabilities above read as the framework's and not as one

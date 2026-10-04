@@ -44,7 +44,7 @@ _LAY_HINTS: Dict[str, str] = {
     "temperature": "warm, cold, cool, hot, chilly, temperature, cosy",
     "humidity": "humid, damp, dry, muggy",
     "occupancy": "busy, crowded, empty, free, people, occupancy, quiet in terms of people",
-    "illuminance": "bright, dark, well-lit, light levels, daylight",
+    "illuminance": "bright, dark, well-lit, light levels, daylight, lights on, lights off",
     "door_contact": "door open, door closed, door activity",
     "window_contact": "window open, window closed",
 }

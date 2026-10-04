@@ -20,10 +20,7 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from orchestrator.services.deliberation.clarify_policy import (
-    Assumption,
-    ClarifyDecision,
-)
+from orchestrator.services.deliberation.clarify_policy import Assumption, ClarifyDecision
 from orchestrator.services.deliberation.cqir import CQIR
 from orchestrator.services.deliberation.plan_executor import ExecutionOutcome
 from shared.utils import get_logger
@@ -174,19 +171,42 @@ def build_dossier(
 
     label_by_iri = {c.space_iri: c.label for c in outcome.candidates}
     kinds_by_iri = {c.space_iri: tuple(getattr(c, "kinds", ()) or ()) for c in outcome.candidates}
-    ranked = [
-        DossierRanked(
+
+    def _ranked_entry(s) -> "DossierRanked":
+        # G5 (2026-10-04): a duplicate constraint for one modality can put BOTH a
+        # real-valued and a None-valued CriterionScore for it in `s.criteria` (a list).
+        # A plain `{c.modality: c.value for c in s.criteria}` keeps whichever comes LAST,
+        # which can be the None one -- silently dropping a real measurement from the row
+        # (and, before this fix, leaving the gap note that then contradicted the OTHER
+        # dict-building order). A real value must never be overwritten by a None for the
+        # same modality, in either order.
+        _criteria: Dict[str, Optional[float]] = {}
+        for c in s.criteria:
+            if c.modality not in _criteria or c.value is not None:
+                _criteria[c.modality] = c.value
+        # G5 (2026-10-04): `s.criteria` is a LIST, and a duplicate constraint for one
+        # modality (the same question naming it two ways -- "quiet" and, separately, a
+        # second term that also resolves to the same modality) can put one real-valued
+        # CriterionScore and one None-valued one in it. The dict comprehension above keeps
+        # whichever comes last; `s.data_gaps` is a SEPARATE list appended independently of
+        # the dict, so a modality the scorer found a value for could still be listed as
+        # "no data" -- a row reading "(noise: 60.342, occupancy_status: 0.776) (no data:
+        # occupancy_status)", contradicting itself in one sentence. The gap marker must
+        # come from the SAME structure as the value: a modality present with a real number
+        # in `_criteria` is not a gap, whatever the separate list says.
+        _gaps = [m for m in s.data_gaps if _criteria.get(m) is None]
+        return DossierRanked(
             rank=s.rank or 0,
             space=s.label,
             floor=s.floor,
             total=s.total or 0.0,
             proximity_m=None if s.proximity_m is None else round(s.proximity_m, 1),
-            criteria={c.modality: c.value for c in s.criteria},
-            data_gaps=list(s.data_gaps),
+            criteria=_criteria,
+            data_gaps=_gaps,
             access_controlled_as=access_word(kinds_by_iri.get(s.space_iri, ())),
         )
-        for s in outcome.score.ranked
-    ]
+
+    ranked = [_ranked_entry(s) for s in outcome.score.ranked]
     excluded = [
         DossierExcluded(space=e.label, reason=e.reason) for e in outcome.ledger.excluded
     ] + [

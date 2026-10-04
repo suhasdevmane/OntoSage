@@ -841,6 +841,42 @@ def _r_session_recall(c: _Ctx) -> Optional[str]:
     return "session_recall" if is_recall_question(c.query) else None
 
 
+#: "which [record/source/answer/...] is right/correct/accurate/true" -- a question asking
+#: THIS SYSTEM to adjudicate between two things it was already told, not a question about a
+#: sensor's current reading. Deliberately narrower than register_projection._CROSS_SOURCE_RE
+#: used alone: that vocabulary (conflict/disagree/inconsistent/...) over-matches physical and
+#: scheduling conflicts ("conflict with closure, cleaning...", "fire-door conflicts") that have
+#: nothing to do with two STATED facts disagreeing -- measured over the 4,060-question bank,
+#: 115 match the bare vocabulary and all but a handful are that kind of false positive. This
+#: pattern instead names the "which is right" / "differs depending on who" SHAPE directly,
+#: which the bank's own motivating case needs anyway ("the reception hours differ depending on
+#: who I ask -- which is right?" carries no conflict-vocabulary word at all).
+_PRECEDENCE_ASK_RE = re.compile(
+    r"\bwhich\s+(?:one|record|source|answer|figure|number|value)?\s*(?:is\s+)?"
+    r"(?:right|correct|accurate|true)\b"
+    r"|\b(?:differs?|disagrees?)\s+depending\s+on\s+who\b"
+    r"|\bdepends?\s+on\s+who\s+(?:you|i)\s+ask\b",
+    re.IGNORECASE,
+)
+
+
+def _r_cross_source_precedence(c: _Ctx) -> Optional[str]:
+    """E2 (QA-trial plan, 2026-10-04): "which source is right?" -> the fact-conflicts scanner.
+
+    scripts/fact_conflicts.py is a complete cross-source fact-conflict capability — it finds
+    every (subject, attribute) this building's own documents and TTL state with more than one
+    value — with a standing test and NO orchestrator caller before this rule. A tester asking
+    "the reception hours differ depending on who I ask — which is right?" reached nothing.
+
+    LAST in the stage, same reasoning as session_recall immediately above: this corrects
+    whatever the classifier guessed, for a shape no earlier rule names. Measured over the
+    4,060-question bank: 0 moves — the bank's synthetic phrasing does not happen to use this
+    construction, which is reported rather than inflated; the motivating phrasing itself
+    matches and the gate stays green because nothing in it uses this construction either.
+    """
+    return "fact_conflict" if _PRECEDENCE_ASK_RE.search(c.ql) else None
+
+
 def _r_self_description(c: _Ctx) -> Optional[str]:
     """A question about the ASSISTANT is not open-domain general knowledge.
 
@@ -870,6 +906,76 @@ def _r_history_question_not_report(c: _Ctx) -> Optional[str]:
     if c.sr.report_intake_intent(c.query) is not None:
         return None
     return "capability" if SERVICE_HISTORY_RE.search(c.query) else None
+
+
+#: "can you clean graffiti BY YOURSELF?", "could it automatically make coffee?" -- a question
+#: about what the SYSTEM can do, which the classifier reads as a report of the thing named.
+_SELF_ACTING_QUESTION_RE = re.compile(
+    r"\b(?:can|could|would|will|does|do)\s+(?:you|it|the\s+(?:building|system))\b[^?]{0,60}?"
+    r"\b(?:by\s+(?:yourself|itself)|automatically|on\s+its\s+own|without\s+(?:me|us|anyone))\b",
+    re.IGNORECASE,
+)
+
+
+#: The id the intake service mints (`report_intake_service._new_report_id`) and recognises
+#: (`_report_re`): one spelling, so the two cannot disagree about what a report id looks like.
+_REPORT_ID_RE = re.compile(r"\bREP[-_ ]?[0-9A-F]{6}\b", re.IGNORECASE)
+_REPORT_STATUS_RE = re.compile(
+    r"\b(?:status|progress|update)\b[^?]{0,30}\b(?:my|the|that|this)\s+"
+    r"(?:report|ticket|request|complaint|issue)\b|\bmy (?:reports|tickets|complaints)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_report_id_is_a_status_lookup(c: _Ctx) -> Optional[str]:
+    """'what is the status of REP-5C28ED?' -> the intake node, which looks the id up.
+
+    The battery (c06, 2026-10-02): the follow-up "what is the status of that report?" was
+    resolved to the id verbatim and then classified `capability`, which answered with the
+    complaints TOPIC -- the system's own confirmation message had told the asker to type exactly
+    this. The intake node's `classify_action` returns "status" for a message holding an id or
+    "status of my report", and `get_report_status` scopes it to the asker; nothing routed the
+    question there. Keyed on the id's shape and the status phrasing, no building words. Sits
+    AFTER `question_is_not_a_report`, which exempts the same shapes.
+    """
+    q = c.query or ""
+    if _REPORT_ID_RE.search(q) or _REPORT_STATUS_RE.search(q):
+        return "maintenance"
+    return None
+
+
+def _r_question_is_not_a_report(c: _Ctx) -> Optional[str]:
+    """A QUESTION the classifier labelled as a report is answered, never filed (BUG-1418).
+
+    Tail Q, 2026-10-02: "can you clean graffitti by yourself" (no question mark) was classified
+    `maintenance` and FILED as ticket REP-EB3D5D -- an administrator notified, the asker told to
+    name a room. The deterministic `report_intake_intent` had returned None for it; nothing
+    corrected the classifier. A tester asking questions must not leave tickets behind.
+
+    Conditions, all required: a report intent from the classifier, the deterministic report
+    test says it is NOT a report, and the text is interrogative -- an information question, a
+    "?" at the end, or the self-acting shape above. A genuine statement ("the toilet is
+    leaking") fails the second condition and is still filed. Sits AFTER
+    `history_question_not_report`, which owns the service-history shape.
+    """
+    # suggestion/feedback are NOT in this set: wave 8 deliberately files "is there a way to
+    # tell the system ..." as a suggestion, and a question-shaped wish is still a wish.
+    if c.intent not in ("maintenance", "complaint", "safety_report"):
+        return None
+    if c.sr.report_intake_intent(c.query) is not None:
+        return None
+    q = (c.query or "").strip()
+    if _REPORT_ID_RE.search(q) or _REPORT_STATUS_RE.search(q):
+        return None  # a status lookup IS the intake node's job (`report_id_is_a_status_lookup`)
+    # ONLY the self-acting shape ("can you clean it by yourself"). The first version also moved
+    # every `is_information_question` to capability, and the full suite (2026-10-02) showed why
+    # that was wrong: the intake node already skips an information question to the REGISTER
+    # path ("Show me the maintenance schedule" -> metadata, wave 2), and the capability lane
+    # declined what the register answers. A request ("Could someone look at the broken light?")
+    # matches neither and is still filed.
+    if _SELF_ACTING_QUESTION_RE.search(q):
+        return "capability"
+    return None
 
 
 def _r_comfort_question(c: _Ctx) -> Optional[str]:
@@ -1535,9 +1641,7 @@ def _r_why_diagnosis(c: _Ctx) -> Optional[str]:
     """Comfort why-question -> diagnosis lane (V5-T20). Runs LAST: comfort
     questions were already flipped to analytics by comfort_question, so
     analytics is in the from-set; statements keep their intake route."""
-    from orchestrator.services.anomaly.diagnosis import (
-        is_why_question,  # local: no cycle
-    )
+    from orchestrator.services.anomaly.diagnosis import is_why_question  # local: no cycle
 
     if c.intent in ("maintenance", "complaint", "report"):
         if not _INTERROGATIVE_RE.search(c.query or ""):
@@ -2024,6 +2128,92 @@ _EXISTENTIAL_COMFORT_INTENTS = (
 )
 
 
+#: "which rooms / spaces / areas ..." -- a question whose answer is a SET of places.
+_WHICH_SPACES_RE = re.compile(
+    r"\b(?:which|what|any|are\s+there)\b[^?]{0,40}\b"
+    r"(?:rooms?|spaces?|zones?|areas?|offices?|labs?|desks?|seats?|floors?)\b",
+    re.IGNORECASE,
+)
+#: A question about the SENSORS, not the conditions: "which rooms have co-located temperature,
+#: CO2 and noise sensors" is an inventory question and stays where it is.
+_ABOUT_THE_SENSORS_RE = re.compile(
+    r"\b(?:sensors?|devices?|instrument\w*|monitored|coverage|co-?located)\b", re.IGNORECASE
+)
+_TWO_QUANTITY_INTENTS = _WEAK_INTENTS + (
+    "sensor_data",
+    "analytics",
+    "compare",
+    "trend",
+    "recommend",
+)
+
+
+def _r_two_quantities_over_spaces(c: _Ctx) -> Optional[str]:
+    """A which-rooms question naming TWO OR MORE measured quantities -> deliberate (Phase 1.5).
+
+    "Which student-accessible study area has had the most stable temperature and lighting?",
+    "Which available area is likely to have lower noise, lower crowding and less glare?" --
+    the answer is a ranking of spaces on several modalities at once, which is exactly what the
+    deliberation lane computes (coverage, a dossier, a scored list), and exactly what the
+    reading lane cannot: it fetches one quantity, or refuses the breadth. MEASURED 2026-10-02
+    over the 4,060 bank: 20 questions name two or more measurands in a which-rooms shape; 5
+    already reach `deliberate` through a superlative, 12 land in `sensor_data`. The quantities
+    are counted deterministically (`aggregate_lane.question_measurands`), so no concept has to
+    resolve first; a question about the SENSORS themselves is left alone.
+    """
+    if c.intent not in _TWO_QUANTITY_INTENTS:
+        return None
+    q = c.query or ""
+    if not _WHICH_SPACES_RE.search(q) or _ABOUT_THE_SENSORS_RE.search(q):
+        return None
+    if c.sr.is_control_command(q) or c.sr.report_intake_intent(q):
+        return None
+    try:
+        from orchestrator.services.aggregate_lane import question_measurands
+
+        named = set(question_measurands(q)) | _deliberation_lay_modalities(q)
+    except Exception:  # pragma: no cover - the catalogue is optional
+        return None
+    # The two tables spell one quantity two ways ("noise"/"sound", "air quality"/"co2"); measured
+    # 2026-10-02, 3 of 11 newly matched bank questions were ONE quantity counted twice.
+    named = {_SAME_QUANTITY.get(n, n) for n in named}
+    return "deliberate" if len(named) >= 2 else None
+
+
+_SAME_QUANTITY = {"noise": "sound", "air quality": "co2", "pm25": "co2", "voc": "co2"}
+
+
+_LAY_STEM_RE = re.compile(r"(?:ing|ed|es|s)$")
+
+
+def _deliberation_lay_modalities(question: str) -> set:
+    """The modalities the DELIBERATION lane's lay table recognises in a question.
+
+    `question_measurands` knows the reading lane's words ("noise", "CO2"); the lane this rule
+    routes to ranks on its own table (`compiler._LAY_HINTS`: "crowded", "empty", "bright").
+    Counting with both is counting what the target lane can actually rank. Stemmed on both
+    sides so "crowding" meets "crowded". A one-word hint matches as a word; a multi-word hint
+    ("quiet in terms of people", "sound level") matches only as the WHOLE phrase -- the first
+    version split those into tokens and "in" made every "in room 2.01" an occupancy question.
+    "glare" is in neither table and contributes nothing, which is the honest count.
+    """
+    try:
+        from orchestrator.services.deliberation.compiler import _LAY_HINTS
+    except Exception:  # pragma: no cover
+        return set()
+    words = [
+        _LAY_STEM_RE.sub("", w.lower()) for w in re.findall(r"[A-Za-z][A-Za-z-]*", question or "")
+    ]
+    stemmed = " " + " ".join(w for w in words if w) + " "
+    found = set()
+    for name, hint in _LAY_HINTS.items():
+        for phrase in hint.split(","):
+            tokens = [_LAY_STEM_RE.sub("", t) for t in phrase.strip().lower().split()]
+            if tokens and " " + " ".join(tokens) + " " in stemmed:
+                found.add(name)
+    return found
+
+
 def _r_existential_comfort_is_deliberate(c: _Ctx) -> Optional[str]:
     """ "Is it stuffy anywhere?" → deliberate: rank the rooms and name the worst (TODO-629).
 
@@ -2175,16 +2365,20 @@ def _r_building_not_general(c: _Ctx) -> Optional[str]:
     # It cannot read the marker the gate sets — the concept stage is handed a fresh
     # three-key dict — so it re-derives the condition from the query, using the same
     # detector the gate used. One definition, no second opinion.
-    from orchestrator.services.referent_resolver import (
-        detect_space_deixis,
-        names_a_specific_space,
-    )
+    from orchestrator.services.referent_resolver import detect_space_deixis, names_a_specific_space
 
     if (
         c.intent == "clarification"
         and detect_space_deixis(c.query)
         and not names_a_specific_space(c.query)
     ):
+        return None
+    # The same for a clarification the dialogue agent raised over an AMBIGUOUS follow-up --
+    # "how warm is it there?" after a reply naming three kitchens (Phase 1.2). No deixis word
+    # to re-derive from, so the caller passes the marker (`clarification_raised`); without it
+    # this rule answered the question building-wide, which is the guess the clarification
+    # exists to refuse.
+    if c.intent == "clarification" and c.normalized.get("clarification_raised"):
         return None
     from orchestrator.services.grounding_guard import is_building_specific
 
@@ -2404,9 +2598,7 @@ def _r_capability_measurand_is_data(c: _Ctx) -> Optional[str]:
     #
     # Deliberately narrow: only why-questions move, and only to the lane already designed for
     # them. Everything else this rule was built for (BUG-225's 88% absorption) is untouched.
-    from orchestrator.services.anomaly.diagnosis import (
-        is_why_question,  # local: no cycle
-    )
+    from orchestrator.services.anomaly.diagnosis import is_why_question  # local: no cycle
 
     if is_why_question(c.query):
         return None
@@ -3432,6 +3624,16 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         sets_analytics=True,
     ),
     Rule(
+        "question_is_not_a_report",
+        "a QUESTION the classifier called a report is answered, never filed (BUG-1418)",
+        _r_question_is_not_a_report,
+    ),
+    Rule(
+        "report_id_is_a_status_lookup",
+        "a question carrying a report id, or asking after 'my report', is a status lookup",
+        _r_report_id_is_a_status_lookup,
+    ),
+    Rule(
         "alarm_history_is_a_record",
         "an alarm that ALREADY happened is a record to read, not an alert to create "
         "(TODO-490). Sits before standing_alert_request, which owns the opposite shape",
@@ -3482,6 +3684,11 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "stuffiest', for a questioner who does not know to phrase it that way (TODO-629). "
         "Directly after superlative_room_takeover, whose shape it completes",
         _r_existential_comfort_is_deliberate,
+    ),
+    Rule(
+        "two_quantities_over_spaces",
+        "a which-rooms question naming two or more measured quantities → deliberate (Phase 1.5)",
+        _r_two_quantities_over_spaces,
     ),
     Rule(
         "uniformity_is_a_comparison",
@@ -3650,6 +3857,12 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "session_recall",
         "a question about THIS CONVERSATION -> session_recall, never a data lane (BUG-941)",
         _r_session_recall,
+    ),
+    Rule(
+        "cross_source_precedence",
+        "'which source is right?' / 'differs depending on who I ask' -> fact_conflict, the "
+        "lane that reads scripts/fact_conflicts.py's cross-source findings (E2)",
+        _r_cross_source_precedence,
     ),
 )
 

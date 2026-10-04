@@ -46,7 +46,17 @@ PROVENANCE_RE = re.compile(
     r"|\bcan (?:that|this|it|the (?:answer|figure|result)) be (?:rerun|reproduced|repeated|audited|verified)\b"
     r"|\bhow (?:was|were) (?:that|this|it) (?:calculated|computed|derived|measured)\b"
     r"|\bshow (?:me )?(?:your|the) (?:working|provenance|evidence|audit trail)\b"
-    r"|\bprove it\b|\bis that (?:reliable|trustworthy|auditable)\b",
+    r"|\bprove it\b|\bis that (?:reliable|trustworthy|auditable)\b"
+    # D7 (QA-trial plan, 2026-10-02): five phrasings a live detector probe found matching
+    # NEITHER this regex nor session_recall's ("which one did you check?", "which data
+    # sources/records/sensors did you use?", "what data/sources did you use?") -- so they
+    # reached no lane at all. Deliberately NOT added here: "what is the evidence behind
+    # your answer?" and "how did you arrive at that?", which session_recall already owns
+    # (BUG-1397, VERIFIED_LIVE) -- widening here would re-open that fix, not close a gap.
+    # Measured over the 4,060-question bank before shipping: exactly 1 move, a correct one
+    # ("Which sensors did you use to answer my last question?"), 0 lost.
+    r"|\bwhich (?:data )?(?:sources?|records?|sensors?|ones?) did you (?:use|check|read)\b"
+    r"|\bwhat (?:data|sources?) did you use\b",
     re.IGNORECASE,
 )
 
@@ -62,7 +72,10 @@ def _fmt_time(value: Any) -> str:
 
 
 def render(
-    record: Optional[Dict[str, Any]], question: str = "", for_admin: bool = False
+    record: Optional[Dict[str, Any]],
+    question: str = "",
+    for_admin: bool = False,
+    inline: bool = False,
 ) -> Optional[str]:
     """Read an evidence record back as prose, or None when there is nothing to read.
 
@@ -71,11 +84,22 @@ def render(
 
     ``for_admin`` adds the record's remedy. The default is the plain read-back, so a caller
     that does not know who is reading fails toward it.
+
+    ``inline`` (D11/D16, QA-trial plan 2026-10-02): the SAME record, read for the CURRENT
+    answer rather than for a follow-up question about a PAST one. Three differences only —
+    no new prose, no second renderer: the heading says "this answer" not "that answer", the
+    closing sentence (which only makes sense as a read-back of a past turn) is dropped, and
+    the whole block is wrapped in a collapsible ``<details type="evidence">`` the way
+    ``render_dossier_details`` already wraps its own panel, so the two read the same way in
+    the client.
     """
     if not record:
         return None
 
-    lines: List[str] = ["**How that answer was arrived at**", ""]
+    from orchestrator.services.provenance import readable_source_label
+
+    heading = "How this answer was arrived at" if inline else "How that answer was arrived at"
+    lines: List[str] = [f"**{heading}**", ""]
 
     status = str(record.get("status") or "")
     operation = str(record.get("operation") or "")
@@ -105,12 +129,23 @@ def render(
         )
         if operation:
             lines.append(f"- **Operation performed:** {operation.replace('_', ' ')}")
+        # D6 (QA-trial plan, 2026-10-02): the authority tier that led -- "what kind of
+        # thing answered you" (W4-02) -- now set on every turn with at least one source,
+        # not only when two tiers disagreed.
+        if record.get("source_tier"):
+            lines.append(f"- **Kind of source that led:** {record['source_tier']}")
 
     sources = record.get("sources") or []
     if sources:
         lines.append(f"- **Sources ({len(sources)}):**")
         for src in sources[:8]:
-            bits = [f"`{src.get('source_id', '?')}`"]
+            # D15 (QA-trial plan, 2026-10-02): this printed `source_id` verbatim -- a bare
+            # timeseries UUID or a raw record IRI in front of every reader, BUG-1407's shape
+            # at the evidence layer. A record built after D15's fix carries a reader-facing
+            # `label`; one built before it (an old cached turn) did not, so this still never
+            # falls back to the bare id, only to a readable derivation of it.
+            _sid = str(src.get("source_id") or "?")
+            bits = [f"`{src.get('label') or readable_source_label(_sid)}`"]
             if src.get("kind"):
                 bits.append(str(src["kind"]).replace("_", " "))
             if src.get("owner"):
@@ -135,7 +170,17 @@ def render(
             when.append(f"newest evidence {observed}")
         if retrieved:
             when.append(f"retrieved {retrieved}")
-        lines.append("- **When:** " + ", ".join(when))
+        when_line = "- **When:** " + ", ".join(when)
+        # D16 (QA-trial plan, 2026-10-02): `_serve_from_cache` restores this record on a
+        # repeated question and deliberately does NOT refresh `retrieved_at` — so without
+        # this, a tester who asks the same question twice and then asks how it knows that
+        # is shown a true timestamp with a false implication: that THIS turn re-read the
+        # store. It did not; nothing was re-read for it.
+        if record.get("served_from_cache"):
+            when_line += (
+                " (this answer was replayed from a cached result; nothing was re-read for it)"
+            )
+        lines.append(when_line)
 
     if record.get("completeness") is not None:
         lines.append(
@@ -175,6 +220,33 @@ def render(
     # (2026-09-17 user decision), so it is withheld unless the reader holds system:admin.
     if for_admin and record.get("remedy"):
         lines.append(f"- **To make it answerable:** {record['remedy']}")
+
+    if inline:
+        # D18 (QA-trial plan, 2026-10-02): an empty working-out is not working-out
+        # (render_dossier_details's own rule, dossier.py:481-483). Injected into EVERY
+        # answer unprompted, a panel holding only the heading and a "Kind of claim" line
+        # with no sources, no gates and no conflicts is noise, not evidence. A FOLLOW-UP
+        # question ("how do you know that?") still gets the full read-back even when it is
+        # this sparse — that is a direct answer to a direct question, not an unprompted
+        # addition — so this guard applies only here.
+        if len(lines) <= 2:  # just the heading and a blank line: nothing was added at all
+            return ""
+        # D11: collapsible, the same convention render_dossier_details uses, so the two
+        # panels read the same way in the client. No closing sentence here — "kept at the
+        # time it was given, not a reconstruction after the fact" is a claim about reading
+        # a PAST turn's record; this IS the current turn's record.
+        body = "\n".join(lines)
+        return "\n".join(
+            [
+                "",
+                '<details type="evidence">',
+                "<summary>How I know this</summary>",
+                "",
+                body,
+                "",
+                "</details>",
+            ]
+        )
 
     lines += [
         "",
