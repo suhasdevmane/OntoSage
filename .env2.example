@@ -38,31 +38,25 @@ POSTGRES_USER_PASSWORD=CHANGE-ME-postgres-user-password
 # ==================== 🎯 MODEL PROVIDER SELECTION ====================
 # Core decision: Where do models run?
 #
-# LOCAL OPTION (default — no API costs):
-#   - MODEL_PROVIDER=local
-#   - EMBEDDING_PROVIDER=local
-#   - STT_PROVIDER=local
-#   - ✅ FREE (no API costs)
-#   - ✅ Privacy (data stays local)
-#   - ✅ No rate limits
-#   - ⚠️ Slower inference
-#   - ⚠️ Requires 8GB+ RAM
-#   - Uses: Ollama (OLLAMA_MODEL below), sentence-transformers, faster-whisper
-#   - NOTE: MODEL_PROVIDER also auto-falls-back to 'local' whenever
-#     MODEL_PROVIDER=openai is set but OPENAI_API_KEY is blank.
+# Three gpt-oss:20b providers — pick ONE by setting MODEL_PROVIDER below:
 #
-# CLOUD OPTION (Recommended for production):
-#   - MODEL_PROVIDER=cloud
-#   - EMBEDDING_PROVIDER=openai
-#   - STT_PROVIDER=openai
-#   - ✅ Fast inference
-#   - ✅ State-of-the-art models
-#   - ⚠️ Costs money (~$0.01 per 1K tokens)
-#   - ⚠️ Requires internet
-#   - ⚠️ Needs OpenAI API key
-#   - Uses: GPT-4, ada-002, Whisper API
+# OPTION 1 — HOSTED GPU GATEWAY (default):
+#   MODEL_PROVIDER=hosted
+#   ✅ Same gpt-oss:20b model, no local GPU needed
+#   ⚠️ Requires Cardiff VPN; fill HOSTED_LLM_API_KEY below
+#
+# OPTION 2 — LOCAL LAPTOP GPU:
+#   MODEL_PROVIDER=local
+#   ✅ Free, fully private, no VPN needed
+#   ⚠️ Requires Ollama installed on the host + 8 GB+ VRAM
+#
+# OPTION 3 — OPENAI CLOUD (paid, different model):
+#   MODEL_PROVIDER=openai
+#   ✅ Fast, state-of-the-art
+#   ⚠️ Costs money; requires OPENAI_API_KEY below
+#   NOTE: auto-falls-back to 'local' when OPENAI_API_KEY is blank
 
-MODEL_PROVIDER=local
+MODEL_PROVIDER=hosted
 EMBEDDING_PROVIDER=local
 STT_PROVIDER=local
 
@@ -112,8 +106,17 @@ AGENT_MEMORY_EMBED_MODEL=text-embedding-3-large
 # Supports: mp3, mp4, mpeg, mpga, m4a, wav, webm
 
 
+# ==================== 🖥️ HOSTED GPU GATEWAY (MODEL_PROVIDER=hosted) ====================
+# COMAT GPU server — OpenAI-compatible endpoint running gpt-oss:20b on a dedicated GPU.
+# VPN: connect to Cardiff VPN before use. Health check: curl http://10.98.84.2:8000/health
+# API key: ssh comat-llm "grep GATEWAY_API_KEY ~/.config/gpu-access/gateway.env"
+HOSTED_LLM_BASE_URL=http://10.98.84.2:8000/v1
+HOSTED_LLM_API_KEY=your-comat-gateway-api-key-here
+HOSTED_LLM_MODEL=gpt-oss:20b
+
+
 # ==================== 🖥️ LOCAL MODEL CONFIGURATION ====================
-# Used only if MODEL_PROVIDER=cloud, EMBEDDING_PROVIDER=local, or STT_PROVIDER=local
+# Used only if MODEL_PROVIDER=local, EMBEDDING_PROVIDER=local, or STT_PROVIDER=local
 
 # Ollama (Local LLM)
 # Ollama runs NATIVELY on the host (not in Docker) — reached from inside the

@@ -17,7 +17,7 @@ On the next turn:
 """
 
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from orchestrator.services import session_summary
 from orchestrator.services.session_summary import TurnNote
@@ -68,8 +68,8 @@ class TurnMemoryService:
                     """
                     INSERT INTO turn_memory
                         (conversation_id, user_id, turn_index, user_query,
-                         intent, entities, result_summary, carry_forward)
-                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                         intent, entities, result_summary, carry_forward, evidence)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                     """,
                     state.conversation_id,
                     state.user_id or "",
@@ -83,6 +83,7 @@ class TurnMemoryService:
                     # them (the Redis save_state path already does this). Without it,
                     # a forecast follow-up ("now plot that") silently loses its state.
                     json.dumps(self._extract_carry_forward(state), default=str),
+                    self._extract_evidence(state),
                 )
                 logger.info(
                     f"[turn_memory] saved turn {turn_index} " f"for conv={state.conversation_id}"
@@ -209,6 +210,25 @@ class TurnMemoryService:
             logger.warning(f"[turn_memory] get_session_context failed (non-fatal): {e}")
         return "", []
 
+    async def count_user_turns(self, user_id: str) -> int:
+        """How many stored turn rows belong to one user (what GET /api/v1/me/memory reports).
+
+        Returns 0 when Postgres is unavailable or the read fails.
+        """
+        if not self.pool:
+            return 0
+        try:
+            async with self.pool.acquire() as conn:
+                return int(
+                    await conn.fetchval(
+                        "SELECT COUNT(*) FROM turn_memory WHERE user_id = $1", user_id
+                    )
+                    or 0
+                )
+        except Exception as e:
+            logger.warning(f"[turn_memory] count_user_turns failed (non-fatal): {e}")
+            return 0
+
     async def delete_conversation(self, conversation_id: str) -> int:
         """Delete all turn_memory rows for a conversation (e.g. user clears a chat).
         Returns the number of rows removed."""
@@ -266,3 +286,49 @@ class TurnMemoryService:
     def _extract_carry_forward(self, state: ConversationState) -> Dict[str, Any]:
         """Extract only the safe carry-forward keys (forecast + analytics)."""
         return {k: v for k, v in state.intermediate_results.items() if k in _CARRY_FORWARD_KEYS}
+
+    @staticmethod
+    def _extract_evidence(state: ConversationState) -> Optional[str]:
+        """The bounded evidence projection as JSON text, or None. Never the whole record."""
+        from orchestrator.services.answer_provenance import project_for_storage
+
+        projection = project_for_storage(
+            (getattr(state, "intermediate_results", None) or {}).get("evidence_record")
+        )
+        return json.dumps(projection, default=str) if projection else None
+
+    async def get_evidence(
+        self, conversation_id: str, turn_index: Optional[int] = None
+    ) -> Optional[Dict[str, Any]]:
+        """One turn's stored evidence projection; the latest turn when turn_index is None."""
+        if not self.pool:
+            return None
+        try:
+            async with self.pool.acquire() as conn:
+                if turn_index is None:
+                    row = await conn.fetchrow(
+                        """
+                        SELECT turn_index, evidence FROM turn_memory
+                        WHERE conversation_id = $1
+                        ORDER BY turn_index DESC LIMIT 1
+                        """,
+                        conversation_id,
+                    )
+                else:
+                    row = await conn.fetchrow(
+                        """
+                        SELECT turn_index, evidence FROM turn_memory
+                        WHERE conversation_id = $1 AND turn_index = $2
+                        """,
+                        conversation_id,
+                        int(turn_index),
+                    )
+            if not row:
+                return None
+            ev = row["evidence"]
+            if isinstance(ev, str):
+                ev = json.loads(ev)
+            return {"turn": row["turn_index"], "evidence": ev}
+        except Exception as e:
+            logger.warning(f"[turn_memory] get_evidence failed (non-fatal): {e}")
+            return None

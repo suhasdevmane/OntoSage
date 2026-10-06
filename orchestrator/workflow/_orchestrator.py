@@ -10549,10 +10549,13 @@ SELECT ?l WHERE {
 
         logger.info(f"[alert_mgmt] intent={state.current_intent}")
 
-        # RBAC: guest users cannot manage alert rules
+        # RBAC: a caller must hold alert:create. Every built-in role does (B4), so this
+        # refuses only guest/anonymous, which map to no role at all.
+        from orchestrator.middleware.rbac import ROLE_PERMISSIONS
+
         user_role = state.intermediate_results.get("user_role", "guest")
         user_id = state.intermediate_results.get("user_id", "")
-        if not user_id or user_role in ("guest", "anonymous"):
+        if not user_id or "alert:create" not in ROLE_PERMISSIONS.get(user_role, set()):
             state.intermediate_results["dialogue_response"] = (
                 "Alert management requires you to be logged in. "
                 "Please authenticate to create or manage personal alerts."

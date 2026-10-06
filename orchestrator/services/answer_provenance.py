@@ -200,7 +200,15 @@ def render(
     if gates:
         lines.append(f"- **Checks that fired:** {', '.join(gates[:6])}")
     if advisory:
-        lines.append(f"- **Checks that flagged in advisory mode:** {', '.join(advisory[:6])}")
+        # E7 (2026-10-06): one line per fired advisory gate, each with its reason. A single
+        # comma-joined line named the gate but not why, and an advisory failure is only
+        # worth reading once you know what it objected to. Entries are "gate: reason" as
+        # assemble.py writes them; a bare name still renders, with no reason to add.
+        lines.append("- **Checks that flagged in advisory mode** (recorded, changed nothing):")
+        for entry in advisory[:6]:
+            name, _, reason = str(entry).partition(": ")
+            detail = f" — {reason.strip()}" if reason.strip() else ""
+            lines.append(f"    - `{name.strip()}`{detail}")
 
     conflicts = record.get("conflicts") or []
     if conflicts:
@@ -254,3 +262,89 @@ def render(
         "reconstruction after the fact._",
     ]
     return "\n".join(lines)
+
+
+#: D9: how much of a turn's evidence record is kept in `turn_memory`. A projection, never the
+#: whole record: the record can carry hundreds of sources and full claim-binding detail, and
+#: a row that grows with the data it describes is a second store, not a memo.
+PROJECTION_MAX_SOURCES = 25
+PROJECTION_MAX_GATES = 20
+_PROJECTION_TEXT_MAX = 200
+_PROJECTION_SOURCE_FIELDS = ("source_id", "kind", "store", "owner", "observed_at")
+_PROJECTION_COUNT_FIELDS = (
+    "total",
+    "bound",
+    "derived",
+    "unbound",
+    "skipped",
+    "unbound_numeric",
+    "unbound_universal",
+)
+
+
+def _cap_text(value: Any) -> Optional[str]:
+    if value is None:
+        return None
+    text = str(value)
+    return text[:_PROJECTION_TEXT_MAX]
+
+
+def project_for_storage(record: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """The bounded subset of an evidence record that is kept per turn, or None.
+
+    Holds what the "how do you know that?" read-back and the evidence endpoint need: the
+    status and operation, the sources (capped at PROJECTION_MAX_SOURCES, each with only its
+    identity fields), the two evidence times, the gates that fired, and the claim-binding
+    COUNTS. Free text is cut at _PROJECTION_TEXT_MAX characters. The remedy is kept because
+    the endpoint shows it to a system:admin reader and strips it for everyone else.
+
+    Never raises: a turn's evidence failing to project must not cost the turn's memory row.
+    """
+    if not isinstance(record, dict) or not record:
+        return None
+    try:
+        sources: List[Dict[str, Any]] = []
+        for src in (record.get("sources") or [])[:PROJECTION_MAX_SOURCES]:
+            if isinstance(src, dict):
+                sources.append({f: _cap_text(src.get(f)) for f in _PROJECTION_SOURCE_FIELDS})
+
+        gates = [_cap_text(g) for g in (record.get("gates_applied") or [])]
+        advisory = [_cap_text(g) for g in (record.get("gates_advisory") or [])]
+        binding = record.get("claim_binding") or {}
+        counts_src = binding.get("counts") if isinstance(binding, dict) else None
+        counts = {
+            f: int(counts_src[f])
+            for f in _PROJECTION_COUNT_FIELDS
+            if isinstance(counts_src, dict) and isinstance(counts_src.get(f), int)
+        }
+
+        out: Dict[str, Any] = {
+            "status": _cap_text(record.get("status")),
+            "operation": _cap_text(record.get("operation")),
+            "sources": sources,
+            "sources_total": len(record.get("sources") or []),
+            "latest_evidence_at": _cap_text(record.get("latest_evidence_at")),
+            "retrieved_at": _cap_text(record.get("retrieved_at")),
+            "gates_applied": gates[:PROJECTION_MAX_GATES],
+            "gates_advisory": advisory[:PROJECTION_MAX_GATES],
+            "claim_binding": {
+                "mode": _cap_text(binding.get("mode")) if isinstance(binding, dict) else None,
+                "counts": counts,
+            },
+        }
+        if record.get("remedy"):
+            out["remedy"] = _cap_text(record.get("remedy"))
+        return out
+    except Exception as exc:  # the projection must never cost the turn its memory row
+        logger.warning(f"[evidence] projection skipped: {exc}")
+        return None
+
+
+def for_reader(projection: Optional[Dict[str, Any]], *, is_admin: bool) -> Optional[Dict[str, Any]]:
+    """The stored projection as one reader may see it. The remedy is for system:admin only."""
+    if not projection:
+        return None
+    shown = dict(projection)
+    if not is_admin:
+        shown.pop("remedy", None)
+    return shown

@@ -681,3 +681,47 @@ thing that runs every day instead of every week.
 | User accounts | < 5 min | Last backup |
 | Sensor time-series | < 30 min | Last backup |
 | Conversation history | < 10 min | Last backup |
+
+## Costs of each operation
+
+What each routine operation costs, and what was measured. "Unmeasured" means no number
+exists yet; do not quote an estimate as a measurement.
+
+| Operation | Command | Cost | Measured |
+|-----------|---------|------|----------|
+| Restart orchestrator (code in the bind mount) | `.\scripts\deploy.ps1` | seconds; no rebuild; keeps the old environment (CAVEAT-178) | unmeasured |
+| Rebuild orchestrator image | `.\scripts\deploy.ps1 -Rebuild -Confirm` | minutes; needed for Dockerfile or dependency changes (BUG-343) | unmeasured |
+| Encrypted backup, routine | `python scripts\backup_encrypted.py` | config, `.env`, Postgres dump, artifacts, GraphDB export; one `.enc` per run | dry-run: 390.5 MB raw before gzip and encryption (config 250.2 MB, Postgres 140.2 MB as an upper bound from the volume, artifacts 19 KB); GraphDB export and compressed size unmeasured |
+| Encrypted backup, with sensor store | `python scripts\backup_encrypted.py --include-sensor-data` | adds the MySQL sensordb dump; owner reports about 9 GB raw | unmeasured here |
+| Verify an archive | `python scripts\restore_encrypted.py <archive> --verify-only` | reads the whole archive once to authenticate it | unmeasured |
+| Restore an archive | `python scripts\restore_encrypted.py <archive> --dest <dir>` | verifies, then copies files; databases are restored by hand | unmeasured |
+
+Measure a row yourself, not from this table: `Measure-Command { .\scripts\deploy.ps1 }`,
+and `python scripts\backup_encrypted.py --dry-run` for the backup sizes.
+
+### Encrypted local backup (one-time setup)
+
+The archive is AES-256-GCM, with a key derived from a passphrase by scrypt. The passphrase lives
+in the Windows Credential Manager, never in `.env` or the repository. It is needed to write and
+to restore.
+
+```powershell
+# one-time: store the passphrase (prompts; never prints it)
+.\.venv\Scripts\python.exe -m pip install keyring        # only if not already installed
+.\.venv\Scripts\python.exe scripts\_backup_secret.py --set
+
+# first backup
+.\.venv\Scripts\python.exe scripts\backup_encrypted.py --dry-run   # see what it would include
+.\.venv\Scripts\python.exe scripts\backup_encrypted.py             # writes C:\Users\<you>\OntoSage-backups\
+
+# nightly at 02:30, keeps the newest 14 (preview first with -WhatIf)
+.\scripts\register_backup_task.ps1 -WhatIf
+.\scripts\register_backup_task.ps1
+```
+
+Exit codes: 0 complete; 3 archive written but a source was skipped (read `manifest.json`); 2 no
+passphrase. A scheduled run cannot prompt, so it fails with 2 when nothing is stored.
+
+**Not covered by this script, and deliberately flagged:** MongoDB chat transcripts (about 0.5 GB)
+and the Open WebUI volume (about 1 GB, which holds its own user accounts) are not in the archive.
+They are the only data here that cannot be regenerated. Adding them is an owner decision.

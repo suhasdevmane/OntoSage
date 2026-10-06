@@ -85,8 +85,9 @@ services:
   open-webui:
     image: ghcr.io/open-webui/open-webui:0.8.3
     container_name: open-webui
+    # Loopback only (B2): reached from the host by the Cloudflare tunnel, never the LAN.
     ports:
-      - "3000:8080"
+      - "127.0.0.1:3000:8080"
     volumes:
       - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/open-webui:/app/backend/data
     environment:
@@ -122,8 +123,17 @@ services:
         GIT_SHA: "${GIT_SHA:-unknown}"
         BUILD_TIME: "${BUILD_TIME:-unknown}"
     container_name: ontosage-orchestrator
+    # Loopback only (B2): the orchestrator's /v1 trusts the forwarded-user header on the
+    # strength of this binding (see resolve_forwarded_user). Do not drop the 127.0.0.1.
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
+    # Logs (B5): json-file with a size bound so a long trial cannot fill the disk. The
+    # cap is 5 x 50 MB per container, 250 MB in all; `docker compose logs` still reads it.
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
     env_file:
       - .env
     volumes:
@@ -365,7 +375,7 @@ services:
       - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/redis:/data
     command: >
       redis-server --appendonly yes --appendfsync everysec --save 900 1 --save
-      300 10 --save 60 10000 --maxmemory 2gb --maxmemory-policy allkeys-lru --hz
+      300 10 --save 60 10000 --maxmemory 4gb --maxmemory-policy allkeys-lru --hz
       20
     networks:
       - ontobot-agentic

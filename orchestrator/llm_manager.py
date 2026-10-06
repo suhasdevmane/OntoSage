@@ -473,7 +473,9 @@ class LLMManager:
             self._initialize_openai()
         elif self.provider == "ollama_cloud":
             self._initialize_ollama_cloud()
-        else:  # ollama
+        elif self.provider == "hosted":
+            self._initialize_hosted()
+        else:  # ollama (local)
             self._initialize_ollama()
 
     def _initialize_openai(self):
@@ -551,6 +553,27 @@ class LLMManager:
             logger.error("langchain-ollama not installed. Run: pip install langchain-ollama")
             raise
 
+    def _initialize_hosted(self):
+        """Initialize COMAT GPU gateway client (OpenAI-compatible, http://10.98.84.2:8000/v1)."""
+        try:
+            from langchain_openai import ChatOpenAI
+
+            self.client = ChatOpenAI(
+                base_url=self.config["base_url"],
+                model=self.config["model"],
+                api_key=self.config["api_key"] or "not-set",  # validate_config refuses a real deploy without it
+                temperature=self.config["temperature"],
+                max_tokens=4096,
+                timeout=_transport_timeout_s(),  # BUG-1191
+            )
+            self.client_fast = self.client  # same model for the hosted gateway
+            logger.info(
+                f"Initialized hosted LLM: {self.config['model']} at {self.config['base_url']}"
+            )
+        except ImportError:
+            logger.error("langchain-openai not installed. Run: pip install langchain-openai")
+            raise
+
     def _initialize_ollama_cloud(self):
         """Initialize Ollama Cloud client (OpenAI-compatible API, single model)."""
         try:
@@ -592,8 +615,8 @@ class LLMManager:
         return (self.client_fast, True) if use_fast else (self.client, False)
 
     def _fit_to_context(self, prompt: Any) -> Any:
-        """Cap a prompt at the local model's window; a hosted provider's window is not ours to guess."""
-        if getattr(self, "provider", "") == "openai":
+        """Cap a prompt at the local model's window; remote providers manage their own windows."""
+        if getattr(self, "provider", "") in ("openai", "hosted"):
             return prompt
         return fit_prompt(prompt, prompt_char_budget())
 
@@ -689,7 +712,7 @@ class LLMManager:
         for attempt in range(1, LLM_MAX_RETRIES + 1):
             try:
                 # Per-client rate limiting
-                if self.provider in ["openai", "ollama_cloud"]:
+                if self.provider in ["openai", "ollama_cloud", "hosted"]:
                     current_time = time.time()
                     if is_fast:
                         elapsed = current_time - self.last_request_time_fast
@@ -810,7 +833,7 @@ class LLMManager:
         else:
             effective_system = self._LANGUAGE_INSTRUCTION
 
-        if self.provider in ["openai", "ollama_cloud"]:
+        if self.provider in ["openai", "ollama_cloud", "hosted"]:
             try:
                 from langchain.schema import HumanMessage as HumMsg
                 from langchain.schema import SystemMessage as SysMsg
@@ -853,7 +876,7 @@ class LLMManager:
         and validation still decides. The schema is then advisory rather than enforced,
         which is exactly what the `stripped_envelope` tally makes visible.
         """
-        if self.provider in ("openai", "ollama_cloud"):
+        if self.provider in ("openai", "ollama_cloud", "hosted"):
             return {
                 "response_format": {
                     "type": "json_schema",
@@ -973,7 +996,7 @@ class LLMManager:
             else:
                 effective_system = self._LANGUAGE_INSTRUCTION
 
-            if self.provider in ["openai", "ollama_cloud"]:
+            if self.provider in ["openai", "ollama_cloud", "hosted"]:
                 try:
                     from langchain.schema import HumanMessage as HumMsg
                     from langchain.schema import SystemMessage as SysMsg

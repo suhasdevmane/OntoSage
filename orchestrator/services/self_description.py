@@ -123,6 +123,25 @@ _GROUPS: List[tuple] = [
 ]
 
 
+# H3 (TRIAL_TRACKER, 2026-10-06): what a first-time tester sees before asking anything. Each
+# is a question the GOOD_ANSWER label was given to in docs/phase0/demo_rehearsal_2026-09-18_
+# run3_read.jsonl, phrased without any building's room numbers, floors or names. The label is
+# a hand read of one run, not a guarantee for every ask -- the wording is a starting point.
+SUGGESTED_PROMPTS: Tuple[str, ...] = (
+    "Where's the coolest place to work in the building right now?",
+    "Which room in the building is the quietest right now?",
+    "How many open work orders are there, and which are overdue?",
+    "Which floor is the warmest right now?",
+    "Which shutters or doors fail open versus fail locked on power loss?",
+    "Is it stuffy anywhere in the building?",
+)
+
+
+def suggested_prompts() -> List[str]:
+    """Six starting questions for a first-time user, none naming an internal lane."""
+    return list(SUGGESTED_PROMPTS)
+
+
 def is_self_question(query: str) -> bool:
     """True when the user is asking about the assistant, not about the building."""
     q = (query or "").strip()

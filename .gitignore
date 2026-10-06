@@ -290,6 +290,7 @@ paper/
 .claude/settings.local.json
 markdown/
 presentation/
+client/
 
 ##############################
 # Local review / planning notes (not for sharing)

@@ -51,6 +51,10 @@ ALL_PERMISSIONS = {
     # Device control
     "device:control",
     "control:write",  # T24: write setpoints via actuation gateway (admin + facility only)
+    # Personal alert rules. Granted to EVERY role below (B4, owner decision 2026-10-06):
+    # an alert only notifies the user who created it, so it is not a privilege. Guest and
+    # anonymous callers hold no role here and are still refused by _alert_mgmt_node.
+    "alert:create",
     # System
     "system:admin",
     "system:health",
@@ -110,6 +114,10 @@ ROLE_PERMISSIONS: Dict[str, Set[str]] = {
         "system:health",
     },
 }
+
+# B4: every built-in role may create personal alert rules (see "alert:create" above).
+for _role_perms in ROLE_PERMISSIONS.values():
+    _role_perms.add("alert:create")
 
 
 # ─────────────────────────────────────────────────────────────────────────────

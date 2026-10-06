@@ -112,9 +112,13 @@ class Settings(BaseSettings):
     """
 
     # ==================== Model Provider ====================
-    MODEL_PROVIDER: Literal["local", "cloud", "openai"] = Field(
-        default="local",
-        description="Choose 'local' for local Ollama, 'cloud' for cloud Ollama, or 'openai' for OpenAI API",
+    MODEL_PROVIDER: Literal["local", "hosted", "cloud", "openai"] = Field(
+        default="hosted",
+        description=(
+            "LLM provider: 'local' = laptop GPU via Ollama, "
+            "'hosted' = COMAT GPU gateway (OpenAI-compatible, http://10.98.84.2:8000/v1), "
+            "'cloud' = Ollama Cloud, 'openai' = OpenAI API"
+        ),
     )
 
     # ==================== LLM Configuration ====================
@@ -134,6 +138,21 @@ class Settings(BaseSettings):
             "on-GPU, fast); larger models (gemma4:26b/31b) spill to CPU on 16GB and "
             "run much slower. Admin-overridable via OLLAMA_MODEL / the AI & Models tab."
         ),
+    )
+
+    # Hosted GPU gateway (OpenAI-compatible, COMAT server at 10.98.84.2)
+    HOSTED_LLM_BASE_URL: str = Field(
+        default="http://10.98.84.2:8000/v1",
+        description="OpenAI-compatible endpoint for the hosted COMAT GPU gateway",
+    )
+    HOSTED_LLM_API_KEY: str = Field(
+        default="",
+        description="API key for the COMAT GPU gateway (see client/.env LLM_API_KEY)",
+        repr=False,
+    )
+    HOSTED_LLM_MODEL: str = Field(
+        default="gpt-oss:20b",
+        description="Model served by the hosted GPU gateway",
     )
 
     # Cloud (Ollama Cloud)
@@ -497,6 +516,15 @@ class Settings(BaseSettings):
         ),
         repr=False,
     )
+    ENABLE_SIGNUP: bool = Field(
+        default=False,
+        description=(
+            "Allow POST /auth/register to create accounts. Off by default: an open register "
+            "endpoint on a building's network lets anyone mint a login. Set true in .env for "
+            "the trial (bldg1). Accounts created this way get the occupant role; admins are "
+            "created with the admin endpoints or scripts/import_user_credentials.py."
+        ),
+    )
     TRUST_FORWARDED_USER: bool = Field(
         default=False,
         description=(
@@ -581,9 +609,15 @@ class Settings(BaseSettings):
             "Toggleable synthetic data sources + answer provenance. When true, "
             "the orchestrator loads input/datasources.yaml, exposes the "
             "/api/v1/datasources admin API, gates disabled-source questions with "
-            "a locked-capability decline, and annotates answers with per-source "
-            "provenance tags. Default false until the feature ships (see "
-            "tasks/IMPLEMENTATION_PLAN_DATASOURCE_TOGGLES_AND_PROVENANCE.md)."
+            "a locked-capability decline, and appends per-source provenance CHIPS "
+            "to answers. Default false until the feature ships (see "
+            "tasks/IMPLEMENTATION_PLAN_DATASOURCE_TOGGLES_AND_PROVENANCE.md). "
+            "EVIDENCE IS NOT GATED BY THIS FLAG (owner decision 2026-10-06: evidence is "
+            "always on whenever present): the evidence record, its turn_memory projection, "
+            "GET /api/v1/evidence/{conversation_id} and the 'how do you know that?' read-back "
+            "run with the flag false. The provenance CHIPS above are still gated by this flag "
+            "(they are built from the provenance stores); whether they should be is an owner "
+            "call, not made here."
         ),
     )
     MULTI_INTENT_MIN_LENGTH: int = Field(
@@ -671,12 +705,25 @@ class Settings(BaseSettings):
             "Set to e.g. 86400 to re-enable time-based expiry."
         ),
     )
+    # Redis is a WORKING copy, and this cap bounds the copy, not the conversation. The full
+    # transcript is kept in Postgres `messages` (no pruning, deleted only by the user), and
+    # any entry point whose Redis copy is shorter than that store is refilled from it
+    # (main._fill_history_gap). 400 messages = 200 turns, which is a long chat, not a window.
+    # The LLM prompt is NOT sized by this number: every prompt consumer takes its own short
+    # window (5-6 messages) and older turns reach the model through the rolling session
+    # summary. Owner decision 2026-10-06: no artificial short window on STORED history.
     CONVERSATION_MAX_MESSAGES: int = Field(
-        default=20,
-        description="Max verbatim messages kept per conversation in Redis hot cache.",
+        default=400,
+        description=(
+            "Max verbatim messages kept per conversation in the Redis working copy. "
+            "Postgres `messages` holds the full history; Redis trimming is not data loss."
+        ),
     )
+    # The /v1 request-side cap and the Redis `messages:` list cap. Same reasoning as above:
+    # it bounds what is carried per turn, and was 20 (10 turns) before 2026-10-06.
     MAX_CONVERSATION_HISTORY: int = Field(
-        default=20, description="Max prior turns injected into LLM context from Redis."
+        default=400,
+        description="Max prior messages carried per turn from client history or the store.",
     )
     COREFERENCE_REWRITE_ENABLED: bool = Field(
         default=True,
@@ -1276,6 +1323,15 @@ def get_llm_config() -> dict:
             # not forwarded to the OpenAI clients: the fast model (gpt-4o-mini)
             # rejects the parameter, and mixing per-client support is a trap.
         }
+    elif settings.MODEL_PROVIDER == "hosted":
+        return {
+            "provider": "hosted",
+            "base_url": settings.HOSTED_LLM_BASE_URL,
+            "model": settings.HOSTED_LLM_MODEL,
+            "model_fast": settings.HOSTED_LLM_MODEL,
+            "api_key": settings.HOSTED_LLM_API_KEY,
+            "temperature": settings.OPENAI_TEMPERATURE,
+        }
     elif settings.MODEL_PROVIDER == "cloud":
         return {
             "provider": "ollama_cloud",
@@ -1324,6 +1380,9 @@ def validate_config():
     # ── API key checks ────────────────────────────────────────────────────────
     if settings.MODEL_PROVIDER == "openai" and not settings.OPENAI_API_KEY:
         raise ValueError("OPENAI_API_KEY is required when MODEL_PROVIDER=openai")
+
+    if settings.MODEL_PROVIDER == "hosted" and not settings.HOSTED_LLM_API_KEY:
+        raise ValueError("HOSTED_LLM_API_KEY is required when MODEL_PROVIDER=hosted")
 
     if settings.MODEL_PROVIDER == "cloud" and not settings.OLLAMA_CLOUD_API_KEY:
         raise ValueError("OLLAMA_CLOUD_API_KEY is required when MODEL_PROVIDER=cloud")

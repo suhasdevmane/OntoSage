@@ -47,12 +47,14 @@ from orchestrator.redis_manager import RedisManager
 from orchestrator.services.adapters.registry import adapter_registry
 from orchestrator.services.agent_memory import AgentMemoryService
 from orchestrator.services.alert_monitor import AlertMonitor
+from orchestrator.services.build_provenance import build_identity
 from orchestrator.services.connection_manager import ConnectionManager
 from orchestrator.services.floor_plan_service import floor_plan_service
 from orchestrator.services.hybrid_retrieval import hybrid_retrieval
 from orchestrator.services.job_queue import JobQueue
 from orchestrator.services.job_queue import JobStatus as _JobStatus
 from orchestrator.services.multi_building_manager import get_building_manager
+from orchestrator.services import pipeline_gate
 from orchestrator.services.ontology_detector import OntologySchemaDetector
 from orchestrator.services.ontology_introspector import ontology_introspector
 from orchestrator.services.ontology_validator import ontology_validator
@@ -1780,6 +1782,10 @@ async def health_check():
                 "sha": os.environ.get("BUILD_SHA", "unknown"),
                 "time": os.environ.get("BUILD_TIME", "unknown"),
             },
+            # Additive: the commit the image was built from (code_sha) beside the commit the
+            # mounted source's git HEAD points at (mounted_sha, None when no .git is reachable).
+            # A mismatch means the running image and the checkout disagree (BUG-343's shape).
+            **build_identity(),
         },
     )
 
@@ -1959,6 +1965,11 @@ async def register_user(body: RegisterRequest):
     the client cannot request a role. Use POST /api/v1/admin/users (system:admin)
     to create accounts with an elevated role.
     """
+    if not settings.ENABLE_SIGNUP:
+        return APIResponse(
+            success=False,
+            error="Self-registration is disabled on this deployment (ENABLE_SIGNUP=false).",
+        )
     try:
         result = await auth_manager.register_user(body.username, body.password, body.email)
 
@@ -2220,10 +2231,10 @@ async def clear_user_history(
 
         deleted_count = 0
 
-        # Clear from Postgres
+        # Clear from Postgres: the conversations table, whose messages cascade.
+        pg_conversations = 0
         if postgres_manager and postgres_manager.pool:
-            await postgres_manager.clear_user_history(username)
-            # We don't get a count back easily, but assume success
+            pg_conversations = await postgres_manager.clear_user_history(username)
 
         # Clear from Redis
         if redis_manager:
@@ -2248,10 +2259,12 @@ async def clear_user_history(
         # than no erasure at all because the user is told it worked.
         turns_deleted = await _turn_memory_service().delete_user_turns(username)
 
+        # The reply names what was removed, so "cleared" is a count and not a claim.
         return APIResponse(
             success=True,
             data={
-                "deleted_conversations": deleted_count,  # This might be just Redis count
+                "deleted_conversations": deleted_count,  # Redis conversation keys
+                "deleted_postgres_conversations": pg_conversations,
                 "deleted_turn_records": turns_deleted,
                 "message": "History cleared successfully",
             },
@@ -2609,6 +2622,10 @@ async def chat(
                 state.persona = persona
                 state.personas = []
 
+        # Full history, not the Redis working copy: refill from the stored transcript if it is
+        # longer (every entry point, same helper; see _fill_history_gap).
+        state.messages = await _fill_history_gap(conversation_id, state.messages)
+
         # BUG-655: the restored intermediate_results is the previous turn's, whole. Prune what
         # is about a place the user has left — BEFORE this message joins the history, so the
         # look-back compares against earlier turns only.
@@ -2687,7 +2704,7 @@ async def chat(
                 },
             )
 
-        updated_state = await orchestrator.execute(state)
+        updated_state = await pipeline_gate.run(orchestrator.execute(state), "/chat")
 
         # Log intermediate results
         logger.info("\n" + "=" * 100)
@@ -2876,6 +2893,9 @@ async def chat_stream(
                 else:
                     state.user_message = user_message
 
+                # Full history, same as /chat (see _fill_history_gap).
+                state.messages = await _fill_history_gap(conversation_id, state.messages)
+
                 # BUG-655: same guard as /chat and /v1, before the message joins the history.
                 _prune_inherited_state(
                     state.intermediate_results, state.messages, user_message, "/chat/stream"
@@ -2913,7 +2933,9 @@ async def chat_stream(
 
                 # Stream workflow execution — emit progress events per node, then final response
                 updated_state = state
-                async for step in orchestrator.stream_execute(state):
+                async for step in pipeline_gate.stream(
+                    orchestrator.stream_execute(state), "/chat/stream"
+                ):
                     if isinstance(step, dict):
                         for node_name, node_state in step.items():
                             label = _NODE_LABELS.get(node_name)
@@ -3038,6 +3060,78 @@ def _oai_auth(authorization: Optional[str] = Header(None)) -> None:
         raise HTTPException(status_code=401, detail="Invalid API key")
 
 
+# ==================== Per-user memory: see and erase (F6) =========================
+#
+# Identity comes from the SAME path the chat turn uses (resolve_forwarded_user), not from a
+# session, so what GET shows is exactly what the chat has been keyed on. The route is gated
+# by the pipeline key like /v1 itself: the forwarded header is only as trustworthy as the
+# network holding that key. The shared fallback identity is REFUSED, not served: every
+# request that cannot be attributed to a person resolves to "openwebui_user", and listing or
+# erasing that partition would show or destroy one stranger's memory on behalf of another.
+
+_SHARED_FALLBACK_USER = "openwebui_user"
+
+
+async def _memory_owner(request: Request) -> str:
+    """The end user whose memory this request may see or erase. Raises 403 with a reason."""
+    username, _role = await resolve_forwarded_user(request)
+    if not username or username == _SHARED_FALLBACK_USER:
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Cannot identify you: this request carries no forwarded user identity, so it "
+                f"resolves to the shared fallback '{_SHARED_FALLBACK_USER}'. Per-user memory is "
+                "not shown or erased for that shared identity. Sign in through the front end, "
+                "and ask the administrator to confirm TRUST_FORWARDED_USER is enabled."
+            ),
+        )
+    return username
+
+
+@app.get("/api/v1/me/memory")
+async def get_my_memory(request: Request, _: None = Depends(_oai_auth)):
+    """What OntoSage holds about the requesting user: stored preferences and turn count."""
+    from orchestrator.services.user_preference_store import get_user_preference_store
+
+    owner = await _memory_owner(request)
+    preferences = await get_user_preference_store().list_preferences(owner)
+    turn_count = await _turn_memory_service().count_user_turns(owner)
+    return APIResponse(
+        success=True,
+        data={
+            "user": owner,
+            "preferences": preferences,
+            "turn_count": turn_count,
+            "note": (
+                "Conversation transcripts are not part of this view; they are listed and "
+                "cleared through the conversation history endpoints."
+            ),
+        },
+    )
+
+
+@app.delete("/api/v1/me/memory")
+async def erase_my_memory(request: Request, _: None = Depends(_oai_auth)):
+    """Erase the requesting user's stored preferences and per-turn memory. Reports the counts."""
+    from orchestrator.services.user_preference_store import get_user_preference_store
+
+    owner = await _memory_owner(request)
+    preferences_deleted = await get_user_preference_store().delete_all_preferences(owner)
+    turns_deleted = await _turn_memory_service().delete_user_turns(owner)
+    logger.info(
+        f"[me/memory] erased user={owner!r}: preferences={preferences_deleted} "
+        f"turn_records={turns_deleted}"
+    )
+    return APIResponse(
+        success=True,
+        data={
+            "user": owner,
+            "preferences_deleted": preferences_deleted,
+            "turn_records_deleted": turns_deleted,
+        },
+    )
+
+
 def _is_placeholder_account(row: Dict[str, Any]) -> bool:
     """True for the auto-created ``/v1`` conversation-owner stub (never a real account)."""
     meta = row.get("metadata")
@@ -3062,14 +3156,25 @@ async def resolve_forwarded_user(request: Request) -> Tuple[str, str]:
     is only as trustworthy as the network holding the pipeline key, which is why this
     is opt-in and never inferred.
     """
+    # Trust decision (B3, owner 2026-10-06): the forwarded-user header is trusted because the
+    # orchestrator and Open WebUI publish their ports on 127.0.0.1 only (docker-compose
+    # B2), so only the local proxy/tunnel can set it. Anything that can reach :8000 from
+    # elsewhere is not on this trust boundary and must not be able to set it.
+    #
+    # The shared "openwebui_user" partition is reserved for requests that carry NO
+    # identity at all (flag off, or header absent). A request that names someone but
+    # cannot be resolved gets its own readonly partition keyed by that name, so two users
+    # never share conversation memory by accident.
     fallback = ("openwebui_user", "readonly")
     if not getattr(settings, "TRUST_FORWARDED_USER", False):
         return fallback
 
     header_name = getattr(settings, "FORWARDED_USER_HEADER", "X-OpenWebUI-User-Email")
     ident = (request.headers.get(header_name) or "").strip()
-    if not ident or postgres_manager is None:
+    if not ident:
         return fallback
+    if postgres_manager is None:
+        return (ident, "readonly")
 
     # Match the exact username, then the account's registered email, then the email's local
     # part. Open WebUI forwards an email while OntoSage accounts are keyed by username.
@@ -3094,7 +3199,7 @@ async def resolve_forwarded_user(request: Request) -> Tuple[str, str]:
             rows = await lookup(name)
         except Exception as e:  # never let identity lookup break a chat turn
             logger.warning(f"[forwarded-user] lookup failed for {name!r}: {e}")
-            return fallback
+            return (ident, "readonly")
         # Chatting through /v1 auto-creates a placeholder row so conversations have a
         # valid owner. It is a foreign-key stub, not an identity decision — and it is
         # always readonly. Treating one as an account would let a stub created before
@@ -3447,6 +3552,9 @@ async def websocket_stream(websocket: WebSocket):
             else:
                 state.user_message = user_message
 
+            # Full history, same as /chat (see _fill_history_gap).
+            state.messages = await _fill_history_gap(conversation_id, state.messages)
+
             # BUG-655: same guard as /chat and /v1, before the message joins the history.
             _prune_inherited_state(
                 state.intermediate_results, state.messages, user_message, "/stream"
@@ -3469,10 +3577,16 @@ async def websocket_stream(websocket: WebSocket):
             state.messages.append(Message(role="user", content=user_message))
 
             await redis_manager.save_message(conversation_id, "user", user_message)
+            # The stored transcript is the source of truth (see _fill_history_gap), so the
+            # websocket writes it too, as the three HTTP routes already do.
+            if postgres_manager and postgres_manager.pool:
+                await postgres_manager.save_message(
+                    conversation_id, "user", user_message, auth["username"]
+                )
 
             # Stream workflow execution — capture last step as final state
             last_step = None
-            async for step in orchestrator.stream_execute(state):
+            async for step in pipeline_gate.stream(orchestrator.stream_execute(state), "/stream"):
                 last_step = step
                 # Send progress updates
                 if "dialogue" in step:
@@ -3521,6 +3635,10 @@ async def websocket_stream(websocket: WebSocket):
             assistant_message = _assistant_answer(final_state)
 
             await redis_manager.save_message(conversation_id, "assistant", assistant_message)
+            if postgres_manager and postgres_manager.pool:
+                await postgres_manager.save_message(
+                    conversation_id, "assistant", assistant_message, auth["username"]
+                )
 
             # Send final response
             await websocket.send_json(
@@ -3581,6 +3699,35 @@ async def get_conversation(
         return APIResponse(success=False, error=str(e))
 
 
+@app.get("/api/v1/evidence/{conversation_id}", response_model=APIResponse)
+async def get_turn_evidence(
+    conversation_id: str,
+    turn: Optional[int] = None,
+    user: UserContext = Depends(require_permission("metadata:read")),
+):
+    """One turn's stored evidence projection (D10). Read-only.
+
+    Same ownership rule as /conversation/{id}: the conversation's owner, or a user:read holder.
+    The remedy is shown only to system:admin, because it names a data change only an
+    administrator can make. ``turn`` is the turn index; the latest turn when it is omitted.
+    """
+    from orchestrator.services.answer_provenance import for_reader
+
+    if not _user_owns_conversation(user, conversation_id):
+        raise HTTPException(status_code=403, detail="Access denied")
+    found = await _turn_memory_service().get_evidence(conversation_id, turn)
+    if found is None:
+        raise HTTPException(status_code=404, detail="No such turn for this conversation")
+    return APIResponse(
+        success=True,
+        data={
+            "conversation_id": conversation_id,
+            "turn": found["turn"],
+            "evidence": for_reader(found["evidence"], is_admin=user.has_permission("system:admin")),
+        },
+    )
+
+
 @app.delete("/conversation/{conversation_id}", response_model=APIResponse)
 async def delete_conversation(
     conversation_id: str,
@@ -3590,16 +3737,21 @@ async def delete_conversation(
     if not _user_owns_conversation(user, conversation_id):
         raise HTTPException(status_code=403, detail="Access denied")
     try:
-        # Delete state and messages
-        await redis_manager.redis.delete(f"conversation:{conversation_id}")
-        await redis_manager.redis.delete(f"messages:{conversation_id}")
+        # Delete state and messages. RedisManager's connection is `.client`; `.redis` does not
+        # exist, so this endpoint raised on every call and reported the raise as a failure.
+        await redis_manager.client.delete(f"conversation:{conversation_id}")
+        await redis_manager.client.delete(f"messages:{conversation_id}")
         # F4 (QA-trial plan, 2026-10-04): turn_memory.delete_conversation existed with no
         # caller -- deleting the Redis state left the per-turn Postgres rows for this
         # conversation behind.
-        await _turn_memory_service().delete_conversation(conversation_id)
+        turns_deleted = await _turn_memory_service().delete_conversation(conversation_id)
 
         return APIResponse(
-            success=True, data={"message": f"Conversation {conversation_id} deleted"}
+            success=True,
+            data={
+                "message": f"Conversation {conversation_id} deleted",
+                "deleted_turn_records": turns_deleted,
+            },
         )
 
     except Exception as e:
@@ -3864,39 +4016,93 @@ def _retrieval_outcome_from_state(state: Any) -> Optional[Dict[str, Any]]:
         return None
     return _ro_from_state(getattr(state, "intermediate_results", None) or {})
 
+def _history_cap() -> int:
+    """The most stored messages one conversation is rehydrated with (CONVERSATION_MAX_MESSAGES)."""
+    return max(1, int(getattr(settings, "CONVERSATION_MAX_MESSAGES", 400)))
+
+
+async def _fill_history_gap(
+    conversation_id: str,
+    in_memory: List["Message"],
+    cap: Optional[int] = None,
+) -> List["Message"]:
+    """Return the conversation's history, refilled from Postgres when the in-memory copy is short.
+
+    CONVERSATION HISTORY IS NOT WINDOWED. Postgres `messages` holds every user and assistant
+    message of a conversation until the user deletes it. Redis holds a bounded working copy
+    (CONVERSATION_MAX_MESSAGES), so after a long chat the Redis copy is a suffix of the stored
+    transcript. Evicting from Redis is therefore not data loss: when the stored transcript is
+    longer than what the entry point holds, the stored tail (up to ``cap``) replaces it.
+
+    Returns ``in_memory`` itself (the same object) when nothing is missing, so callers and
+    tests can tell a no-op from a refill. Never raises: an unavailable store degrades to the
+    in-memory copy, which is the behaviour before this function existed.
+
+    Applied on every entry point (/chat, /chat/stream, the websocket, /v1/chat/completions).
+    """
+    if not (postgres_manager and getattr(postgres_manager, "pool", None)):
+        return in_memory
+    cap = cap or _history_cap()
+    try:
+        stored = await postgres_manager.count_conversation_messages(conversation_id)
+        if stored <= len(in_memory):
+            return in_memory
+        rows = await postgres_manager.load_conversation_tail(conversation_id, min(stored, cap))
+    except Exception as _ge:
+        logger.debug(f"[history] store refill skipped for {conversation_id}: {_ge}")
+        return in_memory
+    if not rows:
+        return in_memory
+    refilled = [
+        Message(
+            role=r["role"],
+            content=r.get("content") or "",
+            timestamp=r.get("timestamp") or datetime.now(),
+        )
+        for r in rows
+    ]
+    logger.info(
+        f"[history] {conversation_id}: working copy held {len(in_memory)} message(s), the stored "
+        f"transcript holds {stored}; restored the newest {len(refilled)} from Postgres"
+    )
+    return refilled
+
 
 async def _rehydrate_prior_messages(
     conversation_id: str,
     prior_messages: List["Message"],
     max_history: int,
 ) -> List["Message"]:
-    """Rehydrate conversation history from server state when the client sent none.
+    """The prior history a /v1 turn starts from: the client's, or the server's, whichever is fuller.
 
-    OpenWebUI echoes the full message array each turn, so `prior_messages`
-    (reconstructed from the request) already carries history and is returned
-    unchanged. But a custom chat UI, the /stream WebSocket, or a plain API
-    caller may send ONLY the current message — leaving `prior_messages` empty
-    and breaking follow-ups ("is that ok?", "humidity there?"). In that case we
-    load the persisted conversation state so co-reference still resolves.
+    OpenWebUI echoes the full message array each turn, so `prior_messages` (reconstructed
+    from the request) normally carries history. A minimal client (a custom chat UI, a plain
+    API caller) may send ONLY the current message, so with nothing supplied the Redis
+    working copy is read. In both cases the result is then refilled from the stored
+    transcript when that is longer (`_fill_history_gap`), so a client that echoes a short
+    window does not truncate a conversation the server still holds in full.
 
-    Additive and side-effect-free: skipped whenever the client supplied
-    history; `save_state` later re-persists the merged list so it accumulates
-    across turns. Never raises — a memory miss degrades to no history.
+    Returns ``prior_messages`` unchanged (same object) when neither the store nor the
+    working copy has more. Never raises: a memory miss degrades to no history.
     """
     if prior_messages:
+        base = prior_messages
+    else:
+        base = []
+        try:
+            _prev_state = await redis_manager.load_state(conversation_id)
+            if _prev_state and _prev_state.messages:
+                base = list(_prev_state.messages)
+                logger.info(
+                    f"[/v1/chat/completions] {len(base)} prior message(s) from server memory "
+                    "(client sent no history)"
+                )
+        except Exception as _re:
+            logger.debug(f"[/v1/chat/completions] server-memory rehydrate skipped: {_re}")
+    filled = await _fill_history_gap(conversation_id, base, cap=max(1, int(max_history)))
+    if filled is base and prior_messages:
         return prior_messages
-    try:
-        _prev_state = await redis_manager.load_state(conversation_id)
-        if _prev_state and _prev_state.messages:
-            rehydrated = list(_prev_state.messages)[-max_history:]
-            logger.info(
-                f"[/v1/chat/completions] rehydrated {len(rehydrated)} prior "
-                "turn(s) from server memory (client sent no history)"
-            )
-            return rehydrated
-    except Exception as _re:
-        logger.debug(f"[/v1/chat/completions] server-memory rehydrate skipped: {_re}")
-    return prior_messages
+    return filled[-max_history:] if max_history else filled
 
 
 @app.post("/v1/chat/completions")
@@ -4112,6 +4318,11 @@ async def openai_chat_completions(
                 # Initial role chunk
                 yield sse_chunk(role="assistant")
 
+                # H2: another turn holds the pipeline. Say so now, in words, instead of a
+                # silent wait behind the model (the gate itself is taken below).
+                if pipeline_gate.busy():
+                    yield sse_chunk(content=pipeline_gate.WAITING_MESSAGE + "\n\n")
+
                 # Stream pipeline progress LIVE inside a collapsible <details>
                 # block as each node runs, so Open WebUI shows an updating panel
                 # during processing instead of a blank screen until the pipeline
@@ -4128,7 +4339,9 @@ async def openai_chat_completions(
                     yield sse_chunk(content="- Analyzing your question…\n")
                     details_open = True
                     seen_status.add("Analyzing intent")  # dialogue node won't re-add
-                async for step in orchestrator.stream_execute(state):
+                async for step in pipeline_gate.stream(
+                    orchestrator.stream_execute(state), "/v1 stream"
+                ):
                     last_step = step
                     if not show_status:
                         continue
@@ -4306,8 +4519,11 @@ async def openai_chat_completions(
 
         # Non-streaming: Execute workflow (with per-request timeout to prevent cascade failures)
         try:
-            updated_state = await asyncio.wait_for(
-                orchestrator.execute(state), timeout=float(settings.REQUEST_TIMEOUT_SECS)
+            # The gate's queue wait is outside the timeout: only the run itself is bounded.
+            updated_state = await pipeline_gate.run(
+                orchestrator.execute(state),
+                "/v1",
+                timeout=float(settings.REQUEST_TIMEOUT_SECS),
             )
         except asyncio.TimeoutError:
             logger.warning(
