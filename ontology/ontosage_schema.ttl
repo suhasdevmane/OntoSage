@@ -2780,10 +2780,17 @@ ontosage:Booking ontosage:layTerms "booking", "bookings", "reservation", "reserv
 # "no records of scheduled inspections are present in the ontology" and instructed to
 # "create a record", while 82 compliance checks are held with due dates, completion dates
 # and a responsible role. A documented hand-off that never landed.
+# BUG-1443 (2026-10-06): a building's fire risk assessment is held as ComplianceCheck
+# records, not as RiskAssessment. The bare "risk assessment" declared on RiskAssessment
+# scored 30.0 against 0 for these, so a fire question answered from non-fire assessments.
+# Whole phrases only: a bare "fire" would claim every fire-alarm question. The phrases
+# stay in this one statement, because the record-class tests read one per class.
 ontosage:ComplianceCheck ontosage:layTerms "compliance check", "compliance checks",
     "compliance", "statutory check", "statutory checks", "inspection", "inspections",
     "test due", "overdue check", "certificate",
-    "assurance", "assurance activity", "assurance activities", "assurance evidence" .
+    "assurance", "assurance activity", "assurance activities", "assurance evidence",
+    "fire risk assessment", "fire risk assessments",
+    "fire risk assessment review", "fire risk assessment reviews" .
 
 # DEFECTS AND DRAINS (2026-09-18, live run 3 rows 49 and 129). This register holds 24 work
 # orders with a priority, a schedule kind, a completion date and a recorded status — the
