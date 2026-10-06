@@ -113,6 +113,19 @@ AGENT_MEMORY_EMBED_MODEL=text-embedding-3-large
 HOSTED_LLM_BASE_URL=http://10.98.84.2:8000/v1
 HOSTED_LLM_API_KEY=your-comat-gateway-api-key-here
 HOSTED_LLM_MODEL=gpt-oss:20b
+# Client deadline per hosted request, QUEUE TIME INCLUDED. The gateway generates a few requests at
+# once and queues the rest, so a request can wait minutes before its first token. Default 660 =
+# 600 s + 60 s margin. Set it below ~600 and queued requests are abandoned client-side.
+# Read from this .env by shared/config.py (Settings.HOSTED_LLM_TIMEOUT_S).
+HOSTED_LLM_TIMEOUT_S=660
+# Hosted requests this process keeps in flight at once; the rest wait here and the wait is
+# logged. Match the gateway's own concurrency (4). Read from this .env (HOSTED_LLM_MAX_CONCURRENCY).
+HOSTED_LLM_MAX_CONCURRENCY=4
+# max_tokens floor for every hosted call. gpt-oss spends this on hidden reasoning BEFORE any
+# visible text, so a small value returns an empty answer. A call that comes back empty with
+# finish_reason=length is retried once at double this budget. Read from this .env
+# (HOSTED_LLM_MAX_TOKENS).
+HOSTED_LLM_MAX_TOKENS=4096
 
 
 # ==================== 🖥️ LOCAL MODEL CONFIGURATION ====================
@@ -502,3 +515,13 @@ BUILDING_TIMEZONE=Europe/London
 # and claim any role.
 TRUST_FORWARDED_USER=true
 FORWARDED_USER_HEADER=X-OpenWebUI-User-Email
+
+# Shared accounts with Open WebUI. An account the admin creates in OntoSage is also created
+# in Open WebUI with the same email and password. Open WebUI's internal URL is the default.
+# OPENWEBUI_ADMIN_EMAIL must be an existing Open WebUI ADMIN account (the first user who
+# signs up in Open WebUI becomes admin). Blank = no sync; the account is then created in
+# OntoSage only. Set the password here yourself; nothing in this repo supplies one.
+# A password changed later in Open WebUI is NOT copied back to OntoSage.
+OPENWEBUI_URL=http://open-webui:8080
+OPENWEBUI_ADMIN_EMAIL=
+OPENWEBUI_ADMIN_PASSWORD=

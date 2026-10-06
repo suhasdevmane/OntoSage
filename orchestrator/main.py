@@ -1775,6 +1775,9 @@ async def health_check():
             # report the mismatch as a regression.
             "building_id": settings.BUILDING_ID,
             "ontology_valid": ontology_ok,
+            # Additive. Reports the automatic backup; it does not feed the overall status above,
+            # because a failing backup must not take the answering service out of rotation.
+            "backup": _auto_backup_status(),
             "introspector_ready": ontology_introspector.is_ready(),
             # Build provenance — which commit/time this image was built from (baked as ENV at build).
             # "unknown" means the image was built without GIT_SHA passed.
@@ -2540,6 +2543,30 @@ async def _save_turn_memory(state: Any, route: str) -> None:
         await _turn_memory_service().save_turn(state)
     except Exception as exc:
         logger.debug(f"[{route}] turn_memory save skipped: {describe_exception(exc)}")
+    # Every answer route reaches this hook after its turn is persisted, so it is the one place
+    # an automatic backup is requested. The request coalesces and never raises.
+    _request_auto_backup()
+
+
+def _request_auto_backup() -> None:
+    """Ask the auto-backup service for a run. Non-blocking; a failure here never reaches a turn."""
+    try:
+        from orchestrator.services.auto_backup import get_service
+
+        get_service(lambda: postgres_manager.pool if postgres_manager else None).request()
+    except Exception as exc:
+        logger.debug(f"[auto_backup] request skipped: {describe_exception(exc)}")
+
+
+def _auto_backup_status() -> Dict[str, Any]:
+    """The /health `backup` block. Never raises."""
+    try:
+        from orchestrator.services.auto_backup import get_service
+
+        return get_service(lambda: postgres_manager.pool if postgres_manager else None).status()
+    except Exception as exc:
+        logger.debug(f"[auto_backup] status unavailable: {describe_exception(exc)}")
+        return {"enabled": False, "status": "unavailable"}
 
 
 @app.post("/chat", response_model=APIResponse)
@@ -3213,10 +3240,53 @@ async def resolve_forwarded_user(request: Request) -> Tuple[str, str]:
         logger.info(f"[forwarded-user] {ident!r} → {row['username']!r} (role={role})")
         return row["username"], role
 
+    # First sign-in through Open WebUI by an identity OntoSage has never seen: create the
+    # least-privilege account, so an admin can see it and change its role later.
+    if "@" in ident:
+        provisioned = await _provision_openwebui_identity(ident)
+        if provisioned is not None:
+            return provisioned
+
     # A real person signed into the proxy with no OntoSage account: let them ask,
     # but at least privilege — silently granting more would be worse than a refusal.
     logger.info(f"[forwarded-user] {ident!r} has no OntoSage account — using readonly")
     return (ident, "readonly")
+
+
+async def _provision_openwebui_identity(ident: str) -> Optional[Tuple[str, str]]:
+    """Create a readonly OntoSage account for a first-seen Open WebUI email.
+
+    Returns ``(username, role)`` for the account that now exists, or None when none could
+    be created or found (the caller then falls back to readonly). Concurrent first requests
+    are safe: ``create_user`` reports a duplicate as False, and the row that won the race is
+    re-read so its role, not a guess, decides the answer. Never raises.
+    """
+    try:
+        created = await postgres_manager.create_user(
+            ident,
+            "placeholder_hash",  # external identity: a hash that cannot match any password
+            "placeholder_salt",
+            email=ident,
+            # Deliberately NOT source=open_webui: that marker means "conversation stub, never
+            # an account" and would hide the row from role changes made later by an admin.
+            metadata={"source": "openwebui_signup"},
+            role="readonly",
+        )
+    except Exception as e:
+        logger.warning(f"[forwarded-user] could not create account for {ident!r}: {e}")
+        return None
+    if created:
+        logger.info(
+            f"[forwarded-user] {ident!r} first seen via Open WebUI — created readonly account"
+        )
+        return ident, "readonly"
+    try:
+        row = await postgres_manager.get_user(ident)
+    except Exception:
+        return None
+    if row and row.get("username") and not _is_placeholder_account(row):
+        return row["username"], row.get("role") or "readonly"
+    return None
 
 
 # NOTE: The GET /v1/models and POST /v1/chat/completions routes are defined
@@ -7189,10 +7259,24 @@ async def create_user_account(
     if body.role not in _VALID_ROLES:
         return APIResponse(success=False, error=f"invalid role '{body.role}'", data={})
     res = await auth_manager.register_user(body.username, body.password, body.email, role=body.role)
+    data: Dict[str, Any] = {"username": body.username, "role": body.role}
+    if res.get("success"):
+        # Same credentials in Open WebUI. The OntoSage account already exists, so a sync
+        # failure is reported here and never turns this into a failed creation.
+        from orchestrator.services.openwebui_sync import ensure_openwebui_user
+
+        sync = await ensure_openwebui_user(body.email or "", body.username, body.password)
+        data["openwebui_sync"] = sync.as_dict()
+        if sync.status == "failed":
+            data["warning"] = (
+                "The OntoSage account was created and is unaffected. The Open WebUI account "
+                f"was not created: {sync.reason}. Create it in Open WebUI, or fix the "
+                "OPENWEBUI_ADMIN_* settings and recreate the account."
+            )
     return APIResponse(
         success=bool(res.get("success")),
         error=res.get("error"),
-        data={"username": body.username, "role": body.role},
+        data=data,
     )
 
 

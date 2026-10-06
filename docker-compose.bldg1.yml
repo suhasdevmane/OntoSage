@@ -143,6 +143,7 @@ services:
       - ./input:/app/input # rw: GUI-created data sources persist to input/datasources.custom.yaml
       - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/floor-plans:/app/floor_plans # Writable — pipeline writes manifests + PNGs here
       - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/artifacts:/app/volumes/artifacts # rw: datasource toggle-state + ttl-upload cache
+      - ./volumes/${BUILDING_ID:?BUILDING_ID missing - set it in .env}/backups:/app/volumes/backups # rw, ORCHESTRATOR ONLY: encrypted automatic backups (AUTO_BACKUP_DIR); gitignored via volumes/
       - ./outputs:/app/outputs # Mount shared outputs (data, plots, query results)
       - ./orchestrator/agents/.env:/app/agents/.env:ro # Mount OpenAI credentials
       - ./data:/app/data:ro

@@ -1,126 +1,95 @@
-"""Backup passphrase handling for the encrypted backup scripts.
+"""Backup passphrase for the encrypted backup scripts: read from BACKUP_PASSPHRASE, nowhere else.
 
-The passphrase lives in the Windows Credential Manager (via the `keyring` package, DPAPI
-protected, readable only by this Windows user) under service ``OntoSage-backup`` and
-username ``bldg1``. It is never read from ``.env`` and never written into the repository.
+The passphrase is an environment variable in the active ``.env``, like every other credential
+in this project (owner decision, 2026-10-06). The Windows Credential Manager is deliberately
+not used. A value already in the process environment wins over the file, so a scheduled run
+may supply it without writing it anywhere.
 
-First-time setup (prints nothing secret)::
+    BACKUP_PASSPHRASE=<at least 12 characters>      # in the active .env
 
-    .venv\\Scripts\\python.exe scripts\\_backup_secret.py --set
-
-Check whether a passphrase is stored (prints yes/no only)::
+Check that it is set (prints set / not set, never the value)::
 
     .venv\\Scripts\\python.exe scripts\\_backup_secret.py --check
-
-A scheduled run cannot prompt, so it fails with exit code 2 when nothing is stored.
 """
 
 import argparse
-import getpass
+import os
 import sys
-from typing import Any, Callable, Optional
+from pathlib import Path
+from typing import Mapping, Optional
 
-SERVICE = "OntoSage-backup"
-USERNAME = "bldg1"
-MIN_LENGTH = 12
+SCRIPTS_DIR = Path(__file__).resolve().parent
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
+
+from _backup_format import MIN_PASSPHRASE_LENGTH  # noqa: E402
+
+REPO_ROOT = SCRIPTS_DIR.parent
+ENV_NAME = "BACKUP_PASSPHRASE"
 
 
 class PassphraseError(Exception):
     """No usable passphrase could be obtained."""
 
 
-def _default_keyring() -> Any:
-    try:
-        import keyring
-    except ImportError as exc:
-        raise PassphraseError(
-            "the 'keyring' package is not installed in this interpreter "
-            "(.venv\\Scripts\\python.exe -m pip install keyring)"
-        ) from exc
-    return keyring
+def _read_key_from_env_file(path: Path, key: str) -> Optional[str]:
+    """Return the value of one KEY=VALUE line in a dotenv file, or None. Never prints it."""
+    if not path.is_file():
+        return None
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        name, _, value = line.partition("=")
+        if name.strip() != key:
+            continue
+        value = value.strip()
+        if len(value) >= 2 and value[0] == value[-1] and value[0] in "'\"":
+            value = value[1:-1]
+        return value
+    return None
 
 
 def get_passphrase(
     *,
     creating: bool = False,
-    interactive: Optional[bool] = None,
-    keyring_mod: Any = None,
-    prompt: Callable[[str], str] = getpass.getpass,
-    input_fn: Callable[[str], str] = input,
-    service: str = SERVICE,
-    username: str = USERNAME,
+    environ: Optional[Mapping[str, str]] = None,
+    env_file: Optional[Path] = None,
 ) -> str:
-    """Return the backup passphrase from the Credential Manager, or prompt for it.
+    """Return BACKUP_PASSPHRASE from the environment, else from the active .env.
 
-    creating=True asks twice, enforces MIN_LENGTH, and offers to store the result. It is
-    used when writing a new archive. creating=False (restore) prompts once and only offers
-    to store when nothing is stored yet.
+    creating=True is used when WRITING an archive and enforces MIN_PASSPHRASE_LENGTH.
+    creating=False (restore) accepts any non-empty value, because an old archive was written
+    with whatever passphrase was in force then.
     """
-    kr = keyring_mod if keyring_mod is not None else _default_keyring()
-    try:
-        stored = kr.get_password(service, username)
-    except Exception as exc:  # keyring backends raise a family of errors
-        raise PassphraseError(f"Credential Manager unavailable: {type(exc).__name__}") from exc
-    if stored:
-        return stored
-
-    if interactive is None:
-        interactive = sys.stdin is not None and sys.stdin.isatty()
-    if not interactive:
+    env = os.environ if environ is None else environ
+    value = env.get(ENV_NAME) or _read_key_from_env_file(
+        env_file if env_file is not None else REPO_ROOT / ".env", ENV_NAME
+    )
+    if not value:
         raise PassphraseError(
-            "no backup passphrase stored. Run: "
-            ".venv\\Scripts\\python.exe scripts\\_backup_secret.py --set"
+            f"{ENV_NAME} is not set. Add it to the active .env (see .env.example); "
+            "the backup cannot be encrypted or decrypted without it."
         )
-
-    first = prompt("Backup passphrase: ")
-    if creating:
-        second = prompt("Repeat passphrase: ")
-        if first != second:
-            raise PassphraseError("passphrases do not match")
-        if len(first) < MIN_LENGTH:
-            raise PassphraseError(f"passphrase must be at least {MIN_LENGTH} characters")
-    if not first:
-        raise PassphraseError("empty passphrase")
-
-    answer = input_fn("Store it in the Windows Credential Manager for this user? [y/N] ")
-    if answer.strip().lower() in ("y", "yes"):
-        try:
-            kr.set_password(service, username, first)
-            print("Stored in Credential Manager.")
-        except Exception as exc:
-            print(f"Could not store it ({type(exc).__name__}); using it for this run only.")
-    return first
+    if creating and len(value) < MIN_PASSPHRASE_LENGTH:
+        raise PassphraseError(
+            f"{ENV_NAME} must be at least {MIN_PASSPHRASE_LENGTH} characters to write a backup"
+        )
+    return value
 
 
 def main(argv=None) -> int:
-    """Set or check the stored passphrase. The value itself is never printed."""
+    """Report whether the passphrase is set. The value itself is never printed."""
     parser = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--set", action="store_true", help="prompt and store a new passphrase")
-    group.add_argument("--check", action="store_true", help="report whether one is stored")
-    args = parser.parse_args(argv)
+    parser.add_argument("--check", action="store_true", help="report set / not set")
+    parser.parse_args(argv)
     try:
-        kr = _default_keyring()
-        if args.check:
-            present = bool(kr.get_password(SERVICE, USERNAME))
-            print("stored" if present else "not stored")
-            return 0 if present else 2
-        existing = kr.get_password(SERVICE, USERNAME)
-        if existing:
-            print("A passphrase is already stored. Overwrite it? Existing backups still need it.")
-            if input("Overwrite? [y/N] ").strip().lower() not in ("y", "yes"):
-                return 0
-        first = getpass.getpass("New backup passphrase: ")
-        second = getpass.getpass("Repeat: ")
-        if first != second or len(first) < MIN_LENGTH:
-            print(f"Refused: passphrases differ or are shorter than {MIN_LENGTH} characters.")
-            return 2
-        kr.set_password(SERVICE, USERNAME, first)
-        print("Stored in Windows Credential Manager.")
-        return 0
+        get_passphrase()
     except PassphraseError as exc:
-        print(f"error: {exc}", file=sys.stderr)
+        print(f"not set: {exc}", file=sys.stderr)
         return 2
+    print("set")
+    return 0
 
 
 if __name__ == "__main__":
