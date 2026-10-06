@@ -38,6 +38,8 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import requests
 
 REPO = Path(__file__).resolve().parent.parent
+if str(REPO) not in sys.path:
+    sys.path.insert(0, str(REPO))
 
 #: Openings the system uses when it cannot ground an answer. An answer that BEGINS with one of these
 #: is a decline, whatever follows. Kept as the system's own wording so a new decline phrasing shows
@@ -167,6 +169,9 @@ def classify(answer: str) -> str:
     for pat in _PREAMBLES:
         body = re.sub(pat, "", body).strip()
     head = body[:400]
+    # The orchestrator's own deadline apology (REQUEST_TIMEOUT_SECS): no answer was produced.
+    if head.startswith("your request took too long"):
+        return "timeout"
     if any(m in head for m in _REFUSAL_MARKERS):
         return "refused"
     if any(m in head for m in _DECLINE_MARKERS):
@@ -305,7 +310,9 @@ def mysql_has_data_factory(tz_name: Optional[str]) -> Callable[[date, str], bool
                 return os.environ.get(key) or env.get(key) or default
 
             state["conn"] = pymysql.connect(
-                host=pick("MYSQL_HOST", "localhost"),
+                # The gate runs on the host, where the container name in MYSQL_HOST does not
+                # resolve; GATE_MYSQL_HOST overrides for any other setup.
+                host=pick("GATE_MYSQL_HOST", "127.0.0.1"),
                 port=int(pick("MYSQL_PORT", "3306")),
                 user=pick("MYSQL_USER", "root"),
                 password=pick("MYSQL_PASSWORD", ""),

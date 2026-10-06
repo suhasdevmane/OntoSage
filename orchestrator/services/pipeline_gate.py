@@ -33,15 +33,24 @@ WAITING_MESSAGE = (
     "Another question is being answered right now. " "You are next, and your answer will follow."
 )
 
-_gate: Optional[asyncio.Lock] = None
+_gate: Optional[asyncio.Semaphore] = None
 _waiting = 0
 
 
-def _lock() -> asyncio.Lock:
-    """The process lock, created on first use so it binds to the running event loop."""
+def _capacity() -> int:
+    """Turns that may run at once: the hosted gateway's slots, or one for the local model."""
+    from shared.config import settings
+
+    if settings.MODEL_PROVIDER == "hosted":
+        return max(1, int(settings.HOSTED_PIPELINE_CONCURRENCY))
+    return 1
+
+
+def _lock() -> asyncio.Semaphore:
+    """The process gate, created on first use so it binds to the running event loop."""
     global _gate
     if _gate is None:
-        _gate = asyncio.Lock()
+        _gate = asyncio.Semaphore(_capacity())
     return _gate
 
 

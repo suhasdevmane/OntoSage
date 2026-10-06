@@ -11222,6 +11222,12 @@ SELECT ?l WHERE {
         error_str = str(e).lower()
         error_type = type(e).__name__
 
+        if error_type == "GatewayUnreachable":
+            return (
+                "The language model is not reachable from this machine right now (the GPU "
+                "gateway needs the VPN). Please try again once it is connected. This "
+                "is not a gap in the building's records."
+            )
         if "rate limit" in error_str or "429" in error_str:
             return "I'm receiving too many requests right now. Please wait a moment and try again."
         if "timeout" in error_type.lower() or "timeout" in error_str:
