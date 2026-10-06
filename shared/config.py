@@ -164,6 +164,14 @@ class Settings(BaseSettings):
     # The gateway generates this many requests at once and queues the rest. Matching it
     # keeps the queue on the server's side of the wire, where it is visible, instead of
     # stacking abandonable requests in this process.
+    HOSTED_PIPELINE_CONCURRENCY: int = Field(
+        default=4,
+        description=(
+            "Chat turns the orchestrator runs at once on the hosted gateway. The gateway "
+            "serves 4 requests at a time and queues the rest, so 4 uses its capacity "
+            "without queueing inside it. The local model runs one turn at a time (1)."
+        ),
+    )
     HOSTED_LLM_MAX_CONCURRENCY: int = Field(
         default=4,
         ge=1,

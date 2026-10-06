@@ -250,6 +250,21 @@ class EmptyCompletionError(RuntimeError):
     """The provider answered successfully but produced no text."""
 
 
+class GatewayUnreachable(RuntimeError):
+    """The hosted gateway did not answer a cheap reachability probe.
+
+    Raised before any queued request is sent, so a dropped VPN fails in seconds instead of
+    leaving a request waiting on a dead link for the full client deadline.
+    """
+
+
+#: Seconds a hosted reachability result is trusted before the probe runs again.
+HOSTED_PROBE_TTL_S = float(os.environ.get("HOSTED_PROBE_TTL_S", "20"))
+HOSTED_PROBE_TIMEOUT_S = float(os.environ.get("HOSTED_PROBE_TIMEOUT_S", "5"))
+#: Attempts a hosted call gets. Two: one retry for a transient fault, not a second queue wait.
+HOSTED_MAX_ATTEMPTS = 2
+
+
 class HostedBudgetExhausted(EmptyCompletionError):
     """A hosted reasoning model spent its whole max_tokens budget before any visible text.
 
@@ -676,8 +691,43 @@ class LLMManager:
             return prompt
         return fit_prompt(prompt, prompt_char_budget())
 
+    async def _probe_hosted_gateway(self) -> None:
+        """Raise GatewayUnreachable unless the hosted gateway answers a cheap GET /models.
+
+        Results are cached for HOSTED_PROBE_TTL_S in both directions, so a busy building does
+        not probe per question and a dead link is refused without waiting for the probe again.
+        """
+        now = time.monotonic()
+        if now < getattr(self, "_gateway_down_until", 0.0):
+            raise GatewayUnreachable(self._gateway_down_reason)
+        if now < getattr(self, "_gateway_ok_until", 0.0):
+            return
+        import httpx
+
+        base = str(self.config["base_url"]).rstrip("/")
+        headers = {"Authorization": f"Bearer {self.config.get('api_key') or ''}"}
+        try:
+            async with httpx.AsyncClient(timeout=HOSTED_PROBE_TIMEOUT_S) as client:
+                resp = await client.get(f"{base}/models", headers=headers)
+            if resp.status_code >= 500 or resp.status_code in (401, 403):
+                raise GatewayUnreachable(f"gateway answered HTTP {resp.status_code}")
+            self._gateway_ok_until = time.monotonic() + HOSTED_PROBE_TTL_S
+            self._gateway_down_until = 0.0
+        except GatewayUnreachable as exc:
+            self._gateway_down_until = time.monotonic() + HOSTED_PROBE_TTL_S
+            self._gateway_down_reason = str(exc)
+            raise
+        except Exception as exc:  # network down, DNS failure, connect timeout
+            reason = f"{type(exc).__name__}: {exc}"
+            self._gateway_down_until = time.monotonic() + HOSTED_PROBE_TTL_S
+            self._gateway_down_reason = reason
+            logger.error(f"[hosted] gateway unreachable ({reason}); refusing without queueing")
+            raise GatewayUnreachable(reason) from exc
+
     def _is_retryable(self, error: Exception) -> bool:
         """Check if an error is transient and should be retried."""
+        if isinstance(error, GatewayUnreachable):
+            return False
         if isinstance(error, EmptyCompletionError):
             return True
         # A transport timeout is exactly as transient as an asyncio one, and its message
@@ -766,7 +816,10 @@ class LLMManager:
 
         last_error = None
 
-        for attempt in range(1, LLM_MAX_RETRIES + 1):
+        if self.provider == "hosted":
+            await self._probe_hosted_gateway()
+        max_attempts = HOSTED_MAX_ATTEMPTS if self.provider == "hosted" else LLM_MAX_RETRIES
+        for attempt in range(1, max_attempts + 1):
             try:
                 # Per-client rate limiting
                 if self.provider in ["openai", "ollama_cloud", "hosted"]:
@@ -828,7 +881,7 @@ class LLMManager:
                 last_error = TimeoutError(f"LLM [{client_label}] timed out after {_limit:g}s")
                 logger.warning(
                     f"LLM [{client_label}] timeout after {_elapsed:.1f}s "
-                    f"(limit {_limit:g}s, attempt {attempt}/{LLM_MAX_RETRIES})"
+                    f"(limit {_limit:g}s, attempt {attempt}/{max_attempts})"
                 )
                 self._breaker.record_failure()
             except Exception as e:
@@ -840,7 +893,7 @@ class LLMManager:
                     )
                 last_error = e
                 self._breaker.record_failure()
-                if not self._is_retryable(e) or attempt == LLM_MAX_RETRIES:
+                if not self._is_retryable(e) or attempt == max_attempts:
                     logger.error(
                         f"LLM [{client_label}] error (attempt {attempt}, non-retryable): {e}",
                         exc_info=True,
@@ -848,10 +901,10 @@ class LLMManager:
                     record_llm_failure(e, client_label)
                     raise
                 logger.warning(
-                    f"LLM [{client_label}] retryable error (attempt {attempt}/{LLM_MAX_RETRIES}): {e}"
+                    f"LLM [{client_label}] retryable error (attempt {attempt}/{max_attempts}): {e}"
                 )
 
-            if attempt < LLM_MAX_RETRIES:
+            if attempt < max_attempts:
                 backoff = LLM_BACKOFF_BASE_S * (LLM_BACKOFF_FACTOR ** (attempt - 1))
                 if self.provider in ["openai", "ollama_cloud", "hosted"]:
                     backoff = max(backoff, OPENAI_RETRY_DELAY_S)

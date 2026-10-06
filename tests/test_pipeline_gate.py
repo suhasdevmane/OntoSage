@@ -23,8 +23,22 @@ MAIN = REPO / "orchestrator" / "main.py"
 
 @pytest.fixture(autouse=True)
 def fresh_gate(monkeypatch):
+    from shared.config import settings
+
+    # These tests pin the one-at-a-time rule that applies to the local model.
+    monkeypatch.setattr(settings, "MODEL_PROVIDER", "local")
     monkeypatch.setattr(pipeline_gate, "_gate", None)
     monkeypatch.setattr(pipeline_gate, "_waiting", 0)
+
+
+def test_the_hosted_gateway_runs_as_many_turns_as_it_has_slots(monkeypatch):
+    from shared.config import settings
+
+    monkeypatch.setattr(settings, "MODEL_PROVIDER", "hosted")
+    monkeypatch.setattr(settings, "HOSTED_PIPELINE_CONCURRENCY", 4)
+    assert pipeline_gate._capacity() == 4
+    monkeypatch.setattr(settings, "MODEL_PROVIDER", "local")
+    assert pipeline_gate._capacity() == 1
 
 
 class _Log:

@@ -25,6 +25,17 @@ from types import SimpleNamespace
 
 import pytest
 
+
+@pytest.fixture(autouse=True)
+def _no_live_probe(monkeypatch):
+    # These tests exercise the queue and the budget, not the reachability check.
+    from orchestrator.llm_manager import LLMManager
+
+    async def _up(self):
+        return None
+
+    monkeypatch.setattr(LLMManager, "_probe_hosted_gateway", _up)
+
 pytestmark = pytest.mark.unit
 
 
@@ -243,4 +254,5 @@ def test_an_empty_stop_is_not_mistaken_for_a_budget_shortfall(monkeypatch):
 
     with pytest.raises(lm.EmptyCompletionError):
         asyncio.run(mgr.generate("x"))
-    assert [c["max_tokens"] for c in gateway.calls] == [4096]
+    # Two attempts at the same budget (hosted cap), never a doubled one.
+    assert {c["max_tokens"] for c in gateway.calls} == {4096}
