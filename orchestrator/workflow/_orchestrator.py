@@ -4145,7 +4145,13 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             row_count = len(result.get("results", {}).get("data", []))
             logger.info(f"SQL successful: {row_count} data records retrieved")
             if row_count > 0:
-                _prov.record_sql_stores(state, storage_map)
+                # Cite only the stores that returned rows for a bound uuid (BUG-1442). Rows
+                # that carry no uuid column (aggregate-lane shapes) keep the whole map.
+                _prov.record_sql_stores(
+                    state,
+                    storage_map,
+                    _prov.uuids_holding_rows(result.get("results", {}).get("data", [])),
+                )
 
             # WB-18: NO staleness notification from a READ. `on_new_readings` is the ingestion
             # hook ("called by the ingestion pipeline when new sensor readings arrive"); this

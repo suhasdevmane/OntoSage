@@ -18,7 +18,7 @@ a registry is available — so it never changes behaviour when the flag is off.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 from orchestrator.services.datasource_registry import BUILTIN_PROVENANCE
 from shared.models import ProvenanceTag
@@ -57,13 +57,39 @@ def _table_from_storage(uri: str) -> str:
     return s
 
 
-def record_sql_stores(state: Any, storage_map: Dict[str, str]) -> None:
+def uuids_holding_rows(rows: Any) -> Optional[set]:
+    """The uuids that appear in a fetched result, or None when the rows carry no uuid column.
+
+    None means "cannot tell which sensors contributed", and the caller keeps the whole bound
+    map rather than guessing a subset.
+    """
+    rows = list(rows or [])
+    if not all(isinstance(r, dict) and "uuid" in r for r in rows):
+        return None
+    return {r["uuid"] for r in rows}
+
+
+def record_sql_stores(
+    state: Any,
+    storage_map: Dict[str, str],
+    uuids_with_rows: Optional[Iterable[str]] = None,
+) -> None:
     """Record provenance for the SQL step from a {uuid: storedAt-uri} map.
+
+    ``uuids_with_rows``, when given, restricts the stores cited to those holding a row for a
+    bound uuid. The map is every sensor the SPARQL step BOUND; a store that returned nothing for
+    its sensors was not a source of the answer, and citing it (BUG-1442: "Co2 Data" named for a
+    turn whose co2_data read was one sensor's rows) told the reader a table contributed that did
+    not. ``None`` keeps the old behaviour for result shapes that carry no uuid column.
 
     Falls back to the generic live-sensors tag when no storedAt is known.
     """
     if storage_map:
-        for uri in storage_map.values():
+        bound = storage_map
+        if uuids_with_rows is not None:
+            wanted = set(uuids_with_rows)
+            bound = {u: uri for u, uri in storage_map.items() if u in wanted}
+        for uri in bound.values():
             record(state, f"store:{_table_from_storage(uri)}")
     else:
         record(state, "live_sensors")

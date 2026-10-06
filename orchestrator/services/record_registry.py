@@ -747,10 +747,21 @@ def second_record_class(
     if len(ranked) < 2:
         return None
     best_score = ranked[0][0]
+    low = f" {(query or '').lower()} "
+    primary_terms = [t for t in primary.terms if _term_score(t, low) > 0]
     for score, record in ranked[1:]:
         if record.local_name == primary.local_name:
             continue
-        return record if score >= best_score * SECOND_REGISTER_SHARE else None
+        if score < best_score * SECOND_REGISTER_SHARE:
+            return None
+        # BUG-1443: a term the question matches only INSIDE a longer phrase the primary
+        # already claims is the same words, not a second register. "fire risk assessment"
+        # (ComplianceCheck) contains "risk assessment" (RiskAssessment), and merging that
+        # register in put non-fire assessments beside the fire reviews.
+        own = [t for t in record.terms if _term_score(t, low) > 0]
+        if own and all(any(t != p and t in p for p in primary_terms) for t in own):
+            continue
+        return record
     return None
 
 

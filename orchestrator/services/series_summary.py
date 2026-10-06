@@ -218,25 +218,29 @@ def summarise_series(
     return "\n".join(lines), has_energy
 
 
-#: A question that asks for a TOTAL over a period ("how much electricity did we use yesterday",
-#: "the total energy use last month"). Matched on the question, never on the data.
-_TOTAL_RE = re.compile(
-    r"\b(?:how\s+much|total|in\s+total|altogether|consum\w*|"
-    r"(?:did|do|does|have|has)\s+(?:we|you|it|the\s+building)\s+us(?:e|ed))\b",
-    re.IGNORECASE,
-)
-#: Words that make it a different question: those have their own templates and lanes.
+#: Words that make it a different question: those have their own templates and lanes, or ask for
+#: a level, a change or a forecast rather than the energy used over the period.
 _NOT_A_TOTAL_RE = re.compile(
     r"\b(?:average|mean|avg|highest|lowest|peak|maximum|minimum|max|min|current|latest|now|"
-    r"recent|compare[ds]?|versus|vs|trend|forecast|predict\w*)\b",
+    r"recent|most|least|worst|best|busiest|biggest|largest|smallest|hottest|coolest|warmest|"
+    r"coldest|compare[ds]?|versus|vs|trend|forecast|predict\w*|"
+    r"chang\w*|rise|rising|rose|fall\w*|increas\w*|decreas\w*|over\s+time|"
+    r"going\s+(?:up|down))\b",
     re.IGNORECASE,
 )
 
 
 def asks_for_a_total(question: str) -> bool:
-    """True when the answer is a SUM over the period, not a latest, average or extreme."""
-    q = question or ""
-    return bool(_TOTAL_RE.search(q)) and not _NOT_A_TOTAL_RE.search(q)
+    """True when the question does not ask for a different statistic of the period.
+
+    BUG-1447. This used to require a TOTAL word ("how much", "total", "consumption"), so "What was
+    the energy use on floor 3 for the day before yesterday?" got no total and the narrator headlined
+    the LATEST reading (4.44 kWh) of an 85-reading day whose sum is 374.42 kWh. Whether a summable
+    quantity is totalled is decided by the QUANTITY (`summarise_energy_totals` returns None unless
+    every series is energy in a summable unit), so the wording only has to rule out a question that
+    asks for something else: a latest value, a level's mean, an extreme, a change or a forecast.
+    """
+    return not _NOT_A_TOTAL_RE.search(question or "")
 
 
 def summarise_energy_totals(
