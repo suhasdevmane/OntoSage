@@ -16,3 +16,7 @@ pip-audit==2.7.3
 yamllint==1.35.1
 pytest==8.3.4
 pytest-asyncio==0.24.0
+
+# Host-side only: the encrypted backup passphrase (scripts/_backup_secret.py) lives in
+# the Windows Credential Manager. Not part of the orchestrator image.
+keyring==25.7.0

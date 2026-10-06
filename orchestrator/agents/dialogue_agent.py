@@ -262,6 +262,9 @@ def _get_few_shot_examples(persona: str, max_examples: int = 2) -> str:
 
 # RAG Service URL for context retrieval
 RAG_SERVICE_URL = f"http://{settings.RAG_SERVICE_HOST}:{settings.RAG_SERVICE_PORT}"
+# Messages folded into the running conversation summary per refresh. Fixed at the window the
+# summary always saw before stored history was allowed to grow (see CONVERSATION_MAX_MESSAGES).
+_SUMMARY_SOURCE_WINDOW = 20
 
 
 def _format_triple(triple: Any) -> str:
@@ -1571,11 +1574,15 @@ class DialogueAgent:
 
         # Update context summary if needed
         if len(state.messages) > 5:
-            # Summarize periodically or if not present
+            # Summarize periodically or if not present. The full history can now be
+            # hundreds of messages (see CONVERSATION_MAX_MESSAGES); summarising all of it on
+            # every fifth turn would send the whole transcript to the model. Only the last
+            # _SUMMARY_SOURCE_WINDOW messages are folded into the running summary, which is
+            # the window this call always saw before the history cap was raised.
             if not state.summary or len(state.messages) % 5 == 0:
                 logger.info("📝 Updating conversation summary...")
                 state.summary = await self.context_manager.summarize_history(
-                    state.messages, state.summary
+                    state.messages[-_SUMMARY_SOURCE_WINDOW:], state.summary
                 )
 
         # Format conversation history (Summary + Recent)

@@ -130,6 +130,14 @@ class PostgresManager:
                 );
             """
             )
+            # D9: the bounded evidence projection for the turn (see
+            # answer_provenance.project_for_storage). Added idempotently so a database created
+            # before this column existed is upgraded in place, and NULL for every older row.
+            await conn.execute(
+                """
+                ALTER TABLE turn_memory ADD COLUMN IF NOT EXISTS evidence JSONB;
+            """
+            )
             await conn.execute(
                 """
                 CREATE INDEX IF NOT EXISTS idx_turn_memory_conv
@@ -313,6 +321,27 @@ class PostgresManager:
             logger.error(f"Error updating password: {e}")
             return False
 
+    async def update_user_role_and_email(self, username: str, role: str, email: str) -> bool:
+        """Set an existing user's role and email. True if a row was updated.
+
+        Used by scripts/import_user_credentials.py to make the CSV the source of truth for
+        trial accounts. The role is validated by the caller against ROLE_PERMISSIONS.
+        """
+        if not self.pool:
+            return False
+        try:
+            async with self.pool.acquire() as conn:
+                result = await conn.execute(
+                    "UPDATE users SET role = $1, email = $2 WHERE username = $3",
+                    role,
+                    email,
+                    username,
+                )
+            return result.endswith("1")
+        except Exception as e:
+            logger.error(f"Error updating role/email: {e}")
+            return False
+
     async def update_user_metadata(self, username: str, metadata: Dict[str, Any]) -> bool:
         """Merge-update the metadata JSON column for a user. Returns True if a row was updated."""
         if not self.pool:
@@ -460,17 +489,74 @@ class PostgresManager:
             logger.error(f"Error getting messages: {e}")
             return []
 
-    async def clear_user_history(self, username: str) -> bool:
+    async def count_conversation_messages(self, conversation_id: str) -> int:
+        """Stored user/assistant messages in one conversation (the full transcript, unpruned).
+
+        The store is the source of truth for conversation history: Redis holds a bounded
+        working copy, and this count tells the caller whether that copy is short.
+        Returns 0 when Postgres is unavailable or the read fails.
+        """
         if not self.pool:
-            return False
+            return 0
+        try:
+            async with self.pool.acquire() as conn:
+                return int(
+                    await conn.fetchval(
+                        "SELECT COUNT(*) FROM messages "
+                        "WHERE conversation_id = $1 AND role IN ('user', 'assistant')",
+                        conversation_id,
+                    )
+                    or 0
+                )
+        except Exception as e:
+            logger.error(f"Error counting conversation messages: {e}")
+            return 0
+
+    async def load_conversation_tail(
+        self, conversation_id: str, limit: int
+    ) -> List[Dict[str, Any]]:
+        """The newest ``limit`` user/assistant messages, oldest first.
+
+        Ordered by the serial ``id`` (insertion order), not ``timestamp``, so two turns saved
+        within the same clock tick keep their sequence.
+        """
+        if not self.pool or limit <= 0:
+            return []
+        try:
+            async with self.pool.acquire() as conn:
+                rows = await conn.fetch(
+                    """
+                    SELECT role, content, timestamp FROM messages
+                    WHERE conversation_id = $1 AND role IN ('user', 'assistant')
+                    ORDER BY id DESC LIMIT $2
+                    """,
+                    conversation_id,
+                    int(limit),
+                )
+            return [dict(r) for r in reversed(rows)]
+        except Exception as e:
+            logger.error(f"Error loading conversation tail: {e}")
+            return []
+
+    async def clear_user_history(self, username: str) -> int:
+        """Delete the user's conversations (messages cascade). Returns the conversation count.
+
+        Returns 0 when Postgres is unavailable or the delete fails. Callers that need to know
+        whether the delete ran must check the connection themselves; a 0 is not proof of
+        an empty history.
+        """
+        if not self.pool:
+            return 0
         try:
             async with self.pool.acquire() as conn:
                 # Delete all conversations for user (messages will cascade delete)
-                await conn.execute("DELETE FROM conversations WHERE user_id = $1", username)
-                return True
+                result = await conn.execute(
+                    "DELETE FROM conversations WHERE user_id = $1", username
+                )
+                return int(result.split()[-1]) if result else 0  # asyncpg -> "DELETE <n>"
         except Exception as e:
             logger.error(f"Error clearing history: {e}")
-            return False
+            return 0
 
     # ==================== Admin Audit Log ====================
 

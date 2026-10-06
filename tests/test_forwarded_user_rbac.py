@@ -70,7 +70,9 @@ async def test_lookup_failure_never_breaks_the_turn():
         m, "postgres_manager", pg
     ):
         got = await m.resolve_forwarded_user(_request({"X-OpenWebUI-User-Email": "a@b.com"}))
-    assert got == ("openwebui_user", "readonly")
+    # Changed 2026-10-06 (B3): a request that NAMES a user is not unidentifiable, so a
+    # lookup failure must not drop it into the shared partition. Its own name keys it.
+    assert got == ("a@b.com", "readonly")
 
 
 @pytest.mark.asyncio

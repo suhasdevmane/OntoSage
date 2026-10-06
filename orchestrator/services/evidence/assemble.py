@@ -310,14 +310,16 @@ def contributing_uuids(results: Dict[str, Any]) -> List[str]:
             if isinstance(u, str) and u not in seen:
                 seen.add(u)
                 out.append(u)
-    # D8/D12 (QA-trial plan, 2026-10-02): the deliberation lane binds real timeseries uuids
-    # (`DossierEvidenceRow.sensor_uuid`) and never writes `sensor_metadata`, so this returned
-    # [] for every deliberate turn and the spatial-adequacy grader skipped all of them on the
-    # "zero contributing uuids" conjunct of its guard. One more reader of the same dossier
-    # object `_sources_from` already reads, not a new store.
-    for _row in (results.get("evidence_dossier") or {}).get("evidence") or []:
-        if isinstance(_row, dict):
-            u = _row.get("sensor_uuid")
+    # D12 (2026-10-06): the deliberation lane binds real timeseries uuids in its dossier
+    # (`DossierEvidenceRow.sensor_uuid`) and never writes `sensor_metadata`, so every
+    # deliberate turn read as having no contributing points. The spatial grader's guard
+    # skipped those turns on exactly that conjunct. Read the same dossier object
+    # `_sources_from` already reads; this is one more reader of it, not a second store.
+    dossier = results.get("evidence_dossier")
+    rows = dossier.get("evidence") if isinstance(dossier, dict) else None
+    for row in rows or []:
+        if isinstance(row, dict):
+            u = row.get("sensor_uuid")
             if isinstance(u, str) and u and u not in seen:
                 seen.add(u)
                 out.append(u)

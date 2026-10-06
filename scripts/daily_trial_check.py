@@ -23,6 +23,8 @@ _backup_status below.
 Usage:
     python scripts/daily_trial_check.py                    # print + append to the log
     python scripts/daily_trial_check.py --no-log            # print only
+    python scripts/daily_trial_check.py --freshness-minutes 15   # stricter staleness cut
+                                                            # (default 30 minutes)
 """
 from __future__ import annotations
 
@@ -45,13 +47,18 @@ HEALTH_URL = f"{BASE_URL}/health"
 #: (the fastest-cadence modalities this building declares have a 5-minute policy
 #: limit; half an hour is "something is genuinely wrong", not noise).
 FRESHNESS_THRESHOLD_MINUTES = 30
+"""Default for the --freshness-minutes flag. The endpoint's own per-state verdict uses each
+modality's policy max_age; this threshold is a SEPARATE, operator-chosen cut applied to the
+per-sensor age_minutes it returns, so a trial day can ask "how many sensors are more than
+N minutes old" without changing the server's policy."""
 
 
-def _sensor_freshness() -> str:
+def _sensor_freshness(threshold_minutes: int = FRESHNESS_THRESHOLD_MINUTES) -> str:
     """H6's own endpoint (now UTC-correct, BUG-1440), as the real freshness signal --
     not /health's connectivity-only status, which stays 'ok' through a stopped
     publisher. Needs an admin login; reports the attempt's own failure rather than
-    silently omitting the check."""
+    silently omitting the check. Also counts sensors whose age_minutes exceeds
+    ``threshold_minutes``; a sensor with no age is not counted either way."""
     import os
 
     user = os.environ.get("ADMIN_USERNAME")
@@ -73,8 +80,16 @@ def _sensor_freshness() -> str:
         data = resp.json()["data"]
         counts = data.get("by_state", {})
         not_probed = data.get("not_probed", [])
-        return f"{counts} ({data.get('assessed', 0)} assessed)" + (
-            f"; not probed: {not_probed}" if not_probed else ""
+        over = [
+            s
+            for s in data.get("sensors", [])
+            if isinstance(s.get("age_minutes"), (int, float))
+            and s["age_minutes"] > threshold_minutes
+        ]
+        return (
+            f"{counts} ({data.get('assessed', 0)} assessed); "
+            f"{len(over)} older than {threshold_minutes} min"
+            + (f"; not probed: {not_probed}" if not_probed else "")
         )
     except Exception as exc:
         return f"check failed: {exc}"
@@ -138,6 +153,15 @@ def main() -> int:
     parser.add_argument(
         "--no-log", action="store_true", help="Print only, do not append to the log"
     )
+    parser.add_argument(
+        "--freshness-minutes",
+        type=int,
+        default=FRESHNESS_THRESHOLD_MINUTES,
+        help=(
+            "Report how many sensors are older than this many minutes "
+            f"(default {FRESHNESS_THRESHOLD_MINUTES}; owner decision 2026-10-06)"
+        ),
+    )
     args = parser.parse_args()
 
     now = dt.datetime.now(dt.timezone.utc)
@@ -148,7 +172,7 @@ def main() -> int:
     open_breakers = [b["name"] for b in breakers if b.get("state") != "closed"]
 
     gate_deletions = _gate_deletions_24h()
-    freshness = _sensor_freshness()
+    freshness = _sensor_freshness(args.freshness_minutes)
     watchdog = _watchdog_restarts()
     backup = _backup_status()
 
