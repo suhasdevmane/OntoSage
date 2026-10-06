@@ -78,20 +78,21 @@ def test_drawing_label_next_to_the_room_tag_is_the_capacity_it_states(room):
 
 
 def test_live_ttl_records_both_figures_it_was_reconciled_from():
-    """The reconciliation text names the superseded figure, so the audit trail is intact."""
+    """Owner decision (2026-10-06): drawing figures are live; estimates are retained as records."""
     ttl = (BLDG1 / "bldg1_occupancy_capacity.ttl").read_text(encoding="utf-8")
-    for room, live, superseded in (("1.04", 25, 50), ("4.01", 20, 25), ("5.01", 20, 25)):
+    for room, drawing in (("1.04", 30), ("4.01", 7), ("5.01", 8)):
         block = ttl[ttl.index(f"bldg:Room{room}\n") :]
         block = block[: block.index(" .\n") + 3]
-        assert f"hbco:roomCapacity     {live} ;" in block, room
-        assert f"superseded figure was {superseded}" in block, room
+        assert f"hbco:roomCapacity     {drawing} ;" in block, room
+        assert f"CapacityRecord_Room{room}_estimate" in ttl, room
 
 
 def test_no_supersedes_triples_are_invented_for_these_rooms():
-    """Adding ontosage:supersedes / effectiveFrom awaits the owner's confirmation (E6)."""
+    """Owner decision (2026-10-06): supersedes links are written; no record is deleted."""
     ttl = (BLDG1 / "bldg1_occupancy_capacity.ttl").read_text(encoding="utf-8")
-    assert "supersedes" not in ttl
-    assert "effectiveFrom" not in ttl
+    assert "supersedes" in ttl
+    for room in ("1.04", "4.01", "5.01"):
+        assert f"CapacityRecord_Room{room}_drawing" in ttl, room
 
 
 @pytest.mark.skip(

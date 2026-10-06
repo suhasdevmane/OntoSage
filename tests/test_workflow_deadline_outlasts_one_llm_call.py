@@ -39,9 +39,15 @@ pytestmark = pytest.mark.unit
 
 
 def _settings(monkeypatch, **env):
-    """A fresh Settings built under a controlled environment."""
+    """A fresh Settings built under a controlled environment.
+
+    Pinned to MODEL_PROVIDER=local: every assertion below is about the LOCAL derivation,
+    from LLM_TIMEOUT_S. The default provider is now `hosted`, whose deadline is
+    HOSTED_LLM_TIMEOUT_S and is covered in tests/test_hosted_llm_queue_budget.py.
+    """
     import shared.config as cfg
 
+    env.setdefault("MODEL_PROVIDER", "local")
     for k, v in env.items():
         if v is None:
             monkeypatch.delenv(k, raising=False)

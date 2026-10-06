@@ -154,6 +154,28 @@ class Settings(BaseSettings):
         default="gpt-oss:20b",
         description="Model served by the hosted GPU gateway",
     )
+    # A hosted request waits in the gateway's own queue before generation starts, so the
+    # client deadline must outlast that wait, not just one generation (BUG-1191 shape).
+    HOSTED_LLM_TIMEOUT_S: float = Field(
+        default=660.0,
+        gt=0,
+        description="Client deadline per hosted request, queue time included (seconds)",
+    )
+    # The gateway generates this many requests at once and queues the rest. Matching it
+    # keeps the queue on the server's side of the wire, where it is visible, instead of
+    # stacking abandonable requests in this process.
+    HOSTED_LLM_MAX_CONCURRENCY: int = Field(
+        default=4,
+        ge=1,
+        description="Hosted requests this process keeps in flight at once (the gateway's own)",
+    )
+    # Reasoning tokens come out of this budget before any visible text does. A floor, not a
+    # default: no hosted call is sent with less, whatever a caller asks for.
+    HOSTED_LLM_MAX_TOKENS: int = Field(
+        default=4096,
+        ge=1,
+        description="max_tokens floor for every hosted call (reasoning + visible content)",
+    )
 
     # Cloud (Ollama Cloud)
     OLLAMA_CLOUD_API_KEY: str = Field(default="", description="Ollama Cloud API key", repr=False)
@@ -507,6 +529,27 @@ class Settings(BaseSettings):
         description="Bootstrap admin password (>=6 chars). See ADMIN_USERNAME.",
         repr=False,
     )
+    OPENWEBUI_URL: str = Field(
+        default="http://open-webui:8080",
+        description=(
+            "Base URL the orchestrator uses to reach Open WebUI's API (account sync). "
+            "The default is the compose service name on the internal network."
+        ),
+    )
+    OPENWEBUI_ADMIN_EMAIL: str = Field(
+        default="",
+        description=(
+            "Email of an Open WebUI ADMIN account. When set together with "
+            "OPENWEBUI_ADMIN_PASSWORD, creating an OntoSage account also creates the matching "
+            "Open WebUI account. Empty = no sync. Create the admin in Open WebUI first; it is "
+            "not created by this system."
+        ),
+    )
+    OPENWEBUI_ADMIN_PASSWORD: str = Field(
+        default="",
+        description="Password of the Open WebUI admin named by OPENWEBUI_ADMIN_EMAIL.",
+        repr=False,
+    )
     PIPELINE_API_KEY: str = Field(
         default="sk-ontobot-pipeline",
         description=(
@@ -538,6 +581,33 @@ class Settings(BaseSettings):
     FORWARDED_USER_HEADER: str = Field(
         default="X-OpenWebUI-User-Email",
         description="Header carrying the end user's identity when TRUST_FORWARDED_USER is on.",
+    )
+    BACKUP_PASSPHRASE: Optional[str] = Field(
+        default=None,
+        repr=False,
+        description=(
+            "Passphrase that encrypts every backup archive (AES-256-GCM). At least 12 characters. "
+            "Unset disables automatic backups and makes the host scripts refuse to run. Losing it "
+            "makes every existing archive unreadable: record it outside this file."
+        ),
+    )
+    AUTO_BACKUP_ENABLED: bool = Field(
+        default=True,
+        description="Write an encrypted backup after answers (needs BACKUP_PASSPHRASE).",
+    )
+    AUTO_BACKUP_DIR: str = Field(
+        default="/app/volumes/backups",
+        description="Container path the automatic archives are written to (bind-mounted).",
+    )
+    AUTO_BACKUP_MIN_INTERVAL_S: int = Field(
+        default=600,
+        ge=1,
+        description="At most one automatic backup run per this many seconds.",
+    )
+    AUTO_BACKUP_KEEP: int = Field(
+        default=96,
+        ge=1,
+        description="Keep the newest N ontosage-auto-*.enc archives; older ones are deleted.",
     )
     STRICT_SECRETS: bool = Field(
         default=True,
@@ -1069,10 +1139,16 @@ class Settings(BaseSettings):
         import os as _os
 
         _logger = _logging.getLogger("shared.config")
-        try:
-            llm_s = float(_os.environ.get("LLM_TIMEOUT_S", "60"))
-        except ValueError:
-            llm_s = 60.0
+        if self.MODEL_PROVIDER == "hosted":
+            # A hosted call is bounded by HOSTED_LLM_TIMEOUT_S (queue time included), plus
+            # the 30 s outer margin llm_manager adds. Deriving from LLM_TIMEOUT_S here would
+            # give a 180 s-based workflow deadline that kills a call still queued at the gateway.
+            llm_s = float(self.HOSTED_LLM_TIMEOUT_S) + 30.0
+        else:
+            try:
+                llm_s = float(_os.environ.get("LLM_TIMEOUT_S", "60"))
+            except ValueError:
+                llm_s = 60.0
 
         if self.WORKFLOW_TIMEOUT_S <= 0:
             # Room for two full-length calls plus overhead — NOT for the worst case.

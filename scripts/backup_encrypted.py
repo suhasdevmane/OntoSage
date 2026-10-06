@@ -33,16 +33,11 @@ Examples::
 import argparse
 import base64
 import datetime as dt
-import gzip
-import hashlib
-import io
-import json
 import os
 import re
 import shutil
 import subprocess
 import sys
-import tarfile
 import tempfile
 import urllib.parse
 import urllib.request
@@ -56,12 +51,17 @@ for _p in (str(REPO_ROOT), str(SCRIPTS_DIR)):
     if _p not in sys.path:
         sys.path.insert(0, _p)
 
-from _backup_format import CHUNK_SIZE, EncryptedWriter  # noqa: E402
+from _backup_format import CHUNK_SIZE  # noqa: E402
+from _backup_format import write_archive as _write_format_archive  # noqa: E402
 
 FORMAT_NAME = "ontosage-encrypted-backup"
 FORMAT_VERSION = 1
 ARCHIVE_PREFIX = "ontosage-"
 ARCHIVE_SUFFIX = ".enc"
+# Archives written by the orchestrator's automatic backup. Routine and automatic archives may
+# share a folder, so neither side may delete the other's files: this script's retention skips
+# this prefix, and the orchestrator's retention touches nothing else.
+AUTO_ARCHIVE_PREFIX = "ontosage-auto-"
 PG_CONTAINER_DEFAULT = "postgres-user-data"
 # Compose service names that resolve only inside the docker network. Host-side tools
 # (mysqldump, urllib) cannot resolve them, so they are mapped to loopback. Container-side
@@ -356,27 +356,19 @@ def _fmt(n: int) -> str:
     return f"{n:.1f} GB"
 
 
-class _HashingReader:
-    """File wrapper that hashes bytes as tarfile reads them, so each file is read once."""
-
-    def __init__(self, fh) -> None:
-        self._fh = fh
-        self._h = hashlib.sha256()
-
-    def read(self, n: int = -1) -> bytes:
-        data = self._fh.read(n)
-        self._h.update(data)
-        return data
-
-    def hexdigest(self) -> str:
-        return self._h.hexdigest()
-
-
 def prune(out_dir: Path, keep: int) -> List[Path]:
-    """Delete the oldest ontosage-*.enc archives so that only `keep` remain. Returns deletions."""
+    """Delete the oldest routine ontosage-*.enc archives so that only `keep` remain.
+
+    Automatic archives (AUTO_ARCHIVE_PREFIX) are never candidates here; they have their own
+    retention in the orchestrator. Returns the deletions.
+    """
     if keep <= 0:
         return []
-    archives = sorted(out_dir.glob(f"{ARCHIVE_PREFIX}*{ARCHIVE_SUFFIX}"))
+    archives = sorted(
+        p
+        for p in out_dir.glob(f"{ARCHIVE_PREFIX}*{ARCHIVE_SUFFIX}")
+        if not p.name.startswith(AUTO_ARCHIVE_PREFIX)
+    )
     doomed = archives[:-keep] if len(archives) > keep else []
     for path in doomed:
         path.unlink()
@@ -393,44 +385,15 @@ def write_archive(
     skipped: List[dict],
 ) -> dict:
     """Stream members into an encrypted archive; returns the manifest that was written last."""
-    partial = out_path.with_name(out_path.name + ".partial")
-    entries = []
-    try:
-        with open(partial, "wb") as fh:
-            with EncryptedWriter(fh, passphrase) as enc:
-                # GzipFile, not tarfile's "w|gz": tarfile.open in stream mode takes no
-                # compresslevel on this Python. mtime=0 keeps the stream reproducible.
-                gz = gzip.GzipFile(filename="", mode="wb", fileobj=enc, compresslevel=6, mtime=0)
-                with tarfile.open(fileobj=gz, mode="w|") as tar:
-                    for arcname, path in members:
-                        info = tar.gettarinfo(str(path), arcname=arcname)
-                        with open(path, "rb") as src:
-                            reader = _HashingReader(src)
-                            tar.addfile(info, reader)
-                        entries.append(
-                            {"name": arcname, "size": info.size, "sha256": reader.hexdigest()}
-                        )
-                    manifest = {
-                        "format": FORMAT_NAME,
-                        "format_version": FORMAT_VERSION,
-                        "building_id": building_id,
-                        "created_utc": created,
-                        "members": entries,
-                        "skipped": skipped,
-                        "excluded_by_design": [name for name, _ in EXCLUDED_BY_DESIGN],
-                    }
-                    data = json.dumps(manifest, indent=2, sort_keys=True).encode("utf-8")
-                    info = tarfile.TarInfo("manifest.json")
-                    info.size = len(data)
-                    info.mtime = int(dt.datetime.now(dt.timezone.utc).timestamp())
-                    tar.addfile(info, io.BytesIO(data))
-                gz.close()
-        os.replace(partial, out_path)
-    except BaseException:
-        if partial.exists():
-            partial.unlink()
-        raise
-    return manifest
+    header = {
+        "format": FORMAT_NAME,
+        "format_version": FORMAT_VERSION,
+        "building_id": building_id,
+        "created_utc": created,
+        "skipped": skipped,
+        "excluded_by_design": [name for name, _ in EXCLUDED_BY_DESIGN],
+    }
+    return _write_format_archive(out_path, passphrase, members, header)
 
 
 def run(

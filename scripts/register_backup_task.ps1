@@ -4,10 +4,9 @@ Register, or remove, the nightly encrypted backup as a Windows Scheduled Task.
 
 .DESCRIPTION
 Creates the task OntoSage-nightly-backup. It runs every day at -Time (default 02:30) as the
-current user, and only while that user is logged on. The passphrase is in the Windows
-Credential Manager, which is per user, so the task must run as that user. A scheduled run
-cannot prompt: with no stored passphrase it exits with code 2, and the failure shows up in the
-task's Last Run Result.
+current user, and only while that user is logged on. The passphrase is BACKUP_PASSPHRASE in the
+active .env, read from there by the script. A scheduled run cannot prompt: with no passphrase
+set it exits with code 2, and the failure shows up in the task's Last Run Result.
 
 The action is:
     <repo>\.venv\Scripts\python.exe scripts\backup_encrypted.py --out-dir <OutDir> --keep <Keep>
@@ -16,8 +15,9 @@ Retention is done by backup_encrypted.py itself, not by this script. After a suc
 it deletes the oldest ontosage-*.enc files beyond the newest -Keep, and it touches no other file
 in the output directory.
 
-Before the first scheduled run, store the passphrase once:
-    .venv\Scripts\python.exe scripts\_backup_secret.py --set
+Before the first scheduled run, set BACKUP_PASSPHRASE (at least 12 characters) in the active
+.env, then confirm it is seen:
+    .venv\Scripts\python.exe scripts\_backup_secret.py --check
 
 .PARAMETER Time
 Daily start time, HH:mm (default 02:30).

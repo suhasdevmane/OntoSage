@@ -13,8 +13,9 @@ import json
 import os
 import re
 import time
+from contextlib import asynccontextmanager
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, AsyncIterator, Dict, List, Optional, Tuple
 
 
 class TaskType(Enum):
@@ -99,6 +100,11 @@ def _transport_timeout_s() -> float:
     the shape actually observed, since the connection was open and nothing arrived for 54
     minutes. It does not survive a fully starved loop. The memory ceiling on the container
     is what covers that case.
+
+    NOT THE HOSTED PROVIDER. This derivation is sized for a local call that generates
+    and then answers; a hosted request can sit in the gateway's queue for minutes before
+    the first byte, and 105 s would abandon it there. The hosted client takes
+    HOSTED_LLM_TIMEOUT_S instead (see `LLMManager._initialize_hosted`).
     """
     raw = (os.environ.get("LLM_TRANSPORT_TIMEOUT_S") or "").strip()
     if raw:
@@ -107,6 +113,31 @@ def _transport_timeout_s() -> float:
         except ValueError:
             logger.warning(f"LLM_TRANSPORT_TIMEOUT_S={raw!r} is not a number; deriving instead")
     return LLM_TIMEOUT_S * 1.5 + 15.0
+
+
+#: Seconds the outer `asyncio.wait_for` on a hosted attempt outlasts HOSTED_LLM_TIMEOUT_S.
+#: The client's own deadline should fire first, as a typed and retryable error; the outer one
+#: is the backstop for a loop that is not running its timers (BUG-1191).
+_HOSTED_OUTER_MARGIN_S = 30.0
+
+
+def _hosted_timeout_s() -> float:
+    """The client deadline for one hosted request, queue time included (HOSTED_LLM_TIMEOUT_S)."""
+    return float(settings.HOSTED_LLM_TIMEOUT_S)
+
+
+def _hosted_budget(requested: Any = None) -> int:
+    """max_tokens for a hosted call: the configured floor, or more if a caller asked for more.
+
+    A reasoning model spends this budget on hidden reasoning before any visible text, so
+    a value below the floor can return an empty answer with HTTP 200. Every hosted call is
+    sized through here, and `_generate_once` is the one place a hosted call is sent.
+    """
+    try:
+        asked = int(requested or 0)
+    except (TypeError, ValueError):
+        asked = 0
+    return max(int(settings.HOSTED_LLM_MAX_TOKENS), asked)
 
 
 def _ollama_client_kwargs() -> Dict[str, Any]:
@@ -217,6 +248,21 @@ _EMPTY_QUESTION_SLOT_RE = re.compile(
 
 class EmptyCompletionError(RuntimeError):
     """The provider answered successfully but produced no text."""
+
+
+class HostedBudgetExhausted(EmptyCompletionError):
+    """A hosted reasoning model spent its whole max_tokens budget before any visible text.
+
+    Distinct from a provider fault: the call worked, the budget was too small for the
+    reasoning it triggered. `_call_provider` retries it once at double the budget.
+    """
+
+    def __init__(self, budget: int) -> None:
+        super().__init__(
+            f"hosted model spent its max_tokens budget of {budget} on reasoning and returned "
+            "no visible content (finish_reason=length)"
+        )
+        self.budget = budget
 
 
 def _looks_like_a_dead_local_runner(error: Optional[BaseException]) -> bool:
@@ -554,17 +600,27 @@ class LLMManager:
             raise
 
     def _initialize_hosted(self):
-        """Initialize COMAT GPU gateway client (OpenAI-compatible, http://10.98.84.2:8000/v1)."""
+        """Initialize the hosted COMAT gateway client (OpenAI-compatible; HOSTED_LLM_BASE_URL)."""
         try:
+            import httpx
             from langchain_openai import ChatOpenAI
 
+            # The deadline is HOSTED_LLM_TIMEOUT_S, not `_transport_timeout_s()`: a queued
+            # request is silent at the gateway for minutes, and the 1.5x derivation would
+            # abandon it while it waits (BUG-1191's layer, sized for generation, not a queue).
+            # Connect stays short: an unreachable gateway (VPN down) should fail fast.
+            _total = _hosted_timeout_s()
             self.client = ChatOpenAI(
                 base_url=self.config["base_url"],
                 model=self.config["model"],
-                api_key=self.config["api_key"] or "not-set",  # validate_config refuses a real deploy without it
+                api_key=self.config["api_key"]
+                or "not-set",  # validate_config refuses a real deploy without it
                 temperature=self.config["temperature"],
-                max_tokens=4096,
-                timeout=_transport_timeout_s(),  # BUG-1191
+                max_tokens=_hosted_budget(),
+                timeout=httpx.Timeout(_total, connect=min(10.0, _total)),
+                # The OpenAI SDK would otherwise re-send a timed-out request into the same
+                # gateway queue. Retries belong to `generate`, which can see them and log them.
+                max_retries=0,
             )
             self.client_fast = self.client  # same model for the hosted gateway
             logger.info(
@@ -664,7 +720,8 @@ class LLMManager:
 
         Circuit breaker fast-fails when the LLM provider is unresponsive.
         Retries up to LLM_MAX_RETRIES times on transient errors (429, 5xx, connection
-        errors) with exponential backoff. Each attempt is capped at LLM_TIMEOUT_S.
+        errors) with exponential backoff. Each attempt is capped at `_attempt_timeout_s()`:
+        LLM_TIMEOUT_S locally, HOSTED_LLM_TIMEOUT_S (+ margin) for the hosted gateway.
 
         ``provider_kwargs`` are passed straight to the underlying client call — the
         route by which `generate_structured` hands the provider a JSON schema. Empty
@@ -725,16 +782,15 @@ class LLMManager:
                             await asyncio.sleep(OPENAI_RATE_LIMIT_DELAY - elapsed)
                         self.last_request_time = time.time()
 
+                _limit = self._attempt_timeout_s()
                 _started = time.monotonic()
-                result = await asyncio.wait_for(
-                    self._generate_once(
-                        prompt,
-                        system_message,
-                        temperature,
-                        active_client,
-                        provider_kwargs=provider_kwargs,
-                    ),
-                    timeout=LLM_TIMEOUT_S,
+                result = await self._call_provider(
+                    prompt,
+                    system_message,
+                    temperature,
+                    active_client,
+                    provider_kwargs,
+                    client_label,
                 )
                 _elapsed = time.monotonic() - _started
                 # BUG-1191: a 3,239 s call was discovered by subtracting two log
@@ -743,8 +799,8 @@ class LLMManager:
                 # "elapsed 3239.0s > LLM_TIMEOUT_S 180.0s" is the entire diagnosis.
                 if _elapsed >= LLM_SLOW_CALL_WARN_S:
                     _overran = (
-                        f" — OVERRAN LLM_TIMEOUT_S={LLM_TIMEOUT_S:g}s WITHOUT FIRING"
-                        if _elapsed > LLM_TIMEOUT_S
+                        f" — OVERRAN its {_limit:g}s deadline WITHOUT FIRING"
+                        if _elapsed > _limit
                         else ""
                     )
                     logger.warning(
@@ -769,10 +825,10 @@ class LLMManager:
 
             except asyncio.TimeoutError:
                 _elapsed = time.monotonic() - _started
-                last_error = TimeoutError(f"LLM [{client_label}] timed out after {LLM_TIMEOUT_S}s")
+                last_error = TimeoutError(f"LLM [{client_label}] timed out after {_limit:g}s")
                 logger.warning(
                     f"LLM [{client_label}] timeout after {_elapsed:.1f}s "
-                    f"(limit {LLM_TIMEOUT_S:g}s, attempt {attempt}/{LLM_MAX_RETRIES})"
+                    f"(limit {_limit:g}s, attempt {attempt}/{LLM_MAX_RETRIES})"
                 )
                 self._breaker.record_failure()
             except Exception as e:
@@ -797,7 +853,7 @@ class LLMManager:
 
             if attempt < LLM_MAX_RETRIES:
                 backoff = LLM_BACKOFF_BASE_S * (LLM_BACKOFF_FACTOR ** (attempt - 1))
-                if self.provider in ["openai", "ollama_cloud"]:
+                if self.provider in ["openai", "ollama_cloud", "hosted"]:
                     backoff = max(backoff, OPENAI_RETRY_DELAY_S)
                 elif _looks_like_a_dead_local_runner(last_error):
                     # The local model runner DIED and is reloading (CAVEAT-619). Ollama
@@ -812,6 +868,106 @@ class LLMManager:
         final_error = last_error or RuntimeError("LLM generation failed after all retries")
         record_llm_failure(final_error, client_label)
         raise final_error
+
+    def _is_hosted(self) -> bool:
+        """True for the hosted COMAT gateway (the only provider with a queue-aware deadline)."""
+        return getattr(self, "provider", "") == "hosted"
+
+    def _attempt_timeout_s(self) -> float:
+        """The outer deadline on one provider attempt.
+
+        Hosted: HOSTED_LLM_TIMEOUT_S plus a margin, so the client's own timeout fires first.
+        Everything else keeps LLM_TIMEOUT_S, exactly as before.
+        """
+        if self._is_hosted():
+            return _hosted_timeout_s() + _HOSTED_OUTER_MARGIN_S
+        return LLM_TIMEOUT_S
+
+    #: One gate per process, created on first hosted use. Created lazily because LLMManager is
+    #: built at import time, before any event loop exists.
+    _hosted_sem: Optional[asyncio.Semaphore] = None
+
+    def _hosted_semaphore(self) -> asyncio.Semaphore:
+        """The hosted request gate, shared by the fast and complex clients (same gateway)."""
+        if self._hosted_sem is None:
+            self._hosted_sem = asyncio.Semaphore(int(settings.HOSTED_LLM_MAX_CONCURRENCY))
+        return self._hosted_sem
+
+    @asynccontextmanager
+    async def _hosted_slot(self, label: str) -> AsyncIterator[None]:
+        """Hold one of HOSTED_LLM_MAX_CONCURRENCY slots for the length of a hosted call.
+
+        Requests beyond the cap wait HERE, in this process, and the wait is logged. The
+        gateway would queue them anyway; holding them locally keeps the queue visible.
+        """
+        if not self._is_hosted():
+            yield
+            return
+        sem = self._hosted_semaphore()
+        cap = int(settings.HOSTED_LLM_MAX_CONCURRENCY)
+        if sem.locked():
+            logger.info(f"[hosted] all {cap} slots busy — {label} call waiting in this process")
+        _waiting_since = time.monotonic()
+        async with sem:
+            _waited = time.monotonic() - _waiting_since
+            if _waited >= 0.5:
+                logger.info(f"[hosted] {label} call waited {_waited:.1f}s for one of {cap} slots")
+            yield
+
+    async def _call_provider(
+        self,
+        prompt: str,
+        system_message: Optional[str],
+        temperature: Optional[float],
+        client,
+        provider_kwargs: Optional[Dict[str, Any]],
+        client_label: str,
+    ) -> str:
+        """One provider call under the attempt deadline. Hosted calls also hold a slot.
+
+        The slot is taken BEFORE the deadline starts, so time waiting for a free slot in this
+        process is not charged to the request. Time in the gateway's own queue IS charged,
+        which is why the hosted deadline is measured in minutes.
+
+        A hosted reasoning model can spend its whole max_tokens budget on hidden reasoning and
+        return empty content with finish_reason=length. That is a budget shortfall, not a
+        provider fault, so it is retried ONCE at double the budget before the failure is
+        allowed to count as an empty completion.
+        """
+        if not self._is_hosted():
+            return await asyncio.wait_for(
+                self._generate_once(
+                    prompt, system_message, temperature, client, provider_kwargs=provider_kwargs
+                ),
+                timeout=self._attempt_timeout_s(),
+            )
+
+        budget = _hosted_budget((provider_kwargs or {}).get("max_tokens"))
+        for budget_try in (1, 2):
+            kwargs = dict(provider_kwargs or {})
+            kwargs["max_tokens"] = budget
+            async with self._hosted_slot(client_label):
+                try:
+                    return await asyncio.wait_for(
+                        self._generate_once(
+                            prompt, system_message, temperature, client, provider_kwargs=kwargs
+                        ),
+                        timeout=self._attempt_timeout_s(),
+                    )
+                except HostedBudgetExhausted as exc:
+                    if budget_try == 2:
+                        logger.error(
+                            f"[hosted] {client_label} call still returned no visible content at "
+                            f"max_tokens={exc.budget} (finish_reason=length) — giving up"
+                        )
+                        raise
+                    logger.warning(
+                        f"[hosted] {client_label} call returned no visible content: max_tokens="
+                        f"{exc.budget} was spent on reasoning (finish_reason=length). Retrying "
+                        f"once with max_tokens={exc.budget * 2}"
+                    )
+                    budget = exc.budget * 2
+        raise AssertionError("unreachable: the budget loop returns or raises")  # pragma: no cover
 
     # Injected into every LLM call to prevent language drift
     _LANGUAGE_INSTRUCTION = "Always respond in English, regardless of the language used in the user's message or any prior context."
@@ -846,8 +1002,25 @@ class LLMManager:
             if temperature is not None:
                 invoke_kwargs["temperature"] = temperature
             invoke_kwargs.update(extra)
-            response = await active.ainvoke(messages, **invoke_kwargs)
-            return response.content
+            if not self._is_hosted():
+                response = await active.ainvoke(messages, **invoke_kwargs)
+                return response.content
+
+            # Hosted: the floor is applied here, the one place a hosted call is sent.
+            invoke_kwargs["max_tokens"] = _hosted_budget(invoke_kwargs.get("max_tokens"))
+            # agenerate, not ainvoke: in this langchain-openai version `finish_reason` lives on
+            # the generation's `generation_info`, and ainvoke returns only the message, so the
+            # one signal that separates "budget spent on reasoning" from "model said nothing"
+            # would be discarded.
+            result = await active.agenerate([messages], **invoke_kwargs)
+            generation = result.generations[0][0]
+            text = generation.message.content
+            blank = not text or (isinstance(text, str) and not text.strip())
+            if blank:
+                finish = (generation.generation_info or {}).get("finish_reason")
+                if finish == "length":
+                    raise HostedBudgetExhausted(int(invoke_kwargs["max_tokens"]))
+            return text
 
         else:  # ollama (local)
             full_prompt = f"System: {effective_system}\n\nUser: {prompt}"
@@ -1008,8 +1181,11 @@ class LLMManager:
                 stream_kwargs = {}
                 if temperature is not None:
                     stream_kwargs["temperature"] = temperature
-                async for chunk in active_client.astream(messages, **stream_kwargs):
-                    yield chunk.content
+                if self._is_hosted():
+                    stream_kwargs["max_tokens"] = _hosted_budget()  # the same floor as generate
+                async with self._hosted_slot("stream"):
+                    async for chunk in active_client.astream(messages, **stream_kwargs):
+                        yield chunk.content
 
             else:  # ollama (local)
                 full_prompt = f"System: {effective_system}\n\nUser: {prompt}"
