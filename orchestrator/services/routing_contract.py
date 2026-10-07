@@ -2938,6 +2938,64 @@ def _r_readiness_check(c: _Ctx) -> Optional[str]:
     return "readiness_check" if _READINESS_RE.search(c.query or "") else None
 
 
+#: "When was room 2.01 last comfortable?" -- a COMFORT-HISTORY question, not a readiness
+#: check (BUG-1450). Live-routed to `readiness_check`, which answers from the AV register
+#: (projector/display/microphone status): neither `rank_record_classes`' term scoring nor any
+#: `_READINESS_RE` branch matches this shape, so the classifier itself is picking
+#: `readiness_check` on a broad reading of its own description ("is a space ready...").
+#:
+#: Vocabulary: "comfortable"/"comfort" are not read dynamically from the TTL here -- no
+#: routing-contract rule does that (checked: `concept_resolver.resolve` is async/SPARQL and
+#: every other lane's vocabulary in this module, e.g. `COMFORT_SIGNAL_KWS` just above and
+#: `door_records_question`'s own regex, is a hand-written tuple/pattern too). The two words
+#: are grounded in the TTL the same way those are: `ontosage:Intent_Comfort` declares the
+#: pattern "...is it comfortable, air quality" (ontology/ontosage_schema.ttl); hbco_mappings.ttl
+#: declares `hbco:overall_comfort hbco:layTerm "comfortable"` and
+#: `hbco:thermal_comfort hbco:layTerm "is it comfortable"` / `"comfort standard"`.
+#:
+#: Narrow by construction: a WHEN/HOW-LONG-AGO/LAST-TIME temporal marker is required, so a
+#: CURRENT-state comfort question ("is it comfortable in here?") is untouched -- that shape
+#: already has a home (Intent_Comfort -> Src_TimeSeriesDB/Src_Analytics) and this rule only
+#: takes from `readiness_check`.
+#: The gap uses `[^?!]`, not `[^?.!]` -- a room id like "2.01" carries a period, and
+#: excluding it stops the span dead before it reaches "comfortable" (BUG-1393's own lesson,
+#: same character class, same fix). `?`/`!` stay hard stops so a question does not reach
+#: into a NEXT sentence.
+_COMFORT_HISTORY_RE = re.compile(
+    r"\bwhen\s+(?:was|were|did|has|have)\b[^?!]{0,60}\blast\b[^?!]{0,20}\bcomfort"
+    r"|\bwhen\s+(?:was|were|did|has|have)\b[^?!]{0,60}\bcomfort\w*\b"
+    r"|\bwhen\s+(?:was|were|did|has|have)\b[^?!]{0,60}\blast\b[^?!]{0,30}"
+    r"\b(?:met|meet|comply|complied|complying)\b[^?!]{0,20}\b(?:comfort|standards?)\b"
+    r"|\bhow\s+long\s+ago\b[^?!]{0,60}\bcomfort\w*\b"
+    r"|\blast\s+time\b[^?!]{0,30}\bcomfort\w*\b",
+    re.IGNORECASE,
+)
+
+
+def _r_comfort_history_not_readiness(c: _Ctx) -> Optional[str]:
+    """A comfort-HISTORY question ("when was it last comfortable?") is not a readiness check.
+
+    Takes ONLY from `readiness_check`, so a comfort question already routed anywhere else
+    (analytics, sensor_data, capability) keeps its own route. Guards explicitly against
+    `_READINESS_RE` too, even though the two patterns do not overlap today, because the
+    contract's own rule is "the last one wins" and a future change to either pattern must
+    not silently create a question this rule claims out from under a genuine readiness check.
+
+    No lane in this codebase answers "when was X last compliant/comfortable" historically --
+    `standards_engine.newest_reading_verdict` and `narration_contradiction.
+    reconcile_compliance_claim` (BUG-1428/G6) only judge the NEWEST reading, and
+    `record_registry`'s register classes hold no "comfort" vocabulary (comfort is a continuous
+    reading, not a dated record). Routed to `comfort_history`, a deterministic, honest decline
+    naming the room when one was extracted, rather than reaching a data lane that would have to
+    invent a historical timestamp to answer at all.
+    """
+    if c.intent != "readiness_check":
+        return None
+    if _READINESS_RE.search(c.query or ""):
+        return None
+    return "comfort_history" if _COMFORT_HISTORY_RE.search(c.query or "") else None
+
+
 #: A question about WHEN something was last serviced, or WHAT is overdue for maintenance. Three
 #: questions from the 2026-09-18 hand reads -- "When was the lift last serviced?", "Which assets are
 #: overdue for maintenance?", "Which maintenance tasks are overdue?" -- landed in the capability
@@ -3847,6 +3905,15 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "readiness_check",
         "is this space ready for what happens next -> the readiness lane, dated per line",
         _r_readiness_check,
+    ),
+    # Directly after readiness_check, and the order is the whole point: it corrects ONLY
+    # what that rule (or the classifier matching its broad description) just produced,
+    # never a readiness question earlier rules have already claimed elsewhere (BUG-1450).
+    Rule(
+        "comfort_history_not_readiness",
+        "'when was room 2.01 last comfortable?' -> comfort_history (an honest decline), "
+        "never the AV-readiness register",
+        _r_comfort_history_not_readiness,
     ),
     Rule(
         "governance_question_never_reads_data",

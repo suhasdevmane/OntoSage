@@ -57,18 +57,53 @@ def resolve_unit(meta_unit: str, label: str) -> Tuple[str, str]:
     return declared or recorded, ""
 
 
-def counts_people(label: str, kind: str = "") -> bool:
+#: The Brick class (local name, lowercased) that declares a point a STATUS flag, never a count,
+#: however its label reads -- `occupancy_status` in `config/saturation_modalities.yaml`. A status
+#: point reports presence, not how many people; counting it inflates a headcount (BUG-954's shape).
+_STATUS_CLASS = "occupancy_status"
+
+#: The Brick class that unambiguously counts people -- `Occupancy_Count_Sensor` in the same file.
+#: `Occupancy_Sensor` and `Motion_Sensor` are NOT here: both populations share those classes with
+#: status/motion points (CAVEAT-207), so a label is still the only signal for them.
+_COUNT_CLASS = "occupancy_count_sensor"
+
+
+def _class_local(brick_class: str) -> str:
+    """The local name of a Brick class however it was written: prefixed, IRI or bare."""
+    s = (brick_class or "").strip()
+    for sep in ("#", "/", ":"):
+        s = s.rsplit(sep, 1)[-1]
+    return s.lower()
+
+
+def counts_people(label: str, kind: str = "", brick_class: str = "") -> bool:
     """Does THIS series count people, rather than report whether a space is occupied?
 
     A 0/1 occupancy status and a percentage of capacity both answer "is anyone there" and neither
     is a headcount; summing them gives a number that looks like one. Judged per series, because
     the store holds both: 256 counting series and 243 status series share one table, and a
     question about people binds a mixture of the two.
+
+    THE GRAPH'S OWN CLASS DECIDES WHEN IT IS DECISIVE (owner rule, 2026-10-07). A sensor's label
+    is read only when its Brick class is absent or is one BOTH populations carry
+    (`Occupancy_Sensor`, `Motion_Sensor`) -- the genuine ambiguity CAVEAT-207 already names.
+    `Occupancy_Status` is never a headcount, however its label reads; `Occupancy_Count_Sensor`
+    always is, unless the unit itself says it is a ratio.
     """
+    cls = _class_local(brick_class)
+    if cls == _STATUS_CLASS:
+        return False
+    if cls == _COUNT_CLASS:
+        return kind != "ratio"
     return not _STATUS_WORDS.search(str(label or "")) and kind != "ratio"
 
 
-def is_headcount(measurand: Optional[str], labels: Iterable[str], kinds: Iterable[str]) -> bool:
+def is_headcount(
+    measurand: Optional[str],
+    labels: Iterable[str],
+    kinds: Iterable[str],
+    classes: Iterable[str] = (),
+) -> bool:
     """True when the bound sensors include series that count people.
 
     ANY, NOT ALL (the defect this wording fixes). This asked whether NO label anywhere carried a
@@ -77,13 +112,19 @@ def is_headcount(measurand: Optional[str], labels: Iterable[str], kinds: Iterabl
     readings and reported 114 people on one floor while the floor counter read 29. The caller
     narrows the set to the counting series with `counts_people`; here the question is only
     whether any exist.
+
+    `classes` is each series' Brick class, read in the same order as `labels` (owner rule); it may
+    be shorter than `labels` or omitted, in which case every series falls back to its label alone.
     """
     if measurand != "occupancy":
         return False
     seen = {k for k in kinds if k}
     if seen and seen <= {"ratio"}:
         return False  # every series is a percentage of capacity: not people
-    return any(counts_people(label) for label in labels)
+    label_list = list(labels)
+    class_list = list(classes)
+    class_list += [""] * (len(label_list) - len(class_list))
+    return any(counts_people(label, brick_class=cls) for label, cls in zip(label_list, class_list))
 
 
 #: A period a question names. "Which floor has the most people?" names none, and for a headcount
@@ -341,9 +382,7 @@ def missing_floors_note(
     not_read = [f for f in missing if f in with_sensor]
     parts: List[str] = []
     if none_there:
-        parts.append(
-            f"The building records no {noun} sensor on {_join_floors(none_there)}."
-        )
+        parts.append(f"The building records no {noun} sensor on {_join_floors(none_there)}.")
     if not_read:
         parts.append(
             f"{_join_floors(not_read)} also record{'s' if len(not_read) == 1 else ''} {noun}, "

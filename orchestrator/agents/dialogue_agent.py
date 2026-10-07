@@ -772,6 +772,7 @@ class DialogueAgent:
             _LOCATIVE_ANAPHOR_RE,
             acts_on_previous_result,
             ambiguous_reference,
+            amenities_in_reply,
             place_of,
             places_in_reply,
             resolve_location_statement,
@@ -836,20 +837,23 @@ class DialogueAgent:
                 # decline as ambiguous -- the same class counted twice. Picking the first
                 # candidate that actually appears in THIS reply keeps the final list at
                 # one entry per class, never per synonym.
-                _reply_lc = (_previous_reply or "").lower()
+                # BUG-1426 (live, 2026-10-07): this loop used to match with a plain
+                # `.lower()` + `\b` regex against the raw reply, bypassing the accent
+                # fold `amenities_in_reply` applies on every OTHER caller's path --
+                # "Café" in the reply never matched a graph label spelled "Cafe", so
+                # this pre-filter silently found nothing while the offline unit test
+                # (which exercises `amenities_in_reply` directly, not this loop)
+                # stayed green. Call the shared, accent-folding helper instead, so the
+                # fold applies here too; "at most one candidate per class" is kept by
+                # taking only the first of THAT class's own candidates it reports.
                 _labels = []
                 for _c in _classes:
                     _candidates = [getattr(_c, "label", "")] + [
                         t for t in getattr(_c, "terms", ()) if len(t.split()) <= 2
                     ]
-                    for _cand in _candidates:
-                        if (
-                            _cand
-                            and len(_cand) >= 3
-                            and re.search(rf"\b{re.escape(_cand.lower())}\b", _reply_lc)
-                        ):
-                            _labels.append(_cand)
-                            break
+                    _matches = amenities_in_reply(_previous_reply, _candidates)
+                    if _matches:
+                        _labels.append(_matches[0])
                 _fixed = resolve_sole_floor_or_amenity_anaphor(latest, _previous_reply, _labels)
                 if _fixed and _fixed != latest:
                     logger.info(

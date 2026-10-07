@@ -639,6 +639,12 @@ class SQLAgent:
                     user_query,
                     len(uuids),
                     [str((m or {}).get("label") or "") for m in (sensor_metadata or {}).values()],
+                    # The quantity named in the reply is read from the sensors' own Brick class,
+                    # never their label (owner rule, 2026-10-07) -- see too_broad_reply.py.
+                    [
+                        str((m or {}).get("brick_class") or "")
+                        for m in (sensor_metadata or {}).values()
+                    ],
                 )
                 logger.info(f"[sql] declining as too broad: {len(uuids)} > {MAX_FETCH_UUIDS}")
                 return {

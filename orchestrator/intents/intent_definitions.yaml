@@ -374,6 +374,29 @@ intents:
     node_method: _readiness_check_node
 
   # INTERNAL lane (deterministic rule only — do not classify into this): the routing
+  # contract decides, from routing_contract._r_comfort_history_not_readiness (BUG-1450),
+  # which stands down a `readiness_check` result for a comfort-HISTORY shape ("when was
+  # room 2.01 last comfortable?") that readiness_check's own broad description was being
+  # misread to cover. Declared here so the graph auto-wires it and the registry can see it;
+  # the classifier is never asked to pick it directly.
+  - name: comfort_history
+    description: |-
+      INTERNAL lane (deterministic rule only — do not classify into this): a question about
+      WHEN a space was last comfortable or last met comfort/environmental standards —
+      "when was room 2.01 last comfortable?", "how long ago did it last meet comfort
+      standards?". Answered with an honest decline: this building checks the newest reading
+      against a standard, and has no register of WHEN a space was last compliant, so no past
+      timestamp is invented. NOT for the CURRENT state ("is it comfortable in here?" ->
+      analytics/sensor_data) and NOT a readiness check ("is this room ready for my class?").
+    examples:
+      - '"When was room 2.01 last comfortable?"'
+      - '"How long ago did Room 3.04 last meet comfort standards?"'
+    pipeline_group: standalone
+    route_target: comfort_history
+    node_method: _comfort_history_node
+    cacheable: false
+
+  # INTERNAL lane (deterministic rule only — do not classify into this): the routing
   # contract decides, from routing_contract._r_cross_source_precedence (E2, QA-trial plan
   # 2026-10-04), which fires on the "which source is right?" / "differs depending on who I
   # ask" SHAPE. It is declared here so the graph auto-wires it and the registry can see it;

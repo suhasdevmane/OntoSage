@@ -581,6 +581,7 @@ _PER_TURN_LANE_KEYS = (
     "asset_state_result",
     "observability_result",
     "readiness_result",
+    "comfort_history_result",
     "fact_conflict_result",
     "privacy_refusal_result",
     # A refusal is as stale as an answer: the previous turn's "Room 9.99 does not
@@ -6203,6 +6204,7 @@ SELECT ?l WHERE {
         _observability_result = state.intermediate_results.get("observability_result") or {}
         _referent_refusal = state.intermediate_results.get("referent_refusal_result") or {}
         _readiness_result = state.intermediate_results.get("readiness_result") or {}
+        _comfort_history_result = state.intermediate_results.get("comfort_history_result") or {}
         _fact_conflict_result = state.intermediate_results.get("fact_conflict_result") or {}
         _register_result = state.intermediate_results.get("register_result") or {}
         _asset_state_result = state.intermediate_results.get("asset_state_result") or {}
@@ -6239,6 +6241,11 @@ SELECT ?l WHERE {
             # checklist in .claude/rules/agent-patterns.md, and it is the step this
             # codebase has now forgotten twice. Registered at the same time as the node.
             final_response = _readiness_result["formatted_response"]
+        elif _comfort_history_result.get("formatted_response"):
+            # BUG-1450: same reason as readiness_result immediately above -- a node that
+            # computes an answer nothing collects produces the generic "I processed your
+            # request" line. Registered at the same time as the node.
+            final_response = _comfort_history_result["formatted_response"]
         elif _fact_conflict_result.get("formatted_response"):
             # E2 (QA-trial plan, 2026-10-04): same reason as readiness_result immediately
             # above -- a node that computes an answer nothing collects produces the generic
@@ -9110,6 +9117,43 @@ SELECT ?l WHERE {
         except Exception as exc:
             logger.error(f"[readiness] compose failed: {describe_exception(exc)}", exc_info=True)
             state.intermediate_results["error"] = f"readiness_check: {describe_exception(exc)}"
+        return state
+
+    async def _comfort_history_node(self, state: ConversationState) -> ConversationState:
+        """ "When was room 2.01 last comfortable?" -> an honest decline (BUG-1450).
+
+        Routed here only by routing_contract._r_comfort_history_not_readiness, never by the
+        classifier (the intent is declared INTERNAL for exactly that reason). Deterministic:
+        no lane in this codebase keeps a register of WHEN a space was last compliant --
+        `standards_engine.newest_reading_verdict` only judges the NEWEST reading -- so nothing
+        here invents a past timestamp. The room is named when the question named one, the
+        same way `_readiness_check_node` reads it.
+        """
+        question = state.messages[-1].content if state.messages else ""
+        logger.info(f"[comfort_history] q={question[:70]!r}")
+
+        room = ""
+        for entity in state.intermediate_results.get("entities", []) or []:
+            if isinstance(entity, str) and re.search(r"\d", entity):
+                room = entity
+                break
+
+        subject = f"**{room}**" if room else "that space"
+        text = (
+            f"I don't have a record of exactly when {subject} was last comfortable. "
+            "This building checks the newest reading against a comfort standard when you "
+            "ask whether a space is comfortable now -- it does not keep a log of every past "
+            "moment a space crossed into or out of that standard, so I can't give you a past "
+            "date without inventing one.\n\n"
+            "Ask me whether it is comfortable right now, or ask for the temperature, "
+            "humidity or CO2 trend over a period you name, and I can tell you from the "
+            "readings themselves."
+        )
+        state.intermediate_results["comfort_history_result"] = {
+            "success": True,
+            "formatted_response": text,
+            "room": room,
+        }
         return state
 
     async def _fact_conflict_node(self, state: ConversationState) -> ConversationState:

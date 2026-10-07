@@ -19,7 +19,7 @@ literal, no sensor uuid in the text.
 from __future__ import annotations
 
 import re
-from datetime import datetime
+from datetime import datetime, timedelta
 from statistics import mean
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
@@ -247,6 +247,8 @@ def summarise_energy_totals(
     rows: Iterable[Any],
     metadata: Optional[Dict[str, Dict[str, Any]]] = None,
     max_series: int = 8,
+    window: Optional[Tuple[str, str]] = None,
+    tz_name: Optional[str] = None,
 ) -> Optional[str]:
     """The TOTAL of energy series over the fetched window, computed here, not narrated.
 
@@ -261,6 +263,17 @@ def summarise_energy_totals(
     latest reading is not a total. Returns None unless every series is an energy series in units
     that may be summed together (`units.aggregation_decision`), so a power (kW) series or a mixed
     set is never added up.
+
+    BUG-1451. *"The building consumed 690 kWh on 6 October"* headlined the sum of readings that
+    covered only 14:02 to 22:53 of that day (9 of 24 hours) as though it were the day's total.
+    The only safeguard was an advisory sentence below ("if it is shorter than the period asked
+    about, say so plainly") — the model read it and still presented the partial sum as the
+    whole day's figure. ``window``, when the caller passes the bounds actually resolved for this
+    fetch (BUG-1437's named-day narrowing, or whatever the SQL lane resolved — either way, no new
+    query), lets the coverage be CHECKED here rather than left to narration: when the measured
+    span does not reach both ends of ``window``, the quotable headline itself states the covered
+    span in building-local time and stops calling the sum "the total", instead of hoping the
+    model adds a caveat it has already been shown to drop.
     """
     from orchestrator.services.units import _KIND, aggregation_decision, normalise
 
@@ -293,11 +306,52 @@ def summarise_energy_totals(
     values = [v for pts in per.values() for _, v in pts]
     stamps = sorted(t for pts in per.values() for t, _ in pts if t is not None)
     span = f", {stamps[0]:%d %b %H:%M} to {stamps[-1]:%d %b %H:%M} store time" if stamps else ""
-    lines = [
-        f"Total over the period, computed from the readings fetched (quote it; do not recompute it "
-        f"and never use a latest reading as a total): {_fmt(sum(values))} {unit} across "
-        f"{len(per)} series ({len(values)} readings{span}).",
-    ]
+
+    # BUG-1451: does the measured span actually reach both ends of the window the fetch was
+    # asked to cover? A 30-minute margin clears ordinary reporting jitter at either edge
+    # without hiding a real gap the size of the one this was written for (missing ~14 hours).
+    # `window` bounds are store-clock STAMP strings, the same convention every SQL builder in
+    # this system speaks (`requested_interval.STAMP`); a bound that cannot be parsed is treated
+    # as absent rather than guessed at.
+    coverage_caveat = ""
+    if window and len(window) == 2 and stamps:
+        win_start = win_end = None
+        for raw, slot in ((window[0], "start"), (window[1], "end")):
+            try:
+                parsed = datetime.strptime(str(raw)[:19], "%Y-%m-%d %H:%M:%S")
+            except (TypeError, ValueError):
+                parsed = None
+            if slot == "start":
+                win_start = parsed
+            else:
+                win_end = parsed
+        if win_start is not None and win_end is not None:
+            margin = timedelta(minutes=30)
+            if stamps[0] > win_start + margin or stamps[-1] < win_end - margin:
+                from orchestrator.services.requested_interval import to_local
+
+                first_local = to_local(stamps[0], tz_name)
+                last_local = to_local(stamps[-1], tz_name)
+                coverage_caveat = (
+                    f" THE READINGS FETCHED COVER ONLY {first_local:%H:%M} to "
+                    f"{last_local:%H:%M} (building time) of the period asked about, NOT all "
+                    "of it. Say so plainly and do not call this figure the period's total — "
+                    "state it as the sum for the span actually covered."
+                )
+
+    if coverage_caveat:
+        lines = [
+            f"Partial-period sum, computed from the readings fetched (quote it; do not "
+            f"recompute it, and never use a latest reading as a total): {_fmt(sum(values))} "
+            f"{unit} across {len(per)} series ({len(values)} readings{span})."
+            f"{coverage_caveat}",
+        ]
+    else:
+        lines = [
+            f"Total over the period, computed from the readings fetched (quote it; do not recompute it "
+            f"and never use a latest reading as a total): {_fmt(sum(values))} {unit} across "
+            f"{len(per)} series ({len(values)} readings{span}).",
+        ]
     for key in sorted(per, key=_label)[:max_series]:
         vals = [v for _, v in per[key]]
         lines.append(f"- {_label(key)}: {_fmt(sum(vals))} {unit} ({len(vals)} readings)")

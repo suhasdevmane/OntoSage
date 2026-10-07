@@ -61,7 +61,7 @@ def test_the_capability_lane_checks_before_composing():
     from orchestrator.agents import capability_agent
 
     src = inspect.getsource(capability_agent)
-    i_guard = src.index("is_live_state_question(state.user_message")
+    i_guard = src.index("is_live_state_question(_effective_query(state)")
     i_compose = src.index("composed, _decided = await self._answer_from_passages(")
     assert i_guard < i_compose, "the live-state check must run BEFORE the passage composer"
     assert "document_cannot_answer_live_state" in src

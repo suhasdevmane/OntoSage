@@ -420,6 +420,9 @@ def test_precedence_order_is_pinned():
         # register lanes that answer a third of them, so any rule after it would take them
         # back. The AV register legitimately matches "ready" and dates nothing.
         "readiness_check",
+        # BUG-1450: directly after readiness_check, correcting only what that rule (or the
+        # classifier matching its broad description) just produced.
+        "comfort_history_not_readiness",
         # Wave 7: provenance / verification / permission / "is an assessment required" questions
         # are documents questions; after the register lanes, so it takes only what they left.
         "governance_question_never_reads_data",
