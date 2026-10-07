@@ -709,6 +709,47 @@ PERSONAS = {
 }
 
 
+#: BUG-1425. Words that scope a question to THIS moment rather than naming a second
+#: subject. `capability_graph_resolver._FRAME_WORDS`' own comment explains why these are
+#: deliberately kept OUT of the frame everywhere else: "those change WHICH answer is
+#: right, and a static topic answering them is a different defect" — this is that
+#: defect, and it is scoped to exactly the one place it was measured.
+_LIVE_SCHEDULE_WORD = frozenset(
+    "now today tonight tomorrow afternoon evening morning currently immediately".split()
+)
+
+
+def _not_merely_scheduled(user_query: str, facts: List[Any]) -> List[Any]:
+    """Drop a `subject_facts` match whose only leftover is a scheduling word (BUG-1425).
+
+    `topic_is_the_subject` keeps a topic whose single leftover word is not one of the
+    tiny "this building does not offer this" set (BUG-1395's `_NOT_THIS_BUILDING`) — a
+    deliberately permissive rule for topics like "What happens during a power outage?"
+    (leftover {happens}). "Is Level 1 computer lab 1.06 (WS-02) free this afternoon?"
+    matched 'Schools And Key Facilities' on the phrase "computer lab" and left exactly
+    {afternoon} — not a disqualifying word there, so the topic qualified and the
+    ttl-route short-circuit skipped the LLM classifier for a room-AVAILABILITY
+    question, not a facilities question (G3's own motivating example, which G3 did not
+    fully close).
+
+    This composes the EXISTING, unmodified `_subject_leftover` rather than loosening it
+    or `topic_is_the_subject`/`subject_facts` for every caller — the capability lane's
+    own subject test and the routing-contract stand-down (BUG-1439) keep their already-
+    measured numbers unchanged. Scoped to the one call site this row is about: the
+    pre-classification short-circuit, which is the only place a topic match being wrong
+    costs the classifier its turn entirely.
+    """
+    from orchestrator.services.capability_graph_resolver import _subject_leftover
+
+    kept = []
+    for f in facts:
+        leftover = _subject_leftover(user_query, f)
+        if leftover is not None and leftover and set(leftover) <= _LIVE_SCHEDULE_WORD:
+            continue
+        kept.append(f)
+    return kept
+
+
 class DialogueAgent:
     """Manages conversation flow and LLM-based intent detection"""
 
@@ -1460,6 +1501,13 @@ class DialogueAgent:
                     if _facts
                     else []
                 )
+                # BUG-1425: `subject_facts`' own one-leftover-word tolerance let a
+                # schedule word ("this afternoon") stand in for a second subject, so a
+                # room-availability question still skipped the classifier via the
+                # Schools And Key Facilities topic. See `_not_merely_scheduled`'s
+                # docstring for why this filter lives here and not inside the shared
+                # subject test.
+                _subject = _not_merely_scheduled(user_query, _subject)
                 if _subject:
                     logger.info(
                         f"[ttl-route] capability via ontology triples: "
