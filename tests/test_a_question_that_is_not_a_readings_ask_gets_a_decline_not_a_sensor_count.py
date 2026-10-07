@@ -68,18 +68,42 @@ def test_the_per_sensor_refusal_is_kept_exactly(question):
 
 
 def test_the_decline_names_the_quantity_only_when_the_question_does():
+    # the sensors' quantity is read from their BRICK CLASS, never the label (owner rule) -- the
+    # label is kept only so the example room number can be read from it.
     labels = ["Room 4.16 occupancy [persons]"]
+    classes = ["Occupancy_Count_Sensor"]
     # asked about people: the way forward is about people
-    asked = too_broad_reply("is the office busy in the afternoon", 250, labels)
+    asked = too_broad_reply("is the office busy in the afternoon", 250, labels, classes)
     assert "people" in asked and "250" not in asked
     # the sensors are occupancy sensors but the question is a wish about lighting: never said
-    wish = too_broad_reply("How can we optimize lighting usage?", 250, labels)
+    wish = too_broad_reply("How can we optimize lighting usage?", 250, labels, classes)
     assert "occupancy" not in wish and "Room 4.16" not in wish
 
 
 def test_the_decline_names_no_building_and_no_room_literal():
     text = too_broad_reply("What hours are considered off-peak?", 269, [])
     assert "bldg" not in text.lower() and "Abacws" not in text and "Room " not in text
+
+
+def test_the_quantity_is_read_from_the_sensors_brick_class_not_their_label():
+    """Owner rule (2026-10-07): a sensor's label is a naming convention, not its measurand.
+
+    This sensor is typed CO2_Level_Sensor in the graph; its label happens to carry "noise" (a
+    maintenance tag, not a measurement) -- exactly the mismatch the rule exists to guard against.
+    Reading the measurand from the label alone (the pre-fix behaviour) gives "sound"; reading it
+    from the Brick class gives the right answer, "CO2".
+    """
+    from orchestrator.services.aggregate_lane import measurand_key
+
+    label = ["Zone noise-test-node C7"]
+    brick_class = ["CO2_Level_Sensor"]
+
+    # proof the label alone is misleading -- the shape the old, name-based code would have hit
+    assert measurand_key(label) == "sound"
+
+    text = too_broad_reply("give me every sensor reading this week", 50, label, brick_class)
+    assert "CO2" in text
+    assert "sound" not in text.lower()
 
 
 # ── 2. WHICH place: a constraint is not a summary ────────────────────────────────────────────

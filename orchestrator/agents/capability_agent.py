@@ -33,6 +33,29 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
+
+def _effective_query(state: ConversationState) -> str:
+    """The query text this lane should answer, preferring the co-reference rewrite.
+
+    BUG-1426 (live, 2026-10-07): the coref block in ``workflow/_orchestrator.py`` rewrites
+    a context-dependent follow-up ("What time does it close?" -> "What time does the cafe
+    close?") into ``state.messages[-1].content`` and records it in
+    ``state.intermediate_results["coref_rewrite"]`` -- but deliberately does NOT overwrite
+    ``state.user_message``, because that field is also read, unrewritten, by
+    ``_response_node``'s post-answer guards (``non_answer_reason``, ``implausibility_note``,
+    ``unserved_note``, the response-cache check) for every lane, and by `control_agent` /
+    `maintenance_agent`, where rewriting the user's literal words before they are logged as
+    an incident or a decline reason would be the wrong trade. This lane alone needs the
+    rewritten form: without it, "What time does it close?" carries no amenity word, so the
+    "Working Hours" topic wins over the cafe's own hours. Reading the stored rewrite here
+    is narrower than making the coref block set `state.user_message` for every lane.
+    """
+    _rw = state.intermediate_results.get("coref_rewrite")
+    if isinstance(_rw, dict) and _rw.get("rewritten"):
+        return str(_rw["rewritten"])
+    return state.user_message or ""
+
+
 # Count / area questions are answered from the live graph + floor plans (BuildingMetrics),
 # never from frozen prose. When one of these matches, a TBOX SPARQL COUNT + DWG area supplies
 # the authoritative live figures.
@@ -414,7 +437,7 @@ class CapabilityAgent:
         """
         if not getattr(settings, "REFERENT_VALIDATION_ENABLED", True):
             return None
-        query = state.user_message or ""
+        query = _effective_query(state)
         typed_phrase = ""
         try:
             from orchestrator.agents.sparql_agent import SPARQLAgent, _active_namespace
@@ -507,7 +530,7 @@ class CapabilityAgent:
         different questions: metrics say how MANY things the building has,
         this says what the building IS.
         """
-        query = state.user_message or ""
+        query = _effective_query(state)
         try:
             from orchestrator.services import building_profile as bp
 
@@ -553,7 +576,7 @@ class CapabilityAgent:
             _res = state.intermediate_results.get("capability_result")
             if isinstance(_res, dict) and _res.get("response"):
                 _repl = _terse.apply(
-                    state.user_message or "",
+                    _effective_query(state),
                     str(_res.get("response")),
                     str(_res.get("building_name") or "this building"),
                 )
@@ -609,7 +632,7 @@ class CapabilityAgent:
         # answered from the room records, not from a topic that mentions them (BUG-810, 827).
         from orchestrator.services import room_type_lookup as _rooms
 
-        _kind_answer = await _rooms.answer_live(state.user_message or "")
+        _kind_answer = await _rooms.answer_live(_effective_query(state))
         if _kind_answer:
             state.intermediate_results["capability_result"] = _rooms.capability_result(
                 _kind_answer, building_name
@@ -621,7 +644,7 @@ class CapabilityAgent:
         # passage that merely mentions parking).
         from orchestrator.services import amenity_attribute_answer as _attrs
 
-        _attr = await _attrs.answer_live(state.user_message or "", building_name)
+        _attr = await _attrs.answer_live(_effective_query(state), building_name)
         if _attr:
             state.intermediate_results["capability_result"] = _attr
             return state
@@ -635,18 +658,18 @@ class CapabilityAgent:
         from orchestrator.services.building_metrics import names_a_specific_class
         from orchestrator.services.routing_contract import _METROLOGY_RE as _METROLOGY
 
-        _is_metrology = bool(_METROLOGY.search(state.user_message or ""))
+        _is_metrology = bool(_METROLOGY.search(_effective_query(state)))
         # Nor a count of a specific KIND of device (BUG-431). This snapshot reports the
         # building's totals, so "how many CO2 sensors are there?" was answered "2,721
         # sensors". The class census two blocks below counts by class and holds the right
         # figure — CO2_Sensor 280 — so a class-qualified count belongs to it.
-        _class_qualified = names_a_specific_class(state.user_message or "")
+        _class_qualified = names_a_specific_class(_effective_query(state))
         if (
             not _is_metrology
             and not _class_qualified
             and (
-                measurand_of(state.user_message or "")
-                or _is_metrics_question(state.user_message or "")
+                measurand_of(_effective_query(state))
+                or _is_metrics_question(_effective_query(state))
             )
         ):
             _decline = await self._absent_referent_decline(state, building_id, building_name)
@@ -655,7 +678,7 @@ class CapabilityAgent:
                 return state
             # The census answers counts and size only. A measurand ("sound insulation") that
             # asks for neither must not be answered with sensor and room totals.
-            _wants_figures = _asks_for_building_figures(state.user_message or "")
+            _wants_figures = _asks_for_building_figures(_effective_query(state))
             if not _wants_figures:
                 logger.info("[capability] measurand named but no count asked — figures withheld")
             try:
@@ -694,9 +717,9 @@ class CapabilityAgent:
             _resolver = get_capability_graph_resolver()
             _withheld: list = []  # matched but out of service: named, never dropped silently
             if hasattr(_resolver, "resolve_with_withheld"):  # a duck-typed resolver may lack it
-                _facts, _withheld = await _resolver.resolve_with_withheld(state.user_message or "")
+                _facts, _withheld = await _resolver.resolve_with_withheld(_effective_query(state))
             else:
-                _facts = await _resolver.resolve(state.user_message or "")
+                _facts = await _resolver.resolve(_effective_query(state))
             # BUG-103: lay-term matching can land on a loosely-related amenity — a
             # question about a swimming pool or a water tank's pH was answered with
             # "Catering Amenities". An amenity may only answer if it actually mentions
@@ -720,7 +743,7 @@ class CapabilityAgent:
                     }
                     for f in _facts
                 ]
-                _keep = {id(r) for r in _on_topic(state.user_message or "", _rendered)}
+                _keep = {id(r) for r in _on_topic(_effective_query(state), _rendered)}
                 _pairs = [(f, r) for f, r in zip(_facts, _rendered) if id(r) in _keep]
                 # ORDER matters as much as inclusion, and the filter above cannot
                 # supply it. For "how many parking bays are free?" BOTH a
@@ -748,7 +771,7 @@ class CapabilityAgent:
                 )
 
                 _rank = {MATCH_DISTINCTIVE: 2, MATCH_COMMON: 1}
-                _q = state.user_message or ""
+                _q = _effective_query(state)
 
                 # A floor named in the question outranks everything else. "Where can I
                 # fill my bottle ON FLOOR 3?" listed floors 0, 1 and 2 and never
@@ -807,7 +830,7 @@ class CapabilityAgent:
                 from orchestrator.services import amenity_floor_answer as _floors
 
                 _by_floor = _floors.capability_answer(
-                    state.user_message or "",
+                    _effective_query(state),
                     subject_facts(_q, [f for f, _ in _pairs]),
                     subject_facts(_q, _withheld),
                     building_name,
@@ -824,7 +847,7 @@ class CapabilityAgent:
                 from orchestrator.services.grounding_guard import missing_fact_caveat
 
                 _caveat = missing_fact_caveat(
-                    state.user_message or "", " ".join(f.render() for f in _facts)
+                    _effective_query(state), " ".join(f.render() for f in _facts)
                 )
                 if _caveat:
                     _parts.append(f"*{_caveat}*\n")
@@ -850,7 +873,7 @@ class CapabilityAgent:
                 _sources = ["building's own records"]
                 if _doc_ref:
                     _extra = await _search_documents(
-                        state.user_message or "", building_id, only_document=_doc_ref
+                        _effective_query(state), building_id, only_document=_doc_ref
                     )
                     if _extra:
                         _parts.append(
@@ -890,8 +913,8 @@ class CapabilityAgent:
 
             # "Are there duplicate assets?" asks about a QUALITY of what is held; a census of
             # equipment classes is a different fact and was returned as though it answered.
-            if is_inventory_question(state.user_message or "") and _census_can_answer(
-                state.user_message or ""
+            if is_inventory_question(_effective_query(state)) and _census_can_answer(
+                _effective_query(state)
             ):
                 from orchestrator.agents.sparql_agent import (
                     GRAPHDB_QUERY_ENDPOINT,
@@ -899,7 +922,7 @@ class CapabilityAgent:
                 )
 
                 _rows = await class_census(
-                    state.user_message or "", _active_namespace(), GRAPHDB_QUERY_ENDPOINT
+                    _effective_query(state), _active_namespace(), GRAPHDB_QUERY_ENDPOINT
                 )
                 # A census reads as a partition, and Brick's classes are not disjoint:
                 # "Air Quality Sensor 523, CO2 Sensor 214, CO2 Level Sensor 208" invites a
@@ -940,7 +963,7 @@ class CapabilityAgent:
                 render,
             )
 
-            _wants_provenance = is_provenance_question(state.user_message or "")
+            _wants_provenance = is_provenance_question(_effective_query(state))
         except Exception:  # pragma: no cover - never block the lane on this
             _wants_provenance = False
 
@@ -961,7 +984,7 @@ class CapabilityAgent:
                 _prov_for_admin = reader_is_admin_in(state)
             except Exception:  # pragma: no cover - the plain read-back is the safe side
                 _prov_for_admin = False
-            _rendered = render(_record, state.user_message or "", for_admin=_prov_for_admin)
+            _rendered = render(_record, _effective_query(state), for_admin=_prov_for_admin)
             state.intermediate_results["capability_result"] = {
                 "success": True,
                 "response": _rendered
@@ -999,7 +1022,7 @@ class CapabilityAgent:
         try:
             from orchestrator.services.routing_contract import scenario_question
 
-            _is_scenario = scenario_question(state.user_message or "")
+            _is_scenario = scenario_question(_effective_query(state))
         except Exception:  # pragma: no cover - never block the lane on this
             _is_scenario = False
 
@@ -1045,7 +1068,7 @@ class CapabilityAgent:
 
             await load_lay_terms()
             _held_classes = await record_classes()
-            _absent = absent_record_class(state.user_message or "", _held_classes)
+            _absent = absent_record_class(_effective_query(state), _held_classes)
         except Exception as _rr_err:  # pragma: no cover - never block the lane on this
             logger.debug(f"[capability] record registry unavailable: {_rr_err}")
             _absent = None
@@ -1086,7 +1109,7 @@ class CapabilityAgent:
         # Genuinely-uploaded manuals / policy PDFs, semantically retrieved. This is NOT a
         # capability.yaml fallback — it is a distinct source for long-form uploaded content.
         _doc_stats: Dict[str, Any] = {}
-        doc_hits = await _search_documents(state.user_message or "", building_id, stats=_doc_stats)
+        doc_hits = await _search_documents(_effective_query(state), building_id, stats=_doc_stats)
         # CAVEAT-226: when the floor removed EVERY candidate, say so on the evidence record.
         # An answer that got thinner because a threshold moved is an attributable tightening;
         # one that got thinner for no stated reason is a regression, and the gate cannot tell
@@ -1114,7 +1137,7 @@ class CapabilityAgent:
             ]
             _before_guard = len(doc_hits)
             doc_hits = filter_on_topic(
-                state.user_message or "", doc_hits, extra_vocab=_concept_vocab
+                _effective_query(state), doc_hits, extra_vocab=_concept_vocab
             )
             # The on-topic guard must name itself for the same reason the retrieval floor has
             # to (CAVEAT-226): it SUPPRESSES an answer, and a suppression that names nothing is
@@ -1144,7 +1167,7 @@ class CapabilityAgent:
             from orchestrator.services.passage_relevance import relevant_hits
 
             doc_hits, _gated_out = relevant_hits(
-                state.user_message or "",
+                _effective_query(state),
                 doc_hits,
                 floor=settings.document_score_floor,
                 extra_vocab=_concept_vocab,
@@ -1188,7 +1211,7 @@ class CapabilityAgent:
                 h
                 for h in doc_hits
                 if match_strength(
-                    state.user_message or "",
+                    _effective_query(state),
                     str(h.get("text", "")),
                     extra_vocab=_concept_vocab,
                     corpus_df=_corpus_df,
@@ -1214,7 +1237,7 @@ class CapabilityAgent:
             # knowledge, which is the fabrication this project guards against hardest.
             from orchestrator.services.passage_relevance import is_live_state_question
 
-            if doc_hits and is_live_state_question(state.user_message or ""):
+            if doc_hits and is_live_state_question(_effective_query(state)):
                 # BUG-1407: "Are the doors locked" -> "Yes, the door was secured; access log
                 # reviewed", composed from an incident-log passage. A document records
                 # procedures and past events, never whether something is so right now.
@@ -1238,7 +1261,7 @@ class CapabilityAgent:
                 return state
             if doc_hits:
                 composed, _decided = await self._answer_from_passages(
-                    state.user_message or "", doc_hits
+                    _effective_query(state), doc_hits
                 )
             else:
                 # Every retrieved passage failed the relevance gate: nothing to compose from.
@@ -1267,7 +1290,7 @@ class CapabilityAgent:
             from orchestrator.services.passage_relevance import document_is_named
 
             if _searched and (
-                _decided or not (_strong or document_is_named(state.user_message or "", doc_hits))
+                _decided or not (_strong or document_is_named(_effective_query(state), doc_hits))
             ):
                 from orchestrator.services.grounding_guard import reader_is_admin_in
 
@@ -1317,9 +1340,9 @@ class CapabilityAgent:
                 # backstop: a register question normally routes to the graph lane long
                 # before here (dialogue_agent's TTL-first short-circuit), and it reaches
                 # this line only when some earlier stage claimed the question for documents.
-                _register_note = _held_register_note(state.user_message or "", _held_classes)
+                _register_note = _held_register_note(_effective_query(state), _held_classes)
                 if not _register_note:
-                    _log_selector_gap(state.user_message or "", _held_classes)
+                    _log_selector_gap(_effective_query(state), _held_classes)
                 if _register_note:
                     _response = _register_note
                 elif reader_is_admin_in(state):
@@ -1362,7 +1385,7 @@ class CapabilityAgent:
             # Already wired on the graph path (and tested there); its absence here is why
             # a question asking for a DATE could be answered with prose containing none.
             _caveat = missing_fact_caveat(
-                state.user_message or "", str((doc_hits[0] or {}).get("text", ""))
+                _effective_query(state), str((doc_hits[0] or {}).get("text", ""))
             )
             if _caveat:
                 parts.append(f"{_caveat}\n")
@@ -1404,7 +1427,7 @@ class CapabilityAgent:
         # reached it, and the boundary sentence turned a routing miss into a statement about
         # the building. A held register the question names is checked before that sentence
         # is allowed out.
-        _register_note = _held_register_note(state.user_message or "", _held_classes)
+        _register_note = _held_register_note(_effective_query(state), _held_classes)
         if _register_note:
             state.intermediate_results["capability_result"] = {
                 "success": True,
@@ -1415,9 +1438,9 @@ class CapabilityAgent:
             logger.info("[capability] no source matched — named the register held instead")
             return state
 
-        _log_selector_gap(state.user_message or "", _held_classes)
+        _log_selector_gap(_effective_query(state), _held_classes)
 
-        _q = (state.user_message or "").lower()
+        _q = _effective_query(state).lower()
         _kind = (
             SUBJECT_DOCUMENT
             if any(w in _q for w in ("policy", "manual", "procedure", "document", "guide", "say"))
@@ -1430,7 +1453,7 @@ class CapabilityAgent:
                 f"For building-specific queries please contact your building's facilities / "
                 f"estates management team."
                 f"{enablement_hint(_kind, for_admin=reader_is_admin_in(state))}"
-                f"{_boundary_pointer(building_name, state.user_message or '', _held_classes)}"
+                f"{_boundary_pointer(building_name, _effective_query(state), _held_classes)}"
             ),
             "provenance": "no_match",
             "building_name": building_name,

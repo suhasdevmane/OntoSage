@@ -56,7 +56,16 @@ PROVENANCE_RE = re.compile(
     # Measured over the 4,060-question bank before shipping: exactly 1 move, a correct one
     # ("Which sensors did you use to answer my last question?"), 0 lost.
     r"|\bwhich (?:data )?(?:sources?|records?|sensors?|ones?) did you (?:use|check|read)\b"
-    r"|\bwhat (?:data|sources?) did you use\b",
+    r"|\bwhat (?:data|sources?) did you use\b"
+    # BUG-1427: "what evidence supports that?" / "what data backed that up?" reached
+    # neither this regex nor session_recall's `_ABOUT_MY_ANSWER` -- a provenance question
+    # with no lane at all, falling through to general_knowledge. Deliberately disjoint from
+    # the D7 exclusion list above: "evidence BEHIND/FOR your/that/the last answer" stays
+    # session_recall's (BUG-1397), because it names the ANSWER explicitly; this is the
+    # narrower "evidence SUPPORTS/BACKS/CONFIRMS it" shape, which never did. Measured over
+    # the same 4,060-question bank: exactly 1 new move, 0 overlap with the existing pattern.
+    r"|\bwhat\s+evidence\s+(?:supports?|backs?(?:\s+up)?|confirms?)\s+(?:that|this|it)\b"
+    r"|\bwhat\s+(?:data|sources?)\s+(?:backed?|supports?)\s+(?:that|this|it)(?:\s+up)?\b",
     re.IGNORECASE,
 )
 
@@ -64,6 +73,34 @@ PROVENANCE_RE = re.compile(
 def is_provenance_question(query: str) -> bool:
     """True when the user is asking how the previous answer was arrived at."""
     return bool(PROVENANCE_RE.search(query or ""))
+
+
+async def load_previous_turn_record(conversation_id: Optional[str]) -> Optional[Dict[str, Any]]:
+    """The PREVIOUS turn's ``evidence_record``, off this conversation's own saved state.
+
+    BUG-1427: `capability_agent`'s own "how do you know that?" block (V7-T74) already did
+    exactly this read inline; `session_recall` owns a sibling, backward-referencing shape of
+    the same question ("what is the evidence behind your/your last answer?", BUG-1397) and
+    needed the identical read rather than a second inline copy of the Redis call, which is
+    how two lanes answering the same kind of question would drift (BUG-210's shape).
+
+    Never raises: a provenance question must get an honest decline, never a crash, and a
+    turn with no conversation id (a test stub, a lane invoked standalone) is just a turn
+    with nothing to read.
+    """
+    if not conversation_id:
+        return None
+    try:
+        from orchestrator.redis_manager import redis_manager
+
+        prev = await redis_manager.load_state(conversation_id)
+    except Exception as exc:  # pragma: no cover - never block an answer on this read
+        logger.debug(f"[evidence] could not load previous turn for provenance read-back: {exc}")
+        return None
+    if not prev or not getattr(prev, "intermediate_results", None):
+        return None
+    record = prev.intermediate_results.get("evidence_record")
+    return record if isinstance(record, dict) and record else None
 
 
 def _fmt_time(value: Any) -> str:

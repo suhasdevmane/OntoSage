@@ -130,7 +130,16 @@ class TestItIsWiredIntoTheRewriteChain:
         synonym that matches would let ONE class's two synonyms both appearing in a
         reply look like TWO different amenities to amenities_in_reply, declining as
         ambiguous when there is really just one. The call site must keep at most one
-        candidate per class."""
+        candidate per class.
+
+        BUG-1426 (live, 2026-10-07): this loop originally matched with its own plain
+        `.lower()` regex and a `break` to stop at the first hit. That bypassed the
+        accent fold `amenities_in_reply` applies on every other caller's path, so it
+        now calls that shared helper per class and keeps only `[0]` of what it
+        returns -- a different mechanism for the same "at most one per class"
+        invariant, so this guard now looks for THAT shape instead of the literal
+        `break` the old implementation happened to use.
+        """
         import inspect
 
         from orchestrator.agents.dialogue_agent import DialogueAgent
@@ -139,7 +148,8 @@ class TestItIsWiredIntoTheRewriteChain:
         block_start = src.index("for _c in _classes:")
         block_end = src.index("resolve_sole_floor_or_amenity_anaphor(", block_start)
         block = src[block_start:block_end]
-        assert "break" in block, "must stop at the first matching candidate per class"
+        assert "amenities_in_reply(" in block, "must use the shared, accent-folding helper"
+        assert "_matches[0]" in block, "must stop at the first matching candidate per class"
 
     def test_it_runs_after_the_synchronous_room_only_loop(self):
         """The room resolver (synchronous, free) must be tried BEFORE paying for a

@@ -1470,6 +1470,11 @@ class Facts:
     #: A unit the label declares that the recorded one contradicts within the same quantity kind
     #: (L/min against L/s). Nothing here can tell which is right, so the answer says so.
     unit_conflict: str = ""
+    #: The sensor's own Brick class, when the pipeline resolved one. Read by `is_headcount` /
+    #: `counts_people` so a count-vs-status question is settled by the graph, not by this label
+    #: (owner rule, 2026-10-07). A companion sensor found through `build_companion_query` carries
+    #: none -- that query does not select ?cls back -- so it falls back to the label alone.
+    brick_class: str = ""
 
 
 @dataclass
@@ -1568,6 +1573,7 @@ def facts_from(
             room=place.room,
             on_floor=place.on_floor,
             unit_conflict=conflict,
+            brick_class=str(meta.get("brick_class") or ""),
         )
     return out
 
@@ -2651,7 +2657,8 @@ async def try_answer(
     )
     kinds = _kinds_of(units)
     labels = [str((metadata.get(u) or {}).get("label") or "") for u in uuids]
-    headcount = is_headcount(measurand, labels, kinds)
+    classes = [str((metadata.get(u) or {}).get("brick_class") or "") for u in uuids]
+    headcount = is_headcount(measurand, labels, kinds, classes)
 
     # WHEN A BARE MEASURAND MAY BE SUMMARISED. All four conditions, because each one on its own
     # would take a question this lane should not answer: a named place makes a building-wide
@@ -2855,14 +2862,23 @@ async def try_answer(
             counters = {
                 u: facts[u].floor
                 for u in uuids
-                if facts[u].on_floor and facts[u].floor and counts_people(facts[u].label)
+                if facts[u].on_floor
+                and facts[u].floor
+                and counts_people(facts[u].label, brick_class=facts[u].brick_class)
             }
             if len(counters) < 2 and sparql_exec is not None:
                 try:
                     found = parse_companions(
                         await sparql_exec(
                             build_companion_query(
-                                [u for u in uuids if counts_people(facts[u].label)] or uuids
+                                [
+                                    u
+                                    for u in uuids
+                                    if counts_people(
+                                        facts[u].label, brick_class=facts[u].brick_class
+                                    )
+                                ]
+                                or uuids
                             )
                         )
                     )
@@ -2907,10 +2923,15 @@ async def try_answer(
         return res
 
     # A STATUS FLAG IS NOT A HEADCOUNT, and both live in one table: a question about people binds
-    # 256 counting series and 243 occupancy-status series together. Dropped by NAME rather than by
-    # letting the unit-family vote below decide it — that vote would be won by a margin of 13
-    # series, which is not a property anything should rest on.
-    counting = [u for u in uuids if counts_people(facts[u].label, _kind_of(facts[u].unit))]
+    # 256 counting series and 243 occupancy-status series together. Dropped by the sensor's own
+    # Brick CLASS where one resolves, by label only when the class does not (owner rule), rather
+    # than by letting the unit-family vote below decide it — that vote would be won by a margin of
+    # 13 series, which is not a property anything should rest on.
+    counting = [
+        u
+        for u in uuids
+        if counts_people(facts[u].label, _kind_of(facts[u].unit), facts[u].brick_class)
+    ]
     not_counting = len(uuids) - len(counting)
     if headcount and counting:
         uuids = counting
@@ -3344,7 +3365,7 @@ async def _answer_presence(
         if not place or place.isdigit():
             unplaced += 1
             continue
-        family = "count" if counts_people(f.label, _kind_of(f.unit)) else "presence"
+        family = "count" if counts_people(f.label, _kind_of(f.unit), f.brick_class) else "presence"
         held = by_place.setdefault(place, {})
         # One reading per family per place: a space with two presence flags is still one space,
         # and the newest of them is what "right now" means there.

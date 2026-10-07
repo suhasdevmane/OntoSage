@@ -7,7 +7,7 @@ import sys
 sys.path.append("/app")
 
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
@@ -137,6 +137,7 @@ class AnalyticsAgent:
             # called directly (the planner does). The window is kept for the no-data message.
             _named_window = None
             _named_label = ""
+            _tz = None
             try:
                 from orchestrator.services.requested_interval import (
                     STAMP,
@@ -152,6 +153,21 @@ class AnalyticsAgent:
                     _named_label = _local_day.strftime("%d %b %Y")
             except Exception as _nd_err:  # never let a window check cost the answer
                 logger.debug(f"[analytics] named-day narrowing skipped: {_nd_err}")
+
+            # BUG-1451: the window actually resolved for THIS fetch, so an energy total's
+            # coverage can be checked against it in `_format_analysis` -- no new query. Prefer
+            # the named-day bounds above (BUG-1437, relative words only); fall back to whatever
+            # the sql node resolved and left on the bus, which also covers an explicit calendar
+            # date ("6 October") that the named-day resolver does not match.
+            _energy_window = _named_window
+            if _energy_window is None:
+                try:
+                    _bus_start = state.intermediate_results.get("start_date")
+                    _bus_end = state.intermediate_results.get("end_date")
+                    if _bus_start and _bus_end:
+                        _energy_window = (str(_bus_start), str(_bus_end))
+                except Exception:  # never let a window check cost the answer
+                    pass
 
             data_count = len(data.get("data", []))
             logger.info(f"📊 Data Records: {data_count}")
@@ -298,6 +314,8 @@ class AnalyticsAgent:
                     sensor_metadata,
                     rows=data.get("data", []),
                     declared=self._declared_figures_note(state),
+                    window=_energy_window,
+                    tz_name=_tz,
                 )
                 return {
                     "success": True,
@@ -342,6 +360,8 @@ class AnalyticsAgent:
                 sensor_metadata,
                 rows=data.get("data", []),
                 declared=self._declared_figures_note(state),
+                window=_energy_window,
+                tz_name=_tz,
             )
             logger.info(f"✅ Formatted response generated")
             logger.info("=" * 80)
@@ -1140,11 +1160,17 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         sensor_metadata: Dict[str, Dict[str, str]] = None,
         rows: Optional[List[Dict[str, Any]]] = None,
         declared: str = "",
+        window: Optional[Tuple[str, str]] = None,
+        tz_name: Optional[str] = None,
     ) -> str:
         """Format analysis results into natural language.
 
         ``declared`` is ``_declared_figures_note``'s output — what the building model states
         for this space, so a computed extreme cannot be offered in its place (BUG-953).
+
+        ``window``/``tz_name`` are the period actually resolved for this fetch (BUG-1451) —
+        this method has no ``state``, so the caller resolves them once and passes them through,
+        letting an energy total's coverage be checked against what was asked for.
         """
 
         if not result.get("success"):
@@ -1290,7 +1316,14 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
             )
 
             if asks_for_a_total(user_query):
-                _energy_totals = summarise_energy_totals(rows or [], sensor_metadata or {})
+                # BUG-1451: `window`/`tz_name` are the period actually resolved for this
+                # fetch (`analyze()` computes them -- named-day bounds, BUG-1437, or
+                # whatever the sql node left on the bus -- and passes them through, since
+                # this method has no `state`). Checking coverage against them is what lets
+                # a partial-day sum stop being headlined as the day's total.
+                _energy_totals = summarise_energy_totals(
+                    rows or [], sensor_metadata or {}, window=window, tz_name=tz_name
+                )
                 if _energy_totals:
                     sensor_context = "\n\n" + _energy_totals + "\n" + sensor_context
         except Exception as _et_err:  # never cost the answer

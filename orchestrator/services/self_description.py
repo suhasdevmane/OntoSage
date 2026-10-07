@@ -87,6 +87,10 @@ _NOT_USER_FACING = {
     "general_guidance",
     "session_recall",
     "fact_conflict",
+    # BUG-1450 (2026-10-07): a comfort-HISTORY stand-down of readiness_check, never
+    # classified directly. Its decline is worded inline in _comfort_history_node, not as a
+    # standing capability a reader would ask for by name.
+    "comfort_history",
 }
 
 # Grouped so the list reads as capabilities rather than as internal labels. An intent

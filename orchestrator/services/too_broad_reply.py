@@ -17,6 +17,14 @@ reader's own quantity and period so they can be asked as they stand:
 
 Nothing here names a building. The example room is taken from the sensors that were resolved (their
 own labels), and when no label carries one the reply says "a room" rather than invent one.
+
+THE SENSORS' QUANTITY IS READ FROM THEIR BRICK CLASS, NEVER FROM A LABEL (owner rule, 2026-10-07).
+A sensor's label is a building's naming convention, not a statement of what it measures -- the
+same label text that misled `aggregate_lane.try_answer` before BUG-1442 can mislead the words this
+module offers back to the reader. `_quantity`/`_decline` therefore vote from the bound sensors'
+`brick_class` values first (`aggregate_lane.measurand_from_classes`) and fall back only to the
+QUESTION's own wording, never to the sensors' labels. Labels are still read for the example room
+number, which is display, not quantity selection.
 """
 
 from __future__ import annotations
@@ -43,11 +51,20 @@ _LEVEL_WORD = {
 }
 
 
-def _quantity(question: str, labels: Iterable[str]) -> Optional[str]:
-    """The measurand the sensors and the question agree on, as a reader would say it."""
-    from orchestrator.services.aggregate_lane import measurand_key
+def _quantity(question: str, classes: Iterable[str] = ()) -> Optional[str]:
+    """The measurand the sensors and the question agree on, as a reader would say it.
 
-    return measurand_key(list(labels)) or measurand_key([question])
+    The sensors' half comes from their BRICK CLASS, never their label (owner rule): each class a
+    question's bound sensors carry votes for exactly one modality or none, so a naming convention
+    has nothing here to mislead. When no class resolves, the question's OWN wording is the only
+    other honest source.
+    """
+    from orchestrator.services.aggregate_lane import (
+        measurand_from_classes,
+        measurand_key,
+    )
+
+    return measurand_from_classes(list(classes)) or measurand_key([question])
 
 
 def _period(question: str) -> Optional[str]:
@@ -65,7 +82,7 @@ def _example_room(labels: Iterable[str]) -> Optional[str]:
     return None
 
 
-def _decline(question: str, labels: Iterable[str]) -> str:
+def _decline(question: str, labels: Iterable[str], classes: Iterable[str] = ()) -> str:
     """The honest decline the rest of the system gives: no sensor count, no limit, a way forward.
 
     Used for every question that reached the breadth guard WITHOUT asking for the readings sensor
@@ -73,9 +90,14 @@ def _decline(question: str, labels: Iterable[str]) -> str:
     told "that covers all 233 sound sensors", which reads as a limit of the system and is not an
     answer; the sensor set was whatever retrieval bound, and often not even the quantity asked.
     The quantity is named only when the QUESTION names it; otherwise the way forward is generic.
+
+    THE SENSORS' quantity comes from `classes` (their BRICK CLASS), never from `labels` (owner
+    rule, 2026-10-07). `labels` is still read below for an example room number, which is display,
+    not quantity selection.
     """
     from orchestrator.services.aggregate_lane import (
         display_name,
+        measurand_from_classes,
         measurand_key,
         question_asks_about,
     )
@@ -83,7 +105,8 @@ def _decline(question: str, labels: Iterable[str]) -> str:
 
     lead = "I couldn't tie that question to a reading I can give you, so I have no figure for it."
     label_list = [str(x) for x in labels]
-    key = measurand_key(label_list) or measurand_key([question])
+    class_list = [str(x) for x in classes]
+    key = measurand_from_classes(class_list) or measurand_key([question])
     if key and is_readings_question(question) and question_asks_about(question, key):
         name = display_name(key)
         if key == "occupancy":
@@ -104,21 +127,31 @@ def _decline(question: str, labels: Iterable[str]) -> str:
     )
 
 
-def too_broad_reply(question: str, sensor_count: int, labels: Iterable[str] = ()) -> str:
+def too_broad_reply(
+    question: str,
+    sensor_count: int,
+    labels: Iterable[str] = (),
+    classes: Iterable[str] = (),
+) -> str:
     """The reply for a question that reached the breadth guard.
 
     A REQUEST FOR THE READINGS SENSOR BY SENSOR ("show me CO2 for every sensor") is the one shape
     where the size of the set is the honest reason, and it keeps its sentence. Everything else gets
     the plain decline.
+
+    `classes` is each bound sensor's Brick class (``metadata[uuid]["brick_class"]``), read in the
+    same order as `labels`. Passing it is what lets the quantity named below be the sensors' own
+    graph type rather than a guess from their label text.
     """
     from orchestrator.services.aggregate_support import asks_for_per_sensor_detail
 
     if not asks_for_per_sensor_detail(question):
-        return _decline(question, labels)
+        return _decline(question, labels, classes)
     from orchestrator.services.aggregate_lane import display_name
 
     label_list = [str(x) for x in labels]
-    key = _quantity(question, label_list)
+    class_list = [str(x) for x in classes]
+    key = _quantity(question, class_list)
     if not key:
         return (
             f"That covers all {sensor_count} sensors at once, which is too wide to answer "

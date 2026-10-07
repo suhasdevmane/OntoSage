@@ -429,8 +429,13 @@ async def answer_profile(
             )
             continue
         answered = {r.uuid for r in rows}
+        # THE FAMILY'S OWN QUANTITY IS READ FROM ITS SENSORS' BRICK CLASS, NEVER FROM A LABEL
+        # (owner rule, 2026-10-07). `measurand` is the question's overall quantity, which is not
+        # specific enough when the question binds two families at once ("CO2 or temperature");
+        # each family's own class resolves which one THIS group is, falling back to `measurand`
+        # only when the family's classes do not agree on one.
         family_name = al.display_name(
-            al.measurand_key(facts[u].label for u in members) or measurand
+            al.measurand_from_classes(facts[u].brick_class for u in members) or measurand
         )
         excluded = 0
         blocks.append(

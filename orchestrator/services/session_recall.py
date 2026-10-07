@@ -58,7 +58,7 @@ unchanged for bldg2.
 from __future__ import annotations
 
 import re
-from typing import Any, List, Sequence, Tuple
+from typing import Any, List, Optional, Sequence, Tuple
 
 from orchestrator.services.session_summary import OUTCOMES, TurnNote
 from shared.utils import get_logger
@@ -465,6 +465,57 @@ def answer(query: str, notes: Sequence[TurnNote]) -> str:
     return "\n".join(lines)
 
 
+#: BUG-1427. BUG-1397 correctly routes "what is the evidence behind your answer?", "how did
+#: you arrive at that?", "what was your previous answer based on?" HERE — this is the one
+#: lane that can say whether there was an answer — but until now the lane could only quote
+#: the past QUESTION back (`answer()` above), never the previous answer's own recorded
+#: evidence. Asking for a BASIS then produced "I have no record of you mentioning 'based'",
+#: a confusing non-answer when a basis really was recorded one turn back. Said when a
+#: previous turn exists but carried no usable evidence record at all (the key was never
+#: set — an old cached turn, or a lane that raised before assembly ran); the much more
+#: common case of a turn that ran and recorded "no lane produced evidence for this answer"
+#: is itself a valid, honest render (see `render`'s NOT_ASSESSABLE handling) and is shown
+#: rather than this.
+_NO_EVIDENCE_RECORD = (
+    "**Your last answer in this conversation carries no recorded evidence basis.** That "
+    "happens when the turn is too old to carry one, or ended before a record could be "
+    "assembled. Ask a question the building answers from its own records or live "
+    "readings, then ask how I know, and I will read that record back to you."
+)
+
+
+async def _render_previous_answer_evidence(state: Any, query: str) -> Optional[str]:
+    """The previous turn's evidence record read back in prose, or None to fall through.
+
+    None (never a decline here) when the question is not about the previous ANSWER's basis,
+    or there simply is no previous turn — the caller's quote-based `answer()` already covers
+    both honestly. A decline is only returned from here when there WAS a previous turn with
+    no evidence record to read, which `answer()` cannot say (it only sees the user's own
+    past questions, never the evidence bus key).
+    """
+    if not _ABOUT_MY_ANSWER.search(query or ""):
+        return None
+    from orchestrator.services.answer_provenance import (
+        load_previous_turn_record,
+        render,
+    )
+
+    record = await load_previous_turn_record(getattr(state, "conversation_id", None))
+    is_admin = False
+    try:
+        from orchestrator.services.grounding_guard import reader_is_admin_in
+
+        is_admin = reader_is_admin_in(state)
+    except Exception:  # pragma: no cover - the plain read-back is the safe side
+        pass
+    rendered = render(record, query, for_admin=is_admin) if record else None
+    if rendered:
+        return rendered
+    if record is None:
+        return _NO_EVIDENCE_RECORD
+    return None  # render() returned nothing for a non-empty record; let answer() speak
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # The lane
 # ─────────────────────────────────────────────────────────────────────────────
@@ -483,9 +534,26 @@ async def session_recall_node(state: Any) -> Any:
     *"I processed your request, but couldn't generate a response."* Three lanes reach the
     reader through that key today (``self_description``, ``general_knowledge``,
     ``locked_capability``); nothing else runs alongside this one, so nothing outranks it.
+
+    BUG-1427: a question about the PREVIOUS ANSWER's own evidence (not about what the user
+    themselves said) is read from that turn's recorded evidence, with the same vocabulary
+    `answer_provenance.render()` uses everywhere else — never a raw dump of UUIDs, never a
+    second API call. Only attempted when there IS a previous turn to ask about; with none,
+    the existing quote-based decline below already says so honestly.
     """
     query = state.user_message or ""
     notes = state.intermediate_results.get(NOTES_KEY) or []
+    if notes:
+        try:
+            evidenced = await _render_previous_answer_evidence(state, query)
+        except Exception as exc:  # an evidence read must never cost the turn its recall
+            logger.debug(f"[session_recall] evidence read-back skipped: {exc}")
+            evidenced = None
+        if evidenced:
+            state.intermediate_results["dialogue_response"] = evidenced
+            state.current_intent = "session_recall"
+            logger.info("[session_recall] answered a provenance question from the evidence record")
+            return state
     state.intermediate_results["dialogue_response"] = answer(query, notes)
     state.current_intent = "session_recall"
     logger.info(f"[session_recall] answered from {len(notes)} stored turn(s)")

@@ -14,7 +14,10 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from orchestrator.services.series_summary import asks_for_a_total, summarise_energy_totals
+from orchestrator.services.series_summary import (
+    asks_for_a_total,
+    summarise_energy_totals,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -28,7 +31,11 @@ def _six_meters_one_day(kwh_per_hour: float = 3.0):
         meta[u] = {"label": f"Electrical Energy Meter — Floor {floor}", "unit": "kWh"}
         for h in range(24):
             rows.append(
-                {"uuid": u, "value": kwh_per_hour, "timestamp": (t0 + timedelta(hours=h)).isoformat(sep=" ")}
+                {
+                    "uuid": u,
+                    "value": kwh_per_hour,
+                    "timestamp": (t0 + timedelta(hours=h)).isoformat(sep=" "),
+                }
             )
     return rows, meta
 
@@ -59,7 +66,10 @@ def test_a_mixed_set_is_not_totalled():
         {"uuid": "a", "value": 1, "timestamp": "2026-09-17 10:00:00"},
         {"uuid": "b", "value": 2, "timestamp": "2026-09-17 10:00:00"},
     ]
-    meta = {"a": {"label": "Energy meter", "unit": "kWh"}, "b": {"label": "CO2 sensor", "unit": "ppm"}}
+    meta = {
+        "a": {"label": "Energy meter", "unit": "kWh"},
+        "b": {"label": "CO2 sensor", "unit": "ppm"},
+    }
     assert summarise_energy_totals(rows, meta) is None
 
 
@@ -120,7 +130,10 @@ def test_the_lane_adds_the_block_only_for_a_total_question():
 
     src = inspect.getsource(analytics_agent)
     assert "asks_for_a_total(user_query)" in src and "summarise_energy_totals" in src
-    assert src.index("summarise_energy_totals(rows or []") > src.index("Sensor Information:")
+    # BUG-1451 added a `window=` keyword to this call, which black wraps onto its own line at
+    # this call's indentation -- so the check is the CALL's position, not an exact one-line
+    # argument literal that formatting is free to break.
+    assert src.index("summarise_energy_totals(") > src.index("Sensor Information:")
 
 
 def test_the_narrator_is_told_to_state_the_period_the_total_covers():

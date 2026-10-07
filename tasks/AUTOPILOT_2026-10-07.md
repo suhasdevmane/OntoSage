@@ -52,3 +52,34 @@ are binding.
 - [diagnosis] energy partial day: series_summary.summarise_energy_totals has no coverage check; the headline is written
   by the model. The 14:02 start may be the SQL fetch cap (newest-first, MAX_FETCH_ROWS) cutting the oldest rows.
   BUG-1437 (day choice) is fine; log the partial-total defect separately.
+- [commit] df0b1e5 "fix: trial-readiness round 4 - ..." committed locally (parked suite 14685/0/186/5
+  measured clean immediately before). bldg1/datasources.yaml A3 already correct on development; no change needed.
+- [wave 2 launched] 4 agents from df0b1e5: BUG-1426 real two-stage fix, comfort-history routing override,
+  energy partial-day coverage disclosure, remaining name-based selectors (too_broad_reply, aggregate_profile,
+  is_headcount) -> class-based.
+- [wave 2 merged] BUG-1449 (class-based cleanup, kept), BUG-1450 (comfort-history routing, renumbered from a
+  collision with 1449), BUG-1451 (energy partial-day disclosure, renumbered from the same collision), BUG-1426
+  (real two-stage fix) all merged onto the main checkout. 462 targeted tests pass; black/flake8 F821,F823 clean.
+  Full parked suite re-running (background) before the next commit.
+- [wave 3 launched] 3 agents from df0b1e5: TODO-1026 (find or write the missing long-conversation test),
+  BUG-1427 (build a previous-answer provenance lane), BUG-1424 (deliberation self-contradiction + noise banding).
+- [TODO-1026] CLOSED as VERIFIED. memory_probe.py and waveG_probe_before.txt were never committed (untracked
+  session scratch, confirmed via git log --all over 417 commits). Wrote a faithful reconstruction of the
+  row's own stated acceptance (60-turn recall at 3/25/59) driving the real TurnMemoryService against a
+  stateful in-memory Postgres stand-in -- new test tests/test_w5_04_long_conversation_recall_at_turns_3_25_59.py.
+  Its worktree was stale (ab6c081); the stub's INSERT unpacking didn't know about the `evidence` column this
+  round's D4/D9 work added -- fixed on merge (9-tuple, not 8), 2/2 pass on df0b1e5.
+- [BUG-1424] already fixed pre-df0b1e5 (commit 39c05c9). Added the end-to-end regression test
+  tests/test_bug_1424_render_text_consistency_and_noise_band.py (5/5); 60.342 dB confirmed NOT
+  banded "quiet" (utility 0.24 against the cited WHO 30-70 dB(A) band; "quiet" only appears in the
+  Assumptions disclosure of the user's own lay term). No threshold changed. 7/7 pass with test_g5.
+- [suite 3] parked `pytest -m unit` after wave 2 merge: 14718 pass, 186 skip, 5 xfail, 1 FAILED. Cause:
+  BUG-1426's capability_agent refactor (reads _effective_query(state) instead of state.user_message
+  directly) changed the literal string a source-inspection test pinned. Fixed the test's assertion to the
+  new call site (behaviour unchanged, and now also sees the coref-rewritten query). 18/18 pass.
+- [wave 3 merged] TODO-1026 (closed VERIFIED), BUG-1424 (confirmed fixed pre-existing, stronger test added),
+  BUG-1427's fix (renumbered BUG-1449 -> BUG-1452 on merge, another collision caught): answer_provenance's
+  PROVENANCE_RE widened (1 bank move, 0 lost), session_recall renders the previous turn's evidence_record
+  via answer_provenance.render() when the query asks about it and no quote-based path applies. 267+ targeted
+  tests pass; black/flake8 clean.
+- [suite 4] full parked run starting now.
