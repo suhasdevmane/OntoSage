@@ -139,3 +139,19 @@ are binding.
   tests/test_mtext_decoder_grammar.py (7 cases) + tests/test_a_room_label_is_not_cad_markup.py:
   21 passed. #21 still fixed, #17 still improved-not-guaranteed, #27 reasoned still OPEN (not
   live-verified). Tracker corruption from the merge fixed as above.
+
+## Continuation, same day, user awake ("go ahead with remaining, leave manual check for me")
+
+- [push] 02eb470 pushed to origin/development, per explicit instruction.
+- [housekeeping] A2, A5 verified against their own acceptance and closed DONE; G8 relabelled
+  NO_LONGER_REPRODUCES; CLAUDE.md routing-rule count fixed again (66 -> 68, eighth staleness).
+  Committed e46998c, local only.
+- [G7/BUG-1430] live-verified RESOLVED as a side effect of tonight's BUG-1437 fix: 'yesterday' / 'and
+  the day before?' now resolve to 6 Oct / 5 Oct correctly; 5 Oct honestly declines (real data gap).
+  Closed both rows.
+- [CAVEAT-1453, new] found while verifying G7: the pre-existing answer-relevance gate non-deterministically
+  deleted a correct energy-total answer as OFF_TOPIC once; a cache-flushed re-ask succeeded. 3 identical
+  asks without a flush replayed one cached decline, not 3 independent failures. Logged, not chased (same
+  family as BUG-873, which this project has already measured and declined to over-fix).
+- [wave 5 launched] 2 agents from e46998c: BUG-1425 (ttl-route short-circuit needs the subject test before
+  skipping the classifier) and BUG-1445 (table-cell grounding for the workspace daylight field).

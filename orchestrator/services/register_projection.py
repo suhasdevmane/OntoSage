@@ -1969,6 +1969,119 @@ def _denied_concepts(
     return out
 
 
+#: A line is the SCOPE a record's id is read from: a bullet or a table row names its record
+#: once and states several of its cells on that one line, often as more than one sentence
+#: ("WS-14 has a weak network rating. No daylight (internal)." is one line, two sentences).
+_LINE_SPLIT_RE = re.compile(r"(\n+)")
+
+#: Within a line already scoped to one record, each SENTENCE is checked and dropped on its
+#: own — so a line's other, correct sentences about that same record survive a drop.
+_SENTENCE_SPLIT_RE = re.compile(r"((?<=[.!?])\s+)")
+
+
+def _value_words(value: str) -> Set[str]:
+    """A cell's own content words, stemmed — short/function words (``no``, ``at``) dropped."""
+    return {stem(w) for w in words_of(value) if len(w) >= 3}
+
+
+def _misattributed_fields(
+    chunk: str, row: Dict, rows: List[Dict], columns: Sequence[str]
+) -> List[Tuple[str, str, str]]:
+    """Columns this CHUNK states a value for that belongs to a DIFFERENT row, not this one.
+
+    BUG-1445: a narration said WS-14 "has no natural daylight" and, closer to the source
+    text, "No daylight (internal)" — WS-14's own ``daylightAspect`` cell reads "North-facing";
+    "Internal, no daylight" is WS-04's and WS-05's. The chunk's words fully cover another row's
+    cell for the SAME column while touching nothing of this row's own cell for it: the
+    signature of a value read off the wrong table row, not a paraphrase of this record's own
+    fact. Matched on the cell's own words, never on how close the mention sits in the text —
+    a row named once at the top of a paragraph is still THIS row for every chunk below it only
+    when that chunk names it again; one unclaimed chunk proves nothing either way and is left
+    alone.
+    """
+    chunk_words = {stem(w) for w in words_of(chunk) if len(w) >= 3}
+    if not chunk_words:
+        return []
+    hits: List[Tuple[str, str, str]] = []
+    for col in columns:
+        own_value = _value(row, col)
+        own_words = _value_words(own_value)
+        if own_words & chunk_words:
+            continue  # touches this row's own value for the column -- not a clean misattribution
+        for other in rows:
+            if other is row:
+                continue
+            other_value = _value(other, col)
+            if not other_value or other_value == own_value:
+                continue
+            other_words = _value_words(other_value)
+            if len(other_words) < 2 or not (other_words <= chunk_words):
+                continue  # too short to be distinctive, or not what this chunk actually says
+            hits.append((col, other_value, _ident(other)))
+            break
+    return hits
+
+
+def _named_row(text: str, rows: List[Dict]) -> Optional[Dict]:
+    """The one record this text names by its own id, or ``None`` when it names none or several.
+
+    Never "which record was named nearest it in the text" — the id itself must appear.
+    """
+    norm = text.translate({0x2011: "-", 0x2010: "-", 0x2013: "-", 0x2212: "-"})
+    named = [r for r in rows if _ident(r) != "?" and _ident(r) in norm]
+    return named[0] if len(named) == 1 else None
+
+
+def drop_misattributed_cells(narration: str, rows: List[Dict]) -> str:
+    """Drop any sentence that states a DIFFERENT record's cell for a record named on its line.
+
+    The register lane hands the model its rows to read and narrate; nothing before this
+    compared what it SAID about one record against that record's OWN cells. A LINE naming
+    exactly one record scopes every SENTENCE on it to that record, so a value split across
+    sentences ("WS-14 has a weak network rating. No daylight (internal).") is still checked
+    against the record the line is about; a sentence found to state a value that belongs to
+    another record, and touches nothing of this one's own value for that column, is dropped —
+    its line's other, correct sentences are left standing (BUG-1445).
+    """
+    if not narration or len(rows) < 2:
+        return narration
+    columns = rf._content_columns(rows, _all_columns(rows))
+    if not columns:
+        return narration
+    lines = _LINE_SPLIT_RE.split(narration)
+    dropped: List[str] = []
+    for li in range(0, len(lines), 2):
+        line = lines[li]
+        if not line.strip():
+            continue
+        row = _named_row(line, rows)
+        if row is None:
+            continue
+        sentences = _SENTENCE_SPLIT_RE.split(line)
+        changed = False
+        for si in range(0, len(sentences), 2):
+            sentence = sentences[si]
+            if not sentence.strip():
+                continue
+            hits = _misattributed_fields(sentence, row, rows, columns)
+            if hits:
+                dropped.append(
+                    f"{_ident(row)}: {[c for c, _v, _o in hits]} stated from "
+                    f"{[o for _c, _v, o in hits]}"
+                )
+                sentences[si] = ""
+                changed = True
+        if changed:
+            lines[li] = re.sub(r"[ \t]{2,}", " ", "".join(sentences)).strip()
+    if not dropped:
+        return narration
+    logger.warning(
+        "[register_projection] narration attributed another record's cell to a named record "
+        f"— dropped: {dropped}"
+    )
+    return "".join(lines)
+
+
 def guard_narration(
     narration: str,
     rows: List[Dict],
@@ -2020,7 +2133,7 @@ def guard_narration(
             for p in paragraphs:
                 if not out or p != out[-1]:
                     out.append(p)
-            return "\n\n".join(out)
+            return drop_misattributed_cells("\n\n".join(out), rows)
     if res is not None and _contradicts_the_rows(narration, res, question):
         try:
             prep = res.prep or prepare(question)
@@ -2038,10 +2151,11 @@ def guard_narration(
                 "[register_projection] narration claims there is no match, and the rows hold "
                 f"{len(res.selected)} — replaced by the computed answer"
             )
-            return composed
-    return narration + rf.false_absence_corrections(
+            return drop_misattributed_cells(composed, rows)
+    final = narration + rf.false_absence_corrections(
         narration, rows, _all_columns(rows), question, register_label
     )
+    return drop_misattributed_cells(final, rows)
 
 
 #: An opening that says nothing matched ("None of these workspaces combine all three ...", "The
