@@ -106,7 +106,11 @@ def test_the_drawing_never_joins_a_ttl_tie():
 
 # ── the real bldg1 TTL, read through the real reader ───────────────────────────────────────────
 
-ROOMS = {"Room1.04": 25, "Room4.01": 20, "Room5.01": 20}
+#: 2026-10-07, second owner decision: these three rooms' TTL figures were reconciled to the
+#: architect's drawing figures (7/30/8), which is WHY the next test below no longer asserts a
+#: disagreement for them -- the synthetic test_ttl_outranks_a_drawing_that_disagrees above
+#: already covers the general mechanism; this dict just has to track whatever bldg1's TTL says.
+ROOMS = {"Room1.04": 30, "Room4.01": 7, "Room5.01": 8}
 
 
 def _payload(g: rdflib.Graph, query: str) -> dict:
@@ -150,11 +154,20 @@ async def test_the_building_model_figure_is_what_the_reader_answers_with(bldg1_g
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("room", sorted(ROOMS))
-async def test_a_drawing_figure_on_file_does_not_displace_the_model_figure(bldg1_graph, room):
+async def test_a_drawing_figure_on_file_is_read_but_never_overrides_the_ttl_source(
+    bldg1_graph, room
+):
+    """2026-10-07: these three rooms' TTL figures were reconciled to equal their drawing
+    figures (the owner's second decision), so bldg1's real graph can no longer demonstrate a
+    DISAGREEING drawing -- that general case is `test_ttl_outranks_a_drawing_that_disagrees`
+    above, on synthetic figures. What the real graph still proves: a drawing record exists and
+    is READ (entry.drawing is populated), but the winning ``source`` is always "ttl", never
+    "drawing", even when the two numbers now happen to match -- the authority order is not
+    merely coincidentally right here, it is still TTL-first by construction."""
     declared = await dO.declared_design_occupancy(_exec_over(bldg1_graph))
     entry = declared[str(BLDG[room])]
     assert entry.drawing, f"{room} has a drawing record on file"
-    assert entry.value != next(iter(entry.drawing.values()))
+    assert entry.source == "ttl"
 
 
 # ── a space with NO model figure falls through to its drawing ──────────────────────────────────

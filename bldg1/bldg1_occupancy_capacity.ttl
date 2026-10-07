@@ -99,8 +99,8 @@ bldg:Room5.18
     ontosage:capacityBasis "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds the authoritative figure." .
 
 bldg:Room1.04
-    hbco:roomCapacity     25 ;
-    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (25 under hbco:roomCapacity, 50 under the building's own maxOccupancy). The TTL figure is authoritative and the drawing is a second source (owner decision 2026-10-07). Not certified — Estates holds the authoritative figure." .
+    hbco:roomCapacity     30 ;
+    ontosage:capacityBasis "drawing-adopted; owner decision 2026-10-07 (second round) replaced the 25-estimate with the architect's drawing figure for Room 1.04 (30, label '30P Seminar' on the floor plan) -- the drawing is more specific than the generic estimate reconciliation. Not certified -- Estates holds the authoritative figure." .
 
 # Retained capacity records for Room 1.04. The TTL figure above is the estimate record's value,
 # and the estimate supersedes the retired 2026-09-30 maxOccupancy figure. The architect's drawing
@@ -109,10 +109,10 @@ bldg:Room1.04
 bldg:CapacityRecord_Room1.04_estimate
     rdfs:label "Room 1.04 capacity, 2026-09-30 estimate (current TTL figure)"@en ;
     rdfs:seeAlso bldg:Room1.04 ;
-    hbco:roomCapacity     25 ;
+    hbco:roomCapacity     30 ;
     ontosage:capacitySource "ttl" ;
     ontosage:supersedes bldg:CapacityRecord_Room1.04_retired ;
-    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (25 under hbco:roomCapacity, 50 under the building's own maxOccupancy). The lower is recorded because exceeding a recorded limit is the dangerous direction. Not certified — Estates holds the authoritative figure." .
+    ontosage:capacityBasis "drawing-adopted (current TTL figure); owner decision 2026-10-07 (second round) replaced the 25-estimate with the architect's drawing figure for Room 1.04 (30, label '30P Seminar' on the floor plan) -- the drawing is more specific than the generic estimate reconciliation. Not certified -- Estates holds the authoritative figure." .
 
 bldg:CapacityRecord_Room1.04_retired
     rdfs:label "Room 1.04 maxOccupancy 50, 2026-09-30 (retired)"@en ;
@@ -161,17 +161,17 @@ bldg:Room3.01
     ontosage:capacityBasis "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritative figure." .
 
 bldg:Room4.01
-    hbco:roomCapacity     20 ;
-    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (20 under hbco:roomCapacity, 25 under the building's own maxOccupancy). The TTL figure is authoritative and the drawing is a second source (owner decision 2026-10-07). Not certified — Estates holds the authoritative figure." .
+    hbco:roomCapacity     7 ;
+    ontosage:capacityBasis "drawing-adopted; owner decision 2026-10-07 (second round) replaced the 20-estimate with the architect's drawing figure for Room 4.01 (7, label '7P PHD Research' on the floor plan) -- the drawing is more specific than the generic estimate reconciliation. Not certified -- Estates holds the authoritative figure." .
 
 # Retained capacity records for Room 4.01 (see the note on Room 1.04 above for the order).
 bldg:CapacityRecord_Room4.01_estimate
     rdfs:label "Room 4.01 capacity, 2026-09-30 estimate (current TTL figure)"@en ;
     rdfs:seeAlso bldg:Room4.01 ;
-    hbco:roomCapacity     20 ;
+    hbco:roomCapacity     7 ;
     ontosage:capacitySource "ttl" ;
     ontosage:supersedes bldg:CapacityRecord_Room4.01_retired ;
-    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (20 under hbco:roomCapacity, 25 under the building's own maxOccupancy). The lower is recorded because exceeding a recorded limit is the dangerous direction. Not certified — Estates holds the authoritative figure." .
+    ontosage:capacityBasis "drawing-adopted (current TTL figure); owner decision 2026-10-07 (second round) replaced the 20-estimate with the architect's drawing figure for Room 4.01 (7, label '7P PHD Research' on the floor plan) -- the drawing is more specific than the generic estimate reconciliation. Not certified -- Estates holds the authoritative figure." .
 
 bldg:CapacityRecord_Room4.01_retired
     rdfs:label "Room 4.01 maxOccupancy 25, 2026-09-30 (retired)"@en ;
@@ -188,17 +188,17 @@ bldg:CapacityRecord_Room4.01_drawing
     ontosage:capacityBasis "drawing: architect's floor plan bldg1/Abacws floor 4.dxf, text label '7P PHD Research' nearest to room tag '4.01' (the PDF floor plan shows the same label). Second source: read only when the TTL holds no figure for the room. Figure is the drawing's person count, not certified — Estates holds the fire-certified figure." .
 
 bldg:Room5.01
-    hbco:roomCapacity     20 ;
-    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (20 under hbco:roomCapacity, 25 under the building's own maxOccupancy). The TTL figure is authoritative and the drawing is a second source (owner decision 2026-10-07). Not certified — Estates holds the authoritative figure." .
+    hbco:roomCapacity     8 ;
+    ontosage:capacityBasis "drawing-adopted; owner decision 2026-10-07 (second round) replaced the 20-estimate with the architect's drawing figure for Room 5.01 (8, label '8P PHD Research' on the floor plan) -- the drawing is more specific than the generic estimate reconciliation. Not certified -- Estates holds the authoritative figure." .
 
 # Retained capacity records for Room 5.01 (see the note on Room 1.04 above for the order).
 bldg:CapacityRecord_Room5.01_estimate
     rdfs:label "Room 5.01 capacity, 2026-09-30 estimate (current TTL figure)"@en ;
     rdfs:seeAlso bldg:Room5.01 ;
-    hbco:roomCapacity     20 ;
+    hbco:roomCapacity     8 ;
     ontosage:capacitySource "ttl" ;
     ontosage:supersedes bldg:CapacityRecord_Room5.01_retired ;
-    ontosage:capacityBasis "estimated; reconciled 2026-09-30 from two declarations (20 under hbco:roomCapacity, 25 under the building's own maxOccupancy). The lower is recorded because exceeding a recorded limit is the dangerous direction. Not certified — Estates holds the authoritative figure." .
+    ontosage:capacityBasis "drawing-adopted (current TTL figure); owner decision 2026-10-07 (second round) replaced the 20-estimate with the architect's drawing figure for Room 5.01 (8, label '8P PHD Research' on the floor plan) -- the drawing is more specific than the generic estimate reconciliation. Not certified -- Estates holds the authoritative figure." .
 
 bldg:CapacityRecord_Room5.01_retired
     rdfs:label "Room 5.01 maxOccupancy 25, 2026-09-30 (retired)"@en ;

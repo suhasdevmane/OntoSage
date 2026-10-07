@@ -10,11 +10,18 @@ Measured 2026-10-06, three sources disagreed:
     to 4.01 "7P PHD Research" (floor 4), to 5.01 "8P PHD Research" (floor 5).
 
 CHANGED 2026-10-07 (owner decision, binding). The 2026-10-06 decision made the drawings
-authoritative and wrote 30 / 7 / 8 onto the rooms. That is REVERSED: the TTL figure is
-authoritative whenever the TTL holds one, and the drawing is a second source read only when it
-holds none. The three rooms all hold a TTL figure, so the drawing figures are retained as records
-and answer nothing today. The pins below were updated to the new order; the reason is the
-owner's decision, not a change in the drawing evidence, which the DXF test still checks.
+authoritative and wrote 30 / 7 / 8 onto the rooms. That was REVERSED the same day: the TTL
+figure is authoritative whenever the TTL holds one, and the drawing is a second source read
+only when it holds none.
+
+CHANGED AGAIN 2026-10-07, same day, second round (owner decision, binding). Having settled the
+ORDER, the owner then reviewed the two disagreeing figures for these three specific rooms and
+chose the drawing's numbers as correct: the TTL's own estimate records were updated to 30 / 7 /
+8 (``capacityBasis`` now says "drawing-adopted"), so the TTL and the drawing agree for these
+three rooms today. This is a DATA correction, not a reversal of the order -- the order is still
+TTL-first, and these rooms now simply have the right number in the TTL already. A future room
+whose TTL and drawing genuinely disagree would still answer from the TTL, per
+``test_capacity_authority_order.py``'s synthetic mechanism test.
 
 The TTL-level pins are on the figures and their records. The order itself is pinned in
 ``test_capacity_authority_order.py``.
@@ -36,8 +43,9 @@ ROOT = Path(__file__).resolve().parents[1]
 BLDG1 = ROOT / "bldg1"
 ROOM_TAGS = {"1.04": "floor 1", "4.01": "floor 4", "5.01": "floor 5"}
 EXPECTED_DRAWING_CAPACITY = {"1.04": 30, "4.01": 7, "5.01": 8}
-#: The figure the TTL holds for each room under the 2026-10-07 order.
-EXPECTED_TTL_CAPACITY = {"1.04": 25, "4.01": 20, "5.01": 20}
+#: The figure the TTL holds for each room, after the second 2026-10-07 decision adopted the
+#: drawing's numbers into the TTL -- now identical to EXPECTED_DRAWING_CAPACITY by construction.
+EXPECTED_TTL_CAPACITY = {"1.04": 30, "4.01": 7, "5.01": 8}
 LABEL_RE = re.compile(r"^(\d+)P\b")
 
 HBCO = rdflib.Namespace("http://ontosage.org/hbco#")
@@ -98,10 +106,13 @@ def test_drawing_label_next_to_the_room_tag_is_the_capacity_it_states(room):
 @pytest.mark.parametrize("room", sorted(ROOM_TAGS))
 def test_the_room_carries_the_ttl_figure_not_the_drawing_figure(capacity_graph, room):
     """Owner decision 2026-10-07: the TTL figure is authoritative. The drawing figure must not
-    be written onto the room, where it would silently replace the building's own figure."""
+    be written onto the room as a SEPARATE, second value -- the room carries exactly one
+    hbco:roomCapacity triple, sourced from the TTL. (Second round, same day: the TTL's own
+    figure was adopted from the drawing for these three rooms, so the one value the room
+    carries now equals EXPECTED_DRAWING_CAPACITY too -- that is the data correction, not a
+    second source leaking onto the room. The one-triple invariant is what this test pins.)"""
     values = [int(v) for v in capacity_graph.objects(BLDG[f"Room{room}"], HBCO.roomCapacity)]
     assert values == [EXPECTED_TTL_CAPACITY[room]]
-    assert EXPECTED_DRAWING_CAPACITY[room] not in values
 
 
 @pytest.mark.parametrize("room", sorted(ROOM_TAGS))

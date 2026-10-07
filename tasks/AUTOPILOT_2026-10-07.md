@@ -155,3 +155,8 @@ are binding.
   family as BUG-873, which this project has already measured and declined to over-fix).
 - [wave 5 launched] 2 agents from e46998c: BUG-1425 (ttl-route short-circuit needs the subject test before
   skipping the classifier) and BUG-1445 (table-cell grounding for the workspace daylight field).
+
+- [BUG-1425, BUG-1445 live-verified and merged; committed 1d07aa0]
+- [BUG-785/BUG-787 re-checked against current code; committed fec09c4] both still OPEN, both
+  need the owner's own hand read per their own acceptance criteria -- not attempted here.
+- [local commits this continuation, none pushed beyond 02eb470]: e46998c, 1d07aa0, fec09c4.

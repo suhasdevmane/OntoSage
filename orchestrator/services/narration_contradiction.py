@@ -32,7 +32,15 @@ from typing import List, Optional
 _FULL_COMPLIANCE_CLAIM_RE = re.compile(
     r"\b(?:met|meets|meeting)\s+all\b[^.?!]{0,60}\b(?:standard|requirement|threshold|band)s?\b"
     r"|\b(?:is|was|remains?)\s+(?:fully\s+)?compliant\s+with\s+(?:every|all)\b"
-    r"|\bthe\s+last\s+time\b[^.?!]{0,60}\bmet\s+all\b",
+    r"|\bthe\s+last\s+time\b[^.?!]{0,60}\bmet\s+all\b"
+    # 2026-10-07, G6 widened: the original three alternatives all require the word
+    # "standard"/"compliant" -- a plain "was comfortable" or "all comfort standards were
+    # met" claim slipped past them. Measured against ~5,000 real stored answers: 2 new
+    # hits, both a NEGATED claim ("you can't say whether it is comfortable") with no
+    # nearby timestamp, so reconcile_compliance_claim's own timestamp-match gate (below)
+    # would not edit either -- only compliance_contradiction's passive counter sees them.
+    r"|\b(?:was|is|remains?)\s+(?:last\s+)?comfortable\b"
+    r"|\ball\s+(?:comfort|air[\s-]?quality)\s+standards?\s+(?:were|was)\s+met\b",
     re.IGNORECASE,
 )
 
