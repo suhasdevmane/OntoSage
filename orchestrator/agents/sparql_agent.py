@@ -3172,7 +3172,17 @@ SELECT (COUNT(DISTINCT ?space) AS ?count) WHERE {
   UNION { ?sensor brick:hasLocation ?space . FILTER(CONTAINS(STR(?space), "Zone")) }
 }"""
             )
-        if any(w in uq for w in zone_words) and not entities:
+        # 2026-10-07: this template returns a sensor COUNT per space -- rows with no
+        # timeseries id -- which is exactly the shape the T2 comment above warns about:
+        # a question the building's own vocabulary has already recognised as being about
+        # something measurable (a resolved concept_class) must not fall into a count-only
+        # template, or the answer narrates "the building model only records how many
+        # sensors are installed in each space" for a question that named a real quantity
+        # (noise, lighting, ...) -- a confidently false claim, measured live on a 210-
+        # question stakeholder sample (2 cases: "lower expected background noise", a
+        # multi-criteria room comparison naming acoustics/lighting/capacity). The sibling
+        # template immediately above already carries this guard; this one did not.
+        if any(w in uq for w in zone_words) and not entities and not concept_class:
             return (
                 self._prefix_block()
                 + f"""
