@@ -83,3 +83,59 @@ are binding.
   via answer_provenance.render() when the query asks about it and no quote-based path applies. 267+ targeted
   tests pass; black/flake8 clean.
 - [suite 4] full parked run starting now.
+- [commit] 1787fbe "fix: trial-readiness round 5 - ..." committed locally (parked suite 14746/0/186/5
+  measured clean immediately before).
+- [unparked] bldg1 -> input, .env1 -> .env, docker-compose.bldg1.yml -> docker-compose.yml; stack up
+  (config-panel skipped, port 3001 held by a stray host process -- not needed for verification); orchestrator
+  healthy, no import errors; 3 caches flushed.
+- [live verify] BUG-1426 FIXED: "what time does it close?" after the cafe reply now answers Catering/cafe
+  hours (08:00-16:30), not the building's 07:00-22:00.
+  BUG-1451 FIXED: "energy yesterday" now states "for the period actually covered (15:02-23:53 building time
+  on 06 Oct)" instead of claiming the whole day.
+  BUG-1452 FIXED: "what evidence supports that?" after a data answer now renders that answer's OWN stored
+  evidence record ("kept at the time it was given, not a reconstruction after the fact").
+  BUG-1450 PARTIAL IN PRACTICE: fires only when the classifier itself picks readiness_check. Re-asked fresh,
+  the classifier instead picked 'general', fell through doc-route to capability then the data lane, which
+  answered with real readings+range -- not the AV misroute, not fabricated, but not this fix's decline
+  either. Classifier choice for this question is unstable (CAVEAT-891's shape); not chased further.
+  Tracker updated to FIXED_UNVERIFIED with this finding.
+  BUG-1449 (headcount) NOT EXERCISED live: the ask routed to an honest capability decline before reaching
+  the aggregate lane. Offline fixtures already demonstrate the mechanism.
+- [gate] regression_answerability.py running alone now.
+- [gate] 49/51, both flagged cases confirmed SAME pre-existing apparatus artifacts, not regressions:
+  #37 session_recall correctly declining a fresh chat with no prior turn; #70's actual answer is the
+  correct decline "there is no air-pressure sensor recorded for Room 2.01" -- the gate's classifier is
+  fooled by the evidence panel's OTHER-sensor metadata (Light/Noise/Occupancy sources listed for
+  context), CAVEAT-1402's exact shape. 51/51 in substance, zero real regressions from this round.
+- [I1, honest scope note] docs/supervisor_evidence_pack/ was captured 2026-09-22 via a real browser with
+  73 screenshots (median 100s/question) -- a full re-capture needs browser automation not available in this
+  session, and at that rate is a multi-hour task on its own. NOT faked. What this round actually did instead:
+  live /v1 re-asks of the SPECIFIC shapes this session's fixes target (cafe follow-up, comfort-history,
+  energy coverage, previous-answer provenance, door records, capacity authority) -- the current, targeted
+  equivalent, logged above under [live verify]. A full pack re-capture is left as a follow-up needing a
+  browser tool, not attempted here.
+- [H3] live-applied: scripts/set_openwebui_model_description.py --apply against http://127.0.0.1:3000
+  (OPENWEBUI_URL's compose-internal default only resolves inside Docker; overridden for this host run).
+  Verified by reading the model row back: name "Abacws Building", description, 6 starter prompts. TRIAL_TRACKER
+  H3 -> DONE.
+- [I1] TRIAL_TRACKER row set to PARTIAL with the honest scope note (see above).
+- [wave 4, final for tonight] 1 agent from 1787fbe: BUG-1407's remaining MTEXT label leak (#58), plus a
+  code-level check of #21/#17/#27 against current code. After this, moving to final suite + final commit.
+- [self-caught corruption, important] my own byte-level row-replacement trick (match a line by
+  "ID,", replace just that physical line, keep its terminator) silently corrupts a row whose
+  Description/Verification field is MULTI-LINE inside CSV quoting (e.g. BUG-1407's Description has
+  embedded \n before the next real row) -- it replaces only the field's FIRST physical line and
+  leaves the other physical lines behind as orphaned, malformed fragment "rows". Caught immediately
+  by csv-parsing the result and checking for malformed row shapes (not just duplicate IDs -- the
+  orphans had NO duplicate ID, they just had the wrong column count). Fixed by reconstructing the
+  correct multi-line row from the last valid commit, appending the new note through proper csv
+  parsing, and splicing it back via a full csv.reader/csv.writer round-trip of the whole file
+  (verified this is lossless for every OTHER row: git diff on the tracker is 4 insertions / 2
+  deletions, i.e. only the one row changed). FIX_TRACKER.csv is 1,155 unique rows, 0 duplicates,
+  0 malformed, after this fix. The byte-level line-replacement trick is UNSAFE for any row with a
+  multi-line field and must not be reused without checking for that first (e.g. by csv-parsing the
+  row and counting embedded newlines before doing a byte-level replace).
+- [wave 4 merged] BUG-1407's decoder confirmed already correct (no code change needed); new test
+  tests/test_mtext_decoder_grammar.py (7 cases) + tests/test_a_room_label_is_not_cad_markup.py:
+  21 passed. #21 still fixed, #17 still improved-not-guaranteed, #27 reasoned still OPEN (not
+  live-verified). Tracker corruption from the merge fixed as above.
