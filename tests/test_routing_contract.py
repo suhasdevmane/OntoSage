@@ -354,6 +354,9 @@ def test_precedence_order_is_pinned():
         # register that holds their ids answers both. It sits AFTER the events rule because every
         # rule runs and each sets the intent: the last one to claim the question wins.
         "register_owns_work_orders_and_timetable",
+        # BUG-1429: "which doors do you have records for?" -> the register lane. Shape-gated on
+        # records/logs so a bare door (DoorHardware's measured decision) never reaches it.
+        "door_records_are_a_register_question",
         # C19: a compliance question with no measurand, no space and no named standard
         # has nothing to check, and the lane's own template said so by asking for a zone
         # — to a question about whether two sets of documents agree. It sits DIRECTLY

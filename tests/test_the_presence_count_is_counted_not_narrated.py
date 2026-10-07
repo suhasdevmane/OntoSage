@@ -83,7 +83,13 @@ async def _answer(
     values = {s["uuid"]: s["value"] for s in series}
     adapter = FakeNarrow(values)
     metadata = {
-        s["uuid"]: {"label": s["label"], "unit": "", "kind": "Occupancy_Sensor"} for s in series
+        s["uuid"]: {
+            "brick_class": "Occupancy_Sensor",
+            "label": s["label"],
+            "unit": "",
+            "kind": "Occupancy_Sensor",
+        }
+        for s in series
     }
     bindings = [_binding(s["uuid"], s.get("place", ""), s.get("on_floor", False)) for s in series]
 
@@ -111,6 +117,7 @@ def _room(n: int, value: float, *, status: bool = False) -> Dict[str, Any]:
     kind = "occupancy_status" if status else "occupancy"
     return {
         "uuid": f"series-{'s' if status else 'c'}-{n:04d}",
+        "brick_class": "Occupancy_Status" if status else "Occupancy_Sensor",
         "label": f"Room{n} {kind}",
         "place": f"Room {n}",
         "value": value,
@@ -241,6 +248,7 @@ async def test_a_floor_counter_is_not_counted_as_a_room_and_is_not_dropped() -> 
     series.append(
         {
             "uuid": "series-floor-0001",
+            "brick_class": "Occupancy_Sensor",
             "label": "Floor 1 occupancy",
             "place": "Floor 1",
             "value": 40.0,
@@ -259,7 +267,13 @@ async def test_a_floor_counter_is_not_counted_as_a_room_and_is_not_dropped() -> 
 async def test_a_series_the_graph_does_not_place_is_disclosed_not_counted() -> None:
     series = [_room(1, 1.0, status=True), _room(2, 0.0, status=True)]
     series.append(
-        {"uuid": "series-loose-001", "label": "Roving occupancy", "place": "", "value": 3.0}
+        {
+            "uuid": "series-loose-001",
+            "brick_class": "Occupancy_Sensor",
+            "label": "Roving occupancy",
+            "place": "",
+            "value": 3.0,
+        }
     )
     out = await _answer("Which rooms are occupied at the moment?", series)
     assert out is not None
@@ -365,7 +379,13 @@ async def test_no_readings_means_no_answer_rather_than_a_count_of_zero() -> None
         question="Which rooms are empty at the moment?",
         uuids=[series[0]["uuid"]],
         storage_map={series[0]["uuid"]: STORE},
-        metadata={series[0]["uuid"]: {"label": series[0]["label"], "unit": ""}},
+        metadata={
+            series[0]["uuid"]: {
+                "brick_class": "Occupancy_Sensor",
+                "label": series[0]["label"],
+                "unit": "",
+            }
+        },
         start_date=None,
         end_date=None,
         budget_hit=False,
@@ -393,7 +413,10 @@ async def test_the_store_is_asked_for_the_newest_reading_not_for_rows() -> None:
         question="Which rooms are occupied at the moment?",
         uuids=[s["uuid"] for s in series],
         storage_map={s["uuid"]: STORE for s in series},
-        metadata={s["uuid"]: {"label": s["label"], "unit": ""} for s in series},
+        metadata={
+            s["uuid"]: {"brick_class": s["brick_class"], "label": s["label"], "unit": ""}
+            for s in series
+        },
         start_date=None,
         end_date=None,
         budget_hit=False,

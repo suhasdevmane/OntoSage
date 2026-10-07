@@ -268,6 +268,12 @@ article/
 admin-portal-screenshots/
 volumes/
 outputs/
+# scripts/outputs/ is measurement output, ignored as a whole. Evidence that must be
+# tracked lives in docs/phase0/ (CLAUDE.md cites it), not here. as
+# evidence and the generic rule above had swallowed them. Raw run JSON/JSONL stays
+# ignored: large, and it carries full answer text. (Integrated from agent-aa418032.)
+!scripts/outputs/
+scripts/outputs/*
 graphify-out/
 QuestionBank/
 *.zip

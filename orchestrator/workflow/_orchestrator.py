@@ -50,7 +50,7 @@ from orchestrator.services.reasoning_engine import get_reasoning_engine
 from orchestrator.services.requested_interval import store_now
 
 # CAP-04: Compliance standards engine
-from orchestrator.services.standards_engine import get_standards_engine
+from orchestrator.services.standards_engine import get_standards_engine, newest_reading_verdict
 from orchestrator.services.turn_outcome import Outcome as _Outcome
 from shared.config import settings
 from shared.models import ConversationState, Message
@@ -451,7 +451,16 @@ def plan_trace_for_response(results: Dict[str, Any]) -> Optional[Dict[str, Any]]
     trace = results.get("plan_trace")
     if not isinstance(trace, dict):
         return trace
-    return {**trace, "stage_ms": _stage_durations(results)}
+    refreshed = {**trace, "stage_ms": _stage_durations(results)}
+    # C8 (2026-10-07): what the turn spent on the model, from the same request context. The
+    # response node's own generations are inside the graph, so they are counted here; a call
+    # made after this point (none today) is not. Absent when the request was untraced.
+    from orchestrator.llm_manager import llm_usage
+
+    usage = llm_usage()
+    if usage is not None:
+        refreshed["llm"] = usage
+    return refreshed
 
 
 def build_plan_trace(
@@ -3735,8 +3744,19 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 # Disambiguate by sensor type if the user asked for a specific kind (e.g., temperature)
                 preferred_kind = self._infer_query_kind(latest_message)
                 if preferred_kind and sensor_metadata:
+                    # BY CLASS, NOT BY NAME (BUG-1442). The kind of a point was inferred from its
+                    # label, so a CO2 point whose name lacked "co2" was dropped from the floor's
+                    # sensor set and the count moved with the naming.
+                    from orchestrator.services.aggregate_lane import (
+                        lane_measurand,
+                        measurand_from_classes,
+                    )
+
+                    wanted = lane_measurand(preferred_kind)
                     filtered = {
-                        u: m for u, m in sensor_metadata.items() if m.get("kind") == preferred_kind
+                        u: m
+                        for u, m in sensor_metadata.items()
+                        if measurand_from_classes([m.get("brick_class") or ""]) == wanted
                     }
                     if filtered:
                         uuids = [u for u in uuids if u in filtered]
@@ -4428,6 +4448,30 @@ Instructions:
             )
             return state
 
+        # A NAMED CALENDAR DAY NARROWS THE ROWS BEFORE ANY ANALYSIS READS THEM (BUG-1437).
+        # The fetch can carry a wider window than the question names (a rolling default, or a
+        # day the upstream resolver did not set); "yesterday" and "the day before yesterday"
+        # then computed over the SAME rows and gave the same answer. Narrowed here, once, so the
+        # deterministic path, the saved file and the generated code all see the same rows.
+        # `state.query_results` itself is left alone: other nodes read the fetch as fetched.
+        try:
+            from orchestrator.services.requested_interval import (
+                building_tz as _bld_tz,
+                restrict_to_named_day,
+            )
+
+            data, _named_window, _named_checked = restrict_to_named_day(
+                data, latest_message, _bld_tz(getattr(state, "building_id", None))
+            )
+            if _named_window is not None:
+                logger.info(
+                    f"[analytics_node] named calendar day {_named_window[0]} .. "
+                    f"{_named_window[1]} (checked={_named_checked}, "
+                    f"rows={len(data.get('data', [])) if isinstance(data, dict) else '?'})"
+                )
+        except Exception as _nd_err:  # never let a window check cost the answer
+            logger.debug(f"[analytics_node] named-day narrowing skipped: {_nd_err}")
+
         sensor_metadata = state.intermediate_results.get("sensor_metadata")
         if not sensor_metadata:
             sensor_metadata = {}
@@ -4551,6 +4595,8 @@ Instructions:
                         "space": _design.label,
                         "declarations": dict(_design.declarations),
                         "conflicted": _design.conflicted,
+                        # Which source the answer rests on: "ttl", "drawing" or "" (E6).
+                        "source": _design.source,
                     }
                     # The object itself, so `_response_node`'s must-state check (BUG-897) can
                     # reuse it instead of repeating the SPARQL round trip. Not a published
@@ -4568,10 +4614,18 @@ Instructions:
                             ),
                             "params": {
                                 "space": _design.label,
-                                "declared": {
-                                    p.rsplit("#", 1)[-1].rsplit("/", 1)[-1]: v
-                                    for p, v in _design.declarations.items()
-                                },
+                                # The authoritative figure only. A superseded record is
+                                # retained in the graph and must not reach the model as a
+                                # declared value; the full list is passed only when the
+                                # sources disagree and nothing says which is current.
+                                "declared": (
+                                    {
+                                        p.rsplit("#", 1)[-1].rsplit("/", 1)[-1]: v
+                                        for p, v in _design.active_declarations.items()
+                                    }
+                                    if _design.conflicted
+                                    else {_design.source or "none": _design.value}
+                                ),
                                 "unit": "persons",
                             },
                             "answer_template": compare_observed_with_design(None, _design),
@@ -4693,44 +4747,22 @@ Instructions:
         if isinstance(result, dict) and result.get("success"):
             _prov.record(state, "analytics")
 
-        # ── CAP-04 Auto-compliance check ──────────────────────────────────────
-        # After data is fetched, build a scalar readings dict from the latest
-        # row and run auto_check() so compliance info can be appended to the
-        # response without the user needing to explicitly ask.
+        # ── Newest-reading compliance verdict (BUG-1428 / trial G6) ───────────
+        # The auto_check()/format_for_llm() pair this block called was never on
+        # development (it lives only on an unmerged branch), so every call raised
+        # AttributeError and was swallowed at DEBUG. The verdict below is the same
+        # StandardsEngine.check() that grounds the compliance answer, computed over the
+        # same rows; _response_node uses it to judge a claim about the newest reading.
         try:
             _rows = data.get("data", []) if isinstance(data, dict) else []
-            if _rows:
-                _latest_row = _rows[-1] if _rows else {}
-                _param_col_map = {
-                    "temp_c": ["temperature", "temp"],
-                    "humidity_rh": ["humidity", "rh"],
-                    "co2_ppm": ["co2", "co₂", "carbon"],
-                    "pm25_ugm3": ["pm25", "pm2.5"],
-                    "pm10_ugm3": ["pm10"],
-                    "tvoc_ppb": ["tvoc", "voc"],
-                    "illuminance_lux": ["illuminance", "light", "lux"],
-                }
-                _auto_readings: dict = {}
-                for pkey, kws in _param_col_map.items():
-                    for col, val in _latest_row.items():
-                        if any(kw in str(col).lower() for kw in kws):
-                            try:
-                                _auto_readings[pkey] = float(val)
-                            except (TypeError, ValueError):
-                                pass
-                            break
-
-                if _auto_readings:
-                    _auto_results = self._standards_engine.auto_check(_auto_readings)
-                    _compliance_block = self._standards_engine.format_for_llm(_auto_results)
-                    if _compliance_block:
-                        state.intermediate_results["compliance_context"] = _compliance_block
-                        logger.info(
-                            f"[standards] Auto-check generated compliance block "
-                            f"({len(_auto_results)} standards checked)"
-                        )
-        except Exception as _ac_err:
-            logger.debug(f"Auto-compliance check skipped: {_ac_err}")
+            _verdict = newest_reading_verdict(_rows)
+            if _verdict:
+                state.intermediate_results["compliance_verdict"] = _verdict
+        except Exception as _cv_err:
+            logger.warning(
+                f"[standards] newest-reading verdict skipped: "
+                f"{type(_cv_err).__name__}: {_cv_err}"
+            )
 
         return state
 
@@ -4850,7 +4882,10 @@ Instructions:
                                 )
                                 break
                 except Exception as _std_err:
-                    logger.debug(f"Standards engine augmentation skipped: {_std_err}")
+                    logger.warning(
+                        f"Standards engine augmentation skipped: "
+                        f"{type(_std_err).__name__}: {_std_err}"
+                    )
 
             return result
         except Exception as e:
@@ -6467,6 +6502,25 @@ SELECT ?l WHERE {
         except Exception as exc:
             logger.warning(f"[response] could not attach the truncation note: {exc}")
 
+        # BUG-1444: "the CO2 data for floor 3 is complete" was published beside an evidence
+        # record that measured 2% of the window observed and a 42-hour silence. The prose claim
+        # is an LLM sentence the record cannot reach, so it is qualified here from the record
+        # itself -- appended, never substituted, and only when the prose asserts completeness
+        # the record does not support (completeness_disclosure returns "" otherwise).
+        try:
+            from orchestrator.services.evidence.completeness import (
+                completeness_disclosure as _completeness_disclosure,
+            )
+
+            _cdisc = _completeness_disclosure(
+                final_response or "", state.intermediate_results.get("evidence_record")
+            )
+            if _cdisc and final_response and _cdisc not in final_response:
+                final_response = f"{final_response}\n\n{_cdisc}"
+                logger.info("[response] disclosed a measured completeness gap")
+        except Exception as exc:
+            logger.warning(f"[response] could not attach the completeness disclosure: {exc}")
+
         # ── No answer describes the retrieval (2D-16 wave 2) ──────────────────
         #
         # "The data you received only lists how many sensors are installed in each room",
@@ -6626,15 +6680,17 @@ SELECT ?l WHERE {
                 answer=final_response,
             )
 
-        # ── CAP-04: Append auto-compliance block (if produced by analytics node)
-        _compliance_block = ctx.compliance_context
-        if _compliance_block and state.current_intent not in (
-            "clarification",
-            "greeting",
-            "general_knowledge",
-            "recommend",  # recommendations already include relevant thresholds
-        ):
-            final_response = f"{final_response}\n\n{_compliance_block}"
+        # ── G6 / BUG-1428: a claim about the newest reading must agree with that reading's
+        # own compliance verdict. Only the exact claim-about-this-timestamp shape changes;
+        # every other sentence, and every answer without a verdict, passes through as written.
+        _cv = state.intermediate_results.get("compliance_verdict")
+        if _cv and state.current_intent not in ("clarification", "greeting", "general_knowledge"):
+            from orchestrator.services.narration_contradiction import reconcile_compliance_claim
+
+            _reconciled = reconcile_compliance_claim(final_response, _cv)
+            if _reconciled != final_response:
+                logger.info("[standards] reconciled a newest-reading compliance claim (G6)")
+                final_response = _reconciled
 
         # ── Floor-plan card injection ─────────────────────────────────────────
         # When any sensor/analytics/SQL response resolves to a known zone,
@@ -9907,12 +9963,17 @@ SELECT ?l WHERE {
             qunit_val = None
             type_val = None
             floor_val = None
+            class_val = None
 
             for var in binding:
                 if var.lower() in ("floornum", "floor_num", "floornumber"):
                     # BUG-537: the floor-scoped template binds it; carrying it is what lets a
                     # per-floor comparison be computed instead of left to the narration.
                     floor_val = binding[var]["value"]
+                elif var.lower() == "metriccls":
+                    # BUG-1442: the Brick class the point was selected BY. The measurand of an
+                    # aggregate is read from this, never from the label.
+                    class_val = binding[var]["value"]
                 elif "uuid" in var.lower() or "id" in var.lower() or "timeseries" in var.lower():
                     uuid_val = binding[var]["value"]
                 elif "label" in var.lower():
@@ -9960,6 +10021,8 @@ SELECT ?l WHERE {
                 }
                 if floor_val not in (None, ""):
                     sensor_metadata[uuid_val]["floor"] = str(floor_val)
+                if class_val:
+                    sensor_metadata[uuid_val]["brick_class"] = class_val
 
         return sensor_metadata
 

@@ -1239,6 +1239,11 @@ ontosage:capacityBasis a owl:DatatypeProperty ;
     rdfs:label "capacity basis"@en ;
     rdfs:comment "How the space's hbco:roomCapacity was arrived at: certified, surveyed, or ESTIMATED from floor-plan area at a stated density, with the density and its source. A capacity with no basis cannot be told apart from a certified fire capacity, and an estimate quoted as a limit is a safety claim nobody made."@en .
 
+ontosage:capacitySource a owl:DatatypeProperty ;
+    rdfs:range xsd:string ;
+    rdfs:label "capacity source"@en ;
+    rdfs:comment "Which source a retained hbco:roomCapacity record came from: \"ttl\" (the building's own model) or \"drawing\" (the architect's drawing, a second source). The reader takes the TTL figure for a space whenever the TTL holds one, and reads a drawing only when it holds none. Carried by the record, not the space, so a superseded TTL figure and a drawing figure stay distinguishable."@en .
+
 # ── J.2 Forecast skill (P3 PREDICT) ────────────────────────────────────────────────────────────
 
 ontosage:ForecastSkill a owl:Class ;

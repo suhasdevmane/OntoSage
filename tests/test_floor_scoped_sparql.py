@@ -43,16 +43,11 @@ def test_none_without_inferrable_metric():
     assert _agent._floor_scoped_sparql("compare floor 1 and floor 5", None) is None
 
 
-def test_label_fallback_for_unmapped_metric():
-    # No Brick class maps the hyphenated "run-time", so the label-match tier
-    # resolves it by rdfs:label — naming-agnostic (works for any URI scheme).
-    q = _agent._floor_scoped_sparql("What is the AHU run-time on floor 5?", None)
-    assert q is not None
-    assert 'CONTAINS(LCASE(STR(?label)), "ahu")' in q
-    assert 'CONTAINS(LCASE(STR(?label)), "run")' in q
-    assert "ref:hasTimeseriesId" in q
-    assert '"5"' in q
-    assert "?sensor a brick:" not in q  # label tier has no hard-coded class triple
+def test_an_unmapped_metric_is_not_selected_by_label():
+    # BUG-1442: no Brick class maps "run-time", and the floor resolver used to fall back to
+    # matching rdfs:label text. A point is selected by its class or not at all, so this declines
+    # and the templates that can say so answer instead.
+    assert _agent._floor_scoped_sparql("What is the AHU run-time on floor 5?", None) is None
 
 
 def test_salient_terms():
@@ -108,5 +103,9 @@ def test_a_question_joining_two_measurands_resolves_both():
 
 def test_one_measurand_stays_one_class_even_with_and():
     agent = _bare_agent()
-    assert agent._infer_classes("temperature on floor 2 and floor 3") == ["brick:Temperature_Sensor"]
-    assert agent._infer_classes("air temperature and nothing else") == ["brick:Air_Temperature_Sensor"]
+    assert agent._infer_classes("temperature on floor 2 and floor 3") == [
+        "brick:Temperature_Sensor"
+    ]
+    assert agent._infer_classes("air temperature and nothing else") == [
+        "brick:Air_Temperature_Sensor"
+    ]

@@ -721,7 +721,37 @@ def rank_record_classes(query: str, classes: List[RecordClass]) -> List[Tuple[fl
         # the question. See `_only_modifies` for what that excludes and what it measured.
         if total > 0 and named:
             scored.append((total, record))
+    # DOOR-RECORD QUESTIONS NAME THE DOOR-EVENT REGISTER (BUG-1429). "Which doors do you have
+    # records for?" contains no word of any class's vocabulary -- the door-event class declares
+    # "door events" and "access log", not "doors" -- so nothing was ranked, and the metadata lane
+    # answered with the nearest record it could find (a refuge point). The shape is decided once,
+    # in the routing contract, and the class it names is the TBox's own AccessEvent.
+    from orchestrator.services.routing_contract import door_records_question  # local: no cycle
+
+    if door_records_question(query or ""):
+        scored = _door_records_to_the_event_register(scored, classes)
     return sorted(scored, key=lambda pair: (-pair[0], pair[1].local_name))
+
+
+#: The TBox class that holds door-event records (ontosage_schema.ttl, AccessEvent).
+_DOOR_EVENT_CLASS = "AccessEvent"
+
+
+def _door_records_to_the_event_register(
+    scored: List[Tuple[float, "RecordClass"]], classes: List["RecordClass"]
+) -> List[Tuple[float, "RecordClass"]]:
+    """Rank the held door-event class first for a door-record question, when the building holds it.
+
+    Only a HELD class can be named: `classes` is what the building holds, so an absent door-event
+    register leaves the ranking as it was rather than inventing a record. Scored one point above the
+    strongest other class, so it wins the top rank without rewriting any other class's score.
+    """
+    event = next((r for r in classes if r.local_name == _DOOR_EVENT_CLASS), None)
+    if event is None:
+        return scored
+    top = max((s for s, _ in scored), default=0.0)
+    others = [(s, r) for s, r in scored if r.local_name != _DOOR_EVENT_CLASS]
+    return others + [(top + 1.0, event)]
 
 
 def second_record_class(

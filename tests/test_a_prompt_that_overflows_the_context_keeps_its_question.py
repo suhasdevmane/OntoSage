@@ -100,7 +100,7 @@ def test_a_hosted_provider_is_left_alone():
 
 
 def test_all_three_entry_points_cut_after_stripping_and_before_the_breaker():
-    for name in ("generate", "generate_structured", "astream_generate"):
+    for name in ("_generate_attempts", "generate_structured", "astream_generate"):
         code = inspect.getsource(getattr(lm.LLMManager, name)).split('"""', 2)[-1]
         assert "self._fit_to_context(prompt)" in code, name
         assert code.index("strip_tracker_ids(prompt)") < code.index("self._fit_to_context(prompt)")

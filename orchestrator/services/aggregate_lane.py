@@ -552,6 +552,61 @@ def measurand_key(texts: Iterable[str]) -> Optional[str]:
     return max(votes, key=votes.get) if votes else None
 
 
+#: The modality config's names where the lane's own vocabulary spells the quantity differently.
+#: A binary occupancy STATUS point is counted as occupancy: "which rooms are occupied" is answered
+#: from status flags and counters alike (BUG-954), and the config's separate modality exists for
+#: the register, not for this lane's presence count.
+_MODALITY_LANE_NAME = {"noise": "sound", "occupancy_status": "occupancy"}
+
+
+def lane_measurand(modality: str) -> str:
+    """The lane's name for a modality config name, e.g. "air_quality" -> "air quality"."""
+    m = (modality or "").strip().lower()
+    return _MODALITY_LANE_NAME.get(m, m.replace("_", " "))
+
+
+def _class_local(iri: str) -> str:
+    """The local name of a Brick class however it was written: prefixed, IRI or bare."""
+    s = (iri or "").strip()
+    for sep in ("#", "/", ":"):
+        s = s.rsplit(sep, 1)[-1]
+    return s.lower()
+
+
+def measurand_from_classes(
+    classes: Iterable[str], building_id: Optional[str] = None
+) -> Optional[str]:
+    """The quantity a set of sensors measures, read from their BRICK CLASSES (BUG-1442).
+
+    Each class votes for the modality that declares it in `config/saturation_modalities.yaml`.
+    A class that more than one modality declares (occupancy_count_sensor, motion_sensor, ...)
+    votes for neither: it does not say which quantity it is. The winner must be unique; a tie or
+    a class no modality declares gives None. The modality config is shared, not a building
+    literal, and the active building's overlay is read when one is named.
+    """
+    from orchestrator.services.deliberation.coverage_audit import load_modalities
+
+    if building_id is None:
+        from shared.config import settings
+
+        building_id = getattr(settings, "BUILDING_ID", None) or None
+    owners: Dict[str, set] = {}
+    for spec in load_modalities(building_id):
+        for c in spec.brick_classes:
+            owners.setdefault(_class_local(c), set()).add(spec.name)
+    votes: Dict[str, int] = {}
+    for cls in classes:
+        names = owners.get(_class_local(cls) or "\0", set())
+        if len(names) == 1:
+            key = lane_measurand(next(iter(names)))
+            votes[key] = votes.get(key, 0) + 1
+    if not votes:
+        return None
+    top = max(votes.values())
+    winners = [k for k, v in votes.items() if v == top]
+    return winners[0] if len(winners) == 1 else None
+
+
 _DISPLAY = {"co2": "CO2", "pm25": "PM2.5", "voc": "VOC", "ph": "pH"}
 
 
@@ -2587,12 +2642,13 @@ async def try_answer(
         )[0]
         for u in uuids
     ]
-    texts = [
-        f"{(metadata.get(u) or {}).get('label', '')} {(metadata.get(u) or {}).get('kind', '')} "
-        f"{(metadata.get(u) or {}).get('sensor_uri', '')}"
-        for u in uuids
-    ]
-    measurand = measurand_key(texts) or measurand_key([question])
+    # THE QUANTITY IS READ FROM THE GRAPH'S CLASS, NEVER FROM A LABEL (BUG-1442). The label of a
+    # point is what a building's naming convention says and it moved this answer's count: a
+    # point whose name lacked "CO2" was kept or dropped with its name. A set whose classes do not
+    # resolve to one quantity has no measurand, and no summary is given for it.
+    measurand = measurand_from_classes(
+        [str((metadata.get(u) or {}).get("brick_class") or "") for u in uuids]
+    )
     kinds = _kinds_of(units)
     labels = [str((metadata.get(u) or {}).get("label") or "") for u in uuids]
     headcount = is_headcount(measurand, labels, kinds)

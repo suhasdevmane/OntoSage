@@ -646,6 +646,12 @@ class EvidenceRecord(BaseModel):
     completeness: Optional[float] = Field(
         default=None, ge=0.0, le=1.0, description="Share of expected samples actually present"
     )
+    # BUG-1444: a share can pass the floor while a single stretch of silence is hours long.
+    # The longest measured gap is recorded in words so the answer can say what was missing.
+    completeness_gap: str = Field(
+        default="",
+        description="The longest measured gap beyond the declared cadence, '' when none",
+    )
     spatial_adequacy: SpatialAdequacy = Field(default=SpatialAdequacy.UNGRADED)
     calibration_state: str = Field(default="unknown")
     conflicts: List[str] = Field(

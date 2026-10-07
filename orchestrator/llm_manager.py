@@ -315,6 +315,14 @@ _llm_failures: contextvars.ContextVar[Optional[List[Dict[str, Any]]]] = contextv
     "ontosage_llm_failures", default=None
 )
 
+# C8 (trial readiness, 2026-10-07): what the turn spent on the model, next to the failures
+# above. One mutable dict per request, shared by child tasks in the same way. Counts logical
+# `generate()` calls (retries inside one call are NOT extra calls) and sums their wall time,
+# so overlapping calls can make `seconds` exceed the turn's elapsed time.
+_llm_usage: contextvars.ContextVar[Optional[Dict[str, float]]] = contextvars.ContextVar(
+    "ontosage_llm_usage", default=None
+)
+
 RATE_LIMIT_MARKERS = ("429", "rate limit", "quota", "too many requests", "requires a subscription")
 
 #: httpx's timeout exceptions, by NAME rather than by import.
@@ -354,8 +362,26 @@ def classify_llm_error(error: BaseException) -> str:
 
 
 def begin_llm_trace() -> None:
-    """Start recording LLM failures for the current request."""
+    """Start recording LLM failures and usage for the current request."""
     _llm_failures.set([])
+    _llm_usage.set({"calls": 0.0, "seconds": 0.0})
+
+
+def record_llm_call(seconds: float) -> None:
+    """Count one logical LLM call and its wall time against the in-flight request, if traced."""
+    usage = _llm_usage.get()
+    if usage is None:
+        return  # untraced caller (script, test) — nothing to report
+    usage["calls"] += 1
+    usage["seconds"] += max(0.0, float(seconds))
+
+
+def llm_usage() -> Optional[Dict[str, Any]]:
+    """This request's LLM call count and summed seconds, or None when untraced."""
+    usage = _llm_usage.get()
+    if usage is None:
+        return None
+    return {"calls": int(usage["calls"]), "seconds": round(usage["seconds"], 2)}
 
 
 def record_llm_failure(error: BaseException, client_label: str = "") -> None:
@@ -754,6 +780,23 @@ class LLMManager:
         return False
 
     async def generate(
+        self,
+        prompt: str,
+        system_message: Optional[str] = None,
+        temperature: Optional[float] = None,
+        task_type: Optional[TaskType] = None,
+        provider_kwargs: Optional[Dict[str, Any]] = None,
+    ) -> str:
+        """One logical generation, counted and timed against the request (C8). See `llm_usage`."""
+        started = time.monotonic()
+        try:
+            return await self._generate_attempts(
+                prompt, system_message, temperature, task_type, provider_kwargs
+            )
+        finally:
+            record_llm_call(time.monotonic() - started)
+
+    async def _generate_attempts(
         self,
         prompt: str,
         system_message: Optional[str] = None,

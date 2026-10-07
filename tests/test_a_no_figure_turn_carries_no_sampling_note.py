@@ -29,9 +29,9 @@ DECLINE = (
     "a current value."
 )
 WITH_NOTE = DECLINE + (
-    " _At least one sensor returned the full 60 rows this question reads per sensor, so these "
-    "readings are a SAMPLE of the newest data and their number is not a count of what the "
-    "period holds. The readings used run from 2026-10-01 04:22:18 to 2026-10-01 09:23:15._"
+    " _The readings query reached its row limit of 60 rows, so these readings are a SAMPLE of "
+    "the newest data and their number is not a count of what the period holds. The readings "
+    "used run from 2026-10-01 04:22:18 to 2026-10-01 09:23:15._"
     "\n\n---\n*Sources: `Building model` `Sensor data`*"
 )
 

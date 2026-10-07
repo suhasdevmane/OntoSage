@@ -1290,7 +1290,8 @@ curl http://localhost:8000/health   # orchestrator (8001 rag, 8002 code-executor
 pytest tests/ -v                                       # all (live e2e need the stack up)
 pytest -m unit            # fast / offline      pytest -m integration   # needs services
 pytest tests/test_routing_accuracy.py -v               # single file
-# CI deterministic suite = 423 tests (2 skipped) on 3.10/3.11/3.12 (see .github/workflows/ci.yml)
+# CI deterministic suite = 363 tests collected from the file list in .github/workflows/ci.yml
+# (counted 2026-10-07 on both ab6c081 and development; skip count not re-measured)
 
 # Lint (run before commit)
 black --line-length 100 orchestrator/ shared/ scripts/ tests/

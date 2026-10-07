@@ -61,6 +61,42 @@ def compliance_contradiction(text: str) -> Optional[str]:
     return text[start:end].strip()
 
 
+def reconcile_compliance_claim(text: str, verdict: Optional[dict]) -> str:
+    """Replace the claim sentence ONLY when it asserts the newest reading met all standards
+    and that reading's own verdict (``standards_engine.newest_reading_verdict``) fails one.
+
+    BUG-1428 / trial G6: "the last time it met all listed standards was 11:45:13" was printed
+    beside a non-compliance mark for that same 11:45:13 reading. The replacement states the
+    verdict the same check produced and says no earlier reading was searched, so it asserts
+    nothing that was not computed. Returns ``text`` unchanged for any other input, including a
+    claim about an EARLIER time, which the newest reading cannot contradict.
+    """
+    if not isinstance(text, str) or not text or not isinstance(verdict, dict):
+        return text
+    failing = verdict.get("failing") or []
+    at = str(verdict.get("at") or "").strip()
+    if not failing or not at:
+        return text
+    m = _FULL_COMPLIANCE_CLAIM_RE.search(text)
+    if not m:
+        return text
+    start = text.rfind(".", 0, m.start()) + 1
+    end = text.find(".", m.end())
+    end = end + 1 if end != -1 else len(text)
+    time_of_day = at[-8:] if len(at) >= 8 else at
+    if time_of_day not in text[start:end]:
+        return text
+    names = "; ".join(
+        f"{f.get('standard', '')}: {', '.join(f.get('parameters') or []) or 'see checks'}"
+        for f in failing
+    )
+    replacement = (
+        f" At the newest reading ({at}) the building does not fully meet all listed standards. "
+        f"Not compliant: {names}. No earlier reading was searched, so no earlier time is claimed."
+    )
+    return text[:start] + replacement + text[end:]
+
+
 #: "averaging N <unit>, ranging from A to B <unit>" -- the bare headline shape, no "per
 #: <group>" required. Deliberately narrower than a generic number-pair scan: both the verb
 #: ("averaging") and the range phrase ("ranging from ... to ...") must be present together,

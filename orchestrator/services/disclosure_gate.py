@@ -288,7 +288,9 @@ _NOT_A_FIGURE = (
     re.compile(r"\b(?:room|zone|space|rm|floor|level|storey)\s*\d+(?:\.\d+)?[A-Za-z]?\b", re.I),
     re.compile(r"!\[[^\]]*\]\([^)]*\)"),
 )
-_ANY_NOTE_RE = re.compile(r"_?At least one sensor(?:'s readings were cut off| returned the full)")
+_ANY_NOTE_RE = re.compile(
+    r"_?(?:At least one sensor(?:'s readings were cut off| returned the full)|The readings query reached its row limit)"
+)
 
 
 def gives_a_figure(text: str) -> bool:
@@ -331,16 +333,15 @@ def truncation_note(marker: Optional[Dict[str, Any]]) -> str:
             f" That is the newest part of {asked}, not the whole of it." if asked and span else ""
         )
         return (
-            f"\n\n_At least one sensor returned the full {per} this question reads per "
-            f"sensor, so these readings are a SAMPLE of the newest data and their number is "
-            f"not a count of what the period holds.{span}{shortfall}_"
+            f"\n\n_The readings query reached its row limit of {per}, so these readings are a "
+            f"SAMPLE of the newest data and their number is not a count of what the period "
+            f"holds.{span}{shortfall}_"
         )
     except Exception as exc:  # the cap is disclosed even when its detail is not
         return (
-            f"\n\n_At least one sensor's readings were cut off at this question's per-sensor "
-            f"row limit, so the figures above are computed over a sample of the newest data "
-            f"and their number is not a count of what the period holds; the detail of the "
-            f"cap could not be read ({exc})._"
+            f"\n\n_The readings query reached its row limit, so these readings are a SAMPLE "
+            f"of the newest data and their number is not a count of what the period holds; "
+            f"the detail of the cap could not be read ({exc})._"
         )
 
 

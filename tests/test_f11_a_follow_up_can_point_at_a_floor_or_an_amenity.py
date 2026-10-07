@@ -15,6 +15,9 @@ this reason.
 Amenity vocabulary comes from the graph (record_registry.held_amenity_classes), never a
 hardcoded word list -- building-agnostic by construction.
 """
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
 from orchestrator.services.context_switch import (
@@ -163,3 +166,91 @@ class TestItIsWiredIntoTheRewriteChain:
         gate_start = src.rindex("if (", 0, gate_idx)
         gate_block = src[gate_start:gate_idx]
         assert "floors_in_reply" not in gate_block
+
+
+class TestTwoTurnFollowUpThroughTheRewrite:
+    """Behavioural, not source-string: a two-message conversation runs through the real
+    `DialogueAgent.rewrite_to_standalone`, with the graph's amenity vocabulary and the LLM
+    stubbed. The deterministic resolvers must answer without the model; a rewrite that
+    reaches the model here would mean the floor/amenity case was not caught."""
+
+    CLASSES = [
+        SimpleNamespace(label="Café / catering", terms=("cafe", "coffee shop", "buy a coffee")),
+        SimpleNamespace(label="Reception", terms=("front desk",)),
+    ]
+
+    @staticmethod
+    def _conversation(reply: str, question: str):
+        from shared.models import ConversationState, Message
+
+        return ConversationState(
+            conversation_id="conv-f11",
+            user_id="tester",
+            user_message=question,
+            building_id="bldg1",
+            messages=[
+                Message(role="user", content="what is on the ground floor?"),
+                Message(role="assistant", content=reply),
+                Message(role="user", content=question),
+            ],
+        )
+
+    @staticmethod
+    async def _rewrite(reply: str, question: str, classes):
+        from orchestrator.agents.dialogue_agent import DialogueAgent
+
+        state = TestTwoTurnFollowUpThroughTheRewrite._conversation(reply, question)
+        with patch(
+            "orchestrator.services.record_registry.held_amenity_classes",
+            new=AsyncMock(return_value=classes),
+        ), patch(
+            "orchestrator.agents.dialogue_agent.llm_manager.generate",
+            new=AsyncMock(return_value=""),
+        ) as gen:
+            out = await DialogueAgent().rewrite_to_standalone(state)
+        return out, gen
+
+    @pytest.mark.asyncio
+    async def test_a_floor_named_in_the_reply_is_the_referent(self):
+        out, gen = await self._rewrite(
+            "Floor 3 is the warmest, at 22.4 C.",
+            "and what about its humidity there?",
+            self.CLASSES,
+        )
+        assert out == "and what about its humidity in floor 3?"
+        gen.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_the_cafe_closing_time_is_asked_of_the_cafe_not_the_building(self):
+        """BUG-1426's live shape: the reply names the cafe AND its floor. The amenity must
+        win, because a floor has no closing hours."""
+        out, gen = await self._rewrite(
+            "The cafe is on floor 0, open 08:00-16:00.",
+            "what time does it close?",
+            self.CLASSES,
+        )
+        assert out == "what time does the cafe close?"
+        assert "floor 0" not in out
+        gen.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_a_named_room_still_wins_over_an_amenity(self):
+        out, gen = await self._rewrite(
+            "Room 2.13 is the cafe's nearest table, on floor 2.",
+            "what time does it close?",
+            self.CLASSES,
+        )
+        assert out == "what time does room 2.13 close?"
+        gen.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_two_named_amenities_are_not_bound_to_either(self):
+        """Ambiguous: the deterministic resolver must decline, so neither amenity (and not
+        the floor they share) is silently chosen as the referent."""
+        out, gen = await self._rewrite(
+            "The cafe and the front desk are both on floor 0.",
+            "what time does it close?",
+            self.CLASSES,
+        )
+        assert out is None
+        gen.assert_called()  # the deterministic resolver declined, so the model was asked
