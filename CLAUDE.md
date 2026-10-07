@@ -1187,10 +1187,10 @@ approval.**
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**66** parse-stage + 2 post-stage + 5 concept-stage ordered rules — `cross_source_precedence`
-  (E2) appended LAST, counted FROM THE MODULE immediately after adding it, 2026-10-04 — it said
-  **65** earlier the SAME day, so this line has now gone stale a SEVENTH time, which is the
-  argument for printing it rather than reading it;
+  (**68** parse-stage + 2 post-stage + 5 concept-stage ordered rules — `door_records_question`
+  (BUG-1429) and `comfort_history_not_readiness` (BUG-1450) appended 2026-10-07, counted FROM
+  THE MODULE immediately after adding them — this line said **66** for three days, which is the
+  EIGHTH time it has gone stale, which is the argument for printing it rather than reading it;
   2026-09-17 — this line said 17+1+1 for weeks after it stopped being true, then 36+1+3 for
   another nine days, which is the same failure twice. Count it, do not read it: `python -c
   "from orchestrator.services import routing_contract as r; print(len(r.PARSE_STAGE_RULES),
