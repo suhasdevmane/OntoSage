@@ -4,3 +4,7 @@
 *.pdf -text
 *.dwg -text
 *.dxf -text
+
+# Frozen evaluation sets: MANIFEST.json pins each file's SHA256, so the bytes must be identical
+# on every clone. An end-of-line rewrite on checkout would make every hash fail to verify.
+eval/compound/** -text
