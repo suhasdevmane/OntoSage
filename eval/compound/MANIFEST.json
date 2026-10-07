@@ -1,0 +1,434 @@
+{
+ "freeze_date": "2026-10-07",
+ "exclusion_snapshot_frozen_at_utc": "2026-10-07T22:12:52+00:00",
+ "files_sha256": {
+  "T-REAL.jsonl": "74d0b9f20504091fd70c17c3770fd0b4dd14a0c9ae08b1ea616c563b5dc9a7cb",
+  "T-REAL-SUPPLEMENT.jsonl": "d025df2f5e979847996e9ef93185f384dba316eb3a6bf51b8cf945f1756c9017",
+  "T-CAT.jsonl": "119d7fb40ab5cd64369e4b8a63df4529203e41d17320544336458d3c94f69a41",
+  "DEV.jsonl": "431dd30fbf14b9927c2d1852966fe4a2a28c92d03214a5570a4a06e4716e5885",
+  "SPENT_210.jsonl": "e43290dbb445ae50411b7024fd3e616aa09f3d49cf33b02141137f14a252b896",
+  "HELDOUT_HASHES.txt": "9df47f49a5d1f4a9ca613cfe44b9617e3205f90f68d388e47745596e5b9b4135",
+  "LABELS.json": "6f4c71fa48a6b4351a098d985f63f2e08561850ba5c6d50fa152a45c9d2fa45b",
+  "EXCLUSION_SNAPSHOT.json": "5cb1debde530528d97bc60eb55e5d1554baf5ec2bada7cd32b3dd4238ba3fe0d",
+  "CODEBOOK.md": "69c95efda9ba6225f1c4642e4194046946b86ca9f97a3fc91f2f5fb7d3d2fa9b",
+  "build_sets.py": "92fc5f925bee48f8c9b27cc5b9383783234b876878c0d29e85d01fdec57256c5"
+ },
+ "sealed_until_the_blinded_read": [
+  "T-REAL.jsonl",
+  "T-REAL-SUPPLEMENT.jsonl",
+  "T-CAT.jsonl",
+  "LABELS.json"
+ ],
+ "open_to_the_v2_developer": [
+  "DEV.jsonl",
+  "SPENT_210.jsonl",
+  "HELDOUT_HASHES.txt",
+  "CODEBOOK.md",
+  "MANIFEST.json",
+  "build_sets.py",
+  "EXCLUSION_SNAPSHOT.json"
+ ],
+ "sources_sha256": {
+  "classified_corpus.csv": "542956454f90df1cd0f1cbbea07ec624c1825622c12a36816b8ca35260e6dc40",
+  "smart_building_questions.csv": "a6254536a21bd903d847f8a52f4fd5b46cd13c135f480a56d4637f0d5c08360e",
+  "catalogue_pdfs": {
+   "Academic office occupants.pdf": "b0a369cb9fbaa561073f8cc9dc97995c8eb6c31e7dc6c0e0a1779c04a2a7e6dd",
+   "Access-control administrators.pdf": "8b26ad5897f51278ecb9a079a6b85737f91238e8b55d722c8ead4d8ff7449a2b",
+   "Accessibility, inclusion, and well-being teams.pdf": "48f335bce0d6622ba705c33015a24ce9115e3e84961895db3c7f751079970bfd",
+   "Architects and building designers.pdf": "7639c65aa3e8b8f94b41c516c288802c55d8f1cb7c39e0b53c2355c71f407c0f",
+   "Auditors and certification assessors.pdf": "1f4667a569ecaf6469c51dc901494ddbbcd26da5962c01c26f67dd6879cc6b00",
+   "BMS-HVAC operators.pdf": "95559dac9403eb2f5be6fb0ced67df80ec090f5a10757cbad0cea5f72ccc14ce",
+   "Cleaning and caretaking teams.pdf": "10c74fa1918f34434ee87c4ecd8a569e54cb16bf75c786e0fdbc500606615c22",
+   "Emergency coordinators.pdf": "b1b34d0473cd565a93821d455bbe59aaf7a29cfc61657399336edb968fda1e50",
+   "Emergency responders.pdf": "3324a3e9364cd20976491802f5372fdbb62adb8e3412c57279da0856f0399f11",
+   "Energy, carbon, and sustainability teams.pdf": "a906f374fd72c5a67a9dc893a7dd92bc2505b1b90b74c8495c976ce67d0a9075",
+   "External maintenance contractors.pdf": "cc7c80e8540512618a3c15b25e5ce5be32449bbbe250f6cbad56bb44fbba42e2",
+   "Facilities managers.pdf": "61cf517445e7b8724f2c46d379ada588e17d5db7fb8dfc5ce7657900484ff81e",
+   "Finance and procurement teams.pdf": "582d4a65f23c1e0ac57ef8b7bd87f7dd1c37773914349f21d682bf617c8ae6b3",
+   "Fire-safety personnel.pdf": "4d8fbe58bf41e9fd99c632a3f61c72a97ae21c748e5a9739facb4f00933f5e45",
+   "Health and safety officers.pdf": "9e82649e4da299038f6a8ff5dee324607ff0d645706ee942ac8cb39ca58a7d53",
+   "Insurers and risk assessors.pdf": "c94ec2b27b16a4572bef13f32171d93d16d17ba778b9c2887dbf34ad740e91ee",
+   "IT, network, and server-infrastructure teams.pdf": "e60efd98157c36b6eedfc1a0f8f1178926c7c60184d5a9cd6dfef41e5464b314",
+   "Lecturers and tutors.pdf": "fe26e17a13acd482ebbf137e33cbfb9f356d6afd4e02b31f240f2920885579e6",
+   "Mechanical and electrical engineers.pdf": "f1b3d670d065f92d9758d06d097712d489ac6ceeae41c48e10bb661ccfb18c13",
+   "People with mobility, sensory, or other accessibility requirements.pdf": "1a979c4f947ea532c0c9e329b425bf6817ff088da0f3c754b2ebee1a7fa90e2c",
+   "PhD students.pdf": "0bbe062508cea7ea131e3505b3d01abab990ea920135841f1a227ace0bd27078",
+   "Professional-services staff.pdf": "d3c35a2d6fce59f56e68ec2651c094a11bf0b597e3df1ba1e4331665ceb40f52",
+   "Prospective students and family members.pdf": "ed8b39c3d6b914977be6883648c920542ea8a2f27231b028f7d4f120996e622d",
+   "Regulatory and institutional compliance teams.pdf": "7c41cc78d98c20909549f2cd7aaecdf016ba42506364224db841ba3bd916c513",
+   "Research staff.pdf": "f0b17c11cbf485f0e187a0513d95c40c8329b57a3dfe17ed9c7115d2ee9db642",
+   "Researchers and data scientists.pdf": "1a35553fd43363b8d9c7edfb1a87bf2543344fa32839b17752300424657c6671",
+   "Room-booking team.pdf": "e42b412dbb83a607797d0c23b77d920f7ba0d149d4ba58bcfb82438a56e5e5b7",
+   "School leadership, university leadership, and building owners.pdf": "cdfab72789c8c83fa3be520372a6f2de6b146d52f5f91d19f97d468483a9934d",
+   "Security officers.pdf": "53b2ee3c4e828b68f0eec81e911b59593cb7b572c0fc07d0904c025230beb0c9",
+   "Space-planning teams.pdf": "878386e49f925d3a388038623e598a64298a993665f5bdb70e1200f5b3479281",
+   "Taught postgraduate students.pdf": "c403c11d715f9f4916b45295f5bf25e4592b1101b71c681b64070c982684b39a",
+   "Teaching and audiovisual support team.pdf": "f89f7c6c7be3d488f3521242b51b220f8c862a18b8e439c7d4ce2a306dbf59df",
+   "Timetabling team.pdf": "7cff63af01e4fe33c090086a5ebe26ff3131da351cde1743794c7e0f9f74f9e2",
+   "Undergraduate students.pdf": "5e9b6076d0f871ef605608d4fd3f9418301a2e9afc102fbf7f62d3156d3039ac",
+   "University estates and asset-management teams.pdf": "3067f4e88f7b00b92187650d39d4da895d5a358583e3c66ec9b434ac5004bd83",
+   "Visitors and event attendees.pdf": "0eab20377717dbb1d8aee9bbedaee2f6f47a7e7c31437c0cee47bf17dfed83e5",
+   "Waste-management teams.pdf": "4e0fac4826f3d7b4151c28d60c44a4aa718afebb546877a6b608ca46a26106b3"
+  }
+ },
+ "counts": {
+  "T-REAL.jsonl": 27,
+  "T-REAL-SUPPLEMENT.jsonl": 22,
+  "T-CAT.jsonl": 42,
+  "DEV.jsonl": 2477,
+  "SPENT_210.jsonl": 210,
+  "HELDOUT_HASHES.txt": 91
+ },
+ "T-REAL": {
+  "role": "pre-registered primary held-out test (pool: MULTI_STEP + AGGREGATION rows)",
+  "by_shape": {
+   "C1": 1,
+   "C2": 7,
+   "C3": 12,
+   "C4": 3,
+   "C5": 1,
+   "C6": 3
+  },
+  "by_answerability": {
+   "FULL": 10,
+   "NONE": 5,
+   "PARTIAL": 12
+  },
+  "shape_x_answerability": {
+   "C1": {
+    "FULL": 0,
+    "PARTIAL": 1,
+    "NONE": 0
+   },
+   "C2": {
+    "FULL": 1,
+    "PARTIAL": 6,
+    "NONE": 0
+   },
+   "C3": {
+    "FULL": 7,
+    "PARTIAL": 2,
+    "NONE": 3
+   },
+   "C4": {
+    "FULL": 2,
+    "PARTIAL": 1,
+    "NONE": 0
+   },
+   "C5": {
+    "FULL": 0,
+    "PARTIAL": 0,
+    "NONE": 1
+   },
+   "C6": {
+    "FULL": 0,
+    "PARTIAL": 2,
+    "NONE": 1
+   }
+  },
+  "distinct_participants": 21,
+  "pool_accounting": {
+   "candidates": 858,
+   "after_stated_rule": 805,
+   "after_all_integrity_exclusions": 308,
+   "exclusion_reason_counts": {
+    "EXPOSED": 529,
+    "NEAR_DUPLICATE_OF": 474,
+    "SHOWN_PARENT_PEEK": 20,
+    "ASKED_STATED_RULE": 53,
+    "ASKED_PUNCTUATION_VARIANT": 1
+   },
+   "within_pool_duplicates_dropped": 27,
+   "pool_screened_by_codebook": 281
+  },
+  "codebook_decisions_over_pool": {
+   "C1": 1,
+   "C2": 7,
+   "C3": 13,
+   "C4": 3,
+   "C5": 1,
+   "C6": 4,
+   "NC:CAPABILITY": 52,
+   "NC:DUPLICATE": 8,
+   "NC:EXPLAIN": 1,
+   "NC:GENERIC": 20,
+   "NC:HYPOTHETICAL": 5,
+   "NC:OFFTOPIC": 22,
+   "NC:OPINION": 9,
+   "NC:PROCEDURE": 6,
+   "NC:SINGLE": 118,
+   "NC:UNCLEAR": 11
+  },
+  "selection": {
+   "compound_in_pool_by_shape": {
+    "C1": 1,
+    "C2": 7,
+    "C3": 13,
+    "C4": 3,
+    "C5": 1,
+    "C6": 4
+   },
+   "available_under_participant_cap": {
+    "C1": 1,
+    "C2": 7,
+    "C3": 13,
+    "C4": 3,
+    "C5": 1,
+    "C6": 3
+   },
+   "quota": {
+    "C1": 1,
+    "C2": 7,
+    "C3": 13,
+    "C4": 3,
+    "C5": 1,
+    "C6": 3
+   },
+   "selected_by_shape": {
+    "C1": 1,
+    "C2": 7,
+    "C3": 12,
+    "C4": 3,
+    "C5": 1,
+    "C6": 3
+   }
+  }
+ },
+ "T-REAL-SUPPLEMENT": {
+  "role": "NOT part of the pre-registered T-REAL. Same freeze, codebook, exclusions and participant cap, drawn from LOOKUP rows because the specified pool yields far fewer than 80. The owner decides, before any v2 commit, whether the primary analysis uses T-REAL alone or T-REAL + supplement; record that decision.",
+  "screening_rule": "LOOKUP rows matching SUPPLEMENT_SIGNAL (fixed before reading)",
+  "by_shape": {
+   "C1": 4,
+   "C2": 7,
+   "C3": 4,
+   "C5": 5,
+   "C6": 2
+  },
+  "by_answerability": {
+   "FULL": 14,
+   "PARTIAL": 8
+  },
+  "shape_x_answerability": {
+   "C1": {
+    "FULL": 3,
+    "PARTIAL": 1,
+    "NONE": 0
+   },
+   "C2": {
+    "FULL": 3,
+    "PARTIAL": 4,
+    "NONE": 0
+   },
+   "C3": {
+    "FULL": 3,
+    "PARTIAL": 1,
+    "NONE": 0
+   },
+   "C4": {
+    "FULL": 0,
+    "PARTIAL": 0,
+    "NONE": 0
+   },
+   "C5": {
+    "FULL": 4,
+    "PARTIAL": 1,
+    "NONE": 0
+   },
+   "C6": {
+    "FULL": 1,
+    "PARTIAL": 1,
+    "NONE": 0
+   }
+  },
+  "distinct_participants": 19,
+  "pool_accounting": {
+   "lookup_rows": 6293,
+   "lookup_rows_after_integrity_exclusions": 3304,
+   "with_compound_signal_word": 701,
+   "near_duplicates_of_t_real_pool_dropped": 0,
+   "within_pool_duplicates_dropped": 150,
+   "pool_screened_by_codebook": 551
+  },
+  "codebook_decisions_over_pool": {
+   "C1": 4,
+   "C2": 11,
+   "C3": 5,
+   "C4": 1,
+   "C5": 9,
+   "C6": 7,
+   "NC:CAPABILITY": 170,
+   "NC:DUPLICATE": 15,
+   "NC:EXPLAIN": 5,
+   "NC:GENERIC": 68,
+   "NC:HYPOTHETICAL": 5,
+   "NC:OFFTOPIC": 18,
+   "NC:OPINION": 16,
+   "NC:PLAN_EXAMPLE": 2,
+   "NC:PROCEDURE": 77,
+   "NC:SINGLE": 125,
+   "NC:UNCLEAR": 13
+  },
+  "selection": {
+   "compound_in_pool_by_shape": {
+    "C1": 4,
+    "C2": 11,
+    "C3": 5,
+    "C4": 1,
+    "C5": 9,
+    "C6": 7
+   },
+   "available_under_participant_cap": {
+    "C1": 4,
+    "C2": 9,
+    "C3": 5,
+    "C4": 0,
+    "C5": 6,
+    "C6": 2
+   },
+   "quota": {
+    "C1": 4,
+    "C2": 9,
+    "C3": 5,
+    "C4": 0,
+    "C5": 6,
+    "C6": 2
+   },
+   "selected_by_shape": {
+    "C1": 4,
+    "C2": 7,
+    "C3": 4,
+    "C4": 0,
+    "C5": 5,
+    "C6": 2
+   }
+  }
+ },
+ "T-REAL_plus_supplement": {
+  "count": 49,
+  "by_shape": {
+   "C1": 5,
+   "C2": 14,
+   "C3": 16,
+   "C4": 3,
+   "C5": 6,
+   "C6": 5
+  },
+  "by_answerability": {
+   "FULL": 24,
+   "NONE": 5,
+   "PARTIAL": 20
+  },
+  "distinct_participants": 33,
+  "max_items_per_participant": 2
+ },
+ "T-CAT": {
+  "role": "secondary held-out test (catalogue items never asked, quoted or printed)",
+  "by_shape": {
+   "C1": 13,
+   "C2": 12,
+   "C3": 3,
+   "C5": 11,
+   "C6": 3
+  },
+  "by_answerability": {
+   "FULL": 15,
+   "NONE": 4,
+   "PARTIAL": 23
+  },
+  "shape_x_answerability": {
+   "C1": {
+    "FULL": 5,
+    "PARTIAL": 8,
+    "NONE": 0
+   },
+   "C2": {
+    "FULL": 6,
+    "PARTIAL": 6,
+    "NONE": 0
+   },
+   "C3": {
+    "FULL": 0,
+    "PARTIAL": 1,
+    "NONE": 2
+   },
+   "C4": {
+    "FULL": 0,
+    "PARTIAL": 0,
+    "NONE": 0
+   },
+   "C5": {
+    "FULL": 1,
+    "PARTIAL": 8,
+    "NONE": 2
+   },
+   "C6": {
+    "FULL": 3,
+    "PARTIAL": 0,
+    "NONE": 0
+   }
+  },
+  "distinct_personas": 21,
+  "pool_accounting": {
+   "extracted": 2743,
+   "dropped_exact_duplicates": 1,
+   "dropped_header_superstrings": 12,
+   "after_dedup": 2730,
+   "spent_210_matched_items": 210,
+   "not_spent": 2520,
+   "tcat_eligible_before_codebook": 204,
+   "exclusion_reason_counts_not_spent": {
+    "EXPOSED": 2246,
+    "NEAR_DUPLICATE_OF": 5
+   },
+   "not_bank_matched_not_spent": 133
+  },
+  "codebook_decisions_over_pool": {
+   "C1": 38,
+   "C2": 22,
+   "C3": 3,
+   "C5": 16,
+   "C6": 4,
+   "NC:CAPABILITY": 2,
+   "NC:DUPLICATE": 4,
+   "NC:HYPOTHETICAL": 7,
+   "NC:OPINION": 21,
+   "NC:PROCEDURE": 23,
+   "NC:SINGLE": 64
+  },
+  "selection": {
+   "personas_with_compound_items": 21,
+   "compound_items_in_pool": 83,
+   "selected_by_shape": {
+    "C1": 13,
+    "C2": 12,
+    "C3": 3,
+    "C4": 0,
+    "C5": 11,
+    "C6": 3
+   }
+  }
+ },
+ "DEV": {
+  "items_removed_because_they_would_show_a_test_item": 1,
+  "with_bank_id": 2344,
+  "note": "Extraction is the PDF regex pass as specified; items without a bank_id are two-column merges or header fragments and should be read with that in mind."
+ },
+ "seeds": {
+  "spent_210_draw": 20261007,
+  "parent_peek_reproduction": 1,
+  "t_real_order": "compound-eval/T-REAL/2026-10-07",
+  "t_real_supplement_order": "compound-eval/T-REAL-SUPPLEMENT/2026-10-07",
+  "t_cat_order": "compound-eval/T-CAT/2026-10-07"
+ },
+ "parameters": {
+  "target_real": 80,
+  "target_cat": 60,
+  "max_per_pid_across_t_real_and_supplement": 2,
+  "max_per_persona": 2,
+  "near_dup_jaccard": 0.8,
+  "bulk_threshold": 500
+ },
+ "heldout_hashes_rule": "One line per T-REAL, T-REAL-SUPPLEMENT and T-CAT item: sha256 hex of the UTF-8 bytes of the question text after: lowercase; every run of whitespace collapsed to one space and leading/trailing whitespace stripped; then all trailing '?' characters removed and any trailing whitespace left stripped. Lines sorted, duplicates removed, no question text. Matches exact (normalised) copies only, not paraphrases or near-duplicates. Anyone who hashes the corpus can recover set membership from this file, so it protects against accidental exposure only.",
+ "statement": "Built on 2026-10-07 by an isolated agent, before any v2 code was committed, from the real survey corpus (classified_corpus.csv) and the 37-role stakeholder catalogue PDFs. The 210 catalogue questions asked during development that day were reproduced from their seeded draw and excluded. Every corpus question that had been stored as asked, logged by the orchestrator as answered, printed to the developer, quoted, or present in any development artefact, session transcript or uncompressed live store - or was a near-duplicate of one, or of any 4,060-bank question - was removed before the codebook was applied; the scan is frozen in EXCLUSION_SNAPSHOT.json. Compoundness, shape and FULL/PARTIAL/NONE answerability for bldg1 were judged under CODEBOOK.md and frozen in LABELS.json, and the sets were drawn by fixed seeds. The specified T-REAL pool yields far fewer than the planned 80 items, so a separately filed supplement from LOOKUP rows was frozen at the same time for the owner to adopt or discard. The v2 developer may use DEV.jsonl only; the sealed files stay unread until the blinded hand read. Every catalogue question, test items included, is in the 4,060-question development bank, so T-CAT is a weaker held-out set than T-REAL.",
+ "build": "python eval/compound/build_sets.py [--write]   (--rescan only at freeze time)"
+}
