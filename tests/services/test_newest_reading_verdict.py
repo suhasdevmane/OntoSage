@@ -103,6 +103,31 @@ def test_reconcile_is_identity_without_a_failing_verdict_or_a_claim():
     assert _nc.reconcile_compliance_claim("", failing) == ""
 
 
+def test_reconcile_also_catches_a_plain_comfortable_claim():
+    """2026-10-07, G6 widened: the original regex required "standard"/"compliant" in the
+    sentence. A plain "was comfortable" claim about the newest reading is now caught too."""
+    verdict = _se.newest_reading_verdict(_rows((G6_TIME, 1052)))
+    text = (
+        "Room 5.08 is at 22.5 °C. ❌ CO₂ is non-compliant with WELL v2 at this time.\n"
+        f"The room was comfortable as of {G6_TIME}."
+    )
+    out = _nc.reconcile_compliance_claim(text, verdict)
+    assert "was comfortable" not in out
+    assert f"At the newest reading ({G6_TIME})" in out
+    assert out.startswith("Room 5.08 is at 22.5 °C. ❌ CO₂ is non-compliant with WELL v2")
+
+
+def test_a_negated_comfort_claim_with_no_matching_timestamp_is_untouched():
+    """The widened regex also matches "you can't say whether it is comfortable" -- a real
+    shape measured in stored answers. It must NOT be edited: there is no timestamp in the
+    sentence for reconcile_compliance_claim's own gate to match against, so the safety rail
+    (same computed time must appear in the matched sentence) holds regardless of how broad
+    the detection regex becomes."""
+    verdict = _se.newest_reading_verdict(_rows((G6_TIME, 1052)))
+    text = "Because we don't have the current sensor values, you can't say for sure whether the room is comfortable or not."
+    assert _nc.reconcile_compliance_claim(text, verdict) == text
+
+
 def test_dead_auto_check_pair_is_gone_from_the_live_path():
     # BUG-1428: these were never on development; no call site may reference them again.
     orch = (_ROOT / "orchestrator" / "workflow" / "_orchestrator.py").read_text(encoding="utf-8")

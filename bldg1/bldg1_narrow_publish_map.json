@@ -8489,7 +8489,7 @@
   "4c1d504d-e247-5b20-bfb1-1774e2596e5b": {
     "band_from": "2026-10-07",
     "dec": 0,
-    "hi": 20.0,
+    "hi": 8.0,
     "hi_basis": "hbco:roomCapacity of the space this point is in; estimated, not certified (ontosage:capacityBasis)",
     "label": "Room 5.01 \u2014 Research Laboratory occupancy [persons]",
     "lo": 0.0,
@@ -10584,7 +10584,7 @@
   "5ee0bce6-debd-5074-a14a-2ea5140b884a": {
     "band_from": "2026-10-07",
     "dec": 0,
-    "hi": 20.0,
+    "hi": 8.0,
     "hi_basis": "hbco:roomCapacity of the space this point is in; estimated, not certified (ontosage:capacityBasis)",
     "label": "Occupancy Count Sensor - Lab 5.01",
     "lo": 0.0,
@@ -16580,7 +16580,7 @@
   "8f4a444a-1f25-566f-9978-3615e46dccbe": {
     "band_from": "2026-10-07",
     "dec": 0,
-    "hi": 20.0,
+    "hi": 7.0,
     "hi_basis": "hbco:roomCapacity of the space this point is in; estimated, not certified (ontosage:capacityBasis)",
     "label": "Room 4.01 \u2014 Research Laboratory occupancy [persons]",
     "lo": 0.0,
@@ -18077,7 +18077,7 @@
   "9e094069-60e1-5c0c-91da-c37fa8c28a1d": {
     "band_from": "2026-10-07",
     "dec": 0,
-    "hi": 20.0,
+    "hi": 7.0,
     "hi_basis": "hbco:roomCapacity of the space this point is in; estimated, not certified (ontosage:capacityBasis)",
     "label": "Occupancy Count Sensor - Lab 4.01",
     "lo": 0.0,
