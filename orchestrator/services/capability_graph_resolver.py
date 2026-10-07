@@ -546,32 +546,41 @@ _NOT_THIS_BUILDING = frozenset(
 )
 
 
-def topic_is_the_subject(question: str, fact: Any) -> bool:
-    """True when this topic is what the question is ABOUT, not merely a word it contains.
+#: The words an OPENING-HOURS question uses for the hours themselves, not for its subject
+#: (BUG-1439). "What time does the cafe close?" leaves {time, close} against the catering topic,
+#: whose own terms do not cover them, so the catering topic failed the subject test while the
+#: building's generic "Working Hours" topic, which DECLARES "close" and "what time", kept only
+#: {cafe} and qualified. The shape is what makes these frame words; the words alone are not
+#: (BUG-1396 measured "hours" inside "the next 12 hours" as a forecast, not an hours question).
+_HOURS_FRAME = frozenset(
+    "close closes closed closing shut shuts open opens opening time times hours hour until".split()
+)
 
-    Judged against the terms the BUILDING declared for the topic, or its label when it declared
-    none. A topic with neither is kept: there is nothing to judge it by, and dropping it would
-    deny a declared amenity.
+_HOURS_QUESTION_RE = re.compile(
+    r"\b(?:what|which)\s+time\b"
+    r"|\bwhen\s+(?:does|do|is|are|will|would)\b"
+    r"|\b(?:opening|closing)\s+(?:hours?|times?)\b"
+    r"|\bhours\s+(?:does|do|is|are)\b",
+    re.IGNORECASE,
+)
 
-    LIVED IN `capability_agent` AS A CLOSURE UNTIL 2026-10-01, and it is here now because a
-    SECOND reader needed it (BUG-1396). The routing contract's amenity stand-down keyed on the
-    COUNT of matched amenities, so one live turn produced this:
 
-        [routing-contract] capability_measurand_is_data stood down: 1 amenity triples match
-        [capability]       topics ['Working Hours'] match words but are not the subject
-                           — not answering from them
-
-    The contract stopped handing a forecast question to a data lane in favour of a lane that
-    then refused it, because 'Working Hours' matched the word "hours" inside "the next 12
-    hours". Both stages now ask the same question of the same facts, in one place — the
-    alternative was a second matcher beside the first, which is exactly how BUG-947's decline
-    pointer came to disagree with its own register selector.
-    """
-    phrases = [
+def _phrases_of(fact: Any) -> List[str]:
+    """A topic's declared lay phrases, or its label's words when it declares none."""
+    return [
         p.strip().lower() for p in str(getattr(fact, "lay_terms", "") or "").split(",") if p.strip()
     ] or [w.lower() for w in str(getattr(fact, "label", "") or "").split() if len(w) > 2]
+
+
+def _subject_leftover(question: str, fact: Any) -> Optional[List[str]]:
+    """The content words left once this topic's own terms and the frame are removed.
+
+    None when the topic declares nothing to judge it by. This is the ONE place the leftover is
+    computed, so the single-topic test and the list-level test below cannot disagree about it.
+    """
+    phrases = _phrases_of(fact)
     if not phrases:
-        return True
+        return None
     leftover = leftover_content_words((question or "").lower(), phrases)
     # A MECHANISM QUESTION IS JUDGED ON ITS SUBJECT, NOT ON ITS FRAME (2026-10-02). "Are lights
     # automatically adjusting properly to current conditions?" left [automatically, adjusting,
@@ -601,6 +610,36 @@ def topic_is_the_subject(question: str, fact: Any) -> bool:
     # the version that shipped.
     if quantifier_question(question or "") and any(w in QUANTIFIER_PRONOUNS for w in leftover):
         leftover = [w for w in leftover if w not in QUANTIFIER_FRAME]
+    # BUG-1439: an opening-hours question's hours words are its frame for EVERY topic.
+    if _HOURS_QUESTION_RE.search(question or ""):
+        leftover = [w for w in leftover if w not in _HOURS_FRAME]
+    return leftover
+
+
+def topic_is_the_subject(question: str, fact: Any) -> bool:
+    """True when this topic is what the question is ABOUT, not merely a word it contains.
+
+    Judged against the terms the BUILDING declared for the topic, or its label when it declared
+    none. A topic with neither is kept: there is nothing to judge it by, and dropping it would
+    deny a declared amenity.
+
+    LIVED IN `capability_agent` AS A CLOSURE UNTIL 2026-10-01, and it is here now because a
+    SECOND reader needed it (BUG-1396). The routing contract's amenity stand-down keyed on the
+    COUNT of matched amenities, so one live turn produced this:
+
+        [routing-contract] capability_measurand_is_data stood down: 1 amenity triples match
+        [capability]       topics ['Working Hours'] match words but are not the subject
+                           — not answering from them
+
+    The contract stopped handing a forecast question to a data lane in favour of a lane that
+    then refused it, because 'Working Hours' matched the word "hours" inside "the next 12
+    hours". Both stages now ask the same question of the same facts, in one place — the
+    alternative was a second matcher beside the first, which is exactly how BUG-947's decline
+    pointer came to disagree with its own register selector.
+    """
+    leftover = _subject_leftover(question, fact)
+    if leftover is None:
+        return True
     if len(leftover) > 1:
         return False
     # ONE LEFTOVER WORD NAMING SOMETHING THE BUILDING IS NOT DISQUALIFIES THE TOPIC (BUG-1395).
@@ -623,9 +662,54 @@ def topic_is_the_subject(question: str, fact: Any) -> bool:
     return not any(w in _NOT_THIS_BUILDING for w in leftover)
 
 
+def _declared_words(fact: Any) -> set:
+    """The words a topic declares, as `leftover_content_words` tokenises them."""
+    return {w for p in _phrases_of(fact) for w in re.findall(r"[a-z]+", p) if len(w) > 2}
+
+
+def _named_by_a_fully_explained_topic(
+    leftover: List[str], fact: Any, question: str, pool: List[Any]
+) -> bool:
+    """True when another matched topic is the one the question names, and this one is not.
+
+    BUG-1439. "What time does the cafe close?" matched Working Hours and Catering Amenities.
+    With the hours frame removed, Catering is left with NOTHING: its own term "cafe" explains the
+    whole question. Working Hours is left with {cafe}, which is inside the single-word allowance,
+    so it qualified too. But "cafe" is Catering's declared term: the named subject is Catering,
+    and Working Hours is only the frame the question happens to share.
+
+    The rule needs the other topic to be FULLY explained. A pool where both topics keep a word
+    each ("Is the guest wifi ...", "the fire exit from the kitchen") is a two-subject question,
+    and neither topic may silently win it -- measured: a looser version ("any other topic declares
+    one of my leftover words") dropped the right answer on three of five bank questions it moved.
+    """
+    words = {w for w in leftover} | {w.rstrip("s") for w in leftover}
+    for o in pool:
+        if o is fact:
+            continue
+        if _subject_leftover(question, o) != []:
+            continue  # only a topic that explains the question WHOLE can name it
+        if words & (_declared_words(o) | {d.rstrip("s") for d in _declared_words(o)}):
+            return True
+    return False
+
+
 def subject_facts(question: str, facts: Any) -> List[Any]:
-    """The matched topics the question is actually ABOUT, in the order given."""
-    return [f for f in (facts or ()) if topic_is_the_subject(question, f)]
+    """The matched topics the question is actually ABOUT, in the order given.
+
+    Two judgements, both from `_subject_leftover`: a topic must pass the single-topic test, AND
+    it must not hold a word that a topic which explains the whole question names (BUG-1439).
+    """
+    pool = list(facts or ())
+    kept = []
+    for f in pool:
+        if not topic_is_the_subject(question, f):
+            continue
+        leftover = _subject_leftover(question, f) or []
+        if leftover and _named_by_a_fully_explained_topic(leftover, f, question, pool):
+            continue
+        kept.append(f)
+    return kept
 
 
 def _score(query_lc: str, lay_phrases: List[str]) -> int:

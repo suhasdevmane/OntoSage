@@ -84,6 +84,7 @@ def _uuids_in(sql: str) -> List[str]:
 
 META = {
     f"sensor-t{i:02d}-aaaa": {
+        "brick_class": "Air_Temperature_Sensor",
         "label": f"Air Temperature Sensor {i % 6}.0{i}",
         "unit": "°C",
         "floor": str(i % 6),
@@ -204,7 +205,12 @@ def test_the_generic_method_rule_does_not_catch_a_question_about_this_building()
 
 
 CO2_META = {
-    u: {"label": m["label"].replace("Air Temperature", "CO2 Level"), "unit": "ppm", "floor": m["floor"]}
+    u: {
+        "brick_class": "CO2_Level_Sensor",
+        "label": m["label"].replace("Air Temperature", "CO2 Level"),
+        "unit": "ppm",
+        "floor": m["floor"],
+    }
     for u, m in META.items()
 }
 
@@ -326,8 +332,18 @@ def _sum_count_rows(spec):
 async def test_the_building_mean_is_weighted_by_readings_and_sits_inside_the_range():
     """The shape that produced 39.4 against a floor minimum of 45."""
     meta = {
-        "sensor-b0-aaaa": {"label": "Air Quality 0.01", "unit": "level", "floor": "0"},
-        "sensor-b5-aaaa": {"label": "Air Quality 5.01", "unit": "level", "floor": "5"},
+        "sensor-b0-aaaa": {
+            "brick_class": "Air_Quality_Sensor",
+            "label": "Air Quality 0.01",
+            "unit": "level",
+            "floor": "0",
+        },
+        "sensor-b5-aaaa": {
+            "brick_class": "Air_Quality_Sensor",
+            "label": "Air Quality 5.01",
+            "unit": "level",
+            "floor": "5",
+        },
     }
     # floor 0: 10 readings averaging 100; floor 5: 1,000 readings averaging 50
     spec = {
@@ -355,7 +371,14 @@ async def test_the_building_mean_is_weighted_by_readings_and_sits_inside_the_ran
 
 async def test_a_figure_outside_its_own_range_is_never_printed():
     """The invariant, driven by a store that reports a sum inconsistent with its own extremes."""
-    meta = {"sensor-b5-aaaa": {"label": "Air Quality 5.01", "unit": "level", "floor": "5"}}
+    meta = {
+        "sensor-b5-aaaa": {
+            "brick_class": "Air_Quality_Sensor",
+            "label": "Air Quality 5.01",
+            "unit": "level",
+            "floor": "5",
+        }
+    }
     impossible = {"sensor-b5-aaaa": (100, 3940.0, 45.0, 105.0)}  # mean 39.4, min 45
     adapter = FakeAdapter(_sum_count_rows(impossible))
     res = await ask(
@@ -408,7 +431,14 @@ def test_the_renderer_itself_withholds_rather_than_prints():
 
 async def test_one_instrumented_floor_reads_as_a_fact_about_the_building():
     """ "No figure for Floor 0, 1, 2, 3 and 4" is true and reads like a fault."""
-    meta = {"sensor-b5-aaaa": {"label": "Air Quality 5.01", "unit": "level", "floor": "5"}}
+    meta = {
+        "sensor-b5-aaaa": {
+            "brick_class": "Air_Quality_Sensor",
+            "label": "Air Quality 5.01",
+            "unit": "level",
+            "floor": "5",
+        }
+    }
     spec = {"sensor-b5-aaaa": (100, 6000.0, 45.0, 105.0)}
     adapter = FakeAdapter(_sum_count_rows(spec))
     res = await ask(

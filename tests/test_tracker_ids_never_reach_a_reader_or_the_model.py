@@ -165,7 +165,7 @@ def test_polish_answer_scrubs_every_reader_facing_answer():
 def test_all_three_model_entry_points_strip_before_anything_else():
     from orchestrator.llm_manager import LLMManager
 
-    for name in ("generate", "generate_structured", "astream_generate"):
+    for name in ("_generate_attempts", "generate_structured", "astream_generate"):
         src = inspect.getsource(getattr(LLMManager, name))
         code = src.split('"""', 2)[-1]  # skip the docstring
         assert "strip_tracker_ids(prompt)" in code, name

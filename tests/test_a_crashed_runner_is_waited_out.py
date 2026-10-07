@@ -61,7 +61,7 @@ def test_the_backoff_actually_consults_the_predicate():
 
     from orchestrator.llm_manager import LLMManager
 
-    source = inspect.getsource(LLMManager.generate)
+    source = inspect.getsource(LLMManager._generate_attempts)
     assert "_looks_like_a_dead_local_runner" in source
     assert "LLM_RUNNER_RESTART_WAIT_S" in source
 
@@ -111,7 +111,7 @@ def test_the_check_runs_on_every_generate_call():
     import inspect
 
     mod = _llm_module()
-    source = inspect.getsource(mod.LLMManager.generate)
+    source = inspect.getsource(mod.LLMManager._generate_attempts)
     assert "_EMPTY_QUESTION_SLOT_RE" in source
 
 
@@ -120,7 +120,7 @@ def test_the_check_only_warns():
     import inspect
 
     mod = _llm_module()
-    source = inspect.getsource(mod.LLMManager.generate)
+    source = inspect.getsource(mod.LLMManager._generate_attempts)
     block = source[source.index("_EMPTY_QUESTION_SLOT_RE") : source.index("_EMPTY_QUESTION_SLOT_RE") + 600]
     assert "logger.warning" in block
     assert "raise" not in block

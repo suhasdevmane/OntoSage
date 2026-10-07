@@ -146,10 +146,30 @@ def completeness_gate(
     coverage: Optional[float],
     consequence_class: str = "informational",
     detail: str = "",
+    gap_detail: str = "",
 ) -> GateVerdict:
-    """Did we observe enough of the window to aggregate over it? (V6-T17 wiring)"""
+    """Did we observe enough of the window to aggregate over it? (V6-T17 wiring)
+
+    BUG-1444: `coverage` is a COUNT share, and a count share can clear the floor while a
+    single stretch of silence is hours long (a 42-hour hole is about 2% of a month). So a
+    measured gap beyond the declared cadence fails the gate on its own, whatever the share.
+    """
     mode = policy.gate_mode("completeness")
     floor = policy.min_completeness(consequence_class)
+    if coverage is not None and coverage >= floor and gap_detail:
+        return GateVerdict(
+            "completeness",
+            False,
+            mode,
+            gap_detail,
+            remedy="Narrow the window to a covered period, or restore the missing data.",
+            next_step=(
+                "The share of the window observed is not the measure that matters here: "
+                "the silence itself is what a reader needs to know about."
+            ),
+            downgrade_to=AnswerStatus.NOT_ASSESSABLE,
+            threshold=f"{floor:.0%}",
+        )
 
     if coverage is None:
         # SAY WHICH STREAMS AND WHY. The caller already counts how many contributing

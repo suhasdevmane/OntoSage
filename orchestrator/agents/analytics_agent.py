@@ -132,6 +132,27 @@ class AnalyticsAgent:
             if "data" not in data:
                 data = {"data": []}
 
+            # The named calendar day, if any, bounds the rows this analysis may read (BUG-1437).
+            # Idempotent with the node's own narrowing; kept here so this method is correct when
+            # called directly (the planner does). The window is kept for the no-data message.
+            _named_window = None
+            _named_label = ""
+            try:
+                from orchestrator.services.requested_interval import (
+                    STAMP,
+                    building_tz,
+                    restrict_to_named_day,
+                    to_local,
+                )
+
+                _tz = building_tz(getattr(state, "building_id", None))
+                data, _named_window, _ = restrict_to_named_day(data, user_query, _tz)
+                if _named_window is not None:
+                    _local_day = to_local(datetime.strptime(_named_window[0], STAMP), _tz)
+                    _named_label = _local_day.strftime("%d %b %Y")
+            except Exception as _nd_err:  # never let a window check cost the answer
+                logger.debug(f"[analytics] named-day narrowing skipped: {_nd_err}")
+
             data_count = len(data.get("data", []))
             logger.info(f"📊 Data Records: {data_count}")
 
@@ -180,7 +201,10 @@ class AnalyticsAgent:
                     f" for **{entities[0]}**" if entities else " for the requested sensor(s)"
                 )
                 time_hint = ""
-                if time_range:
+                if _named_window is not None:
+                    # The named day is what was asked about, not the fetch's wider window.
+                    time_hint = f" on {_named_label}"
+                elif time_range:
                     start = time_range.get("start_time", "")
                     end = time_range.get("end_time", "")
                     if start or end:

@@ -1,21 +1,23 @@
-"""E6 — which design capacity is authoritative for Rooms 1.04, 4.01 and 5.01?
+"""E6 — the architect's drawings for Rooms 1.04, 4.01 and 5.01, and how the TTL records them.
 
-Measured 2026-10-06, three sources disagree:
+Measured 2026-10-06, three sources disagreed:
 
   * bldg1/bldg1_occupancy_capacity.ttl — hbco:roomCapacity 25 / 20 / 20, the live figures.
   * the same file's capacityBasis text — the superseded maxOccupancy 50 / 25 / 25, retired by
-    BUG-896 and kept only in prose (git history holds the triples).
+    BUG-896 and now kept as retained TTL records.
   * the architect's drawings — bldg1/Abacws floor N.dxf carries a "NP <function>" label next
     to each room tag, on layer A-AREA-IDEN. Nearest label to 1.04 is "30P Seminar" (floor 1),
     to 4.01 "7P PHD Research" (floor 4), to 5.01 "8P PHD Research" (floor 5).
 
-The owner decided on 2026-09-17 that the architect's DXF drawings are authoritative for what a
-room is (tasks/held_back/room_identity_2026-09-17/README.md). The drawing label is therefore
-the best-supported figure. It is NOT written into the TTL here: it would RAISE Room 1.04 from
-25 to 30, against the recorded rule that the lower figure is kept, and the held-back README
-sequences all capacity corrections as one change with a cascade. That is the owner's call.
+CHANGED 2026-10-07 (owner decision, binding). The 2026-10-06 decision made the drawings
+authoritative and wrote 30 / 7 / 8 onto the rooms. That is REVERSED: the TTL figure is
+authoritative whenever the TTL holds one, and the drawing is a second source read only when it
+holds none. The three rooms all hold a TTL figure, so the drawing figures are retained as records
+and answer nothing today. The pins below were updated to the new order; the reason is the
+owner's decision, not a change in the drawing evidence, which the DXF test still checks.
 
-This file pins the drawing evidence, so the reconciliation can be reviewed against it.
+The TTL-level pins are on the figures and their records. The order itself is pinned in
+``test_capacity_authority_order.py``.
 """
 
 from __future__ import annotations
@@ -25,13 +27,22 @@ import re
 from pathlib import Path
 
 import pytest
+import rdflib
+from rdflib.namespace import RDFS
 
 pytestmark = pytest.mark.unit
 
-BLDG1 = Path("bldg1")
+ROOT = Path(__file__).resolve().parents[1]
+BLDG1 = ROOT / "bldg1"
 ROOM_TAGS = {"1.04": "floor 1", "4.01": "floor 4", "5.01": "floor 5"}
 EXPECTED_DRAWING_CAPACITY = {"1.04": 30, "4.01": 7, "5.01": 8}
+#: The figure the TTL holds for each room under the 2026-10-07 order.
+EXPECTED_TTL_CAPACITY = {"1.04": 25, "4.01": 20, "5.01": 20}
 LABEL_RE = re.compile(r"^(\d+)P\b")
+
+HBCO = rdflib.Namespace("http://ontosage.org/hbco#")
+ONT = rdflib.Namespace("http://ontosage.org/capabilities#")
+BLDG = rdflib.Namespace("http://abacwsbuilding.cardiff.ac.uk/abacws#")
 
 
 def _dxf_texts(path: Path):
@@ -64,6 +75,13 @@ def _nearest_capacity_label(path: Path, tag: str):
     return labels[0], labels[1]
 
 
+@pytest.fixture(scope="module")
+def capacity_graph() -> rdflib.Graph:
+    g = rdflib.Graph()
+    g.parse(BLDG1 / "bldg1_occupancy_capacity.ttl", format="turtle")
+    return g
+
+
 @pytest.mark.parametrize("room", sorted(ROOM_TAGS))
 def test_drawing_label_next_to_the_room_tag_is_the_capacity_it_states(room):
     dxf = BLDG1 / f"Abacws {ROOM_TAGS[room]}.dxf"
@@ -77,34 +95,46 @@ def test_drawing_label_next_to_the_room_tag_is_the_capacity_it_states(room):
     assert int(LABEL_RE.match(label).group(1)) == EXPECTED_DRAWING_CAPACITY[room]
 
 
-def test_live_ttl_records_both_figures_it_was_reconciled_from():
-    """Owner decision (2026-10-06): drawing figures are live; estimates are retained as records."""
-    ttl = (BLDG1 / "bldg1_occupancy_capacity.ttl").read_text(encoding="utf-8")
+@pytest.mark.parametrize("room", sorted(ROOM_TAGS))
+def test_the_room_carries_the_ttl_figure_not_the_drawing_figure(capacity_graph, room):
+    """Owner decision 2026-10-07: the TTL figure is authoritative. The drawing figure must not
+    be written onto the room, where it would silently replace the building's own figure."""
+    values = [int(v) for v in capacity_graph.objects(BLDG[f"Room{room}"], HBCO.roomCapacity)]
+    assert values == [EXPECTED_TTL_CAPACITY[room]]
+    assert EXPECTED_DRAWING_CAPACITY[room] not in values
+
+
+@pytest.mark.parametrize("room", sorted(ROOM_TAGS))
+def test_the_drawing_is_retained_as_a_second_source_record(capacity_graph, room):
+    drawing = BLDG[f"CapacityRecord_Room{room}_drawing"]
+    assert (drawing, HBCO.roomCapacity, rdflib.Literal(EXPECTED_DRAWING_CAPACITY[room])) in (
+        capacity_graph
+    )
+    assert (drawing, ONT.capacitySource, rdflib.Literal("drawing")) in capacity_graph
+    assert (drawing, RDFS.seeAlso, BLDG[f"Room{room}"]) in capacity_graph
+
+
+@pytest.mark.parametrize("room", sorted(ROOM_TAGS))
+def test_the_estimate_is_the_current_ttl_record_and_supersedes_the_retired_figure(
+    capacity_graph, room
+):
+    estimate = BLDG[f"CapacityRecord_Room{room}_estimate"]
+    retired = BLDG[f"CapacityRecord_Room{room}_retired"]
+    assert (estimate, HBCO.roomCapacity, rdflib.Literal(EXPECTED_TTL_CAPACITY[room])) in (
+        capacity_graph
+    )
+    assert (estimate, ONT.supersedes, retired) in capacity_graph
+    assert (retired, ONT.capacitySource, rdflib.Literal("ttl")) in capacity_graph
+
+
+def test_the_drawing_basis_names_the_dxf_and_the_label_it_read(capacity_graph):
     for room, drawing in (("1.04", 30), ("4.01", 7), ("5.01", 8)):
-        block = ttl[ttl.index(f"bldg:Room{room}\n") :]
-        block = block[: block.index(" .\n") + 3]
-        assert f"hbco:roomCapacity     {drawing} ;" in block, room
-        assert f"CapacityRecord_Room{room}_estimate" in ttl, room
-
-
-def test_no_supersedes_triples_are_invented_for_these_rooms():
-    """Owner decision (2026-10-06): supersedes links are written; no record is deleted."""
-    ttl = (BLDG1 / "bldg1_occupancy_capacity.ttl").read_text(encoding="utf-8")
-    assert "supersedes" in ttl
-    for room in ("1.04", "4.01", "5.01"):
-        assert f"CapacityRecord_Room{room}_drawing" in ttl, room
-
-
-@pytest.mark.skip(
-    reason="E6: awaits owner confirmation of the drawing figures (30/7/8) over the recorded "
-    "25/20/20 before ontosage:supersedes + effectiveFrom are written. The precedence reader here "
-    "has no supersedes support; that is the E4 work in commit 39c05c9."
-)
-def test_precedence_picks_the_authoritative_figure_once_the_triples_exist():
-    from orchestrator.services.evidence.precedence import SourceClaim, resolve
-
-    claims = [
-        SourceClaim("bldg:Room4.01#hbco:roomCapacity", "authoritative", 7.0),
-        SourceClaim("bldg:Room4.01#superseded", "authoritative", 20.0),
-    ]
-    assert resolve(claims).winner.value == 7.0
+        basis = str(
+            next(
+                capacity_graph.objects(
+                    BLDG[f"CapacityRecord_Room{room}_drawing"], ONT.capacityBasis
+                )
+            )
+        )
+        assert ".dxf" in basis and f"{drawing}P" in basis, room
+        assert "second source" in basis.lower(), room

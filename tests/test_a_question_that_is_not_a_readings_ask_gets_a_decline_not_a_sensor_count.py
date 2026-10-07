@@ -134,7 +134,12 @@ def _uuids_in(sql: str) -> List[str]:
 
 STORE = "http://example.org/bldg#co2_data"
 META = {
-    f"sensor-c{i:02d}-aaaa": {"label": f"CO2 Level Sensor {i}.01", "unit": "ppm", "floor": str(i)}
+    f"sensor-c{i:02d}-aaaa": {
+        "brick_class": "CO2_Level_Sensor",
+        "label": f"CO2 Level Sensor {i}.01",
+        "unit": "ppm",
+        "floor": str(i),
+    }
     for i in range(6)
 }
 #: one sensor's newest reading is 10 ppm, which no occupied room can hold

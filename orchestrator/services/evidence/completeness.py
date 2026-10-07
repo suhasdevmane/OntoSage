@@ -22,6 +22,7 @@ it in exactly the place where the building was not looking.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import List, Optional, Sequence, Tuple
@@ -191,3 +192,58 @@ def duration_above(
         f"counted over {len(inside)} observation(s) at {step:.1f}-minute resolution; "
         "unobserved intervals are excluded rather than counted as below threshold"
     )
+
+
+#: BUG-1444. A statement that the data is complete, as opposed to a complete picture of
+#: something else. Copula forms only: "is complete", "fully observed", "no gaps". Deliberately
+#: NOT "complete" alone -- "complete the form" and "a complete list" must not trigger.
+_COMPLETENESS_CLAIM_RE = re.compile(
+    r"\b(?:is|are|was|were|be|been)\s+(?:fully\s+|entirely\s+|100\s*%\s+)?complete\b"
+    r"|\bfully\s+(?:observed|covered|represented|recorded)\b"
+    r"|\bno\s+(?:data\s+|reading\s+|readings\s+)?gaps\b",
+    re.IGNORECASE,
+)
+
+
+def asserts_completeness(text: str) -> bool:
+    """True when prose states the data is complete, fully observed or without gaps."""
+    return bool(_COMPLETENESS_CLAIM_RE.search(text or ""))
+
+
+def completeness_disclosure(
+    text: str, record: Optional[dict], floor: Optional[float] = None
+) -> str:
+    """The measured completeness to append when prose claims more than the record measured.
+
+    "" when there is nothing to say: the prose makes no completeness claim, or the record
+    supports it (no gap beyond the declared cadence, and the observed share clears the floor).
+    Unknown coverage (no declared cadence) is deliberately NOT disclosed here -- that is a
+    gate's job, and disclosing it on every "complete" sentence would bury the measured cases.
+
+    Never raises: a disclosure that breaks the answer it qualifies is worse than none.
+    """
+    try:
+        if not asserts_completeness(text) or not isinstance(record, dict):
+            return ""
+        gap = str(record.get("completeness_gap") or "").strip()
+        cov = record.get("completeness")
+        if floor is None:
+            from orchestrator.services.evidence.policy import load_policy
+
+            floor = load_policy().min_completeness()
+        short = cov is not None and float(cov) < float(floor)
+        if not gap and not short:
+            return ""
+        if gap:
+            return (
+                f"_Completeness was measured, not assumed: {gap}. A share of the window can "
+                "look complete while a stretch of it is missing, so this is not a complete "
+                "record of the window._"
+            )
+        return (
+            f"_Completeness was measured, not assumed: {float(cov):.0%} of the requested "
+            "window was observed._"
+        )
+    except Exception as exc:  # pragma: no cover - a disclosure must never cost the answer
+        logger.debug(f"[completeness] disclosure skipped: {exc}")
+        return ""

@@ -39,8 +39,8 @@ is not better than no window.
 from __future__ import annotations
 
 import re
-from datetime import date, datetime, timedelta
-from typing import List, Optional, Tuple
+from datetime import date, datetime, timedelta, timezone
+from typing import Any, Dict, List, Optional, Tuple
 
 #: The wire format every store, builder and formatter in this system speaks.
 STAMP = "%Y-%m-%d %H:%M:%S"
@@ -73,6 +73,17 @@ _CALENDAR_DAYS = {
 #: above so it is the one a dict comprehension's last-write-wins picks here -- the most
 #: natural phrase to substitute for "yesterday" in a rewritten question.
 _DAYS_BACK_TO_PHRASE = {back: phrase for phrase, back in _CALENDAR_DAYS.items()}
+
+
+def _named_day_word(low: str) -> Optional[str]:
+    """The LONGEST calendar-day phrase the lowercased text contains, or None.
+
+    "the day before yesterday" contains "yesterday", so a first-match scan over an unordered
+    table resolved it one day back: the two named days produced one window (BUG-1437). The
+    longest phrase wins, so a phrase that contains another can never be shadowed by it.
+    """
+    hits = [word for word in _CALENDAR_DAYS if re.search(rf"\b{re.escape(word)}\b", low)]
+    return max(hits, key=len) if hits else None
 
 
 #: THE STORES ARE UTC. Every one of them, and every reader sees them that way (BUG-403).
@@ -196,14 +207,10 @@ def calendar_day_bounds(
     SQL builders compare them against. `now`, when passed, is building-local wall time.
     Without a zone no conversion happens, which is also what the tests without one expect.
     """
-    low = (text or "").lower()
-    days_back = None
-    for word, back in _CALENDAR_DAYS.items():
-        if re.search(rf"\b{re.escape(word)}\b", low):
-            days_back = back
-            break
-    if days_back is None:
+    word = _named_day_word((text or "").lower())
+    if word is None:
         return None
+    days_back = _CALENDAR_DAYS[word]
 
     if now is None:
         now = local_now(tz_name)
@@ -219,11 +226,45 @@ def calendar_day_bounds(
 
 def named_day(text: str) -> Optional[str]:
     """Which calendar day the text names, or None. Used to LABEL a resolved interval."""
-    low = (text or "").lower()
-    for word in _CALENDAR_DAYS:
-        if re.search(rf"\b{re.escape(word)}\b", low):
-            return word
-    return None
+    return _named_day_word((text or "").lower())
+
+
+def rows_in_window(
+    rows: List[Dict[str, Any]], start: str, end: str
+) -> Optional[List[Dict[str, Any]]]:
+    """The rows whose timestamp falls inside a resolved window, or None when none can be read.
+
+    `start` and `end` are store-clock STAMP strings, inclusive, as `calendar_day_bounds`
+    returns them. Rows are compared on the same clock (a timezone-aware stamp is converted to
+    UTC first). A row with no readable timestamp is dropped, because it cannot be shown to lie
+    in the named day. When NO row has a readable timestamp the rows are returned unchanged
+    and the caller must say it could not check the window, rather than narrate it as checked.
+    """
+    try:
+        lo = datetime.strptime(str(start)[:19], STAMP)
+        hi = datetime.strptime(str(end)[:19], STAMP)
+    except (TypeError, ValueError):
+        return None
+    kept, readable = [], 0
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        ts = row.get("timestamp") or row.get("Datetime") or row.get("datetime")
+        if isinstance(ts, str):
+            try:
+                ts = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            except ValueError:
+                ts = None
+        if not isinstance(ts, datetime):
+            continue
+        if ts.tzinfo is not None:
+            ts = ts.astimezone(timezone.utc).replace(tzinfo=None)
+        readable += 1
+        if lo <= ts <= hi:
+            kept.append(row)
+    if readable == 0:
+        return None
+    return kept
 
 
 def interval_hours(start: str, end: str) -> Optional[float]:
@@ -403,3 +444,32 @@ def calendar_period_bounds(
         to_store(start_local, tz_name).strftime(STAMP),
         to_store(end_local, tz_name).strftime(STAMP),
     )
+
+
+def restrict_to_named_day(
+    data: Any, question: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Tuple[Any, Optional[Tuple[str, str]], bool]:
+    """Narrow fetched rows to the calendar day the question names (BUG-1437).
+
+    Returns ``(data, bounds, checked)``. ``bounds`` is None when the question names no day, in
+    which case ``data`` is returned untouched. When it names one, ``data`` carries only the rows
+    inside that day; ``checked`` is False when the rows had no readable timestamp, so the caller
+    can say the window was NOT verified rather than presenting unfiltered rows as the day.
+
+    Only ``dict`` payloads and bare row lists are narrowed; anything else passes through.
+    """
+    bounds = calendar_day_bounds(question, tz_name, now=now)
+    if bounds is None:
+        return data, None, True
+    if isinstance(data, dict):
+        rows = data.get("data") or []
+    elif isinstance(data, list):
+        rows = data
+    else:
+        return data, bounds, False
+    kept = rows_in_window(rows, bounds[0], bounds[1])
+    if kept is None:
+        return data, bounds, False
+    if isinstance(data, dict):
+        return {**data, "data": kept}, bounds, True
+    return kept, bounds, True

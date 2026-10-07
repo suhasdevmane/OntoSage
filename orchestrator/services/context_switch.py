@@ -38,6 +38,7 @@ is what makes the rare positive meaningful.
 from __future__ import annotations
 
 import re
+import unicodedata
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
@@ -520,15 +521,26 @@ def amenities_in_reply(reply: str, amenity_labels: Sequence[str]) -> List[str]:
     at all -- only a dotted room token. Takes the vocabulary from the graph
     (record_registry.held_amenity_classes) rather than a hardcoded word list, so this
     holds for whatever amenities THIS building declares, not a guessed set."""
-    text = (reply or "").lower()
+    # BUG-1426 root cause (measured 2026-10-07): the reply says "Café" and the graph label is
+    # "Cafe" -- a plain lower() comparison never matched, so the resolver returned None and the
+    # rewrite fell back to the building's hours. Both sides are folded to ASCII, which is what
+    # a reader means by the same word; the label kept is the GRAPH's spelling, the one the
+    # rewritten question carries.
+    text = _fold_accents(reply or "")
     seen: List[str] = []
     for label in amenity_labels:
         label = (label or "").strip()
         if len(label) < 3:
             continue
-        if re.search(rf"\b{re.escape(label.lower())}\b", text) and label not in seen:
+        folded = _fold_accents(label)
+        if re.search(rf"\b{re.escape(folded)}\b", text) and label not in seen:
             seen.append(label)
     return seen
+
+
+def _fold_accents(text: str) -> str:
+    """Lower-case ASCII form of a string: 'Café' -> 'cafe'. Pure, no locale."""
+    return unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii").lower()
 
 
 def resolve_sole_floor_or_amenity_anaphor(

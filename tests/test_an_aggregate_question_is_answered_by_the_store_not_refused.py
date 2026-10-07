@@ -99,11 +99,36 @@ def narrow_handler(stats: Dict[str, Dict[str, Any]], peak_at: str = "2026-09-16 
 
 
 META = {
-    F1A: {"label": "CO2 Level Sensor 1.01", "unit": "ppm", "floor": "1"},
-    F1B: {"label": "CO2 Level Sensor 1.02", "unit": "ppm", "floor": "1"},
-    F2A: {"label": "CO2 Level Sensor 2.01", "unit": "ppm", "floor": "2"},
-    F2B: {"label": "CO2 Level Sensor 2.02", "unit": "ppm", "floor": "2"},
-    F3A: {"label": "CO2 Level Sensor 3.01", "unit": "ppm", "floor": "3"},
+    F1A: {
+        "brick_class": "CO2_Level_Sensor",
+        "label": "CO2 Level Sensor 1.01",
+        "unit": "ppm",
+        "floor": "1",
+    },
+    F1B: {
+        "brick_class": "CO2_Level_Sensor",
+        "label": "CO2 Level Sensor 1.02",
+        "unit": "ppm",
+        "floor": "1",
+    },
+    F2A: {
+        "brick_class": "CO2_Level_Sensor",
+        "label": "CO2 Level Sensor 2.01",
+        "unit": "ppm",
+        "floor": "2",
+    },
+    F2B: {
+        "brick_class": "CO2_Level_Sensor",
+        "label": "CO2 Level Sensor 2.02",
+        "unit": "ppm",
+        "floor": "2",
+    },
+    F3A: {
+        "brick_class": "CO2_Level_Sensor",
+        "label": "CO2 Level Sensor 3.01",
+        "unit": "ppm",
+        "floor": "3",
+    },
 }
 SMAP = {u: STORE for u in META}
 
@@ -497,7 +522,12 @@ async def test_a_no_is_a_no_with_the_highest_figure_for_context():
 
 async def test_a_quantity_with_no_cited_limit_is_ranked_and_not_called_high():
     meta = {
-        u: {**m, "label": m["label"].replace("CO2 Level", "Noise Level"), "unit": "dB"}
+        u: {
+            **m,
+            "brick_class": "Sound_Level_Sensor",
+            "label": m["label"].replace("CO2 Level", "Noise Level"),
+            "unit": "dB",
+        }
         for u, m in META.items()
     }
     adapter = FakeAdapter(narrow_handler(_stats()))
@@ -527,7 +557,9 @@ async def test_a_level_is_never_summed_into_how_much_was_used():
 
 
 async def test_a_how_much_question_about_a_level_is_not_treated_as_consumption():
-    meta = {F1A: {"label": "CO2 1.01", "unit": "ppm", "floor": "1"}}
+    meta = {
+        F1A: {"brick_class": "CO2_Level_Sensor", "label": "CO2 1.01", "unit": "ppm", "floor": "1"}
+    }
     adapter = FakeAdapter(narrow_handler(_stats()))
     assert (
         await ask("How much CO2 is on floor 1 this week?", adapter, meta=meta, smap={F1A: STORE})
@@ -697,12 +729,14 @@ def companion_exec(query: str):
                         "uuid": {"value": FLOOR_1},
                         "storage": {"value": STORE},
                         "floorNum": {"value": "1"},
+                        "brick_class": "Occupancy_Sensor",
                         "label": {"value": "Occupancy Count Sensor - Floor 1"},
                     },
                     {
                         "uuid": {"value": FLOOR_2},
                         "storage": {"value": STORE},
                         "floorNum": {"value": "2"},
+                        "brick_class": "Occupancy_Sensor",
                         "label": {"value": "Occupancy Count Sensor - Floor 2"},
                     },
                 ]
@@ -713,8 +747,18 @@ def companion_exec(query: str):
 
 async def test_the_floor_with_the_most_people_uses_the_floors_own_counter_not_the_sum_of_rooms():
     meta = {
-        ROOM_A: {"label": "Room 1.01 occupancy [persons]", "unit": "count", "kind": "occupancy"},
-        ROOM_B: {"label": "Room 2.01 occupancy [persons]", "unit": "count", "kind": "occupancy"},
+        ROOM_A: {
+            "brick_class": "Occupancy_Sensor",
+            "label": "Room 1.01 occupancy [persons]",
+            "unit": "count",
+            "kind": "occupancy",
+        },
+        ROOM_B: {
+            "brick_class": "Occupancy_Sensor",
+            "label": "Room 2.01 occupancy [persons]",
+            "unit": "count",
+            "kind": "occupancy",
+        },
     }
     adapter = FakeAdapter(latest_handler({FLOOR_1: 11.0, FLOOR_2: 14.0, ROOM_A: 9.0, ROOM_B: 8.0}))
     res = await al.try_answer(
@@ -742,14 +786,18 @@ async def test_the_floor_with_the_most_people_uses_the_floors_own_counter_not_th
 async def test_without_a_floor_counter_the_room_sum_is_labelled_as_such():
     meta = {
         ROOM_A: {
+            "brick_class": "Occupancy_Sensor",
             "label": "Room 1.01 occupancy",
             "unit": "count",
+            "brick_class": "Occupancy_Sensor",
             "kind": "occupancy",
             "floor": "1",
         },
         ROOM_B: {
+            "brick_class": "Occupancy_Sensor",
             "label": "Room 1.02 occupancy",
             "unit": "count",
+            "brick_class": "Occupancy_Sensor",
             "kind": "occupancy",
             "floor": "1",
         },

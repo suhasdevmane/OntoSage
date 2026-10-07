@@ -44,11 +44,29 @@ import re
 from dataclasses import dataclass, field
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
+from orchestrator.services.evidence.precedence import SourceClaim, resolve
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
 SparqlExec = Callable[[str], Awaitable[Dict[str, Any]]]
+
+#: Where a capacity figure came from. Stored on a record as ``ontosage:capacitySource``.
+#: ``ttl`` is the building's own model; ``drawing`` is the architect's drawing, read as a
+#: second source. The values are the only vocabulary the reader recognises: anything else
+#: is ignored, never guessed at.
+CAPACITY_SOURCE_TTL = "ttl"
+CAPACITY_SOURCE_DRAWING = "drawing"
+
+#: THE AUTHORITY ORDER. Owner decision, binding, 2026-10-07: the TTL figure for a space is
+#: authoritative whenever the TTL holds one; the drawing-derived figure is a SECOND source,
+#: used only when the TTL has no figure for that space; otherwise the answer is "none". Never
+#: an average, and never "the larger value". The order is a precedence tier pair: TTL is
+#: ``authoritative``, a drawing is ``document_derived`` (a statement ABOUT the building, not the
+#: model itself), and the two are never resolved together -- the drawing is consulted only
+#: when the TTL verdict is empty.
+_TIER_TTL = "authoritative"
+_TIER_DRAWING = "document_derived"
 
 #: Local names, normalised (lowercased, non-alphanumerics dropped), that declare how many
 #: PEOPLE a space was designed for. Matched by EQUALITY, never by substring: `capacityLitres`
@@ -77,30 +95,120 @@ _RDFS = "http://www.w3.org/2000/01/rdf-schema#"
 _SPACE_TOKEN_RE = re.compile(r"\b(?:room|space|zone)?\s*0*(\d{1,2}[.\-]\d{1,3})\b", re.IGNORECASE)
 
 
+@dataclass(frozen=True)
+class CapacityAuthority:
+    """The one figure a space is answered with, and where it came from."""
+
+    #: The authoritative count, or None when there is none or the sources disagree.
+    value: Optional[int]
+    #: ``CAPACITY_SOURCE_TTL``, ``CAPACITY_SOURCE_DRAWING``, or "" when neither has a figure.
+    source: str
+    #: Two sources at the deciding tier state different figures and no supersedes link says
+    #: which is current. Reported, never picked.
+    unresolved: bool = False
+    note: str = ""
+
+
+def authoritative_capacity(
+    ttl: Dict[str, int],
+    drawing: Dict[str, int],
+    supersedes: Optional[Dict[str, str]] = None,
+) -> CapacityAuthority:
+    """TTL first, then the drawing, then none (owner decision 2026-10-07).
+
+    ``ttl`` and ``drawing`` map a record key to its count; ``supersedes`` maps a key to the key
+    it replaces. A superseded TTL record is retained for the audit trail and does not count
+    as a disagreement once its successor is in place. Keys are compared by identity only, so
+    a value is never looked up by the room it sits in.
+    """
+    supersedes = supersedes or {}
+    if ttl:
+        return _settle(CAPACITY_SOURCE_TTL, ttl, supersedes, _TIER_TTL)
+    if drawing:
+        return _settle(CAPACITY_SOURCE_DRAWING, drawing, {}, _TIER_DRAWING)
+    return CapacityAuthority(value=None, source="")
+
+
+def _settle(
+    source: str, figures: Dict[str, int], supersedes: Dict[str, str], tier: str
+) -> CapacityAuthority:
+    # Sorted by key so the verdict's wording cannot depend on the order the graph returned rows.
+    claims = [
+        SourceClaim(
+            source_id=key,
+            tier=tier,
+            value=float(count),
+            label=_local(key),
+            supersedes=supersedes.get(key, ""),
+        )
+        for key, count in sorted(figures.items())
+    ]
+    verdict = resolve(claims)
+    winner = verdict.winner
+    if winner is None:
+        return CapacityAuthority(value=None, source="")
+    # Every disagreeing claim must be one the winner explicitly supersedes. A third figure
+    # with no link to the winner is a real disagreement, whatever tiebreak the winner got.
+    stray = [
+        c for c in verdict.tied_with if c.value != winner.value and c.source_id != winner.supersedes
+    ]
+    if verdict.tiebreak == "unresolved" or stray:
+        return CapacityAuthority(
+            value=None, source=source, unresolved=True, note=verdict.describe()
+        )
+    return CapacityAuthority(value=int(winner.value), source=source)
+
+
 @dataclass
 class DesignOccupancy:
     """Every design-occupancy figure the building declares for one space."""
 
     space_iri: str
     label: str
-    #: predicate IRI -> declared count. More than one entry is normal; more than one VALUE
-    #: is a contradiction the building has to resolve, not one this code may resolve for it.
+    #: record key -> count, from the building's own TTL. Keys are the predicate IRI for a
+    #: figure on the space itself, and the record IRI for a retained capacity record. More
+    #: than one entry is normal; more than one VALUE is a contradiction the building has to
+    #: resolve, unless a supersedes link says which record is current.
     declarations: Dict[str, int] = field(default_factory=dict)
+    #: record key -> count, from an architect's drawing. Read only when ``declarations`` is
+    #: empty (the owner's order: TTL first, drawing second).
+    drawing: Dict[str, int] = field(default_factory=dict)
+    #: superseding record key -> the record key it replaces.
+    supersedes: Dict[str, str] = field(default_factory=dict)
+
+    @property
+    def authority(self) -> CapacityAuthority:
+        return authoritative_capacity(self.declarations, self.drawing, self.supersedes)
+
+    @property
+    def source(self) -> str:
+        """Which source the answer rests on: ``ttl``, ``drawing`` or "" for none."""
+        return self.authority.source
+
+    @property
+    def active_declarations(self) -> Dict[str, int]:
+        """The figures of the source in use (TTL when it has any, else the drawing). Includes
+        superseded TTL records, so use it to describe a conflict, never to state a value."""
+        return self.declarations or self.drawing
 
     @property
     def values(self) -> List[int]:
-        return sorted(set(self.declarations.values()))
+        """The figures a reader may see. One authoritative figure when there is one; every
+        figure of the source in use when the sources disagree, so a conflicted space can be
+        described in full. A superseded record never appears here as a live value."""
+        if not self.conflicted and self.value is not None:
+            return [self.value]
+        return sorted(set(self.active_declarations.values()))
 
     @property
     def conflicted(self) -> bool:
-        """Two declarations, two numbers. Neither is authoritative and neither is discarded."""
-        return len(self.values) > 1
+        """The TTL holds figures that disagree and nothing says which is current."""
+        return self.authority.unresolved
 
     @property
     def value(self) -> Optional[int]:
-        """The declared figure — only when the building declares exactly one."""
-        vals = self.values
-        return vals[0] if len(vals) == 1 else None
+        """The authoritative figure, or None when there is none or it is unresolved."""
+        return self.authority.value
 
 
 def _local(iri: str) -> str:
@@ -142,6 +250,29 @@ SELECT ?space ?label ?p ?v WHERE {{
 """
 
 
+#: The retained capacity RECORDS for a space: a record that points at a location with
+#: ``rdfs:seeAlso`` and says which source it came from. Records are not typed as locations,
+#: so `_ALL_QUERY` never sees them; they are read here and nowhere else.
+_RECORDS_QUERY = """
+PREFIX brick: <{brick}>
+PREFIX rdfs: <{rdfs}>
+PREFIX ontosage: <{onto}>
+SELECT ?space ?rec ?label ?p ?v ?src ?sup WHERE {{
+  ?rec rdfs:seeAlso ?space .
+  ?space a ?t . ?t rdfs:subClassOf* brick:Location .
+  ?rec ?p ?v .
+  FILTER(isNumeric(?v))
+  BIND(REPLACE(LCASE(REPLACE(STR(?p), "^.*[#/]", "")), "[^a-z0-9]", "") AS ?norm)
+  FILTER(?norm IN ({terms}))
+  ?rec ontosage:capacitySource ?src .
+  OPTIONAL {{ ?rec ontosage:supersedes ?sup }}
+  OPTIONAL {{ ?space rdfs:label ?label }}
+}}
+"""
+
+_ONTOSAGE = "http://ontosage.org/capabilities#"
+
+
 def _bindings(payload: Any) -> List[Dict[str, Any]]:
     if not isinstance(payload, dict):
         return []
@@ -159,14 +290,24 @@ async def declared_design_occupancy(sparql_exec: SparqlExec) -> Dict[str, Design
     "no space has a declared occupancy" — an unreachable graph and a building that declares
     nothing must not produce the same answer.
     """
-    query = _ALL_QUERY.format(brick=_BRICK, rdfs=_RDFS, terms=_terms_for_sparql())
+    terms = _terms_for_sparql()
+    figures_q = _ALL_QUERY.format(brick=_BRICK, rdfs=_RDFS, terms=terms)
+    records_q = _RECORDS_QUERY.format(brick=_BRICK, rdfs=_RDFS, onto=_ONTOSAGE, terms=terms)
     try:
-        payload = await sparql_exec(query)
+        payload = await sparql_exec(figures_q)
+        records = await sparql_exec(records_q)
     except Exception as exc:
         logger.warning(f"[design_occupancy] graph query failed: {exc}")
         return {}
 
     out: Dict[str, DesignOccupancy] = {}
+
+    def _entry(iri: str, label: str) -> DesignOccupancy:
+        return out.setdefault(
+            iri,
+            DesignOccupancy(space_iri=iri, label=label or _local(iri)),
+        )
+
     for row in _bindings(payload):
         iri = (row.get("space") or {}).get("value") or ""
         pred = (row.get("p") or {}).get("value") or ""
@@ -177,14 +318,36 @@ async def declared_design_occupancy(sparql_exec: SparqlExec) -> Dict[str, Design
             count = int(float(raw))
         except (TypeError, ValueError):
             continue
-        entry = out.setdefault(
-            iri,
-            DesignOccupancy(
-                space_iri=iri,
-                label=(row.get("label") or {}).get("value") or _local(iri),
-            ),
-        )
-        entry.declarations[pred] = count
+        label = (row.get("label") or {}).get("value") or ""
+        _entry(iri, label).declarations[pred] = count
+
+    for row in _bindings(records):
+        iri = (row.get("space") or {}).get("value") or ""
+        rec = (row.get("rec") or {}).get("value") or ""
+        src = (row.get("src") or {}).get("value") or ""
+        raw = (row.get("v") or {}).get("value")
+        if (
+            not iri
+            or not rec
+            or raw is None
+            or src
+            not in (
+                CAPACITY_SOURCE_TTL,
+                CAPACITY_SOURCE_DRAWING,
+            )
+        ):
+            continue
+        try:
+            count = int(float(raw))
+        except (TypeError, ValueError):
+            continue
+        label = (row.get("label") or {}).get("value") or ""
+        entry = _entry(iri, label)
+        bucket = entry.declarations if src == CAPACITY_SOURCE_TTL else entry.drawing
+        bucket[rec] = count
+        superseded = (row.get("sup") or {}).get("value") or ""
+        if superseded and src == CAPACITY_SOURCE_TTL:
+            entry.supersedes[rec] = superseded
     return out
 
 
@@ -246,6 +409,13 @@ def describe_design(design: Optional[DesignOccupancy]) -> str:
         return (
             f"{design.label} has no single design occupancy on record: the building states "
             f"{parts}. Nothing in the model says which is authoritative, so I will not pick one."
+        )
+    if design.value is None:
+        return ""
+    if design.source == CAPACITY_SOURCE_DRAWING:
+        return (
+            f"{design.label} has a design occupancy of {design.value} people, taken from the "
+            "architect's drawing; the building model holds no figure for it."
         )
     return f"{design.label} has a design occupancy of {design.value} people."
 

@@ -2609,12 +2609,14 @@ Return ONLY the corrected SPARQL query."""
         cls, _classes, _plant_q = self._floor_scope_classes(
             user_query, class_target, class_targets, concept_populated
         )
+        # ?metricCls is projected on every path: the class each point was selected BY travels with
+        # the row into the sensor metadata, so the measurand of the answer is read from the graph's
+        # class and never from a label (BUG-1442).
         if len(_classes) > 1:
             type_clause = (
                 "VALUES ?metricCls { " + " ".join(_classes) + " }\n"
                 "  ?sensor rdf:type/rdfs:subClassOf* ?metricCls ."
             )
-            label_clause = ""
             row_limit = row_limit * len(_classes)
             logger.info(f"[sparql] floor-scoped resolve: classes={_classes} floors={floors}")
         elif cls:
@@ -2623,18 +2625,15 @@ Return ONLY the corrected SPARQL query."""
             # Water_Temperature_Sensor, …). An exact `?sensor a Temperature_Sensor`
             # would match none of them. rdf:type/rdfs:subClassOf* keeps it
             # building-agnostic — it resolves whatever subclass the building uses.
-            type_clause = f"?sensor rdf:type/rdfs:subClassOf* {cls} ."
-            label_clause = ""
+            type_clause = f"?sensor rdf:type/rdfs:subClassOf* {cls} .\n  BIND({cls} AS ?metricCls)"
             logger.info(f"[sparql] floor-scoped resolve: class={cls} floors={floors}")
         else:
-            terms = self._salient_terms(user_query)
-            if not terms:
-                return None
-            type_clause = ""
-            label_clause = (
-                "FILTER(" + " && ".join(f'CONTAINS(LCASE(STR(?label)), "{t}")' for t in terms) + ")"
-            )
-            logger.info(f"[sparql] floor-scoped resolve: label-match terms={terms} floors={floors}")
+            # NO NAME TIER (BUG-1442). The floor's sensors are selected by Brick class or not at
+            # all: a label match ("ahu", "run") picked points by what their NAMES say, and the
+            # measurand of the answer was then voted from those same names. A question whose
+            # quantity resolves to no class is left to the templates that can say so.
+            logger.info(f"[sparql] floor-scoped resolve: no Brick class for {user_query!r}")
+            return None
         # The `ref:` prefix WAS absent from the standard block when this was written, and is
         # in it now — so re-declaring it made GraphDB reject the whole query with "Multiple
         # prefix declarations for prefix 'ref'" (BUG-631, P1). Nothing announced that: the
@@ -2690,10 +2689,9 @@ Return ONLY the corrected SPARQL query."""
         return (
             _prefixes
             + f"""
-SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage WHERE {{
+SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage ?metricCls WHERE {{
   ?sensor rdfs:label ?label .
   {type_clause}
-  {label_clause}
   {floor_membership}
   ?floor a brick:Floor .
   BIND(REPLACE(STR(?floor), "^.*[Ff]loor", "") AS ?floorNum)

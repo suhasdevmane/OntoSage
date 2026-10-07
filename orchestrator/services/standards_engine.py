@@ -663,3 +663,97 @@ def get_standards_engine() -> "StandardsEngine":
     if _engine_instance is None:
         _engine_instance = StandardsEngine()
     return _engine_instance
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Newest-reading verdict (BUG-1428 / trial G6)
+# ─────────────────────────────────────────────────────────────────────────────
+
+#: Column-name keywords -> engine parameter key. NAMES only, no thresholds: the bounds
+#: live in the standards registry the engine reads, never in this table.
+_COLUMN_PARAMS: Tuple[Tuple[str, Tuple[str, ...]], ...] = (
+    ("temp_c", ("temperature", "temp")),
+    ("humidity_rh", ("humidity", "rh")),
+    ("co2_ppm", ("co2", "co₂", "carbon")),
+    ("pm25_ugm3", ("pm25", "pm2.5")),
+    ("pm10_ugm3", ("pm10",)),
+    ("tvoc_ppb", ("tvoc", "voc")),
+    ("illuminance_lux", ("illuminance", "light", "lux")),
+)
+
+#: Standards whose verdict on the newest reading is reported. A standard the engine's
+#: registry does not hold is skipped, not guessed.
+_VERDICT_STANDARDS: Tuple[str, ...] = ("ashrae55", "well_v2", "breeam", "en15251")
+
+
+def _row_time(row: Dict[str, Any]) -> Optional[str]:
+    """The row's timestamp-like cell as text, or None."""
+    for key, value in row.items():
+        if any(t in str(key).lower() for t in ("time", "date")) and value is not None:
+            return str(value)
+    return None
+
+
+def newest_reading_verdict(
+    rows: Any,
+    standards: Tuple[str, ...] = _VERDICT_STANDARDS,
+    engine: Optional[StandardsEngine] = None,
+) -> Optional[Dict[str, Any]]:
+    """Run the standards check on the NEWEST row only and report which standards it fails.
+
+    Returns None when there is no row or no checkable parameter. Otherwise::
+
+        {"at": "2026-10-02 11:45:13" | None,
+         "checked": ["WELL v2 ...", ...],
+         "failing": [{"standard": ..., "parameters": [labels]}],
+         "all_compliant": bool}
+
+    The same ``check()`` call that grounds a compliance answer produces this verdict, so a
+    sentence about the newest reading can be judged against the number it describes.
+    """
+    if not isinstance(rows, list) or not rows or not isinstance(rows[-1], dict):
+        return None
+    newest = rows[-1]
+    readings: Dict[str, float] = {}
+    for pkey, keywords in _COLUMN_PARAMS:
+        for col, val in newest.items():
+            if any(kw in str(col).lower() for kw in keywords):
+                try:
+                    readings[pkey] = float(val)
+                except (TypeError, ValueError):
+                    pass
+                break
+    if not readings:
+        return None
+
+    eng = engine or get_standards_engine()
+    checked: List[str] = []
+    failing: List[Dict[str, Any]] = []
+    for std_id in standards:
+        if eng.get_standard(std_id) is None:
+            continue
+        result = eng.check(std_id, readings)
+        if "error" in result or result.get("overall_status") == "no_data":
+            continue
+        checked.append(result["standard"])
+        # "borderline" is not compliance: a value just over a limit still fails the claim.
+        if result["overall_status"] != "compliant":
+            failing.append(
+                {
+                    "standard": result["standard"],
+                    "status": result["overall_status"],
+                    "parameters": [
+                        f"{c['label']} {c['status']}"
+                        for c in result["checks"]
+                        if c["status"] != "compliant"
+                    ],
+                }
+            )
+    if not checked:
+        return None
+    return {
+        "at": _row_time(newest),
+        "checked": checked,
+        "failing": failing,
+        "all_compliant": not failing,
+    }

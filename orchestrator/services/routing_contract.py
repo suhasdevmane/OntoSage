@@ -1455,6 +1455,49 @@ def register_owns_the_record(query: str) -> bool:
     )
 
 
+#: "Which doors do you have records for?" asks for the building's door-EVENT register: the access
+#: events (doors held open, forced, entries), which the TBox declares as AccessEvent (BUG-1429).
+#:
+#: It is NOT a bare "door". The schema records that bare "door"/"doors" asked about door HARDWARE in
+#: about two of seven reads (ontology/ontosage_schema.ttl, the DoorHardware layTerms comment), so
+#: the shape must ask for the RECORDS the doors have. "Fire doors" never matches: the shape needs
+#: "which doors" with nothing between, and fire-door questions belong to the fire-safety register.
+_DOOR_RECORD_ASK_RE = re.compile(
+    r"\bwhich\s+doors?\s+(?:do|does|did|have|has|are|is)\b[^?.!]{0,40}?\b(?:records?|logs?)\b"
+    r"|\bdo\s+you\s+(?:have|hold|keep)\b[^?.!]{0,20}?\bdoor\s+(?:records?|logs?)\b"
+    r"|\bwhat\s+door\s+(?:records?|logs?)\b[^?.!]{0,30}?\bdo\s+you\s+(?:have|hold|keep)\b",
+    re.IGNORECASE,
+)
+
+
+def door_records_question(query: str) -> bool:
+    """True for an interrogative asking what door records the building holds (BUG-1429).
+
+    Public because the register selector (`record_registry.rank_record_classes`) reads the same
+    definition: the rule below routes the question to the metadata lane, and the selector then
+    names the door-event register, so the two cannot disagree about which questions are these.
+    """
+    q = query or ""
+    if not (_INTERROGATIVE_RE.search(q) or q.rstrip().endswith("?")):
+        return False  # a statement ("I have door records to share") is not a question
+    return bool(_DOOR_RECORD_ASK_RE.search(q))
+
+
+def _r_door_records_are_a_register_question(c: _Ctx) -> Optional[str]:
+    """Door-record questions ("which doors do you have records for?") -> the register lane (BUG-1429).
+
+    The register lane then selects the door-event class (`record_registry`), which before this
+    rule had no vocabulary that the question's words reached: the metadata lane searched its
+    registers for "door", found nothing it could name, and answered with the nearest record it
+    could find (a refuge point). A fault statement or a control command keeps its own lane.
+    """
+    if c.intent not in _WEAK_INTENTS + ("events", "sensor_data", "analytics", "recommend"):
+        return None
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None
+    return "metadata" if door_records_question(c.query) else None
+
+
 def _r_register_owns_work_orders_and_timetable(c: _Ctx) -> Optional[str]:
     """Work-order and teaching-timetable questions → the register lane (`metadata`).
 
@@ -3715,6 +3758,13 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "vocabulary claims both, because each rule sets the intent and the last one wins "
         "(2026-09-19 probe regressions)",
         _r_register_owns_work_orders_and_timetable,
+    ),
+    Rule(
+        "door_records_are_a_register_question",
+        "'which doors do you have records for?' -> the register lane (metadata), which selects the "
+        "door-event class. Shape-gated on 'records'/'logs', never a bare 'door' (DoorHardware's "
+        "measured decision, ontosage_schema.ttl). BUG-1429",
+        _r_door_records_are_a_register_question,
     ),
     Rule(
         "compliance_without_a_measurable_check",

@@ -81,6 +81,7 @@ def sparql(
                     "uuid": {"value": u},
                     "storage": {"value": STORE},
                     "floorNum": {"value": f},
+                    "brick_class": "Occupancy_Sensor",
                     "label": {"value": f"Occupancy Count Sensor - Floor {f}"},
                 }
                 for u, f in (counters or {}).items()
@@ -128,7 +129,12 @@ async def ask(question, adapter, meta, sparql_exec, **kw):
 
 ROOMS = {f"sensor-room{f}-aaaa": (f"Room {f}.01 - Office", str(f)) for f in (0, 2, 3, 4, 5)}
 ROOM_META = {
-    u: {"label": f"{room} occupancy [persons]", "unit": "persons", "floor": floor}
+    u: {
+        "brick_class": "Occupancy_Sensor",
+        "label": f"{room} occupancy [persons]",
+        "unit": "persons",
+        "floor": floor,
+    }
     for u, (room, floor) in ROOMS.items()
 }  # floor 1 has no room sensors in the resolved set, exactly as the live run showed
 COUNTERS = {f"sensor-fl{f}-counter": str(f) for f in range(6)}
@@ -167,6 +173,7 @@ async def test_the_floor_figures_add_up_to_the_building_total_given_a_moment_ear
 async def test_without_floor_counters_a_room_is_counted_once_with_its_newest_reading():
     meta = {
         "sensor-a1-aaaa": {
+            "brick_class": "Occupancy_Sensor",
             "label": "Room 1.01 occupancy [persons]",
             "unit": "persons",
             "floor": "1",
@@ -177,6 +184,7 @@ async def test_without_floor_counters_a_room_is_counted_once_with_its_newest_rea
             "floor": "1",
         },
         "sensor-b1-aaaa": {
+            "brick_class": "Occupancy_Sensor",
             "label": "Room 1.02 occupancy [persons]",
             "unit": "persons",
             "floor": "1",
@@ -248,7 +256,11 @@ async def test_a_weeks_headcount_is_never_built_from_the_peaks_of_rooms():
 
 async def test_a_status_flag_is_not_added_up_as_people():
     meta = {
-        u: {**m, "label": m["label"].replace("occupancy [persons]", "occupancy_status")}
+        u: {
+            **m,
+            "brick_class": "Occupancy_Sensor",
+            "label": m["label"].replace("occupancy [persons]", "occupancy_status"),
+        }
         for u, m in ROOM_META.items()
     }
     adapter = FakeAdapter(latest_handler({u: 1 for u in meta}))
@@ -259,7 +271,15 @@ async def test_a_status_flag_is_not_added_up_as_people():
 
 
 async def test_a_temperature_question_that_names_floors_is_still_left_to_the_row_lane():
-    meta = {u: {"label": "Air Temperature 1.01", "unit": "°C", "floor": "1"} for u in ROOM_META}
+    meta = {
+        u: {
+            "brick_class": "Air_Temperature_Sensor",
+            "label": "Air Temperature 1.01",
+            "unit": "°C",
+            "floor": "1",
+        }
+        for u in ROOM_META
+    }
     adapter = FakeAdapter(latest_handler({}))
     assert (
         await ask("Which floor is the warmest right now?", adapter, meta, sparql(ROOMS, {})) is None
@@ -298,7 +318,14 @@ async def test_a_gas_answer_names_no_statistics_and_no_meter_claim_it_cannot_bac
 
 
 async def test_a_how_much_question_about_a_level_without_a_consumption_verb_is_left_alone():
-    meta = {"sensor-co2-aaaaa": {"label": "CO2 1.01", "unit": "ppm", "floor": "1"}}
+    meta = {
+        "sensor-co2-aaaaa": {
+            "brick_class": "CO2_Level_Sensor",
+            "label": "CO2 1.01",
+            "unit": "ppm",
+            "floor": "1",
+        }
+    }
     adapter = FakeAdapter(latest_handler({}))
     assert await ask("How much CO2 is on floor 1 this week?", adapter, meta, sparql()) is None
 
@@ -425,12 +452,14 @@ def _live_metadata():
             "label": LIVE_COUNT.format(f=f),
             "unit": "people",
             "floor": str(f),
+            "brick_class": "Occupancy_Sensor",
             "kind": "occupancy",
         }
         meta[f"sensor-sta{i:03d}-aaaa"] = {
             "label": LIVE_STATUS.format(f=f),
             "unit": "",
             "floor": str(f),
+            "brick_class": "Occupancy_Sensor",
             "kind": "occupancy",
         }
     return meta

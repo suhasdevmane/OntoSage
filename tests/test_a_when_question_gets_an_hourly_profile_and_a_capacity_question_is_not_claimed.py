@@ -77,6 +77,7 @@ def _uuids_in(sql: str) -> List[str]:
 
 META = {
     f"sensor-t{i:02d}-aaaa": {
+        "brick_class": "Air_Temperature_Sensor",
         "label": f"Air Temperature Sensor {i % 6}.0{i}",
         "unit": "°C",
         "floor": str(i % 6),
@@ -199,7 +200,12 @@ async def test_a_bare_plural_place_and_quantity_is_summarised():
     res = await ask(Q_ROOMS)
     assert res is not None and "Across the building" in res["formatted_response"]
     co2 = {
-        u: {**m, "label": m["label"].replace("Air Temperature", "CO2 Level"), "unit": "ppm"}
+        u: {
+            **m,
+            "brick_class": "CO2_Level_Sensor",
+            "label": m["label"].replace("Air Temperature", "CO2 Level"),
+            "unit": "ppm",
+        }
         for u, m in META.items()
     }
     res = await ask(Q_FLOORS, meta=co2)
@@ -268,7 +274,12 @@ async def test_a_headcount_profile_is_never_built_from_room_counters():
     only from the floor counters; with none to be found the lane says nothing rather than
     average rooms."""
     meta = {
-        u: {"label": f"Room {i}.01 occupancy [persons]", "unit": "people", "floor": str(i % 6)}
+        u: {
+            "brick_class": "Occupancy_Sensor",
+            "label": f"Room {i}.01 occupancy [persons]",
+            "unit": "people",
+            "floor": str(i % 6),
+        }
         for i, u in enumerate(META)
     }
 
@@ -325,7 +336,12 @@ def test_a_genuine_readings_question_is_still_a_readings_question(question):
 @pytest.mark.parametrize("question", [Q_WAIT, Q_CAPACITY])
 async def test_the_lane_declines_to_claim_them(question):
     meta = {
-        u: {"label": f"Room {i}.01 occupancy [persons]", "unit": "people", "floor": str(i % 6)}
+        u: {
+            "brick_class": "Occupancy_Sensor",
+            "label": f"Room {i}.01 occupancy [persons]",
+            "unit": "people",
+            "floor": str(i % 6),
+        }
         for i, u in enumerate(META)
     }
     assert await ask(question, meta=meta) is None

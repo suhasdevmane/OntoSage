@@ -441,7 +441,7 @@ def test_the_wording_lives_in_one_place_so_the_two_appenders_cannot_diverge():
         "actual_latest": "2026-09-29 16:48:30",
     }
     note = truncation_note(marker)
-    assert "full 1000 rows" in note
+    assert "reached its row limit of 1000 rows" in note
     assert "SAMPLE" in note and "not a count of what the period holds" in note
     assert "2026-09-18 09:00:00 to 2026-09-29 16:48:30" in note
     assert "newest part of the last 30 days" in note

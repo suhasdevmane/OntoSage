@@ -67,12 +67,18 @@ COUNTERS = {f"sensor-fl{f}-counter": str(f) for f in range(6)}
 ROOMS = {f"sensor-rm{i:02d}-aaaa": str(i % 6) for i in range(12)}
 META = {
     **{
-        u: {"label": f"Room {f}.0{i} occupancy [persons]", "unit": "people", "floor": f}
+        u: {
+            "brick_class": "Occupancy_Sensor",
+            "label": f"Room {f}.0{i} occupancy [persons]",
+            "unit": "people",
+            "floor": f,
+        }
         for i, (u, f) in enumerate(ROOMS.items())
     },
     # 243 of the 499 series in the real store are 0/1 status flags, bound together with the counts
     **{
         f"sensor-st{i:02d}-aaaa": {
+            "brick_class": "Occupancy_Sensor",
             "label": f"Room {i % 6}.9{i} occupancy_status",
             "unit": "",
             "floor": str(i % 6),
@@ -114,6 +120,7 @@ async def sparql_exec(query: str) -> Dict[str, Any]:
                         "uuid": {"value": u},
                         "storage": {"value": STORE},
                         "floorNum": {"value": f},
+                        "brick_class": "Occupancy_Sensor",
                         "label": {"value": f"Occupancy Count Sensor - Floor {f}"},
                     }
                     for u, f in COUNTERS.items()
@@ -293,7 +300,12 @@ def test_the_sensors_quantity_must_be_one_the_question_is_about(question, measur
 
 async def test_a_busy_question_is_never_answered_with_a_temperature_summary():
     temp = {
-        u: {"label": f"Air Temperature Sensor {i}.01", "unit": "°C", "floor": str(i % 6)}
+        u: {
+            "brick_class": "Air_Temperature_Sensor",
+            "label": f"Air Temperature Sensor {i}.01",
+            "unit": "°C",
+            "floor": str(i % 6),
+        }
         for i, u in enumerate(ROOMS)
     }
     assert await ask("Is the building busy right now?", meta=temp) is None

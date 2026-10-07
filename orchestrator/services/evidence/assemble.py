@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import re as _re
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 from shared.models import (
     AnswerStatus,
@@ -388,6 +388,24 @@ def _as_observation_time(value: Any) -> Optional[datetime]:
     if isinstance(value, str) and ("+" in value[10:] or value.strip().endswith("Z")):
         return dt
     return dt.replace(tzinfo=timezone.utc)
+
+
+def _gap_sentence(longest: Tuple[float, str, Any], meta: Dict[str, Any]) -> str:
+    """The longest measured silence, in words a reader can check (BUG-1444).
+
+    Names the stream by its label when the lane supplied one and never by its UUID; states the
+    window the silence sits in and the threshold it exceeded, so the claim can be re-derived.
+    """
+    from orchestrator.services.evidence.completeness import GAP_TOLERANCE
+
+    minutes, _uid, gap = longest
+    label = str((meta or {}).get("label") or "one stream").strip()
+    span = f"{minutes / 60:.0f} hours" if minutes >= 120 else f"{minutes:.0f} minutes"
+    return (
+        f"the longest silence in {label}'s readings is {span}, from "
+        f"{gap.start:%Y-%m-%d %H:%M} to {gap.end:%Y-%m-%d %H:%M}, longer than "
+        f"{GAP_TOLERANCE:.0f} intervals at its declared cadence"
+    )
 
 
 def _rows_of(payload: Any) -> List[Dict[str, Any]]:
@@ -1059,13 +1077,28 @@ def _available_gates(
                     for uid in named:
                         stamps_by_uuid.setdefault(uid, []).append(stamp)
             judged, unassessable = [], 0
+            # BUG-1444: the SHARE of expected samples is not the completeness claim. A stream
+            # can clear the floor with a 42-hour silence inside it, so the longest measured gap
+            # is kept as well, and it is what the answer is allowed to say was complete.
+            longest_gap = None  # (minutes, uuid, Gap)
             for uid, stamps in stamps_by_uuid.items():
                 cad = cadences.get(uid)
                 if not cad:
                     unassessable += 1
                     continue
-                judged.append(assess(stamps, w_start, w_end, cad).coverage)
+                report = assess(stamps, w_start, w_end, cad)
+                judged.append(report.coverage)
+                for gap in report.gaps:
+                    if longest_gap is None or gap.minutes > longest_gap[0]:
+                        longest_gap = (gap.minutes, uid, gap)
             worst = min((c for c in judged if c is not None), default=None)
+            gap_note = ""
+            if longest_gap is not None:
+                gap_note = _gap_sentence(
+                    longest_gap,
+                    (results.get("sensor_metadata") or {}).get(longest_gap[1]) or {},
+                )
+            rec.completeness_gap = gap_note
             if judged or unassessable:
                 if worst is not None:
                     rec.completeness = round(worst, 3)
@@ -1081,6 +1114,7 @@ def _available_gates(
                         worst,
                         consequence_class="informational",
                         detail=detail,
+                        gap_detail=gap_note,
                     )
                 )
     except Exception as exc:
