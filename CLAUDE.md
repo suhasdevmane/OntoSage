@@ -1626,7 +1626,12 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
       `input/`→`bldg<N>/`, `.env`→`.env<N>`, `docker-compose.yml`→`docker-compose.bldg<N>.yml`.
    3. Verify: `ls -d input .env docker-compose.yml` all absent; all three parked sets present.
    4. Run `pytest -m unit -q` **in the parked state** (it must pass there — that is what a
-      fresh clone and CI see), then commit + push.
+      fresh clone and CI see) **AND `python scripts/run_ci_unit_tests.py`** (exactly the file
+      list GitHub Actions runs, read from `ci.yml`), then commit + push. **Both, not either:**
+      1,296 tests are not marked `unit`, CI's hand-listed files are not a subset of the marked
+      ones, and on 2026-10-08 three CI tests turned out to have been failing for weeks (one
+      since the 2026-08-20 validator change) while this step stayed green. Check CI's result
+      after a push to `main` too (`api.github.com/repos/suhasdevmane/OntoSage/actions/runs`).
    5. Tell the user which building was parked, so they can say *"run bldg\<N\>"* to resume.
    Rationale: the committed tree is then identical no matter who was testing what, a fresh
    clone has all three buildings intact and none half-active, and no `.env` (secrets) can

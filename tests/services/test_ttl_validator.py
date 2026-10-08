@@ -362,14 +362,37 @@ def test_non_ontology_subdirs_excluded(staged):
     assert report.ttl_files_checked == 1
 
 
-def test_real_nested_ontology_still_validated(staged):
-    """A genuine bad ontology TTL in a NON-scaffolding nested dir must still
-    hard-fail (we only skip scaffolding, not all subdirectories)."""
+def test_a_subdirectory_ttl_is_not_validated_because_the_uploader_never_loads_it(staged):
+    """The boot gate is NON-RECURSIVE on purpose (2026-08-20): it gates exactly what
+    ttl_uploader.discover_building_ttls() admits, and the uploader globs "*.ttl" in the building
+    directory without descending. A TTL in a SUBDIRECTORY -- even a non-scaffolding one such as
+    ontology/ -- is never loaded into GraphDB, so it cannot corrupt anything, yet validating it
+    let an unrelated downloaded sample put the orchestrator into a restart loop.
+
+    This test used to assert the opposite (a bad nested ontology/ TTL must hard-fail), the
+    behaviour that was deliberately removed; it went red then and stayed red in CI.
+    """
     tmp_path, bldg = staged
     (bldg / "good.ttl").write_text(GOOD_TTL, encoding="utf-8")
     nested = bldg / "ontology"
     nested.mkdir()
     (nested / "bad.ttl").write_text(MISMATCH_TTL, encoding="utf-8")
+
+    report = validate_building_ttls(
+        building_id="bldg_test",
+        declared_namespace="http://example.com/test-building#",
+        building_prefix="bldg",
+        input_root=tmp_path / "input",
+    )
+    assert report.ok, f"a subdirectory TTL must not gate startup; got {report.hard_failures}"
+    assert report.ttl_files_checked == 1
+
+
+def test_a_bad_top_level_ttl_still_hard_fails_beside_a_good_one(staged):
+    """The other half of the contract: what the uploader DOES load is still gated."""
+    tmp_path, bldg = staged
+    (bldg / "good.ttl").write_text(GOOD_TTL, encoding="utf-8")
+    (bldg / "bad.ttl").write_text(MISMATCH_TTL, encoding="utf-8")
 
     report = validate_building_ttls(
         building_id="bldg_test",

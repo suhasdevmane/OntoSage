@@ -205,9 +205,15 @@ class TestFallbackFilename:
         import orchestrator.workflow as wf_module
 
         src = inspect.getsource(wf_module.WorkflowOrchestrator._analytics_node)
-        # The except block must use uuid4, not the bare 'current_data.json' sentinel
-        except_block_start = src.find("except Exception")
-        assert except_block_start != -1, "No except block found in _analytics_node"
+        # The except block must use uuid4, not the bare 'current_data.json' sentinel.
+        # Anchored on the block's own log line: this used to take the FIRST "except Exception"
+        # in the function, which moved up when the named-day window check (_nd_err) was added
+        # above it -- the slice then started before the unique-filename code and swept in the
+        # default value that code overwrites on every path.
+        except_block_start = src.find("Failed to save analytics data locally")
+        assert (
+            except_block_start != -1
+        ), "A.7 save-failure except block not found in _analytics_node"
         except_block = src[except_block_start:]
         assert (
             "current_data.json" not in except_block

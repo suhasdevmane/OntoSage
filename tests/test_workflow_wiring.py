@@ -77,9 +77,14 @@ def test_registry_standalone_intents_route_to_registered_nodes():
     """Every standalone intent in the registry must resolve to a node that
     _route_from_dialogue would accept (the Phase 10G safety-net set)."""
     from orchestrator.intents import get_intent_registry
+    from orchestrator.workflow import WorkflowOrchestrator
 
     reg = get_intent_registry(None)
-    src = _orchestrator_source()
+    # Behavioural, like the rest of this file: ask the graph the orchestrator really builds.
+    # This used to demand the literal string "<target>" in _orchestrator.py, which a lane that
+    # is auto-registered from the YAML and routed by the routing contract (comfort_history,
+    # session_recall, ...) never needs to contain -- the lane worked and the test went red.
+    graph_nodes = set(WorkflowOrchestrator.__new__(WorkflowOrchestrator)._build_graph().nodes)
     wired = 0
     for name in reg.names():
         d = reg.get(name)
@@ -92,10 +97,14 @@ def test_registry_standalone_intents_route_to_registered_nodes():
         # "response" — only intents that DECLARE a handler must be wired.
         if getattr(d, "node_method", None):
             wired += 1
-            assert f'"{target}"' in src, (
+            assert hasattr(WorkflowOrchestrator, d.node_method), (
+                f"standalone intent {name} declares node_method {d.node_method!r}, "
+                "which WorkflowOrchestrator does not define"
+            )
+            assert target in graph_nodes, (
                 f"standalone intent {name} declares node_method "
-                f"{d.node_method!r} but its target {target!r} does not appear "
-                "in _orchestrator.py — likely an unregistered node"
+                f"{d.node_method!r} but its target {target!r} is not a node in the "
+                f"compiled graph ({sorted(graph_nodes)}) -- an unregistered node"
             )
     # The inner check is the one that matters, and a registry that stopped declaring
     # node_method anywhere would skip it entirely while the test stayed green.
