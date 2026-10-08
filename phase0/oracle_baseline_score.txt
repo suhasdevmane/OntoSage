@@ -1,0 +1,203 @@
+REGISTER ORACLE  scored 100 answers (oracle questions not asked: 0, run rows not in the oracle: 0)
+WARNING: these register files changed after the oracle was generated, so their rows may score wrongly (regenerate and re-ask): public_event_register, sustainability_targets
+PASS 71/100 = 71.0%  (95% CI 61.5-79.0%);  of answers that arrived: 71.0%
+DEFECT CLASSES (share of scored answers; one answer can carry several)
+  FALSE_ABSENCE          11   11.0%
+  DECLINED                4    4.0%
+  WRONG_COUNT             2    2.0%
+  MISSING_VALUES         24   24.0%
+  INVENTED_IDS            0    0.0%
+  EXTRA_IDS(warning)     21   21.0%
+BY REGISTER
+                                        n  pass  pass% falseabs declined invented
+  access_permission_register            3     2    67%        0        0        0
+  accessible_route_register             2     2   100%        0        0        0
+  approval_evidence_register            3     2    67%        0        0        0
+  asset_engineering_register            3     2    67%        0        0        0
+  av_readiness_register                 3     3   100%        0        0        0
+  circulation_times                     3     3   100%        0        0        0
+  cleaning_task_register                3     2    67%        1        0        0
+  condition_survey                      3     3   100%        0        0        0
+  continuity_provision_register         3     0     0%        2        1        0
+  contract_register                     3     3   100%        0        0        0
+  coordination_function_register        3     3   100%        0        0        0
+  coshh_and_lev                         3     1    33%        1        0        0
+  cost_line_register                    3     1    33%        2        0        0
+  department_directory                  3     2    67%        0        1        0
+  door_hardware_register                3     0     0%        0        1        0
+  evacuation_and_peeps                  3     3   100%        0        0        0
+  event_activity_register               2     2   100%        0        0        0
+  fire_safety                           3     2    67%        0        0        0
+  handover_register                     3     3   100%        0        0        0
+  hvac_operation                        3     2    67%        0        0        0
+  incident_and_near_miss_log            3     2    67%        0        0        0
+  maintenance_log                       3     3   100%        0        0        0
+  patrol_checkpoint_register            3     2    67%        1        0        0
+  permit_to_work_register               3     3   100%        0        0        0
+  public_event_register                 3     2    67%        0        0        0
+  risk_assessment_register              3     1    33%        1        0        0
+  room_bookings                         3     2    67%        1        0        0
+  service_schedules                     3     3   100%        0        0        0
+  stakeholder_group_register            3     3   100%        0        0        0
+  sustainability_targets                3     3   100%        0        0        0
+  timetabled_sessions                   3     1    33%        1        1        0
+  warranty_register                     3     2    67%        0        0        0
+  waste_collection_register             3     1    33%        1        0        0
+  workspace_profile_register            3     2    67%        0        0        0
+BY TEMPLATE
+                                        n  pass  pass% falseabs declined invented
+  any_exists                            8     8   100%        0        0        0
+  blank_field                           5     4    80%        1        0        0
+  count_facet                           8     7    88%        1        0        0
+  count_facet_status                    8     5    62%        1        1        0
+  count_status                          7     7   100%        0        0        0
+  count_total                           8     8   100%        0        0        0
+  field_of_record                       8     4    50%        0        1        0
+  list_facet_status                     8     8   100%        0        0        0
+  list_status                           6     6   100%        0        0        0
+  owner_facet                           8     1    12%        5        1        0
+  owner_record                          7     1    14%        2        0        0
+  when_last_done                        7     5    71%        0        1        0
+  when_next_due                         6     2    33%        0        0        0
+  when_review                           6     5    83%        1        0        0
+BY PERSONA
+                                        n  pass  pass% falseabs declined invented
+  auditor                              19    12    63%        2        1        0
+  executive                            20    11    55%        4        2        0
+  facility_manager                     21    17    81%        3        1        0
+  occupant                             19    14    74%        2        0        0
+  student                              21    17    81%        0        0        0
+FAILING QUESTIONS (29)
+  RO-0002 risk_assessment_register/field_of_record  MISSING_VALUES
+      Q: Briefly: When is the Laboratory chemicals - COSHH due for review?
+      missing_values: ['2027-06-02']
+      A: The register records two laboratory‑based COSHH chemical stores that are due for review:  | Record | Location | Next review date | |--------|----------|--------
+  RO-0005 public_event_register/owner_record  MISSING_VALUES
+      Q: Who is the recorded owner of EVT-2026-0042?
+      missing_values: ['Events and Communications Coordinator']
+      A: **Abacws Building** — owner: **Cardiff University**.
+  RO-0011 continuity_provision_register/owner_facet  FALSE_ABSENCE,DECLINED,MISSING_VALUES
+      Q: Who is the recorded owner of the continuity provisions with criticality high?
+      missing_values: ['Head of IT Infrastructure', 'M and E Maintenance Supervisor', 'Head of Security', 'Building Fire Warden Coordinator', 'Estates Operations Manager']
+      absence claim: The register does not record an owner for any of the continuity provisions.
+      absence claim: It only records the owner of the register itself (the entity that maintains the register).
+      A: The register does **not** record an owner for any of the continuity provisions.   It only records the owner of the register itself (the entity that maintains th
+  RO-0018 door_hardware_register/owner_facet  MISSING_VALUES
+      Q: Which role owns the door hardware items of kind escape door?
+      missing_values: ['Head of Security', 'Estates Operations Manager', 'Building Fire Warden Coordinator']
+      A: The building’s records do **not** contain any information about a “role” that owns the escape‑door hardware.   What the register does record for the escape‑door
+  RO-0021 workspace_profile_register/field_of_record  MISSING_VALUES
+      Q: Briefly: What is the name of WS-28?
+      missing_values: ['Meeting room 5.18']
+      A: This building is **Abacws Building**.
+  RO-0024 cleaning_task_register/owner_record  FALSE_ABSENCE,MISSING_VALUES
+      Q: Who owns CLN-0010?
+      missing_values: ['Caretaking Supervisor']
+      absence claim: The register does not record ownership of CLN-0010.
+      A: The register does not record ownership of CLN‑0010.  --- **You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full regist
+  RO-0029 warranty_register/field_of_record  MISSING_VALUES
+      Q: For my notes: What is the asset of WTY-BMS-2024?
+      missing_values: ['BMS head end and field controllers']
+      A: Here is what **Abacws Building** has, counted live from its building model:  - **Equipment** — 147 - **Meter** — 39 - **HVAC Equipment** — 29 - **Electrical Met
+  RO-0034 fire_safety/when_next_due  MISSING_VALUES
+      Q: For the audit record: When is FSA-020 next due for testing?
+      missing_values: ['2026-10-08']
+      A: The register does not contain a record named **FSA‑020**. It records 25 service‑schedule entries, including records **SVC‑01** through **SVC‑17** with various r
+  RO-0038 waste_collection_register/owner_record  MISSING_VALUES
+      Q: Who is in charge of the Level 5 general waste?
+      missing_values: ['Soft Services Manager']
+      A: **In Room 5.01 — Research Laboratory I can measure:** air quality, co2, door contact, humidity, illuminance, lighting cct, noise, occupancy, occupancy status, p
+  RO-0039 access_permission_register/owner_facet  MISSING_VALUES
+      Q: Which role owns the access permissions with time profile ESCORTED?
+      missing_values: ['Estates Duty Manager', 'Laboratory Manager']
+      A: The building’s records show that **three** access‑permission groups use the time profile “ESCORTED.”   The roles that own those permissions are:  - **External c
+  RO-0040 coshh_and_lev/when_next_due  MISSING_VALUES
+      Q: For the audit record: When is HZ-012 next due for testing?
+      missing_values: ['2027-05-06']
+      A: The register does not record an audit record named **HZ‑012**. It contains 25 service‑schedule entries, with recorded states of active, overdue, due, and no sta
+  RO-0041 hvac_operation/owner_record  MISSING_VALUES
+      Q: Who is the recorded owner of REG-001?
+      missing_values: ['BMS-HVAC operators']
+      A: **Abacws Building** — owner: **Cardiff University**.
+  RO-0045 asset_engineering_register/when_last_done  MISSING_VALUES
+      Q: Could you tell me: when was AEP-010 last visited?
+      missing_values: ['2026-04-01']
+      A: I haven't created an alert yet. I need what to measure (for example CO2, temperature or humidity) and the value that should trigger it (for example 'above 1000'
+  RO-0051 timetabled_sessions/count_facet_status  DECLINED,WRONG_COUNT
+      Q: How many timetabled sessions on floor 1 are scheduled?
+      expected count 16
+      missing_ids: ['TS-0510', 'TS-0519', 'TS-0553', 'TS-0559', 'TS-0563', 'TS-0582', 'TS-0585', 'TS-0592', 'TS-0598', 'TS-0608', 'TS-0639', 'TS-0644', 'TS-0647', 'TS-0663', 'TS-0666', 'TS-0672']
+      A: I understood the question but could not put an answer together for it.  - I read it as a question about **what the building records**.  What Abacws Building doe
+  RO-0055 risk_assessment_register/when_review  FALSE_ABSENCE,MISSING_VALUES
+      Q: Briefly: When is the Electrical safety - HV switchroom due for review?
+      missing_values: ['2026-10-05']
+      absence claim: I'm sorry, but the building's records do not contain a review date for the Electrical safety - HV switchroom.
+      absence claim: the building's data only lists how many sensors are installed in each space
+      A: I'm sorry, but the building's records do not contain a review date for the **Electrical safety - HV switchroom**.   the building's data only lists how many sens
+  RO-0059 room_bookings/count_facet_status  FALSE_ABSENCE
+      Q: For the audit record, how many bookings in Room 5.15 - Seminar / Conference Room are confirmed?
+      absence claim: * The Public event register does not record room-booking information, so it does not contribute to this count.
+      A: There are **3 confirmed bookings** for **Room 5.15 — Seminar / Conference Room** in the audit record.  **Confirmed bookings in that room**  | Record ID | Booked
+  RO-0060 door_hardware_register/when_next_due  MISSING_VALUES
+      Q: For my notes: When is the Level 3 lab corridor fire door next due?
+      missing_values: ['2027-04-02']
+      A: **In Room 3.01 — Research Laboratory I can measure:** air quality, co2, door contact, humidity, illuminance, lighting cct, noise, occupancy, occupancy status, p
+  RO-0065 continuity_provision_register/blank_field  FALSE_ABSENCE
+      Q: Could you tell me: which continuity provisions have no alternative capacity recorded?
+      extra_ids: ['CP-001', 'CP-002', 'CP-004', 'CP-005', 'CP-007', 'CP-008', 'CP-009', 'CP-010']
+      absence claim: Four of them have no alternative capacity recorded - the alternativeCapacity field is empty for these records:
+      A: The building holds 12 continuity provisions.   **Four of them have no alternative capacity recorded** – the `alternativeCapacity` field is empty for these recor
+  RO-0068 cost_line_register/owner_record  FALSE_ABSENCE,MISSING_VALUES
+      Q: Who is accountable for CL-2026-012?
+      missing_values: ['Caretaking Supervisor']
+      absence claim: The register does not record an accountable role for CL-2026-012.
+      A: The register does not record an accountable role for CL‑2026‑012.  **Also recorded in this register:** *accountable* — recorded as accountable role.  --- **You 
+  RO-0072 patrol_checkpoint_register/owner_facet  FALSE_ABSENCE,MISSING_VALUES
+      Q: Who is accountable for the patrol checkpoints with circuit C2-PUBLIC?
+      missing_values: ['Head of Security']
+      absence claim: Therefore, the records do not specify an accountable person or role for the C2-PUBLIC patrol checkpoints.
+      A: The patrol checkpoints that belong to the **C2‑PUBLIC** circuit are:  - **CHK‑201** – Main reception desk   - **CHK‑202** – Level 1 atrium   - **CHK‑203** – Lev
+  RO-0073 timetabled_sessions/count_facet  FALSE_ABSENCE
+      Q: How many timetabled sessions with weekday Friday are there in total?
+      absence claim: It does not keep a separate count of which of those sessions fall on a Friday, so I can't give you a Friday-specific number.
+      A: I’m sorry, but the building model only records that there are **125** timetabled sessions in total. It does not keep a separate count of which of those sessions
+  RO-0077 incident_and_near_miss_log/owner_record  MISSING_VALUES
+      Q: Who is the recorded owner of INC-2026-011?
+      missing_values: ['Security Duty Manager']
+      A: **Abacws Building** — owner: **Cardiff University**.
+  RO-0082 continuity_provision_register/when_next_due  MISSING_VALUES
+      Q: Could you tell me: when is CP-007 next due?
+      missing_values: ['2027-02-12']
+      A: The register does not record a service or schedule named **CP‑007**. It records 25 service‑schedule entries, including 12 active, 8 with no status, 3 overdue, a
+  RO-0084 cost_line_register/owner_facet  FALSE_ABSENCE,MISSING_VALUES
+      Q: Who is accountable for the cost lines with cost centre ABW-MECH?
+      missing_values: ['Estates Duty Manager']
+      absence claim: The building's records do not specify an accountable person for the cost lines that belong to the ABW-MECH cost centre.
+      absence claim: - The Approval and evidence record register does include an "accountableRole" field, but it is not linked to cost lines and does not list any record with the ABW-MECH cost centre.
+      A: The building’s records do not specify an accountable person for the cost lines that belong to the **ABW‑MECH** cost centre.  - In the **Building cost line** reg
+  RO-0087 department_directory/field_of_record  DECLINED,MISSING_VALUES
+      Q: Briefly: What are the responds within hours for DEP-01?
+      missing_values: ['24']
+      A: **Abacws Building's documents do not answer this.** I searched Stakeholder Group Register; they are the closest material and none of them contains the answer. T
+  RO-0093 coshh_and_lev/owner_facet  FALSE_ABSENCE,MISSING_VALUES
+      Q: Who owns the hazard controls of kind COSHH substance?
+      missing_values: ['Lab manager', 'Caretaking Supervisor']
+      absence claim: The building's records do not contain any information about who owns the hazard controls.
+      absence claim: These are the only records that have the hazard kind "COSHH substance." The register does not record an owner for any of them.
+      A: The building’s records do **not** contain any information about who owns the hazard controls.   They do, however, list the three COSHH‑substance controls that a
+  RO-0094 approval_evidence_register/count_facet_status  WRONG_COUNT
+      Q: Give me the headline number: how many approvals with authority Cardiff University Estates are current?
+      expected count 18
+      missing_ids: ['APR-001', 'APR-002', 'APR-003', 'APR-009', 'APR-010', 'APR-012', 'APR-013', 'APR-014', 'APR-015']
+      extra_ids: ['APR-021', 'APR-022']
+      A: There are **11 approvals** that are both current and held by Cardiff University Estates.  **Current approvals with Cardiff University Estates authority**  - APR
+  RO-0099 door_hardware_register/when_last_done  DECLINED,MISSING_VALUES
+      Q: Briefly: When was the North stairwell ground door last tested?
+      missing_values: ['2026-08-12']
+      A: **Abacws Building's documents do not answer this.** I searched Incident And Near Miss Log; they are the closest material and none of them contains the answer. T
+  RO-0105 waste_collection_register/owner_facet  FALSE_ABSENCE,MISSING_VALUES
+      Q: Who is in charge of the waste collection points with stream label Laboratory glass?
+      missing_values: ['Laboratory Manager']
+      absence claim: The register does not record who is in charge of the waste collection points with stream label Laboratory glass.
+      A: The register does not record who is in charge of the waste collection points with stream label **Laboratory glass**.    It does record that there are two such p
+[written] C:/Users/suhas/AppData/Local/Temp/claude/c--Users-suhas-Documents-GitHub-OntoSage/78aeec3e-27f5-4333-8e9d-b698f47f3de2/scratchpad/oracle_base_score.json

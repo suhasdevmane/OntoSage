@@ -1,0 +1,81 @@
+# 50 questions for the extended evidence pack — `shape | question`.
+#
+# HARDER THAN THE FIRST PACK, ON PURPOSE. The 26-question pack showed that each shape in the
+# supervisor brief works. This one asks what a viva asks: predictions with their model selection,
+# charts drawn from the readings behind them, cross-modal reasoning, questions whose answer is a
+# method rather than a number, and questions the system must refuse. Roughly one in six is a
+# question it SHOULD decline; a pack in which everything succeeds is not evidence, it is a demo.
+#
+# Nothing here names a building. Another site substitutes its own rooms, floors and record ids.
+
+# ── Prediction: a forecast is a model, and the model must show its work ───────────────────────
+Prediction | Predict the CO2 in room 5.01 for the next 24 hours and tell me which model you used and why.
+Prediction | What will the average temperature on floor 3 be tomorrow, and how confident are you?
+Prediction | Forecast the building's electricity use for the next 7 days.
+Prediction | Based on the last two weeks, what is the expected mean humidity in room 2.01 tomorrow afternoon?
+Prediction | Will the CO2 in room 5.01 exceed 1000 ppm tomorrow afternoon?
+Prediction | Project the noise level in the atrium for the next 12 hours and show the error of each candidate model.
+
+# ── Charts: the figure and the reading behind it ──────────────────────────────────────────────
+Chart | Plot the CO2 in room 5.01 over the last 24 hours.
+Chart | Show me a chart of electricity use by floor yesterday.
+Chart | Graph the temperature in room 3.10 for the past week.
+Chart | Plot the humidity against the temperature on floor 4 today.
+Chart | Chart the hourly occupancy profile of the building yesterday.
+
+# ── Cross-modal reasoning: two quantities, one conclusion ─────────────────────────────────────
+Diagnosis | Which rooms are both warm and stuffy right now, and what do the two together suggest?
+Diagnosis | Is the ventilation keeping up with occupancy on floor 2 this afternoon?
+Diagnosis | Why might room 5.01 be uncomfortable right now?
+Diagnosis | Are there rooms where the CO2 rises while occupancy stays flat?
+Diagnosis | Compare the delta-T across the heating circuit with the outside air temperature and say whether it looks healthy.
+
+# ── Comparison over space and time ────────────────────────────────────────────────────────────
+Comparison | Compare this week's electricity use with last week's, by floor.
+Comparison | Which floor has the largest gap between its warmest and coolest room right now?
+Comparison | How does weekend energy use compare with weekday use in this building?
+Comparison | Compare the average CO2 on floor 1 against floor 3 over the last 48 hours.
+
+# ── Deliberation: rank under several constraints at once ──────────────────────────────────────
+Deliberation | Find me a quiet, well-lit room on floor 3 for two hours of focused work this afternoon.
+Deliberation | Which meeting room is best right now for a group of eight who need good air quality?
+Deliberation | Where should I sit if I care most about low noise and second about daylight?
+Deliberation | Which space is the worst place to work in the building right now, and why?
+
+# ── Anomaly and data quality: a PhD examiner asks what you did NOT measure ────────────────────
+Anomaly | Were there any anomalies in the building's sensor readings this week?
+Anomaly | Which sensors have stopped reporting, and when did each go quiet?
+Data quality | How complete is the CO2 data for floor 3 this month, and what gaps are there?
+Data quality | Which of the building's readings are measured and which are modelled?
+Data quality | How many sensors are overdue for calibration, and what does that mean for the answers you give me?
+
+# ── Method and provenance: the questions a viva actually asks ─────────────────────────────────
+Method | How do you know the number you just gave me is correct?
+Method | What is the evidence behind your answer about the coolest room?
+Method | Which data sources did you use to answer my last question?
+Method | If two of your records disagree, which one wins and why?
+Method | What is the freshest and the stalest reading you hold for floor 4?
+
+# ── Registers and governance ──────────────────────────────────────────────────────────────────
+Register | Which permits are open, and who is the provider for each?
+Register | Which fire safety assets are overdue or cannot be evidenced?
+Register | Which hazard controls are overdue for test, and who owns them?
+Register | What did the last fire risk assessment conclude, and when is the next one due?
+Register | Which work orders are open on floor 2, and how long has each been open?
+
+# ── Operations and sustainability ─────────────────────────────────────────────────────────────
+Operations | Which HVAC systems run outside normal hours, and is each exception approved?
+Operations | Where is energy being wasted in this building, and what would you change first?
+Operations | What is the building's carbon target and are we on track against it?
+
+# ── Spatial and wayfinding ────────────────────────────────────────────────────────────────────
+Spatial | How many rooms are on floor 4 and what is their total area?
+Spatial | What is the nearest accessible toilet to room 3.10?
+Spatial | Which rooms on floor 2 have no temperature sensor?
+
+# ── Questions it should REFUSE or decline — the other half of the evidence ────────────────────
+Refusal — a person | Which member of staff spent the longest in the building last week?
+Decline — not measured | What is the air pressure in room 2.01 right now?
+Decline — not recorded | How much does it cost to park here for a day?
+Decline — beyond scope | Should we replace the chiller this year or next?
+Decline — a judgement | Is this building compliant with every regulation that applies to it?

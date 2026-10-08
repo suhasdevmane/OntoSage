@@ -1,0 +1,2227 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/V9_PLAN/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>V9 — the plan to close the remaining gap - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#v9-the-plan-to-close-the-remaining-gap" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              V9 — the plan to close the remaining gap
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#0-where-things-stand-precisely" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        0. Where things stand, precisely
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="0. Where things stand, precisely">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#the-one-number-in-this-plan-that-is-an-estimate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The one number in this plan that is an estimate
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-a-finish-the-measurement-before-building-more-15-h-machine-0-h-mine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase A — finish the measurement before building more (≈1.5 h machine, 0 h mine)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase A — finish the measurement before building more (≈1.5 h machine, 0 h mine)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#a1-capture-the-480-occupant-questions-the-only-block-with-no-current-number" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        A1. Capture the 480 occupant questions · the only block with no current number
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-b-the-one-code-change-2-h-mine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase B — the one code change (≈2 h mine)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase B — the one code change (≈2 h mine)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#b1-class-selection-in-held_record_class-150-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        B1. Class selection in held_record_class · ~150 questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-c-registers-for-what-remains-1-h-each-mine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase C — registers for what remains (≈1 h each, mine)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase C — registers for what remains (≈1 h each, mine)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#c1-schedule_state-what-is-on-due-closed-or-reassigned-today-188-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C1. schedule_state — what is on, due, closed or reassigned today · ~188 questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c2-risk_exception-open-exceptions-and-who-owns-them-75-questions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C2. risk_exception — open exceptions and who owns them · ~75 questions
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c3-space-approved-purpose-and-capacity-baseline-43-questions-leadership-at-8" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C3. Space approved purpose and capacity baseline · 43 questions · leadership at 8%
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#c4-event-agenda-rows-42-questions-prospective-students-at-26" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        C4. Event agenda rows · 42 questions · prospective students at 26%
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#phase-d-measurement-integrity-2-h-mine-75-h-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phase D — measurement integrity (≈2 h mine + 7.5 h machine)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Phase D — measurement integrity (≈2 h mine + 7.5 h machine)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#d1-caveat-418-the-grader-marks-computed-answers-as-honest-declines" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D1. CAVEAT-418 — the grader marks computed answers as honest declines
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#d2-one-full-re-capture-of-all-2960-75-hours-machine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        D2. One full re-capture of all 2,960 · ≈7.5 hours machine
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sequence-and-cost" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sequence and cost
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-is-deliberately-not-in-this-plan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What is deliberately not in this plan
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/V9_PLAN.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="v9-the-plan-to-close-the-remaining-gap">V9 — the plan to close the remaining gap<a class="headerlink" href="#v9-the-plan-to-close-the-remaining-gap" title="Permanent link">&para;</a></h1>
+<p><strong>Written:</strong> 2026-09-04 · <strong>Building:</strong> bldg1 · <strong>Model:</strong> local <code>gpt-oss:20b</code> (GPU)
+<strong>Basis:</strong> the V8 measurement (<code>tasks/V8_REPORT.md</code>, <code>tasks/V8_QA_RESULTS.csv</code>)</p>
+<hr />
+<h2 id="0-where-things-stand-precisely">0. Where things stand, precisely<a class="headerlink" href="#0-where-things-stand-precisely" title="Permanent link">&para;</a></h2>
+<p>The corpus is now two sources and 37 catalogues in one folder:</p>
+<table>
+<thead>
+<tr>
+<th>source</th>
+<th style="text-align: right;">questions</th>
+<th>measured?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>stakeholder_catalogue_37</code></td>
+<td style="text-align: right;"><strong>2,960</strong> (37 roles × 80)</td>
+<td>2,480 measured 2026-09-03/04</td>
+</tr>
+<tr>
+<td></td>
+<td style="text-align: right;"></td>
+<td><strong>480 have NO current measurement</strong></td>
+</tr>
+<tr>
+<td><code>v5_synthetic_bank</code></td>
+<td style="text-align: right;">1,100</td>
+<td>in the 1,580 golden baseline (2026-08-28)</td>
+</tr>
+<tr>
+<td><strong>total</strong></td>
+<td style="text-align: right;"><strong>4,060</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Of the 2,480 measured: <strong>935 computed (37.7%)</strong>, 522 quoted, 789 honest declines, 227 failed,
+7 unmeasured — <strong>1,023 did not answer with data</strong>.</p>
+<p>Seven registers are now live (128 records). Measured effect on the four roles they targeted:
+<strong>23% → 55% computed, +32 points, 115 questions newly computing.</strong></p>
+<h3 id="the-one-number-in-this-plan-that-is-an-estimate">The one number in this plan that is an estimate<a class="headerlink" href="#the-one-number-in-this-plan-that-is-an-estimate" title="Permanent link">&para;</a></h3>
+<p>Keyword-matching the 1,023 against what the seven registers now hold suggests <strong>689 are
+plausibly addressed and 334 are beyond them</strong>. That is an <em>upper bound from wording</em>, not a
+measurement. The only measured evidence is the 320-question re-measure. Everything sized
+below is a question count from the corpus; the <em>effect</em> of any item is unknown until asked.</p>
+<hr />
+<h2 id="phase-a-finish-the-measurement-before-building-more-15-h-machine-0-h-mine">Phase A — finish the measurement before building more (≈1.5 h machine, 0 h mine)<a class="headerlink" href="#phase-a-finish-the-measurement-before-building-more-15-h-machine-0-h-mine" title="Permanent link">&para;</a></h2>
+<h3 id="a1-capture-the-480-occupant-questions-the-only-block-with-no-current-number">A1. Capture the 480 occupant questions · <strong>the only block with no current number</strong><a class="headerlink" href="#a1-capture-the-480-occupant-questions-the-only-block-with-no-current-number" title="Permanent link">&para;</a></h3>
+<p>The six occupant catalogues — undergraduates, taught postgraduates, PhD students, research
+staff, lecturers and tutors, academic office occupants — were last measured in the
+2026-08-28 golden baseline, on a <strong>different model and before every fix in V8</strong>. They are
+1 in 6 of the whole catalogue corpus and nothing current is known about them.</p>
+<p>They also matter more than their share suggests. <strong>Design contract 5 names occupants first</strong>
+among the stakeholders this system exists to serve, and the roles closest to them in kind
+scored worst in V8 — visitors 16%, prospective students 26%. If the pattern holds, this is
+the weakest part of the system and it is currently invisible.</p>
+<ul>
+<li><strong>Do:</strong> <code>capture_golden_baseline.py --source stakeholder_catalogue_37</code>, resumed against the
+  existing capture so only the 480 new rows are asked.</li>
+<li><strong>Cost:</strong> 480 × ~9 s ≈ <strong>1.2 hours</strong>, unattended.</li>
+<li><strong>Gives:</strong> the first complete picture of all 37 catalogues, and the per-role table that
+  decides Phase C's order.</li>
+<li><strong>Risk if skipped:</strong> Phase C gets built for the roles I happen to have measured rather
+  than the roles that are worst.</li>
+</ul>
+<p><strong>This runs first and everything else waits on its per-role table.</strong></p>
+<hr />
+<h2 id="phase-b-the-one-code-change-2-h-mine">Phase B — the one code change (≈2 h mine)<a class="headerlink" href="#phase-b-the-one-code-change-2-h-mine" title="Permanent link">&para;</a></h2>
+<h3 id="b1-class-selection-in-held_record_class-150-questions">B1. Class selection in <code>held_record_class</code> · ~150 questions<a class="headerlink" href="#b1-class-selection-in-held_record_class-150-questions" title="Permanent link">&para;</a></h3>
+<p><code>record_registry.held_record_class</code> picks <strong>one</strong> record class by lay-term match. Questions
+routinely name several, so:</p>
+<table>
+<thead>
+<tr>
+<th>question</th>
+<th>matched</th>
+<th>should have matched</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><em>"…planned, reactive, statutory, </em><em>contract-fixed</em><em>…"</em></td>
+<td><code>Contract</code></td>
+<td><code>CostLine</code></td>
+</tr>
+<tr>
+<td><em>"which unresolved exceptions for this shift </em><em>handover</em><em>"</em></td>
+<td><code>HandoverRecord</code></td>
+<td><code>PatrolCheckpoint</code></td>
+</tr>
+<tr>
+<td><em>"is the </em><em>Level 2 laboratory</em><em> permission group approved"</em></td>
+<td>(observability lane)</td>
+<td><code>AccessPermission</code></td>
+</tr>
+</tbody>
+</table>
+<p>This is a <em>different</em> problem from BUG-417. That one made classes unreachable; this one picks
+the wrong class among reachable ones — and it gets <strong>worse with every register added</strong>, so it
+should be fixed before Phase C rather than after.</p>
+<ul>
+<li><strong>Approach:</strong> score every candidate class instead of returning the first match, and prefer
+  the class whose <em>distinctive</em> terms match over one matched by a shared word. <code>"contract"</code>
+  inside <code>"contract-fixed"</code> is a substring of a compound, not a mention of a contract.</li>
+<li><strong>Guard:</strong> the same trap as BUG-372 — head words may find data but must never justify a
+  decline. A scoring change must not turn a correct answer into a confident wrong one, so it
+  needs a labelled set of the ~150 before/after, the way BUG-218's fix was measured and
+  rejected.</li>
+</ul>
+<hr />
+<h2 id="phase-c-registers-for-what-remains-1-h-each-mine">Phase C — registers for what remains (≈1 h each, mine)<a class="headerlink" href="#phase-c-registers-for-what-remains-1-h-each-mine" title="Permanent link">&para;</a></h2>
+<p>Ordered by measured question count. Each is the same shape as the seven already built: a
+mapping in <code>ontology/record_documents/</code>, a document in <code>input/documents/</code>, a class in Module R
+with <code>ontosage:layTerms</code>. <strong>No code.</strong></p>
+<h3 id="c1-schedule_state-what-is-on-due-closed-or-reassigned-today-188-questions">C1. <code>schedule_state</code> — what is on, due, closed or reassigned <em>today</em> · ~188 questions<a class="headerlink" href="#c1-schedule_state-what-is-on-due-closed-or-reassigned-today-188-questions" title="Permanent link">&para;</a></h3>
+<p>18.4% of the unanswered ask about timing and current state — <em>"which rooms must be ready
+first"</em>, <em>"is this closed today"</em>, <em>"when is the next window"</em>. Individual registers each
+answer this for their own domain; nothing answers it <strong>across</strong> them.</p>
+<p>Columns: subject, subject_kind, state (on / due / overdue / closed / reassigned), effective
+window, reason, replaces, owner. One row per thing whose availability changes today.</p>
+<h3 id="c2-risk_exception-open-exceptions-and-who-owns-them-75-questions">C2. <code>risk_exception</code> — open exceptions and who owns them · ~75 questions<a class="headerlink" href="#c2-risk_exception-open-exceptions-and-who-owns-them-75-questions" title="Permanent link">&para;</a></h3>
+<p>7.3% ask about risk and exceptions. <code>RiskAssessment</code> holds 6 records of <em>assessments</em>;
+nothing holds the <strong>open exceptions</strong> those assessments raised, their escalation state or
+their owner. The registers already surface exceptions in prose (<code>patrol_checkpoint</code> has three
+open, <code>approval_evidence</code> has four findings) — this makes them countable and cross-cutting.</p>
+<h3 id="c3-space-approved-purpose-and-capacity-baseline-43-questions-leadership-at-8">C3. Space <strong>approved purpose and capacity</strong> baseline · 43 questions · leadership at 8%<a class="headerlink" href="#c3-space-approved-purpose-and-capacity-baseline-43-questions-leadership-at-8" title="Permanent link">&para;</a></h3>
+<p>Leadership is the worst-served role in the corpus and asks a shape nothing else does:
+<em>"which spaces have materially drifted from their approved purpose, capacity or service
+requirement?"</em> Drift is computable only against a recorded baseline — approved purpose,
+approved capacity, approved service level, per space, with the approval that set it.</p>
+<p>Pairs naturally with <code>approval_evidence</code>, which already records who approved a space use.</p>
+<h3 id="c4-event-agenda-rows-42-questions-prospective-students-at-26">C4. Event <strong>agenda</strong> rows · 42 questions · prospective students at 26%<a class="headerlink" href="#c4-event-agenda-rows-42-questions-prospective-students-at-26" title="Permanent link">&para;</a></h3>
+<p><code>public_event</code> answers admission, entrance and check-in. Prospective students ask about the
+<em>inside</em> of the event: <em>"how much time for the course talk, tour and questions"</em>, <em>"we only
+have two hours, what should we prioritise"</em>, <em>"where can my family wait quietly between
+activities"</em>. One row per activity within an event: sequence, duration, location, whether a
+companion may attend, whether it is optional.</p>
+<hr />
+<h2 id="phase-d-measurement-integrity-2-h-mine-75-h-machine">Phase D — measurement integrity (≈2 h mine + 7.5 h machine)<a class="headerlink" href="#phase-d-measurement-integrity-2-h-mine-75-h-machine" title="Permanent link">&para;</a></h2>
+<h3 id="d1-caveat-418-the-grader-marks-computed-answers-as-honest-declines">D1. CAVEAT-418 — the grader marks computed answers as honest declines<a class="headerlink" href="#d1-caveat-418-the-grader-marks-computed-answers-as-honest-declines" title="Permanent link">&para;</a></h3>
+<p>Four of twelve "regressions" in the V8 re-measure were computed answers carrying a qualifying
+sentence. <code>_heuristic_grade</code> tests for capability phrases <em>before</em> it tests for computation.</p>
+<p><strong>This changes the number, not the system</strong>, and it changes it upward — every coverage figure
+reported so far is a floor. Fix it before the final re-capture so that run is graded correctly,
+and re-grade the existing captures with the corrected grader so the comparison stays valid.</p>
+<p><strong>Do not simply reorder the checks.</strong> The reverse error — marking a decline that mentions a
+number as computed — is BUG-370 and BUG-191, both of which cost this project a fictitious
+score. Needs a labelled set swept before and after.</p>
+<h3 id="d2-one-full-re-capture-of-all-2960-75-hours-machine">D2. One full re-capture of all 2,960 · ≈7.5 hours machine<a class="headerlink" href="#d2-one-full-re-capture-of-all-2960-75-hours-machine" title="Permanent link">&para;</a></h3>
+<p><strong>At the end, not before.</strong> Re-measuring between changes spends hours on a configuration
+about to be abandoned. This produces the single headline number for all 37 catalogues, graded
+by the corrected grader, on one model, with provider and model stamped per row.</p>
+<hr />
+<h2 id="sequence-and-cost">Sequence and cost<a class="headerlink" href="#sequence-and-cost" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>phase</th>
+<th>item</th>
+<th style="text-align: right;">my time</th>
+<th style="text-align: right;">machine</th>
+<th>blocks</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>A</strong></td>
+<td>Capture the 480 occupant questions</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">1.2 h</td>
+<td>Phase C order</td>
+</tr>
+<tr>
+<td><strong>B</strong></td>
+<td>Class selection scoring</td>
+<td style="text-align: right;">2 h</td>
+<td style="text-align: right;">—</td>
+<td>Phase C value</td>
+</tr>
+<tr>
+<td><strong>C1</strong></td>
+<td><code>schedule_state</code> register</td>
+<td style="text-align: right;">1 h</td>
+<td style="text-align: right;">—</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>C2</strong></td>
+<td><code>risk_exception</code> register</td>
+<td style="text-align: right;">1 h</td>
+<td style="text-align: right;">—</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>C3</strong></td>
+<td>Space purpose/capacity baseline</td>
+<td style="text-align: right;">1 h</td>
+<td style="text-align: right;">—</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>C4</strong></td>
+<td>Event agenda rows</td>
+<td style="text-align: right;">1 h</td>
+<td style="text-align: right;">—</td>
+<td></td>
+</tr>
+<tr>
+<td><strong>D1</strong></td>
+<td>Grader fix + re-grade</td>
+<td style="text-align: right;">2 h</td>
+<td style="text-align: right;">—</td>
+<td>D2</td>
+</tr>
+<tr>
+<td><strong>D2</strong></td>
+<td>Full 2,960 re-capture</td>
+<td style="text-align: right;">—</td>
+<td style="text-align: right;">7.5 h</td>
+<td>—</td>
+</tr>
+<tr>
+<td></td>
+<td><strong>total</strong></td>
+<td style="text-align: right;"><strong>~8 h</strong></td>
+<td style="text-align: right;"><strong>~9 h</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>A and D2 are unattended. B must precede C, because every register added makes class selection
+harder. D1 must precede D2, or the final number is measured with a grader known to
+under-count.</p>
+<h2 id="what-is-deliberately-not-in-this-plan">What is deliberately not in this plan<a class="headerlink" href="#what-is-deliberately-not-in-this-plan" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Person records</strong>, under any register. V7-T35, and the catalogues forbid it. Only 11 of the
+  1,023 mention a person and every one asks who is <em>accountable</em> — a role.</li>
+<li><strong>Design-judgement questions.</strong> 243 of <code>policy_governance</code>'s 283 ask architects <em>"where
+  </em><em>should</em><em> zones begin and end"</em>. A register cannot answer those and should not pretend to.</li>
+<li><strong><code>weather_external</code>.</strong> Still WIRED with 0 rows (NOTE-413), worth 79 questions, but it is a
+  live feed rather than a register — a different kind of work, and cheaper to leave until the
+  register pattern is exhausted.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

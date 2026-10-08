@@ -1,0 +1,138 @@
+{
+ "namespace": "http://abacwsbuilding.cardiff.ac.uk/abacws#",
+ "building_name": "Abacws Building",
+ "cases": [
+  {
+   "question": "How many CO2 sensors are there?",
+   "lane": "capability_result",
+   "source": "class_census",
+   "rows": [
+    [
+     "Sensor",
+     3248
+    ],
+    [
+     "Air_Quality_Sensor",
+     835
+    ],
+    [
+     "Contact_Sensor",
+     466
+    ],
+    [
+     "Particulate_Matter_Sensor",
+     366
+    ],
+    [
+     "Temperature_Sensor",
+     296
+    ],
+    [
+     "Air_Temperature_Sensor",
+     288
+    ],
+    [
+     "Relative_Humidity_Sensor",
+     281
+    ],
+    [
+     "CO2_Sensor",
+     280
+    ],
+    [
+     "CO2_Level_Sensor",
+     274
+    ],
+    [
+     "Illuminance_Sensor",
+     269
+    ],
+    [
+     "Occupancy_Count_Sensor",
+     257
+    ],
+    [
+     "PM2.5_Level_Sensor",
+     245
+    ],
+    [
+     "Lighting_Correlated_Color_Temperature_Sensor",
+     235
+    ],
+    [
+     "Gas_Sensor",
+     210
+    ],
+    [
+     "Zone_Air_Humidity_Sensor",
+     208
+    ],
+    [
+     "Zone_Air_Temperature_Sensor",
+     66
+    ],
+    [
+     "NO2_Level_Sensor",
+     41
+    ],
+    [
+     "TVOC_Level_Sensor",
+     41
+    ],
+    [
+     "CO_Sensor",
+     40
+    ]
+   ],
+   "figures": {
+    "Sensor": 3248.0,
+    "Air_Quality_Sensor": 835.0,
+    "Contact_Sensor": 466.0,
+    "Particulate_Matter_Sensor": 366.0,
+    "Temperature_Sensor": 296.0,
+    "Air_Temperature_Sensor": 288.0,
+    "Relative_Humidity_Sensor": 281.0,
+    "CO2_Sensor": 280.0,
+    "CO2_Level_Sensor": 274.0,
+    "Illuminance_Sensor": 269.0,
+    "Occupancy_Count_Sensor": 257.0,
+    "PM2.5_Level_Sensor": 245.0,
+    "Lighting_Correlated_Color_Temperature_Sensor": 235.0,
+    "Gas_Sensor": 210.0,
+    "Zone_Air_Humidity_Sensor": 208.0,
+    "Zone_Air_Temperature_Sensor": 66.0,
+    "NO2_Level_Sensor": 41.0,
+    "TVOC_Level_Sensor": 41.0,
+    "CO_Sensor": 40.0
+   },
+   "answer": "Here is what **Abacws Building** has, counted live from its building model:\n\n- **Sensor** — 3248\n- **Air Quality Sensor** — 835\n- **Contact Sensor** — 466\n- **Particulate Matter Sensor** — 366\n- **Temperature Sensor** — 296\n- **Air Temperature Sensor** — 288\n- **Relative Humidity Sensor** — 281\n- **CO2 Sensor** — 280\n- **CO2 Level Sensor** — 274\n- **Illuminance Sensor** — 269\n- **Occupancy Count Sensor** — 257\n- **PM2.5 Level Sensor** — 245\n- **Lighting Correlated Color Temperature Sensor** — 235\n- **Gas Sensor** — 210\n- **Zone Air Humidity Sensor** — 208\n- **Zone Air Temperature Sensor** — 66\n- **NO2 Level Sensor** — 41\n- **TVOC Level Sensor** — 41\n- **CO Sensor** — 40\n\n*Counted now from the building's own model.*\n\n_Note: in Brick, `Particulate_Matter_Sensor` measures particulate matter, but it is also the parent of `TVOC_Level_Sensor`, `TVOC_Sensor`, which measure volatile organic compounds. This count includes them — Brick uses that class as a general pollutant supertype, so the total is broader than the name suggests._\n\n_Note: in Brick, `Temperature_Sensor` measures air temperature, but it is also the parent of `Chilled_Water_Supply_Temperature_Sensor`, `Entering_Water_Temperature_Sensor`, `Hot_Water_Supply_Temperature_Sensor`, `Leaving_Water_Temperature_Sensor`, `Water_Temperature_Sensor`, which measure water temperature. This count includes them — Brick uses that class as a general pollutant supertype, so the total is broader than the name suggests._"
+  },
+  {
+   "question": "How many sensors are there?",
+   "lane": "capability_result",
+   "source": "building_metrics",
+   "figures": {
+    "points_described": 3512.0,
+    "sensors_declared": 3248.0,
+    "zones": 298.0,
+    "floors": 8.0,
+    "rooms": 234.0,
+    "reporting_window_hours": 24.0,
+    "storeys": 6.0,
+    "floor_kind_Floor": 6.0,
+    "floor_kind_Rooftop": 1.0,
+    "floor_kind_Parking_Level": 1.0,
+    "sensor_type_Air_Quality_Sensor": 835.0,
+    "sensor_type_Contact_Sensor": 466.0,
+    "sensor_type_Particulate_Matter_Sensor": 366.0,
+    "sensor_type_Temperature_Sensor": 296.0,
+    "sensor_type_Air_Temperature_Sensor": 288.0,
+    "sensor_type_Humidity_Sensor": 281.0,
+    "sensor_type_Relative_Humidity_Sensor": 281.0,
+    "sensor_type_CO2_Sensor": 280.0,
+    "sensor_type_CO2_Level_Sensor": 274.0
+   },
+   "answer": "**Live building figures for Abacws Building** (computed now from the building's own model):\n- Readings and settings described in the building model: **3,512**\n- Sensors declared in the building model: **3,248**\n- Zones / locations: **298**\n- Floors: **8** — 6 storeys plus 1 rooftop, 1 parking level (the building model counts these as floors)\n- Rooms: **234**\n- Most common sensor types: Air Quality Sensor (835), Contact Sensor (466), Particulate Matter Sensor (366), Temperature Sensor (296), Air Temperature Sensor (288), Humidity Sensor (281)"
+  }
+ ]
+}

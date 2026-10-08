@@ -1,0 +1,17 @@
+# Alternative phrasings for questions that failed in tail A. Purpose: find the wording that WORKS,
+# so a recording or a supervisor session has evidence-backed guidance ("ask this, not that").
+# These are not a test set: each is written after seeing its sibling fail.
+Which floor had the highest CO2 this week?
+Which floor has the most people in it right now?
+How many people are in Room 1.06 right now?
+Which rooms are occupied at the moment?
+Where are the lifts?
+Which rooms are computer laboratories?
+What was the total electricity use yesterday?
+What is the current temperature of the heat pump water loop?
+What is the CO2 level in the atrium right now?
+Plot CO2 in Room 1.04 for the last 24 hours.
+Who should I contact about a faulty light?
+Which maintenance tasks are overdue?
+How much water did floor 3 use yesterday?
+Describe this building.
