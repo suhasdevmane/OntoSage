@@ -1,0 +1,127 @@
+{
+ "set": "T-REAL",
+ "version": "v2",
+ "counts": {
+  "lane:compare": 7,
+  "lane:analytics": 6,
+  "deliberate-v1": 7,
+  "lane:capability": 1,
+  "lane:clarification": 1,
+  "lane:privacy_refusal": 1,
+  "lane:trend": 1,
+  "lane:recommend": 1,
+  "lane:discovery": 1,
+  "lane:sensor_data": 1
+ },
+ "provider_failed": [],
+ "items": {
+  "R001": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "R002": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "R003": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "R004": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "R005": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "R006": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "R007": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "R008": {
+   "attribution": "lane:capability",
+   "provider_failed": false
+  },
+  "R009": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "R010": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "R011": {
+   "attribution": "lane:clarification",
+   "provider_failed": false
+  },
+  "R012": {
+   "attribution": "lane:privacy_refusal",
+   "provider_failed": false
+  },
+  "R013": {
+   "attribution": "lane:trend",
+   "provider_failed": false
+  },
+  "R014": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "R015": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "R016": {
+   "attribution": "lane:recommend",
+   "provider_failed": false
+  },
+  "R017": {
+   "attribution": "lane:discovery",
+   "provider_failed": false
+  },
+  "R018": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "R019": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "R020": {
+   "attribution": "lane:sensor_data",
+   "provider_failed": false
+  },
+  "R021": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "R022": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "R023": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "R024": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "R025": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "R026": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "R027": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  }
+ }
+}
