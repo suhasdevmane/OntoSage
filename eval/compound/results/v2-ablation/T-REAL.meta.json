@@ -1,0 +1,13 @@
+{
+  "set": "eval\\compound\\T-REAL.jsonl",
+  "version": "v2-ablation",
+  "git_head": "9e7d27556a09cdf771c25b57c0fe99f28d4b0bfc",
+  "identity": "facility01@example.com",
+  "endpoint": "/v1/chat/completions (non-streamed)",
+  "concurrency": 4,
+  "timeout_s": 600.0,
+  "started_utc": "2026-10-08T07:28:07+00:00",
+  "items": 27,
+  "finished_utc": "2026-10-08T07:32:56+00:00",
+  "errors": 0
+}

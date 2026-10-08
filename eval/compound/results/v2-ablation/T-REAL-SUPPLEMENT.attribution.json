@@ -1,0 +1,105 @@
+{
+ "set": "T-REAL-SUPPLEMENT",
+ "version": "v2-ablation",
+ "counts": {
+  "deliberate-v1": 4,
+  "lane:capability": 2,
+  "lane:analytics": 6,
+  "lane:sensor_data": 2,
+  "lane:metadata": 4,
+  "lane:clarification": 1,
+  "lane:compare": 2,
+  "lane:events": 1
+ },
+ "provider_failed": [],
+ "items": {
+  "X001": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "X002": {
+   "attribution": "lane:capability",
+   "provider_failed": false
+  },
+  "X003": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "X004": {
+   "attribution": "lane:sensor_data",
+   "provider_failed": false
+  },
+  "X005": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "X006": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "X007": {
+   "attribution": "lane:clarification",
+   "provider_failed": false
+  },
+  "X008": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "X009": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "X010": {
+   "attribution": "lane:sensor_data",
+   "provider_failed": false
+  },
+  "X011": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "X012": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "X013": {
+   "attribution": "lane:events",
+   "provider_failed": false
+  },
+  "X014": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "X015": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "X016": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "X017": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "X018": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "X019": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "X020": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  },
+  "X021": {
+   "attribution": "lane:capability",
+   "provider_failed": false
+  },
+  "X022": {
+   "attribution": "lane:analytics",
+   "provider_failed": false
+  }
+ }
+}

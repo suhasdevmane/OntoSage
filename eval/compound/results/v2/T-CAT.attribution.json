@@ -1,0 +1,187 @@
+{
+ "set": "T-CAT",
+ "version": "v2",
+ "counts": {
+  "lane:metadata": 26,
+  "lane:capability": 3,
+  "lane:events": 4,
+  "lane:planner": 1,
+  "lane:diagnosis": 3,
+  "lane:sensor_data": 1,
+  "lane:floor_plan": 1,
+  "lane:register": 1,
+  "lane:compare": 1,
+  "deliberate-v1": 1
+ },
+ "provider_failed": [],
+ "items": {
+  "C001": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C002": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C003": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C004": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C005": {
+   "attribution": "lane:capability",
+   "provider_failed": false
+  },
+  "C006": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C007": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C008": {
+   "attribution": "lane:events",
+   "provider_failed": false
+  },
+  "C009": {
+   "attribution": "lane:events",
+   "provider_failed": false
+  },
+  "C010": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C011": {
+   "attribution": "lane:planner",
+   "provider_failed": false
+  },
+  "C012": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C013": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C014": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C015": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C016": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C017": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C018": {
+   "attribution": "lane:capability",
+   "provider_failed": false
+  },
+  "C019": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C020": {
+   "attribution": "lane:diagnosis",
+   "provider_failed": false
+  },
+  "C021": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C022": {
+   "attribution": "lane:diagnosis",
+   "provider_failed": false
+  },
+  "C023": {
+   "attribution": "lane:events",
+   "provider_failed": false
+  },
+  "C024": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C025": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C026": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C027": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C028": {
+   "attribution": "lane:sensor_data",
+   "provider_failed": false
+  },
+  "C029": {
+   "attribution": "lane:floor_plan",
+   "provider_failed": false
+  },
+  "C030": {
+   "attribution": "lane:diagnosis",
+   "provider_failed": false
+  },
+  "C031": {
+   "attribution": "lane:register",
+   "provider_failed": false
+  },
+  "C032": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C033": {
+   "attribution": "lane:compare",
+   "provider_failed": false
+  },
+  "C034": {
+   "attribution": "deliberate-v1",
+   "provider_failed": false
+  },
+  "C035": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C036": {
+   "attribution": "lane:events",
+   "provider_failed": false
+  },
+  "C037": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C038": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C039": {
+   "attribution": "lane:capability",
+   "provider_failed": false
+  },
+  "C040": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C041": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  },
+  "C042": {
+   "attribution": "lane:metadata",
+   "provider_failed": false
+  }
+ }
+}
