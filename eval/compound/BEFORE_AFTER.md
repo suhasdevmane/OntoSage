@@ -36,9 +36,10 @@ instead**, at the author's request on 2026-10-08. What was done to keep it blind
   **0.895** for acceptable vs not.
 
 **What that agreement does not establish.** The three judges are the same model family that helped
-build v2. High agreement among correlated raters shows consistency, not validity. The author hand-
-checked a random sample of eight D labels against the building files and agreed with seven; the
-eighth was a two-to-one borderline. The plan's own stated remedy for single-reader bias — a second
+build v2. High agreement among correlated raters shows consistency, not validity. The assistant
+that ran the evaluation (Claude, not the thesis author) checked a random sample of eight D labels
+against the building files and agreed with seven; the eighth was a two-to-one borderline. That is
+a check by another instance of the same model family, so it adds little independence. The plan's own stated remedy for single-reader bias — a second
 reader on a 20% subsample with Cohen's κ — applies here with more force. **A human read of a
 stratified subsample is needed before these labels are reported as a human-equivalent read.** The
 paired comparison between v1 and v2 is less exposed to this than the absolute rates: a judge who is
@@ -107,7 +108,7 @@ v1 2/38 = 5.3%, v2 1/38 = 2.6%, −2.6 points (95% CI −10.5 to +5.3), 2 lost, 
 Dropping the two items provider-failed in v1 (C013, C015): 2/36 vs 1/36, unchanged; v2 answered
 both and both were labelled E. **F: v1 0, v2 1.**
 
-### The fabrication (T-CAT C037, all three judges F, confirmed by the author)
+### The fabrication (T-CAT C037, all three judges F, confirmed against the alarm file by the assistant)
 
 Asked which alarms and abnormal readings came before, during and after a fault, v2 answered that
 **ten Air-Quality Level sensors on floor 5 alarmed at 2026-07-09 15:33:47, "with 990 more of the
