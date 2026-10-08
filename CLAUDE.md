@@ -7,11 +7,11 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 ## New session orientation (read this first)
 
-**Current branch:** `development` — the last commits before this one are `8965cd1` (tag
-`v1.0-demo`, the "before" system for the v2 comparison) and `673f56b` (v1's captured answers and
-the pre-registered evaluation rules). **`git log --oneline -3` settles it in one second, so read
-it rather than this sentence** — it went stale twice before. **Never commit or push without the
-user's explicit approval.**
+**Current branch:** `development`, promoted to `main` by fast-forward after each validated round
+(both were `b72a4c1` on 2026-10-08; **QA testers pull `main`**). The v1 baseline is tag `v1.0-demo`
+(`8965cd1`). **`git log --oneline -3` settles it in one second, so read it rather than this
+sentence** — it went stale twice before. **Never commit or push without the user's explicit
+approval.**
 
 **Three files every session must read** (in order):
 1. `CLAUDE.md` (this file) — navigation index, debugging, workflow rules

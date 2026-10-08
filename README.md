@@ -1,6 +1,6 @@
 # OntoSage — Agentic AI for Smart Buildings
 
-**Ask your building anything in plain English. Get sensor-grounded, persona-aware, multi-intent answers.**
+**Ask your building anything in plain English. Get answers grounded in its own data, with the evidence shown.**
 
 [![Python](https://img.shields.io/badge/python-3.10%20|%203.11%20|%203.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com/)
@@ -8,7 +8,6 @@
 [![Brick Schema](https://img.shields.io/badge/Brick_Schema-1.3-orange.svg)](https://brickschema.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![CI](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml/badge.svg)](https://github.com/suhasdevmane/OntoSage/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-981%20passing-brightgreen.svg)](#tests)
 
 ---
 
@@ -20,28 +19,37 @@ No SQL, no SPARQL, no schema knowledge required from the user.
 
 Ask a follow-up — *"and what about humidity there?"* — and it remembers you meant floor 3.
 
-> **Full technical reference:** [ONTOSAGE.md](./ONTOSAGE.md) — complete architecture, phase-by-phase changelog, all intents, multi-tenant/multi-persona model, conversation memory, forecasting pipeline, admin console, test coverage, known issues.
+> **Full technical reference:** [ONTOSAGE.md](./ONTOSAGE.md) — complete architecture, how answers are grounded and evidenced, compound-question reasoning, changelog, all intents, multi-tenant/multi-persona model, conversation memory, forecasting pipeline, admin console, quality gates and measured results, known limitations.
+
+> **Where it stands (October 2026).** OntoSage answers single-fact and multi-part questions about
+> one building from its ontology, its document registers, its floor plans and its live sensor
+> readings, and shows the evidence behind each answer. **Compound, multi-criteria questions are
+> the research frontier**: a pre-registered before/after evaluation found no statistically
+> significant gain from the version-2 work (see [Measured quality](#measured-quality)). It is
+> ready for **supervised trials**, not for unattended or open use.
 
 ---
 
 ## Prerequisites
 
-> **`docker-compose up -d` is the design goal, and it is not yet the whole truth.** Where a
+> **`docker compose up -d` is the design goal, and it is not yet the whole truth.** Where a
 > host dependency exists, it belongs here rather than in a newcomer's afternoon.
 
 | What | Why | How to check |
 |---|---|---|
 | **Docker Desktop / Engine + Compose v2** | Every service except MySQL runs in compose | `docker compose version` |
 | **MySQL on the HOST, port 3306, database `sensordb`** | The compose MySQL service is **commented out**; the orchestrator reaches the host via `host.docker.internal:3306`. Without it every time-series answer returns no rows while the graph answers normally — which reads as a data gap rather than a missing prerequisite | `mysql -h 127.0.0.1 -P 3306 -e "SHOW DATABASES"` |
-| **Ollama on the host, port 11434** | Only when `MODEL_PROVIDER=local` (the default). `gpt-oss:20b` is the primary model | `curl -s http://127.0.0.1:11434/api/tags` |
-| **~16 GB GPU VRAM** | For `gpt-oss:20b` to sit 100% on the GPU. CPU inference works and is roughly 6× slower | `nvidia-smi` |
-| **`.env`** | Copy `.env.example` and set the four values `STRICT_SECRETS` refuses to boot on: `MYSQL_PASSWORD`, `POSTGRES_USER_PASSWORD`, `GRAPHDB_PASSWORD`, `SECRET_KEY` | the orchestrator refuses to start and names the offender |
+| **A language model — one of three** | The model reads the question and writes the reply; it never does the arithmetic. **Hosted gateway** (the default in `.env.example`): an OpenAI-compatible GPU server running `gpt-oss:20b`, reachable on the Cardiff VPN, needs `HOSTED_LLM_API_KEY`. **Local**: Ollama on the host, port 11434, the same model, about 16 GB of GPU memory so it sits entirely on the GPU (CPU works, roughly six times slower). **OpenAI**: an API key, and it costs money | hosted: `curl <HOSTED_LLM_BASE_URL>/models` · local: `curl -s http://127.0.0.1:11434/api/tags` |
+| **`.env`** | Copy `.env.example`, choose `MODEL_PROVIDER`, supply that provider's key, and set the four values `STRICT_SECRETS` refuses to boot on: `MYSQL_PASSWORD`, `POSTGRES_USER_PASSWORD`, `GRAPHDB_PASSWORD`, `SECRET_KEY` | the orchestrator refuses to start and names the offender |
 
-**On timeouts.** `WORKFLOW_TIMEOUT_S` is *derived* from `LLM_TIMEOUT_S` — a model slower than
-the workflow deadline cannot serve this pipeline, and when that was silent it produced eight
-empty plan hashes at exactly 120.0 s during a benchmark (CAVEAT-185). `shared/config.py`
-warns at boot when the deadline cannot outlast one full-length LLM call. Set `LLM_TIMEOUT_S`
-and let the deadline follow it.
+**The shared gateway, and what to expect from it.** The hosted gateway is shared and generates a
+few requests at once; the rest queue, so a request can wait minutes before its first word. The
+workflow deadline is *derived* from the model timeout — a model slower than the deadline cannot
+serve this pipeline, and the system warns at boot when that is the case. When the gateway cannot
+be reached, the answer says exactly that, and says it is not a gap in the building's records,
+rather than reporting a misleading "I could not find this". A call made during a brief outage
+(under a minute) waits it out once; a longer outage is reported at once. The system is built for
+**one user at a time**: with several people asking together, answers queue.
 
 **Optional backends.** TimescaleDB and Cassandra are exercised by
 `docker-compose.timeseries-backends.yml` and seeded by `scripts/seed_timeseries_backends.py`.
@@ -49,19 +57,34 @@ They are off by default and nothing needs them.
 
 ---
 
-## Measured coverage
+## Measured quality
 
-```
-Corpus replay, 240 stratified questions
-    bldg1 (Abacws, real building)         63.8% pass   (vs 16.2% baseline before V3)
-    bldg2 (portability building)          70.4% pass   — same code, zero changes
-Live survey (95 questions, Phase 18):     94/95 PASS · 1 WARN · 0 FAIL  (99%)
-Deterministic unit suite:                 981 pass / 0 fail, 8 skipped (Python 3.10/3.11/3.12)
-```
+Every quality figure here comes from reading the answers themselves — by a person, or, for the
+compound-question evaluation, by a panel of language-model judges working to a fixed rubric (and
+that is said where it matters). Automatic scorers are not used to make claims: in this project they
+proved unreliable on questions they had not been calibrated on, and one scored below chance on
+held-out answers.
 
-Validates against the 5,604-question survey in `paper/Survey analysis and results/` — corroborates
-paper §6.5. The bldg2 run is the portability evidence: a second building with a different namespace,
-size and sensor mix scored **above** the first with no code changes — only its own data and config.
+| What was measured | Result |
+|---|---|
+| **Unseen real questions**, 60 at a time, hand-read (questions nobody building the system had asked) | **65%** and **68%** of answers acceptable on two independent sets, October 2026. *Acceptable* means a correct answer, or an honest decline that is itself correct |
+| **Fabricated figures** in those unseen sets | **None** across six independent sets of about 60 questions. The compound-question evaluation below then found one fabricated claim in a seventh body of answers; it is logged as an open defect |
+| **Compound, multi-criteria questions** — a pre-registered before/after on 91 held-out questions, version 1 against version 2 | **No statistically significant improvement.** 13.6% → 15.9% acceptable on the 44 answerable real questions (p = 1.00). Full report: [eval/compound/BEFORE_AFTER.md](./eval/compound/BEFORE_AFTER.md) |
+| **Regression gate** — 51 fixed real questions, re-asked against the running system after every change | 51 of 51 behave as recorded (one case is a known quirk of the test harness, not of the system) |
+| **Automated tests**, clean checkout, no building active | 15,157 pass and none fail (8 October 2026); GitHub's CI passes on Python 3.10, 3.11 and 3.12 |
+| **Speed** | Median about 25 seconds per answer, 90th percentile about 45 seconds, occasionally minutes |
+
+**How to read these.** The two 60-question figures describe the system as a whole on questions it
+had not been tuned on; the earlier sets that *were* fixed against read higher and are not quoted.
+The most common way an answer is unacceptable is a **false decline** — the building holds the data
+and the answer says it does not. That is a visible failure, which is why it is tolerable in a
+supervised trial; it is also the reason the system is **not yet ready for an open invitation**.
+
+An earlier, automatically graded replay of 240 survey questions (June 2026) read 63.8% on the
+reference building and 70.4% on a second building with no code changes — evidence that the system
+moves between buildings. The grading method itself is no longer relied on, so those figures are
+kept as history. They were drawn from a 5,604-question survey of what building stakeholders
+actually ask.
 
 ---
 
@@ -133,8 +156,9 @@ commitment, not an accident of implementation:
    different databases: one active building runs MySQL and PostgreSQL side by side, some sensors read
    from each. A new backend technology is a new adapter, nothing more; the registry ships connection
    templates for ~50 stores (MySQL, PostgreSQL, TimescaleDB, MongoDB, InfluxDB, Cassandra, Redis, …).
-10. **Local or API models, independently.** Language and embedding models are each switchable between
-    OpenAI and local Ollama, so you can run fully offline for privacy or on the API for capability.
+10. **Local or API models, independently.** The language model is switchable between a hosted GPU
+    gateway, local Ollama and OpenAI, and the embedding model is chosen separately, so you can run
+    fully offline for privacy or on an API for capability.
     The local embedding model (`bge-large-en-v1.5`) is baked into the image and runs offline; its
     vector width and retrieval threshold are read from the model itself, and a boot-time sweep repairs
     any vector store left at a mismatched width — so the model can never silently drift.
@@ -174,6 +198,20 @@ analytics ──► visualization                              response ◄─�
 ```
 
 Every turn: co-reference rewrite before classification; conversation persisted to Redis + Postgres after response. The routing decision (`intent, overrides_applied, final_node, decision_source`) is logged per-request.
+
+The diagram shows the main path. Beyond it, deterministic rules send some questions to
+specialised lanes:
+
+- a **deliberation** lane ranks rooms or floors against several criteria and returns an evidence table;
+- an **events** lane answers questions about bookings, work orders and footfall;
+- **register** and **asset** lanes read the building's document registers and the working state of its equipment;
+- a **reach** lane answers *"can you measure X here?"* from a coverage matrix rather than from prose;
+- small lanes handle comfort history, readiness (*"is this room ready for my class?"*), indirect why-questions, conflicting stated facts, session recall (*"what did I ask?"*, *"how do you know that?"*), privacy refusals and out-of-scope guidance.
+
+Which question shape goes to which lane is a single ordered contract of 76 rules in three
+stages — while the model's classification is read, just after it, and once the question's
+concepts are resolved. It is audited on every turn, so behaviour can be traced rather than
+inferred.
 
 ---
 
@@ -217,6 +255,126 @@ folder**, which OntoSage re-reads live.
 > **Switching vs building.** `input/` is always the *active* building. To **build a new** building,
 > do steps 1–5 in the browser. To **switch to a pre-built** building, swap `input/`'s contents (and
 > `.env` / `docker-compose.yml`) — see [BUILDING_ONBOARDING.md](docs/BUILDING_ONBOARDING.md).
+
+## What makes an answer trustworthy
+
+OntoSage is built so that a wrong answer is visible and a right one can be checked.
+
+**The model does not do the arithmetic.** A language model reads the question, works out what it
+means, and writes the reply. Every count, total, average, ranking and comparison in between is
+computed by ordinary deterministic code over the building's data, and an answer whose wording
+disagrees with its own table is failed rather than shown.
+
+**Every answer carries its evidence.** Open the *How I know this* panel under an answer and it
+says what kind of claim it is (read from an instrument, read from a system of record, or derived),
+what operation produced it, which kind of source led (an authoritative record or a measurement),
+the sources it drew on in plain names rather than identifiers, and when the newest evidence is
+from and when it was retrieved. A one-line sources footer sits above the panel.
+
+**Four different kinds of "nothing" are kept apart.** The building does not have it. The building
+has it, but not for the period asked. The system could not retrieve it just now. Or the person
+asking is not permitted to see it. Each is said differently, and a decline names the step that
+would make the question answerable.
+
+**Named things are checked first.** A room, floor, piece of equipment or quantity named in a
+question is looked up in the building's own graph before anything is answered. If it does not
+exist, the answer says so and lists what does, instead of answering with another room's readings.
+
+**Units, media and time are not mixed.** Readings in different units are never combined. Water
+temperatures are not averaged with room air. Every store holds time in UTC, and answers show it in
+the building's local time.
+
+**A failure of the model is reported as one.** If the language model is unreachable, the answer
+says that and says it is not a gap in the building's records.
+
+**Follow-ups work.** *"And humidity there?"*, *"the second one"*, *"that report"* and
+*"how do you know that?"* are resolved against what was just said — including the evidence record
+of the previous answer.
+
+**What a person sees depends on their role.** Roles decide which data sources an answer may draw
+on and whether building systems can be controlled; see [Security & RBAC](#security--rbac).
+
+---
+
+## Compound, multi-criteria questions
+
+Most questions ask for one thing. The hard ones ask for several at once, drawn from different
+places in the building's data. This is the research contribution of the project, studied in a
+pre-registered before/after evaluation. It is described here honestly: it works in part, and the
+evaluation did not show a significant gain.
+
+### What counts as compound
+
+| Shape | What it needs | Example |
+|---|---|---|
+| **C1 Multi-criteria selection** | Filter or rank one set of rooms on criteria from different sources | *"Find a quiet room for 12 with a projector, free this afternoon"* |
+| **C2 Cross-source comparison** | Two facts about the same thing from different sources | *"Real-time occupancy versus the evacuation capacity"* |
+| **C3 Group, aggregate, rank** | Aggregate per group, then compare the groups | *"Which floor has less crowd now?"* |
+| **C4 Period comparison** | One quantity over two named periods | *"This week's electricity against last week's, by floor"* |
+| **C5 Series and events** | A relation between a series and events, or two series | *"Do VOC levels spike after night-shift cleaning?"* |
+| **C6 Multi-part** | Two independent asks in one message | *"Temperature on floor 2, and when is the next service?"* |
+
+### How version 2 answers them
+
+The system inspects its own knowledge graph and works out **what can be known** about the
+building's spaces, floors and routes. For the reference building that is about four hundred
+*facets*: the quantities sensors measure, the fields in the building's document registers
+(bookings, timetables, maintenance, assets, permits and so on), properties declared in the
+ontology, recorded events, and spatial structure. Each facet is graded — declared, linked,
+populated, suitable — from the data itself, never assumed.
+
+For register rows to be answerable by room, each row is **linked to the room and floor it
+describes at the moment the register is loaded** (883 rows to rooms and 786 to floors in the
+reference building). Text that cannot be resolved to exactly one place is listed, never guessed.
+
+The language model then translates the question into a **typed plan over those facets**. Code
+rejects any facet that is not in the catalogue, fetches the values, joins them by room, and does
+the work — one of five operations:
+
+- **select** rooms that meet criteria from several sources;
+- **compare** a measured value with a declared one, checking that the units agree;
+- **group, aggregate and rank** — totals for amounts such as people, averages for levels such as
+  temperature, with the count behind every group stated;
+- **compare two periods**;
+- **relate** a series to recorded events or to another series — always stated as co-occurrence,
+  never as cause.
+
+The answer is a table with its assumptions and its coverage. A criterion that cannot be assessed
+is named, not dropped.
+
+### Rolling it out safely
+
+The new path takes a question only when the plan needs two or more kinds of source, or an
+operation the older paths cannot compute; everything else keeps its older route. It has three
+modes — **off**, **shadow** (decide and log what it would have done while the older path answers)
+and **live** — and ships in shadow. Switching the facet machinery and the routing off gives the
+*ablation arm* used to separate what the architecture contributes from the incidental fixes made
+along the way.
+
+### What the evaluation found
+
+91 held-out questions were answered by version 1 and by version 2 (and the 49 primary ones also
+by the ablation arm). Each answer was judged on its own, blind to which system wrote it.
+
+- **The primary hypothesis was not supported**: 13.6% → 15.9% acceptable (95% CI −9.1 to +13.6
+  points, p = 1.00) on the 44 answerable real questions.
+- **The new path was reached by 2 of the 91 questions.** Real phrasing rarely matches the narrow
+  conditions under which it takes over. One of the two went from a decline to a full answer.
+- **The dominant failure is older and shared by both versions**: a false decline, on 32 of 49
+  answers in each.
+- **Reliability is uneven.** Single-criterion operations (a total per floor; CO₂ during sessions
+  against outside them) succeeded on every repeat. A question that needs a kind-of-room filter
+  *and* a cross-source comparison in one sentence succeeded about one time in seven.
+- **One answer fabricated alarms** the building does not hold; it came from an older path, which
+  version 1 had never reached on that question because it timed out first.
+- **The judges were a panel of language models**, not the pre-registered human reader — a
+  disclosed deviation. Their agreement was high (Fleiss' κ 0.885), but agreement among similar
+  raters shows consistency, not validity, so a human check of a subsample is still owed.
+
+Full report: [eval/compound/BEFORE_AFTER.md](./eval/compound/BEFORE_AFTER.md). Design and
+pre-registration: [tasks/V2_COMPOUND_PLAN.md](./tasks/V2_COMPOUND_PLAN.md).
+
+---
 
 ## Which questions can be answered — Stakeholder Guide
 
@@ -268,6 +426,33 @@ A `KnowledgeTopic` carries the short authoritative answer; when it also declares
 `ontosage:documentRef`, the long form is read from *that named document* rather than whichever
 chunk a vector search scores highest — so a policy question is answered deterministically from the
 document the ontology says governs it.
+
+### Questions about records the building keeps
+
+Alongside its sensors, a building keeps **registers**: bookings, timetabled sessions, maintenance
+and work orders, incidents and near misses, assets and their engineering profile, permits to work,
+cleaning tasks, AV readiness, contracts, warranties and more — dozens in the reference building.
+They are loaded as records in the ontology, so they answer in the same way as everything
+else and carry the same evidence panel.
+
+| Question | Answered from |
+|---|---|
+| "Which permits are open?" | the permit-to-work register |
+| "When was the CO2 sensor in Room 5.01 last calibrated?" | the sensor calibration records |
+| "Is the lift working?" | the lift state and asset status records |
+| "What is the nearest accessible toilet to room 3.10?" | the accessible-route register and amenity locations |
+| "Is Room 1.06 free for the next two hours?" | the booking and timetable records |
+
+### Compound questions
+
+These ask for several things at once. Reliability varies by shape, and the table says so.
+
+| Question | What it computes | Reliability |
+|---|---|---|
+| "Which floor has the most people right now?" | a total per floor, with the number of spaces behind each | consistent |
+| "Is CO2 higher in rooms during timetabled sessions than outside them?" | CO₂ during recorded sessions against outside them, per room, stated as co-occurrence | consistent |
+| "Which floor has the most meeting rooms?" | rooms counted by kind, read from their own labels | intermittent |
+| "Are any meeting rooms over their seating capacity right now?" | live occupancy against the declared seat count, per room | intermittent — about one in seven asks |
 
 ### Asking about OntoSage itself (no building data needed)
 
@@ -394,7 +579,8 @@ GRAPHDB_PASSWORD=CHANGE-ME-…                 →  your GraphDB password
 MYSQL_PASSWORD=CHANGE-ME-…                   →  your MySQL password
 POSTGRES_USER_PASSWORD=CHANGE-ME-…           →  your Postgres password
 ADMIN_PASSWORD=CHANGE-ME-…                   →  12+ characters
-OPENAI_API_KEY=                              →  your key, or leave blank for local Ollama
+HOSTED_LLM_API_KEY=…                         →  the gateway key (MODEL_PROVIDER=hosted, the default)
+OPENAI_API_KEY=                              →  your key if you use OpenAI; blank for hosted or local
 ```
 
 The real `.env` you create is gitignored and never committed — only the `*.example`
@@ -506,7 +692,8 @@ COMPOSE_PROJECT_NAME=ontosage_riverside               # keeps containers/volumes
 
 Also set real secrets — `STRICT_SECRETS=true` refuses to boot while any password is still a default:
 `MYSQL_PASSWORD`, `POSTGRES_USER_PASSWORD`, `GRAPHDB_PASSWORD`, `SECRET_KEY`, `PIPELINE_API_KEY`,
-plus `OPENAI_API_KEY` (or `MODEL_PROVIDER=local` with `OLLAMA_MODEL`).
+plus the key for your model provider (`HOSTED_LLM_API_KEY`, `OPENAI_API_KEY`, or
+`MODEL_PROVIDER=local` with `OLLAMA_MODEL`).
 
 ### Step 2 — Replace the building data in `input/`
 
@@ -943,6 +1130,12 @@ The **Role → Data-source access** matrix on the same tab controls which data s
 role may draw on when answering. A role left fully unticked is unrestricted (access
 control is opt-in), and changes apply immediately.
 
+> **Trial setting.** For the current QA trial every role is allowed every data source, so that
+> testers can try the whole building. The per-role lists are kept in a comment at the top of
+> the building's access file and **must be restored before any non-trial deployment**. What
+> still differs by role: `readonly` cannot control building systems or create alerts, and
+> someone signing in without an account is served as `readonly`.
+
 ### Role-aware answers in the chat UI
 
 Open WebUI authenticates to OntoSage with a single shared `PIPELINE_API_KEY`, so on its own
@@ -981,44 +1174,28 @@ TRUST_FORWARDED_USER=true    # apply each chat user's own role (see trust bounda
 
 ---
 
-## Tests
+## Tests and quality gates
 
-**981 deterministic tests pass, 8 skipped**, run in CI on Python 3.10/3.11/3.12.
-Skips are optional dependencies and fixtures that need an *active* building.
-The suite runs from a clean checkout with **no active building and no `.env`** — that is exactly what CI sees:
+Four gates, each answering a different question. They overlap without any one containing another,
+so more than one is needed.
+
+| Gate | The question it answers | How to run |
+|---|---|---|
+| **Fast offline suite** | Does anything that used to work now break? About 15,000 tests, needing no building, no `.env` and no running services — the state a fresh clone sees | `pytest -m unit -q` |
+| **CI parity** | Does exactly what GitHub Actions runs pass? It reads the file list from the CI workflow, so it cannot drift | `python scripts/run_ci_unit_tests.py` |
+| **Regression gate** | Do 51 fixed real questions still behave as recorded, against the running system? Run it **alone**: its verdicts are unreliable under load | `python scripts/regression_answerability.py --token <PIPELINE_API_KEY>` |
+| **Held-out hand reads** | Is it actually good, on questions nobody tuned it on? | see [ONTOSAGE.md §9](./ONTOSAGE.md) |
+
+**Before committing, the first two must both pass** in the parked state (no building active).
+They once disagreed: three CI tests failed for weeks behind a green fast suite, because most of the
+suite is selected by a marker and CI lists its files by hand. CI parity exists so that cannot
+happen again.
 
 ```bash
-pytest tests/ -m unit -q                       # fast offline suite (~60s)
-pytest tests/ -m integration -q                # needs running stack
-pytest tests/test_routing_accuracy.py -v       # 29 canonical routing cases
-pytest tests/test_admin_ontology_endpoints.py  # 13 admin endpoint tests
+pytest -m unit -q                              # fast offline suite
+python scripts/run_ci_unit_tests.py            # exactly what CI runs
+pytest -m integration -q                       # needs the running stack
 ```
-
-Key test files:
-
-| File | Tests | What it covers |
-|---|---|---|
-| `test_routing_accuracy.py` | 29 | All 20+ intents + 5 override scenarios + 4 audit invariants |
-| `test_routing_contract.py` | 51 | Every question-shape → intent rule, its precedence order, and a scan proving no building literals |
-| `test_survey_aligned_phases.py` | 64 | Capability KB + persona + workflow wiring |
-| `test_compound_query_e2e.py` | 17 | Multi-intent heuristic + decomposition |
-| `test_coreference_rewrite.py` | 16 | Follow-up query rewrite gate + LLM mock |
-| `test_grounding_guard.py` | 47 | Refusing unrelated passages; floor/space/equipment/measurand existence gate; verb-inflection matching; the "I don't hold that fact" caveat |
-| `test_referent_resolver.py` | 12 | Named zone/room existence gate + fail-open behaviour |
-| `test_absent_referent_metrics.py` | 18 | A count/reading question about a place the building lacks is declined, not answered with whole-building figures — even when the existence check itself times out |
-| `test_plausibility.py` | 11 | No confident verdict ("very strong") over a value outside every plausible range for its measurand |
-| `test_self_description.py` | 16 | "What is OntoSage / what can you do / how do you work" answered from live configuration as a building-agnostic framework — never invented, never claiming to be a bare LLM |
-| `test_ontology_inventory.py` | 18 | "What equipment / sensors does this building have" answered from the graph's own Brick classes |
-| `test_entity_label_resolution.py` | 12 | A sensor named in prose resolves to the one asked about, across two different naming conventions |
-| `test_data_query_bypass.py` | 4 | A reading question reaches the data path regardless of the measurand's wording |
-| `test_agents_building_agnostic.py` | 2 | A source scan proving no agent names a building in code |
-| `test_embedding_standardisation.py` | 14 | Retrieval floor and vector width derive from the loaded model, not a hardcoded constant |
-| `test_embedding_consistency.py` | 9 | Boot-time sweep drops any Qdrant collection built at a different width, for any building |
-| `test_document_indexer_hygiene.py` | 7 | Documents in any editor encoding are indexed; deleted-document folders are never treated as a building |
-| `test_admin_ontology_endpoints.py` | 13 | Admin portal endpoints, auth enforcement |
-| `test_forwarded_user_rbac.py` | 8 | Per-user RBAC through the shared-key proxy; header ignored when untrusted; placeholder stubs never shadow real accounts |
-| `test_admin_password_reset.py` | 5 | Argon2id reset, session revocation, minimum length, non-recoverability |
-| `test_ttl_validator.py` | 10 | TTL parse, prefix/namespace, SHACL gating |
 
 **Cross-building regression harness** — one command proves a change didn't break any building:
 
@@ -1035,13 +1212,34 @@ is recorded per building under `tasks/regression_baselines/`.
 
 **Live tests (needs running stack):**
 ```bash
-python scripts/corpus_replay.py --sample 240   # stratified 240-question replay (~63.8% pass)
+python scripts/corpus_replay.py --sample 240   # stratified replay of survey questions
 python scripts/ontosage_qa_suite.py --quick    # persona × intent QA battery
 ```
+
+**Before testing a change against the running system, flush all four caches** or you will be
+looking at an answer produced before the change: the response cache, the query-row cache, the
+routing-decision cache and the compiled-plan cache. The last survives a restart.
 
 ---
 
 ## What's new
+
+### Compound questions, evidence on every answer, and trial readiness (September – October 2026)
+
+| Change | Detail |
+|---|---|
+| **Compound-question reasoning (version 2)** | The multi-criteria ranking path now plans over the building's own *facets* — sensed quantities, register fields, ontology properties, events and spatial structure — instead of sensors alone. Five operations: select, compare measured against declared, group-aggregate-rank, compare two periods, relate a series to events. Evaluated in a pre-registered before/after; the headline result is a negative one (see [Measured quality](#measured-quality)) |
+| **Registers linked to rooms** | Every row of a document register is linked to the room and floor it describes when the register is loaded, so "which rooms…" can join a booking, a seat count and a sensor reading. What cannot be resolved to exactly one place is listed, never guessed |
+| **Evidence on every answer** | A *How I know this* panel states the kind of claim, the operation, the kind of source that led, labelled sources and the time of the evidence. Never a bare identifier |
+| **Typed absence and outcomes** | Every response envelope now reports whether the turn's machinery ran, and the lanes that know why they came back empty say which kind of nothing it was: "the building has no such thing", "no data for that period", "could not retrieve" or "not permitted". The generic decline wording does not yet carry a typed outcome, so a person or a script still has to read the prose for those |
+| **A deterministic routing contract** | 76 ordered, audited rules in three stages decide which question shape goes to which lane. Order is part of the contract and is pinned by tests |
+| **More lanes** | Events (bookings, work orders, footfall), compliance registers, asset state, reach ("can you measure X here?"), comfort history, readiness ("is this room ready for my class?"), indirect why-questions, conflicting stated facts, session recall, privacy refusal, and out-of-scope guidance — 42 intents in all |
+| **Follow-ups that point backwards** | *"The second one"*, *"that report"*, *"the two"*, *"I'm in room X"* and *"how do you know that?"* are resolved from the previous answer before classification |
+| **Honesty fixes found by reading answers** | A total is no longer an average (people per floor); water and room-air temperatures are no longer pooled; a decline about the model is no longer reported as a gap in the data; a sampling note no longer decorates an answer that contains no figure |
+| **One clock** | All stores hold UTC; answers display the building's local time |
+| **Hosted model gateway** | A third provider alongside local and OpenAI, with outage handling that tells the reader what happened |
+| **Process watchdog** | Memory and event-loop lag are logged every 30 seconds from a separate thread, so a wedged service can be told from an idle one |
+| **Quality gates and measurement discipline** | CI parity with the commit gate; a 51-question regression gate; hand-read held-out sets; pre-registered evaluation with a stated protocol deviation |
 
 ### Conversational vocabulary + schema-driven console (2026-07-17)
 
@@ -1182,24 +1380,35 @@ non-destructively (exit code 2 on a mismatch) if you prefer a scripted check.
 |---|---|---|
 | **[CLAUDE.md](./CLAUDE.md)** | AI assistants / contributors | **Read first.** Navigation index (file:symbol), current branch state, debugging patterns, workflow rules, open issues |
 | **README.md** (this file) | New users | Quickstart, stakeholder question guide, data setup, admin portal, RBAC |
-| **[ONTOSAGE.md](./ONTOSAGE.md)** | Operators + contributors | Complete technical reference — all architecture, phases, config surface, tests, known issues |
+| **[ONTOSAGE.md](./ONTOSAGE.md)** | Operators + contributors | Complete technical reference — architecture, grounding and evidence, compound questions, config surface, quality gates, known limitations |
 | **[docs/CAPABILITY_ROUTING.md](./docs/CAPABILITY_ROUTING.md)** | Contributors | Capability routing (TTL-first single path) + document-KB thresholds |
 | **[docs/RUNBOOK.md](./docs/RUNBOOK.md)** | Operators | Incident runbook — what to do when things break |
+| **[eval/compound/BEFORE_AFTER.md](./eval/compound/BEFORE_AFTER.md)** | Researchers, reviewers | The compound-question before/after result, with its protocol deviation stated first |
+| **[tasks/V2_COMPOUND_PLAN.md](./tasks/V2_COMPOUND_PLAN.md)** | Researchers | The version-2 design and the evaluation as pre-registered, then its result |
+| **[docs/READINESS_2026-09-19.md](./docs/READINESS_2026-09-19.md)** · **[docs/V12_SUPPORTED_SCOPE.md](./docs/V12_SUPPORTED_SCOPE.md)** | Researchers, operators | What is and is not supported, and how readiness was measured |
 | **[.claude/rules/](./.claude/rules/)** | Contributors | Style + agent + API + SPARQL patterns |
 
 **For AI-assisted code review or bug fixing:** read all three core files (`CLAUDE.md` → `README.md` → `ONTOSAGE.md`) before touching code. `CLAUDE.md`'s Navigation Index tells you exactly which file and symbol to open for any task — without it you'll spend tool calls searching.
 
 ---
 
-## Known issues
+## Known limitations
 
-| Issue | Status |
+Measured, current as of October 2026, and not softened.
+
+| Limitation | What it means for you |
 |---|---|
-| Maintenance agent "report broken light" | Open — returns generic fallback; workaround: be specific ("report broken light in room 3.01") |
-| Service-history questions | Open — "when was X last serviced?" may file a maintenance ticket instead of answering |
-| Related-but-partial answers | Open — a topical document may be returned without stating which specific fact (a date, a reading) is not held |
-| MySQL host mode | MySQL runs on the Docker host (`host.docker.internal:3306`, database `sensordb`); the Docker MySQL service in `docker-compose.yml` is commented out |
-| FLUSHDB wipes sessions | `redis-cli FLUSHDB` removes session tokens; users must log in again. Safe flush: target only `resp_cache:*` keys |
+| **False declines are the most common failure** | The building holds the data and the answer says it does not, or gives a generic "couldn't put an answer together". It was the dominant failure in every hand read, and 32 of 49 answers in the compound evaluation, in both versions. A decline is visible and harmless to trust, but it is a real loss of usefulness |
+| **Multi-criteria questions are only partly reliable** | A question needing a kind-of-room filter *and* a cross-source comparison in one sentence succeeds some of the time. The model's reading of such a sentence varies from one ask to the next. Single-criterion operations are consistent |
+| **One fabricated answer was observed** | In the compound evaluation, an alarm-correlation question was answered with air-quality alarms that the building's records do not contain. It is an open defect. None was found in six hand-read sets of about 60 unseen questions each |
+| **The reference building's own data disagrees with itself in places** | Floors 0–4 are synthetic (see above). Many declared room capacities are physically impossible, live people counts exceed stated capacities in many rooms, and the graph's idea of what some rooms are differs from the architect's drawings. Capacity-based answers inherit all of this |
+| **Speed and concurrency** | Median about 25 seconds, 90th percentile about 45, occasionally minutes. Built for one user at a time; simultaneous users queue |
+| **A model provider is a dependency** | The hosted gateway needs the Cardiff VPN and is shared; local needs a GPU. When the model is unreachable the answer says so |
+| **MySQL runs on the host** | The compose MySQL service is commented out; the orchestrator reaches the host on port 3306 |
+| **Redis `FLUSHDB` signs everyone out** | It removes session tokens, so users must log in again. To clear stale answers, delete only the four cache families, never the whole database |
+| **Trial access setting** | For the QA trial every role may draw on every data source. Restore the per-role lists before any other deployment (see [Security & RBAC](#security--rbac)) |
+
+The full, itemised defect log is `tasks/FIX_TRACKER.csv`.
 
 ---
 
