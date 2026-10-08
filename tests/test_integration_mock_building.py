@@ -71,7 +71,13 @@ class TestDialogueIntentDetection:
         # is deselected from the unit set.
         ("check for any anomaly in humidity sensors", "events"),
         ("compare zones 1 and 2 temperatures", "compare"),
-        ("what sensors do you have?", "discovery"),
+        # "What sensors do you have?" asks what the SYSTEM can observe, which is the reach lane
+        # (routing_contract.observability_query, V6-T10) -- pinned by
+        # test_what_data_do_you_collect_reaches_the_reach_lane::test_what_already_worked_still_works.
+        # This expectation predated that lane and asserted `discovery`; it went unnoticed because
+        # CI's integration job was skipped for weeks behind a failing unit job (CAVEAT-1481).
+        # Discovery itself stays covered by the "list all CO2 sensors" case above.
+        ("what sensors do you have?", "observability"),
     ]
 
     @pytest.mark.asyncio
