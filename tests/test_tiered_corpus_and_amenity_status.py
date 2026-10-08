@@ -17,7 +17,14 @@ import pytest
 pytestmark = pytest.mark.unit
 
 REPO = Path(__file__).resolve().parent.parent
-BANK = REPO / "tasks" / "smart_building_questions.csv"
+#: The bank's working copy (gitignored, present only locally) and its tracked, byte-identical
+#: twin. A fresh clone and CI have only the tracked one: every test below failed there with
+#: FileNotFoundError until 2026-10-08, when the commit gate was first run in a clean worktree.
+_BANKS = (
+    REPO / "tasks" / "smart_building_questions.csv",
+    REPO / "docs" / "smart_building_questions.csv",
+)
+BANK = next((p for p in _BANKS if p.is_file()), _BANKS[0])
 SCHEMA = REPO / "ontology" / "ontosage_schema.ttl"
 
 
