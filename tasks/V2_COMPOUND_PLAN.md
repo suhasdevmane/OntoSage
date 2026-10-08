@@ -240,6 +240,37 @@ failure*, which is the distinction the claim rests on.
 the final build. Same questions, same identity (`facility_manager`), same endpoint (`/v1`),
 caches flushed, fresh chat per question.
 
+**Provider failures — decided 2026-10-08, after the v1 capture and before any v2 answer exists.**
+The language model is a hosted gateway shared with other users, and it sometimes stops answering
+for a few seconds (`[hosted] gateway unreachable (ReadTimeout)` in the orchestrator log). A turn
+is *provider-failed* when its answer contains one of the five wordings the code emits only from
+the `except` around an LLM call — "couldn't summarise them against your question just now",
+"able to generate an answer just now", "The readings could not be summarised.", "language model
+this assistant uses is not responding", "language model that writes the summary is not
+responding" (the last two are CAVEAT-1409's, already in v1, shown when the model is known to be
+down) — or when its `ontosage_llm_degraded` names a cause other than `pipeline_timeout`. The
+list is matched as written, on both versions alike; v2 may only ADD a sentence after one of
+these, never reword one. **A pipeline timeout is the
+system's own failure and stays in every analysis** — it is what a slow design looks like to a
+reader. Counted on v1 from the capture records, without reading any held-out answer:
+**T-REAL 0 of 27, T-REAL-SUPPLEMENT 0 of 22, T-CAT 2 of 42** (C013 and C015, both within twelve
+seconds of a logged gateway timeout at 23:15:01 UTC). T-CAT's C037 is a 300 s pipeline timeout:
+v1's failure, kept. The primary analysis keeps every turn as captured — a reader would have seen
+it. A **sensitivity analysis** drops every item that is provider-failed in *either* version. v2
+is captured at the same concurrency (4) as v1, so neither version is given a quieter gateway by
+construction.
+
+**What else changes between v1 and v2, and how it is attributed.** v2 also carries fixes to v1
+defects found while building it (each a `tasks/FIX_TRACKER.csv` row dated after 2026-10-07 that
+names the v2 phase that found it). So that the comparison does not credit those to the compound
+architecture: (1) every v2 answer is attributed from its own capture record, without reading it
+— answered by the deliberation lane with facet criteria (architecture) or by a v1 lane (anything
+else); (2) an **ablation arm** — the v2 build with `ARBITER_FACETS_ENABLED=false` and
+`ARBITER_V2_ROUTING=off` — is captured on the primary set in the same session as v2. v1 → ablated
+isolates the incidental fixes; ablated → v2 isolates the architecture. The ablation answers enter
+the blinded read only if the reader chooses to read a third answer per item; otherwise the
+attribution in (1) is what the report states.
+
 **Scoring — one blinded hand read of all pairs, at the end.** For each item the two answers are
 shown in random order as X and Y; the reader does not know which system wrote which. One reader,
 one session, so reader drift cannot masquerade as improvement. Labels:
@@ -274,9 +305,18 @@ stay 0; the 51-case regression gate must stay 51/51 in substance.
   own bias; a second reader on a 20% subsample with Cohen's κ is the cheap fix if time allows.
 - **Model nondeterminism.** Each item is asked once per version. Plan-fingerprint stability on
   20 items × 3 asks bounds how much of any difference could be run-to-run variance.
+- **The building's data moves between the two captures.** v1 was captured on 2026-10-08; v2 is
+  captured days later, so "right now" and "yesterday" questions see different readings. The
+  rubric judges each answer on its own grounding (right facets, right operation, numbers that
+  come from the data it read), not against a fixed gold value, so a changed reading is not
+  scored as an error. Questions whose answer is a static record or TTL fact are unaffected.
 - **Test-set construction by the same project.** The sets were built by a separate agent under a
   written codebook before any v2 code; the codebook and the builder script are committed with
   them, so the selection can be audited and re-run.
+- **A shared, intermittently unavailable model.** See *Provider failures* above: the effect is
+  counted per version from the capture records and the log, and a sensitivity analysis removes it.
+- **v2 is more than the architecture.** See *What else changes* above: per-answer lane
+  attribution and an ablation arm separate the compound architecture from incidental fixes.
 
 ---
 

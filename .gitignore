@@ -259,6 +259,12 @@ deleted_backup_ext/
 # was added. Narrowed with a directory-scoped negation, not a rewording of the pattern
 # itself, so every OTHER *_backup.* match (actual backup files, anywhere else) is unchanged.
 !tests/*_backup.*
+# ...and it swallowed orchestrator/services/auto_backup.py, the automatic-backup service itself,
+# from 2026-10-06 (commit 0b49250 shipped its test and not the module) to 2026-10-08: main.py and
+# tests/test_auto_backup.py import it, so every fresh clone failed to collect that test and
+# silently lost the feature. Named exactly, so a real copy such as sparql_agent_backup.py stays
+# ignored; tests/test_imported_modules_are_not_gitignored.py fails if the rule takes another.
+!orchestrator/services/auto_backup.py
 *_old.*
 *.orig
 
@@ -319,6 +325,10 @@ input/.trash/
 
 # Per-run QA suite results (timestamped, local only)
 results/
+# ...except the compound-question evaluation's captured answers: they are the before/after
+# evidence the thesis comparison rests on (tasks/V2_COMPOUND_PLAN.md section 5), and the generic
+# rule above would have dropped every one of them from the evidence commit without a word.
+!eval/compound/results/
 
 # ── Parked alternate-building inputs (single-building deployment: bldg1 active) ──
 # archive/buildings/ holds bldg2 (+ example) for the future swap/portability test.

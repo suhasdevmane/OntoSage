@@ -1,0 +1,13 @@
+{
+  "set": "eval\\compound\\dev_samples\\DEV-40-s1.jsonl",
+  "version": "v1",
+  "git_head": "8965cd1974b921dc39ddd61b09f75ef0debc9b64",
+  "identity": "facility01@example.com",
+  "endpoint": "/v1/chat/completions (non-streamed)",
+  "concurrency": 4,
+  "timeout_s": 600.0,
+  "started_utc": "2026-10-08T00:38:59+00:00",
+  "items": 40,
+  "finished_utc": "2026-10-08T00:43:11+00:00",
+  "errors": 0
+}
