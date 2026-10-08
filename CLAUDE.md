@@ -7,14 +7,11 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 ## New session orientation (read this first)
 
-**Current branch:** `development` — last commit before this one was `ab6c081` (2026-10-02,
-*"fix(readiness): mechanism questions reach the building's own topics..."*). **This line said
-`e0c14ae` (2026-09-25) until 2026-10-04, which was a week and six days of accumulated work
-stale — `git log --oneline -3` settles it in one second, so read it rather than this
-sentence.** Everything from 2026-09-26 to 2026-10-04 inclusive — the whole QA-trial plan and
-trial-readiness plan push, D4/E2/E4/H3 and BUG-1441 among the last of it — is in the commit
-(`39c05c9`) this line was last updated by. **Never commit or push without the user's explicit
-approval.**
+**Current branch:** `development` — the last commits before this one are `8965cd1` (tag
+`v1.0-demo`, the "before" system for the v2 comparison) and `673f56b` (v1's captured answers and
+the pre-registered evaluation rules). **`git log --oneline -3` settles it in one second, so read
+it rather than this sentence** — it went stale twice before. **Never commit or push without the
+user's explicit approval.**
 
 **Three files every session must read** (in order):
 1. `CLAUDE.md` (this file) — navigation index, debugging, workflow rules
@@ -29,7 +26,29 @@ approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **LATEST (2026-10-04, trial-readiness plan continued and PUSHED — commit `39c05c9` on
+- **LATEST (2026-10-08) — v2: compound, multi-criteria questions. READ
+  [`tasks/V2_COMPOUND_PLAN.md`](./tasks/V2_COMPOUND_PLAN.md) sections 5 and 8 FIRST.** v1 is
+  frozen as tag `v1.0-demo` with its answers to the sealed held-out sets in
+  `eval/compound/results/v1/`. **The held-out sets (`eval/compound/T-REAL*.jsonl`, `T-CAT.jsonl`,
+  `LABELS.json`) are SEALED until the user's blinded read: never open, grep or print them, and
+  never print a question from `docs/smart_building_questions.csv` or the survey corpus that a
+  routing scan matches — counts only (`HELDOUT_HASHES.txt` excludes exact copies, not
+  paraphrases).** Develop on `eval/compound/DEV.jsonl` and hand-written probes only.
+  **What v2 is:** ARBITER generalised from sensed modalities to the building's FACETS — record
+  rows linked to spaces at lift time (P1), a facet catalogue derived from the graph (400 for
+  bldg1), a space-kind facet from labels + Brick classes, a typed plan over facets, operations
+  C1 select / C2 measured-vs-declared / C3 group→aggregate→rank / C4 periods / C5 series vs
+  events or series, and routing (`ARBITER_V2_ROUTING=off|shadow|live`, code default shadow)
+  that escalates ONLY what v1 gets wrong. `ARBITER_FACETS_ENABLED=false` + routing off is the
+  ablation arm. **Live and measured:** gate 51/51 in substance with routing live; "which floor
+  has the most people" → a total per floor (v1 averaged per sensor, BUG-1464); "meeting rooms
+  over seating capacity", "seminar rooms over stated capacity", "CO2 during timetabled sessions"
+  (968 vs 795 ppm, 40 rooms, "co-occur, not cause"), "temperature after bookings end",
+  "occupancy vs CO2 correlation" all answered with n and coverage. **The hosted gateway
+  (10.98.84.2) drops out for seconds or longer** (CAVEAT-1459): a provider failure is NOT the
+  system — the pre-registered definition is in plan section 5, and `scripts/attribute_answers.py`
+  applies it without reading answers. Rows BUG-1458..1474, CAVEAT-1459/1475.
+- **(2026-10-04, trial-readiness plan continued and PUSHED — commit `39c05c9` on
   `development`) — of the 77-row plan: 35 DONE, 10 PARTIAL (each honestly scoped), 4
   INVESTIGATED_NOT_IMPLEMENTED (their own stated premise didn't survive contact with the live
   code — see each row's Notes), 2 DEFERRED by the plan's own design, 26 TODO. SUITE **14,389
@@ -1187,7 +1206,11 @@ approval.**
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**68** parse-stage + 2 post-stage + 5 concept-stage ordered rules — `door_records_question`
+  (**68** parse-stage + 2 post-stage + **6** concept-stage ordered rules — printed FROM THE MODULE
+  2026-10-08 after v2 P6 appended `compound_facets_to_deliberate` LAST in the concept stage
+  (shadow by default, `ARBITER_V2_ROUTING`; pinned by
+  `test_routing_contract.py::test_concept_stage_precedence_is_pinned`);
+  `door_records_question`
   (BUG-1429) and `comfort_history_not_readiness` (BUG-1450) appended 2026-10-07, counted FROM
   THE MODULE immediately after adding them — this line said **66** for three days, which is the
   EIGHTH time it has gone stale, which is the argument for printing it rather than reading it;

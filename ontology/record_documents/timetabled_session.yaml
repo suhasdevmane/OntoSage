@@ -36,10 +36,12 @@ columns:
     required: true
   room:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   floor:
     predicate: ontosage:onFloor
+    link: on_floor
     datatype: xsd:string
   session_date:
     predicate: ontosage:effectiveDate

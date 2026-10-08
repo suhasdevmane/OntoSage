@@ -33,6 +33,7 @@ columns:
     required: true
   location:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   control:

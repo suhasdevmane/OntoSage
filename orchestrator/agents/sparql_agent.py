@@ -372,8 +372,15 @@ Your Answer:"""
 
         except Exception as e:
             logger.error(f"LLM reasoning error: {e}")
+            # Never the exception's own text: "...had trouble interpreting it: ReadTimeout:"
+            # reached a reader on 2026-10-08 (DEV S045). services/reader_text.py has the wording.
+            from orchestrator.services.reader_text import model_failure_sentence
+
             return {
-                "text": f"I found relevant ontology data but had trouble interpreting it: {str(e)}",
+                "text": model_failure_sentence(
+                    "I found relevant parts of the building model but could not turn them into "
+                    "an answer just now."
+                ),
                 "confidence": "low",
             }
 
@@ -1361,6 +1368,7 @@ Your Answer:"""
                 query,
                 True,
                 row_limit=40,
+                question=user_query,  # BUG-1460: templates read the question, not guidance
             ),
             "standardized": self._standardize_results(results, user_query, query),
             "context": [],
@@ -1481,6 +1489,11 @@ Your Answer:"""
         # checked there; guessing it here only produced a confident wrong answer about how
         # big something was going to be.
         tokens = self._scope_tokens(user_query) or self._measurand_tokens(user_query)
+        # The lifter's entity links (ontosage:locatedInSpace, onFloorEntity, ...) are join keys,
+        # not fields: the text beside each says the same thing in words. Handed over, every row
+        # would carry a bare IRI, cost prompt budget, and match a scope token against the
+        # namespace host rather than anything the record says.
+        from orchestrator.services.record_entity_links import exclude_link_predicates
 
         def _scope_clause() -> str:
             if not tokens:
@@ -1493,6 +1506,7 @@ Your Answer:"""
                 "    SELECT DISTINCT ?record WHERE {\n"
                 f"      ?record a ontosage:{record.local_name} ; ?sp ?sv .\n"
                 f"      FILTER({clauses})\n"
+                f"      {exclude_link_predicates('?sp')}\n"
                 f"    }} LIMIT {self.MAX_RECORD_ROWS}\n"
                 "  }\n"
             )
@@ -1507,6 +1521,7 @@ Your Answer:"""
                 + scope_filter
                 + f"  ?record a ontosage:{which.local_name} ; ?p ?v .\n"
                 "  FILTER(?p != rdf:type)\n"
+                f"  {exclude_link_predicates('?p')}\n"
                 f"}} ORDER BY ?record LIMIT {self.MAX_RECORD_ROWS * 25}"
             )
 
@@ -1871,7 +1886,12 @@ Your Answer:"""
             logger.warning(f"[sparql] projected answer skipped: {type(exc).__name__}: {exc}")
         _narration = _rows_answer or strip_leaked_code_line(
             await self._format_results(
-                results, guidance, query, True, row_limit=self.MAX_RECORD_ROWS * 2
+                results,
+                guidance,
+                query,
+                True,
+                row_limit=self.MAX_RECORD_ROWS * 2,
+                question=user_query,  # BUG-1460: templates read the question, not guidance
             )
         )
         try:  # BUG-589: completeness of an overdue answer is not left to the narration
@@ -1941,6 +1961,7 @@ Your Answer:"""
         answer or None, and None leaves the scoped path exactly as it was.
         """
         from orchestrator.services import register_projection as rp
+        from orchestrator.services.record_entity_links import exclude_link_predicates
         from orchestrator.services.requested_interval import building_local_now
 
         if not (0 < record.instances <= self.MAX_PROJECTED_RECORDS):
@@ -1949,12 +1970,15 @@ Your Answer:"""
         if prep.reader or not rp.question_shape(prep.core, prep.list_hint):
             return None  # a question no lookup answers: do not pay for the fetch
         limit = record.instances * 40  # a lifted record carries ~15-25 predicates
+        # Entity links are join keys, not fields: a floor link beside the floor text would give
+        # the projection two "floor" columns to choose between, one of them an IRI.
         query = (
             "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
             "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
             "SELECT ?record ?p ?v WHERE {\n"
             f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
             "  FILTER(?p != rdf:type)\n"
+            f"  {exclude_link_predicates('?p')}\n"
             f"}} ORDER BY ?record LIMIT {limit}"
         )
         try:
@@ -2010,6 +2034,7 @@ Your Answer:"""
         record under a heading it does not belong to, which is worse than the fallback.
         """
         from orchestrator.services import register_projection as rp
+        from orchestrator.services.record_entity_links import exclude_link_predicates
 
         words = rp.grouping_words(user_query)
         if not words:
@@ -2017,11 +2042,14 @@ Your Answer:"""
         clauses = " || ".join(
             f'CONTAINS(LCASE(STR(?p)), "{self._escape_literal(w.lower())}")' for w in words
         )
+        # Without the exclusion, "which floors have ..." matches onFloor AND onFloorEntity, and
+        # the exactly-one-field rule below would then decline a grouping the text alone answers.
         query = (
             "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
             "SELECT ?p ?v (COUNT(DISTINCT ?record) AS ?n) WHERE {\n"
             f"  ?record a ontosage:{record.local_name} ; ?p ?v .\n"
             f"  FILTER({clauses})\n"
+            f"  {exclude_link_predicates('?p')}\n"
             "} GROUP BY ?p ?v ORDER BY DESC(?n) LIMIT 400"
         )
         try:
@@ -5097,12 +5125,17 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
         sparql_query: str,
         used_template: bool,
         row_limit: Optional[int] = None,
+        question: Optional[str] = None,
     ) -> str:
         """Format SPARQL results into natural language.
 
         ``row_limit`` overrides the default cap on how many rows reach the prompt. The
         deterministic register handover passes one, because its whole purpose is that the
         model sees the WHOLE register — and it was not.
+
+        ``question`` is the user's own question, for callers whose ``user_query`` is not: the
+        register and metrology answers pass their GUIDANCE there, so the narration prompt embeds
+        it. Every special-case template below is decided on the question (BUG-1460).
         """
 
         bindings = results.get("results", {}).get("bindings", [])
@@ -5137,9 +5170,17 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
         # rows are labelled here instead, so it no longer depends on that.
         bindings = await self._label_bare_subjects(bindings)
 
+        # THE TEMPLATES BELOW ARE DECIDED ON THE QUESTION, NEVER ON THE GUIDANCE (BUG-1460).
+        # The register lane passes its instructions in `user_query`, and they always say "this
+        # building holds" while its counted facts say "named" -- so every register answer whose
+        # scoped fetch returned ONE row was replaced by "The building name is: **<that row>**".
+        # Measured, DEV D024: a luminaire question answered "The building name is: **Fire
+        # service liaison**". A '#' in the facts fired the label/definition template the same way.
+        asked = question if question is not None else user_query
+        uq = asked.lower()
+
         # Special formatting for label+definition queries
-        uq = user_query.lower()
-        if ("label" in uq and "definition" in uq) or ("#" in user_query):
+        if ("label" in uq and "definition" in uq) or ("#" in asked):
             # Format as: "Label: X, Definition: Y"
             if len(bindings) == 1:
                 b = bindings[0]
@@ -5187,10 +5228,7 @@ SELECT DISTINCT ?sensor ?location ?uuid WHERE {{
         result_text = f"Found {len(bindings)} result(s):\n\n"
 
         # Check if user wants all results
-        user_query_lower = user_query.lower()
-        show_all = any(
-            k in user_query_lower for k in ["all", "complete", "full", "everything", "list"]
-        )
+        show_all = any(k in uq for k in ["all", "complete", "full", "everything", "list"])
 
         # Set limit based on user intent (default 10, but higher if "all" requested)
         # Cap at 100 to prevent context window overflow.
@@ -5778,11 +5816,26 @@ Generate your response now:"""
             detail = ", ".join(x for x in (source, status) if x)
             shown.append(f"- {name}" + (f" ({detail})" if detail else ""))
         more = f"\n- …and {len(bindings) - 15} more" if len(bindings) > 15 else ""
+        # CAVEAT-1459: say WHY when the model is the problem. The first sentence is kept word
+        # for word -- the compound evaluation's pre-registered provider-failure marker matches
+        # it -- and the reason is ADDED after it.
+        from orchestrator.services.circuit_breaker import model_is_unavailable
+
+        why = (
+            " The language model that writes the summary is not responding at the moment; "
+            "this is not a gap in the building's records, and the same question should work "
+            "once it is back."
+            if model_is_unavailable()
+            else ""
+        )
         return (
             f"I found **{len(bindings)} records** that bear on this, but I couldn't summarise "
-            "them against your question just now, so I haven't drawn a conclusion from them. "
-            "The records are:\n" + "\n".join(shown) + more + "\n\nAsk about one of them, or "
-            "narrow the question, and I can answer from its detail."
+            "them against your question just now, so I haven't drawn a conclusion from them."
+            + why
+            + " The records are:\n"
+            + "\n".join(shown)
+            + more
+            + "\n\nAsk about one of them, or narrow the question, and I can answer from its detail."
         )
 
     def _clean_uri_output(self, result_text: str) -> str:

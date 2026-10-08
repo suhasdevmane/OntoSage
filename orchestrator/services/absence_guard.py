@@ -107,6 +107,14 @@ _SCOPED_ABSENCE_RE = re.compile(
 #: the list read as part of the sentence above it.
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+|\n+")
 
+#: A PARENTHESIS ANNOTATES THE ITEM BEFORE IT. "Room 1.04 — Common Area / Atrium (no occupancy
+#: sensor)" says one room has none; it is not a claim about the building. Measured live,
+#: 2026-10-08: a correct per-floor total of occupancy (Floor 5, 87.67 people over 46 spaces) was
+#: replaced by "this building does have 270 occupancy sensor(s)" because of exactly that note on
+#: the one room it could not count. Parentheses are removed before matching, so the claim this
+#: guard exists for -- a bare sentence that the building lacks a class -- is still caught.
+_PARENTHESIS_RE = re.compile(r"\([^()]{0,120}\)")
+
 
 def detect_absence_claim(text: str) -> Optional[str]:
     """Return the modality an answer claims the building lacks, else None.
@@ -140,6 +148,12 @@ def detect_absence_claim(text: str) -> Optional[str]:
             for pat in _ABSENCE_PATTERNS:
                 rx = re.compile(pat.replace("{m}", token))
                 for sentence in _SENTENCE_SPLIT_RE.split(low):
+                    if sentence.lstrip().startswith("|"):
+                        # A TABLE ROW describes its own item, never the building: the C5 evidence
+                        # table's row for the one room without an occupancy sensor read "no
+                        # occupancy sensor", and a 40-room correlation was replaced (2026-10-08).
+                        continue
+                    sentence = _PARENTHESIS_RE.sub(" ", sentence)
                     if rx.search(sentence) and not _SCOPED_ABSENCE_RE.search(sentence):
                         return modality
     return None

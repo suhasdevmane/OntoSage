@@ -25,6 +25,7 @@ columns:
     datatype: xsd:date
   area:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
   status:
     predicate: ontosage:recordStatus

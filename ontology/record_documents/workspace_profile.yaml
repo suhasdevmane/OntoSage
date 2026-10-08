@@ -43,10 +43,12 @@ columns:
     # Must name a room the building actually has. A workspace profile for an invented room
     # is the fabrication the referent gate exists to stop, arriving through the data.
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   floor:
     predicate: ontosage:onFloor
+    link: on_floor
     datatype: xsd:string
     required: true
   kind:

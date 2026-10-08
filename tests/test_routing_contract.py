@@ -234,7 +234,7 @@ def test_post_stage_preserves_analytics_flag():
 
 
 def test_rule_names_unique_and_documented():
-    rules = rc.PARSE_STAGE_RULES + rc.POST_STAGE_RULES
+    rules = rc.PARSE_STAGE_RULES + rc.POST_STAGE_RULES + rc.CONCEPT_STAGE_RULES
     names = [r.name for r in rules]
     assert len(names) == len(set(names))
     assert all(r.shape.strip() for r in rules)
@@ -968,6 +968,12 @@ def test_concept_stage_precedence_is_pinned():
         # passed its offline tests — which supplied the concepts — and never fired once on a
         # live turn, because the context it read was empty there.
         "one_quantity_judged_against_another",
+        # v2 P6 (2026-10-08): LAST in the LAST stage. The concept stage is the only one every
+        # question reaches — the held-record and amenity-triple short-circuits return before the
+        # parse stage — and last because it only escalates from single-facet lanes, deferring to
+        # every shape another rule owns by testing that rule's own predicate (nothing after it
+        # can take a question back). Shadow by default (ARBITER_V2_ROUTING).
+        "compound_facets_to_deliberate",
     ]
 
 

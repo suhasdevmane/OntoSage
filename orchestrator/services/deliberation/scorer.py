@@ -101,6 +101,24 @@ class CriterionScore:
     weight: float
     citation: str = ""
     note: str = ""  # e.g. 'no data — criterion skipped, weights renormalized'
+    #: v2 — for a facet criterion: what the reader is shown ("seat count: 16") and where the
+    #: value came from ("WorkspaceProfile WS-07"). Empty for a sensed criterion.
+    display: str = ""
+    provenance: str = ""
+
+
+@dataclass
+class FacetScore:
+    """v2 — one facet criterion's contribution to one candidate (computed by the executor).
+
+    ``score.utility`` is None when the value is not recorded: a soft criterion is then
+    renormalised away like a sensor gap, and a HARD one leaves the candidate in the ranking
+    but below every candidate verified on it, never presented as met.
+    """
+
+    score: CriterionScore
+    hard: bool = False
+    label: str = ""
 
 
 @dataclass
@@ -115,6 +133,11 @@ class ScoredCandidate:
     rank: Optional[int] = None
     excluded_reason: Optional[str] = None
     data_gaps: List[str] = field(default_factory=list)
+    #: v2 — soft facet criteria with no recorded value for this space (reader labels).
+    facet_gaps: List[str] = field(default_factory=list)
+    #: v2 — HARD facet criteria with no recorded value: the space is kept, flagged and ranked
+    #: below every space verified on them.
+    unverified_hard: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -227,8 +250,12 @@ def score_candidates(
     proximity_weight: float = 1.0,
     provenance: Optional[Dict[str, Dict[str, Any]]] = None,
     evidence_mode: str = "operational",
+    facet_scores: Optional[Dict[str, List[FacetScore]]] = None,
 ) -> ScoreResult:
     """Deterministic rank. `values` comes from the executor's aggregation — code, not LLM.
+
+    v2: ``facet_scores`` (space_iri -> facet contributions, built by the executor from the
+    facet checks) join the weighted sum beside the sensed criteria. Omitted, nothing changes.
 
     `provenance` maps space_iri -> {modality: ProvenanceVerdict} and is what makes V12-04
     possible: until it existed this function had ZERO occurrences of `simulated`,
@@ -382,11 +409,26 @@ def score_candidates(
             sc.criteria.append(CriterionScore(c.modality, v, u, c.weight, anchor.citation))
             weighted_sum += u * c.weight
             weights_total += c.weight
+        for fs in (facet_scores or {}).get(cand.space_iri, []):
+            sc.criteria.append(fs.score)
+            if fs.score.utility is None:
+                (sc.unverified_hard if fs.hard else sc.facet_gaps).append(
+                    fs.label or fs.score.modality
+                )
+                continue
+            weighted_sum += fs.score.utility * fs.score.weight
+            weights_total += fs.score.weight
         if want_proximity and sc.proximity_m is not None:
             sc.proximity_utility = 1.0 if max_d <= 0 else _clamp01(1.0 - sc.proximity_m / max_d)
             weighted_sum += sc.proximity_utility * proximity_weight
             weights_total += proximity_weight
         if weights_total <= 0:
+            if sc.unverified_hard or sc.facet_gaps:
+                # v2: nothing about this space could be checked, which is not a reason to hide
+                # it -- it stays, last, flagged with exactly what was not recorded.
+                sc.total = 0.0
+                scored.append(sc)
+                continue
             sc.excluded_reason = "no scorable data on any criterion"
             excluded.append(sc)
             continue
@@ -413,7 +455,19 @@ def score_candidates(
     # rooms measured on all five. A room is ranked against the rooms that answer the same
     # question; those with an unmeasured criterion follow, still ordered by score among
     # themselves, and each row keeps its "no data" note.
-    scored.sort(key=lambda s: (len(s.data_gaps), -(s.total or 0.0), _raw_key(s), s.label))
+    #
+    # v2 adds one key IN FRONT: a space whose HARD facet criterion could not be checked ranks
+    # below every space verified on it. Both new lists are empty for a v1 plan, so this sort is
+    # then exactly the one above it in history.
+    scored.sort(
+        key=lambda s: (
+            len(s.unverified_hard),
+            len(s.data_gaps) + len(s.facet_gaps),
+            -(s.total or 0.0),
+            _raw_key(s),
+            s.label,
+        )
+    )
     for i, s in enumerate(scored, 1):
         s.rank = i
 
@@ -426,7 +480,13 @@ def score_candidates(
     )
     if len(scored) >= 2:
         result.top1_stable_under_weight_perturbation = _top1_stable(
-            cqir, candidates, values, anchors, proximity_weight, scored[0].space_iri
+            cqir,
+            candidates,
+            values,
+            anchors,
+            proximity_weight,
+            scored[0].space_iri,
+            facet_scores=facet_scores,
         )
     logger.info(
         f"[scorer] mode={evidence_mode} ranked {len(scored)}, excluded {len(excluded)}"
@@ -443,8 +503,14 @@ def score_candidates(
     return result
 
 
-def _top1_stable(cqir, candidates, values, anchors, proximity_weight, top_iri) -> bool:
-    """Does the winner survive every single-weight ±25% perturbation?"""
+def _top1_stable(
+    cqir, candidates, values, anchors, proximity_weight, top_iri, facet_scores=None
+) -> bool:
+    """Does the winner survive every single-weight ±25% perturbation?
+
+    v2: the facet criteria's weights are perturbed too, one at a time, so a winner carried by
+    a recorded fact is tested exactly as one carried by a reading.
+    """
     for idx in range(len(cqir.constraints)):
         for factor in (0.75, 1.25):
             perturbed = (
@@ -452,13 +518,25 @@ def _top1_stable(cqir, candidates, values, anchors, proximity_weight, top_iri) -
             )
             perturbed.constraints[idx].weight = cqir.constraints[idx].weight * factor
             # single-pass rescore (no recursion back into the sensitivity check)
-            res = _plain_rank(perturbed, candidates, values, anchors, proximity_weight)
+            res = _plain_rank(
+                perturbed, candidates, values, anchors, proximity_weight, facet_scores
+            )
+            if res and res[0] != top_iri:
+                return False
+    n_facets = max((len(v) for v in (facet_scores or {}).values()), default=0)
+    for j in range(n_facets):
+        for factor in (0.75, 1.25):
+            res = _plain_rank(
+                cqir, candidates, values, anchors, proximity_weight, facet_scores, (j, factor)
+            )
             if res and res[0] != top_iri:
                 return False
     return True
 
 
-def _plain_rank(cqir, candidates, values, anchors, proximity_weight) -> List[str]:
+def _plain_rank(
+    cqir, candidates, values, anchors, proximity_weight, facet_scores=None, facet_factor=None
+) -> List[str]:
     """Rank IRIs without the sensitivity pass (helper for _top1_stable)."""
     hard = [c for c in cqir.constraints if c.hardness == Hardness.HARD]
     soft = [c for c in cqir.constraints if c.hardness == Hardness.SOFT]
@@ -489,11 +567,23 @@ def _plain_rank(cqir, candidates, values, anchors, proximity_weight) -> List[str
             anchor = anchors.get(c.modality, ScoreAnchor(0.0, 1.0))
             total += _utility(c, v, anchor) * c.weight
             wsum += c.weight
+        unverified = 0
+        for j, fs in enumerate((facet_scores or {}).get(cand.space_iri, [])):
+            if fs.score.utility is None:
+                unverified += 1 if fs.hard else 0
+                continue
+            w = fs.score.weight
+            if facet_factor is not None and facet_factor[0] == j:
+                w *= facet_factor[1]
+            total += fs.score.utility * w
+            wsum += w
         if want_proximity and cand.distance_to_anchor_m is not None:
             pu = 1.0 if max_d <= 0 else _clamp01(1.0 - cand.distance_to_anchor_m / max_d)
             total += pu * proximity_weight
             wsum += proximity_weight
         if wsum > 0:
-            rows.append((-(total / wsum), cand.label, cand.space_iri))
+            row = (-(total / wsum), cand.label, cand.space_iri)
+            # v2: the unverified-hard count leads, as in score_candidates; a v1 row is unchanged.
+            rows.append((unverified,) + row if facet_scores is not None else row)
     rows.sort()
-    return [iri for _, _, iri in rows]
+    return [row[-1] for row in rows]

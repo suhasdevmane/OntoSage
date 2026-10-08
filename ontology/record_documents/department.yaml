@@ -47,6 +47,7 @@ columns:
     required: true
   based_at:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
   coverage_hours:
     predicate: ontosage:openingHours

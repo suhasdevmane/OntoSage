@@ -93,11 +93,19 @@ async def _ask(
 ) -> Dict[str, Any]:
     async with sem:
         started = time.time()
-        row: Dict[str, Any] = {"id": item["id"]}
+        # The chat id and start time tie a turn to its own lines in the orchestrator log, so a
+        # provider failure can be attributed to the turn it hit (added after the v1 capture,
+        # which has neither; see tasks/V2_COMPOUND_PLAN.md section 5, "Provider failures").
+        chat_id = f"compound-eval-{uuid.uuid4()}"
+        row: Dict[str, Any] = {
+            "id": item["id"],
+            "chat_id": chat_id,
+            "started_utc": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
         try:
             resp = await client.post(
                 "http://127.0.0.1:8000/v1/chat/completions",
-                headers={**headers, "X-Chat-Id": f"compound-eval-{uuid.uuid4()}"},
+                headers={**headers, "X-Chat-Id": chat_id},
                 json={
                     "model": "ontosage",
                     "messages": [{"role": "user", "content": item["question"]}],

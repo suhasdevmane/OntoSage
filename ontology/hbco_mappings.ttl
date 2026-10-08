@@ -382,6 +382,9 @@ hbco:crowded rdf:type hbco:Concept ,
     hbco:conceptId "crowded"^^xsd:string ;
     skos:prefLabel "crowded"@en ;
     hbco:layTerm "crowded"^^xsd:string ;
+    hbco:layTerm "crowd"^^xsd:string ;
+    hbco:layTerm "crowds"^^xsd:string ;
+    hbco:layTerm "crowding"^^xsd:string ;
     hbco:layTerm "packed"^^xsd:string ;
     hbco:layTerm "too many people"^^xsd:string ;
     hbco:layTerm "congested"^^xsd:string ;

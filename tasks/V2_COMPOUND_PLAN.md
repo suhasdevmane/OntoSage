@@ -315,6 +315,11 @@ stay 0; the 51-case regression gate must stay 51/51 in substance.
   them, so the selection can be audited and re-run.
 - **A shared, intermittently unavailable model.** See *Provider failures* above: the effect is
   counted per version from the capture records and the log, and a sensitivity analysis removes it.
+- **Blinding hides the label, not the style.** v2's operation answers have a recognisable layout
+  (a table with an n per group, "Counted only where …"), so a reader may guess which system wrote
+  an answer. The rubric scores what an answer establishes — the right facets and operation, every
+  figure grounded, gaps named — not how it is laid out, and the reader is asked to score each
+  answer on its own before comparing the pair.
 - **v2 is more than the architecture.** See *What else changes* above: per-answer lane
   attribution and an ablation arm separate the compound architecture from incidental fixes.
 
@@ -346,3 +351,41 @@ stay 0; the 51-case regression gate must stay 51/51 in substance.
 **What this plan deliberately does not do:** replace the router with an LLM; adopt an external
 agent runtime for serving; let the model write queries on the v2 path; claim causes from
 correlations; or quote any number that did not come from the blinded read.
+
+---
+
+## 8. v2 as built (2026-10-08) — what the "after" system contains
+
+Developed against DEV and hand-written probes only; no held-out item was read. Each piece is
+off with its flag (`ARBITER_FACETS_ENABLED=false`, `ARBITER_V2_ROUTING=off` — the ablation arm).
+
+| Piece | Where | What it does |
+|---|---|---|
+| P1 entity links | `record_entity_links.py`, Module R.11 of `ontosage_schema.ttl`, `link:` keys in 22 mappings | a register row's place text becomes an IRI link to the space/floor at lift time; unresolved values are listed, never guessed (bldg1: 883 record→space, 786 record→floor) |
+| P2 facet catalogue | `deliberation/facets.py` | 395 facets for bldg1 derived from its own graph (sensor, record, TTL, event, spatial), each on the availability ladder declared → linked → populated → suitable |
+| Space kind facet | `deliberation/space_kinds.py` | every space's kind from its own label and Brick classes, so "meeting rooms" selects the ten rooms labelled so (BUG-1469) |
+| P3 facet IR + compiler | `cqir.py`, `compiler.py` | the question compiles to a typed plan over facets; bounded inspection (≤ 2 recompiles); field names and statistics checked in code (BUG-1467, BUG-1468) |
+| P4 operations | `operations.py`, `plan_executor.py`, `facet_resolvers.py` | C1 selection over facets; C3 group → aggregate → rank (sum for amounts, mean for levels, range/stdev, n per group); C2 measured vs declared (unit-checked ratio/difference/exceeds); C4 two periods read whole |
+| C5 relation | `event_sources.py`, `operations.py`, `plan_executor.py` | a measured series against recorded events (during / after a lag / while a state holds) or against a second series (correlation of aligned 15–60-minute means, per space and pooled), reduced in the store; every figure with its n; "co-occur, not cause" stated. Event sources are discovered from the graph: bldg1 has 675 timetabled sessions in 44 rooms, 16 bookings, 17 public events, access and alarm events |
+| Compile robustness | `compiler.py` | a comparison written as a constraint is lifted into the comparison (BUG-1472); a time budget on the inspection recompile (BUG-1470); a low-effort retry when the reasoning model returns nothing (BUG-1471) |
+| P6 routing | `facet_routing.py`, `routing_contract._r_compound_facets_to_deliberate` | escalates a selection on ≥ 2 sources (C1) or an operation no v1 lane computes (C3 additive / room kind / dispersion / counted spaces; C2 measured vs declared); leaves levels-per-floor and two-period questions to v1, which answers them |
+
+**Incidental fixes in v2 (attributed separately, section 5):** BUG-1460 (a one-row register answer
+announced as the building's name), BUG-1461 (discovery output bounded), CAVEAT-1459 (a gateway
+outage named to the reader, and a call made in a brief outage waits it out once), BUG-1465
+(absence guard and a per-room note or table row), BUG-1466 (numeric guard and the renderer's own
+count), BUG-1473 (an exception's text never shown), and the deliberation lane is no longer split
+by the multi-intent decomposer. The route record now names a concept-stage rule that escalated a
+turn (`contract:compound_facets_to_deliberate`), which is what `scripts/attribute_answers.py`
+reads.
+
+**Measured on DEV while building (development signal, not a result):** the regression gate
+51/51 in substance with routing live (case #37 is the known fresh-chat recall artefact); on the
+40-question DEV sample v2 changed the lane of 7 answers, 2 of them by escalation and 5 by
+run-to-run variance in the intent classifier on lanes v2 does not touch (CAVEAT-1475) — the
+catalogue's long stakeholder questions mostly need record groupings beyond spaces, which v2
+does not target.
+
+**Blast radius of the routing, measured offline (fires / set):** operation signal — 1 / 73 pack,
+3 / 2,477 DEV, 4 / 4,018 bank (held-out excluded), 9 / 7,085 real corpus (held-out excluded,
+counts only); C1 signal — 3 / 73, 65 / 2,477, 79 / 4,018, 13 / 7,085.

@@ -149,6 +149,10 @@ class DocumentIndexer:
         self._embedder = embedding_service
         self._input_root = Path(input_root)
         self._collection_prefix = collection_prefix
+        # The building's spaces and floors, read once per indexing run and only when a record
+        # document is actually met (v2 P1 entity linking). None = not read yet / unavailable.
+        self._places: Optional[Any] = None
+        self._places_read = False
 
     # ── public API ──────────────────────────────────────────────────────────────
 
@@ -204,7 +208,11 @@ class DocumentIndexer:
         try:
             from orchestrator.services.evidence.spatial_facts import active_namespace
             from orchestrator.services.ontology_manager import upload_ttl
-            from orchestrator.services.record_documents import lift_document, to_turtle
+            from orchestrator.services.record_documents import (
+                is_record_document,
+                lift_document,
+                to_turtle,
+            )
         except ImportError as exc:  # pragma: no cover - import guard
             logger.debug(f"[document_indexer] record lifting unavailable: {exc}")
             return 0, []
@@ -214,12 +222,18 @@ class DocumentIndexer:
             return 0, []
 
         mappings = Path(__file__).resolve().parents[2] / "ontology" / "record_documents"
-        result = lift_document(doc_path, namespace, mappings)
+        places = await self._places_for_run(namespace) if is_record_document(doc_path) else None
+        result = lift_document(doc_path, namespace, mappings, places=places)
 
         # if_missing: called on a SHA skip, where the only reason to do any work is that
         # the graph is not there. An ASK is cheap; re-uploading a graph that already holds
         # the right triples is not, and would rewrite every register on every boot.
-        if if_missing and result.instances and await self._graph_has_triples(result.graph_iri):
+        #
+        # ...or that the graph holds DIFFERENT entity links from the ones this lift writes.
+        # The document is unchanged, so the SHA skip would otherwise keep a register lifted
+        # before linking existed without links for ever -- the same trap as a rejected upload,
+        # and the one that made a lifter fix unable to reach a lifted building.
+        if if_missing and result.instances and await self._graph_is_current(result):
             return 0, []
 
         if result.errors:
@@ -252,6 +266,7 @@ class DocumentIndexer:
                     logger.info(
                         f"[document_indexer] {doc_path.name}: lifted {result.instances} "
                         f"{result.record_type} records into {result.graph_iri}"
+                        + (f" with {result.links} entity link(s)" if result.links else "")
                     )
                     return result.instances, []
                 last_error = str(outcome.get("error") or "upload rejected")
@@ -263,6 +278,73 @@ class DocumentIndexer:
             f"[document_indexer] {doc_path.name}: NOT lifted — upload failed: {last_error}"
         )
         return 0, [f"{doc_path.name}: upload failed ({last_error})"]
+
+    async def _places_for_run(self, namespace: str) -> Optional[Any]:
+        """The building's spaces and floors, read at most once per indexing run.
+
+        None when the graph cannot say -- and then no link is attempted and none is removed.
+        """
+        if not self._places_read:
+            self._places_read = True
+            try:
+                from orchestrator.services.evidence.spatial_facts import default_run_select
+                from orchestrator.services.record_entity_links import load_place_index
+
+                self._places = await load_place_index(namespace, default_run_select)
+            except Exception as exc:  # never block a lift on the linking step
+                logger.warning(f"[document_indexer] entity linking unavailable this run: {exc}")
+                self._places = None
+        return self._places
+
+    async def _graph_is_current(self, result: Any) -> bool:
+        """True when a SHA-skipped register's graph needs no re-upload.
+
+        It needs one when it is empty, or when it holds entity links different from the ones
+        this lift writes -- a register lifted before linking existed, or a building whose
+        spaces changed. Errs towards TRUE whenever it cannot tell, like _graph_has_triples:
+        a lift with no place index has nothing to compare, and must not strip the links a
+        previous run wrote on the strength of a degraded read.
+        """
+        if not await self._graph_has_triples(result.graph_iri):
+            return False
+        if not getattr(result, "links_attempted", False):
+            return True
+        expected = result.link_triples
+        held = await self._graph_link_triples(result.graph_iri, len(expected) + 1)
+        if held is None or held == expected:
+            return True
+        logger.info(
+            f"[document_indexer] {result.document}: graph holds {len(held)} entity link(s), "
+            f"this lift writes {len(expected)} — re-lifting"
+        )
+        return False
+
+    @staticmethod
+    async def _graph_link_triples(graph_iri: str, limit: int) -> Optional[set]:
+        """The entity-link triples a document's named graph holds, or None if unreadable.
+
+        Bounded by ``limit`` (one more than the lift writes), so a graph holding more links than
+        expected is seen as different without reading all of them.
+        """
+        try:
+            from orchestrator.services.ontology_manager import run_sparql_select
+            from orchestrator.services.record_entity_links import LINK_PREDICATE_IRIS
+
+            values = " ".join(f"<{p}>" for p in sorted(LINK_PREDICATE_IRIS))
+            result = await run_sparql_select(
+                f"SELECT ?s ?p ?o WHERE {{ GRAPH <{graph_iri}> {{ VALUES ?p {{ {values} }} "
+                f"?s ?p ?o }} }} LIMIT {limit}",
+                limit=limit,
+            )
+            if not result.get("ok"):
+                return None
+            return {
+                (str(r.get("s")), str(r.get("p")), str(r.get("o")))
+                for r in result.get("rows") or []
+            }
+        except Exception as exc:
+            logger.debug(f"[document_indexer] link check failed for {graph_iri}: {exc}")
+            return None
 
     @staticmethod
     async def _graph_has_triples(graph_iri: str) -> bool:
@@ -288,6 +370,9 @@ class DocumentIndexer:
     async def index_building(self, building_id: str) -> DocIndexResult:
         """Index documents for a single building.  Idempotent; safe to call repeatedly."""
         t0 = time.monotonic()
+        # Each run reads the building's spaces afresh: rooms added or renamed since the last
+        # run must not be linked against the previous run's list.
+        self._places, self._places_read = None, False
         docs_dir = resolve_building_dir(building_id, "documents", self._input_root)
         collection_name = f"{self._collection_prefix}{building_id}"
 

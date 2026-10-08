@@ -1032,6 +1032,89 @@ def aggregate_statements(
     return out
 
 
+def bucket_statements(
+    layout: str,
+    adapter: Any,
+    uuids: Sequence[str],
+    window: Window,
+    bucket_seconds: int,
+    bands: Optional[Dict[str, Tuple[float, float]]] = None,
+) -> List[Statement]:
+    """GROUP BY statements returning per-sensor (bucket, count, sum) over the whole window (v2, C5).
+
+    The same store-side reduction as ``aggregate_statements``, one row per fixed time bucket: a
+    bucket is numbered from the window's START (``floor(seconds since start / size)``), so both
+    bounds are the same literal the WHERE clause compares against and the store's session zone
+    cannot shift one without the other. Every reading in the window is reduced -- nothing is cut
+    to its newest rows -- and a reading outside the quantity's physical range is left out by the
+    store, as for every other aggregate. Never a row-level SELECT.
+    """
+    start, end = _clean_stamp(window.start), _clean_stamp(window.end)
+    size = int(bucket_seconds)
+    if size <= 0:
+        raise ValueError(f"a bucket must last at least a second, not {bucket_seconds!r}")
+    bands = bands or {}
+    safe = [u for u in dict.fromkeys(uuids) if _SAFE_ID.match(str(u))]
+    if not safe:
+        return []
+    out: List[Statement] = []
+    if layout == "mysql_narrow":
+        table = _ident(getattr(adapter, "table", ""))
+        bucket = f"FLOOR(TIMESTAMPDIFF(SECOND, '{start}', `datetime`) / {size})"
+        for band, group in _by_band(safe, bands):
+            x = _banded("`value`", band)
+            for part in _chunks(group, NARROW_CHUNK):
+                inl = ", ".join(f"'{u}'" for u in part)
+                out.append(
+                    Statement(
+                        f"SELECT `uuid`, {bucket} AS b, COUNT({x}) AS n, SUM({x}) AS sm "
+                        f"FROM `{table}` WHERE `uuid` IN ({inl}) AND `datetime` >= '{start}' "
+                        f"AND `datetime` <= '{end}' GROUP BY `uuid`, b",
+                        "narrow_bucket",
+                        tuple(part),
+                    )
+                )
+    elif layout == "mysql_wide":
+        table = _wide_table_of(adapter)
+        ts = _wide_ts_of(adapter)
+        known = getattr(adapter, "_columns_cache", None)
+        cols = [u for u in safe if not known or u in known]
+        bucket = f"FLOOR(TIMESTAMPDIFF(SECOND, '{start}', `{ts}`) / {size})"
+        for part in _chunks(cols, WIDE_CHUNK):
+            picks = []
+            for i, u in enumerate(part):
+                x = _banded(f"`{u}`", bands.get(u))
+                picks.append(f"COUNT({x}) AS n{i}, SUM({x}) AS sm{i}")
+            out.append(
+                Statement(
+                    f"SELECT {bucket} AS b, {', '.join(picks)} FROM `{table}` "
+                    f"WHERE `{ts}` >= '{start}' AND `{ts}` <= '{end}' GROUP BY b",
+                    "wide_bucket",
+                    tuple(part),
+                )
+            )
+    elif layout == "pg_narrow":
+        nb = getattr(adapter, "_narrow") or {}
+        t, u_, ts, v = (_ident(nb.get(k, "")) for k in ("table", "uuid", "ts", "value"))
+        bucket = f"FLOOR(EXTRACT(EPOCH FROM (\"{ts}\" - TIMESTAMP '{start}')) / {size})"
+        for band, group in _by_band(safe, bands):
+            x = _pg_banded(f'"{v}"', band)
+            for part in _chunks(group, NARROW_CHUNK):
+                inl = ", ".join(f"'{u}'" for u in part)
+                out.append(
+                    Statement(
+                        f'SELECT "{u_}" AS uuid, {bucket} AS b, COUNT({x}) AS n, SUM({x}) AS sm '
+                        f'FROM "{t}" WHERE "{u_}" IN ({inl}) AND "{ts}" >= \'{start}\' '
+                        f'AND "{ts}" <= \'{end}\' GROUP BY "{u_}", b',
+                        "narrow_bucket",
+                        tuple(part),
+                    )
+                )
+    # A store with no GROUP BY over an expression (Cassandra) gets no statement: the caller names
+    # its sensors as kept in a store this answer cannot reduce by time, never reads them row by row.
+    return out
+
+
 def latest_statements(
     layout: str, adapter: Any, uuids: Sequence[str], window: Window
 ) -> List[Statement]:
@@ -1417,6 +1500,59 @@ async def run_aggregates(
         if u in aggs:
             aggs[u].exceed = ex
     return list(aggs.values()), [u for st in failed for u in st.uuids]
+
+
+@dataclass
+class SensorBucket:
+    """One sensor's reduction over one time bucket of a window (v2, C5)."""
+
+    uuid: str
+    #: The bucket's number, counted from the window's start.
+    index: int
+    n: int
+    total: float
+
+
+def parse_buckets(statement: Statement, rows: List[Dict[str, Any]]) -> List[SensorBucket]:
+    """Per-sensor, per-bucket (count, sum) from one bucket statement's rows."""
+    out: List[SensorBucket] = []
+    for row in rows:
+        b = _f(row.get("b"))
+        if b is None:
+            continue
+        index = int(b)
+        if statement.kind == "wide_bucket":
+            for i, u in enumerate(statement.uuids):
+                n = _i(row.get(f"n{i}"))
+                if n:
+                    out.append(SensorBucket(u, index, n, _f(row.get(f"sm{i}")) or 0.0))
+        elif statement.kind == "narrow_bucket":
+            u = str(row.get("uuid") or "")
+            n = _i(row.get("n"))
+            if u and n:
+                out.append(SensorBucket(u, index, n, _f(row.get("sm")) or 0.0))
+    return out
+
+
+async def run_buckets(
+    adapter: Any,
+    uuids: Sequence[str],
+    window: Window,
+    bucket_seconds: int,
+    bands: Optional[Dict[str, Tuple[float, float]]] = None,
+) -> Tuple[List[SensorBucket], List[str]]:
+    """(per-sensor bucket reductions, uuids whose statement failed) for one store."""
+    layout = layout_of(adapter)
+    statements = bucket_statements(layout, adapter, uuids, window, bucket_seconds, bands)
+    done, failed = await _execute(adapter, statements)
+    out: List[SensorBucket] = []
+    for st, rows in done:
+        out.extend(parse_buckets(st, rows))
+    covered = {u for st in statements for u in st.uuids}
+    # A sensor no statement could carry (a wide table without its column) is a failure to read,
+    # never "no readings".
+    missing = [u for u in dict.fromkeys(uuids) if u not in covered]
+    return out, [u for st in failed for u in st.uuids] + missing
 
 
 async def run_latest(

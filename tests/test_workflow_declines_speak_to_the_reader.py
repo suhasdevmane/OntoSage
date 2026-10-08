@@ -146,6 +146,16 @@ def deliberation(monkeypatch):
     monkeypatch.setattr(compiler, "compile_query", _compile)
     monkeypatch.setattr(capability_schema, "build_schema", _schema)
 
+    # v2: with ARBITER_FACETS_ENABLED the node first builds the facet catalogue from the LIVE
+    # graph. A unit test never reaches the graph, and an unavailable catalogue is exactly the v1
+    # sensor-only path whose decline wording these tests pin.
+    from orchestrator.services.deliberation import facets as _facets
+
+    async def _no_catalogue(*_a, **_k):
+        raise RuntimeError("no graph in a unit test")
+
+    monkeypatch.setattr(_facets, "build_facet_catalogue", _no_catalogue)
+
     # What the building SENSES is counted from the graph (BUG-663 shape, fixed with BUG-680),
     # so the fake supplies counts; a unit test must never reach the live graph for them.
     counts = {"co2": 3, "zone_air_temperature": 2}

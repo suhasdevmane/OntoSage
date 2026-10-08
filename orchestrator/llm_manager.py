@@ -39,7 +39,11 @@ _FAST_TASK_TYPES = {
     TaskType.SPARQL,
 }
 
-from orchestrator.services.circuit_breaker import circuit_breaker_for
+from orchestrator.services.circuit_breaker import (
+    circuit_breaker_for,
+    note_model_reachable,
+    note_model_unreachable,
+)
 from orchestrator.services.prompt_hygiene import strip_tracker_ids
 from shared.config import get_llm_config, settings
 from shared.utils import get_logger
@@ -261,6 +265,9 @@ class GatewayUnreachable(RuntimeError):
 #: Seconds a hosted reachability result is trusted before the probe runs again.
 HOSTED_PROBE_TTL_S = float(os.environ.get("HOSTED_PROBE_TTL_S", "20"))
 HOSTED_PROBE_TIMEOUT_S = float(os.environ.get("HOSTED_PROBE_TIMEOUT_S", "5"))
+#: An outage younger than this is a blip, worth waiting one refusal window out (CAVEAT-1459);
+#: an older one fails fast (`_await_hosted_gateway`).
+HOSTED_BLIP_S = float(os.environ.get("HOSTED_BLIP_S", "60"))
 #: Attempts a hosted call gets. Two: one retry for a transient fault, not a second queue wait.
 HOSTED_MAX_ATTEMPTS = 2
 
@@ -717,6 +724,31 @@ class LLMManager:
             return prompt
         return fit_prompt(prompt, prompt_char_budget())
 
+    async def _await_hosted_gateway(self) -> None:
+        """Probe the gateway; inside a FRESH outage, wait the refusal window out once and re-probe.
+
+        The shared hosted gateway drops out for seconds at a time (CAVEAT-1459), and a call made
+        in that window used to fail at once: measured 2026-10-08, a deliberation compile at
+        03:08:23 -- the second of an outage -- became "could you rephrase that?", a failure of
+        the provider blamed on the asker's wording. Waiting out ONE refusal window recovers a
+        blip. A gateway down for longer than ``HOSTED_BLIP_S`` is an outage, and the call still
+        fails fast: a turn makes several calls, and waiting on each would take minutes to fail.
+        """
+        try:
+            await self._probe_hosted_gateway()
+            return
+        except GatewayUnreachable:
+            now = time.monotonic()
+            since = getattr(self, "_gateway_down_since", None) or now
+            if now - since > HOSTED_BLIP_S:
+                raise  # a sustained outage: fail fast
+            wait = max(0.0, getattr(self, "_gateway_down_until", 0.0) - now) + 1.0
+            logger.warning(
+                f"[hosted] gateway refusing; waiting {wait:.0f}s once before giving up"
+            )
+            await asyncio.sleep(wait)
+            await self._probe_hosted_gateway()
+
     async def _probe_hosted_gateway(self) -> None:
         """Raise GatewayUnreachable unless the hosted gateway answers a cheap GET /models.
 
@@ -739,14 +771,20 @@ class LLMManager:
                 raise GatewayUnreachable(f"gateway answered HTTP {resp.status_code}")
             self._gateway_ok_until = time.monotonic() + HOSTED_PROBE_TTL_S
             self._gateway_down_until = 0.0
+            self._gateway_down_since = None
+            note_model_reachable()
         except GatewayUnreachable as exc:
             self._gateway_down_until = time.monotonic() + HOSTED_PROBE_TTL_S
+            self._gateway_down_since = getattr(self, "_gateway_down_since", None) or time.monotonic()
             self._gateway_down_reason = str(exc)
+            note_model_unreachable(HOSTED_PROBE_TTL_S)  # CAVEAT-1459: so a reader is told
             raise
         except Exception as exc:  # network down, DNS failure, connect timeout
             reason = f"{type(exc).__name__}: {exc}"
             self._gateway_down_until = time.monotonic() + HOSTED_PROBE_TTL_S
+            self._gateway_down_since = getattr(self, "_gateway_down_since", None) or time.monotonic()
             self._gateway_down_reason = reason
+            note_model_unreachable(HOSTED_PROBE_TTL_S)  # CAVEAT-1459: so a reader is told
             logger.error(f"[hosted] gateway unreachable ({reason}); refusing without queueing")
             raise GatewayUnreachable(reason) from exc
 
@@ -860,7 +898,7 @@ class LLMManager:
         last_error = None
 
         if self.provider == "hosted":
-            await self._probe_hosted_gateway()
+            await self._await_hosted_gateway()
         max_attempts = HOSTED_MAX_ATTEMPTS if self.provider == "hosted" else LLM_MAX_RETRIES
         for attempt in range(1, max_attempts + 1):
             try:

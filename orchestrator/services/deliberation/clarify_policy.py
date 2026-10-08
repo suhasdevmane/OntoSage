@@ -132,6 +132,42 @@ def unbound_space_type(cqir: CQIR) -> Optional[str]:
     scored = " ".join(
         f"{c.source_phrase or ''} {c.modality or ''}" for c in (cqir.constraints or [])
     ).lower()
+    # v2: a facet criterion can BE the space type ("a bookable room", a workspace kind), so its
+    # phrase and value count as applied. Empty for every v1 plan, which leaves this unchanged.
+    facet_words = " ".join(
+        f"{f.source_phrase or ''} {f.value if isinstance(f.value, str) else ''} "
+        + (" ".join(str(v) for v in f.value) if isinstance(f.value, list) else "")
+        for f in (getattr(cqir, "facet_criteria", None) or [])
+    ).lower()
+    if facet_words.strip():
+        scored = f"{scored} {facet_words}"
+    # v2: an operation (aggregate, compare) reads a facet that no constraint names. Its phrase
+    # and its facets count as applied, and so does a lay word for a sensed quantity: in "the
+    # gap between the warmest and coolest room", "coolest" is the temperature being reduced,
+    # not a kind of room. None for every v1 plan, which leaves this exactly as it was.
+    operation = (
+        getattr(cqir, "aggregate", None)
+        or getattr(cqir, "compare", None)
+        or getattr(cqir, "period", None)
+        or getattr(cqir, "relate", None)
+    )
+    if operation is not None:
+        keys = [
+            k
+            for k in (
+                getattr(operation, "facet", None),
+                getattr(operation, "facet_a", None),
+                getattr(operation, "facet_b", None),
+                getattr(operation, "series", None),
+                getattr(operation, "other_series", None),
+                getattr(operation, "events", None),
+            )
+            if k
+        ]
+        words = [getattr(operation, "source_phrase", "") or ""] + [
+            re.sub(r"[^a-z0-9]+", " ", k.split(":", 1)[-1].lower()) for k in keys
+        ]
+        scored = f"{scored} {' '.join(words).lower()}"
     scored_tokens = [t for t in re.split(r"[^a-z0-9]+", scored) if len(t) > 2]
     low = (cqir.raw_query or "").lower()
     for head in _SPACE_HEADS:
@@ -141,8 +177,17 @@ def unbound_space_type(cqir: CQIR) -> Optional[str]:
                 continue
             if any(tok in qualifier or qualifier in tok for tok in scored_tokens):
                 continue  # it names a quantity the lane scores, not a kind of space
+            if operation is not None and _names_a_sensed_quantity(qualifier):
+                continue
             return f"{qualifier} {head}"
     return None
+
+
+def _names_a_sensed_quantity(word: str) -> bool:
+    """True when a word is a lay term for a sensed quantity ("coolest", "busiest")."""
+    from orchestrator.services.deliberation.compiler import _modality_from_lay_term
+
+    return _modality_from_lay_term(word) is not None
 
 
 def build_assumptions(
@@ -151,7 +196,11 @@ def build_assumptions(
     """Every default the pipeline will apply, declared up front (dossier + prose)."""
     anchors = {**DEFAULT_ANCHORS, **(anchors or {})}
     out: List[Assumption] = []
-    for c in cqir.constraints:
+    # v2: a plan that aggregates or compares scores nothing -- its other criteria only narrow
+    # which spaces count -- so neither a scoring band nor a weighting is an assumption it makes.
+    # None for every v1 plan, which leaves the lines below exactly as they were.
+    operation = getattr(cqir, "operation", None)
+    for c in cqir.constraints if not operation else []:
         if c.threshold_source == ThresholdSource.USER:
             continue  # the user's own number is not an assumption
         anchor = anchors.get(c.modality)
@@ -165,8 +214,10 @@ def build_assumptions(
                     source=anchor.citation or "default band",
                 )
             )
-    weights = {c.weight for c in cqir.constraints}
-    if len(weights) <= 1:
+    weights = {c.weight for c in cqir.constraints} | {
+        f.weight for f in (getattr(cqir, "facet_criteria", None) or [])
+    }
+    if len(weights) <= 1 and not operation:
         out.append(Assumption(text="all stated preferences weighted equally", source="default"))
     # A CONSTRAINT THAT COULD NOT BE APPLIED IS DECLARED, NOT OMITTED (BUG-949).
     #
@@ -188,7 +239,25 @@ def build_assumptions(
                 source="unbound space type",
             )
         )
-    if cqir.time.basis == TimeBasis.NOW and not cqir.time.source_phrase:
+    relate = getattr(cqir, "relate", None)
+    if relate is not None and relate.lag_minutes is not None:
+        if relate.lag_source != ThresholdSource.USER:
+            # v2 (C5): "after" with no length stated reads a default, and the answer says so.
+            out.append(
+                Assumption(
+                    text=(
+                        f"'after' read as the {relate.lag_minutes:g} minutes after each event "
+                        "ends — a default; name another length to change it"
+                    ),
+                    source="default lag",
+                )
+            )
+    if getattr(cqir, "period", None) is not None or relate is not None:
+        # v2 (C4, C5): the periods -- or the relation's window -- are resolved from the question
+        # (or declared as a default) and stated with the answer; "current conditions" would
+        # describe none of them.
+        pass
+    elif cqir.time.basis == TimeBasis.NOW and not cqir.time.source_phrase:
         out.append(Assumption(text="interpreted as current conditions", source="default"))
     elif cqir.time.basis == TimeBasis.FORECAST:
         if cqir.time.horizon_hours:
@@ -220,7 +289,7 @@ def build_assumptions(
     return out
 
 
-def absorb_unmapped(cqir: CQIR):
+def absorb_unmapped(cqir: CQIR, facets: bool = False):
     """Graceful degradation for unmapped terms BEFORE admission.
 
     A term the building cannot sense should not trap the user in a rephrase
@@ -228,6 +297,12 @@ def absorb_unmapped(cqir: CQIR):
     DECLARED (they become assumptions in the answer); when nothing at all
     mapped, the caller should decline naming what the building senses instead
     of asking the user to guess vocabulary.
+
+    ``facets=True`` (v2, behind ARBITER_FACETS_ENABLED): a mapped FACET criterion -- or a
+    validated operation (an aggregate, a comparison) -- counts as "something mapped" exactly
+    as a sensor constraint does. By the time this runs the compiler has already searched the
+    catalogue for every unmapped term, so what is left matched nothing the building senses OR
+    records. ``facets=False`` is the v1 rule, unchanged.
 
     Returns (cqir, dropped_phrases, must_decline).
     """
@@ -247,7 +322,10 @@ def absorb_unmapped(cqir: CQIR):
     ):
         return cqir, [], False
     dropped = [s.phrase for s in unmapped if s.phrase]
-    if cqir.constraints:
+    mapped = bool(cqir.constraints) or (
+        facets and bool(getattr(cqir, "facet_criteria", None) or getattr(cqir, "operation", None))
+    )
+    if mapped:
         cqir = cqir.model_copy(deep=True) if hasattr(cqir, "model_copy") else cqir.copy(deep=True)
         cqir.signals = []
         return cqir, dropped, False

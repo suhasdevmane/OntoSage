@@ -31,8 +31,10 @@ sys.path.insert(0, str(REPO))
 
 async def _run(apply: bool) -> int:
     from orchestrator.services.building_context import resolve_building_context
+    from orchestrator.services.evidence.spatial_facts import default_run_select
     from orchestrator.services.ontology_manager import upload_ttl
     from orchestrator.services.record_documents import lift_document, to_turtle
+    from orchestrator.services.record_entity_links import load_place_index
     from shared.config import settings
 
     namespace = resolve_building_context(settings.BUILDING_ID).namespace
@@ -40,16 +42,25 @@ async def _run(apply: bool) -> int:
         print("no active building namespace; activate a building first")
         return 2
 
+    # The building's own spaces and floors, so each register is rewritten WITH its entity
+    # links. None (graph unreadable or empty) lifts the text alone, as before linking existed.
+    places = await load_place_index(namespace, default_run_select)
+    if places is None:
+        print("place index unavailable: registers are lifted without entity links")
+
     docs = sorted((REPO / "input" / "documents").glob("*.md"))
     mappings = REPO / "ontology" / "record_documents"
     total = 0
     failures: List[str] = []
     for doc in docs:
-        result = lift_document(doc, namespace, mappings)
+        result = lift_document(doc, namespace, mappings, places=places)
         if not getattr(result, "ok", False) or not result.instances:
             continue
         comments = sum(1 for _, p, _ in result.triples if p.endswith("rdf-schema#comment"))
-        print(f"  {doc.name:38s} {result.instances:3d} records  {comments:3d} comments")
+        print(
+            f"  {doc.name:38s} {result.instances:3d} records  {comments:3d} comments  "
+            f"{result.links:4d} links  {len(result.unresolved):3d} unlinked"
+        )
         total += result.instances
         if not apply:
             continue

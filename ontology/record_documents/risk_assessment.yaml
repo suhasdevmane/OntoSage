@@ -15,6 +15,7 @@ columns:
     required: true
   area:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
   assessed:
     predicate: ontosage:effectiveFrom

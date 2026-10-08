@@ -39,6 +39,7 @@ columns:
     required: true
   room:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   kind:

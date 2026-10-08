@@ -40,6 +40,7 @@ columns:
     datatype: xsd:integer
   location:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   shift:

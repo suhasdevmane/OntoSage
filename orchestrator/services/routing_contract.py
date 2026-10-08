@@ -4028,6 +4028,167 @@ POST_STAGE_RULES: Tuple[Rule, ...] = (
     ),
 )
 
+#: The answer asked for is a ROUTE -- "which verified route should I take", "route me to my
+#: class", "how do I get to". The route finder and the surveyed route records own those (BUG-744:
+#: "never a ranking of rooms"). Narrower than WAYFIND_RE / ACCESSIBLE_ROUTE_RE on purpose: both
+#: also match "step-free ACCESS", which in "which room has step-free access and a projector?" is
+#: a criterion a ROOM is chosen by, and a guard on those would refuse exactly the compound
+#: question the rule below exists for. A space noun between "which" and "route" makes the
+#: room the answer, so it stops the first branch.
+ROUTE_ASK_RE = re.compile(
+    r"\b(?:which|what|best|quickest|fastest|shortest|safest|easiest)\s+"
+    r"(?:(?!(?:rooms?|spaces?|places?|areas?|desks?|offices?|labs?|workspaces?)\b)[\w'-]+\s+)"
+    r"{0,4}?(?:routes?|ways?|paths?|journeys?)\b"
+    r"|\broute\s+(?:me|us)\b|\bdirections?\s+(?:to|for|from)\b"
+    r"|\b(?:take|guide|walk|lead)\s+(?:me|us)\s+to\b|\bnavigate\s+to\b|\bfind\s+(?:my|our)\s+way\b"
+    r"|\bhow\s+(?:do|can|would|should)\s+(?:i|we)\s+(?:get|reach|go)\s+(?:to|from)\b",
+    re.IGNORECASE,
+)
+
+#: A question whose answer is the SENSORS -- "which rooms have co-located temperature, CO2 and noise
+#: sensors?" is an inventory question, not a choice of room by its conditions. Narrower than
+#: `_ABOUT_THE_SENSORS_RE` on measurement: that pattern also holds "monitored", "coverage" and
+#: "device", and over the development split and the bank it stood this rule down on 3 genuine
+#: selections ("which MONITORED workspaces have been the most consistently quiet ...", "record a
+#: presentation on my own DEVICE ...") for every 1 inventory question.
+_ASKS_ABOUT_SENSORS_RE = re.compile(r"\bsensors?\b|\bco-?located\b", re.IGNORECASE)
+
+#: The single-facet lanes a compound question is observed to land in, each answering one part:
+#: the weak intents (the held-record short-circuit returns `metadata`, the amenity-triple one
+#: `capability`, both BEFORE the parse stage), the register, the readings, the booking store and
+#: the spatial lanes. Never a lane that writes, refuses, recalls, files, forecasts or diagnoses --
+#: those are shapes, not facets -- and never `clarification` or `greeting`: a question the system
+#: judged underspecified, or a greeting, is not compiled into a plan.
+_COMPOUND_TAKES_FROM = (
+    "general",
+    "general_knowledge",
+    "capability",
+    "discovery",
+    "metadata",
+    "register",
+    "sensor_data",
+    "analytics",
+    "recommend",
+    "events",
+    "spatial_query",
+    "floor_plan",
+    "compare",
+    None,
+    "",
+)
+#: A RELATION (C5) also leaves the series lanes: "does CO2 spike after access events?" reads as an
+#: anomaly scan and "does CO2 rise when occupancy rises?" as a trend, and each lane then answers
+#: one series and drops what it is related to. Only a C5 signal takes from these two; C1-C3 keep
+#: `_COMPOUND_TAKES_FROM` exactly as measured.
+_RELATION_ALSO_TAKES_FROM = ("trend", "anomaly")
+
+
+def _compound_shape_owned_elsewhere(c: _Ctx) -> Optional[str]:
+    """The rule that owns this question's SHAPE by design, or None -- tested, not inferred.
+
+    The compound rule is the last rule of the last stage, so nothing after it can take a question
+    back: a shape another rule claims on purpose has to be recognised here, with that rule's own
+    predicate, or the escalation would override it. Each entry names the rule it defers to.
+    """
+    q, ql = c.query or "", c.ql or ""
+    if c.sr.report_intake_intent(q):
+        return "report_intake_statement"
+    if c.sr.is_control_command(q) or _any(ql, EXTERNAL_ACTION_KWS):
+        return "actuation_control"
+    from orchestrator.services.answer_provenance import is_provenance_question
+    from orchestrator.services.emergency_procedure import is_emergency_action_question
+    from orchestrator.services.guidance_shape import is_general_guidance_question
+    from orchestrator.services.privacy.inference_classes import classify_inference
+    from orchestrator.services.scope_policy import out_of_scope_kind
+    from orchestrator.services.self_description import is_self_question
+    from orchestrator.services.session_recall import is_recall_question
+    from orchestrator.services.temporal_pattern import asks_time_pattern
+
+    owners = (
+        ("inference_privacy_denial", lambda: classify_inference(q)),
+        ("session_recall", lambda: is_recall_question(q)),
+        ("answer_provenance", lambda: is_provenance_question(q)),
+        ("self_description", lambda: is_self_question(q)),
+        ("scenario_boundary", lambda: scenario_question(q)),
+        ("cross_source_precedence", lambda: _PRECEDENCE_ASK_RE.search(ql)),
+        ("emergency_action_is_a_procedure", lambda: is_emergency_action_question(q)),
+        ("time_pattern_is_not_a_ranking", lambda: asks_time_pattern(q)),
+        (
+            "inventory_to_discovery (asks about the sensors)",
+            lambda: _ASKS_ABOUT_SENSORS_RE.search(q),
+        ),
+        (
+            "wayfinding_spatial / accessible_route_is_a_surveyed_record",
+            lambda: ROUTE_ASK_RE.search(q),
+        ),
+        ("readiness_check", lambda: _READINESS_RE.search(q)),
+        ("uniformity_is_a_comparison", lambda: uniformity_question(q)),
+        ("general_guidance_question", lambda: is_general_guidance_question(q)),
+        ("scope_boundary", lambda: out_of_scope_kind(q)),
+    )
+    for name, owns in owners:
+        if owns():
+            return name
+    return None
+
+
+def _r_compound_facets_to_deliberate(c: _Ctx) -> Optional[str]:
+    """A question choosing spaces on several facets of the building at once -> deliberate (v2 P6).
+
+    Every v1 lane but one answers ONE facet -- a reading, a register, a booking store -- so "a quiet
+    room for twelve with a projector, free this afternoon" was answered in part by whichever lane
+    its loudest word reached. The facet catalogue the building derives from its own graph says
+    which facets a question names; `facet_routing.compound_signal` decides from it whether the
+    question selects spaces on two or more criteria from two or more sources (its docstring has
+    the rule and the measurement behind every part of it).
+
+    THREE MODES (ARBITER_V2_ROUTING): `off` is inert; `shadow` -- the default -- logs what it would
+    do and changes nothing, so the decision can be read against live traffic before it is trusted;
+    `live` routes. It never builds the catalogue: with none cached (boot not finished, a partial
+    build) it does nothing at all, which is the honest default.
+    """
+    from orchestrator.services.deliberation import facet_routing as _fr
+
+    mode = _fr.routing_mode()
+    if mode == "off" or c.intent not in _COMPOUND_TAKES_FROM + _RELATION_ALSO_TAKES_FROM:
+        return None
+    catalogue = _fr.active_catalogue()
+    if catalogue is None:
+        return None
+    # Two signals, each with its cheap word test first: a SELECTION of spaces on several facets
+    # (C1, `compound_signal`), or an OPERATION no v1 lane computes -- a figure per floor or kind
+    # of room that adds up or is spread, a measured figure against a declared one, or a series
+    # related to recorded events or to another series (C3/C2/C5, `operation_signal`, whose comment
+    # blocks have the measurements behind them).
+    single_facet_lane = c.intent in _COMPOUND_TAKES_FROM
+    signal = (
+        _fr.compound_signal(c.query, catalogue)
+        if single_facet_lane and _fr.selects_spaces(c.query)
+        else None
+    )
+    operation = None if signal is not None else _fr.operation_signal(c.query, catalogue)
+    if operation is not None and not single_facet_lane and operation.shape != "C5":
+        operation = None  # the series lanes are left only for a relation
+    if signal is None and operation is None:
+        return None
+    owner = _compound_shape_owned_elsewhere(c)
+    if owner:
+        logger.debug(f"[routing-contract] compound_facets_to_deliberate stands down: {owner}")
+        return None
+    if signal is not None:
+        keys, why = list(signal.facet_keys), signal.reason
+    else:
+        keys, why = list(operation.facet_keys), f"{operation.shape} {operation.reason}"
+    if mode == "shadow":
+        logger.info(
+            f"[routing-contract] compound_facets_to_deliberate (shadow) would route "
+            f"'{c.intent}' -> 'deliberate' — facets: {keys} ({why})"
+        )
+        return None
+    logger.info(f"[routing-contract] compound_facets_to_deliberate (live) facets: {keys} ({why})")
+    return "deliberate"
+
+
 CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
     Rule(
         "building_question_not_general",
@@ -4069,6 +4230,32 @@ CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
         "'is the ventilation keeping up with occupancy?' judges one measured quantity AGAINST "
         "another, which is a ranking on two modalities at once → deliberate (W1-03, pack #27)",
         _r_one_quantity_judged_against_another,
+    ),
+    # v2 P6 -- LAST IN THE CONCEPT STAGE, and both halves of that are the decision.
+    #
+    # THE CONCEPT STAGE because it is the only stage every question reaches. The held-record
+    # short-circuit (`metadata`) and the amenity-triple short-circuit (`capability`) in
+    # `dialogue_agent.detect_intent` return BEFORE the parse and post stages, and a cached
+    # decision (`cache:intent:*`) replays without them. Those short-circuits are exactly where a
+    # compound question was answered in part ("the workspace register cannot answer this ... and
+    # nothing about ..."), so a parse-stage rule could never have seen them, however ordered --
+    # BUG-440's lesson. It also runs on EVERY turn, so the shadow log is not hidden by the intent
+    # cache and switching the mode needs no cache flush.
+    #
+    # LAST because it only ESCALATES: it takes from the single-facet lanes in
+    # `_COMPOUND_TAKES_FROM`, and with nothing after it, a shape another rule owns by design
+    # (report statements, control, privacy, recall, provenance, routes, readiness, ...) is
+    # recognised with that rule's own predicate in `_compound_shape_owned_elsewhere` rather than
+    # left for a later rule to take back -- no later rule exists, and almost none of the parse
+    # rules could take a question back from `deliberate` anyway (their from-sets exclude it).
+    Rule(
+        "compound_facets_to_deliberate",
+        "a question CHOOSING spaces on two or more facets from two or more sources (a reading and "
+        "a register, two registers, a booking), or one needing an operation no v1 lane computes "
+        "(a total or spread per floor or kind of room, a measured figure against a declared one) "
+        "→ deliberate, decided from the building's facet catalogue (v2 P6; shadow by default, "
+        "ARBITER_V2_ROUTING)",
+        _r_compound_facets_to_deliberate,
     ),
 )
 

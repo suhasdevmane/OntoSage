@@ -54,6 +54,7 @@ columns:
     datatype: xsd:string
   store:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   on_hand:
