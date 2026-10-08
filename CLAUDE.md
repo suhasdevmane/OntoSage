@@ -41,10 +41,17 @@ user's explicit approval.**
   events or series, and routing (`ARBITER_V2_ROUTING=off|shadow|live`, code default shadow)
   that escalates ONLY what v1 gets wrong. `ARBITER_FACETS_ENABLED=false` + routing off is the
   ablation arm. **Live and measured:** gate 51/51 in substance with routing live; "which floor
-  has the most people" → a total per floor (v1 averaged per sensor, BUG-1464); "meeting rooms
-  over seating capacity", "seminar rooms over stated capacity", "CO2 during timetabled sessions"
-  (968 vs 795 ppm, 40 rooms, "co-occur, not cause"), "temperature after bookings end",
-  "occupancy vs CO2 correlation" all answered with n and coverage. **The hosted gateway
+  has the most people" → a total per floor (v1 averaged per sensor, BUG-1464), **reliable, 4/4
+  fresh asks**; "CO2 during timetabled sessions" (968 vs 795 ppm, 40 rooms, "co-occur, not
+  cause"), "temperature after bookings end" — **reliable, every single-criterion operation asked
+  repeatedly succeeded every time.** "Meeting rooms over seating capacity" and "seminar rooms
+  over stated capacity" — a kind filter AND a cross-register comparison in one compile — **NOT
+  reliable: 1 success in 7 fresh asks across the session, 3 distinct failure shapes** (CAVEAT-1477,
+  found re-verifying this bullet 2026-10-08; it is the LLM's raw compile varying at temp 0, not
+  the parsing fixes, which are confirmed correct). **Four Redis caches must be flushed before any
+  live check of this lane, not three** — `cqir_compile:*` was found the same day, replays a
+  stale compile for 24h, survives a restart (BUG-1476; see Debugging below).
+  **The hosted gateway
   (10.98.84.2) drops out for seconds or longer** (CAVEAT-1459): a provider failure is NOT the
   system — the pre-registered definition is in plan section 5, and `scripts/attribute_answers.py`
   applies it without reading answers. Rows BUG-1458..1474, CAVEAT-1459/1475.
@@ -1661,7 +1668,7 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
 - **SPARQL empty** → test GraphDB directly (`.claude/rules/sparql-patterns.md`); empty = ontology not loaded; results-but-empty = `sparql_agent._retrieve_context`.
 - **Floor plan empty / `area_m2=null`** → DWG pipeline off (`dwg2dxf`/libredwg missing → PDF-only); manifest `schema_version` should be "2.0"; reingest `POST /api/v1/floor-plans/reingest`.
 - **Capability not answering** → capabilities are triples now. SPARQL GraphDB: `SELECT ?a ?lay WHERE { { ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } ; ontosage:layTerms ?lay }` — empty = `<id>_capabilities.ttl` not loaded (check `ttl_uploader`). Match miss = the query's lay-term isn't in any `ontosage:layTerms`; add it via the admin Capabilities GUI. Prose manual not surfacing = document score below the 0.50 (local) honesty floor in `capability_agent._search_documents`.
-- **Stale answers after a code fix** → flush ALL THREE caches in Redis before re-testing: `resp_cache:*` (answers), `cache:sparql*` (rows) and `cache:intent:*` (the ROUTING DECISION — it replays a stored classification and skips the parse-stage contract, CAVEAT-1413): `for p in "resp_cache:*" "cache:sparql*" "cache:intent:*"; do redis-cli --scan --pattern "$p" | xargs -r redis-cli DEL; done`. Real container name: `redis-memory-store` (not `ontosage-redis`). A restart retires the intent cache by itself since the key now carries the contract's source hash; a change made without a restart does not.
+- **Stale answers after a code fix** → flush ALL FOUR caches in Redis before re-testing: `resp_cache:*` (answers), `cache:sparql*` (rows), `cache:intent:*` (the ROUTING DECISION — it replays a stored classification and skips the parse-stage contract, CAVEAT-1413), and `cqir_compile:*` (the v2 deliberation lane's COMPILED PLAN, 24h TTL, found 2026-10-08 — BUG-1476: this line said THREE for weeks after a fourth cache was added and nobody added it here. A stale compile replays even across a restart, because its key depends on the question text + modality set + provider/model + prompt-template hash + facet-catalogue fingerprint, none of which a restart necessarily changes — unlike `cache:intent:*`, a restart does NOT retire it by itself): `for p in "resp_cache:*" "cache:sparql*" "cache:intent:*" "cqir_compile:*"; do redis-cli --scan --pattern "$p" | xargs -r redis-cli DEL; done`. Real container name: `redis-memory-store` (not `ontosage-redis`). A restart retires the intent cache by itself since the key now carries the contract's source hash; a change made without a restart does not, and the compile cache is never retired by a restart at all.
 - **Feed not updating** → check `docker logs … | grep FeedRegistry` for `loaded=N`; missing feed = feeds.yaml absent or disabled flag.
 - **ECA rule not firing** → check Redis keys `rules:breach_start:*` and `rules:fired:*`; verify `sensor_uuid` matches a UUID in MySQL `sensor_data`.
 - **Concept not resolving** → SPARQL `SELECT ?c WHERE { ?c a hbco:Concept; hbco:layTerm "stuffy" }` against GraphDB; empty = hbco_mappings.ttl not uploaded.

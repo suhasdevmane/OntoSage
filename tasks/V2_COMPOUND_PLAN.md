@@ -386,6 +386,22 @@ run-to-run variance in the intent classifier on lanes v2 does not touch (CAVEAT-
 catalogue's long stakeholder questions mostly need record groupings beyond spaces, which v2
 does not target.
 
+**The compile step is reliable for a single-criterion operation and NOT for a two-criterion one,
+measured with all four caches confirmed clear each ask (CAVEAT-1477, BUG-1476).** "Which floor
+has the most people" (one modality, no kind filter) and "CO2 during timetabled sessions" (one
+series, one event source) succeeded on every repeat asked (4/4 each). "Are any meeting rooms
+over their seating capacity" (a kind filter AND a cross-register numeric comparison in one
+compile) succeeded once in seven fresh asks across this session; the other six failed three
+different ways. This is NOT the parsing fixes in the table above, which are confirmed correct
+against synthetic fixtures and fire exactly when the raw LLM output has the shape they expect —
+it is the raw compile itself varying between calls at temperature 0 on the hosted model,
+consistent with the project's standing BUG-184 finding. Found while re-verifying this section for
+the user: a fourth Redis cache (`cqir_compile:*`, 24h TTL) had never been covered by the
+documented three-cache flush rule and was replaying a stale compile across restarts (BUG-1476,
+fixed in the rule, not in the model). **Do not read "meeting rooms over capacity" as fixed; read
+it as reliable on one shape of compound question and unreliable on a harder one, honestly
+unresolved.**
+
 **Blast radius of the routing, measured offline (fires / set):** operation signal — 1 / 73 pack,
 3 / 2,477 DEV, 4 / 4,018 bank (held-out excluded), 9 / 7,085 real corpus (held-out excluded,
 counts only); C1 signal — 3 / 73, 65 / 2,477, 79 / 4,018, 13 / 7,085.
