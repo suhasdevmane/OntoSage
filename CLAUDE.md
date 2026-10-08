@@ -28,12 +28,19 @@ user's explicit approval.**
 
 - **LATEST (2026-10-08) — v2: compound, multi-criteria questions. READ
   [`tasks/V2_COMPOUND_PLAN.md`](./tasks/V2_COMPOUND_PLAN.md) sections 5 and 8 FIRST.** v1 is
-  frozen as tag `v1.0-demo` with its answers to the sealed held-out sets in
-  `eval/compound/results/v1/`. **The held-out sets (`eval/compound/T-REAL*.jsonl`, `T-CAT.jsonl`,
-  `LABELS.json`) are SEALED until the user's blinded read: never open, grep or print them, and
-  never print a question from `docs/smart_building_questions.csv` or the survey corpus that a
-  routing scan matches — counts only (`HELDOUT_HASHES.txt` excludes exact copies, not
-  paraphrases).** Develop on `eval/compound/DEV.jsonl` and hand-written probes only.
+  frozen as tag `v1.0-demo` with its answers to the held-out sets in `eval/compound/results/v1/`.
+  **THE BLINDED READ IS DONE (2026-10-08) AND THE PRIMARY HYPOTHESIS IS NOT SUPPORTED — read
+  [`eval/compound/BEFORE_AFTER.md`](./eval/compound/BEFORE_AFTER.md) before claiming anything about
+  v2.** Acceptable on answerable real compound questions: **v1 13.6% → v2 15.9%, n = 44, McNemar
+  p = 1.00**; secondary T-CAT 5.3% → 2.6%; **one v2 fabrication** (T-CAT C037, metadata lane = v1
+  code, BUG-1478, P1). The compound machinery was reached by **2 of 91** held-out items; the false
+  decline in v1 lanes is D on 32 of 49 primary answers in BOTH versions (CAVEAT-1480). **The read
+  was an LLM judge panel, not the pre-registered human reader** (3 judges per answer, Fleiss' κ
+  0.885) — a human subsample check is owed before calling it human-equivalent (CAVEAT-1479).
+  **The held-out sets are now SPENT:** they may be read and used for development, but never again
+  as evidence for a later version — a v3 claim needs a FRESH held-out set, and the real-corpus pool
+  left after exclusions is nearly empty. Still never print a corpus/bank question a routing scan
+  matches — counts only.
   **What v2 is:** ARBITER generalised from sensed modalities to the building's FACETS — record
   rows linked to spaces at lift time (P1), a facet catalogue derived from the graph (400 for
   bldg1), a space-kind facet from labels + Brick classes, a typed plan over facets, operations

@@ -1,0 +1,112 @@
+{
+ "X021": {
+  "label": "B",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "X003": {
+  "label": "D",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "X008": {
+  "label": "D",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "X019": {
+  "label": "D",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "X005": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X010": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X004": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X013": {
+  "label": "D",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "X022": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X018": {
+  "label": "D",
+  "cov": 1,
+  "how": "2/3 judges"
+ },
+ "X009": {
+  "label": "E",
+  "cov": 1,
+  "how": "2/3 judges"
+ },
+ "X017": {
+  "label": "A",
+  "cov": 2,
+  "how": "3/3 judges"
+ },
+ "X014": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X006": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X015": {
+  "label": "E",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "X002": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X012": {
+  "label": "D",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "X020": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X007": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X011": {
+  "label": "E",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "X016": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "X001": {
+  "label": "A",
+  "cov": 2,
+  "how": "3/3 judges"
+ }
+}

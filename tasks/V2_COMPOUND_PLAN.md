@@ -405,3 +405,34 @@ unresolved.**
 **Blast radius of the routing, measured offline (fires / set):** operation signal — 1 / 73 pack,
 3 / 2,477 DEV, 4 / 4,018 bank (held-out excluded), 9 / 7,085 real corpus (held-out excluded,
 counts only); C1 signal — 3 / 73, 65 / 2,477, 79 / 4,018, 13 / 7,085.
+
+---
+
+## 9. Result (2026-10-08) — and the one deviation from section 5
+
+**Deviation, stated first.** Section 5 named one human reader. At the author's request the read was
+done by an **LLM judge panel**: every answer judged alone by three independent judges (693
+judgments over 231 answers — v1, v2 and the ablation arm), no judge seeing two answers to the same
+question or knowing which system wrote one, keys opened only after every label was written, majority
+label final. Fleiss' κ 0.885 (six labels) / 0.895 (acceptable vs not). The judges are the same
+model family that helped build v2, so the agreement shows consistency, not validity. The section-5
+remedy — a second, human reader on a ~20% subsample with Cohen's κ — is owed before this read is
+reported as human-equivalent (CAVEAT-1479).
+
+**Outcome against the pre-registration:**
+
+| | v1 | v2 | |
+|---|---|---|---|
+| Primary: acceptable on answerable, T-REAL ∪ SUPPLEMENT (n = 44) | 13.6% | 15.9% | +2.3 pts, CI −9.1 to +13.6, McNemar p = 1.00 |
+| Sensitivity: T-REAL alone (n = 22) | 13.6% | 18.2% | p = 1.00 |
+| Secondary: T-CAT (n = 38) | 5.3% | 2.6% | p = 1.00 |
+| Safety: F | 0 | **1** (T-CAT C037, BUG-1478) | **criterion failed** |
+| Ablation: v1 → ablated → v2 | 13.6% → 13.6% → 15.9% | | p = 1.00 each |
+
+**The primary hypothesis is not supported.** The compound machinery was reached by 2 of 91
+held-out items (one D→A, one D→D); the dominant failure in both versions is the false decline in v1
+lanes (D = 32 of 49 primary answers in each), and the generalised compiler's instability shows up
+on the held-out set (one gain, one loss against the ablated build). The fabrication came from the
+metadata lane — v1 code that v1 never reached on that item because it timed out. Full report:
+[`eval/compound/BEFORE_AFTER.md`](../eval/compound/BEFORE_AFTER.md). T-REAL and its supplement are
+now **spent**: any v3 claim needs a fresh held-out set.

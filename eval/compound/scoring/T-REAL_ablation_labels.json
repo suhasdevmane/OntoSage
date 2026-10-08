@@ -1,0 +1,137 @@
+{
+ "R019": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R024": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R022": {
+  "label": "C",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R017": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R002": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R015": {
+  "label": "C",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R021": {
+  "label": "E",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "R013": {
+  "label": "C",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R005": {
+  "label": "B",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "R010": {
+  "label": "E",
+  "cov": 1,
+  "how": "3/3 judges"
+ },
+ "R026": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R025": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R023": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R001": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R018": {
+  "label": "C",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R020": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R027": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R014": {
+  "label": "A",
+  "cov": 2,
+  "how": "2/3 judges"
+ },
+ "R003": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R007": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R012": {
+  "label": "C",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R006": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R009": {
+  "label": "E",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R004": {
+  "label": "A",
+  "cov": 2,
+  "how": "3/3 judges"
+ },
+ "R016": {
+  "label": "D",
+  "cov": 0,
+  "how": "3/3 judges"
+ },
+ "R011": {
+  "label": "D",
+  "cov": 0,
+  "how": "2/3 judges"
+ },
+ "R008": {
+  "label": "E",
+  "cov": 0,
+  "how": "3/3 judges"
+ }
+}

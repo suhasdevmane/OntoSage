@@ -1,0 +1,21 @@
+{
+ "answers": 231,
+ "with_three_judgments": 231,
+ "missing_judgments": 0,
+ "unanimous": 211,
+ "two_of_three": 20,
+ "three_way_split": 0,
+ "fleiss_kappa_six_labels": 0.885,
+ "fleiss_kappa_acceptable_vs_not": 0.895,
+ "unanimous_on_acceptability": 220,
+ "final_label_counts": {
+  "D": 158,
+  "E": 28,
+  "C": 23,
+  "A": 15,
+  "B": 6,
+  "F": 1
+ },
+ "any_F_vote": 2,
+ "final_F": 1
+}

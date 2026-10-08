@@ -1,0 +1,1228 @@
+﻿id,shape,answerability,question,criteria_needed,answer_X,answer_Y,label_X,label_Y,criteria_covered_X,criteria_covered_Y,notes
+X001,C3,FULL,can you tell me which areas have the freshest air right now?,co2_or_air_quality; floor_or_zone_membership,"**Best match: Room 1.38 — Academic Office** (floor Floor1, score 0.7213 out of 1, where 1 fits everything you asked for).
+1. **Room 1.38 — Academic Office** — score 0.7213 (co2: 721)
+2. **Room 2.03 — Research Laboratory** — score 0.7109 (co2: 732.2)
+3. **Room 1.37 — Academic Office** — score 0.708 (co2: 735.4)
+
+**Assumptions:** 'freshest air' scored as minimize co2 against the 420-1500 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; co2: 195/195 instrumented; 39 excluded (listed).
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: rank_all over 195 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | co2 | 760.6 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 0.10 — Building Management Office | co2 | 785.6 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 0.17 — Office | co2 | 768 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 0.18 — Office | co2 | 765.2 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 0.19 — Office | co2 | 793.4 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 0.20 — Office | co2 | 751 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 1.04 — Common Area / Atrium | co2 | 804.8 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 1.06 — Computer Laboratory | co2 | 804.4 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 1.07 — Computer Laboratory | co2 | 801.8 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 1.08 — Computer Laboratory | co2 | 785 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 1.09 — Computer Laboratory | co2 | 792.6 | recent mean (last readings) | 5 | database1_floors04 |
+| Room 1.25 — Conference/Seminar Room | co2 | 816 | recent mean (last readings) | 5 | database1_floors04 |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** ASHRAE 62.1 comfort band 420-1500 ppm
+
+</details>
+
+**As measured at 08:07 on 08 Oct, 4 minutes ago.** Recheck by **08:12** (5 minutes of useful life). Switch if: co2 in Room 1.38 — Academic Office moves outside the range that made it the best option — the next best was Room 2.03 — Research Laboratory.
+
+> **Primary:** Room 1.38 — Academic Office. **Backup:** Room 2.03 — Research Laboratory — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.","**Best match: Room 5.21 — Academic Office** (floor Floor5, score 0.9286 out of 1, where 1 fits everything you asked for).
+1. **Room 5.21 — Academic Office** — score 0.9286 (co2: 497.067)
+2. **Room 5.07 — Academic Office** — score 0.908 (co2: 519.333)
+3. **Room 5.26 — Staff Break Room / Kitchen** — score 0.9028 (co2: 524.933)
+
+**Assumptions:** 'freshest air' scored as minimize co2 against the 420-1500 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; co2: 195/195 instrumented; 39 excluded (listed).
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: list_matching over 195 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | co2 | 709.667 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.10 — Building Management Office | co2 | 729 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.17 — Office | co2 | 693.667 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.18 — Office | co2 | 724.333 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.19 — Office | co2 | 740.667 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.20 — Office | co2 | 723 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.04 — Common Area / Atrium | co2 | 736.667 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.06 — Computer Laboratory | co2 | 744.667 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.07 — Computer Laboratory | co2 | 734 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.08 — Computer Laboratory | co2 | 760.333 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.09 — Computer Laboratory | co2 | 710.667 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.25 — Conference/Seminar Room | co2 | 743.333 | recent mean (last readings) | 3 | database1_floors04 |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** ASHRAE 62.1 comfort band 420-1500 ppm
+
+</details>
+
+**As measured at 00:07 on 08 Oct, 1 minutes ago.** Recheck by **00:12** (5 minutes of useful life). Switch if: co2 in Room 5.21 — Academic Office moves outside the range that made it the best option — the next best was Room 5.07 — Academic Office.
+
+> **Primary:** Room 5.21 — Academic Office. **No independent backup exists** — every other option depends on something the primary also depends on, so a single failure would take both. Every alternative shares: Floor5. That is a single point of failure worth raising with the estate team.",A,A,2,2,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X002,C1,FULL,are there any nearby areas with better wifi connectivity?,network_rating_or_wifi_status; adjacency_or_distance,"I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+
+Abacws Building does keep Asset engineering profile, Incident record and Workspace profile records, which I can read for you.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `No Match` · sensor
+- **When:** retrieved 2026-10-07 23:08:19
+- **Checks that fired:** retrieval_floor
+
+</details>","I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+
+Abacws Building does keep Asset engineering profile, Incident record and Workspace profile records, which I can read for you.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `No Match` · sensor
+- **When:** retrieved 2026-10-08 07:11:12
+- **Checks that fired:** retrieval_floor
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X003,C2,PARTIAL,are all the lights turned off in empty rooms?,room_lighting_state; occupancy_count,"The latest illuminance readings (2026‑10‑08 08:11:24, Europe/London) show that the rooms are well lit, so the lights are not turned off.
+
+| Sensor | Latest value | Unit | Average (07 Oct 23:27 – 08 Oct 08:11) | Night mean | Day mean |
+|--------|--------------|------|--------------------------------------|------------|----------|
+| Illuminance Sensor installed-node 5.01 | 549 | lux | 205 | 137 | 493 |
+| Illuminance Sensor installed-node 5.02 | 501 | lux | 187 | 122 | 465 |
+| Illuminance Sensor installed-node 5.03 | 538 | lux | 205 | 139 | 486 |
+| Illuminance Sensor installed-node 5.04 | 528 | lux | 197 | 131 | 491 |
+| Illuminance Sensor installed-node 5.05 | 516 | lux | 187 | 120 | 490 |
+| Illuminance Sensor installed-node 5.06 | 465 | lux | 261 | 193 | 531 |
+| Illuminance Sensor installed-node 5.07 | 519 | lux | 195 | 124 | 488 |
+| Illuminance Sensor installed-node 5.08 | 445 | lux | 189 | 122 | 469 |
+| Illuminance Sensor installed-node 5.09 | 544 | lux | 191 | 127 | 482 |
+| Illuminance Sensor installed-node 5.10 | 525 | lux | 221 | 157 | 466 |
+
+All of these values are well above the typical “dark” threshold for a room with lights off, and the average illuminance for each node is in the 180–260 lux range, with daytime averages roughly double the nighttime averages. Therefore, the lights in these rooms are on.
+
+_The readings query reached its row limit of 1000 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-04 04:36:49 to 2026-10-08 07:11:24. That is the newest part of the last 30 days, not the whole of it._
+
+---
+*Sources: `Building model` `Live Sensor Data` `Lighting Sensing System`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from an instrument
+- **Operation performed:** observation
+- **Kind of source that led:** measurement
+- **Sources (28):**
+    - `Building model` · sensor
+    - `Database1` · sensor
+    - `Light Data` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-08 07:11:24, retrieved 2026-10-08 07:12:06
+
+</details>","I couldn't put an answer together from Abacws Building's records — I did read them, but what I could make of them did not answer the question you asked.
+
+The nearest things I can answer are the Cleaning task, Fire safety asset and Workspace profile records and the readings of lighting cct, air quality, carbon monoxide and co2. Ask about one of those and I will read them.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Live Sensor Data` `Lighting Sensing System` `Analytics Engine`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — arithmetic over observations
+- **Operation performed:** calculation
+- **Kind of source that led:** measurement
+- **Sources (29):**
+    - `Building model` · sensor
+    - `Database1` · sensor
+    - `Light Data` · sensor
+    - `Analytics Engine` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-07 23:08:29, retrieved 2026-10-07 23:09:36
+
+</details>",E,D,1,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X004,C5,FULL,How does air quality affect the ventilation power?,co2_or_air_quality; ventilation_power_hvac_submeters,"I couldn't tie that question to a reading I can give you, so I have no figure for it. For air quality, I can answer ""Which floor had the highest air quality this week?"" or ""What is the air quality in one room right now?"".
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (26):**
+    - `Building model` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** retrieved 2026-10-07 23:08:28
+
+</details>","I couldn't map part of your request (How does air quality affect the ventilation power?) — could you rephrase or drop that part?
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-08 07:11:22
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X005,C2,FULL,Which rooms are closest to being fully occupied?,occupancy_count; room_capacity,"I couldn't tie that question to a reading I can give you, so I have no figure for it. I can answer about a room, a floor or a quantity the building measures, for example ""What is the temperature in a named room right now?"" or ""Which floor has the most people right now?"".
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (26):**
+    - `Building model` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** retrieved 2026-10-08 07:12:16
+
+</details>","I couldn't tie that question to a reading I can give you, so I have no figure for it. I can answer about a room, a floor or a quantity the building measures, for example ""What is the temperature in a named room right now?"" or ""Which floor has the most people right now?"".
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (26):**
+    - `Building model` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** retrieved 2026-10-07 23:08:55
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X006,C5,FULL,are there areas left heated or cooled when nobody is around?,hvac_operation_per_floor; occupancy_count,"I'm sorry, but the building's data only lists temperature sensors - it doesn't record whether a room is actively heated or cooled, nor does it indicate whether people are present.  
+So, based on these results alone, I can't say whether any areas are left heated or cooled when nobody is around.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:09:26
+
+</details>","I'm sorry, but the building's data only list temperature sensors in the building - they don't include any information about whether a space is occupied or whether heating or cooling is running when it's empty.  
+
+**What we can see**
+
+- 30 temperature sensors are recorded, covering rooms such as 4.66, 4.67, 4.68, 4.69, 4.70, 4.71, 5.01, 5.02, 5.03, 5.04, etc.  
+- Each sensor has a UUID that can be used to pull its latest readings, but no occupancy or HVAC-status fields are present.
+
+**What we can't determine**
+
+- Whether any of those rooms are left heated or cooled when nobody is present, because the dataset does not contain occupancy or HVAC-operation data.
+
+If you need to know whether spaces are left on when empty, you would need records that include occupancy status or HVAC control settings.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:12:35
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X007,C2,PARTIAL,"in this zone, is there energy being wasted on empty meeting rooms?",energy_per_room; occupancy_count; bookings,"Which room do you mean by ""this zone""? I cannot tell which one you are in, and answering about a different one would look right and be wrong. Give me its number or name — or name the floor and I will narrow it down.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-08 07:11:40
+
+</details>","Which room do you mean by ""this zone""? I cannot tell which one you are in, and answering about a different one would look right and be wrong. Give me its number or name — or name the floor and I will narrow it down.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-07 23:08:47
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X008,C5,FULL,"during the evening cleaning shift, are lights and hvac left fully on",cleaning_shifts; enduse_submeters_lighting_hvac,"**Answer**
+
+- The “evening cleaning shift” is recorded in the register as the **Late** shift.  
+- There are **12 cleaning tasks** scheduled for the Late shift (records CLN‑0006, CLN‑0008, CLN‑0009, CLN‑0012, CLN‑0013, CLN‑0016, CLN‑0017, CLN‑0020, CLN‑0021, CLN‑0026, CLN‑0027, CLN‑0030).  
+- The register does **not record** whether lights or HVAC systems are left fully on during any shift.  
+
+So, while we know which tasks are assigned to the evening (Late) shift, we have no information on the status of lights or HVAC from these records.
+
+**Also past their due date, though not recorded as overdue** (stated by the system from the register): CLN-0001 (nextDue 2026-09-18, recorded scheduled); CLN-0002 (nextDue 2026-09-18, recorded scheduled); CLN-0004 (nextDue 2026-09-18, recorded scheduled); CLN-0005 (nextDue 2026-09-18, recorded scheduled); CLN-0006 (nextDue 2026-09-18, recorded scheduled); CLN-0007 (nextDue 2026-09-18, recorded scheduled); CLN-0008 (nextDue 2026-09-17, recorded suspended); CLN-0009 (nextDue 2026-09-18, recorded scheduled); CLN-0010 (nextDue 2026-09-18, recorded scheduled); CLN-0011 (nextDue 2026-09-18, recorded scheduled); CLN-0012 (nextDue 2026-09-18, recorded scheduled); CLN-0013 (nextDue 2026-09-18, recorded scheduled); CLN-0014 (nextDue 2026-09-18, recorded scheduled); CLN-0015 (nextDue 2026-09-18, recorded scheduled); CLN-0016 (nextDue 2026-09-18, recorded scheduled).
+
+**Also recorded in this register:** *shift* — recorded as shift name: Early / Day / Late.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Cleaning Task` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Cleaning Task` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:11:56
+
+</details>","I did not find a record that settles whether lights and HVAC are left fully on during the evening cleaning shift in the building's cleaning task records. It records the shift name for each cleaning task.
+
+**Also past their due date, though not recorded as overdue** (stated by the system from the register): CLN-0001 (nextDue 2026-09-18, recorded scheduled); CLN-0002 (nextDue 2026-09-18, recorded scheduled); CLN-0004 (nextDue 2026-09-18, recorded scheduled); CLN-0005 (nextDue 2026-09-18, recorded scheduled); CLN-0006 (nextDue 2026-09-18, recorded scheduled); CLN-0007 (nextDue 2026-09-18, recorded scheduled); CLN-0008 (nextDue 2026-09-17, recorded suspended); CLN-0009 (nextDue 2026-09-18, recorded scheduled); CLN-0010 (nextDue 2026-09-18, recorded scheduled); CLN-0011 (nextDue 2026-09-18, recorded scheduled); CLN-0012 (nextDue 2026-09-18, recorded scheduled); CLN-0013 (nextDue 2026-09-18, recorded scheduled); CLN-0014 (nextDue 2026-09-18, recorded scheduled); CLN-0015 (nextDue 2026-09-18, recorded scheduled); CLN-0016 (nextDue 2026-09-18, recorded scheduled).
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Cleaning Task` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Cleaning Task` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:09:03
+
+</details>",D,D,1,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X009,C2,PARTIAL,Which zones are currently underutilised?,occupancy_count; room_capacity; zone_membership,"**The lowest occupancy observed is 4 persons, tied among three zones: Meeting Room 3.26, Research Laboratory 4.01, and Meeting Room 3.16.**  
+Across the 257 sensors, the highest count recorded was 18 persons in several rooms, while the overall mean occupancy was 14.2 persons. The spread between the highest and lowest readings is 14 persons. The three zones with 4 persons are therefore the most underutilised compared to the average and the peak values.  
+The lowest occupancy observed is 4 persons, tied among Meeting Room 3.26, Research Laboratory 4.01, and Meeting Room 3.16.
+
+
+
+_The readings query reached its row limit of 60 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-08 05:59:21 to 2026-10-08 07:11:58. That is the newest part of the last 30 days, not the whole of it._
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Occupancy Sensing System` `Parking Occupancy System` `Analytics Engine`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — arithmetic over observations
+- **Operation performed:** calculation
+- **Kind of source that led:** measurement
+- **Sources (29):**
+    - `Building model` · sensor
+    - `Occupancy Data` · sensor
+    - `Parking Data` · sensor
+    - `Analytics Engine` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-08 07:11:58, retrieved 2026-10-08 07:13:17
+
+</details>","**The lowest occupancy observed is 0 persons in Occupancy Count Sensor – Lab 4.01.**  
+This zero count is the minimum among the 257 series, while the maximum recorded is 6 persons in the Telecommunications Room (Floor 5, Room 5.34) and Room 4.22 (Research Laboratory).  
+The spread between the lowest and highest readings is 6 persons, with several other zones registering 1 person, including Seminar Room 3.14, Academic Office 2.49, and Meeting Room 3.26.  
+All other zones in the sample show counts of 2 persons or more, indicating higher utilisation.  
+Thus, the zone currently underutilised is Occupancy Count Sensor – Lab 4.01, with 0 persons observed.
+
+
+
+_The readings query reached its row limit of 60 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-07 21:35:03 to 2026-10-07 23:08:41. That is the newest part of the last 30 days, not the whole of it._
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Occupancy Sensing System` `Parking Occupancy System` `Analytics Engine`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — arithmetic over observations
+- **Operation performed:** calculation
+- **Kind of source that led:** measurement
+- **Sources (29):**
+    - `Building model` · sensor
+    - `Occupancy Data` · sensor
+    - `Parking Data` · sensor
+    - `Analytics Engine` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-07 23:08:39, retrieved 2026-10-07 23:10:21
+
+</details>",E,E,2,1,LLM panel; X: 2/3 judges; Y: 2/3 judges
+X010,C5,FULL,How does room occupancy impact room temperature?,occupancy_count; temperature,"I couldn't tie that question to a reading I can give you, so I have no figure for it. For temperature, I can answer ""Which floor had the highest temperature this week?"" or ""What is the temperature in one room right now?"".
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (26):**
+    - `Building model` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** retrieved 2026-10-07 23:09:28
+
+</details>","**Within each of these 40 spaces, temperature and occupancy rose and fell together: r = 0.94 over 3850 periods (60-minute averages, each space's own averages removed first).**
+Period-to-period changes: r = 0.68 over 3570 pairs of consecutive periods.
+The correlation is positive in 40 of the 40 spaces and negative in 0; the median space's r is 0.97.
+A correlation says the two moved together in these readings, not that one causes the other.
+
+| space | periods with both | r (Pearson) | rank r (Spearman) | change r |
+|---|---|---|---|---|
+| Room 0.01 — Main Reception | 96 | 0.96 | 0.94 | 0.66 |
+| Room 0.19 — Office | 96 | 0.96 | 0.95 | 0.64 |
+| Room 1.09 — Computer Laboratory | 96 | 0.96 | 0.95 | 0.58 |
+| Room 1.39 — Academic Office | 96 | 0.97 | 0.96 | 0.7 |
+| Room 2.03 — Research Laboratory | 96 | 0.97 | 0.96 | 0.68 |
+| Room 2.08 — Computer Laboratory | 96 | 0.97 | 0.95 | 0.65 |
+| Room 2.13 — Meeting Room | 96 | 0.96 | 0.96 | 0.54 |
+| Room 2.18 — Research Laboratory | 96 | 0.96 | 0.94 | 0.7 |
+| Room 2.24 — Academic Office | 96 | 0.97 | 0.96 | 0.67 |
+| Room 2.50 — Academic Office | 96 | 0.96 | 0.95 | 0.61 |
+| Room 2.56 — Research Laboratory | 96 | 0.97 | 0.95 | 0.66 |
+| Room 2.61 — Academic Office | 96 | 0.98 | 0.96 | 0.71 |
+| … | further spaces in the evidence dossier | | | |
+
+**Window (building time):** the last 7 days — Thu 01 Oct 08:13 to Thu 08 Oct 08:13.
+**How the figures were made:** each reading was averaged in 60-minute periods by the store and paired where both have readings; r is Pearson's correlation of the pairs (rank r is Spearman's), each space's own averages removed before spaces are pooled.
+**Not compared (1):** Room 1.04 — Common Area / Atrium (no occupancy sensor).
+
+**Each space's figure:** Pearson's r over its paired periods.
+**About this answer:** No period was named, so the last 7 days were read. 194 spaces have both readings; an evenly spread 40 of them, in name order, were read.
+**Assumptions:** I could not narrow to 'does room' — the building model does not record which spaces are one — so this ranks every space considered and does not describe only does rooms.
+**Coverage:** 195 of 234 spaces considered; occupancy: 194/195 instrumented; temperature: 195/195 instrumented; 39 excluded (listed).
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Operation: one reading related to recorded events or to another reading, from 40 spaces; plan fingerprint in the evidence payload.*
+
+| space | periods with both | r | rank r | change r (pairs) | note |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | 96 | 0.96 | 0.94 | 0.66 (89) | — |
+| Room 0.19 — Office | 96 | 0.96 | 0.95 | 0.64 (89) | — |
+| Room 1.04 — Common Area / Atrium | 0 | — | — | — (0) | no occupancy sensor |
+| Room 1.09 — Computer Laboratory | 96 | 0.96 | 0.95 | 0.58 (89) | — |
+| Room 1.39 — Academic Office | 96 | 0.97 | 0.96 | 0.7 (89) | — |
+| Room 2.03 — Research Laboratory | 96 | 0.97 | 0.96 | 0.68 (89) | — |
+| Room 2.08 — Computer Laboratory | 96 | 0.97 | 0.95 | 0.65 (89) | — |
+| Room 2.13 — Meeting Room | 96 | 0.96 | 0.96 | 0.54 (89) | — |
+| Room 2.18 — Research Laboratory | 96 | 0.96 | 0.94 | 0.7 (89) | — |
+| Room 2.24 — Academic Office | 96 | 0.97 | 0.96 | 0.67 (89) | — |
+| Room 2.50 — Academic Office | 96 | 0.96 | 0.95 | 0.61 (89) | — |
+| Room 2.56 — Research Laboratory | 96 | 0.97 | 0.95 | 0.66 (89) | — |
+| Room 2.61 — Academic Office | 96 | 0.98 | 0.96 | 0.71 (89) | — |
+| Room 2.66 — Staff Break Room / Kitchen | 96 | 0.96 | 0.95 | 0.61 (89) | — |
+| Room 3.05 — Computer Laboratory | 96 | 0.97 | 0.96 | 0.69 (89) | — |
+| Room 3.09 — Academic Office | 96 | 0.97 | 0.96 | 0.64 (89) | — |
+| Room 3.14 — Seminar Room | 96 | 0.96 | 0.95 | 0.6 (89) | — |
+| Room 3.20 — Academic Office | 96 | 0.96 | 0.93 | 0.59 (89) | — |
+| Room 3.48 — Academic Office | 96 | 0.97 | 0.95 | 0.63 (89) | — |
+| Room 3.54 — Research Laboratory | 96 | 0.97 | 0.97 | 0.7 (89) | — |
+| Room 3.60 — Academic Office | 96 | 0.97 | 0.95 | 0.62 (89) | — |
+| Room 3.65 — Academic Office | 96 | 0.96 | 0.95 | 0.63 (89) | — |
+| Room 3.69 — Academic Office | 96 | 0.97 | 0.96 | 0.74 (89) | — |
+| Room 4.03 — Research Laboratory | 96 | 0.97 | 0.96 | 0.69 (89) | — |
+| … | further rows in the evidence payload | | | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+</details>",D,A,0,2,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X011,C3,FULL,can you show me areas with the best temperature consistency?,temperature_variability; floor_or_zone_membership,"**How evenly temperature is spread across the floors:**
+**Across 6 floors:** averages run from 22.67 °C (Floor 1 (First Floor)) to 23.05 °C (Floor 0 (Ground Floor)); standard deviation 0.12 °C.
+**Across 195 individual spaces:** from 22 °C (Room 4.05 — Computer Laboratory) to 23.64 °C (Room 5.05 — Research Laboratory); standard deviation 0.32 °C.
+Floor 1 (First Floor) is the most even: standard deviation 0.19 °C, over 12 spaces with a value.
+
+| floor | std. deviation of temperature | average temperature | spread | spaces with a value | without a value |
+|---|---|---|---|---|---|
+| Floor 1 (First Floor) | 0.19 °C | 22.67 °C | 0.76 °C | 12 | 0 |
+| Floor 0 (Ground Floor) | 0.25 °C | 23.05 °C | 0.8 °C | 6 | 0 |
+| Floor 3 (Third Floor) | 0.26 °C | 22.9 °C | 1.04 °C | 45 | 0 |
+| Floor 2 (Second Floor) | 0.3 °C | 22.81 °C | 1.4 °C | 42 | 0 |
+| Floor 5 (Fifth Floor) | 0.33 °C | 22.95 °C | 1.63 °C | 46 | 0 |
+| Floor 4 (Fourth Floor) | 0.35 °C | 22.83 °C | 1.6 °C | 44 | 0 |
+
+**Each space's figure:** recent mean (last readings).
+**Assumptions:** I could not narrow to 'me area' — the building model does not record which spaces are one — so this ranks every space considered and does not describe only me areas; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; temperature: 195/195 instrumented; 39 excluded (listed).
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Operation: groups ranked by one figure, from 195 spaces; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | temperature | 23.037 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 0.10 — Building Management Office | temperature | 22.91 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 0.17 — Office | temperature | 23.053 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 0.18 — Office | temperature | 22.65 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 0.19 — Office | temperature | 23.213 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 0.20 — Office | temperature | 23.453 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 1.04 — Common Area / Atrium | temperature | 22.607 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 1.06 — Computer Laboratory | temperature | 22.885 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 1.07 — Computer Laboratory | temperature | 22.948 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 1.08 — Computer Laboratory | temperature | 22.63 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 1.09 — Computer Laboratory | temperature | 22.86 | recent mean (last readings) | 6 | database1_floors04 |
+| Room 1.25 — Conference/Seminar Room | temperature | 22.637 | recent mean (last readings) | 6 | database1_floors04 |
+| … | | | further rows in the evidence payload | | |
+
+| space | floor | temperature | source |
+|---|---|---|---|
+| Room 0.01 — Main Reception | Floor 0 (Ground Floor) | 23.04 °C | temperature sensor, recent mean (last readings) |
+| Room 0.10 — Building Management Office | Floor 0 (Ground Floor) | 22.91 °C | temperature sensor, recent mean (last readings) |
+| Room 0.17 — Office | Floor 0 (Ground Floor) | 23.05 °C | temperature sensor, recent mean (last readings) |
+| Room 0.18 — Office | Floor 0 (Ground Floor) | 22.65 °C | temperature sensor, recent mean (last readings) |
+| Room 0.19 — Office | Floor 0 (Ground Floor) | 23.21 °C | temperature sensor, recent mean (last readings) |
+| Room 0.20 — Office | Floor 0 (Ground Floor) | 23.45 °C | temperature sensor, recent mean (last readings) |
+| Room 1.04 — Common Area / Atrium | Floor 1 (First Floor) | 22.61 °C | temperature sensor, recent mean (last readings) |
+| Room 1.06 — Computer Laboratory | Floor 1 (First Floor) | 22.89 °C | temperature sensor, recent mean (last readings) |
+| Room 1.07 — Computer Laboratory | Floor 1 (First Floor) | 22.95 °C | temperature sensor, recent mean (last readings) |
+| Room 1.08 — Computer Laboratory | Floor 1 (First Floor) | 22.63 °C | temperature sensor, recent mean (last readings) |
+| Room 1.09 — Computer Laboratory | Floor 1 (First Floor) | 22.86 °C | temperature sensor, recent mean (last readings) |
+| Room 1.25 — Conference/Seminar Room | Floor 1 (First Floor) | 22.64 °C | temperature sensor, recent mean (last readings) |
+| Room 1.26 — Conference/Seminar Room | Floor 1 (First Floor) | 22.56 °C | temperature sensor, recent mean (last readings) |
+| Room 1.37 — Academic Office | Floor 1 (First Floor) | 22.6 °C | temperature sensor, recent mean (last readings) |
+| Room 1.38 — Academic Office | Floor 1 (First Floor) | 22.67 °C | temperature sensor, recent mean (last readings) |
+| Room 1.39 — Academic Office | Floor 1 (First Floor) | 22.81 °C | temperature sensor, recent mean (last readings) |
+| Room 1.40 — Academic Office | Floor 1 (First Floor) | 22.19 °C | temperature sensor, recent mean (last readings) |
+| Room 1.41 — Academic Office | Floor 1 (First Floor) | 22.67 °C | temperature sensor, recent mean (last readings) |
+| Room 2.01 — Research Laboratory | Floor 2 (Second Floor) | 22.43 °C | temperature sensor, recent mean (last readings) |
+| Room 2.02 — Research Laboratory | Floor 2 (Second Floor) | 22.46 °C | temperature sensor, recent mean (last readings) |
+| Room 2.03 — Research Laboratory | Floor 2 (Second Floor) | 22.23 °C | temperature sensor, recent mean (last readings) |
+| Room 2.04 — Research Laboratory | Floor 2 (Second Floor) | 22.59 °C | temperature sensor, recent mean (last readings) |
+| Room 2.05 — Research Laboratory | Floor 2 (Second Floor) | 22.89 °C | temperature sensor, recent mean (last readings) |
+| Room 2.06 — Research Laboratory | Floor 2 (Second Floor) | 22.68 °C | temperature sensor, recent mean (last readings) |
+| … | | further rows in the evidence payload | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+</details>","**Best match: Room 2.64 — Academic Office** (floor Floor2, score 0.4378 out of 1, where 1 fits everything you asked for).
+1. **Room 2.64 — Academic Office** — score 0.4378 (temperature: 22.627)
+2. **Room 3.18 — Kitchen** — score 0.4322 (temperature: 22.593)
+3. **Room 4.60 — Research Laboratory** — score 0.4322 (temperature: 22.593)
+
+**Assumptions:** 'best temperature consistency' scored as maximize temperature against the 20-26 band; all stated preferences weighted equally; I could not narrow to 'me area' — the building model does not record which spaces are one — so this ranks every space considered and does not describe only me areas; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; temperature: 195/195 instrumented; 39 excluded (listed).
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: superlative over 195 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | temperature | 22.54 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.10 — Building Management Office | temperature | 22.203 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.17 — Office | temperature | 22.14 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.18 — Office | temperature | 21.927 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.19 — Office | temperature | 22.48 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 0.20 — Office | temperature | 22.237 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.04 — Common Area / Atrium | temperature | 21.943 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.06 — Computer Laboratory | temperature | 22.16 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.07 — Computer Laboratory | temperature | 22.213 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.08 — Computer Laboratory | temperature | 21.843 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.09 — Computer Laboratory | temperature | 22.05 | recent mean (last readings) | 3 | database1_floors04 |
+| Room 1.25 — Conference/Seminar Room | temperature | 21.833 | recent mean (last readings) | 3 | database1_floors04 |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** ASHRAE 55 comfort range 20-26 °C
+
+</details>
+
+**As measured at 00:08 on 08 Oct, 2 minutes ago.** Recheck by **00:23** (15 minutes of useful life). Switch if: temperature in Room 2.64 — Academic Office moves outside the range that made it the best option — the next best was Room 3.18 — Kitchen.
+
+> **Primary:** Room 2.64 — Academic Office. **Backup:** Room 3.18 — Kitchen — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.",A,E,2,1,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X012,C2,PARTIAL,are the ahu fans running at higher kw than the airflow needs,ahu_fan_power; supply_air_flow; design_duty,"**The highest airflow observed is 912.46 L/s on Floor 5.**  
+The lowest airflow recorded is 0.00 L/s on Floors 1 and 2, while the spread between the highest and lowest values is 912.46 L/s.  
+The data set contains only airflow measurements; no power (kW) data is available.  
+The highest airflow observed is 912.46 L/s on Floor 5.
+
+
+
+_The readings query reached its row limit of 1000 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-01 08:04:08 to 2026-10-08 07:08:54. That is the newest part of the last 30 days, not the whole of it._
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model` `Sensor data` `Analytics Engine`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — two or more things set against each other, and the difference reported
+- **Operation performed:** comparison
+- **Kind of source that led:** measurement
+- **Sources (9):**
+    - `Building model` · sensor
+    - `Plant Data` · sensor
+    - `Analytics Engine` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-08 07:08:54, retrieved 2026-10-08 07:13:21
+
+</details>","**The data set contains only airflow measurements (L/s); no power (kW) readings are present.**  
+The highest airflow observed was 913.33 L/s on Floor 1, while the lowest was 0.00 L/s on all floors.  
+The mean airflow across the six floors ranged from 378.76 L/s (Floor 2) to 443.12 L/s (Floor 4).  
+Because power consumption is not recorded, it cannot be determined whether the AHU fans are operating at higher kW than the airflow requires.
+
+
+
+_The readings query reached its row limit of 1000 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-01 00:03:57 to 2026-10-07 23:08:24. That is the newest part of the last 30 days, not the whole of it._
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model` `Sensor data` `Analytics Engine`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — two or more things set against each other, and the difference reported
+- **Operation performed:** comparison
+- **Kind of source that led:** measurement
+- **Sources (9):**
+    - `Building model` · sensor
+    - `Plant Data` · sensor
+    - `Analytics Engine` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-07 23:08:24, retrieved 2026-10-07 23:10:09
+
+</details>",D,B,1,1,LLM panel; X: 2/3 judges; Y: 3/3 judges
+X013,C1,PARTIAL,Can you guide me to free rooms?,room_availability_bookings_occupancy; routes,"**72 of 234 rooms have no booking today**: Room 0.01, Room 0.06, Room 0.08, Room 0.10, Room 0.17, Room 0.29, Room 0.31, Room 1.04, Room 1.06, Room 1.07, Room 1.08, Room 1.09 …
+
+_Availability = no booking on record; walk-in use isn't tracked here._
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-08 07:13:27
+
+</details>","**72 of 234 rooms have no booking today**: Room 0.01, Room 0.06, Room 0.08, Room 0.10, Room 0.17, Room 0.29, Room 0.31, Room 1.04, Room 1.06, Room 1.07, Room 1.08, Room 1.09 …
+
+_Availability = no booking on record; walk-in use isn't tracked here._
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-07 23:10:23
+
+</details>",D,D,1,1,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X014,C2,FULL,do the temprature setpoints and the energy meter show overcooling anywhere,hvac_setpoints; temperature; hvac_energy,"The operating regime register (10 records) cannot answer this: it records occupied setpoint, unoccupied setpoint, covered scope, approved exception, operating window and seasonal changeover, and nothing about anywhere, energy, meter and overcooling.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Operating Regime` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Operating Regime` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:13:21
+
+</details>","The operating regime register (10 records) cannot answer this: it records occupied setpoint, unoccupied setpoint, covered scope, approved exception, operating window and seasonal changeover, and nothing about anywhere, energy, meter and overcooling.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Operating Regime` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Operating Regime` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:10:13
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X015,C1,FULL,"Can you identify if, even during busy times, there are open seats that are relatively secluded/quiet?",workspace_seats; occupancy_count; noise_or_quiet_zone,"**Best match: Room 1.26 — Conference/Seminar Room** (floor Floor1, score 0.7798 out of 1, where 1 fits everything you asked for).
+1. **Room 1.26 — Conference/Seminar Room** — score 0.7798 (noise: 47.613, occupancy: 9.8)
+2. **Room 4.58 — Research Laboratory** — score 0.7792 (noise: 47.667, occupancy: 12.867)
+3. **Room 5.16 — Seminar / Conference Room** — score 0.7783 (noise: 47.733, occupancy: 15.267)
+
+**Every occupancy reading above sits above the 0 to 8 range used to weigh it**, so on that count these spaces are all at the same end of the scale and the order between them comes from the other things you asked for.
+
+**Assumptions:** 'busy times' scored as maximize occupancy against the 0-8 band; 'relatively secluded/quiet' scored as minimize noise against the 30-70 band; all stated preferences weighted equally; interpreted as current conditions; 'open seats' doesn't match anything this building senses or records about its spaces — ignored.
+**Coverage:** 195 of 234 spaces considered; noise: 194/195 instrumented; occupancy: 194/195 instrumented; 39 excluded (listed).
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: list_matching over 194 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | occupancy | 16 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.01 — Main Reception | noise | 50.92 | recent mean (last readings) | 15 | noise_data |
+| Room 0.10 — Building Management Office | occupancy | 14.533 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.10 — Building Management Office | noise | 49.6 | recent mean (last readings) | 15 | noise_data |
+| Room 0.17 — Office | occupancy | 15.267 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.17 — Office | noise | 49.587 | recent mean (last readings) | 15 | noise_data |
+| Room 0.18 — Office | occupancy | 14.467 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.18 — Office | noise | 49.2 | recent mean (last readings) | 15 | noise_data |
+| Room 0.19 — Office | occupancy | 15.4 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.19 — Office | noise | 48.787 | recent mean (last readings) | 15 | noise_data |
+| Room 0.20 — Office | occupancy | 14.667 | recent mean (last readings) | 15 | occupancy_data |
+| Room 0.20 — Office | noise | 49.3 | recent mean (last readings) | 15 | noise_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** WHO guideline band 30-70 dB(A) indoor · relative occupancy band (0 = empty)
+
+</details>
+
+**As measured at 08:12 on 08 Oct, 2 minutes ago.** Recheck by **08:17** (5 minutes of useful life). Switch if: occupancy in Room 1.26 — Conference/Seminar Room moves outside the range that made it the best option — the next best was Room 4.58 — Research Laboratory.
+
+> **Primary:** Room 1.26 — Conference/Seminar Room. **Backup:** Room 4.58 — Research Laboratory — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.","**The readings don't separate these spaces.** On what you asked for, every space I could measure scores the same, so picking a best one would be arbitrary. Here is what they read:
+- **Room 2.48 — Academic Office** (noise: 40.35, occupancy: 5.286, occupancy_status: 0.214)
+- **Room 5.63 — Academic Office** (noise: 41.479, occupancy: 5.143, occupancy_status: 0)
+- **Room 1.38 — Academic Office** (noise: 40.579, occupancy: 5.071, occupancy_status: 0.786)
+
+
+**Assumptions:** 'busy times' scored as above occupancy against the 0-8 band; 'relatively secluded/quiet' scored as below noise against the 30-70 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; noise: 194/195 instrumented; occupancy: 194/195 instrumented; occupancy_status: 195/195 instrumented; 39 excluded (listed).
+Note: the top choice can flip under ±25% preference-weight changes — the leading options are close.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: list_matching over 194 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | occupancy | 4.357 | recent mean (last readings) | 14 | occupancy_data |
+| Room 0.01 — Main Reception | occupancy_status | 0 | recent mean (last readings) | 14 | occupancy_data |
+| Room 0.01 — Main Reception | noise | 41.571 | recent mean (last readings) | 14 | noise_data |
+| Room 0.10 — Building Management Office | occupancy | 3.786 | recent mean (last readings) | 14 | occupancy_data |
+| Room 0.10 — Building Management Office | occupancy_status | 0 | recent mean (last readings) | 14 | occupancy_data |
+| Room 0.10 — Building Management Office | noise | 41.121 | recent mean (last readings) | 14 | noise_data |
+| Room 0.17 — Office | occupancy | 3.643 | recent mean (last readings) | 14 | occupancy_data |
+| Room 0.17 — Office | occupancy_status | 0.714 | recent mean (last readings) | 14 | occupancy_data |
+| Room 0.17 — Office | noise | 41.571 | recent mean (last readings) | 14 | noise_data |
+| Room 0.18 — Office | occupancy | 3.357 | recent mean (last readings) | 14 | occupancy_data |
+| Room 0.18 — Office | occupancy_status | 0 | recent mean (last readings) | 14 | occupancy_data |
+| Room 0.18 — Office | noise | 40.279 | recent mean (last readings) | 14 | noise_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** WHO guideline band 30-70 dB(A) indoor · relative occupancy band (0 = empty)
+
+</details>
+
+**As measured at 00:09 on 08 Oct, 2 minutes ago.** Recheck by **00:14** (5 minutes of useful life). Switch if: occupancy in Room 2.48 — Academic Office moves outside the range that made it the best option — the next best was Room 5.63 — Academic Office.
+
+> **Primary:** Room 2.48 — Academic Office. **Backup:** Room 5.63 — Academic Office — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.",E,E,1,2,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X016,C6,FULL,IS WASTE MANAGEMENT AND INDOOR POLLUTION UNDER CONTROLL?,waste_registers_and_bin_fill; indoor_pollutant_sensors,"The waste collection point register (24 records) cannot answer this: it records waste station, waste stream, aperture kind, location, service frequency, approved fill threshold, capacity litres and fill percent, plus 3 more fields, and nothing about controll, indoor and pollution.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:13:35
+
+</details>","The waste collection point register (24 records) cannot answer this: it records waste station, waste stream, aperture kind, location, service frequency, approved fill threshold, capacity litres and fill percent, plus 3 more fields, and nothing about controll, indoor and pollution.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:10:31
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X017,C3,FULL,which parts of the building are the quietest during this time?,noise; floor_or_zone_membership,"**Best match: Room 2.53 — Research Laboratory** (floor Floor2, score 0.7639 out of 1, where 1 fits everything you asked for).
+1. **Room 2.53 — Research Laboratory** — score 0.7639 (noise: 39.443)
+2. **Room 0.19 — Office** — score 0.7627 (noise: 39.493)
+3. **Room 2.08 — Computer Laboratory** — score 0.7597 (noise: 39.614)
+
+**Assumptions:** 'quietest parts of the building' scored as minimize noise against the 30-70 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; noise: 194/195 instrumented; 39 excluded (listed).
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: superlative over 194 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | noise | 41.571 | recent mean (last readings) | 14 | noise_data |
+| Room 0.10 — Building Management Office | noise | 41.121 | recent mean (last readings) | 14 | noise_data |
+| Room 0.17 — Office | noise | 41.571 | recent mean (last readings) | 14 | noise_data |
+| Room 0.18 — Office | noise | 40.279 | recent mean (last readings) | 14 | noise_data |
+| Room 0.19 — Office | noise | 39.493 | recent mean (last readings) | 14 | noise_data |
+| Room 0.20 — Office | noise | 41.036 | recent mean (last readings) | 14 | noise_data |
+| Room 1.06 — Computer Laboratory | noise | 42.55 | recent mean (last readings) | 14 | noise_data |
+| Room 1.07 — Computer Laboratory | noise | 42.057 | recent mean (last readings) | 14 | noise_data |
+| Room 1.08 — Computer Laboratory | noise | 41.921 | recent mean (last readings) | 14 | noise_data |
+| Room 1.09 — Computer Laboratory | noise | 41.55 | recent mean (last readings) | 14 | noise_data |
+| Room 1.25 — Conference/Seminar Room | noise | 40.707 | recent mean (last readings) | 14 | noise_data |
+| Room 1.26 — Conference/Seminar Room | noise | 41.014 | recent mean (last readings) | 14 | noise_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** WHO guideline band 30-70 dB(A) indoor
+
+</details>
+
+**As measured at 00:09 on 08 Oct, 2 minutes ago.** Recheck by **00:14** (5 minutes of useful life). Switch if: noise in Room 2.53 — Research Laboratory moves outside the range that made it the best option — the next best was Room 0.19 — Office.
+
+> **Primary:** Room 2.53 — Research Laboratory. **Backup:** Room 0.19 — Office — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.","I couldn't map part of your request (this time) — could you rephrase or drop that part?
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-08 07:14:08
+
+</details>",A,D,2,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X018,C1,FULL,are there any empty rooms i can use right now?,occupancy_count; bookings; access_permissions,"**There are 7 rooms with zero occupancy.**  
+The highest occupancy observed is 18 people in Room 2.56 (Research Laboratory).  
+The lowest occupancy observed is 0 people in several rooms, including the Server Room (Floor 5, Room 5.44), the Telecommunications Room (Floor 0, Room 0.34), Room 5.23, Room 4.11, Room 4.02, Room 5.12, and Room 4.64.  
+The spread between the highest and lowest counts is 18 people.  
+**There are 7 rooms with zero occupancy.**
+
+
+
+_The readings query reached its row limit of 60 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-08 06:01:51 to 2026-10-08 07:14:28. That is the newest part of the last 30 days, not the whole of it._
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Occupancy Sensing System` `Analytics Engine`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — arithmetic over observations
+- **Operation performed:** calculation
+- **Kind of source that led:** measurement
+- **Sources (28):**
+    - `Building model` · sensor
+    - `Occupancy Data` · sensor
+    - `Analytics Engine` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-08 07:14:28, retrieved 2026-10-08 07:16:23
+
+</details>","**There are 3 rooms currently empty.**  
+The lowest occupancy observed in the latest readings is 0.00 count, recorded in Room 5.10, Room 5.12, and Room 4.64.  
+The highest occupancy recorded is 6.00 people in Room 5.62, with other rooms ranging from 1 to 4 people.  
+Thus the spread of observed counts is from 0 to 6 people.  
+There are 3 rooms currently empty.
+
+
+
+_The readings query reached its row limit of 60 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-07 21:37:33 to 2026-10-07 23:11:36. That is the newest part of the last 30 days, not the whole of it._
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Occupancy Sensing System` `Analytics Engine`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — arithmetic over observations
+- **Operation performed:** calculation
+- **Kind of source that led:** measurement
+- **Sources (28):**
+    - `Building model` · sensor
+    - `Occupancy Data` · sensor
+    - `Analytics Engine` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-07 23:11:36, retrieved 2026-10-07 23:14:13
+
+</details>",D,D,1,1,LLM panel; X: 3/3 judges; Y: 2/3 judges
+X019,C3,PARTIAL,which floors have the best natural lighting at the moment?,daylight_illuminance; floor_membership,"**Across the building illuminance is averaging 150 lux**, ranging from 55 to 239 lux.
+
+| Floor | Now lux | Lowest | Highest | Sensors |
+|---|---|---|---|---|
+| Floor 0 | 166 | 139 | 212 | 17 |
+| Floor 1 | 147 | 93 | 213 | 13 |
+| Floor 2 | 149 | 77 | 239 | 49 |
+| Floor 3 | 152 | 81 | 220 | 49 |
+| Floor 4 | 146 | 82 | 213 | 52 |
+| Floor 5 | 142 | 55 | 217 | 53 |
+
+Floor 0 is the highest of the 6 floors at 166 lux; Floor 5 the lowest at 142 lux.
+
+Based on 233 illuminance sensors on 6 floors, the newest reading from each sensor in the last 60 minutes (to Thu 08 Oct 00:11, building time): each sensor's newest reading.
+
+35 sensors report in a different unit and are not combined with these.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — two or more things set against each other, and the difference reported
+- **Operation performed:** comparison
+- **Kind of source that led:** measurement
+- **Sources (26):**
+    - `Building model` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** retrieved 2026-10-07 23:11:45
+
+</details>","**Across the building illuminance is averaging 497 lux**, ranging from 409 to 611 lux.
+
+| Floor | Now lux | Lowest | Highest | Sensors |
+|---|---|---|---|---|
+| Floor 0 | 509 | 461 | 556 | 17 |
+| Floor 1 | 500 | 432 | 556 | 13 |
+| Floor 2 | 499 | 425 | 593 | 49 |
+| Floor 3 | 493 | 409 | 611 | 49 |
+| Floor 4 | 494 | 434 | 557 | 52 |
+| Floor 5 | 491 | 429 | 559 | 53 |
+
+Floor 0 is the highest of the 6 floors at 509 lux; Floor 5 the lowest at 491 lux.
+
+Based on 233 illuminance sensors on 6 floors, the newest reading from each sensor in the last 60 minutes (to Thu 08 Oct 08:14, building time): each sensor's newest reading.
+
+35 sensors report in a different unit and are not combined with these.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — two or more things set against each other, and the difference reported
+- **Operation performed:** comparison
+- **Kind of source that led:** measurement
+- **Sources (26):**
+    - `Building model` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** retrieved 2026-10-08 07:14:30
+
+</details>",D,D,1,1,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X020,C2,FULL,Is motion detected in empty rooms?,motion; bookings_or_occupancy_count,"I couldn't tie that question to a reading I can give you, so I have no figure for it. I can answer about a room, a floor or a quantity the building measures, for example ""What is the temperature in a named room right now?"" or ""Which floor has the most people right now?"".
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (26):**
+    - `Building model` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** retrieved 2026-10-07 23:12:10
+
+</details>","I couldn't tie that question to a reading I can give you, so I have no figure for it. I can answer about a room, a floor or a quantity the building measures, for example ""What is the temperature in a named room right now?"" or ""Which floor has the most people right now?"".
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (26):**
+    - `Building model` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** retrieved 2026-10-08 07:14:51
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X021,C6,PARTIAL,Who runs the day-to-day operations at the building and what are their qualifications?,department_directory; staff_qualifications,"**Abacws Building's documents do not answer this.** I searched Department Directory, Stakeholder Group Register; they are the closest material and none of them contains the answer. That is a statement about the documents, not about the building — if you can name the record or the measurement this would be written down as, I will look there next.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Documents Do Not Answer` · sensor
+- **When:** retrieved 2026-10-08 07:14:42
+
+</details>","**Abacws Building's documents do not answer this.** I searched Department Directory, Stakeholder Group Register; they are the closest material and none of them contains the answer. That is a statement about the documents, not about the building — if you can name the record or the measurement this would be written down as, I will look there next.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Documents Do Not Answer` · sensor
+- **When:** retrieved 2026-10-07 23:12:08
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+X022,C5,PARTIAL,"when the sun is on the south fcaade, are the blinds cutting cooling load?",solar_irradiance; blind_positions; cooling_energy,"I could not find any sensor type related to blinds or solar shading in the records I searched.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:18:53
+
+</details>","I couldn't answer that from Abacws Building's records.
+
+The nearest things I can answer are the Asset engineering profile, Operating regime and Interval record records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:12:46
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
