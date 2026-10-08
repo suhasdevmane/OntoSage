@@ -25,13 +25,41 @@ import re
 import time
 from dataclasses import dataclass, replace
 from datetime import date
-from typing import Dict, FrozenSet, Iterable, List, Optional, Pattern, Set, Tuple
+from typing import (
+    Any,
+    Awaitable,
+    Callable,
+    Dict,
+    FrozenSet,
+    Iterable,
+    List,
+    Optional,
+    Pattern,
+    Set,
+    Tuple,
+)
 
 from shared.utils import describe_exception, get_logger
 
 logger = get_logger(__name__)
 
 ONTOSAGE = "http://ontosage.org/capabilities#"
+
+#: An async callable shaped like ``ontology_manager.run_sparql_select``:
+#: ``(query, limit=...) -> {"ok": bool, "rows": [{column: value}], "error": ...}``.
+RunSelect = Callable[..., Awaitable[Dict[str, Any]]]
+
+
+async def _graph_select(query: str, limit: int = 100) -> Dict[str, Any]:
+    """The live graph through the admin browser's SELECT, imported late.
+
+    Late, so a test that replaces ``ontology_manager.run_sparql_select`` replaces what this
+    reads, and so importing this module never imports the HTTP stack.
+    """
+    from orchestrator.services.ontology_manager import run_sparql_select
+
+    return await run_sparql_select(query, limit=limit)
+
 
 #: CamelCase class name -> spaced words. Compiled once: it runs for every class on every load.
 _CAMEL_RE = re.compile(r"(?<!^)(?=[A-Z])")
@@ -148,12 +176,13 @@ SELECT DISTINCT ?cls WHERE {
 )
 
 
-async def _discover_record_classes() -> tuple:
-    """Record class local names, read from the ontology rather than restated here."""
-    try:
-        from orchestrator.services.ontology_manager import run_sparql_select
+async def _discover_record_classes(select: Optional[RunSelect] = None) -> tuple:
+    """Record class local names, read from the ontology rather than restated here.
 
-        result = await run_sparql_select(_DISCOVER_QUERY, limit=200)
+    ``select`` is the graph to ask; the live one when omitted.
+    """
+    try:
+        result = await (select or _graph_select)(_DISCOVER_QUERY, limit=200)
         if result.get("ok"):
             names = tuple(
                 sorted(
@@ -171,11 +200,14 @@ async def _discover_record_classes() -> tuple:
     return _FALLBACK_RECORD_CLASSES
 
 
+#: ``COALESCE(?lay, "")`` because a class with NO lay terms leaves ?lay unbound on every row,
+#: and an engine may raise on a DISTINCT aggregate over an unbound value (rdflib does) where
+#: another skips it (GraphDB does). An empty string joins to the same "no lay terms" either way.
 _QUERY = """
 PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX o: <http://ontosage.org/capabilities#>
 SELECT ?cls (SAMPLE(?lbl) AS ?label) (COUNT(DISTINCT ?i) AS ?n)
-       (GROUP_CONCAT(DISTINCT ?lay; SEPARATOR="|") AS ?lays) WHERE {
+       (GROUP_CONCAT(DISTINCT COALESCE(?lay, ""); SEPARATOR="|") AS ?lays) WHERE {
   VALUES ?cls { %s }
   ?i a ?cls .
   OPTIONAL { ?cls rdfs:label ?lbl }
@@ -322,6 +354,53 @@ async def _load_id_prefixes(found: List[RecordClass]) -> None:
         logger.debug(f"[record_registry] id prefixes unavailable: {describe_exception(exc)}")
 
 
+async def read_record_classes(select: Optional[RunSelect] = None) -> List[RecordClass]:
+    """The record classes a graph holds instances of, read through ``select``.
+
+    The reading half of `record_classes`, with no cache and no side effect on this module's
+    routing state (the id-prefix index, the compiled patterns): the facet catalogue reads the
+    same classes, the same way, from whichever graph it was handed, and must not rewrite what
+    the live router selects by. ``select`` defaults to the live graph.
+
+    RAISES when the instance counts cannot be read, so a caller can tell "this graph holds no
+    record class" from "this graph could not be asked" -- two facts an empty list would merge.
+    """
+    run = select or _graph_select
+    known = await _discover_record_classes(select)
+    values = " ".join(f"o:{c}" for c in known)
+    found: List[RecordClass] = []
+    result = await run(_QUERY % values, limit=len(known) + 1)
+    if not result.get("ok"):
+        raise RuntimeError(result.get("error") or "SPARQL select failed")
+    for row in result.get("rows") or []:
+        cls = str(row.get("cls") or "")
+        try:
+            count = int(str(row.get("n") or "0"))
+        except ValueError:
+            count = 0
+        if not cls or count <= 0:
+            continue
+        local = cls.rsplit("#", 1)[-1]
+        label = str(row.get("label") or "") or local
+        lays = str(row.get("lays") or "")
+        found.append(RecordClass(local, label, count, _terms_for(local, label, lays)))
+    if found:
+        quals = await run(_QUALIFIER_QUERY % values, limit=len(known) + 1)
+        by_class = {
+            str(r.get("cls") or "").rsplit("#", 1)[-1]: tuple(
+                sorted(
+                    {q.strip().lower() for q in str(r.get("quals") or "").split("|") if q.strip()}
+                )
+            )
+            for r in (quals.get("rows") or [] if quals.get("ok") else [])
+        }
+        found = [
+            replace(r, qualifiers=by_class[r.local_name]) if by_class.get(r.local_name) else r
+            for r in found
+        ]
+    return found
+
+
 async def record_classes(namespace: str = "") -> List[RecordClass]:
     """The record classes the active building holds instances of, cached briefly."""
     key = namespace or "_active"
@@ -329,45 +408,8 @@ async def record_classes(namespace: str = "") -> List[RecordClass]:
     if hit and (time.monotonic() - hit[0]) < _TTL_SECONDS:
         return hit[1]
 
-    known = await _discover_record_classes()
-    values = " ".join(f"o:{c}" for c in known)
-    found: List[RecordClass] = []
     try:
-        from orchestrator.services.ontology_manager import run_sparql_select
-
-        result = await run_sparql_select(_QUERY % values, limit=len(known) + 1)
-        if not result.get("ok"):
-            raise RuntimeError(result.get("error") or "SPARQL select failed")
-        for row in result.get("rows") or []:
-            cls = str(row.get("cls") or "")
-            try:
-                count = int(str(row.get("n") or "0"))
-            except ValueError:
-                count = 0
-            if not cls or count <= 0:
-                continue
-            local = cls.rsplit("#", 1)[-1]
-            label = str(row.get("label") or "") or local
-            lays = str(row.get("lays") or "")
-            found.append(RecordClass(local, label, count, _terms_for(local, label, lays)))
-        if found:
-            quals = await run_sparql_select(_QUALIFIER_QUERY % values, limit=len(known) + 1)
-            by_class = {
-                str(r.get("cls") or "").rsplit("#", 1)[-1]: tuple(
-                    sorted(
-                        {
-                            q.strip().lower()
-                            for q in str(r.get("quals") or "").split("|")
-                            if q.strip()
-                        }
-                    )
-                )
-                for r in (quals.get("rows") or [] if quals.get("ok") else [])
-            }
-            found = [
-                replace(r, qualifiers=by_class[r.local_name]) if by_class.get(r.local_name) else r
-                for r in found
-            ]
+        found = await read_record_classes()
     except Exception as exc:
         logger.debug(f"[record_registry] could not read record classes: {exc}")
         # An unreachable graph must not make every register question route as if the
@@ -726,7 +768,9 @@ def rank_record_classes(query: str, classes: List[RecordClass]) -> List[Tuple[fl
     # "door events" and "access log", not "doors" -- so nothing was ranked, and the metadata lane
     # answered with the nearest record it could find (a refuge point). The shape is decided once,
     # in the routing contract, and the class it names is the TBox's own AccessEvent.
-    from orchestrator.services.routing_contract import door_records_question  # local: no cycle
+    from orchestrator.services.routing_contract import (
+        door_records_question,  # local: no cycle
+    )
 
     if door_records_question(query or ""):
         scored = _door_records_to_the_event_register(scored, classes)
@@ -852,26 +896,33 @@ def event_store_record_classes(class_names, event_kinds) -> FrozenSet[str]:
     return frozenset(name for name in class_names or () if _name_forms(name) & kind_forms)
 
 
+def events_store_registered() -> bool:
+    """Whether the active building registers an events store that can be queried.
+
+    Configuration decides it: the adapter registry is built from building.yaml's storage list
+    and database_registry.yaml. A registry lookup falls back to the DEFAULT adapter for an
+    unregistered key, so a store counts as registered only when the adapter it returns can build
+    an events query. A lookup, never a connection: an unreachable store still counts, and the
+    query that reads it is what finds out.
+    """
+    from orchestrator.services.adapters.registry import adapter_registry
+    from orchestrator.services.event_query_service import EVENTS_STORE_KEY
+
+    adapter = adapter_registry.get(EVENTS_STORE_KEY)
+    return adapter is not None and callable(getattr(adapter, "build_overlap_window", None))
+
+
 def _refresh_event_store_classes() -> None:
     """Re-read which record classes the registered events store answers (BUG-670).
 
-    Configuration decides it: the adapter registry is built from building.yaml's storage list
-    and database_registry.yaml, and the kinds from the events query service's own
-    classifier. A registry lookup falls back to the DEFAULT adapter for an unregistered key,
-    so a store counts as registered only when the adapter it returns can build an events query.
+    Configuration decides it (`events_store_registered`), and the kinds come from the events
+    query service's own classifier.
     """
     global _EVENT_STORE_CLASSES
     try:
-        from orchestrator.services.adapters.registry import adapter_registry
-        from orchestrator.services.event_query_service import (
-            _KIND_RES,
-            EVENTS_STORE_KEY,
-        )
+        from orchestrator.services.event_query_service import _KIND_RES
 
-        adapter = adapter_registry.get(EVENTS_STORE_KEY)
-        registered = adapter is not None and callable(
-            getattr(adapter, "build_overlap_window", None)
-        )
+        registered = events_store_registered()
         _EVENT_STORE_CLASSES = (
             event_store_record_classes(tuple(_ALL_CLASS_TERMS), [kind for kind, _ in _KIND_RES])
             if registered
@@ -1013,12 +1064,56 @@ def absent_record_class(
     return None
 
 
-_SCHEMA_QUERY = """
+#: The predicates the instances of some record classes carry, one row per (class, predicate).
+#:
+#: ONE schema reader, two readers of it. `schema_hint` asks for one class at the BASIC level,
+#: which is the query it always sent (a predicate and one example value per predicate). The
+#: facet catalogue asks for every held class at once at the DETAILED level, which adds, from
+#: the same pattern: how many instances carry the predicate, how many values and distinct
+#: values it has, how many of them are literals, the datatypes present, and a bounded sample of
+#: the distinct values. The class filter, the pattern and the grouping are shared, so the two
+#: cannot come to disagree about which predicates a class has.
+_PROFILE_SELECT_BASIC = "?cls ?p (SAMPLE(?v) AS ?example)"
+_PROFILE_SELECT_DETAILED = (
+    _PROFILE_SELECT_BASIC
+    + " (COUNT(DISTINCT ?i) AS ?carriers) (COUNT(?v) AS ?values)"
+    + " (COUNT(DISTINCT ?v) AS ?distinct) (SUM(IF(isLiteral(?v), 1, 0)) AS ?literals)"
+    + ' (GROUP_CONCAT(DISTINCT IF(isLiteral(?v), STR(DATATYPE(?v)), "iri"); SEPARATOR=" ")'
+    + " AS ?datatypes)"
+    + ' (SUBSTR(GROUP_CONCAT(DISTINCT STR(?v); SEPARATOR="\\t"), 1, %(budget)d) AS ?sample)'
+)
+_PROFILE_QUERY = """
 PREFIX o: <http://ontosage.org/capabilities#>
-SELECT DISTINCT ?p (SAMPLE(?v) AS ?example) WHERE {
-  ?i a o:%s ; ?p ?v .
-} GROUP BY ?p
+SELECT %(select)s WHERE {
+  VALUES ?cls { %(values)s }
+  ?i a ?cls ; ?p ?v .%(scope)s
+} GROUP BY ?cls ?p
 """
+
+#: The longest stretch of one predicate's distinct values the DETAILED profile returns. A
+#: free-text column of a large register would otherwise ship every value it holds.
+PROFILE_SAMPLE_BUDGET = 1200
+
+
+def predicate_profile_query(
+    class_locals: Iterable[str], namespace: str = "", detailed: bool = False
+) -> str:
+    """The SPARQL that profiles the predicates on instances of ``class_locals``.
+
+    ``namespace``, when given, keeps instances outside it out of the profile. ``detailed``
+    adds the counts, datatypes and value sample the facet catalogue reads; the basic level is
+    exactly what `schema_hint` reads.
+    """
+    values = " ".join(f"o:{c}" for c in class_locals)
+    scope = ""
+    if namespace:
+        escaped = namespace.replace("\\", "\\\\").replace('"', '\\"')
+        scope = f'\n  FILTER(STRSTARTS(STR(?i), "{escaped}"))'
+    select = _PROFILE_SELECT_BASIC
+    if detailed:
+        select = _PROFILE_SELECT_DETAILED % {"budget": PROFILE_SAMPLE_BUDGET}
+    return _PROFILE_QUERY % {"select": select, "values": values, "scope": scope}
+
 
 _STATUS_QUERY = """
 PREFIX o: <http://ontosage.org/capabilities#>
@@ -1059,7 +1154,7 @@ async def schema_hint(record: "RecordClass") -> str:
     try:
         from orchestrator.services.ontology_manager import run_sparql_select
 
-        result = await run_sparql_select(_SCHEMA_QUERY % record.local_name, limit=40)
+        result = await run_sparql_select(predicate_profile_query([record.local_name]), limit=40)
         if not result.get("ok"):
             return ""
         lines = []

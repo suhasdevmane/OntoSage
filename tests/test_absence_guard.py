@@ -225,3 +225,34 @@ def test_a_true_absence_beside_a_scoped_one_is_still_caught():
         "This building has no water flow sensors at all."
     )
     assert detect_absence_claim(text) == "water_flow"
+
+
+def test_an_absence_annotating_one_named_space_is_not_a_claim_about_the_building():
+    """Live, 2026-10-08: a correct per-floor total of occupancy (Floor 5, 87.67 people over 46
+    spaces) was REPLACED by "this building does have 270 occupancy sensor(s)" because the answer
+    noted, of the one room it could not count, "Room 1.04 — Common Area / Atrium (no occupancy
+    sensor)". A parenthesis annotates the item before it; it is not a statement about the
+    building."""
+    answer = (
+        "**Floor 5 (Fifth Floor) has the highest total occupancy: 87.67 people**, over 46 spaces "
+        "with a value.\n"
+        "**Without a value, so not counted:** Floor 1 (First Floor) — Room 1.04 — Common Area / "
+        "Atrium (no occupancy sensor)."
+    )
+    assert detect_absence_claim(answer) is None
+
+
+def test_the_claim_the_guard_exists_for_is_still_caught_beside_a_parenthesis():
+    text = "The building has no occupancy sensors (I checked the ontology data you provided)."
+    assert detect_absence_claim(text) == "occupancy"
+
+
+def test_a_table_row_describes_its_own_item_not_the_building():
+    """Live, 2026-10-08 (C5): an occupancy-CO2 correlation over 40 rooms was replaced because the
+    evidence table's row for the one room without the sensor read "no occupancy sensor"."""
+    answer = (
+        "Within each of these 40 spaces, CO2 and occupancy rose and fell together: r = 0.9.\n"
+        "| space | periods | r |\n|---|---|---|\n"
+        "| Room 1.04 — Common Area / Atrium | 0 | no occupancy sensor |"
+    )
+    assert detect_absence_claim(answer) is None

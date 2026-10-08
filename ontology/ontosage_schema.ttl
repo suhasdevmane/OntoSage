@@ -3873,6 +3873,57 @@ ontosage:jobHours a owl:DatatypeProperty ;
     rdfs:comment "Hours of work booked to the job: the time taken on a completed order, the allowance on an open one. In HOURS -- ontosage:expectedMinutes is minutes and holds a different unit for a different class."@en .
 
 ####################################################################################################
+#  Module R.11 — Records joined to the building's own spaces and floors          added 2026-10-07
+#  ------------------------------------------------------------------------------------------------
+#  A register says where a record is in WORDS (ontosage:locationText, onFloor, routeFrom, routeTo,
+#  servesArea) while every sensor is keyed by the space's IRI, so a record and the readings of the
+#  room it describes could not be joined in SPARQL at all. The properties below are that join.
+#
+#  WRITTEN BY THE LIFTER, NEVER BY HAND. A mapping column that names a place declares `link:` and
+#  the lifter writes one of these beside the unchanged text, but ONLY when the text names exactly
+#  one space or floor of the building's own graph: a dotted room id ending the text's first clause,
+#  else an exact label (case, whitespace and dash typography normalised), else -- for a floor -- the
+#  floor's number or exact label. Ambiguous or unmatched text gets NO link and is reported. A missing
+#  link therefore means "not resolved", never "located nowhere"; the text still says what it says.
+#
+#  NO rdfs:domain, ON PURPOSE. The repository reasons with rdfsplus-optimized, so a domain would TYPE
+#  every record that carries the link. That is why these are new properties rather than reuses:
+#  ontosage:locatedIn has domain ontosage:Capability and ontosage:servesSpace has domain
+#  ontosage:ServedZone (a brick:Location), so writing either on a booking would make the booking an
+#  inferred capability, or an inferred location listed among the building's spaces.
+#
+#  RANGE brick:Location. Every object the lifter writes is already a brick:Space or brick:Floor of
+#  the building, so range inference adds nothing to it.
+####################################################################################################
+
+ontosage:locatedInSpace a owl:ObjectProperty ;
+    rdfs:range brick:Location ;
+    rdfs:label "located in space"@en ;
+    rdfs:comment "The space a record's location text names exactly, resolved when the record was lifted. Joins a register row to the sensors and properties of that space. Written beside ontosage:locationText, never instead of it, and absent wherever the text named no single space."@en ;
+    skos:example "?record ontosage:locatedInSpace ?space . ?sensor brick:hasLocation ?space ." .
+
+ontosage:onFloorEntity a owl:ObjectProperty ;
+    rdfs:range brick:Location ;
+    rdfs:label "on floor (entity)"@en ;
+    rdfs:comment "The floor a record's floor text names, resolved by the floor's declared level number or, failing that, the number in the floor's own name or its exact label. Points only at a brick:Floor. Also written when a location text names a whole floor and nothing else, so a query for the space a record is in never returns a floor."@en ;
+    skos:example "?record ontosage:onFloorEntity ?floor . ?space brick:isPartOf ?floor ." .
+
+ontosage:routeFromSpace a owl:ObjectProperty ;
+    rdfs:range brick:Location ;
+    rdfs:label "route from space"@en ;
+    rdfs:comment "The space a route record starts from, where its ontosage:routeFrom text names exactly one space of the building. A starting point outside the building has no link."@en .
+
+ontosage:routeToSpace a owl:ObjectProperty ;
+    rdfs:range brick:Location ;
+    rdfs:label "route to space"@en ;
+    rdfs:comment "The space a route record ends at, where its ontosage:routeTo text names exactly one space of the building."@en .
+
+ontosage:servesAreaSpace a owl:ObjectProperty ;
+    rdfs:range brick:Location ;
+    rdfs:label "serves area space"@en ;
+    rdfs:comment "The space an asset serves, where its ontosage:servesArea text names exactly one space. A served area described as several spaces or a whole floor has no link: picking one of them would claim a service relation nobody recorded."@en .
+
+####################################################################################################
 #  Module S — What makes a room busy                                           added 2026-09-21
 #  ------------------------------------------------------------------------------------------------
 #  NO NEW TERMS ARE DECLARED HERE. ontosage:TimetabledSession already exists (Module R), and a first

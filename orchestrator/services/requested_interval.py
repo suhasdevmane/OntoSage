@@ -446,6 +446,189 @@ def calendar_period_bounds(
     )
 
 
+# ── TWO PERIODS SIDE BY SIDE (v2 compound questions, shape C4) ──────────────────────────────
+#
+# "This week against last week", "today versus yesterday", "weekdays against weekends". Each is
+# TWO intervals, and each is resolved HERE, from the question's own words, by the same arithmetic
+# the single-period functions above use -- never by a second parser and never from dates a model
+# wrote. A question whose periods are in dispute ("recently", "the busy season") gets no periods.
+
+#: Weekday and weekend, as words. A day-type comparison splits ONE window into its local
+#: weekdays and its local weekend days.
+_WEEKDAY_RE = re.compile(r"\bweek\s*-?\s*days?\b")
+_WEEKEND_RE = re.compile(r"\bweek\s*-?\s*ends?\b")
+
+#: The window a weekday/weekend comparison reads when the question names none: the last two
+#: whole weeks of local days ending today. Declared in the answer, never silent.
+DEFAULT_DAY_TYPE_DAYS = 14
+
+
+def day_bounds(
+    days_back: int, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Tuple[str, str]:
+    """Store-clock bounds of the local calendar day ``days_back`` days before today (inclusive)."""
+    if now is None:
+        now = local_now(tz_name)
+    day = (now - timedelta(days=days_back)).date()
+    start = datetime(day.year, day.month, day.day, 0, 0, 0)
+    end = datetime(day.year, day.month, day.day, 23, 59, 59)
+    return to_store(start, tz_name).strftime(STAMP), to_store(end, tz_name).strftime(STAMP)
+
+
+def period_bounds(
+    unit: str, back: int, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Tuple[str, str]:
+    """Store-clock bounds of ONE calendar period: the ``unit`` ``back`` whole units before the
+    one in progress (0 = this week / month / quarter / year). The same arithmetic as
+    :func:`calendar_period_bounds`, without its two-period margin -- a period compared with
+    another is read whole, each on its own."""
+    if now is None:
+        now = local_now(tz_name)
+    first = _unit_start(now.date(), unit, back)
+    last = _unit_end(first, unit)
+    start_local = datetime(first.year, first.month, first.day, 0, 0, 0)
+    end_local = datetime(last.year, last.month, last.day, 23, 59, 59)
+    return (
+        to_store(start_local, tz_name).strftime(STAMP),
+        to_store(end_local, tz_name).strftime(STAMP),
+    )
+
+
+def named_days(text: str) -> List[str]:
+    """Every calendar-day phrase the text names, in the order it names them.
+
+    The longest phrase claims its words first, so "the day before yesterday" is never ALSO read as
+    "yesterday" (the shadowing BUG-1437 was). Used to find the two days of "today versus
+    yesterday"; one named day is :func:`calendar_day_bounds`' business.
+    """
+    low = (text or "").lower()
+    taken: List[Tuple[int, int]] = []
+    found: List[Tuple[int, str]] = []
+    for word in sorted(_CALENDAR_DAYS, key=len, reverse=True):
+        for match in re.finditer(rf"\b{re.escape(word)}\b", low):
+            span = (match.start(), match.end())
+            if any(span[0] < end and start < span[1] for start, end in taken):
+                continue
+            taken.append(span)
+            found.append((span[0], word))
+    return [word for _, word in sorted(found)]
+
+
+def local_day_windows(
+    start: str, end: str, tz_name: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
+    """The building-local calendar days a store-clock interval covers.
+
+    One ``(start, end, iso_weekday)`` per local day, its bounds on the stores' clock and clipped to
+    the interval, so a weekday/weekend split is decided by the OCCUPANTS' calendar (Monday = 1 ...
+    Sunday = 7) and every reading is still compared against UTC stamps.
+    """
+    try:
+        lo = datetime.strptime(str(start)[:19], STAMP)
+        hi = datetime.strptime(str(end)[:19], STAMP)
+    except (TypeError, ValueError):
+        return []
+    out: List[Tuple[str, str, int]] = []
+    day = to_local(lo, tz_name).date()
+    last = to_local(hi, tz_name).date()
+    while day <= last:
+        day_start = to_store(datetime(day.year, day.month, day.day, 0, 0, 0), tz_name)
+        day_end = to_store(datetime(day.year, day.month, day.day, 23, 59, 59), tz_name)
+        a, b = max(lo, day_start), min(hi, day_end)
+        if a <= b:
+            out.append((a.strftime(STAMP), b.strftime(STAMP), day.isoweekday()))
+        day += timedelta(days=1)
+    return out
+
+
+def compared_periods(
+    text: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Tuple[List[Dict[str, Any]], str]:
+    """The TWO periods a comparison question names: ``([period, period], "")`` or ``([], why)``.
+
+    Each period is ``{"label", "start", "end", "day_type", "partial"}`` with store-clock bounds.
+    Calendar periods come back EARLIER FIRST, so a change is always "later minus earlier";
+    weekdays come before weekends. Resolved, in this order:
+
+    * weekdays against weekends -- over the one calendar period the question names ("this
+      month"), or the last :data:`DEFAULT_DAY_TYPE_DAYS` local days when it names none. The
+      weekend is Saturday and Sunday (ISO 8601 days 6 and 7) of the building's own calendar;
+    * this and last week / month / quarter / year;
+    * two named days ("today versus yesterday").
+
+    Anything else returns a reason instead of a guess.
+    """
+    low = (text or "").lower()
+    if now is None:
+        now = local_now(tz_name)
+    if _WEEKDAY_RE.search(low) and _WEEKEND_RE.search(low):
+        named = named_period(low)
+        if named is not None and len(named[1]) == 1:
+            unit, (back,) = named
+            start, end = period_bounds(unit, back, tz_name, now)
+            label = f"{'this' if back == 0 else 'last'} {unit}"
+        elif named is not None or named_day(low) is not None:
+            return [], "weekdays and weekends need a window of more than one day or period"
+        else:
+            first = (now - timedelta(days=DEFAULT_DAY_TYPE_DAYS - 1)).date()
+            start = to_store(datetime(first.year, first.month, first.day), tz_name).strftime(STAMP)
+            end = to_store(now, tz_name).strftime(STAMP)
+            label = f"the last {DEFAULT_DAY_TYPE_DAYS} days"
+        return [
+            {
+                "label": f"weekdays ({label})",
+                "start": start,
+                "end": end,
+                "day_type": "weekday",
+                "partial": False,
+            },
+            {
+                "label": f"weekends ({label})",
+                "start": start,
+                "end": end,
+                "day_type": "weekend",
+                "partial": False,
+            },
+        ], ""
+    named = named_period(low)
+    if named is not None and sorted(named[1]) == [0, 1]:
+        unit = named[0]
+        out: List[Dict[str, Any]] = []
+        for back in (1, 0):
+            start, end = period_bounds(unit, back, tz_name, now)
+            out.append(
+                {
+                    "label": f"{'this' if back == 0 else 'last'} {unit}",
+                    "start": start,
+                    "end": end,
+                    "day_type": None,
+                    # the period in progress has only the readings that exist so far
+                    "partial": back == 0,
+                }
+            )
+        return out, ""
+    days = list(dict.fromkeys(_CALENDAR_DAYS[word] for word in named_days(low)))
+    if len(days) == 2:
+        out = []
+        for back in sorted(days, reverse=True):
+            start, end = day_bounds(back, tz_name, now)
+            label = _DAYS_BACK_TO_PHRASE[back]
+            out.append(
+                {
+                    "label": label,
+                    "start": start,
+                    "end": end,
+                    "day_type": None,
+                    "partial": back == 0,
+                }
+            )
+        return out, ""
+    return [], (
+        "the question does not name two periods that can be read exactly -- for example this "
+        "week and last week, today and yesterday, or weekdays and weekends"
+    )
+
+
 def restrict_to_named_day(
     data: Any, question: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
 ) -> Tuple[Any, Optional[Tuple[str, str]], bool]:

@@ -1148,6 +1148,26 @@ async def lifespan(app: FastAPI):
 
         app.state.phase1_retry_task = asyncio.create_task(_phase1_retry())
 
+    # v2 P6: warm the facet catalogue the compound-routing rule reads. AFTER the TTL upload,
+    # because the catalogue is derived from the graph that upload fills, and in the BACKGROUND,
+    # because a build reads the whole graph and the rule must never pay for one on a turn: until
+    # a COMPLETE catalogue is cached the rule does nothing (facet_routing.warm_facet_catalogue
+    # waits for the graph, retries a partial build, and logs either outcome). Same identity
+    # helpers as the deliberation lane (live.active_identity, live.sparql_exec).
+    if str(getattr(settings, "ARBITER_V2_ROUTING", "shadow")).lower() != "off":
+        try:
+            from orchestrator.services.deliberation.facet_routing import (
+                warm_facet_catalogue,
+            )
+
+            app.state.facet_catalogue_task = asyncio.create_task(warm_facet_catalogue())
+            logger.info(
+                f"[facet-routing] catalogue warm-up scheduled "
+                f"(ARBITER_V2_ROUTING={settings.ARBITER_V2_ROUTING})"
+            )
+        except Exception as _fc_err:  # never block a boot on a shadow-mode instrument
+            logger.warning(f"[facet-routing] catalogue warm-up not scheduled: {_fc_err}")
+
     # Rebuild the GraphDB similarity index on startup so freshly-loaded TTLs (including any
     # GUI-registered sensors persisted to input/) become retrievable via semantic RAG — the index
     # does NOT auto-update on triple changes. Routed through the SAME debounced gateway that

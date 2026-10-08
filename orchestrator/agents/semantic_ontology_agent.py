@@ -315,8 +315,14 @@ Your Answer:"""
 
         except Exception as e:
             logger.error(f"LLM reasoning error: {e}")
+            # Never the exception's own text in a reply (DEV S045, 2026-10-08).
+            from orchestrator.services.reader_text import model_failure_sentence
+
             return {
-                "text": f"I found relevant ontology data but had trouble interpreting it: {str(e)}",
+                "text": model_failure_sentence(
+                    "I found relevant parts of the building model but could not turn them into "
+                    "an answer just now."
+                ),
                 "reasoning": ["Error during LLM reasoning"],
                 "confidence": "low",
             }

@@ -35,10 +35,17 @@ import re
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 import yaml
 
+from orchestrator.services.record_entity_links import (
+    FLOOR_PREDICATE,
+    LINK_KINDS,
+    LINK_PREDICATE_IRIS,
+    PlaceIndex,
+    link_predicate,
+)
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -81,6 +88,10 @@ class ColumnSpec:
     #: Declared value list: {canonical: [accepted, phrasings]}. The ONLY interpretation
     #: this module performs, and it is a lookup, not a judgement.
     values: Dict[str, List[str]] = field(default_factory=dict)
+    #: Which entity this column NAMES, when it names one: located_in | on_floor | route_from |
+    #: route_to | serves. Declared by the mapping, never inferred from a column's name, so a
+    #: register that names a place in a column called "venue" is linked by saying so.
+    link: str = ""
 
 
 @dataclass
@@ -94,6 +105,18 @@ class RecordMapping:
     label_column: str = ""
 
 
+@dataclass(frozen=True)
+class LinkIssue:
+    """One location value that was not linked, or was linked with a caveat."""
+
+    table: str
+    row: int
+    column: str
+    link: str
+    value: str
+    reason: str
+
+
 @dataclass
 class LiftResult:
     """What a lift produced, and why it produced nothing when it did.
@@ -101,6 +124,10 @@ class LiftResult:
     ``errors`` being non-empty means NOTHING was lifted. A half-lifted register answers
     "which permits are open" with a number that is confidently short, which is worse than
     declining — so the failure is total and reported, never partial.
+
+    An UNRESOLVED location is not an error. The record lifts with its text exactly as before
+    and simply carries no link, because a link that had to be guessed would be wrong some of
+    the time and indistinguishable from a right one in every join that used it.
     """
 
     document: str
@@ -109,10 +136,23 @@ class LiftResult:
     instances: int = 0
     errors: List[str] = field(default_factory=list)
     graph_iri: str = ""
+    #: Entity links written beside the text (ontosage:locatedInSpace, onFloorEntity, ...).
+    links: int = 0
+    #: Location values that named no space or floor exactly, each with its reason.
+    unresolved: List[LinkIssue] = field(default_factory=list)
+    #: Values linked by their room id whose description disagrees with the building's label.
+    discrepancies: List[LinkIssue] = field(default_factory=list)
+    #: False when no place index was supplied: no links then means "not attempted", not "none".
+    links_attempted: bool = False
 
     @property
     def ok(self) -> bool:
         return not self.errors and self.instances > 0
+
+    @property
+    def link_triples(self) -> Set[Tuple[str, str, Any]]:
+        """The entity links this lift writes, as (subject, predicate, object) IRIs."""
+        return {t for t in self.triples if t[1] in LINK_PREDICATE_IRIS}
 
 
 # ── parsing ────────────────────────────────────────────────────────────────────────
@@ -136,6 +176,15 @@ def parse_front_matter(text: str) -> Tuple[Dict[str, Any], str]:
     if not isinstance(loaded, dict):
         return {}, text
     return loaded, text[match.end() :]
+
+
+def is_record_document(path: Path) -> bool:
+    """True when a file declares a record_type in its front-matter; never raises."""
+    try:
+        front, _ = parse_front_matter(path.read_text(encoding="utf-8", errors="replace"))
+    except OSError:
+        return False
+    return bool(front.get("record_type"))
 
 
 def parse_tables(body: str) -> List[Tuple[str, List[Dict[str, str]]]]:
@@ -200,6 +249,7 @@ def load_mapping(record_type: str, mappings_dir: Path) -> Optional[RecordMapping
             datatype=spec.get("datatype", "xsd:string"),
             required=bool(spec.get("required", False)),
             values={k: list(v) for k, v in (spec.get("values") or {}).items()},
+            link=str(spec.get("link") or "").strip(),
         )
         for name, spec in (raw.get("columns") or {}).items()
     }
@@ -264,16 +314,68 @@ def _slug(value: str) -> str:
     return _UNSAFE_IRI.sub("_", (value or "").strip()) or "unknown"
 
 
+class IRI(str):
+    """A triple object that is a node, not a string — whatever scheme its namespace uses."""
+
+
+def _link_cell(
+    result: LiftResult,
+    row_triples: List[Tuple[str, str, Any]],
+    places: PlaceIndex,
+    where: Tuple[str, int, str],
+    link: str,
+    cell: str,
+) -> None:
+    """Write the entity link one cell names, or record why it names none."""
+    table, row, column = where
+    subject = row_triples[0][0]
+    outcome = places.resolve(cell, link)
+    if not outcome.linked:
+        result.unresolved.append(LinkIssue(table, row, column, link, cell, outcome.reason))
+        return
+    triple = (subject, link_predicate(link, outcome.target_kind), IRI(outcome.target))
+    if triple not in row_triples:
+        row_triples.append(triple)
+    if outcome.note:
+        result.discrepancies.append(LinkIssue(table, row, column, link, cell, outcome.note))
+
+
+def _drop_contradictory_floors(
+    result: LiftResult, row_triples: List[Tuple[str, str, Any]], where: Tuple[str, int, str]
+) -> List[Tuple[str, str, Any]]:
+    """Two columns of one record naming two different floors: link neither, and say so.
+
+    Keeping both would put the record on two floors in every join; keeping one would be a
+    choice the document never made. The text of both columns is still lifted unchanged.
+    """
+    floors = sorted({str(o) for _, p, o in row_triples if p == FLOOR_PREDICATE})
+    if len(floors) < 2:
+        return row_triples
+    table, row, _ = where
+    result.unresolved.append(
+        LinkIssue(
+            table, row, "", "on_floor", ", ".join(floors), "its columns name different floors"
+        )
+    )
+    return [t for t in row_triples if t[1] != FLOOR_PREDICATE]
+
+
 def lift_document(
     path: Path,
     namespace: str,
     mappings_dir: Path,
     retrieved_at: Optional[datetime] = None,
+    places: Optional[PlaceIndex] = None,
 ) -> LiftResult:
     """Lift one record document into triples, or explain why it lifted nothing.
 
     Returns an empty result with no errors for an ordinary document — one with no
     front-matter is simply not a record document, and that is not a failure.
+
+    ``places`` is the active building's space and floor index. When given, every column the
+    mapping declares with ``link:`` is ALSO written as an object link to the space or floor
+    its text names exactly; the text predicate is written exactly as before either way.
+    Without it no link is attempted, which is how every caller behaved until now.
     """
     result = LiftResult(document=path.name)
     try:
@@ -297,6 +399,21 @@ def lift_document(
     if mapping is None:
         result.errors.append(f"no mapping for record_type {result.record_type!r} in {mappings_dir}")
         return result
+
+    # An unknown link kind is a mapping error, reported like an unknown table: silently
+    # ignoring it would leave a register unjoinable while its mapping says otherwise.
+    bad_links = sorted(
+        f"{column}={spec.link!r}"
+        for column, spec in mapping.columns.items()
+        if spec.link and spec.link not in LINK_KINDS
+    )
+    if bad_links:
+        result.errors.append(
+            f"mapping declares unknown link kind(s) {', '.join(bad_links)}; "
+            f"expected one of {', '.join(LINK_KINDS)}"
+        )
+        return result
+    result.links_attempted = places is not None
 
     declared = {
         str(t.get("name", "")).strip().lower(): str(t.get("maps_to", "")).strip()
@@ -351,6 +468,14 @@ def lift_document(
                         result.errors.append(f"{heading} row {index}: {column!r} is empty")
                     continue
                 row_triples.append((subject, _expand(spec.predicate), value))
+                if spec.link and places is not None:
+                    # The CELL, not the coerced value: a floor typed as an integer is still
+                    # matched on what the author wrote.
+                    where = (heading, index, column)
+                    _link_cell(result, row_triples, places, where, spec.link, row[column])
+
+            if places is not None:
+                row_triples = _drop_contradictory_floors(result, row_triples, (heading, index, ""))
 
             if mapping.label_column and row.get(mapping.label_column):
                 row_triples.append((subject, RDFS_LABEL, row[mapping.label_column]))
@@ -377,11 +502,28 @@ def lift_document(
             triples.extend(row_triples)
 
     if result.errors:
-        # Total, not partial: half a register is a confidently short answer.
+        # Total, not partial: half a register is a confidently short answer. Nothing was
+        # lifted, so there is nothing linked or left unlinked to report either.
+        result.unresolved.clear()
+        result.discrepancies.clear()
         return result
 
     result.triples = triples
     result.instances = len(seen)
+    result.links = len(result.link_triples)
+    if result.links_attempted and any(spec.link for spec in mapping.columns.values()):
+        first = result.unresolved[0] if result.unresolved else None
+        logger.info(
+            f"[record_documents] {path.name}: {result.links} entity link(s), "
+            f"{len(result.unresolved)} location value(s) left unlinked"
+            + (f" (e.g. {first.value!r}: {first.reason})" if first else "")
+            + (
+                f", {len(result.discrepancies)} linked by room id whose description differs "
+                "from the building's label"
+                if result.discrepancies
+                else ""
+            )
+        )
     return result
 
 
@@ -440,6 +582,8 @@ def to_turtle(result: LiftResult) -> str:
 
 
 def _literal(value: Any) -> str:
+    if isinstance(value, IRI):
+        return f"<{value}>"
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, int):

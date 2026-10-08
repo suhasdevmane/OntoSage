@@ -937,6 +937,10 @@ _MEASURED_COUNTS_PENDING: Dict[Tuple[str, str], "asyncio.Task"] = {}
 #: Concurrent COUNT queries while filling the cache.
 _MEASURED_COUNTS_PARALLEL = 4
 
+#: v2 — how long a deliberation turn waits for the facet catalogue's FIRST build (it is cached
+#: afterwards). Past it the turn runs the v1 sensor-only lane rather than keep the reader waiting.
+_FACET_CATALOGUE_TIMEOUT_S = 60.0
+
 
 def _humanise_modality(name: str) -> str:
     """A modality name as a reader would say it ('water_flow' -> 'water flow')."""
@@ -2430,6 +2434,9 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # stuffy in RM157?") from a vocabulary question ("what is stuffiness?"), and
         # it is not available at the earlier stages — so the rule that keeps
         # building questions out of the open-domain answerer runs here.
+        # intermediate_results persist across turns: cleared first, so a rule recorded on an
+        # earlier turn can never be read as this turn's if the stage below fails.
+        state.intermediate_results["concept_rules_applied"] = []
         try:
             from orchestrator.services.routing_contract import apply_contract as _apply_rc
 
@@ -2456,7 +2463,10 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 ],
             }
             _rc_query = state.messages[-1].content if state.messages else ""
-            if _apply_rc(_rc_query, _rc_state, stage="concept"):
+            _concept_applied = _apply_rc(_rc_query, _rc_state, stage="concept")
+            # Recorded on the turn, so the route record can name the rule (see route_decision).
+            state.intermediate_results["concept_rules_applied"] = list(_concept_applied or [])
+            if _concept_applied:
                 intent = _rc_state["intent"]
                 state.intermediate_results["intent"] = intent
                 # BUG-167: refresh the general flag HERE — the re-sync below
@@ -2843,6 +2853,11 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 "greeting",
                 "general_knowledge",
                 "unknown",
+                # The deliberation lane IS the compound engine: it joins the facets of one
+                # question in one plan. Decomposing its input into sequential sub-intents
+                # answers each facet apart and loses exactly the join (v2, P6 -- the concept
+                # stage escalates to deliberate BEFORE this block runs).
+                "deliberate",
             }
         )
         # A question the REGISTER can answer must not be decomposed (BUG-425).
@@ -7517,6 +7532,11 @@ SELECT ?l WHERE {
             logger.warning(f"[discovery] ontology census unavailable: {e}")
             return []
 
+    #: How many label groups the census-less discovery fallback lists before summarising the
+    #: rest in one line (BUG-1461: on a building whose labels do not end in an identifier, every
+    #: label is its own "kind", and DEV D010 was answered with 141,957 characters of them).
+    DISCOVERY_MAX_KINDS = 25
+
     def _handle_sensor_discovery(
         self,
         discovery_filter: str = None,
@@ -7603,10 +7623,15 @@ SELECT ?l WHERE {
                     f'temperature sensors"*.'
                 )
             type_counts = self._count_sensor_types(filtered)
-            type_summary = "\n".join(
-                f"- **{t}**: {c} sensors"
-                for t, c in sorted(type_counts.items(), key=lambda x: -x[1])
-            )
+            ranked = sorted(type_counts.items(), key=lambda x: -x[1])
+            shown = ranked[: self.DISCOVERY_MAX_KINDS]
+            type_summary = "\n".join(f"- **{t}**: {c} sensors" for t, c in shown)
+            if len(ranked) > len(shown):
+                hidden = ranked[len(shown) :]
+                type_summary += (
+                    f"\n\n…and {sum(c for _, c in hidden)} more sensors under "
+                    f"{len(hidden)} other labels."
+                )
             filter_note = f' matching **"{filter_text}"**' if filter_lower else ""
             return (
                 f"Found **{matched}** sensors{filter_note} (out of {total} total):\n\n"
@@ -7978,7 +8003,14 @@ SELECT ?l WHERE {
         route_decision: Dict[str, Any] = {
             "intent_from_dialogue": original_intent,
             "intent_after_overrides": original_intent,
-            "overrides_applied": [],
+            # The routing contract's CONCEPT-stage rules decide before this method runs and were
+            # recorded nowhere a turn's record could show them, so a question the v2 compound
+            # rule escalated read as an ordinary deliberation turn. Carried in, prefixed, so the
+            # attribution the evaluation pre-registered can rest on a recorded fact.
+            "overrides_applied": [
+                f"contract:{name}"
+                for name in (state.intermediate_results.get("concept_rules_applied") or [])
+            ],
             "final_node": None,
             "decision_source": "registry",  # 'registry' | 'override' | 'fallback'
         }
@@ -8700,6 +8732,36 @@ SELECT ?l WHERE {
             state.intermediate_results.pop(_stale, None)
         logger.info(f"[deliberate] building={building_id} query={query[:80]!r}")
 
+        # v2 (ARBITER_FACETS_ENABLED): the facet catalogue -- what the building records about
+        # its spaces, beside what it senses. Built once per building and cached. A failed, timed
+        # out or PARTIAL build leaves the catalogue None, which is the v1 sensor-only lane
+        # exactly: a partial catalogue cannot tell "not recorded" from "not read", and the v2
+        # answer would then say a register holds nothing when it was merely unreachable. With
+        # the flag off nothing here runs and every call below is the v1 call.
+        catalogue = None
+        from orchestrator.services.deliberation.compiler import facets_enabled
+
+        if facets_enabled():  # read at call time, like every other reader of the flag
+            try:
+                from orchestrator.services.deliberation import facets as _facets
+
+                catalogue = await asyncio.wait_for(
+                    _facets.build_facet_catalogue(_live_sparql, building_id, namespace, modalities),
+                    timeout=_FACET_CATALOGUE_TIMEOUT_S,
+                )
+                if catalogue is not None and (catalogue.errors or not len(catalogue)):
+                    logger.warning(
+                        f"[deliberate] facet catalogue partial ({'; '.join(catalogue.errors)}) "
+                        "— sensor-only compile this turn"
+                    )
+                    catalogue = None
+            except Exception as _cat_err:
+                logger.warning(
+                    f"[deliberate] facet catalogue unavailable — sensor-only compile: "
+                    f"{describe_exception(_cat_err)}"
+                )
+                catalogue = None
+
         # ── resume a parked plan: bind the reply, else recompile with it folded in
         cqir = None
         pending = user_ctx.pop("deliberate_pending", None)
@@ -8711,7 +8773,17 @@ SELECT ?l WHERE {
                 query = f"{base} ({reply})" if base else query
                 logger.info("[deliberate] reply unbindable — recompiling with it folded in")
         if cqir is None:
-            cqir = await compile_query(query, modalities)
+            if catalogue is not None:
+                from orchestrator.services.deliberation.facet_resolvers import facet_value_set
+
+                async def _read_values(facet):
+                    return await facet_value_set(facet, _live_sparql)
+
+                cqir = await compile_query(
+                    query, modalities, catalogue=catalogue, value_reader=_read_values
+                )
+            else:
+                cqir = await compile_query(query, modalities)
 
         # scope guard: this system answers for THIS building only — ranking our
         # own rooms for "the building next door" would be a wrong-scope answer
@@ -8737,7 +8809,34 @@ SELECT ?l WHERE {
         # graceful degradation for terms the building cannot sense: drop-and-
         # declare when something else mapped; decline with the sensed-modality
         # list when nothing did — never a rephrase loop for missing vocabulary
-        cqir, _dropped_terms, _must_decline = _cp.absorb_unmapped(cqir)
+        if catalogue is not None:
+            cqir, _dropped_terms, _must_decline = _cp.absorb_unmapped(cqir, facets=True)
+        else:
+            cqir, _dropped_terms, _must_decline = _cp.absorb_unmapped(cqir)
+        if _must_decline and catalogue is not None:
+            from orchestrator.services.deliberation.capability_schema import held_facet_labels
+            from orchestrator.services.grounding_guard import reader_is_admin_in
+
+            # v2: the catalogue has already been searched for every one of these terms, so the
+            # decline names what the building RECORDS and SENSES about its spaces, in labels.
+            _held = held_facet_labels(catalogue, query)
+            _what = ", ".join(f"'{d}'" for d in _dropped_terms) or "that"
+            _text = (
+                f"**{_what} isn't something this building senses or records about its "
+                "spaces**, so I can't rank spaces by it."
+                + (f" It does hold: {', '.join(_held)}. Ask about any of those." if _held else "")
+            )
+            if reader_is_admin_in(state):
+                _text += (
+                    "\n\nTo unlock it, add the sensor or the register (TTL + registered "
+                    "readings, or a register document)."
+                )
+            state.intermediate_results["deliberate_result"] = {
+                "success": False,
+                "formatted_response": _text,
+            }
+            state.intermediate_results["user_context"] = user_ctx
+            return state
         if _must_decline:
             from orchestrator.services.grounding_guard import reader_is_admin_in
 
@@ -8773,14 +8872,23 @@ SELECT ?l WHERE {
             state.intermediate_results["user_context"] = user_ctx
             return state
 
-        admission = _admit(cqir, schema)
+        admission = (
+            _admit(cqir, schema, catalogue=catalogue)
+            if catalogue is not None
+            else (_admit(cqir, schema))
+        )
         decision = _cp.decide(cqir, admission)
         for _term in _dropped_terms:
             # dropped-but-declared: the unmappable extra shows up as an assumption
             decision.assumptions.append(
                 _cp.Assumption(
-                    text=f"'{_term}' isn't a sensed modality here — ignored",
-                    source="not sensed",
+                    text=(
+                        f"'{_term}' doesn't match anything this building senses or records "
+                        "about its spaces — ignored"
+                        if catalogue is not None
+                        else f"'{_term}' isn't a sensed modality here — ignored"
+                    ),
+                    source="not sensed" if catalogue is None else "not sensed or recorded",
                 )
             )
 
@@ -8829,7 +8937,11 @@ SELECT ?l WHERE {
                 state.intermediate_results["user_context"] = user_ctx
                 return state
             cqir = bound
-            admission = _admit(cqir, schema)
+            admission = (
+                _admit(cqir, schema, catalogue=catalogue)
+                if catalogue is not None
+                else _admit(cqir, schema)
+            )
             decision = _cp.decide(cqir, admission)
             decision.assumptions.append(
                 _cp.Assumption(
@@ -8851,7 +8963,11 @@ SELECT ?l WHERE {
             from orchestrator.services.grounding_guard import reader_is_admin_in
 
             missing = ", ".join(admission.missing_modalities)
-            if missing:
+            if getattr(admission, "explanation", ""):
+                # v2: nothing the question asks can be assessed; the admission gate wrote the
+                # whole reader text, naming each criterion and what the building does hold.
+                _text = admission.explanation
+            elif missing:
                 _text = (
                     f"**No {missing} sensors are modelled with data for this building**, "
                     "so I can't rank spaces on that. Ask \"what does this building "
@@ -8902,7 +9018,17 @@ SELECT ?l WHERE {
         except Exception as _protect_err:
             logger.warning(f"[protect] deliberate consult failed (non-fatal): {_protect_err}")
 
-        outcome = await _exec_plan(cqir, admission, schema, live_geometry(building_id))
+        if catalogue is not None:
+            outcome = await _exec_plan(
+                cqir,
+                admission,
+                schema,
+                live_geometry(building_id),
+                catalogue=catalogue,
+                sparql_exec=_live_sparql,
+            )
+        else:
+            outcome = await _exec_plan(cqir, admission, schema, live_geometry(building_id))
 
         def _synthetic_lookup(table: str):
             try:

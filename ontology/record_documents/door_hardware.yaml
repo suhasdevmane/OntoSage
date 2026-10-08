@@ -35,10 +35,12 @@ columns:
     required: true
   location:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   floor:
     predicate: ontosage:onFloor
+    link: on_floor
     datatype: xsd:string
   power_loss_state:
     predicate: ontosage:failStateOnPowerLoss

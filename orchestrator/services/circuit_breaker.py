@@ -138,6 +138,25 @@ class CircuitBreaker:
 _breakers: Dict[str, CircuitBreaker] = {}
 _registry_lock = threading.Lock()
 
+#: Monotonic time until which a provider has reported the model unreachable WITHOUT the breaker
+#: tripping (CAVEAT-1459). The hosted gateway's probe refuses every call for a short while after
+#: one failed probe -- "[hosted] gateway unreachable (ReadTimeout); refusing without queueing" --
+#: and that state never reached the breaker, so readers were told "I wasn't able to generate an
+#: answer just now" instead of CAVEAT-1409's "the language model ... is not responding".
+_model_down_until: float = 0.0
+
+
+def note_model_unreachable(seconds: float) -> None:
+    """Record that the model cannot be reached for the next ``seconds``. Never raises."""
+    global _model_down_until
+    _model_down_until = max(_model_down_until, time.monotonic() + max(0.0, float(seconds)))
+
+
+def note_model_reachable() -> None:
+    """Clear an earlier ``note_model_unreachable``: the provider answered again."""
+    global _model_down_until
+    _model_down_until = 0.0
+
 
 def circuit_breaker_for(
     name: str,
@@ -185,6 +204,8 @@ def model_is_unavailable() -> bool:
     explaining a failure.
     """
     try:
+        if time.monotonic() < _model_down_until:
+            return True  # a provider said so without tripping the breaker (CAVEAT-1459)
         with _registry_lock:
             breaker = _breakers.get("llm")
         if breaker is None:

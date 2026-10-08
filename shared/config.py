@@ -7,7 +7,7 @@ import os
 from pathlib import Path
 from typing import List, Literal, Optional
 
-from pydantic import Field, model_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings
 
 try:
@@ -429,6 +429,23 @@ class Settings(BaseSettings):
             "(denials block fetches, restrictions are applied/declared)."
         ),
     )
+    ARBITER_V2_ROUTING: Literal["off", "shadow", "live"] = Field(
+        default="shadow",
+        description=(
+            "v2 P6 rollout stage of the routing rule that escalates a question choosing spaces "
+            "on several facets of the building at once to the deliberation lane "
+            "(routing_contract.compound_facets_to_deliberate): 'off' (inert, and the facet "
+            "catalogue is not warmed at boot), 'shadow' (log what it would route, change "
+            "nothing — the default), 'live' (route). Read at call time."
+        ),
+    )
+
+    @field_validator("ARBITER_V2_ROUTING", mode="before")
+    @classmethod
+    def _routing_stage_is_case_blind(cls, value: object) -> object:
+        """'Shadow' and ' live ' mean what they say; an unknown stage still refuses to boot."""
+        return value.strip().lower() if isinstance(value, str) else value
+
     ALERT_THRESHOLDS_PATH: str = Field(
         default="/app/config/alert_thresholds.yaml",
         description="Path to YAML file defining sensor alert thresholds.",
@@ -859,6 +876,18 @@ class Settings(BaseSettings):
             "the response is validated against it, one retry carries the validation error "
             "back, and a second failure is a typed error rather than a silent repair. "
             "OFF restores the current text parse byte-for-byte."
+        ),
+    )
+
+    ARBITER_FACETS_ENABLED: bool = Field(
+        default=True,
+        description=(
+            "v2 compound questions: the deliberation lane (ARBITER) compiles against the "
+            "building's FACET CATALOGUE -- record fields, TTL properties of spaces, the "
+            "authoritative capacity, booking availability -- as well as its sensed "
+            "modalities, so 'a quiet room with 12 seats and a ready projector' is answered "
+            "from the registers and the sensors together. OFF reproduces the v1 sensor-only "
+            "compiler, admission and executor exactly (the thesis ablation arm)."
         ),
     )
 

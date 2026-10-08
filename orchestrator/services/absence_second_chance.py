@@ -1580,8 +1580,12 @@ class GraphReach(Reach):
         return await record_classes()
 
     async def rows(self, names: Sequence[str]) -> Dict[str, List[Dict[str, Any]]]:
+        from orchestrator.services.record_entity_links import exclude_link_predicates
+
         tables: Dict[str, List[Dict[str, Any]]] = {}
         for name in list(names)[:MAX_SHORTLIST]:
+            # Entity links are join keys, not content: an IRI cell would let a question word
+            # match the namespace host and count as the register "mentioning" it.
             query = (
                 "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n"
                 "PREFIX ontosage: <http://ontosage.org/capabilities#>\n"
@@ -1589,6 +1593,7 @@ class GraphReach(Reach):
                 "  { SELECT DISTINCT ?record WHERE { ?record a ontosage:%s }\n"
                 f"    ORDER BY ?record LIMIT {MAX_PROBE_ROWS} }}\n"
                 "  ?record ?p ?v . FILTER(?p != rdf:type)\n"
+                f"  {exclude_link_predicates('?p')}\n"
                 "} ORDER BY ?record" % name
             )
             try:

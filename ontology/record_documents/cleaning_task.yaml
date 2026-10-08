@@ -28,6 +28,7 @@ columns:
     required: true
   area:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   standard:

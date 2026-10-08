@@ -30,10 +30,12 @@ columns:
     required: true
   from_point:
     predicate: ontosage:routeFrom
+    link: route_from
     datatype: xsd:string
     required: true
   to_point:
     predicate: ontosage:routeTo
+    link: route_to
     datatype: xsd:string
     required: true
   entrance:

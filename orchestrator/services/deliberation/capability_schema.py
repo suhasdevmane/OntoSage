@@ -20,7 +20,7 @@ the caller must decline — never assume.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
 from orchestrator.services.deliberation.coverage_audit import (
     STATUS_PRESENT,
@@ -33,11 +33,19 @@ from orchestrator.services.deliberation.coverage_audit import (
 from orchestrator.services.deliberation.cqir import CQIR, SpatialRelation
 from shared.utils import get_logger
 
+if TYPE_CHECKING:  # pragma: no cover - facets imports this module
+    from orchestrator.services.deliberation.facets import Facet, FacetCatalogue
+
 logger = get_logger(__name__)
 
 ADMIT = "admit"
 CLARIFY = "clarify"
 DECLINE = "decline"
+
+#: v2 — how one facet criterion stands before anything is fetched.
+FACET_EXECUTABLE = "executable"  # suitable, recorded for at least the spaces in scope
+FACET_PARTIAL = "partial"  # can be read, but not for every space in scope
+FACET_NOT_ASSESSABLE = "not_assessable"  # below "populated": nothing to read
 
 
 #: WB-11: anchors that scope a question to the WHOLE building rather than naming a space.
@@ -100,6 +108,16 @@ class AdmissionResult:
     amenity_anchor: Optional[str] = None  # amenity kind (e.g. 'DrinkingWater')
     space_anchor: Optional[str] = None  # space IRI
     coverage: Dict[str, Dict[str, int]] = field(default_factory=dict)
+    #: v2 — facet key -> executable | partial | not_assessable. Empty for every v1 plan.
+    facet_admission: Dict[str, str] = field(default_factory=dict)
+    #: v2 — criteria that cannot be assessed here (facet keys, and the sensor modalities of a
+    #: facet plan). Execution runs WITHOUT them and the answer names each one: a hard
+    #: requirement that cannot be checked makes an honest partial answer, never a silent drop.
+    not_assessable: List[str] = field(default_factory=list)
+    #: v2 — one reader sentence per not-assessable criterion, saying why.
+    not_assessable_notes: List[str] = field(default_factory=list)
+    #: v2 — the whole reader-facing text when nothing at all can be assessed.
+    explanation: str = ""
 
 
 _AMENITY_QUERY = """
@@ -269,21 +287,49 @@ def _norm_floor(anchor: str, floors: List[str]) -> Optional[str]:
     return None
 
 
-def validate(cqir: CQIR, schema: BuildingCapabilitySchema) -> AdmissionResult:
-    """Admission gate: ADMIT / CLARIFY(one question) / DECLINE — before any data fetch."""
+def validate(
+    cqir: CQIR,
+    schema: BuildingCapabilitySchema,
+    catalogue: Optional["FacetCatalogue"] = None,
+) -> AdmissionResult:
+    """Admission gate: ADMIT / CLARIFY(one question) / DECLINE — before any data fetch.
+
+    v2: a plan with facet criteria, given the facet ``catalogue``, is admitted PER CRITERION
+    (`_admit_facets`) after the same signal and spatial rules. Every other plan -- and every
+    plan when no catalogue is passed -- takes exactly the v1 path: each v2 branch below is
+    guarded by ``facet_plan``.
+    """
+    facet_plan = catalogue is not None and bool(cqir.facet_criteria or cqir.operation is not None)
     # 0. compiler-level ambiguity: surface as ONE clarify question (policy owns wording)
     if not cqir.is_executable():
         phrases = [s.phrase for s in cqir.signals][:3]
+        question = (
+            "I couldn't map part of your request"
+            + (f" ({'; '.join(p for p in phrases if p)})" if phrases else "")
+            + " — could you rephrase or drop that part?"
+        )
+        # v2: an operation the compiler refused (a total of a temperature, a count above a limit
+        # nobody stated) leaves no operation on the plan, so its reason is shown whenever the
+        # facet compiler ran -- a v1 plan carries no such signal.
+        refused_operation = catalogue is not None and any(
+            s.kind == "invalid_operation" for s in cqir.signals
+        )
+        if facet_plan or refused_operation:
+            # v2: say WHY a facet value or operator failed, so the reader sees what the
+            # records accept ("'working' is not a value ... recorded: ready, failed, ...").
+            details = [
+                s.note
+                for s in cqir.signals
+                if s.kind in ("invalid_facet", "invalid_operation") and s.note
+            ][:2]
+            if details:
+                question += " " + " ".join(d[:1].upper() + d[1:].rstrip(".") + "." for d in details)
         return AdmissionResult(
             verdict=CLARIFY,
             reason="query has unresolved parts",
             question=ClarifyQuestion(
                 slot="signals",
-                question=(
-                    "I couldn't map part of your request"
-                    + (f" ({'; '.join(p for p in phrases if p)})" if phrases else "")
-                    + " — could you rephrase or drop that part?"
-                ),
+                question=question,
             ),
         )
 
@@ -295,7 +341,9 @@ def validate(cqir: CQIR, schema: BuildingCapabilitySchema) -> AdmissionResult:
         coverage[c.modality] = cov
         if cov["present"] == 0:
             missing.append(c.modality)
-    if missing:
+    # v2: in a facet plan a sensed criterion with no backed sensor is NOT ASSESSABLE (named in
+    # the answer, `_admit_facets`), not a reason to decline what the records can answer.
+    if missing and not facet_plan:
         return AdmissionResult(
             verdict=DECLINE,
             reason=f"no backed sensors anywhere for: {', '.join(missing)}",
@@ -391,10 +439,203 @@ def validate(cqir: CQIR, schema: BuildingCapabilitySchema) -> AdmissionResult:
                     coverage=coverage,
                 )
 
+    if facet_plan:
+        return _admit_facets(
+            cqir, schema, catalogue, coverage, missing, floor_anchor, amenity_anchor, space_anchor
+        )
     return AdmissionResult(
         verdict=ADMIT,
         floor_anchor=floor_anchor,
         amenity_anchor=amenity_anchor,
         space_anchor=space_anchor,
         coverage=coverage,
+    )
+
+
+# ── v2: admission per criterion ──────────────────────────────────────────────────────────
+
+
+def facet_admission(facet: Optional["Facet"], in_scope: int) -> Tuple[str, str]:
+    """(executable | partial | not_assessable, why) for one facet, before any fetch.
+
+    The ladder decides, never a guess: below "populated" there is nothing to read; a suitable
+    facet recorded for fewer spaces than are in scope is partial; otherwise executable. An
+    availability facet backed by a registered events store is executable whatever the graph
+    shows -- the store is read when the plan runs, and the graph cannot see its rows.
+    """
+    if facet is None:
+        return FACET_NOT_ASSESSABLE, "is not something this building's records describe"
+    if facet.source_kind == "event" and facet.resolver and facet.at_least("linked"):
+        return FACET_EXECUTABLE, ""
+    if not facet.at_least("populated"):
+        why = {
+            "declared": "is declared in the building model but recorded for no space",
+            "linked": "is linked to spaces but no value is recorded",
+        }.get(facet.status, "has no recorded values")
+        return FACET_NOT_ASSESSABLE, why
+    if facet.status != "suitable" or facet.coverage < in_scope:
+        return FACET_PARTIAL, ""
+    return FACET_EXECUTABLE, ""
+
+
+def held_facet_labels(catalogue: "FacetCatalogue", query: str = "", limit: int = 8) -> List[str]:
+    """What the building DOES hold about its spaces, in the reader's words (facet labels).
+
+    The facets most relevant to the question first, then the most widely recorded ones.
+    Never modality names or keys: a decline should tell a person what they can ask about.
+    """
+    from orchestrator.services.deliberation.facet_resolvers import facet_reader_label
+
+    picked: List["Facet"] = []
+    if query:
+        picked = [
+            f
+            for _, f in catalogue.retrieve(query, k=40, min_status="suitable")
+            if f.entity_type == "space"
+        ]
+    rest = sorted(
+        (f for f in catalogue.for_entity("space") if f.status == "suitable"),
+        key=lambda f: (-f.coverage, f.key),
+    )
+    labels: List[str] = []
+    for facet in picked + rest:
+        label = facet_reader_label(facet)
+        if label and label not in labels:
+            labels.append(label)
+        if len(labels) >= limit:
+            break
+    return labels
+
+
+def _admit_facets(
+    cqir: CQIR,
+    schema: BuildingCapabilitySchema,
+    catalogue: "FacetCatalogue",
+    coverage: Dict[str, Dict[str, int]],
+    missing: List[str],
+    floor_anchor: Optional[str],
+    amenity_anchor: Optional[str],
+    space_anchor: Optional[str],
+) -> AdmissionResult:
+    """v2 admission, after `validate`'s signal and spatial rules: each criterion is executable,
+    partial or not assessable.
+
+    A HARD criterion that cannot be assessed does not decline the question: the plan proceeds
+    without it as an honest partial answer, and the answer names it. Only when NOTHING the
+    question asks can be assessed is the question declined -- and the decline says what the
+    building does hold, in facet labels.
+
+    An operation (aggregate, compare, period) is the other way round: its facet IS the answer,
+    so an operation facet that cannot be read declines the question, naming it; and an
+    operation needs no other criterion to be answerable.
+    """
+    from orchestrator.services.deliberation.facet_resolvers import facet_reader_label
+
+    not_assessable: List[str] = []
+    notes: List[str] = []
+    # Sensed criteria: zero backed sensors makes THAT criterion not assessable.
+    for c in cqir.constraints:
+        if c.modality in missing and c.modality not in not_assessable:
+            not_assessable.append(c.modality)
+            notes.append(
+                f"'{c.source_phrase or c.modality}' could not be checked: no {c.modality} "
+                "sensor in this building has readings"
+            )
+    in_scope = sum(
+        1
+        for s in schema.spaces
+        if (not floor_anchor or s.floor == floor_anchor)
+        and (not space_anchor or s.space_iri == space_anchor)
+    )
+
+    # Facet criteria, one by one.
+    statuses: Dict[str, str] = {}
+    for criterion in cqir.facet_criteria:
+        facet = catalogue.get(criterion.facet)
+        status, why = facet_admission(facet, in_scope)
+        statuses[criterion.facet] = status
+        if status == FACET_NOT_ASSESSABLE and criterion.facet not in not_assessable:
+            not_assessable.append(criterion.facet)
+            label = facet_reader_label(facet) if facet is not None else criterion.facet
+            phrase = criterion.source_phrase or label
+            notes.append(f"'{phrase}' could not be checked: {label} {why}")
+
+    # v2 operations: the facet an aggregate reduces, or both facets a comparison sets side by
+    # side. Unlike a filter, the operation IS the answer -- a total of a figure nobody records is
+    # nothing, so an operation facet that cannot be read declines the question, naming it.
+    operation = cqir.operation is not None
+    blocked: List[str] = []
+    for key in cqir.operation_facets():
+        facet = catalogue.get(key)
+        if facet is None:
+            statuses[key] = FACET_NOT_ASSESSABLE
+            blocked.append(f"'{key}' is not something this building's records describe")
+            continue
+        label = facet_reader_label(facet)
+        if facet.source_kind == "sensor":
+            modality = facet.modality or key.split(":", 1)[-1]
+            present = schema.coverage_for(modality)["present"]
+            status = FACET_EXECUTABLE if present >= max(1, in_scope) else FACET_PARTIAL
+            why = f"no {modality} sensor in this building has readings"
+            if present == 0:
+                status = FACET_NOT_ASSESSABLE
+        else:
+            status, why = facet_admission(facet, in_scope)
+            why = f"it {why}"
+        statuses[key] = status
+        if status == FACET_NOT_ASSESSABLE:
+            blocked.append(f"{label} cannot be read: {why}")
+    if blocked:
+        held = held_facet_labels(catalogue, cqir.raw_query)
+        explanation = (
+            "**I can't compute that from this building's records or sensors.** "
+            + " ".join(n[:1].upper() + n[1:] + "." for n in blocked)
+            + (f"\n\nWhat it does record about its spaces: {', '.join(held)}." if held else "")
+        )
+        logger.info(f"[capability_schema] operation not assessable: {blocked}")
+        return AdmissionResult(
+            verdict=DECLINE,
+            reason="the operation's facet cannot be read: " + "; ".join(blocked),
+            coverage=coverage,
+            facet_admission=statuses,
+            not_assessable=not_assessable,
+            not_assessable_notes=notes,
+            explanation=explanation,
+        )
+
+    assessable = [c for c in cqir.constraints if c.modality not in not_assessable] + [
+        f for f in cqir.facet_criteria if statuses.get(f.facet) != FACET_NOT_ASSESSABLE
+    ]
+    # An operation needs no other criterion to be answerable: "which floor has the fewest people"
+    # asks nothing else, and its own facet was admitted just above.
+    if not assessable and not operation:
+        held = held_facet_labels(catalogue, cqir.raw_query)
+        explanation = (
+            "**Nothing you asked for can be checked against this building's records or "
+            "sensors.** "
+            + " ".join(n[:1].upper() + n[1:] + "." for n in notes)
+            + (f"\n\nWhat it does record about its spaces: {', '.join(held)}." if held else "")
+        )
+        logger.info(f"[capability_schema] nothing assessable: {not_assessable}")
+        return AdmissionResult(
+            verdict=DECLINE,
+            reason="nothing in the question can be assessed: " + "; ".join(notes),
+            coverage=coverage,
+            facet_admission=statuses,
+            not_assessable=not_assessable,
+            not_assessable_notes=notes,
+            explanation=explanation,
+        )
+    logger.info(
+        f"[capability_schema] facet admission: {statuses}; not assessable: {not_assessable}"
+    )
+    return AdmissionResult(
+        verdict=ADMIT,
+        floor_anchor=floor_anchor,
+        amenity_anchor=amenity_anchor,
+        space_anchor=space_anchor,
+        coverage=coverage,
+        facet_admission=statuses,
+        not_assessable=not_assessable,
+        not_assessable_notes=notes,
     )

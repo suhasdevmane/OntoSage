@@ -48,10 +48,12 @@ columns:
     required: true
   location:
     predicate: ontosage:locationText
+    link: located_in
     datatype: xsd:string
     required: true
   floor:
     predicate: ontosage:onFloor
+    link: on_floor
     datatype: xsd:string
   design_duty:
     predicate: ontosage:designDuty
@@ -100,6 +102,7 @@ columns:
     # plant room serving Level 3 is the ordinary case; conflating them sends an engineer
     # to the wrong floor.
     predicate: ontosage:servesArea
+    link: serves
     datatype: xsd:string
     required: true
   location_verified_on:

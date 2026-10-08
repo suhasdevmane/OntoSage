@@ -120,6 +120,16 @@ class BuildingLexicon:
 _LABEL_TAIL_RE = re.compile(r"\s*(?:[\u2014\u2013:(/]|\s-\s).*$")
 
 
+def label_head(name: str) -> str:
+    """A name with its descriptive tail removed: `Room 1.06 \u2014 Computer Lab` -> `Room 1.06`.
+
+    The same cut `strip_type_word` makes, exposed so that a register's location text and a
+    space's own label are split at the same place. Two definitions of where a description
+    starts would let a record and the room it names disagree about which part is the name.
+    """
+    return _LABEL_TAIL_RE.sub("", str(name or "")).strip()
+
+
 def strip_type_word(name: str) -> str:
     r"""The IDENTIFIER inside a space's name.
 
