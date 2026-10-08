@@ -1,0 +1,1885 @@
+﻿id,shape,answerability,question,criteria_needed,answer_X,answer_Y,label_X,label_Y,criteria_covered_X,criteria_covered_Y,notes
+C001,C2,FULL,"Which bins should be emptied on the next internal service route, and which can safely remain until the following confirmed visit?",waste_bin_fill; approved_fill_threshold; next_collection,"The waste collection point register (24 records) cannot answer this: it records next due, service frequency, aperture kind, location, approved fill threshold, capacity litres, fill percent and temporary, plus 3 more fields, and nothing about confirmed, internal, route and safely.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:19:14
+
+</details>","The waste collection point register (24 records) cannot answer this: it records next due, service frequency, aperture kind, location, approved fill threshold, capacity litres, fill percent and temporary, plus 3 more fields, and nothing about confirmed, internal, route and safely.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:14:23
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C002,C2,PARTIAL,Which control loops are spending sustained time at output limits without achieving their current target?,control_loop_output; zone_temperature; hvac_setpoints,"I did not find any control loops spending sustained time at output limits without achieving their current target in the building's cost line records. They record cost‑line information such as spend category, status, provider, budget, actual, and committed amounts.
+
+**Also recorded in this register:** *control* — appears in CL-2026-006, CL-2026-016.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Cost Line` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Cost Line` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:14:30
+
+</details>","I did not find any control loops spending sustained time at output limits without achieving their current target in the building's cost line records. It does record two control‑related cost records – **CL‑2026‑006** (Lift B repair — out of service) and **CL‑2026‑016** (Access control reader replacement) – and it records spending categories such as demand‑led, reactive, contract‑fixed, statutory, planned, and planned.
+
+**Also recorded in this register:** *spending* — recorded as spend category.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Cost Line` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Cost Line` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:19:22
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 2/3 judges
+C003,C2,FULL,Will we have enough time to move from the course talk to the public building tour?,public_event_times; walking_times,"**Answer**
+
+- The “Course talk – Computer Science” (ACT‑0042‑2) is scheduled to start at **10:00 am** and lasts **45 minutes**, so it ends at **10:45 am**.  
+- The “Building tour” (ACT‑0042‑3) is scheduled to start at **10:45 am** and lasts **40 minutes**.  
+
+Because the tour begins exactly when the talk finishes, there is **no gap or overlap** between the two activities. Therefore, according to the recorded schedule, you will have enough time to move from the course talk to the public building tour.
+
+*Note:* The register does not record any information about a “move” or a “public” event, so that part of the question is not answered here.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Event Activity` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Event Activity` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:19:17
+
+</details>","The schedule shows that the **course talk** (ACT‑0042‑2) ends at 10:45 am and the **building tour** (ACT‑0042‑3) starts at 10:45 am.  
+- **Course talk**: 10:00 – 10:45 am (45 min)  
+- **Building tour**: 10:45 – 11:25 am (40 min)
+
+So there is no gap or overlap – the tour begins immediately after the talk finishes, giving you enough time to move from one activity to the next.
+
+*Note: The register does not record any details about “move” or “public” beyond the scheduled times.*
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Event Activity` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Event Activity` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:14:26
+
+</details>",E,E,1,1,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C004,C5,PARTIAL,"Has a completed building change delivered the benefits promised to the named services and stakeholder groups, or only changed activity patterns?",building_change_dates; promised_benefits; activity_patterns,"I did not find a record that settles whether a completed building change delivered the benefits promised to the named services and stakeholder groups in the building's stakeholder group records.
+
+**Presence patterns recorded for the five stakeholder groups**
+
+| Stakeholder group | Presence pattern |
+|-------------------|------------------|
+| PhD students | Most weekdays, irregular hours, some evenings |
+| Cleaning and caretaking teams | Early and late shifts, Monday‑Friday 05:00‑20:00 |
+| Space‑planning teams | Weekdays |
+| Staff representative | Weekdays |
+| Visitors and event attendees | Event‑driven |
+
+These are the only patterns captured in the current records. No record in the register indicates whether any building change has delivered the promised benefits.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Stakeholder Group` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Stakeholder Group` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:14:31
+
+</details>","The building register only records the **presence patterns** that each stakeholder group follows.  
+It does **not** contain any information about whether a completed building change actually delivered the benefits that were promised to those groups.
+
+### Presence patterns recorded for the five stakeholder groups
+
+| Stakeholder group | Presence pattern |
+|-------------------|------------------|
+| **PhD students** (SH‑03) | Most weekdays, irregular hours, some evenings |
+| **Cleaning and caretaking teams** (SH‑16) | Early and late shifts, Mon‑Fri 05:00‑20:00 |
+| **Space‑planning teams** (SH‑42) | Weekdays |
+| **Staff representative** (SH‑63) | Weekdays |
+| **Visitors and event attendees** (SH‑67) | Event‑driven |
+
+### Summary of the register
+
+- **Total records:** 5  
+- **Active status:** 4 (SH‑03, SH‑16, SH‑42, SH‑67)  
+- **Occasional status:** 1 (SH‑63)
+
+The register does not record any information about completed building changes, delivered benefits, or promised services. It only records the activity patterns that each stakeholder group follows.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Stakeholder Group` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Stakeholder Group` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:19:19
+
+</details>",D,B,0,1,LLM panel; X: 3/3 judges; Y: 2/3 judges
+C005,C2,PARTIAL,"Are controlled stores, cabinets, cold storage and sensitive materials maintained within their approved environmental, segregation and access conditions?",store_room_environment; approved_storage_conditions; access_events,"I couldn't answer that about **controlled stores, cabinets, cold storage** from Abacws Building's records.
+
+The nearest things I can answer are the Operating regime, Approval and evidence record and Stock item records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+
+---
+*Sources: `Document Knowledge Base`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Document Knowledge Base` · sensor
+- **When:** retrieved 2026-10-08 07:19:41
+
+</details>","Yes – the records show that controlled stores, cabinets, cold storage and sensitive materials are kept within their approved environmental, segregation and access conditions (e.g., HZ‑009, HZ‑011, HZ‑001, HZ‑004, HZ‑005, HZ‑006, HZ‑007, HZ‑008, HZ‑010).
+
+---
+*From Abacws Building's documents: Coshh And Lev. For the current version, contact facility management.*
+
+---
+*Sources: `Document Knowledge Base`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Document Knowledge Base` · sensor
+- **When:** retrieved 2026-10-07 23:15:09
+
+</details>",D,E,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C006,C1,PARTIAL,Which rooms are authorised for the declared confidentiality class and requester access level?,room_confidentiality_class; access_permissions,"The access permission group register (20 records) cannot answer this: it records approval route, controls opening, effective from, effective to, granted to role, inherits from, overridden by and time profile, and nothing about authorised, class, confidentiality and declared.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Access Permission` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Access Permission` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:14:35
+
+</details>","The access permission group register (20 records) cannot answer this: it records approval route, controls opening, effective from, effective to, granted to role, inherits from, overridden by and time profile, and nothing about authorised, class, confidentiality and declared.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Access Permission` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Access Permission` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:19:26
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C007,C1,PARTIAL,"Where do combustible materials, waste, gas cylinders or charging equipment require a housekeeping or control check now?",waste_bin_fill; registered_gas_hazards; ev_charger_state; combustible_storage_observations,"The cleaning task register (30 records) cannot answer this: it records location, cleaning zone, service frequency, shift name, cleaning standard, expected minutes, last completed and next due, plus 1 more field, and nothing about charging, combustible, control and cylinders.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Cleaning Task` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Cleaning Task` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:19:24
+
+</details>","The cleaning task register (30 records) cannot answer this: it records location, cleaning zone, service frequency, shift name, cleaning standard, expected minutes, last completed and next due, plus 1 more field, and nothing about charging, combustible, control and cylinders.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Cleaning Task` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Cleaning Task` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:14:35
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C008,C2,FULL,Are the required arrival and departure confirmations complete for each authorised out-of-hours activity?,authorised_out_of_hours_activities; access_events,"I did not find that in the records I searched.
+
+Try, for example: ""any anomalies this week?"", ""how many open work orders are there?"" or ""is that room booked this afternoon?"".
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-08 07:20:09
+
+</details>","I did not find that in the records I searched.
+
+Try, for example: ""any anomalies this week?"", ""how many open work orders are there?"" or ""is that room booked this afternoon?"".
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-07 23:15:36
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C009,C3,NONE,"Which recurring building issues consume the most Security handling time, and what cross-team prevention options merit consideration?",issue_types; security_handling_time,"I couldn't put an answer together from Abacws Building's records — I did read them, but what I could make of them did not answer the question you asked.
+
+The nearest things I can answer are the Stock item, Department and Patrol checkpoint records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-08 07:20:19
+
+</details>","I couldn't put an answer together from Abacws Building's records — I did read them, but what I could make of them did not answer the question you asked.
+
+The nearest things I can answer are the Stock item, Department and Patrol checkpoint records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-07 23:15:36
+
+</details>",C,C,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C010,C2,FULL,"Which building-services sensors, controllers and gateways should be managed as estate assets but have no agreed place in the asset hierarchy?",bms_points_in_graph; asset_hierarchy_register,"The register records 10 assets that are identified as building‑services sensors, controllers or gateways and that have no parent asset recorded – meaning they have no agreed place in the asset hierarchy. They are:
+
+- **AEP‑004** – Air Handling Unit, Floor 3 (building‑services sensor)  
+- **AEP‑007** – Chiller 1, Building Central Cooling Plant (building‑services sensor)  
+- **AEP‑012** – Emergency Diesel Generator (controller)  
+- **AEP‑013** – Building Battery Energy Storage System (building‑services sensor)  
+- **AEP‑014** – Building Fire Alarm Control Panel (controller, also marked as managed)  
+- **AEP‑015** – Building‑Level Electrical Meter (building‑services sensor)  
+- **AEP‑016** – Building‑Level Water Meter (building‑services sensor)  
+- **AEP‑017** – Exhaust Fan, Parking Level Ventilation (building‑services sensor)  
+- **AEP‑018** – Electrical Breaker Panel, Floor 0 (controller)  
+- **AEP‑024** – Turnstile / Access Barrier, Main Entrance (controller)
+
+These 10 assets are recorded as estate assets but, because no parent asset is listed for them, they do not have an agreed place in the asset hierarchy. The register does not contain any other fields that would identify sensors, gateways, estate, agreed or hierarchy.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Asset Engineering Profile` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Asset Engineering Profile` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:10
+
+</details>","The register records 24 engineering‑profile assets.  
+Only three of them have a parent asset recorded (AEP‑008, AEP‑009, AEP‑010).  
+All other assets are “orphaned” in the hierarchy.  
+Among those orphaned assets, the ones that are explicitly building‑services sensors, controllers or gateways are:
+
+| Asset ID | Asset name (local) | Type |
+|----------|--------------------|------|
+| **AEP‑004** | Air Handling Unit – Floor 3 | Building‑service (sensor/actuator) |
+| **AEP‑007** | Chiller 1 – Building Central Cooling Plant | Building‑service (sensor/actuator) |
+| **AEP‑012** | Emergency Diesel Generator | Controller |
+| **AEP‑013** | Building Battery Energy Storage System | Building‑service (sensor/actuator) |
+| **AEP‑014** | Building Fire Alarm Control Panel | Controller |
+| **AEP‑015** | Building‑Level Electrical Meter | Building‑service (sensor/actuator) |
+| **AEP‑016** | Building‑Level Water Meter | Building‑service (sensor/actuator) |
+| **AEP‑017** | Exhaust Fan – Parking Level Ventilation | Building‑service (sensor/actuator) |
+| **AEP‑018** | Electrical Breaker Panel – Floor 0 | Controller |
+| **AEP‑024** | Turnstile / Access Barrier – Main Entrance | Controller |
+
+**Summary**
+
+* 10 assets that are building‑services sensors, controllers or gateways have no parent asset recorded.  
+* These assets should be managed as estate assets, but the register does not specify where they belong in the asset hierarchy.
+
+**Also recorded in this register:** *services* — recorded as services in void.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Asset Engineering Profile` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Asset Engineering Profile` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:19:53
+
+</details>",E,E,1,1,LLM panel; X: 3/3 judges; Y: 2/3 judges
+C011,C6,FULL,"What is the indicated status of passenger, evacuation and service lifts, and what does the current fire strategy allow responders to rely on?",lift_state; fire_strategy_text,"I couldn't put an answer together from Abacws Building's records — I did read them, but what I could make of them did not answer the question you asked.
+
+The nearest things I can answer are the Accessible route, Asset status record and Asset engineering profile records and the readings of lift state, air quality, carbon monoxide and co2. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** calculated — arithmetic over observations
+- **Operation performed:** calculation
+- **When:** newest evidence 2026-10-08 07:19:28, retrieved 2026-10-08 07:20:31
+
+</details>","**All 2 lift(s) are operational** (last checked 21 days ago). *This is the last KNOWN state, not a live one — the most recent check was 21 days ago.*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-07 23:15:11
+
+</details>",D,D,0,1,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C012,C2,FULL,"Which assets appear active in one system but isolated, replaced, removed or out of service in another?",asset_register_status; live_point_activity; work_orders,"The asset status record register (35 records) cannot answer this: it records assistance contact, status observed at, status of, status reason, status source and status value, and nothing about isolated, removed, replaced and system.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Asset Status` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Asset Status` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:19:58
+
+</details>","The asset status record register (35 records) cannot answer this: it records assistance contact, status observed at, status of, status reason, status source and status value, and nothing about isolated, removed, replaced and system.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Asset Status` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Asset Status` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:11
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C013,C1,FULL,A visitor needs a step-free route to our approved meeting point. Which route is currently verified as usable?,accessible_routes_step_free_and_verified; lift_state,"The only route that records a “point” (a place where people can gather) is **RTE‑013 – “Evacuation route — Level 1 refuge.”**  
+- It is marked **step‑free** (isStepFree = true).  
+- Its status is **open**, so it is currently available for use.  
+
+No record in the register contains any field that says the route has been “verified” or “approved” for use, so the register does not record a verification status.  
+
+**Summary of the route records**
+
+| Status | Count | Step‑free count |
+|--------|-------|-----------------|
+| Open | 13 | 13 |
+| Restricted | 2 | 2 |
+| Closed | 1 | 1 |
+| **Total** | 16 | 15 |
+
+Only one route (RTE‑013) includes a point, and that route is step‑free and open. No other route records a meeting point or a verification status.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Accessible Route` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Accessible Route` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:20:17
+
+</details>","I found **16 records** that bear on this, but I couldn't summarise them against your question just now, so I haven't drawn a conclusion from them. The records are:
+- Accessible drop-off to Reception (open)
+- Cathays station to Reception (open)
+- Bus stop to Reception (open)
+- Reception to Level 1 Atrium (open)
+- Reception to Level 1 Computer Laboratory (open)
+- Reception to Level 2 laboratories (restricted)
+- Reception to Level 3 laboratories (open)
+- Reception to Level 4 laboratories (open)
+- Reception to Level 5 offices (open)
+- Quiet arrival route (open)
+- Low-vision route to Reception (open)
+- Companion or assistance-dog route (open)
+- Evacuation route — Level 1 refuge (open)
+- Reception to accessible washroom (open)
+- North stair route — not step free (restricted)
+- …and 1 more
+
+Ask about one of them, or narrow the question, and I can answer from its detail.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Accessible Route` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Accessible Route` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:13
+
+</details>",E,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C014,C2,PARTIAL,"Does every material invoice line have an authorised order, verified delivery or completion, and valid acceptance for the billed period?",invoice_lines; purchase_orders; work_order_completion; approvals,"The building cost line register (24 records) cannot answer this: it records financial period, provider name, spend category, accrued amount, actual amount, budget amount, coding check required and committed amount, plus 2 more fields, and nothing about acceptance, authorised, billed and completion.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Cost Line` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Cost Line` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:20:18
+
+</details>","The building cost line register (24 records) cannot answer this: it records financial period, provider name, spend category, accrued amount, actual amount, budget amount, coding check required and committed amount, plus 2 more fields, and nothing about acceptance, authorised, billed and completion.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Cost Line` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Cost Line` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:12
+
+</details>",D,D,0,0,LLM panel; X: 2/3 judges; Y: 3/3 judges
+C015,C6,FULL,"Is the lift on my public route in service, and what is the official fallback if it becomes unavailable?",lift_state; official_fallback_route,"The building’s records show that the lift used for step‑free access is **not currently in service** – its record is marked “none”, meaning it has not been verified as operational.
+
+The public route you mentioned (the lecture‑capture service) is recorded as **verified** and is not linked to the lift. The records do not contain any information about an alternative route or fallback service that would be used if the lift were unavailable.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Continuity Provision` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Continuity Provision` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:20:36
+
+</details>","I found **12 records** that bear on this, but I couldn't summarise them against your question just now, so I haven't drawn a conclusion from them. The records are:
+- Core network and building uplink (verified)
+- Wireless access across teaching floors (verified)
+- Research compute and lab data capture (none)
+- Building management system (BMS) (verified)
+- Access control and door release (overdue)
+- CCTV recording (none)
+- Fire alarm monitoring and call-out (verified)
+- Teaching AV in Level 1 laboratories (unverified)
+- Lecture capture and streaming (verified)
+- Domestic hot water (verified)
+- Chilled water to the server room (none)
+- Lift service (step-free access) (none)
+
+Ask about one of them, or narrow the question, and I can answer from its detail.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Continuity Provision` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Continuity Provision` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:14
+
+</details>",E,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C016,C5,PARTIAL,"Where do public journeys conflict with delivery, maintenance, waste, equipment-move or event-setup routes, and can timing or routing separate them?",public_event_routes_and_times; maintenance_and_waste_schedules; delivery_and_equipment_move_routes,"The waste collection point register (24 records) cannot answer this: it records location, waste station, waste stream, aperture kind, service frequency, approved fill threshold, capacity litres and fill percent, plus 3 more fields, and nothing about conflict, delivery, equipment-move and journeys.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:20:28
+
+</details>","The waste collection point register (24 records) cannot answer this: it records location, waste station, waste stream, aperture kind, service frequency, approved fill threshold, capacity litres and fill percent, plus 3 more fields, and nothing about conflict, delivery, equipment-move and journeys.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:14
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C017,C2,PARTIAL,"For sampled specialist or regulated work, were appointment, licence, training and approval valid for the task and date?",permits_to_work; competency_requirements; approval_evidence; licences,"The approval and evidence record register (32 records) cannot answer this: it records approval conditions, approval decision, approval reference, approval subject kind, approved by role, approved on, evidence date and evidence kind, plus 4 more fields, and nothing about appointment, licence, regulated and sampled.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Approval Record` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Approval Record` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:15
+
+</details>","The approval and evidence record register (32 records) cannot answer this: it records approval conditions, approval decision, approval reference, approval subject kind, approved by role, approved on, evidence date and evidence kind, plus 4 more fields, and nothing about appointment, licence, regulated and sampled.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Approval Record` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Approval Record` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:20:31
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C018,C5,PARTIAL,Which facilities services and scheduled activities fall within the declared impact of the authorised emergency-system test?,test_schedule; declared_test_impact; timetable_bookings_cleaning,"I did not find any answer in the records I searched. That is a statement about the documents, not about the building — if you can name the record or the measurement this would be written down as, I will look there next.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Documents Do Not Answer` · sensor
+- **When:** retrieved 2026-10-08 07:20:51
+
+</details>","Here is what I found in **Abacws Building** documentation:
+
+
+**From: Stakeholder Group Register**
+
+
+| Switch and AP status, server room temperature and power, cabling routes, capacity | Active | Server-room environmental alarms come here before Estates | | SH-29 | IT manager | Specialist | IT service delivery in the building | DEP-07 | IT services | Operational | Weekdays | Network status, server room conditions, incidents | Active | Earlier label for SH-28 | | SH-30 | Health and safety officers | Specialist | Evidence that the building is operated safely | DEP-05 | Risk assessment and safe systems of work | Operational | Weekdays | Risk assessments, incidents, near misses, COSHH, LEV, contractor controls, permits | Active | | | SH-31 | Safety officer | Specialist | Safety oversight | DEP-05 | Safety | Operational | Weekdays | Air quality, occupancy limits, alarms, incident reports | Active | Earlier label for SH-30 | | SH-32 | Fire-safety personnel | Specialist | Fire precautions demonstrably in working order | DEP-06 | Fire precautions and evacuation readiness | Operational | Weekdays, drills scheduled | Alarm tests, detection coverage, doors and compartmentation, extinguisher service, drills, PEEPs | Active | A missed weekly alarm test is reportable | | SH-33 | Emergency coordinators | Specialist | Knowing the building is ready before anything happens | DEP-16 | Incident coordination and continuity | Restricted | On call 24/7 | Coordination roles, activation criteria, fallback arrangements, refuge points, roll call | Active | | | SH-34 | Emergency responders | External | A fast, accurate picture on arrival | DEP-03 | | Restricted | On incident only | Access routes, riser and shaft locations, isolation points, occupancy, refuge points, hazards | Active | Need the answer in seconds, and only the load-bearing facts | | SH-35 | Fire service liaison | External | Pre-planning and site familiarity | DEP-06 | | Restricted | Scheduled visits | Building layout, access, hydrants, risers, hazards, compartmentation | Occasional | | | SH-36 | Accessibility, inclusion, and well-being teams | Specialist | A building usable by everyone in it | DEP-13 | Reasonable adjustments and inclusive access | Staff | Weekdays | Step-free routes, lift status, hearing loops, accessible facilities, PEEPs, sensory conditions | Active | | | SH-37 | Accessibility officer | Specialist | Accessibility compliance and adjustments | DEP-13 | Accessibility | Staff | Weekdays | Routes, adjustments, verified accessibility features | Active | Earlier label for SH-36 |
+
+groups, timing | Active | | | SH-77 | Executive assistant | External | Arranging things on someone else's behalf | DEP-10 | | Staff | Weekdays | Room bookings, access for guests, event logistics | Occasional | | | SH-78 | Waste contractor | External | Collecting the right streams on schedule | DEP-12 | Collection and disposal | Visitor | Scheduled collections | Collection points, streams, access windows, duty of care documentation | Active | | | SH-79 | Window cleaner | External | Safe external access | DEP-01 | Work carried out | Visitor | Quarterly | Abseil anchor points, permits, access windows, weather constraints | Occasional | | | SH-80 | Pest control | External | Monitoring and treatment | DEP-04 | Treatment carried out | Visitor | Scheduled visits | Bait point locations, activity records, access, food areas | Occasional | | | SH-81 | Car park attendant | External | Managing vehicle access | DEP-03 | Car park operation | Staff | Weekdays | Barrier state, permits, accessible bays, EV chargers | Occasional | | | SH-82 | Sports facility manager | External | Operating shared sports space | DEP-01 | Sports facility | Staff | Weekdays and evenings | Booking, condition, access, environmental limits | Occasional | | **82 groups: 20 specialist, 20 external, 16 operations, 12 governance, 11 occupant, 3 visitor. Only three groups (security officers, emergency coordinators and emergency responders) have any expectation of the building outside working hours, and eight of the twenty departments that serve these groups have no out-of-hours route at all.**
+
+
+---
+*Source: building documents. For the most current version, contact facility management.*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Document Kb` · sensor
+- **When:** retrieved 2026-10-07 23:15:17
+
+</details>",D,E,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C019,C5,PARTIAL,"Did a prevention, reuse or refurbishment intervention reduce purchasing and waste after accounting for seasonality and service changes?",purchasing_cost_lines_and_stock; waste_returns_monthly; intervention_dates,"The waste collection point register (24 records) cannot answer this: it records service frequency, waste station, waste stream, aperture kind, location, approved fill threshold, capacity litres and fill percent, plus 3 more fields, and nothing about accounting, changes, intervention and prevention.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:16
+
+</details>","The waste collection point register (24 records) cannot answer this: it records service frequency, waste station, waste stream, aperture kind, location, approved fill threshold, capacity litres and fill percent, plus 3 more fields, and nothing about accounting, changes, intervention and prevention.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:20:40
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C020,C5,NONE,"Did a travel intervention change aggregate mode or trip outcomes beyond seasonality, weather, timetable and sampling effects?",travel_mode_and_trip_data; intervention_dates; outdoor_weather,"I did not find that in the records I searched.
+
+Try, for example: ""any anomalies this week?"", ""how many open work orders are there?"" or ""is that room booked this afternoon?"".
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-07 23:15:49
+
+</details>","I couldn't answer that from Abacws Building's records.
+
+The nearest things I can answer are the Operating regime, Circulation time and Timetabled session records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-08 07:20:59
+
+</details>",C,C,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C021,C1,FULL,"Which current hazards and temporary controls apply to this exact workface, task and time window?",hazard_controls_register; risk_assessments; permits_to_work,"The hazard control register (12 records) cannot answer this: it records control measure, hazard condition, hazard kind, location, evidence reference, last tested on, next test due and test standard, and nothing about apply, exact, window and workface.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Hazard Control` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Hazard Control` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:20:41
+
+</details>","The hazard control register (12 records) cannot answer this: it records control measure, hazard condition, hazard kind, location, evidence reference, last tested on, next test due and test standard, and nothing about apply, exact, window and workface.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Hazard Control` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Hazard Control` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:18
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C022,C2,PARTIAL,Which rooms show unexplained deviation from the approved AV configuration baseline?,av_current_state; approved_av_baseline,"I couldn't answer that from Abacws Building's records.
+
+The nearest things I can answer are the Approval and evidence record, Cleaning task and Workspace profile records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-08 07:21:08
+
+</details>","I don't have that specific information on record for **Abacws Building**. For building-specific queries please contact your building's facilities / estates management team.
+
+Abacws Building does keep Approval and evidence record, Teaching AV readiness and Room booking records, which I can read for you.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `No Match` · sensor
+- **When:** retrieved 2026-10-07 23:15:20
+- **Checks that fired:** grounding_guard
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C023,C1,PARTIAL,"Which coded timetable concerns are corroborated by current room, timing or route evidence, and which remain unclear?",coded_timetable_concerns; timetable; room_conditions; routes,"I did not find that in the records I searched.
+
+Try, for example: ""any anomalies this week?"", ""how many open work orders are there?"" or ""is that room booked this afternoon?"".
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-07 23:16:12
+
+</details>","I did not find that in the records I searched.
+
+Try, for example: ""any anomalies this week?"", ""how many open work orders are there?"" or ""is that room booked this afternoon?"".
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-08 07:21:21
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C024,C5,PARTIAL,"Did a waste, reuse or recycling intervention reduce residual waste or increase reuse without worsening contamination, workload, safety or service quality?",waste_returns_monthly; intervention_dates; contamination; workload_and_service_quality,"The waste collection point register (24 records) cannot answer this: it records service frequency, waste station, waste stream, aperture kind, location, approved fill threshold, capacity litres and fill percent, plus 3 more fields, and nothing about contamination, increase, intervention and quality.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:47
+
+</details>","The waste collection point register (24 records) cannot answer this: it records service frequency, waste station, waste stream, aperture kind, location, approved fill threshold, capacity litres and fill percent, plus 3 more fields, and nothing about contamination, increase, intervention and quality.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Waste Collection Point` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Waste Collection Point` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:21:01
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C025,C3,NONE,"What aggregate space, storage, equipment, environmental-control and collaboration demand is approved or credibly forecast for each research-space class?",approved_space_demand; research_space_class,"The register contains 32 approval‑and‑evidence records.  
+Twenty‑two of those records have an approval decision of **approved**.
+
+**Records that mention the words asked for**
+
+- **Aggregate**  
+  • *Data retention – sensor telemetry* (APR‑026)
+
+- **Space**  
+  • *Room 1.06 Computer Laboratory – teaching use* (APR‑005)  
+  • *Room 1.04 Atrium – public event use* (APR‑006)  
+  • *Level 5 academic office use* (APR‑031)
+
+- **Research‑space**  
+  • *Room 2.01 Research Laboratory – COSHH procedure* (APR‑007)  
+  • *Room 3.06 Research Laboratory – COSHH procedure* (APR‑008)  
+  • *APG‑004 Level 2 research laboratories* (APR‑009)
+
+**What the register does not record**
+
+The register contains no fields that record storage, equipment, environmental‑control, collaboration demand, or the class of a research space. Therefore, it cannot provide any approved or forecasted demand for those items.
+
+**Also past their due date, though not recorded as overdue** (stated by the system from the register): APR-004 (reviewDue 2026-09-12, recorded current); APR-008 (reviewDue 2026-09-09, recorded no_evidence); APR-009 (reviewDue 2026-10-01, recorded current); APR-010 (reviewDue 2026-09-08, recorded current); APR-012 (reviewDue 2026-10-01, recorded current); APR-013 (reviewDue 2026-10-01, recorded current); APR-014 (reviewDue 2026-10-05, recorded current); APR-015 (reviewDue 2026-10-05, recorded current); APR-019 (reviewDue 2026-09-30, recorded due_review); APR-020 (reviewDue 2026-10-01, recorded current); APR-023 (reviewDue 2026-09-12, recorded no_evidence).
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Approval Record` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Approval Record` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:21:22
+
+</details>","I did not find any aggregate space, storage, equipment, environmental-control or collaboration demand in the building's approval record records.
+What it does record for research‑space classes is the approval status of the three space‑use records that belong to that category:
+
+- **Room 1.06 Computer Laboratory – teaching use** (approved, record APR‑005)  
+- **Room 1.04 Atrium – public event use** (approved, record APR‑006)  
+- **Level 5 academic office use** (approved, record APR‑031)
+
+All three are in the *current* recorded state.  
+
+No other records in the register provide the demand, storage, equipment, environmental‑control or collaboration data that the question asks for.
+
+**Also past their due date, though not recorded as overdue** (stated by the system from the register): APR-004 (reviewDue 2026-09-12, recorded current); APR-008 (reviewDue 2026-09-09, recorded no_evidence); APR-009 (reviewDue 2026-10-01, recorded current); APR-010 (reviewDue 2026-09-08, recorded current); APR-012 (reviewDue 2026-10-01, recorded current); APR-013 (reviewDue 2026-10-01, recorded current); APR-014 (reviewDue 2026-10-05, recorded current); APR-015 (reviewDue 2026-10-05, recorded current); APR-019 (reviewDue 2026-09-30, recorded due_review); APR-020 (reviewDue 2026-10-01, recorded current); APR-023 (reviewDue 2026-09-12, recorded no_evidence).
+
+**Also recorded in this register:** *aggregate* — appears in APR-026.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Approval Record` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Approval Record` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:16:00
+
+</details>",C,E,0,0,LLM panel; X: 3/3 judges; Y: 2/3 judges
+C026,C1,FULL,"Where can I work for the next hour with confirmed access, power, an authorised network connection and suitable room conditions?",workspace_access_power_network; room_conditions_sensors; bookings_and_timetable,"The register records that 18 of the 28 workspaces meet all of the conditions that are actually recorded:
+
+* **Access** – the space is *Bookable*  
+* **Power** – power is available at every seat or at some seats  
+* **Network** – the network rating is *strong* or *adequate*  
+* **Suitable for calls** – the space is marked as suitable for calls  
+
+These 18 spaces are available on the next hour (the register does not record a “next‑hour” window, but all of them are currently active and meet the above criteria).  
+
+**Workspaces that satisfy the recorded criteria**
+
+| Floor | Workspace | Room label |
+|-------|-----------|------------|
+| 1 | WS‑06 | Seminar room 1.25 |
+| 1 | WS‑07 | Seminar room 1.26 |
+| 2 | WS‑10 | Meeting room 2.13 |
+| 2 | WS‑11 | Meeting room 2.14 |
+| 2 | WS‑12 | Seminar room 2.15 |
+| 3 | WS‑15 | Seminar room 3.13 |
+| 3 | WS‑16 | Seminar room 3.14 |
+| 3 | WS‑17 | Meeting room 3.15 |
+| 3 | WS‑18 | Meeting room 3.16 |
+| 3 | WS‑20 | Meeting room 3.26 |
+| 3 | WS‑21 | Meeting room 3.27 |
+| 4 | WS‑22 | Meeting room 4.11 |
+| 4 | WS‑23 | Meeting room 4.12 |
+| 4 | WS‑24 | Seminar room 4.13 |
+| 5 | WS‑25 | Seminar room 5.15 |
+| 5 | WS‑26 | Seminar room 5.16 |
+| 5 | WS‑27 | Meeting room 5.17 |
+| 5 | WS‑28 | Meeting room 5.18 |
+
+**What the register does not record**
+
+The register does not contain information about “confirmed access”, “authorised” status, a specific “next‑hour” window, or any other detailed conditions beyond the four fields listed above. Therefore, while the 18 spaces listed meet the recorded criteria, the register cannot confirm that they are authorised for your use or that they will remain available for the next hour.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Workspace Profile` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Workspace Profile` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:21:46
+
+</details>","**Workspaces that meet the recorded criteria**
+
+All 18 bookable rooms in the register have:
+
+* **Access** – “Bookable” (access is confirmed for the room)  
+* **Power** – power is available at some or every seat  
+* **Network** – a strong or adequate network rating  
+* **Suitable for calls** – the room is recorded as suitable for confidential or normal calls  
+
+| Floor | Workspace | Room type | Power | Network | Calls |
+|-------|-----------|-----------|-------|---------|-------|
+| 1 | WS‑06 Seminar room 1.25 | Seminar | at some seats | strong | yes |
+| 1 | WS‑07 Seminar room 1.26 | Seminar | at some seats | strong | yes |
+| 2 | WS‑10 Meeting room 2.13 | Meeting | at some seats | strong | yes |
+| 2 | WS‑11 Meeting room 2.14 | Meeting | at some seats | strong | yes |
+| 2 | WS‑12 Seminar room 2.15 | Seminar | at some seats | adequate | yes |
+| 3 | WS‑15 Seminar room 3.13 | Seminar | at some seats | strong | yes |
+| 3 | WS‑16 Seminar room 3.14 | Seminar | at some seats | strong | yes |
+| 3 | WS‑17 Meeting room 3.15 | Meeting | at every seat | strong | yes |
+| 3 | WS‑18 Meeting room 3.16 | Meeting | at every seat | strong | yes |
+| 3 | WS‑20 Meeting room 3.26 | Meeting | at some seats | adequate | yes |
+| 3 | WS‑21 Meeting room 3.27 | Meeting | at some seats | adequate | yes |
+| 4 | WS‑22 Meeting room 4.11 | Meeting | at every seat | strong | yes |
+| 4 | WS‑23 Meeting room 4.12 | Meeting | at every seat | strong | yes |
+| 4 | WS‑24 Seminar room 4.13 | Seminar | at some seats | strong | yes |
+| 5 | WS‑25 Seminar room 5.15 | Seminar | at some seats | strong | yes |
+| 5 | WS‑26 Seminar room 5.16 | Seminar | at some seats | strong | yes |
+| 5 | WS‑27 Meeting room 5.17 | Meeting | at every seat | strong | yes |
+| 5 | WS‑28 Meeting room 5.18 | Meeting | at every seat | strong | yes |
+
+**Summary**
+
+* 18 workspaces satisfy all four recorded conditions.  
+* All are in the active state.  
+* They are spread across floors 1, 2, 3, 4 and 5 as shown above.
+
+**What the register does not record**
+
+The register does not contain any information about “authorised” status, specific “conditions”, a confirmed time window, or a next‑due date for these workspaces.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Workspace Profile` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Workspace Profile` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:16:28
+
+</details>",D,D,1,1,LLM panel; X: 2/3 judges; Y: 3/3 judges
+C027,C1,PARTIAL,"Can the person's chosen companion, personal assistant, interpreter or support worker enter, sit and move with them throughout the activity?",companion_policy; companion_seating; accessible_routes,"The accessible route register (16 records) cannot answer this: it records assistance contact, route distance metres, route from, route to, allow minutes, door operation, step free and lift status, plus 6 more fields, and nothing about activity, chosen, enter and interpreter.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Accessible Route` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Accessible Route` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:21:11
+
+</details>","The accessible route register (16 records) cannot answer this: it records assistance contact, route distance metres, route from, route to, allow minutes, door operation, step free and lift status, plus 6 more fields, and nothing about activity, chosen, enter and interpreter.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Accessible Route` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Accessible Route` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:15:59
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C028,C5,NONE,Where are heating and cooling control outputs simultaneously active for long enough to merit investigation?,heating_control_output; cooling_control_output,"I'm sorry, but the building's data only contains temperature readings from various rooms. It does not include any information about heating or cooling control outputs, so I can't determine where those outputs might be running simultaneously.
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from an instrument
+- **Operation performed:** observation
+- **Kind of source that led:** measurement
+- **Sources (27):**
+    - `Building model` · sensor
+    - `Temperature Data` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-08 07:18:05, retrieved 2026-10-08 07:23:04
+
+</details>","I'm sorry, but the building's data only contains temperature readings from the various rooms.  
+There are no records of heating-or-cooling-system outputs, set-points, or any other indicator that would let us know whether heating and cooling were running at the same time.  
+
+**What the data does show**
+
+| Room | Latest temperature (°C) | Average temperature (°C) | Minimum (°C) | Maximum (°C) |
+|------|------------------------|--------------------------|--------------|--------------|
+| Room 5.64 - Academic Office | 21.74 °C (2026-10-08 00:13:59) | 23.0 °C | 21.0 °C | 25.0 °C |
+| Room 5.63 - Academic Office | 21.74 °C (2026-10-08 00:13:59) | 23.0 °C | 21.0 °C | 25.0 °C |
+| Room 5.62 - Academic Office | 21.57 °C (2026-10-08 00:13:59) | 23.0 °C | 21.0 °C | 25.0 °C |
+| Room 5.61 - Research Laboratory | 21.49 °C (2026-10-08 00:13:59) | 23.0 °C | 21.0 °C | 25.0 °C |
+| Room 5.60 - Research Laboratory | 21.99 °C (2026-10-08 00:13:59) | 23.0 °C | 21.0 °C | 25.0 °C |
+
+*The averages, minima and maxima come from the overall statistics that cover the period 30 Sep 23:04 to 08 Oct 00:13.*
+
+**Conclusion**
+
+Because the dataset contains only temperature measurements, it does not provide any evidence that heating and cooling controls were simultaneously active in any room. If you need to investigate that, you would need data from the HVAC control system itself (e.g., status flags, set-points, or output signals).
+
+_The readings query reached its row limit of 1000 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-09-30 22:04:10 to 2026-10-07 23:13:59. That is the newest part of the last 30 days, not the whole of it._
+
+---
+*Sources: `Building model` `Temperature Sensing System`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from an instrument
+- **Operation performed:** observation
+- **Kind of source that led:** measurement
+- **Sources (27):**
+    - `Building model` · sensor
+    - `Temperature Data` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+    - `Sensor reading` · sensor
+- **When:** newest evidence 2026-10-07 23:13:59, retrieved 2026-10-07 23:17:42
+
+</details>",C,C,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C029,C6,FULL,"Where are the verified access points and competent owners for the roof, basement, plant rooms and service voids relevant to this incident?",door_hardware_and_access_points; owners_and_competence,"I couldn't answer that about **Roof, Basement** from Abacws Building's records.
+
+The nearest things I can answer are the Asset engineering profile, Accessible route and Asset status record records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from an instrument
+- **Operation performed:** observation
+- **When:** retrieved 2026-10-08 07:21:39
+
+</details>","I couldn't answer that about **Roof, Basement** from Abacws Building's records.
+
+The nearest things I can answer are the Asset engineering profile, Accessible route and Asset status record records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from an instrument
+- **Operation performed:** observation
+- **When:** retrieved 2026-10-07 23:16:37
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C030,C3,PARTIAL,"Do incidents and near misses reveal a recurring hazard pattern by location, activity period or service interface that merits formal investigation?",incidents; location_grouping; service_interface,"I couldn't answer that from Abacws Building's records.
+
+The nearest things I can answer are the Incident record, Asset engineering profile and Asset status record records and the readings of formaldehyde, air quality, carbon monoxide and co2. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-08 07:21:38
+
+</details>","I couldn't answer that from Abacws Building's records.
+
+The nearest things I can answer are the Incident record, Asset engineering profile and Asset status record records and the readings of formaldehyde, air quality, carbon monoxide and co2. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-07 23:16:44
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C031,C2,PARTIAL,"Which safety-critical roles lack current required training for the assigned duty, equipment or operating period?",required_training; held_training,"I searched the building's **compliance register** (82 checks). It records, for each check, what it is, when it is next due, when it was last completed and which role is responsible — and nothing else, so it cannot answer what this question asks. Tell me which of those you need, or which register or system holds the rest, and I will read it.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-08 07:22:06
+
+</details>","I searched the building's **compliance register** (82 checks). It records, for each check, what it is, when it is next due, when it was last completed and which role is responsible — and nothing else, so it cannot answer what this question asks. Tell me which of those you need, or which register or system holds the rest, and I will read it.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-07 23:16:46
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C032,C1,PARTIAL,"For each proposed telemetry source, are modality, placement, mapping, commissioning, calibration, clock alignment and current data health verified for the claimed use?",sensor_class_and_location; timeseries_mapping; calibration_records; data_freshness; clock_alignment; commissioning_evidence,"The asset engineering profile register (24 records) cannot answer this: it records commissioned duty, location verified on, engineering system, location, floor, parent asset, serves area and tag in b m s, plus 14 more fields, and nothing about alignment, calibration, claimed and clock.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Asset Engineering Profile` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Asset Engineering Profile` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:21:47
+
+</details>","The asset engineering profile register (24 records) cannot answer this: it records commissioned duty, location verified on, engineering system, location, floor, parent asset, serves area and tag in b m s, plus 14 more fields, and nothing about alignment, calibration, claimed and clock.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Asset Engineering Profile` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Asset Engineering Profile` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:16:43
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C033,C2,FULL,Which differences remain between the contractor completion record and the current observed service state?,work_order_completion; observed_equipment_state,"I have no measured series for Contractor_Completion_Record, Current_Observed_Service_State, so there is nothing to compare from readings.
+
+What this building measures: air quality, carbon monoxide, co2, damper position, door contact, electric power, energy submeter, entering water temperature, fan state, filter differential pressure and more.
+
+If what you asked about is RECORDED rather than measured — a route time, a design duty, a booking — name it and I will read it from the building's records. For a sensor comparison, naming the two spaces and the quantity works best, e.g. *'compare the average CO2 on floor 1 versus floor 3'*.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — two or more things set against each other, and the difference reported
+- **Operation performed:** comparison
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:23:06
+- **Compared against:** Current_Observed_Service_State
+
+</details>","I have no measured series for Contractor_Completion_Record, Current_Observed_Service_State, so there is nothing to compare from readings.
+
+What this building measures: air quality, carbon monoxide, co2, damper position, door contact, electric power, energy submeter, entering water temperature, fan state, filter differential pressure and more.
+
+If what you asked about is RECORDED rather than measured — a route time, a design duty, a booking — name it and I will read it from the building's records. For a sensor comparison, naming the two spaces and the quantity works best, e.g. *'compare the average CO2 on floor 1 versus floor 3'*.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — two or more things set against each other, and the difference reported
+- **Operation performed:** comparison
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:17:59
+- **Compared against:** Current_Observed_Service_State
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C034,C1,FULL,Which eligible room provides sufficient capacity margin without using a substantially oversized space?,bookable_eligibility; room_capacity,"I couldn't answer that from Abacws Building's records.
+
+The nearest things I can answer are the Workspace profile, Cleaning task and Teaching AV readiness records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-07 23:17:31
+
+</details>","I couldn't answer that from Abacws Building's records.
+
+The nearest things I can answer are the Workspace profile, Cleaning task and Teaching AV readiness records and the readings of air quality, carbon monoxide, co2 and damper position. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** not_assessable — the evidence could not support an answer
+- **When:** retrieved 2026-10-08 07:22:39
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C035,C1,PARTIAL,"Which approved evacuation chairs or other assistance devices need attention because presence, access, service status or trained-role coverage is not demonstrated?",evacuation_provisions_state; trained_role_coverage,"**Evacuation chairs and assistance devices that need attention**
+
+- **Evacuation chair – Level 5 north stair (EV‑007)**
+  * The chair is present, but the record shows **no trained operator** on Level 5.  
+  * Because trained‑role coverage is missing, the chair cannot be relied on for evacuation.
+
+All other evacuation chairs and assisted‑route devices in the register have either a trained operator listed (EV‑006) or a clear service status that is currently satisfied (EV‑008). No other records show a lack of presence, access, service status or trained‑role coverage.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Evacuation Provision` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Evacuation Provision` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:22:25
+
+</details>","**Evacuation chairs or assistance devices that need attention**
+
+- **Evacuation chair – Level 5 north stair (EV‑007)**
+  - *What the record says*: The chair is present, but **no trained operator is currently on Level 5**.  
+  - *Status*: The record is marked “defective”, indicating that the lack of trained‑operator coverage is a problem that requires action.
+
+**What the register records for the other devices**
+
+- All other evacuation chairs (EV‑006) and assisted routes (EV‑008, EV‑012) are recorded as **active** with serviceable equipment and, where applicable, trained operators present.  
+- Refuge points (EV‑001 – EV‑005) and personal plans (EV‑009 – EV‑011) are not evacuation chairs or assistance devices, so they are not relevant to this question.
+
+**Summary**
+
+- **Total records held**: 12  
+- **Records needing attention**: 1 (EV‑007)  
+- **No other evacuation chairs or assistance devices** in the register lack demonstrated presence, access, service status, or trained‑role coverage.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Evacuation Provision` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Evacuation Provision` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:17:07
+
+</details>",D,A,2,2,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C036,C5,PARTIAL,"Which class-change windows repeatedly show aggregate congestion near teaching rooms, and which timetable features coincide with it?",corridor_congestion; room_occupancy_and_entry_counts; timetable,"I couldn't put an answer together from Abacws Building's records — I did read them, but what I could make of them did not answer the question you asked.
+
+The nearest things I can answer are the Timetabled session, Teaching AV readiness and Cleaning task records and the readings of window contact, air quality, carbon monoxide and co2. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-07 23:17:52
+
+</details>","I couldn't put an answer together from Abacws Building's records — I did read them, but what I could make of them did not answer the question you asked.
+
+The nearest things I can answer are the Timetabled session, Teaching AV readiness and Cleaning task records and the readings of window contact, air quality, carbon monoxide and co2. Ask about one of those and I will read them.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **When:** retrieved 2026-10-08 07:22:56
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C037,C5,FULL,"Which time-aligned alarms and abnormal measurements occurred immediately before, during and after the fault?",alarm_events; sensor_readings; fault_time_from_work_orders,"The building’s records show that a cluster of **Air‑Quality Level** alarms were triggered at the exact moment of the fault (2026‑07‑09 T15:33:47).  
+
+**Alarms that occurred during the fault**
+
+| Sensor | Alarm time | Timeseries ID |
+|--------|------------|---------------|
+| Air_Quality_Level_Sensor_5.01 | 2026‑07‑09 T15:33:47 | 26f2c139‑f60c‑49dd‑b3aa‑2a38215123ab |
+| Air_Quality_Level_Sensor_5.02 | 2026‑07‑09 T15:33:47 | 249a4c9c‑fe31‑4649‑a119‑452e5e8e7dc5 |
+| Air_Quality_Level_Sensor_5.03 | 2026‑07‑09 T15:33:47 | 18ca2f90‑00a4‑42f2‑af45‑725b56a828b4 |
+| Air_Quality_Level_Sensor_5.04 | 2026‑07‑09 T15:33:47 | 493a480c‑84c8‑4c41‑b31b‑b484bf170256 |
+| Air_Quality_Level_Sensor_5.05 | 2026‑07‑09 T15:33:47 | 1cff60aa‑0472‑45d8‑956d‑5d1e42eac1a4 |
+| Air_Quality_Level_Sensor_5.06 | 2026‑07‑09 T15:33:47 | 2e18edcd‑56de‑4599‑bda9‑ae7afd0218ad |
+| Air_Quality_Level_Sensor_5.07 | 2026‑07‑09 T15:33:47 | fd383494‑bb63‑43ca‑8d58‑d87c17169b7b |
+| Air_Quality_Level_Sensor_5.08 | 2026‑07‑09 T15:33:47 | a8df8757‑009a‑4997‑881b‑ba8763219d6e |
+| Air_Quality_Level_Sensor_5.09 | 2026‑07‑09 T15:33:47 | 543113d4‑f75e‑4c0d‑b38b‑629b7ccca9e4 |
+| Air_Quality_Level_Sensor_5.10 | 2026‑07‑09 T15:33:47 | 55920313‑1698‑488f‑bc81‑b062b9dd00e3 |
+
+*Total alarms recorded at that instant: 10 (with 990 more of the same type across the building).*
+
+**Summary**
+
+- **During the fault**: 10 Air‑Quality Level sensors triggered alarms at 15:33:47 on 9 July 2026.  
+
+If you need the full list of all 1,000 alarms or want to examine the corresponding abnormal measurements (e.g., CO₂, temperature, humidity) for the same period, let me know and I can pull that data for you.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:23:42
+
+</details>",Your request took too long to process. Please try a simpler question or try again later.,F,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C038,C1,PARTIAL,"Which current location can support an assistance dog's pause, water and toileting needs without blocking a route or breaching a restriction?",water_points; assistance_dog_relief_areas; routes; access_restrictions,"I did not find any single route that is explicitly described as providing a pause, water and toileting facility for an assistance dog all in one in the building's accessible route records.
+
+**What the records do show**
+
+| Location (route) | What it records |
+|------------------|-----------------|
+| **RTE‑012 – Companion or assistance‑dog route** | Water bowl at reception on request (water provision). |
+| **RTE‑014 – Reception to accessible washroom** | Accessible washroom (toileting facility). |
+
+Neither of these routes contains a field that records a pause area, and no route records all three needs together.  
+
+All routes that are open (status = open) are available for use, and none of the open routes are marked as restricted or closed. The water‑providing route (RTE‑012) and the washroom route (RTE‑014) are both open, so they do not breach any restriction. However, because pause is not recorded anywhere in the register, the question cannot be answered fully from the available data.
+
+**Also recorded in this register:** *assistance* — recorded as assistance contact: Text 07700 900142 / In-person, Main Reception / Intercom at refuge point.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Accessible Route` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Accessible Route` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:18:08
+
+</details>","I did not find any needs you asked about in the building's accessible route records.
+The register does record each need separately, and all of those routes are currently open (none are restricted or closed).
+
+**Where each need is recorded**
+
+| Need | Record that records it | Route description | Status |
+|------|------------------------|-------------------|--------|
+| Pause (seating) | RTE‑004 – “Reception to Level 1 Atrium” | 55 m, 8 min, busy sensory level, one seated rest | open |
+| Water | RTE‑012 – “Companion or assistance‑dog route” | 80 m, 12 min, moderate sensory level, two seated rests, water bowl at reception on request | open |
+| Toileting | RTE‑014 – “Reception to accessible washroom” | 60 m, 9 min, moderate sensory level, one seated rest, radar‑key washroom | open |
+
+All three of these routes are open and do not breach any restriction.  
+No single route in the register combines all three facilities, so you would need to use the separate routes listed above to meet each requirement.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Accessible Route` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Accessible Route` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:23:17
+
+</details>",B,E,3,3,LLM panel; X: 3/3 judges; Y: 2/3 judges
+C039,C1,PARTIAL,"Which roles need a refresher or change-specific briefing because of a revised control, incident lesson, equipment change or long period without practice?",competency_requirements; control_and_equipment_changes; incident_lessons; practice_dates,"**Abacws Building's documents do not answer this.** I searched Coordination Function Register, Department Directory; they are the closest material and none of them contains the answer. That is a statement about the documents, not about the building — if you can name the record or the measurement this would be written down as, I will look there next.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Documents Do Not Answer` · sensor
+- **When:** retrieved 2026-10-08 07:23:40
+
+</details>","**Abacws Building's documents do not answer this.** I searched Coordination Function Register, Department Directory; they are the closest material and none of them contains the answer. That is a statement about the documents, not about the building — if you can name the record or the measurement this would be written down as, I will look there next.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Documents Do Not Answer` · sensor
+- **When:** retrieved 2026-10-07 23:18:25
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C040,C5,PARTIAL,"Which lessons from incidents, complaints, audits and near misses have become implemented controls, and is there evidence that the improvement has been sustained?",incidents_complaints; implemented_controls; lesson_to_control_links,"**7 of the 15 records in the Incident record register match** (incident category: near miss):
+
+- **INC-2026-001** — Contractor entered a laboratory without induction — completed date: 4 March 2026; status: closed
+- **INC-2026-003** — Fire door on Level 3 wedged open — completed date: 2 April 2026; status: closed
+- **INC-2026-007** — Delivery vehicle blocked the fire service access route — status: open
+- **INC-2026-009** — Trailing cable across a teaching room walkway — completed date: 8 July 2026; status: closed
+- **INC-2026-010** — Sharps bin overfilled in a Level 3 laboratory — completed date: 5 August 2026; status: closed
+- **INC-2026-014** — Hot works permit not displayed at the work location — status: open
+- **INC-2026-015** — CO detection alarm at parking level, no fault found — status: open
+
+This register does not record become, controls, evidence, implemented and improvement, so that part of the question is not answered here.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Incident Record` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Incident Record` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:23:12
+
+</details>","**7 of the 15 records in the Incident record register match** (incident category: near miss):
+
+- **INC-2026-001** — Contractor entered a laboratory without induction — completed date: 4 March 2026; status: closed
+- **INC-2026-003** — Fire door on Level 3 wedged open — completed date: 2 April 2026; status: closed
+- **INC-2026-007** — Delivery vehicle blocked the fire service access route — status: open
+- **INC-2026-009** — Trailing cable across a teaching room walkway — completed date: 8 July 2026; status: closed
+- **INC-2026-010** — Sharps bin overfilled in a Level 3 laboratory — completed date: 5 August 2026; status: closed
+- **INC-2026-014** — Hot works permit not displayed at the work location — status: open
+- **INC-2026-015** — CO detection alarm at parking level, no fault found — status: open
+
+This register does not record become, controls, evidence, implemented and improvement, so that part of the question is not answered here.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `Incident Record` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `Incident Record` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:18:07
+
+</details>",D,D,1,1,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C041,C1,FULL,The main display cannot be restored quickly. Which authorised teaching alternative is technically feasible now?,av_readiness; room_availability_timetable_bookings; room_capacity,"I did not find any alternative, authorised, feasible, quickly and restored for the main display in the building's a v readiness records.
+It does, however, record the status of every display in the building.  
+All displays that are currently **ready** (and therefore could be used as a substitute) are:
+
+- **AV‑104‑DSP** – Atrium display (Room 1.04)  
+- **AV‑106‑DSP** – Room 1.06 display (Computer Laboratory)  
+- **AV‑201‑DSP** – Room 2.01 display (Research Laboratory)  
+- **AV‑202‑DSP** – Room 2.02 display (Research Laboratory)  
+- **AV‑301‑DSP** – Room 3.01 display (Research Laboratory)  
+- **AV‑401‑DSP** – Room 4.01 display (Research Laboratory)  
+- **AV‑504‑DSP** – Room 5.04 display (Academic Office)
+
+These seven displays are the only ones recorded as ready and could therefore serve as a technically feasible alternative to the main display that cannot be restored quickly.
+
+**Also past their due date, though not recorded as overdue** (stated by the system from the register): AV-106-LOOP (nextDue 2026-09-10, recorded unevidenced).
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `A V Readiness` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `A V Readiness` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-07 23:18:27
+
+</details>","The register lists seven display units that are currently in a **ready** state and could be used as a teaching alternative if the main display is unavailable:
+
+**Ready displays**
+
+- **AV‑104‑DSP** – Atrium display (Room 1.04, Common Area / Atrium)  
+- **AV‑106‑DSP** – Room 1.06 display (Computer Laboratory)  
+- **AV‑201‑DSP** – Room 2.01 display (Research Laboratory)  
+- **AV‑202‑DSP** – Room 2.02 display (Research Laboratory)  
+- **AV‑301‑DSP** – Room 3.01 display (Research Laboratory)  
+- **AV‑401‑DSP** – Room 4.01 display (Research Laboratory)  
+- **AV‑504‑DSP** – Room 5.04 display (Academic Office)
+
+These are the only display units recorded as ready; all other display records are either not present or have a different status.
+
+**What the register does not record**
+
+The register does not contain any information about an authorised teaching alternative that is technically feasible, can be restored quickly, or is considered an alternative to the main display.
+
+**Also past their due date, though not recorded as overdue** (stated by the system from the register): AV-106-LOOP (nextDue 2026-09-10, recorded unevidenced).
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+
+---
+*Sources: `A V Readiness` `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** authoritative
+- **Sources (2):**
+    - `A V Readiness` · authoritative
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:23:28
+
+</details>",D,D,1,1,LLM panel; X: 3/3 judges; Y: 3/3 judges
+C042,C5,PARTIAL,Did the intervention restore the required service and keep it stable for the agreed evidence window?,intervention_from_work_orders; service_readings; service_targets; agreed_evidence_window,"I’m sorry, but the records you queried only list the continuity plans (CP‑001 to CP‑010 and two more).  
+None of those entries contain a field that records whether an intervention actually restored the service or kept it stable for the agreed evidence window.  
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building model`*
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Building model` · sensor
+- **When:** retrieved 2026-10-08 07:23:57
+
+</details>","I did not find any answer in the records I searched. That is a statement about the documents, not about the building — if you can name the record or the measurement this would be written down as, I will look there next.
+<details type=""evidence"">
+<summary>How I know this</summary>
+
+**How this answer was arrived at**
+
+- **Kind of claim:** observed — read from a system of record, not from an instrument
+- **Operation performed:** authoritative lookup
+- **Kind of source that led:** measurement
+- **Sources (1):**
+    - `Documents Do Not Answer` · sensor
+- **When:** retrieved 2026-10-07 23:18:28
+
+</details>",D,D,0,0,LLM panel; X: 3/3 judges; Y: 3/3 judges
