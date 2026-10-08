@@ -10,6 +10,7 @@ judges. Run after make_blinded_sheet.py, before eval/compound/scoring/llm_panel/
 (the judge prompt and rubric as run on 2026-10-08), then scripts/llm_panel_apply.py.
 Prints counts only. All seeds are fixed, so the same sheets give the same batches.
 """
+
 import csv
 import json
 import random
@@ -26,11 +27,15 @@ ROUNDS = 3
 
 pool = []
 for s in ("T-REAL", "T-REAL-SUPPLEMENT", "T-CAT"):
-    rows = list(csv.DictReader(open(REPO / f"eval/compound/scoring/{s}_sheet.csv", encoding="utf-8-sig")))
+    rows = list(
+        csv.DictReader(open(REPO / f"eval/compound/scoring/{s}_sheet.csv", encoding="utf-8-sig"))
+    )
     meta = {r["id"]: r for r in rows}
     for r in rows:
         for slot in ("X", "Y"):
-            pool.append({"set": s, "item": r["id"], "slot": slot, "answer": r[f"answer_{slot}"], "row": r})
+            pool.append(
+                {"set": s, "item": r["id"], "slot": slot, "answer": r[f"answer_{slot}"], "row": r}
+            )
     abl = REPO / f"eval/compound/results/v2-ablation/{s}.jsonl"
     if abl.exists():
         for line in abl.open(encoding="utf-8"):
@@ -80,10 +85,19 @@ for rd in range(ROUNDS):
     rounds.append(paths)
 
 index = {a: {k: v for k, v in rec.items() if k != "_item"} for a, rec in public.items()}
-(OUT / "answers_index.json").write_text(json.dumps(index, indent=1, ensure_ascii=False), encoding="utf-8")
+(OUT / "answers_index.json").write_text(
+    json.dumps(index, indent=1, ensure_ascii=False), encoding="utf-8"
+)
 (OUT / "rounds.json").write_text(json.dumps(rounds, indent=1), encoding="utf-8")
 by_slot = {}
 for v in private.values():
     by_slot[v["slot"]] = by_slot.get(v["slot"], 0) + 1
-print(len(pool), "answers;", by_slot, "; batches per round:", [len(r) for r in rounds],
-      "; max batch:", max(len(json.load(open(p, encoding="utf-8"))) for r in rounds for p in r))
+print(
+    len(pool),
+    "answers;",
+    by_slot,
+    "; batches per round:",
+    [len(r) for r in rounds],
+    "; max batch:",
+    max(len(json.load(open(p, encoding="utf-8"))) for r in rounds for p in r),
+)
