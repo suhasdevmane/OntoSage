@@ -400,8 +400,13 @@ def test_a_neighbouring_phrasing_does_not_reach_the_wrong_quantity(resolver, que
 
 
 def test_pm10_outranks_pm1_when_both_match(resolver):
+    # "pm1" matched INSIDE "pm10", so this test only asked pm10 to rank first. Since BUG-1567 a
+    # term that appears only inside another concept's longer term is not evidence for its own
+    # concept, so the question no longer resolves to PM1 at all -- the stronger form of the same
+    # requirement.
     ids = [m.concept_id for m in _resolve(resolver, "what is the pm10 on floor 4")]
-    assert ids.index("pm10_level") < ids.index("pm1_level")
+    assert "pm10_level" in ids
+    assert "pm1_level" not in ids
 
 
 def test_drinking_water_is_never_answered_from_a_sensor(resolver):

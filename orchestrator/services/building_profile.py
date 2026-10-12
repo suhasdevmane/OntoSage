@@ -73,7 +73,9 @@ _FACTS: List[Tuple[str, str, str]] = [
 _FACET_PATTERNS: List[Tuple[str, str]] = [
     (
         "age",
-        r"\bhow old\b|\byear (?:was )?(?:it |this |the building )?(?:built|constructed)\b|\bwhen was (?:it|this|the building) (?:built|constructed)\b|\bage of (?:the|this) building\b|\bhow long has (?:it|this building) (?:been|stood)\b",
+        # "opened", "completed" and "finished" (BUG-1589): "When was the building opened?" missed
+        # this facet and was told no date is recorded while brick:yearBuilt holds one.
+        r"\bhow old\b|\byear (?:was )?(?:it |this |the building )?(?:built|constructed|opened|completed|finished)\b|\bwhen was (?:it|this|the building) (?:built|constructed|opened|completed|finished)\b|\bwhen did (?:it|this|the building) open\b|\bage of (?:the|this) building\b|\bhow long has (?:it|this building) (?:been|stood)\b",
     ),
     (
         "size",

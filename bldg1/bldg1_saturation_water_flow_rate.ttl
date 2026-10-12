@@ -14,7 +14,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0_sat_water_flow_rate>
     a brick:Water_Flow_Sensor ;
-    rdfs:label "Floor0 water_flow_rate [L/s]"@en ;
+    rdfs:label "Floor0 water_flow_rate [L/min]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor0> ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
@@ -25,7 +25,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1_sat_water_flow_rate>
     a brick:Water_Flow_Sensor ;
-    rdfs:label "Floor1 water_flow_rate [L/s]"@en ;
+    rdfs:label "Floor1 water_flow_rate [L/min]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor1> ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
@@ -36,7 +36,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2_sat_water_flow_rate>
     a brick:Water_Flow_Sensor ;
-    rdfs:label "Floor2 water_flow_rate [L/s]"@en ;
+    rdfs:label "Floor2 water_flow_rate [L/min]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor2> ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
@@ -47,7 +47,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3_sat_water_flow_rate>
     a brick:Water_Flow_Sensor ;
-    rdfs:label "Floor3 water_flow_rate [L/s]"@en ;
+    rdfs:label "Floor3 water_flow_rate [L/min]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor3> ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
@@ -58,7 +58,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4_sat_water_flow_rate>
     a brick:Water_Flow_Sensor ;
-    rdfs:label "Floor4 water_flow_rate [L/s]"@en ;
+    rdfs:label "Floor4 water_flow_rate [L/min]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor4> ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [
@@ -69,7 +69,7 @@
 
 <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5_sat_water_flow_rate>
     a brick:Water_Flow_Sensor ;
-    rdfs:label "Floor5 water_flow_rate [L/s]"@en ;
+    rdfs:label "Floor5 water_flow_rate [L/min]"@en ;
     brick:hasLocation <http://abacwsbuilding.cardiff.ac.uk/abacws#Floor5> ;
     rdfs:comment "synthetic-saturation-v4" ;
     ref:hasExternalReference [

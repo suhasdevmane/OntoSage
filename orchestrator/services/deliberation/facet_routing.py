@@ -136,6 +136,12 @@ TIME_WINDOW_RE = re.compile(
 #: A named place: "room 5.01", "floor 3", "floors 1 and 3", "each floor". The question's WHERE.
 PLACE_REF_RE = re.compile(
     r"\b(?:floor|level|storey|room|rm|zone)\s*\d+(?:\.\d+)?\b"
+    # A room named by its KIND and id is one named place (BUG-1624): "What's the temperature in
+    # office 4.07?" kept "in office" after the id was set aside, read as choosing an office, and
+    # was sent to the deliberation lane, which could not find "office 4.07". 0 of the 451 bank
+    # questions that select spaces stop selecting.
+    r"|\b(?:office|offices|lab|labs|laboratory|classroom|studio|suite|kitchen|"
+    r"meeting\s+room|seminar\s+room|study\s+room)\s+[a-z]{0,6}\d{1,2}\.\d{1,3}\b"
     r"|\b(?:floors?|levels?|storeys?)\s+\d+\s*(?:and|or|to|vs\.?|versus|against|-)\s*\d+\b"
     r"|\b[a-z]{0,6}\d{1,2}\.\d{1,3}\b"
     r"|\b(?:ground|first|second|third|fourth|fifth|top|basement)\s+floor\b"

@@ -51,12 +51,23 @@ def _load_capture():
     return mod
 
 
+#: The caches that hold a MODEL'S DECISION about a question, flushed before every ask.
+#:
+#: CAVEAT-1498 (2026-10-10): this flushed resp_cache:* alone while its report said "every run is
+#: a real first pass". cache:intent:* replays the classification and cqir_compile:* replays the
+#: deliberation lane's compiled plan (24 h), so a question asked three times was classified once
+#: and compiled once: "3/3" on a deliberation question measured ONE compile. Those two are the
+#: stochastic steps repeats exist to sample, so they go with the answer cache.
+_PER_ASK_CACHES = ("resp_cache:*", "cache:intent:*", "cqir_compile:*")
+
+
 def _flush_response_cache(container: str) -> bool:
-    """Delete resp_cache:* so the next ask is generated, not served from memory."""
-    cmd = [
-        "docker", "exec", container, "sh", "-c",
-        'redis-cli --scan --pattern "resp_cache:*" | xargs -r redis-cli DEL >/dev/null',
-    ]
+    """Delete the answer, routing and compile caches so the next ask is a true first pass."""
+    script = " ; ".join(
+        f'redis-cli --scan --pattern "{p}" | xargs -r redis-cli DEL >/dev/null'
+        for p in _PER_ASK_CACHES
+    )
+    cmd = ["docker", "exec", container, "sh", "-c", script]
     try:
         return subprocess.run(cmd, capture_output=True, timeout=30).returncode == 0
     except Exception:

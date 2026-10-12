@@ -781,7 +781,7 @@ def _resolved_point_count(state) -> int:
 #: which requires a verb like "measure" — "is there a voltage fluctuation" has none.
 _QUANTITY_RE = re.compile(
     r"\b(?:any|a|an|the)\s+([a-z][a-z0-9 \-]{2,28}?)\s+"
-    r"(?:fluctuation|spike|anomal|reading|level|issue|problem|fault)",
+    r"(?:fluctuation|spike|anomal|reading|level|concentration|issue|problem|fault)",
     re.IGNORECASE,
 )
 
@@ -801,13 +801,58 @@ def _quantity_asked_about(text: str) -> str:
     return named_quantity(text or "")
 
 
+def _save_chart_png(b64: str, prefix: str = "chart") -> str:
+    """Write a base64 PNG where the file server serves it and return its URL, or "" (BUG-1533).
+
+    Open WebUI renders an image only when the reply's TEXT links one; a chart carried only as
+    base64 in the message metadata never appears there. The visualization agent already saves
+    its charts this way; the forecast and aggregate bar charts did not, so neither was ever
+    seen in Open WebUI.
+    """
+    if not b64:
+        return ""
+    try:
+        import base64 as _b64
+        from datetime import datetime as _dt
+
+        from shared.config import settings as _s
+
+        name = f"{prefix}_{_dt.now().strftime('%Y%m%d_%H%M%S_%f')}.png"
+        os.makedirs("/app/outputs", exist_ok=True)
+        with open(f"/app/outputs/{name}", "wb") as fh:
+            fh.write(_b64.b64decode(b64))
+        return f"{_s.STATIC_BASE_URL.rstrip('/')}/static/{name}"
+    except Exception as exc:  # a chart that cannot be saved leaves the text answer intact
+        logger.warning(f"[viz] chart not saved: {exc}")
+        return ""
+
+
+#: Shorthand and misspellings a chat user types for building words (BUG-1542). "temp in rm 5.01
+#: now" bound the right sensor and was then narrated off-topic and deleted by the relevance gate;
+#: "how many ppl on flr 4 rn" and "co2 lvl" fare the same. Only forms with ONE building meaning
+#: are expanded, as whole words; the typed text is kept on the message as `typed_query`.
+_SHORTHAND = (
+    (re.compile(r"\btemps\b", re.I), "temperatures"),
+    (re.compile(r"\btemp\b", re.I), "temperature"),
+    (re.compile(r"\b(?:temprature|tempreture|temperture|tempratures)\b", re.I), "temperature"),
+    (re.compile(r"\b(?:humidty|humdity|humiditiy)\b", re.I), "humidity"),
+    (re.compile(r"\brm(?=\s*\d)", re.I), "room"),
+    (re.compile(r"\bflr\b", re.I), "floor"),
+    (re.compile(r"\blvl\b", re.I), "level"),
+    (re.compile(r"\bppl\b", re.I), "people"),
+    (re.compile(r"\brn(?=\s*[?.!]*\s*$)", re.I), "right now"),
+)
+
+
 def normalise_query_text(text: str) -> str:
-    """Fold typographic forms to plain ones (BUG-587): CO₂ → CO2, narrow/no-break spaces → space."""
+    """Fold typographic forms to plain ones (BUG-587) and expand chat shorthand (BUG-1542)."""
     import unicodedata
 
     if not text:
         return text
     folded = unicodedata.normalize("NFKC", text)
+    for pattern, full in _SHORTHAND:
+        folded = pattern.sub(full, folded)
     return re.sub(r"[ \t]{2,}", " ", folded) if folded != text else text
 
 
@@ -945,6 +990,131 @@ _FACET_CATALOGUE_TIMEOUT_S = 60.0
 def _humanise_modality(name: str) -> str:
     """A modality name as a reader would say it ('water_flow' -> 'water flow')."""
     return str(name or "").replace("_", " ").strip()
+
+
+#: Classes too general to say what a point measures; a backfilled point is typed by the most
+#: specific class it carries that is not one of these.
+_GENERIC_POINT_CLASSES = frozenset(
+    {"Point", "Sensor", "Class", "Entity", "Resource", "NamedIndividual", "Status", "Thing"}
+)
+_UUID_LITERAL_RE = re.compile(r"^[0-9a-fA-F-]{8,64}$")
+
+
+_EXPORT_FORMAT_WORDS = (
+    ("docx", re.compile(r"\b(?:word|docx)\b", re.IGNORECASE)),
+    ("pdf", re.compile(r"\bpdf\b", re.IGNORECASE)),
+    ("json", re.compile(r"\bjson\b", re.IGNORECASE)),
+    ("html", re.compile(r"\bhtml\b", re.IGNORECASE)),
+    ("csv", re.compile(r"\b(?:csv|excel|xlsx|spreadsheet)\b", re.IGNORECASE)),
+)
+
+
+def _export_format_named(question: str) -> Optional[str]:
+    """The file format the question names ('as a PDF report' -> 'pdf'), or None."""
+    for fmt, rx in _EXPORT_FORMAT_WORDS:
+        if rx.search(question or ""):
+            return fmt
+    return None
+
+
+def _label_export_rows(rows: Any, metadata: Dict[str, Dict[str, Any]]) -> Any:
+    """Each exported row with its sensor's name and unit beside the uuid, where known."""
+    if not isinstance(rows, list) or not metadata:
+        return rows
+    out = []
+    for row in rows:
+        if isinstance(row, dict) and row.get("uuid") in metadata:
+            meta = metadata[row["uuid"]] or {}
+            row = {
+                **row,
+                "sensor": meta.get("label") or "",
+                "unit": meta.get("unit") or "",
+            }
+        out.append(row)
+    return out
+
+
+def _bind_sole_candidate(question: str, phrase: str, local: str) -> str:
+    """``question`` with ``phrase`` replaced by the one place it can mean (CAVEAT-1629).
+
+    "What is the CO2 in the glass atrium?" + Room1.04 -> "What is the CO2 in Room 1.04?". The
+    local name is spaced before its number so every lane reads it as the room id it is.
+    """
+    shown = re.sub(r"^([A-Za-z]+)(?=\d)", r"\1 ", str(local or "")).replace("_", " ").strip()
+    if not shown or not phrase:
+        return question
+    return re.sub(
+        r"\b(?:the\s+)?" + re.escape(phrase) + r"\b", shown, question, count=1, flags=re.IGNORECASE
+    )
+
+
+def _point_lookup_query(uuids: List[str]) -> str:
+    """SPARQL for each timeseries id's point, label, classes and unit (the builder's variables)."""
+    values = " ".join(f'"{u}"' for u in uuids if _UUID_LITERAL_RE.match(str(u)))
+    return (
+        "PREFIX ref: <https://brickschema.org/schema/Brick/ref#>\n"
+        "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+        "PREFIX qudt: <http://qudt.org/schema/qudt/>\n"
+        "SELECT ?uuid ?sensor ?label ?type ?qunit WHERE {\n"
+        f"  VALUES ?uuid {{ {values} }}\n"
+        "  ?sensor ref:hasExternalReference/ref:hasTimeseriesId ?uuid .\n"
+        "  OPTIONAL { ?sensor rdfs:label ?label }\n"
+        "  OPTIONAL { ?sensor qudt:hasUnit ?qunit }\n"
+        "  OPTIONAL { ?sensor a ?type . FILTER(STRSTARTS(STR(?type), "
+        '"https://brickschema.org/schema/Brick#") || STRSTARTS(STR(?type), '
+        '"http://ontosage.org/")) }\n'
+        "} LIMIT 2000"
+    )
+
+
+def _most_specific_bindings(bindings: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """One binding per timeseries id, keeping the most specific class it was returned with.
+
+    "Most specific" without a reasoner: drop generic classes, then prefer the longest local name
+    (Waste_Fill_Sensor over Sensor, CO2_Level_Sensor over CO2_Sensor) -- a tie-break, not a
+    hierarchy, and only ever used to name a point that would otherwise be "Series 3".
+    """
+    best: Dict[str, Tuple[int, Dict[str, Any]]] = {}
+    for b in bindings or []:
+        uid = ((b.get("uuid") or {}).get("value")) or ""
+        if not uid:
+            continue
+        local = str((b.get("type") or {}).get("value") or "").rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        score = -1 if (not local or local in _GENERIC_POINT_CLASSES) else len(local)
+        if uid not in best or score > best[uid][0]:
+            best[uid] = (score, b)
+    return [b for _, b in best.values()]
+
+
+def _no_room_sensor_text(missing: List[str], counts: Optional[Dict[str, Optional[int]]]) -> str:
+    """The deliberation decline when no ROOM carries a sensor of the modalities ranked on.
+
+    The admission gate counts sensors per space, so "none present" means no room has one -- not
+    that the building has none. Energy submeters are fresh to the minute and sit on floors, not in
+    rooms, and the decline said "No energy_submeter sensors are modelled with data for this
+    building". Where the graph holds points of the modality outside rooms, say that and point at
+    the question that works; the building-wide sentence is kept only when it has none at all.
+    """
+    elsewhere = [m for m in missing if (counts or {}).get(m)]
+    absent = [m for m in missing if m not in elsewhere]
+    parts = []
+    if elsewhere:
+        names = ", ".join(_humanise_modality(m) for m in elsewhere)
+        held = ", ".join(f"{counts[m]} {_humanise_modality(m)}" for m in elsewhere)
+        parts.append(
+            f"**No single room has its own {names} sensor**, so I can't rank rooms on it. "
+            f"The building does record it ({held} points), but not room by room — ask about it "
+            'for a floor or for the whole building instead, for example "which floor uses the '
+            'most?" or "how much did the building use yesterday?".'
+        )
+    if absent:
+        names = ", ".join(_humanise_modality(m) for m in absent)
+        parts.append(
+            f"**No {names} sensors are modelled with data for this building**, "
+            "so I can't rank spaces on that. Ask \"what does this building "
+            "monitor?\" to see what's available."
+        )
+    return "\n\n".join(parts)
 
 
 async def _count_one_modality(
@@ -1470,7 +1640,13 @@ async def _relevance_gated(state, ctx, text: str) -> str:
         lane = str(getattr(state, "current_intent", "") or "")
         if not gate.judges_lane(lane, getattr(settings, "ANSWER_RELEVANCE_GATE_LANES", None)):
             return text
+        # The question the lanes ANSWERED (BUG-1608): after "and the day before?" was rewritten to
+        # "...the day before yesterday?", the gate judged the bare follow-up and deleted an answer
+        # about 8 Oct as "only Oct 8, not the day before".
         question = str(getattr(state, "user_message", "") or "")
+        _rw = (getattr(state, "intermediate_results", None) or {}).get("coref_rewrite")
+        if isinstance(_rw, dict) and _rw.get("rewritten"):
+            question = str(_rw["rewritten"])
         verdict = await gate.relevance_verdict(question, text, lane)
         if not verdict.judged:
             return text
@@ -2397,6 +2573,12 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
         # Phase 0 (cross-cutting): persist G1 six-tuple for every turn
         if "g1_taxonomy" in intent_result:
             state.intermediate_results["g1_taxonomy"] = intent_result["g1_taxonomy"]
+        # The PARSE-stage contract rules decide inside the dialogue agent and were recorded only in
+        # its own result, so a turn two rules had re-routed showed `overrides_applied: []` on /v1
+        # (CAVEAT-1526). Written every turn, so an earlier turn's rules are never read as this one's.
+        state.intermediate_results["parse_rules_applied"] = [
+            str(r) for r in (intent_result.get("routing_rules_applied") or [])
+        ]
 
         # How many of the building's OWN amenity triples matched this question (BUG-1333).
         # Written by the deterministic amenity short-circuit in `dialogue_agent`; read by the
@@ -3264,6 +3446,7 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                     GATED_INTENTS,
                     NOT_FOUND,
                     SKIPPED,
+                    STEPPED_ASIDE,
                     ReferentResolver,
                 )
 
@@ -3343,6 +3526,36 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                             ),
                         }
                         return state
+                    if (
+                        _resolution.status == STEPPED_ASIDE
+                        and _resolution.referent
+                        and len(_resolution.suggestions or []) == 1
+                    ):
+                        # ONE OF ITS KIND (CAVEAT-1629): "the glass atrium" is the building's one
+                        # atrium. Bind it for the rest of the turn, the way a co-reference rewrite
+                        # does, and say so -- left unbound, the lane read the phrase as nothing
+                        # and answered with the whole building's CO2.
+                        _bound = _bind_sole_candidate(
+                            latest_message, _resolution.referent, _resolution.suggestions[0]
+                        )
+                        if _bound != latest_message:
+                            _orig_q = state.messages[-1].content
+                            _meta = dict(state.messages[-1].metadata or {})
+                            _meta.setdefault("original_query", _orig_q)
+                            state.messages[-1] = Message(
+                                role=state.messages[-1].role, content=_bound, metadata=_meta
+                            )
+                            if _sparql_query == latest_message:
+                                _sparql_query = _bound
+                            latest_message = _bound
+                            state.intermediate_results["referent_bound"] = {
+                                "phrase": _resolution.referent,
+                                "as": _resolution.message or _resolution.suggestions[0],
+                            }
+                            logger.info(
+                                f"[referent_gate] '{_resolution.referent}' is the building's only "
+                                f"one of its kind -> {_resolution.suggestions[0]}"
+                            )
                     if _resolution.status == SKIPPED and _resolution.referent:
                         # BUG-136 — the question NAMED something and the existence
                         # check could not complete. Proceeding here hands the query
@@ -3757,6 +3970,41 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
 
                 uuids = list(set(uuids))
 
+                # A model-written query can return the timeseries ids alone. The narration then
+                # had "Series 1 ... Series 10", every unit "not recorded", for waste bins whose
+                # labels state "(percent full)" (bank sample M1, 2026-10-11). One lookup names
+                # them from the graph; a point the query already labelled is left as it was.
+                _unnamed = [
+                    u
+                    for u in uuids
+                    if (sensor_metadata.get(u) or {}).get("label") in (None, "", "Unknown Sensor")
+                ]
+                if _unnamed:
+                    try:
+                        from orchestrator.services.deliberation.live import sparql_exec as _sx
+
+                        _doc = await asyncio.wait_for(
+                            _sx(_point_lookup_query(_unnamed[:500])), timeout=10.0
+                        )
+                        _filled = self._build_sensor_metadata_from_bindings(
+                            _most_specific_bindings(
+                                ((_doc or {}).get("results") or {}).get("bindings") or []
+                            )
+                        )
+                        for _u, _m in _filled.items():
+                            _kept = {
+                                k: v
+                                for k, v in (sensor_metadata.get(_u) or {}).items()
+                                if k in ("floor", "brick_class") and v
+                            }
+                            sensor_metadata[_u] = {**_m, **_kept}
+                        logger.info(
+                            f"[sql] named {len(_filled)} of {len(_unnamed)} unlabelled point(s) "
+                            "from the graph"
+                        )
+                    except Exception as _name_err:
+                        logger.info(f"[sql] point names not looked up: {_name_err}")
+
                 # Disambiguate by sensor type if the user asked for a specific kind (e.g., temperature)
                 preferred_kind = self._infer_query_kind(latest_message)
                 if preferred_kind and sensor_metadata:
@@ -3954,6 +4202,19 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 _res_clamp = None
                 _aggregate = False
 
+            # BUG-1489: every sensor of this turn bound by the binder to ONE named space.
+            _bind_rec = state.intermediate_results.get("sensor_binding") or {}
+            # Not for a COMPLIANCE turn (BUG-1525): the store's statistic carries no verdict, so
+            # "Is CO2 in room 5.01 within recommended limits today?" was answered "Across the
+            # building CO2 averaged 689 ppm" and never judged; the compliance analytics compares
+            # the rows with the standard, as it did for "does floor 2 meet thermal comfort".
+            _one_place = bool(
+                uuids
+                and _bind_rec.get("status") == "bound"
+                and _bind_rec.get("scope_kind") == "space"
+                and set(uuids) <= set(_bind_rec.get("sensors") or [])
+                and state.intermediate_results.get("intent") != "compliance"
+            )
             result = await self.sql_agent.fetch_data_for_uuids(
                 uuids,
                 latest_message,
@@ -3966,6 +4227,10 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 state.intermediate_results.get("sensor_metadata"),
                 max_resolution_s=_res_clamp,
                 aggregate_across_sensors=_aggregate,
+                one_bound_place=_one_place,
+            )
+            result = await self._zone_series_second_chance(
+                state, result, uuids, latest_message, start_date, end_date, _res_clamp, _aggregate
             )
         elif sparql_result.get("method") == "semantic_rag" or (
             sparql_result.get("success")
@@ -4173,6 +4438,11 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
             state.intermediate_results["aggregate_result"] = {
                 "formatted_response": result.get("formatted_response", ""),
                 **(result.get("aggregate") or {}),
+                # The figures travel with the answer (BUG-1608). `_grounded_evidence_behind` looks
+                # for them here to stop the relevance gate replacing a store-computed answer with
+                # "I couldn't answer that from the records" -- and they were never copied, so that
+                # protection (BUG-873) has never once covered this lane.
+                "figures": dict(result.get("figures") or {}),
             }
 
         # Handle SQL failures properly
@@ -4432,8 +4702,53 @@ Instructions:
             "next hour",
             "in the next",
         )
-        _is_forecast = state.current_intent == "trend" and any(
-            kw in latest_message.lower() for kw in _FORECAST_TRIGGER_KWS
+        # TWO NAMED PLACES COMPARED IN THE FUTURE (CAVEAT-1558): each place is forecast on its
+        # own and the forecasts are compared with their bands. Runs only when the question names
+        # a future time AND exactly two floors or rooms; anything else goes on as before.
+        try:
+            from orchestrator.agents.analytics_agent import _FUTURE_ASK_RE as _future_re
+            from orchestrator.services.forecast_comparison import compare_forecasts, named_places
+
+            if (
+                state.current_intent in ("compare", "trend", "analytics")
+                and _future_re.search(latest_message or "")
+                and len(named_places(latest_message)) == 2
+            ):
+                from orchestrator.services.deliberation.live import sparql_exec as _cmp_sx
+
+                _cmp = await compare_forecasts(
+                    state,
+                    latest_message,
+                    state.intermediate_results.get("sensor_metadata") or {},
+                    state.intermediate_results.get("sql_result") or {},
+                    _cmp_sx,
+                    _ForecastAgent().predict,
+                )
+                if _cmp:
+                    state.intermediate_results["analytics_result"] = _cmp
+                    return state
+        except Exception as _cmp_err:  # a comparison that cannot run leaves the turn as it was
+            logger.warning(f"[analytics_node] forecast comparison skipped: {_cmp_err}")
+
+        # "Will meeting room 4.11 get stuffy THIS AFTERNOON?" names no forecast word and no day
+        # after today, so it went to the analytics lane and was deleted for not answering
+        # (BUG-1592). A future verb with a later part of today is a forecast too.
+        _future_today = bool(
+            re.search(
+                r"\b(?:will|going\s+to)\b.{0,60}\b(?:get|be|become|stay|reach|rise|fall|drop|"
+                r"exceed|go)\b",
+                latest_message or "",
+                re.IGNORECASE,
+            )
+            and re.search(
+                r"\b(?:this\s+(?:afternoon|evening)|later(?:\s+today|\s+on)?|tonight|soon|"
+                r"in\s+(?:an?|\d+)\s+hours?)\b",
+                latest_message or "",
+                re.IGNORECASE,
+            )
+        )
+        _is_forecast = state.current_intent == "trend" and (
+            any(kw in latest_message.lower() for kw in _FORECAST_TRIGGER_KWS) or _future_today
         )
 
         if _is_forecast:
@@ -4448,6 +4763,10 @@ Instructions:
             _forecast_result = await _forecast_agent.predict(
                 state, latest_message, sql_data, _sensor_meta
             )
+            # The question this forecast answered, so the chart node can tell a forecast made
+            # THIS turn from one carried forward from an earlier turn (BUG-1534).
+            if isinstance(_forecast_result, dict):
+                _forecast_result["asked"] = latest_message
             state.intermediate_results["forecast_result"] = _forecast_result
             # Also set analytics_result so the response node picks it up
             state.intermediate_results["analytics_result"] = {
@@ -4471,10 +4790,8 @@ Instructions:
         # deterministic path, the saved file and the generated code all see the same rows.
         # `state.query_results` itself is left alone: other nodes read the fetch as fetched.
         try:
-            from orchestrator.services.requested_interval import (
-                building_tz as _bld_tz,
-                restrict_to_named_day,
-            )
+            from orchestrator.services.requested_interval import building_tz as _bld_tz
+            from orchestrator.services.requested_interval import restrict_to_named_day
 
             data, _named_window, _named_checked = restrict_to_named_day(
                 data, latest_message, _bld_tz(getattr(state, "building_id", None))
@@ -4952,6 +5269,16 @@ Instructions:
         _is_prev_viz = _forecast_result.get("success") and any(
             kw in latest_message.lower() for kw in _PREV_VIZ_KWS
         )
+        # A forecast made THIS turn, for a question that also asks for a chart (BUG-1534): "Forecast
+        # the building's occupancy for tomorrow and show it as a chart" ran Holt-Winters and then
+        # drew the last 18 hours of HISTORY, narrated as "the line chart projects tomorrow's
+        # occupancy". The chart of a forecast is the forecast with its uncertainty bands.
+        if not _is_prev_viz and _forecast_result.get("success"):
+            from orchestrator.services.chart_policy import asks_for_chart
+
+            _is_prev_viz = _forecast_result.get("asked") == latest_message and asks_for_chart(
+                latest_message
+            )
 
         if _is_prev_viz:
             logger.info(
@@ -4981,6 +5308,15 @@ Instructions:
             except Exception as _viz_fetch_err:
                 logger.warning(f"[viz_node] data fetch for visualization failed: {_viz_fetch_err}")
 
+        if not _has_series(data):
+            # THE STORE ANSWERED, SO CHART WHAT IT COMPUTED (BUG-1509). "Draw a bar chart of
+            # average noise by floor yesterday" was answered in the store -- six floor means,
+            # correct -- and then "No chart was drawn: there was no data to plot", because the
+            # aggregate lane returns figures, not rows. The figures ARE the chart.
+            _bar = await self._render_aggregate_bar_chart(state, latest_message)
+            if _bar is not None:
+                state.intermediate_results["viz_result"] = _bar
+                return state
         if not _has_series(data):
             # Nothing to chart is a finding, not a chart. Handing the agent no data made it
             # write plotting code over nothing: an empty bar chart went out narrated as
@@ -5044,6 +5380,142 @@ Instructions:
             logger.warning(f"[viz_node] fallback to the capability lane failed: {exc}")
         return state
 
+    async def _render_aggregate_bar_chart(
+        self, state: ConversationState, question: str
+    ) -> Optional[dict]:
+        """A bar chart of the per-group figures the aggregate lane computed, or None (BUG-1509).
+
+        Deterministic: the bars are the figures the answer's own table quotes, drawn in the code
+        executor exactly as the forecast chart is. Only when the store answered with two or more
+        groups; anything else falls through to the existing no-data path.
+        """
+        agg = state.intermediate_results.get("aggregate_result") or {}
+        sql = state.intermediate_results.get("sql_result") or {}
+        res = agg if agg.get("aggregate_lane") else sql if sql.get("aggregate_lane") else {}
+        figures = res.get("figures") or {}
+        spec = res.get("aggregate") or {}
+        # A PER-PERIOD BREAKDOWN IS A LINE, IN TIME ORDER (BUG-1621). "plot it" after "the CO2 on
+        # floor 2 today by hour" re-printed the hourly table and drew nothing: the breakdown files
+        # its figures as "<hour> mean", and this read only "<group> figure".
+        _time = str(spec.get("group") or "") == "time"
+        if _time:
+            groups = [
+                (k[: -len(" mean")], float(v)) for k, v in figures.items() if k.endswith(" mean")
+            ]
+        else:
+            groups = [
+                (k[: -len(" figure")], float(v))
+                for k, v in figures.items()
+                if k.endswith(" figure")
+            ]
+        if len(groups) < 2:
+            return None
+        stat_word = {
+            "mean": "Average",
+            "max": "Highest",
+            "min": "Lowest",
+            "total": "Total",
+            "exceed": "Readings above the limit",
+        }.get(str(spec.get("stat") or ""), "Value")
+        unit = next(
+            (
+                str(m.get("unit"))
+                for m in (state.intermediate_results.get("sensor_metadata") or {}).values()
+                if isinstance(m, dict) and m.get("unit")
+            ),
+            "",
+        )
+        try:
+            from orchestrator.services.modality_units import qudt_unit_display
+
+            unit = qudt_unit_display(unit) or unit if unit.startswith("http") else unit
+        except Exception:
+            pass
+        if not _time:
+            groups.sort(key=lambda g: g[1], reverse=True)
+        elif len({g[0][:10] for g in groups}) == 1:
+            # one day: "Sat 10 Oct 13:00" reads as "13:00" on the axis, the day goes in the title
+            groups = [(g[0][10:].strip() or g[0], g[1]) for g in groups]
+        _grp = str(spec.get("group") or "")
+        # The table's own names and precision: "Floor 3" and one decimal, never a bare "3".
+        labels = [
+            f"Floor {g[0]}" if _grp == "floor" and str(g[0]).isdigit() else g[0] for g in groups
+        ]
+        values = [round(g[1], 1) for g in groups]
+        import json as _json
+
+        # The question without its command words ("Draw a bar chart of ..."), as the title.
+        title = re.sub(
+            r"^\s*(?:please\s+)?(?:can you\s+)?(?:draw|plot|show|make|give|chart|graph|create)"
+            r"(?:\s+me)?(?:\s+an?)?(?:\s+(?:bar|column))?(?:\s+(?:chart|graph|plot))?(?:\s+of)?\s+",
+            "",
+            question.strip().rstrip("?."),
+            flags=re.IGNORECASE,
+        )
+        title = (title[:1].upper() + title[1:])[:90] if title else question.strip()[:90]
+        code = f"""
+import matplotlib.pyplot as plt
+import base64, io as _io
+labels = {_json.dumps(labels)}
+values = {_json.dumps(values)}
+unit = {_json.dumps(unit)}
+kind = {_json.dumps("line" if _time else "bar")}
+fig, ax = plt.subplots(figsize=(max(7, (0.45 if kind == 'line' else 1.1) * len(labels)), 5))
+lo, hi = min(values), max(values)
+if kind == 'line':
+    # A line's SHAPE is the finding (when it rose, when it fell), so the axis fits the data.
+    ax.plot(labels, values, marker='o', color='steelblue')
+    pad = (hi - lo) * 0.15 or 1
+    ax.set_ylim(lo - pad, hi + pad)
+else:
+    bars = ax.bar(labels, values, color='steelblue')
+    # A bar's LENGTH is its value, so the axis starts at zero: a cropped axis made a 0.7 dB
+    # spread across floors look like a factor of six.
+    ax.set_ylim(min(0, lo * 1.1), max(hi * 1.12, 1e-9) if hi > 0 else 0)
+    for b, v in zip(bars, values):
+        ax.annotate(f'{{v:g}}', (b.get_x() + b.get_width() / 2, v), ha='center', va='bottom', fontsize=9)
+ax.set_title({_json.dumps(title)}, fontsize=11)
+ax.set_ylabel({_json.dumps(stat_word)} + (f' ({{unit}})' if unit else ''))
+plt.xticks(rotation=30 if len(labels) > 6 else 0, ha='right' if len(labels) > 6 else 'center')
+plt.tight_layout()
+_buf = _io.BytesIO(); plt.savefig(_buf, format='png', dpi=110); plt.close(); _buf.seek(0)
+print("PLOT_BASE64: " + base64.b64encode(_buf.read()).decode('utf-8'))
+"""
+        try:
+            import httpx as _httpx
+
+            from shared.config import settings as _cfg
+
+            url = f"http://{_cfg.CODE_EXECUTOR_HOST}:{_cfg.CODE_EXECUTOR_PORT}/execute"
+            async with _httpx.AsyncClient(timeout=45) as client:
+                _res = (await client.post(url, json={"code": code})).json()
+            # The executor answers with `stdout` (measured 2026-10-10); `output` is read as well
+            # for an executor that names it so.
+            out = str(_res.get("stdout") or _res.get("output") or "")
+        except Exception as e:  # a chart that cannot be drawn leaves the table answer intact
+            logger.warning(f"[viz_node] aggregate bar chart not drawn: {describe_exception(e)}")
+            return None
+        b64 = next(
+            (
+                ln[len("PLOT_BASE64: ") :]
+                for ln in out.split("\n")
+                if ln.startswith("PLOT_BASE64: ")
+            ),
+            "",
+        )
+        if not b64:
+            return None
+        logger.info(
+            f"[viz_node] bar chart of {len(groups)} aggregate groups drawn from the store's figures (BUG-1509)"
+        )
+        return {
+            "success": True,
+            "formatted_response": str(res.get("formatted_response") or ""),
+            "media": {"type": "image", "format": "png", "data": b64},
+            "image_url": _save_chart_png(b64, "line" if _time else "bar"),
+            "chart_type": "aggregate_line" if _time else "aggregate_bar",
+        }
+
     async def _render_forecast_chart(
         self,
         state: ConversationState,
@@ -5087,8 +5559,6 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import base64
 import io as _io
-import warnings
-warnings.filterwarnings('ignore')
 
 # ── Forecast data (from ForecastAgent, previous turn) ─────────────────────
 future_index  = {_json.dumps(future_index)}
@@ -5189,9 +5659,10 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
                 "formatted_response": "Could not render the forecast chart — code executor unavailable.",
             }
 
-        # Parse output
-        output = exec_result.get("output", "")
-        error = exec_result.get("error", "")
+        # Parse output. The executor names it `stdout` (BUG-1528, measured 2026-10-10): reading only
+        # `output` found nothing, so every forecast chart came back without its image.
+        output = str(exec_result.get("stdout") or exec_result.get("output") or "")
+        error = exec_result.get("error") or ""
 
         if error and "PLOT_BASE64" not in output:
             logger.warning(f"[viz_node] Forecast chart code error: {error[:200]}")
@@ -5217,6 +5688,9 @@ print(f"Forecast chart for {{sensor_label}}: {{len(fc_values)}} time steps, hori
             f"> The shaded areas show prediction uncertainty: inner band = 80% CI, "
             f"outer band = 95% CI. Bands widen over time because uncertainty grows with the forecast horizon."
         )
+        _url = _save_chart_png((media_payload or {}).get("data", ""), "forecast")
+        if _url:
+            desc += f"\n\n![Forecast chart]({_url})"
 
         return {
             "success": True,
@@ -5616,6 +6090,118 @@ SELECT ?l WHERE {
             logger.debug(f"[synthesis] fallback to draft: {_se}")
             return draft
 
+    async def _zone_series_second_chance(
+        self,
+        state: ConversationState,
+        result: Dict[str, Any],
+        uuids: List[str],
+        question: str,
+        start_date: Optional[str],
+        end_date: Optional[str],
+        res_clamp: Optional[float],
+        aggregate: bool,
+    ) -> Dict[str, Any]:
+        """Read the zone's series when the room's own series held no rows for the asked window.
+
+        BUG-1487: a room bound to its own series for a quantity answered "No readings were found"
+        about a period the zone covering it holds real readings for (3/3 runs of two Paper 3
+        development questions on the 2025 snapshot). Fires ONLY on that empty result, only for a
+        room bound on its own sensors, and only adopts the zone series if IT has rows, so every
+        answer that already had data is unchanged. The binding is then recorded as zone-basis,
+        which is what the spatial grade and the evidence record read.
+        """
+        try:
+            rows = ((result or {}).get("results") or {}).get("data") or []
+            bus = state.intermediate_results
+            record = bus.get("sensor_binding") or {}
+            if (
+                not (result or {}).get("success")
+                or rows
+                # an aggregate-lane answer carries no rows BY DESIGN (the store computed it)
+                or (result or {}).get("aggregate_lane")
+                or record.get("status") != "bound"
+                or record.get("basis") != "own"
+            ):
+                return result
+            from orchestrator.services.sensor_binder import zone_alternates
+
+            alts, zone_label = await zone_alternates(
+                record, question, bus.get("concepts") or [], getattr(state, "building_id", None)
+            )
+            alts = [s for s in alts if s.uuid and s.uuid not in set(uuids)]
+            if not alts:
+                return result
+
+            # the same form the normal path passes: the storage IRI exactly as the graph holds it
+            alt_map = {s.uuid: s.storage for s in alts if s.storage}
+            meta = dict(bus.get("sensor_metadata") or {})
+            for s in alts:
+                meta.setdefault(
+                    s.uuid,
+                    {
+                        "label": s.label or s.iri.rsplit("#", 1)[-1],
+                        "sensor_uri": s.iri,
+                        "uuid": s.uuid,
+                        "kind": s.quantity or "",
+                        "unit": "",
+                    },
+                )
+                if s.type_iri:
+                    # the class it was selected by: the aggregate lane reads the measurand from it
+                    meta[s.uuid].setdefault("brick_class", s.type_iri)
+                    if not meta[s.uuid].get("unit"):
+                        # the declared unit, as the metadata builder resolves it (BUG-1491:
+                        # "862" and "33.2" were printed with no unit at all)
+                        from orchestrator.services.modality_units import unit_for_sensor
+
+                        meta[s.uuid]["unit"] = unit_for_sensor(s.type_iri, s.label) or ""
+            second = await self.sql_agent.fetch_data_for_uuids(
+                [s.uuid for s in alts],
+                question,
+                alt_map,
+                start_date,
+                end_date,
+                meta,
+                max_resolution_s=res_clamp,
+                aggregate_across_sensors=aggregate,
+                one_bound_place=record.get("scope_kind") == "space",
+            )
+            second_rows = ((second or {}).get("results") or {}).get("data")
+            if not second_rows and not (second or {}).get("aggregate_lane"):
+                return result
+            logger.info(
+                f"[sensor_binder] {record.get('scope')}: its own series held no rows for the asked "
+                f"window; read {len(alts)} series of {zone_label or 'the zone that covers it'} "
+                f"instead (BUG-1487)"
+            )
+            bus["sensor_metadata"] = meta
+            bus["sensor_binding"] = {
+                **record,
+                "basis": "zone",
+                "zone": zone_label,
+                "sensors": [s.uuid for s in alts],
+                "second_chance": "own series empty for the asked window",
+            }
+            scope = str(record.get("scope") or "")
+            text = str((second or {}).get("formatted_response") or "")
+            if second.get("aggregate_lane") and scope and zone_label and zone_label in text:
+                # NAME THE PLACE THE READER ASKED ABOUT, AND SAY WHERE THE READING CAME FROM
+                # (BUG-1493). "The average temperature in HVAC Zone 5.15 ..." answered a question
+                # about Room 5.15; the relevance gate read it as off-topic and deleted a correct
+                # answer on 1 of 2 asks, and a reader would have asked the same thing.
+                second = dict(second)
+                second["formatted_response"] = (
+                    text.replace(zone_label, scope, 1)
+                    + f"\n\n_{scope} has no readings of its own for this period; these come from "
+                    f"the sensor of {zone_label}, the HVAC zone that contains it._"
+                )
+            return second
+        except Exception as exc:  # the second chance must never cost the turn
+            logger.warning(
+                f"[sensor_binder] zone second chance skipped ({type(exc).__name__}): {exc}"
+            )
+            return result
+
     def _append_spatial_basis(self, results: Dict[str, Any], text: str) -> str:
         """Append the spatial-adequacy note when the evidence does not cover the space (T14).
 
@@ -5658,6 +6244,10 @@ SELECT ?l WHERE {
             ranked = dossier.get("ranked") or []
             if len(ranked) < 2:
                 return
+            from orchestrator.services.deliberation.dossier import nothing_met
+
+            if nothing_met(dossier):
+                return  # no space met anything: there is no primary to back up (BUG-1607)
 
             from orchestrator.services.evidence.independence import (
                 Candidate,
@@ -5776,10 +6366,15 @@ SELECT ?l WHERE {
             # silently pick a coin-flip candidate; it only stops looking once something
             # resolved unambiguously.
             target = binder_target
-            for _entity in [] if target else entities:
-                target = await resolve_space_iri(_entity, ns, default_run_select)
-                if target:
-                    break
+            # EVERY named place, not only the first (BUG-1532): "Is room 5.01 warmer than room
+            # 3.10?" graded 5.01's sensor against 3.10 and printed "the reading is from Room5.01,
+            # which is not the space asked about" -- under an answer about the space asked about.
+            targets: List[str] = [target] if target else []
+            for _entity in [] if target else entities[:4]:
+                _t = await resolve_space_iri(_entity, ns, default_run_select)
+                if _t and _t not in targets:
+                    targets.append(_t)
+            target = targets[0] if targets else target
             if not target:
                 # Unresolved or ambiguous. Grading against an arbitrary candidate would
                 # produce a confident verdict about the wrong room, so nothing is written and
@@ -5800,7 +6395,16 @@ SELECT ?l WHERE {
                 return
             grades = {}
             for uid, f in facts.items():
-                v = classify(target, f)
+                # A sensor in one of the NAMED places is graded against that place.
+                _own = next(
+                    (
+                        t
+                        for t in targets
+                        if t in (f.containing_space, getattr(f, "environmental_boundary", None))
+                    ),
+                    target,
+                )
+                v = classify(_own, f)
                 grades[uid] = {
                     "grade": v.grade.value,
                     "reason": v.reason,
@@ -6007,6 +6611,10 @@ SELECT ?l WHERE {
             # undated ranking read as current.
             if not chosen.strip():
                 return ""
+            from orchestrator.services.deliberation.dossier import nothing_met
+
+            if nothing_met(dossier):
+                return ""  # every space scored nothing: no choice was made (BUG-1607)
             # The modality the ranking actually used, read off the dossier's own evidence
             # rows. "conditions" is the last resort, and it makes both the switch trigger and
             # the recheck horizon generic -- the horizon especially, since volatility is
@@ -6250,6 +6858,20 @@ SELECT ?l WHERE {
         elif (state.intermediate_results.get("aggregate_result") or {}).get("formatted_response"):
             # 2D-10: per-floor / whole-building aggregate computed in the store, written in code
             final_response = state.intermediate_results["aggregate_result"]["formatted_response"]
+            # ...and its bar chart, when one was asked for and drawn from these figures (BUG-1509)
+            # ...or its line, for a per-hour or per-day breakdown (BUG-1621)
+            if viz_result.get("media") and viz_result.get("chart_type") in (
+                "aggregate_bar",
+                "aggregate_line",
+            ):
+                media_payload = viz_result.get("media")
+                if viz_result.get("image_url"):
+                    _alt = (
+                        "Line chart"
+                        if viz_result["chart_type"] == "aggregate_line"
+                        else "Bar chart"
+                    )
+                    final_response += f"\n\n![{_alt}]({viz_result['image_url']})"
         elif _readiness_result.get("formatted_response"):
             # A lane that computes an answer nothing collects produces "I processed your
             # request, but couldn't generate a response". That is step 3 of the three-step
@@ -6308,10 +6930,18 @@ SELECT ?l WHERE {
         elif ctx.export_result and ctx.export_result.get("success"):
             _template_draft = True
             er = ctx.export_result
+            # THE LINK IS THE ANSWER (2026-10-11): the file was saved and served and the reply
+            # gave only its name and a preview, so nobody could download it.
+            _dl = er.get("download_url")
+            _content = er.get("content")
             final_response = (
-                f"✅ Export complete — **{er['filename']}** ({er['row_count']} rows, {er['size_bytes']} bytes).\n\n"
-                f"Preview (first 2000 chars):\n```\n{er['content'][:2000]}\n```"
+                f"✅ Export complete — **{er['filename']}** ({er.get('row_count', 0):,} rows, "
+                f"{int(er.get('size_bytes') or 0):,} bytes)."
+                + (f"\n\n📥 **[Download {er['filename']}]({_dl})**" if _dl else "")
             )
+            # A PDF or Word file is binary: a preview would print its bytes, not its rows.
+            if isinstance(_content, str) and _content:
+                final_response += f"\n\nPreview (first 2000 chars):\n```\n{_content[:2000]}\n```"
         elif ctx.control_result and ctx.control_result.get("message"):
             _template_draft = True
             cr = ctx.control_result
@@ -7125,6 +7755,17 @@ SELECT ?l WHERE {
                     logger.info("[response] disclosed the assumed referent: %s", _note)
         except Exception as _ap_err:  # never let a footnote cost an answer
             logger.debug(f"[response] assumed-place note skipped: {_ap_err}")
+        # The referent gate bound a described place to the building's only one of its kind
+        # (CAVEAT-1629): said once, as a footnote, like the assumed referent above.
+        # popped, not read: intermediate_results outlive the turn, and the note must not.
+        _rb = state.intermediate_results.pop("referent_bound", None) or {}
+        if final_response and _rb.get("phrase") and _rb.get("as"):
+            _rb_note = (
+                f'Taking "{_rb["phrase"]}" as {_rb["as"]}, the only one of its kind in the '
+                "building."
+            )
+            if _rb_note not in final_response:
+                final_response = f"{final_response}\n\n_{_rb_note}_"
 
         # ── The ontology RAG fallback answers about CLASSES, not about the building ──
         try:
@@ -8009,7 +8650,8 @@ SELECT ?l WHERE {
             # attribution the evaluation pre-registered can rest on a recorded fact.
             "overrides_applied": [
                 f"contract:{name}"
-                for name in (state.intermediate_results.get("concept_rules_applied") or [])
+                for name in list(state.intermediate_results.get("parse_rules_applied") or [])
+                + list(state.intermediate_results.get("concept_rules_applied") or [])
             ],
             "final_node": None,
             "decision_source": "registry",  # 'registry' | 'override' | 'fallback'
@@ -8024,8 +8666,11 @@ SELECT ?l WHERE {
         # sensor_data / discovery / capability (FIX-003).
         try:
             from orchestrator.services.building_metrics import is_inventory_count_question
+            from orchestrator.services.ontology_inventory import per_floor_instrument_ask
 
-            if is_inventory_count_question(user_query):
+            # "which floor has the most PM2.5 sensors?" is the same census, counted per floor
+            # (BUG-1614) -- the capability lane holds both.
+            if is_inventory_count_question(user_query) or per_floor_instrument_ask(user_query):
                 logger.info(
                     "[route] inventory-count question → capability (live metrics grounding)"
                 )
@@ -8968,10 +9613,11 @@ SELECT ?l WHERE {
                 # whole reader text, naming each criterion and what the building does hold.
                 _text = admission.explanation
             elif missing:
-                _text = (
-                    f"**No {missing} sensors are modelled with data for this building**, "
-                    "so I can't rank spaces on that. Ask \"what does this building "
-                    "monitor?\" to see what's available."
+                _text = _no_room_sensor_text(
+                    list(admission.missing_modalities),
+                    await _measured_modality_counts(
+                        timeout_s=5.0, building_id=state.building_id or None
+                    ),
                 )
                 if reader_is_admin_in(state):
                     _text += (
@@ -9344,6 +9990,56 @@ SELECT ?l WHERE {
         except Exception as _sk_err:
             logger.warning(f"[observability] skill lookup skipped: {_sk_err}")
 
+        # "What units are the illuminance readings in?" -- the unit the building declares for each
+        # quantity (2026-10-11; it was answered "the unit is not recorded").
+        try:
+            from orchestrator.services.observability import units_answer
+
+            _units = units_answer(question, building_id=state.building_id or None)
+            if _units:
+                state.intermediate_results["observability_result"] = {
+                    "success": True,
+                    "kind": "units",
+                    "formatted_response": _units,
+                }
+                return state
+        except Exception as _u_err:
+            logger.warning(f"[observability] units answer skipped: {_u_err}")
+
+        # "How long has CO2 been recorded?" -- the first and last reading of the quantity's points
+        # and the months between that hold none, read from the stores (2026-10-11).
+        try:
+            from orchestrator.services.record_span import (
+                is_record_span_question,
+                record_span_answer,
+            )
+
+            if is_record_span_question(question):
+                from orchestrator.services.capability_admin import building_namespace
+                from orchestrator.services.deliberation.live import sparql_exec as _sx_span
+                from orchestrator.services.requested_interval import building_tz
+
+                _bid = state.building_id or None
+                _span = await record_span_answer(
+                    question,
+                    _bid,
+                    building_namespace(_bid or ""),
+                    _sx_span,
+                    tz_name=building_tz(_bid),
+                )
+                state.intermediate_results["observability_result"] = {
+                    "success": bool(_span),
+                    "kind": "record_span",
+                    "formatted_response": _span
+                    or (
+                        "Each quantity the building measures has its own history. Which one do "
+                        "you mean -- for example CO2, temperature, humidity, energy or occupancy?"
+                    ),
+                }
+                return state
+        except Exception as _rs_err:
+            logger.warning(f"[observability] record span skipped: {_rs_err}", exc_info=True)
+
         # "Which sensors have stopped reporting, and when was each last seen?" (W3-05). A
         # sensor's silence is a fact about the DATA, so it is DERIVED from the stores on every
         # ask and never read from a TTL, where it would be wrong the moment it was written.
@@ -9570,18 +10266,23 @@ SELECT ?l WHERE {
                     "room, floor or zone, but I need to know which one before I can answer "
                     "whether it is instrumented."
                 )
-            elif modality is None and not is_open_question(question) and named_quantity(question):
+            elif modality is None and not is_open_question(question) and _named:
                 # A quantity was NAMED and matches no modality this building declares. Listing
                 # what IS measured and leaving the asker to notice the absence is a non-answer:
                 # "can you measure formaldehyde?" deserves a verdict about formaldehyde.
                 #
                 # The named term is never resolved to the nearest modality — that is how "can
                 # you measure radon?" would end up answered about CO2.
+                #
+                # `_named`, not `named_quantity` alone (BUG-1523): "What's the ozone concentration
+                # in room 2.01?" names its quantity without a "measure" verb, so this branch was
+                # skipped, the room's menu was offered instead, and the relevance gate replaced it
+                # with a generic decline -- where the same question without a room got a verdict.
                 reach = Reach(
-                    modality=named_quantity(question),
+                    modality=_named,
                     space_label=space.label,
                     status=UNINSTRUMENTED,
-                    lay_term=named_quantity(question),
+                    lay_term=_named,
                     alternatives=present_modalities(space.modalities or {}),
                 )
                 text = reach.describe(for_admin=_for_admin)
@@ -9982,8 +10683,14 @@ SELECT ?l WHERE {
     async def _export_node(self, state: ConversationState) -> ConversationState:
         """Phase 4.3 — Data export node."""
         logger.info("Executing Phase 4 Export Node")
-        fmt = state.intermediate_results.get("export_format") or "csv"
         latest_message = state.messages[-1].content if state.messages else "export"
+        # The format the READER named wins (2026-10-11): "... as a PDF report" was exported as CSV
+        # because only the classifier's entity was read, and it did not carry one.
+        fmt = (
+            _export_format_named(latest_message)
+            or state.intermediate_results.get("export_format")
+            or "csv"
+        )
 
         # If SPARQL hasn't run yet (export intent bypasses sparql node), run it now
         if not state.intermediate_results.get("sparql_result"):
@@ -10009,6 +10716,9 @@ SELECT ?l WHERE {
         )
         if not rows and isinstance(sql_result, list):
             rows = sql_result
+        # A column of uuids tells the reader nothing: each row also carries its sensor's name and
+        # unit from the metadata the pipeline already holds (2026-10-11).
+        rows = _label_export_rows(rows, state.intermediate_results.get("sensor_metadata") or {})
 
         result = await self.export_agent.export(
             data=rows, label="sensor_export", fmt=fmt, title=latest_message[:80]
@@ -10177,9 +10887,30 @@ SELECT ?l WHERE {
                 # line (BUG-257).
                 from orchestrator.services.modality_units import qudt_unit_display, unit_for_sensor
 
+                if unit_val and (
+                    str(unit_val).startswith("http")
+                    or re.fullmatch(r"[A-Z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)+", str(unit_val))
+                ):
+                    # a QUDT IRI bound as ?unit is still an IRI (BUG-1510), and its bare local
+                    # name ("L-PER-MIN") is no friendlier (BUG-1560): print its unit
+                    unit_val = qudt_unit_display(unit_val) or unit_val
+                elif unit_val:
+                    # A plain token the building wrote ("degC") is printed as a reader writes it
+                    # (BUG-1581): the chilled-water answer read "7.34 degC".
+                    from orchestrator.services.modality_units import display_unit as _du
+
+                    unit_val = _du(str(unit_val)) or unit_val
                 unit = unit_val or qudt_unit_display(qunit_val)
                 if not unit:
                     unit = unit_for_sensor(type_val or sensor_val, label_val)
+                if not unit and label_val:
+                    # A label that states its own unit -- "... illuminance [lux]" -- is the
+                    # building declaring it (BUG-1513); "unit not recorded" beside it was false.
+                    from orchestrator.services.modality_units import display_unit
+
+                    _lab_unit = re.search(r"\[([^\[\]]{1,12})\]\s*$", str(label_val))
+                    if _lab_unit:
+                        unit = display_unit(_lab_unit.group(1))
                 if not unit:
                     unit = self._unit_for_kind(kind)
                 sensor_metadata[uuid_val] = {
@@ -10191,6 +10922,16 @@ SELECT ?l WHERE {
                 }
                 if floor_val not in (None, ""):
                     sensor_metadata[uuid_val]["floor"] = str(floor_val)
+                # A template that binds the point's class as ?type (not ?metricCls) still carries
+                # it (BUG-1508): without it the aggregate lane had no measurand for six floor
+                # counters and declined "how many people are in the building right now?". Only a
+                # Brick class counts; any other ?type binding is left alone.
+                if (
+                    not class_val
+                    and type_val
+                    and ("brickschema.org" in type_val or str(type_val).startswith("brick:"))
+                ):
+                    class_val = type_val
                 if class_val:
                     sensor_metadata[uuid_val]["brick_class"] = class_val
 

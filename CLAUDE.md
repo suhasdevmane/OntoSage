@@ -8,7 +8,7 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 ## New session orientation (read this first)
 
 **Current branch:** `development`, promoted to `main` by fast-forward after each validated round
-(both were `b72a4c1` on 2026-10-08; **QA testers pull `main`**). The v1 baseline is tag `v1.0-demo`
+(both fast-forwarded together on 2026-10-12; **QA testers pull `main`**). The v1 baseline is tag `v1.0-demo`
 (`8965cd1`). **`git log --oneline -3` settles it in one second, so read it rather than this
 sentence** — it went stale twice before. **Never commit or push without the user's explicit
 approval.**
@@ -26,7 +26,124 @@ approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **LATEST (2026-10-08) — v2: compound, multi-criteria questions. READ
+- **LATEST (2026-10-11) — stakeholder intent coverage, ~20 h autonomous. COMMITTED AND PUSHED
+  2026-10-12 with the 10 Oct rounds, all buildings PARKED: parked suite 15,738 pass / 0 fail /
+  186 skip / 5 xfail (exit 0; reconciles with the active run, 15,929 tests both ways), CI file
+  list 359 pass / 5 skip.** READ [`docs/phase0/qa_probe_rounds_2026-10-11.md`](./docs/phase0/qa_probe_rounds_2026-10-11.md)
+  and the plan [`tasks/PLAN_2026-10-11_STAKEHOLDER_INTENT_COVERAGE.md`](./tasks/PLAN_2026-10-11_STAKEHOLDER_INTENT_COVERAGE.md).**
+  M1 (208 role-stratified bank questions, before fixes) declined 50; r7 (142 own questions, 13
+  stakeholder groups, after) flagged 23 and the hand read found the wrong answers the detector
+  passed. **Added and verified live:** the building water meter's interval series (3,449 L
+  yesterday; BUG-1640: it had been summed with its 18 floor meters); utility COST = metered total x
+  the registered tariff in force (`services/utility_cost.py`; water ~GBP 130 last week, electricity
+  ~GBP 700 yesterday; rate units are triples transcribed from the tariff document); kitchens located
+  as amenities repeating the catering topic; CSV/PDF/Word exports in the format named, LINKED in the
+  reply, sensors named (BUG-1644); floor plans shown INLINE (render PNG + PDF link, no IRI,
+  BUG-1645); "the glass atrium" bound to Room 1.04 with a footnote (CAVEAT-1629; step-asides had
+  read as "existence check did not complete", BUG-1643); named weekdays and day-months without a
+  year (CAVEAT-1616). **Routing rules now 68 parse + 4 post + 8 concept** — print them. **A new
+  building TTL must pass `ttl_validator.validate_building_ttls` OFFLINE before a restart: a missing
+  `@prefix bldg:` halted boot three times.** **OWNER DECISION before the study: NOTE-1652 — 1,164
+  OPEN user_reports, nearly all from testing, will be counted as real faults.** Deferred past the
+  freeze (they touch study-shaped ranking answers): CAVEAT-1649/1650 and the ranking defects listed
+  in the record. Named weekdays re-measured against the study: 0 of 56 texts newly bounded.
+  **Afternoon: the 13 three-turn stakeholder conversations (`docs/phase0/conversations_r7/`) were
+  re-run and read in full — first turns mostly right, FOLLOW-UPS broke.** Fixed and re-asked live:
+  an energy total narrated as "27 September **2023**" for a week of 2026 (BUG-1664, P1: the
+  aggregate lane now sums a COMPLETED period, 0 bank questions move; `narration_validators.
+  correct_unwritten_years` corrects a year the narration's sources do not hold); "compare with the
+  week before" and "which floor used the most?" resolved from the USER's own earlier question
+  (`context_switch.resolve_compare_with_before` / `resolve_elliptical_superlative` — the model's
+  rewrite had copied the invented year, lesson #203); "for last week" is the calendar week, only
+  "the last week" a trailing duration (BUG-1667); "how long has CO2 been recorded?" answered from
+  the stores WITH its gaps (`services/record_span.py`: since 1 Jan 2025, none Apr 2025–Feb 2026);
+  "due this month" reads the due date (BUG-1660); the class a question NAMES outranks a rarer
+  hinted one (BUG-1662: server-room temperature had been answered with humidity); topic answers
+  quote sentences, not a chunk (BUG-1661). Open: TODO-1672/1674/1675, CAVEAT-1673/1677.
+  **M1 re-asked on the final build: 50/208 declined before AND after** — 15 each way, mostly decline
+  WORDING the detector counts differently; the count cannot show a change of this size.
+  **SUITE (active) 15,811 pass / 3 fail / 30 error / 79 skip** — 2 + 30 the CAVEAT-1500 set, 1 mine
+  (BUG-1676, fixed, files re-run 13/13; the full suite was NOT re-run). GATE alone on the final build: 50/51 recorded, 51/51 in substance (#37 the fresh-chat case); memory 1.0 → ~4.2 GiB then flat ~3.9 GiB, the same plateau as the morning gate (the ~2 GiB reference predates the 1024-d embedding model — not BUG-1194's climb, but re-baseline it).
+- **(2026-10-10, afternoon) — QA probe rounds through the Open WebUI endpoint (NOTHING
+  committed, push approval owed). READ [`docs/phase0/qa_probe_rounds_2026-10-10.md`](./docs/phase0/qa_probe_rounds_2026-10-10.md).**
+  `scripts/qa_probe.py` asks as Open WebUI does (its headers, streamed, all four caches flushed per
+  ask) and checks route, errors and that every chart image LOADS. Round 1 (127 q) and round 2 (74
+  NEW q) found **BUG-1503…1561**; PASS there means "routed + delivered", not "correct" — answers
+  were read by hand and several PASSes were wrong. P1s fixed: forecasts started where TRAINING
+  ended, two days in the past (BUG-1538); a "total" forecast folded on exact timestamps (BUG-1539);
+  **every TTL upload silently reverted the occupancy model through the boot map rebuild (BUG-1540;
+  `publisher_map` now applies `derive_occupancy_model.apply_occupancy_model`)**; "will floor 3 be
+  warmer than floor 4 tomorrow?" asserted from past means (BUG-1545) — now
+  `services/forecast_comparison.py` forecasts each place and compares bands; floor water flow
+  labelled L/s (BUG-1557); a partial entity guess lost a comparison side (BUG-1514). The register
+  lane now filters by a named period and by storey. Data: 10 WOs + 4 incidents + an HVAC contract
+  + EV amenity; occupancy 3–10 Oct rescaled (backup in `outputs/backups/`).
+  **GATE after every change, alone: 49/51 recorded, 51/51 in substance** (#37 the fresh-chat
+  apparatus case; #68 a correct decline in a wording the classifier does not list), median
+  12.7 s. Dev forms S1-D…S4-D re-asked: all correct; S3-D's decline now comes from the
+  observability lane ("radon is not measured in Room 4.09") — check the study key's wording.
+  **Round 3 (72 q by role, asked as QA accounts of those roles) found BUG-1563…1584**, the worst
+  three P1: a CO question answered with energy meters ("carbon" inside "carbon monoxide" resolved
+  a second concept — `concept_resolver.drop_subsumed`), "the OPEN work orders" refused as a
+  control command, and energy from kW readings SUMMED, not integrated (4x too high —
+  `aggregate_lane._answer_power_energy`). New: per-day/per-hour breakdowns in the store
+  (`services/aggregate_breakdown.py`), stated limits ("over 1000 ppm"), outdoor sensors left out
+  of room questions, `?qunit` projected. Data: chilled-water roles, PV class + kW + a solar
+  publisher shape (zero at night) with the PV week regenerated (backup in `outputs/backups/`).
+  **Deferred for the study freeze (they move study-room answers): CAVEAT-1577/1578/1583.**
+  **Round 4 (46 new phrasings) confirmed those fixes generalise and found BUG-1584…1595:** the
+  two P1s were "which contracts EXPIRE before year end" filtered to the state "expired" (two of
+  six), and "how many PM2.5 sensors" read "2.5" as a room (answered "one" of 245). Also new:
+  "gone up since this morning" (last hour vs the morning, `comparison_windows.since_morning_pair`),
+  "will it get stuffy this afternoon" (forecast + verdict against the standards band,
+  `window_aggregate.comfort_verdict`), yes/no leads on comparisons, energy per floor as a bar
+  chart. **CAVEAT-1594: `volumes/bldg1/artifacts/forecast_skill.json` was graded 2026-08-28 and is
+  stale (CO2 MAE ~800 ppm); it widens every forecast band — re-grade after the freeze.**
+  **Final build (evening): SUITE (active) 15,494 pass / 6 fail / 30 error / 79 skip** — 32 the
+  known state-dependent set, 4 mine and fixed after (files re-run green; the full suite was NOT
+  re-run). **GATE alone 48/51 recorded:** #37 and #70 the known misreads; **#17 declined once
+  and answered 3/3 on re-ask — an intermittent, a first-pass failure.**
+  **Round 5 (late evening) — 12 multi-turn CONVERSATIONS (`docs/phase0/conversations_r5/`): 10 of
+  20 follow-up turns had a defect** after four clean-looking single-question rounds (lesson #198).
+  BUG-1599…1614, the P1s: a solar follow-up bound the floor electricity meters (the class template
+  took the keyword map's `Energy_Sensor` over the resolved PV class — `sparql_agent.
+  _class_over_keyword`, only when the two are unrelated in the TBox); a deliberation ranking where
+  every space scored 0 recommended the reception desk (`dossier.nothing_met`); **the relevance
+  gate's BUG-873 protection never covered the aggregate lane — `figures` was never copied onto
+  `aggregate_result`** (lesson #197), and the gate judged the bare follow-up, not the rewrite; the
+  v2 compound router took "which meeting rooms are free this afternoon?" from the events lane
+  (kind + free window only now stays there). Also: "which of the two", "its", "who is assigned",
+  "when is it due" (a record id), suggestion chips no longer read as places, "is that normal",
+  a per-floor instrument count from the graph (`ontology_inventory.count_by_floor`).
+  **Round 6 (a second, new battery, `conversations_r6/`) found BUG-1620…1626:** "office 4.07" sent
+  to deliberation and reported missing (kind + id is now a named place); **the rewrite INVENTED a
+  year ("… 10 October 2023") — `context_switch.strip_invented_years`**; record ids cut at their
+  first number (my BUG-1603 regression); per-hour breakdowns now plotted as a line chart.
+  **Checks: GATE alone 49/51 recorded, 51/51 in substance after round 5 AND after round 6 (#37,
+  #70 the known misreads). SUITE after round 6 (measured LAST): 15,583 / 2 fail / 30 error / 79
+  skip — exactly the CAVEAT-1500 set.** Deferred for the study freeze: bare-weekday resolution (CAVEAT-1616 — 25 of
+  56 study texts name a weekday).
+  **CAVEAT-1527: charts and floor plans link `http://localhost:8080` — remote testers through the
+  tunnel see no images until `/static` + `/floor-plans` are routed and `STATIC_BASE_URL` is set.**
+- **(2026-10-10, morning) — Paper 3 study readiness (autonomous session; NOTHING committed,
+  push approval owed). READ `paper/phd plan/Suhas v9/14_Work_Log_10Oct_Autonomous_Session.md`
+  (git-ignored) first.** The live Paper 3 study (30 new participants, OntoSage only) freezes
+  Mon 12 Oct. Asking the four DEVELOPMENT forms live (never a study form) found BUG-1484/1485
+  (Open WebUI chats shared state; background tasks ran as questions) and BUG-1487…1497, all
+  fixed, unit-tested and re-verified live. The P1 to know: **BUG-1490, a written-out date
+  ("in March 2025", "on 31 January 2025 between 10:00 and 16:00") was read only by the
+  classifier, which dropped it on some asks** — `requested_interval.explicit_date_bounds` now
+  computes it (0 of 4,060 bank questions affected). Also: a room whose own series is empty
+  reads its HVAC zone's (`_zone_series_second_chance`), "which of rooms A and B" ranks only
+  those rooms (`candidates.named_spaces`), cut hosted replies are retried (`HostedReplyCut`).
+  **GATE 51/51 in substance under `live` and `shadow`; DEC-5 keeps `live`.** SUITE (bldg1
+  ACTIVE) 15,336 pass / 2 fail / 30 error / 79 skip — all 32 state-dependent (CAVEAT-1500:
+  tests that read parked paths); the PARKED suite + `run_ci_unit_tests.py` are owed before the
+  commit. **`scripts/ask_questions.py` repeats replayed the intent and compile caches until
+  today (CAVEAT-1498): any older "N/N" on a deliberation question measured one compile.**
+  **The repo is public: no study-form room, date, wording or answer in tests, scripts or the
+  tracker.**
+- **(2026-10-08) — v2: compound, multi-criteria questions. READ
   [`tasks/V2_COMPOUND_PLAN.md`](./tasks/V2_COMPOUND_PLAN.md) sections 5 and 8 FIRST.** v1 is
   frozen as tag `v1.0-demo` with its answers to the held-out sets in `eval/compound/results/v1/`.
   **THE BLINDED READ IS DONE (2026-10-08) AND THE PRIMARY HYPOTHESIS IS NOT SUPPORTED — read
@@ -1220,7 +1337,9 @@ approval.**
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**68** parse-stage + 2 post-stage + **6** concept-stage ordered rules — printed FROM THE MODULE
+  (**68** parse-stage + **4** post-stage + **8** concept-stage ordered rules — printed FROM THE MODULE
+  2026-10-11 (post: `diagnosis_without_a_quantity`, `file_request_is_an_export`; concept:
+  `record_comparison_is_not_a_series`, `metered_cost_is_computed`, both before the compound rule); before that
   2026-10-08 after v2 P6 appended `compound_facets_to_deliberate` LAST in the concept stage
   (shadow by default, `ARBITER_V2_ROUTING`; pinned by
   `test_routing_contract.py::test_concept_stage_precedence_is_pinned`);

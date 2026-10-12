@@ -1168,6 +1168,26 @@ async def lifespan(app: FastAPI):
         except Exception as _fc_err:  # never block a boot on a shadow-mode instrument
             logger.warning(f"[facet-routing] catalogue warm-up not scheduled: {_fc_err}")
 
+    # WARM THE MEASURED-MODALITY COUNT (BUG-1497). A decline lists what the building measures
+    # from a count of 45 modalities' points that takes ~15 s and is cached once complete; until
+    # then every decline waited 5 s and told the reader "I couldn't read the sensor catalogue
+    # just now" -- false, it was merely not counted yet. Counted in the background after the
+    # graph has had time to load, so the first question of a session is not the one that pays.
+    async def _warm_measured_counts() -> None:
+        await asyncio.sleep(90)
+        try:
+            from orchestrator.workflow._orchestrator import _measured_modality_counts
+
+            counts = await _measured_modality_counts(timeout_s=600.0)
+            logger.info(
+                f"[measured] modality counts warmed: "
+                f"{sum(1 for v in (counts or {}).values() if v)} of {len(counts or {})} present"
+            )
+        except Exception as _mc_err:  # a warm-up must never cost the process
+            logger.warning(f"[measured] modality count warm-up failed: {_mc_err}")
+
+    app.state.measured_counts_task = asyncio.create_task(_warm_measured_counts())
+
     # Rebuild the GraphDB similarity index on startup so freshly-loaded TTLs (including any
     # GUI-registered sensors persisted to input/) become retrievable via semantic RAG — the index
     # does NOT auto-update on triple changes. Routed through the SAME debounced gateway that
@@ -4195,6 +4215,37 @@ async def _rehydrate_prior_messages(
     return filled[-max_history:] if max_history else filled
 
 
+def owui_conversation_id(
+    headers: Any,
+    messages: List[Dict[str, Any]],
+    user_message: str,
+    username: str,
+    forwarded_user_header: str = "X-OpenWebUI-User-Email",
+) -> str:
+    """The conversation id for an OpenAI-compatible turn: one per Open WebUI chat, never shared.
+
+    BUG-1484: Open WebUI 0.8.x forwards the chat id as ``X-OpenWebUI-Chat-Id``
+    (FORWARD_SESSION_INFO_HEADER_CHAT_ID), not ``X-Chat-Id``. Reading only ``X-Chat-Id`` sent
+    every UI chat to the first-message fallback, whose key carried the shared API username, so two
+    people whose chats opened with the same question shared one conversation state and session
+    summary. Both headers are read now (``headers.get`` is case-insensitive on Starlette headers).
+
+    The fallback stays a SHA-256 of the first message (Python's ``hash()`` is salted per process,
+    P1.10), now scoped to the forwarded person when one is sent. The header is used only to
+    NARROW sharing, so an untrusted value can do no harm here.
+    """
+    chat_id = headers.get("X-Chat-Id") or headers.get("X-OpenWebUI-Chat-Id")
+    if chat_id:
+        return f"owui_{chat_id}:{username}"
+    first_content = (messages[0].get("content") or "") if messages else user_message
+    if not isinstance(first_content, str):
+        first_content = json.dumps(first_content, sort_keys=True, default=str)
+    digest = hashlib.sha256(first_content.encode("utf-8")).hexdigest()[:16]
+    who = (headers.get(forwarded_user_header) or "").strip().lower()
+    scope = f"{username}~{hashlib.sha256(who.encode('utf-8')).hexdigest()[:12]}" if who else username
+    return f"owui_{digest}:{scope}"
+
+
 @app.post("/v1/chat/completions")
 async def openai_chat_completions(
     request: Request,
@@ -4242,17 +4293,13 @@ async def openai_chat_completions(
         # conversation_id so turn_memory and Redis intermediate_results (e.g.
         # forecast_result) persist across turns.  Without this, a new UUID was
         # generated every request, preventing cross-turn carry-forward.
-        chat_id_header = request.headers.get("X-Chat-Id") or request.headers.get("x-chat-id")
-        if chat_id_header:
-            conversation_id = f"owui_{chat_id_header}:{username}"
-        else:
-            # Stable fallback: SHA-256 of first user message content.
-            # Python's builtin hash() is salted per process (PYTHONHASHSEED),
-            # so the old abs(hash(...)) id changed on every orchestrator
-            # restart and silently severed conversation memory (P1.10 fix).
-            first_content = messages[0].get("content", "") if messages else user_message
-            _digest = hashlib.sha256(first_content.encode("utf-8")).hexdigest()[:16]
-            conversation_id = f"owui_{_digest}:{username}"
+        conversation_id = owui_conversation_id(
+            request.headers,
+            messages,
+            user_message,
+            username,
+            getattr(settings, "FORWARDED_USER_HEADER", "X-OpenWebUI-User-Email"),
+        )
 
         # Auto-detect persona from system prompt or "As <role>:" prefix when
         # the client (e.g. OpenWebUI) does not send an explicit persona field.

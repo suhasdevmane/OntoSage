@@ -86,9 +86,40 @@ class ExpSmoothingForecaster:
         residuals = train_series.values - in_sample_pred.values
         self._residual_std = float(np.std(residuals, ddof=1))
 
-        # Forecast future
-        forecast_series = self._model_fit.forecast(n_steps)
-        future_index = [str(ts) for ts in forecast_series.index]
+        # THE FUTURE STARTS AFTER THE LAST OBSERVATION (BUG-1538). The model above was fitted to the
+        # first 80% so the last 20% could score it; forecasting from THAT fit began at the end of
+        # the training span, so "the next 24 hours" asked at 12:35 on 10 Oct came back as
+        # 22:00 on 8 Oct onward -- a forecast of the hold-out, two days in the past. The same
+        # configuration is refitted on the whole series and the future runs from its end.
+        future_fit = self._model_fit
+        try:
+            if use_seasonal:
+                full = ExponentialSmoothing(
+                    series,
+                    trend="add",
+                    seasonal="add",
+                    seasonal_periods=self.seasonal_periods,
+                    **kwargs,
+                )
+            elif n_train >= 10:
+                full = ExponentialSmoothing(series, trend="add", **kwargs)
+            else:
+                full = ExponentialSmoothing(series, **kwargs)
+            future_fit = full.fit(optimized=True)
+        except (
+            Exception
+        ) as e:  # the training fit still forecasts; its index is then corrected below
+            logger.warning(
+                f"[exp_smoothing] full-series refit failed ({e}); using the training fit"
+            )
+        forecast_series = future_fit.forecast(n_steps)
+        # The stamps run from the series' last observation whichever fit produced the values.
+        _freq = series.index.freq or pd.infer_freq(series.index)
+        future_index = (
+            [str(ts) for ts in pd.date_range(series.index[-1], periods=n_steps + 1, freq=_freq)[1:]]
+            if _freq is not None
+            else [str(ts) for ts in forecast_series.index]
+        )
         forecast = forecast_series.values.tolist()
 
         intervals = self._bootstrap_intervals(forecast_series.values, n_steps, ci_levels)

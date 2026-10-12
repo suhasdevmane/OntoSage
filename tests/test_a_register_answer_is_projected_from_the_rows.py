@@ -82,9 +82,11 @@ def test_the_lift_last_serviced_date_comes_from_the_maintenance_log():
     table = ground_truth("maintenance_log.md")
     lift = [r for r in table if "lift" in r["asset_name"].lower() and r["completed_on"]]
     newest = max(lift, key=lambda r: r["completed_on"])
-    assert newest["_id"] == "WO-016" and newest["completed_on"] == "2026-06-03"
+    # WO-028 (17 Sep 2026) was added on 2026-10-10 when the log was brought up to date (BUG-1535);
+    # before it, the newest lift job was WO-016 (3 Jun 2026).
+    assert newest["_id"] == "WO-028" and newest["completed_on"] == "2026-09-17"
     assert newest["_id"] in text.splitlines()[0]
-    assert "3 June 2026" in text.splitlines()[0]
+    assert "17 September 2026" in text.splitlines()[0]
     # work orders with no completion date are said to have none, never given one
     assert "WO-021" in text and "WO-022" in text and "no recorded" in text
 
@@ -96,7 +98,7 @@ def test_overdue_maintenance_says_what_is_recorded_and_what_is_not():
     text = _answer("maintenance_log.md", "Which maintenance tasks are overdue?", "Work order")
     table = ground_truth("maintenance_log.md")
     not_complete = sorted(r["_id"] for r in table if r["_status"] != "completed")
-    assert len(not_complete) == 9
+    assert len(not_complete) == 11  # 9 until WO-033/WO-034 were added on 2026-10-10 (BUG-1535)
     assert "no due date" in text and "not the same thing as overdue" in text
     assert all(ident in text for ident in not_complete)
     assert not any(r["_id"] in text for r in table if r["_status"] == "completed")
@@ -218,8 +220,11 @@ def test_the_scripted_open_and_overdue_question_answers_both_halves():
     )
     table = ground_truth("maintenance_log.md")
     open_ids = sorted(r["_id"] for r in table if r["_status"] in ("open", "in_progress"))
-    assert text.splitlines()[0].startswith("**9 of the 24")
-    assert "6 in progress, 3 open" in text.splitlines()[0]
+    # derived from the log, so adding work orders (BUG-1535) does not stale the expectation
+    in_progress = sum(1 for r in table if r["_status"] == "in_progress")
+    still_open = sum(1 for r in table if r["_status"] == "open")
+    assert text.splitlines()[0].startswith(f"**{len(open_ids)} of the {len(table)}")
+    assert f"{in_progress} in progress, {still_open} open" in text.splitlines()[0]
     assert all(ident in text for ident in open_ids)
     assert "records no due date and no 'overdue' status" in text
     assert not any(r["_id"] in text for r in table if r["_status"] == "completed")
@@ -312,7 +317,7 @@ def test_unplanned_work_is_the_reactive_kind():
     text = _answer("maintenance_log.md", "How many unplanned work orders are there?", "Work order")
     table = ground_truth("maintenance_log.md")
     expected = sorted(r["_id"] for r in table if r["category"] == "reactive")
-    assert text.splitlines()[0].startswith(f"**{len(expected)} of the 24")
+    assert text.splitlines()[0].startswith(f"**{len(expected)} of the {len(table)}")
     assert sorted(set(re.findall(r"\bWO-\d+\b", text))) == expected
 
 

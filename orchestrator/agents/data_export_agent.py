@@ -35,6 +35,58 @@ logger = get_logger(__name__)
 SUPPORTED_FORMATS = {"json", "csv", "html", "markdown", "md", "pdf", "docx"}
 
 
+def _readings_summary(rows: List[Dict[str, Any]]) -> "tuple[Dict[str, Dict[str, Any]], str]":
+    """Per-sensor count/min/avg/max of the exported readings, and the span they cover."""
+    per: Dict[str, List[float]] = {}
+    stamps: List[str] = []
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        try:
+            value = float(row.get("value"))
+        except (TypeError, ValueError):
+            continue
+        name = str(row.get("sensor") or row.get("uuid") or "series")
+        unit = str(row.get("unit") or "")
+        per.setdefault(f"{name} ({unit})" if unit else name, []).append(value)
+        ts = str(row.get("timestamp") or row.get("datetime") or "")
+        if ts:
+            stamps.append(ts[:16].replace("T", " "))
+    summary = {
+        key: {
+            "count": len(vals),
+            "min": round(min(vals), 2),
+            "avg": round(sum(vals) / len(vals), 2),
+            "max": round(max(vals), 2),
+        }
+        for key, vals in sorted(per.items())[:60]
+    }
+    span = f"{min(stamps)} to {max(stamps)} (store time, UTC)" if stamps else ""
+    return summary, span
+
+
+#: Units whose readings are their interval's amount, so the readings add up to a total.
+_ADDITIVE_UNITS = {"kwh": "kWh", "wh": "Wh", "mwh": "MWh", "l": "L", "m³": "m³", "m3": "m³"}
+
+
+def _additive_total(rows: List[Dict[str, Any]]) -> str:
+    """' Total over the period: 3,449 L.' when every row is in one additive unit, else ''."""
+    units = {str(r.get("unit") or "").strip().lower() for r in rows if isinstance(r, dict)}
+    if len(units) != 1 or next(iter(units)) not in _ADDITIVE_UNITS:
+        return ""
+    total = 0.0
+    for r in rows:
+        try:
+            total += float(r.get("value"))
+        except (TypeError, ValueError):
+            continue
+    unit = _ADDITIVE_UNITS[next(iter(units))]
+    return (
+        f" Total over the period: {total:,.1f} {unit} (each reading is its own interval's "
+        "amount, so the total is their sum)."
+    )
+
+
 def _local_stamp() -> str:
     """Export timestamps on the building's clock (WB-06)."""
     from orchestrator.services.requested_interval import local_stamp
@@ -92,11 +144,19 @@ class DataExportAgent:
                 from orchestrator.services.document_builder import DocumentBuilder
 
                 builder = DocumentBuilder()
+                # The document carries the figures (2026-10-11): it said only "Data export: N
+                # records", with an empty readings table, so a PDF or Word export held nothing.
+                summary, span = _readings_summary(rows)
                 doc_data = {
-                    "readings_summary": {},
+                    "readings_summary": summary,
                     "anomalies": [],
                     "highlights": [],
-                    "narrative": f"Data export: {len(rows)} records",
+                    "narrative": (
+                        f"Data export: {len(rows):,} readings from {len(summary)} sensor(s)"
+                        + (f", {span}" if span else "")
+                        + ". Figures are computed from the exported readings."
+                        + _additive_total(rows)
+                    ),
                 }
                 doc_result = builder.render(
                     report_data=doc_data,

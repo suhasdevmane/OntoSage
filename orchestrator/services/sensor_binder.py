@@ -282,7 +282,7 @@ class Binding:
 
     def envelope(self) -> Dict[str, Any]:
         """The selection as a SPARQL-results document, so every reader downstream is unchanged."""
-        variables = ["sensor", "label", "type", "uuid", "storage", "location"]
+        variables = ["sensor", "label", "type", "uuid", "storage", "location", "metricCls"]
         rows: List[Dict[str, Dict[str, str]]] = []
         for s in self.sensors:
             row = {
@@ -292,6 +292,11 @@ class Binding:
             }
             if s.type_iri:
                 row["type"] = {"type": "uri", "value": s.type_iri}
+                # BUG-1489: `type_iri` IS the class the point was selected by (`_classify` picks it
+                # from the quantity's classes), which is what `metricCls` means to the metadata
+                # builder (BUG-1442). Without it a binder-bound sensor had no brick_class, the
+                # aggregate lane read `measurand=None`, and a room's month was a 1000-row sample.
+                row["metricCls"] = {"type": "uri", "value": s.type_iri}
             if s.storage:
                 row["storage"] = {"type": "uri", "value": s.storage}
             if s.location:
@@ -1203,6 +1208,49 @@ async def _bind(
     base.reason = "reference_missing" if unlinked else "no_such_sensor_in_place"
     base.holdings = _holdings(own_raw, _modalities(building_id))
     return base
+
+
+async def zone_alternates(
+    record: Dict[str, Any],
+    question: str,
+    concepts: Optional[Sequence[Dict[str, Any]]],
+    building_id: Optional[str],
+    run: Optional[RunQuery] = None,
+) -> Tuple[List[BoundSensor], str]:
+    """The zone's sensors of the bound quantity, for a room whose OWN series held no rows.
+
+    BUG-1487 (found on the Paper 3 development forms, 10 Oct): a room that carries its own series
+    for a quantity is bound to it even when the zone covering the room holds the instrument whose
+    readings span a different period. The "stand-in must not outrank the instrument" rule in
+    `_bind` cannot fire, because no point declares an origin any more (retired 2026-09-22, an owner
+    decision kept here), so `simulated` is never set. A question about a period only the zone's
+    series covers then got "No readings were found" for data the building holds.
+
+    This does NOT re-label anything simulated. It is consulted only after the room's own series
+    returned no rows for the asked window, and the caller uses a zone series only if IT has rows.
+    Returns ``(sensors not already bound, zone label)``; ``([], "")`` when nothing applies.
+    """
+    try:
+        scope_iri = str(record.get("scope_iri") or "")
+        if not scope_iri or record.get("basis") != BASIS_OWN or not _SAFE_IRI_RE.match(scope_iri):
+            return [], ""
+        quantities = detect_quantities(question, concepts, building_id)
+        if not quantities:
+            return [], ""
+        res = await _ask(run or _default_run(), _zone_sensors_query(scope_iri))
+        if res is None:
+            return [], ""
+        raws = _fold(_bindings(res))
+        bound = set(record.get("sensors") or [])
+        alts = [s for s in _classify(raws, quantities) if s.uuid not in bound]
+        label = _plain_label(
+            next((r.zone_label for r in raws if r.zone_label), "")
+            or _local(next((r.zone for r in raws if r.zone), ""))
+        )
+        return alts, label
+    except Exception as exc:  # the second chance must never cost the turn
+        logger.warning(f"[sensor_binder] zone alternates skipped ({type(exc).__name__}): {exc}")
+        return [], ""
 
 
 async def _bind_equipment(

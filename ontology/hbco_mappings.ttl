@@ -87,7 +87,6 @@ hbco:stuffiness rdf:type hbco:Concept ,
     hbco:layTerm "stuffy"^^xsd:string ;
     hbco:layTerm "stale air"^^xsd:string ;
     hbco:layTerm "airless"^^xsd:string ;
-    hbco:layTerm "muggy"^^xsd:string ;
     hbco:layTerm "close air"^^xsd:string ;
     hbco:layTerm "needs fresh air"^^xsd:string ;
     hbco:layTerm "poor ventilation"^^xsd:string ;
@@ -138,6 +137,7 @@ hbco:too_humid rdf:type hbco:Concept ,
     skos:prefLabel "too humid"@en ;
     hbco:layTerm "too humid"^^xsd:string ;
     hbco:layTerm "humid"^^xsd:string ;
+    hbco:layTerm "muggy"^^xsd:string ;
     hbco:layTerm "muggy air"^^xsd:string ;
     hbco:layTerm "moist air"^^xsd:string ;
     hbco:layTerm "damp feeling"^^xsd:string ;
@@ -630,11 +630,38 @@ hbco:water_usage rdf:type hbco:CompositeConcept ,
     hbco:layTerm "water usage"^^xsd:string ;
     hbco:layTerm "water waste"^^xsd:string ;
     hbco:layTerm "water efficiency"^^xsd:string ;
+    hbco:layTerm "how much water"^^xsd:string ;
+    hbco:layTerm "water used"^^xsd:string ;
+    hbco:layTerm "water bill"^^xsd:string ;
+    hbco:layTerm "water cost"^^xsd:string ;
+    hbco:layTerm "litres of water"^^xsd:string ;
+    hbco:layTerm "water consumed"^^xsd:string ;
+    hbco:layTerm "use of water"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Building_Water_Meter ;
+    hbco:mapsToBrickClass brick:Water_Meter ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:water_flow rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "water_flow"^^xsd:string ;
+    skos:prefLabel "water flow"@en ;
     hbco:layTerm "water flow"^^xsd:string ;
     hbco:layTerm "water flow rate"^^xsd:string ;
+    hbco:layTerm "flow rate of water"^^xsd:string ;
+    hbco:layTerm "water flowing"^^xsd:string ;
     hbco:mapsToBrickClass brick:Water_Flow_Sensor ;
-    hbco:mapsToBrickClass brick:Water_Level_Sensor ;
-    hbco:mapsToBrickClass brick:Water_Meter ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "medium"^^xsd:string .
+
+hbco:water_usage_rate rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "water_usage_rate"^^xsd:string ;
+    skos:prefLabel "water usage rate"@en ;
+    hbco:layTerm "water usage rate"^^xsd:string ;
+    hbco:layTerm "water use rate"^^xsd:string ;
+    hbco:layTerm "daily water rate"^^xsd:string ;
+    hbco:layTerm "litres per day"^^xsd:string ;
     hbco:mapsToBrickClass brick:Water_Usage_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "medium"^^xsd:string .
@@ -836,6 +863,10 @@ hbco:unexpected_open_window rdf:type hbco:Concept ,
     hbco:layTerm "window left open"^^xsd:string ;
     hbco:layTerm "open window"^^xsd:string ;
     hbco:layTerm "door left open"^^xsd:string ;
+    hbco:layTerm "doors left open"^^xsd:string ;
+    hbco:layTerm "door held open"^^xsd:string ;
+    hbco:layTerm "doors held open"^^xsd:string ;
+    hbco:layTerm "held open"^^xsd:string ;
     hbco:layTerm "windows left open"^^xsd:string ;
     hbco:layTerm "window open"^^xsd:string ;
     hbco:layTerm "windows open"^^xsd:string ;
@@ -1036,7 +1067,7 @@ hbco:solar_output rdf:type hbco:Concept ,
     hbco:layTerm "PV output"^^xsd:string ;
     hbco:layTerm "photovoltaic"^^xsd:string ;
     hbco:layTerm "renewable energy"^^xsd:string ;
-    hbco:mapsToBrickClass brick:Electric_Power_Sensor ;
+    hbco:mapsToBrickClass ontosage:PV_Generation_Power_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:componentOf hbco:energy_consumption ;
     hbco:confidence "medium"^^xsd:string .
@@ -1514,6 +1545,36 @@ hbco:water_temperature rdf:type hbco:Concept ,
     hbco:layTerm "delta-t"^^xsd:string ;
     hbco:layTerm "delta t"^^xsd:string ;
     hbco:mapsToBrickClass brick:Water_Temperature_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:chilled_water_supply rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "chilled_water_supply"^^xsd:string ;
+    skos:prefLabel "chilled water supply temperature"@en ;
+    hbco:layTerm "chilled water supply temperature"^^xsd:string ;
+    hbco:layTerm "chilled water supply"^^xsd:string ;
+    hbco:layTerm "chilled water flow temperature"^^xsd:string ;
+    hbco:layTerm "chilled water flow"^^xsd:string ;
+    hbco:layTerm "chw supply"^^xsd:string ;
+    hbco:layTerm "chiller leaving water temperature"^^xsd:string ;
+    hbco:layTerm "chiller outlet temperature"^^xsd:string ;
+    hbco:layTerm "chiller supply temperature"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Leaving_Chilled_Water_Temperature_Sensor ;
+    hbco:requiresRecipe "aggregate"^^xsd:string ;
+    hbco:confidence "high"^^xsd:string .
+
+hbco:chilled_water_return rdf:type hbco:Concept ,
+               owl:NamedIndividual ;
+    hbco:conceptId "chilled_water_return"^^xsd:string ;
+    skos:prefLabel "chilled water return temperature"@en ;
+    hbco:layTerm "chilled water return temperature"^^xsd:string ;
+    hbco:layTerm "chilled water return"^^xsd:string ;
+    hbco:layTerm "chw return"^^xsd:string ;
+    hbco:layTerm "chiller entering water temperature"^^xsd:string ;
+    hbco:layTerm "chiller return temperature"^^xsd:string ;
+    hbco:layTerm "chiller inlet temperature"^^xsd:string ;
+    hbco:mapsToBrickClass brick:Entering_Chilled_Water_Temperature_Sensor ;
     hbco:requiresRecipe "aggregate"^^xsd:string ;
     hbco:confidence "high"^^xsd:string .
 

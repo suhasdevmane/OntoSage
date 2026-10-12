@@ -492,7 +492,10 @@ def is_building_specific(query: str, concepts: Optional[Sequence] = None) -> boo
 # partial one.
 
 _ASKS_DATE_RE = re.compile(
-    r"\b(?:when|what date|which date|how long ago|how old)\b"
+    # "when I arrive" is a condition, not a request for a date (2026-10-11: a visitor's "where do
+    # I go when I arrive?" was told "I don't hold a specific date for this").
+    r"\bwhen\b(?!\s+(?:i|we|you|they|he|she|someone|people|there)\b)"
+    r"|\b(?:what date|which date|how long ago|how old)\b"
     r"|\blast\s+(?:serviced|inspected|maintained|repaired|replaced|checked|cleaned)\b",
     re.IGNORECASE,
 )

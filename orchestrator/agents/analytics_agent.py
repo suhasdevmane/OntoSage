@@ -20,6 +20,16 @@ from shared.utils import extract_code_from_llm_response, get_logger
 
 logger = get_logger(__name__)
 
+import re as _re_future  # noqa: E402 - kept beside the one pattern that uses it
+
+#: A question about a FUTURE time ("tomorrow", "next week", "will ... be") -- BUG-1545.
+_FUTURE_ASK_RE = _re_future.compile(
+    r"\b(?:tomorrow|next\s+(?:hour|day|week|month|year|monday|tuesday|wednesday|thursday|friday|"
+    r"saturday|sunday)|later\s+today|tonight|this\s+evening|in\s+\d+\s+(?:hours?|days?))\b"
+    r"|\bwill\b[^?.!]{0,40}\bbe\b",
+    _re_future.IGNORECASE,
+)
+
 #: The name every caller that names no file used to share. A turn that reads it reads whatever
 #: the last writer left, which on the planner path was a file nine months old (BUG-898). Kept as
 #: the parameter default so no caller's signature changes; `analyze` replaces it per call.
@@ -1339,7 +1349,21 @@ Respond with ONLY the corrected Python code, wrapped in ```python blocks."""
         # Add sustainability/compliance context if relevant keywords present
         _q_lower = user_query.lower()
         compliance_hint = ""
-        if any(
+        # "Is it TOO HUMID in room 2.52 today?" asks for a judgement against a comfort band, and
+        # with no band supplied the answer could only list statistics and stop (BUG-1574).
+        # "is that normal for an office?" asks the same judgement (BUG-1610): with no band it got
+        # CO2 statistics and no answer. 3 of 4,060 bank questions take this shape.
+        _asks_comfort_judgement = bool(
+            _re_future.search(
+                r"\btoo\s+(?:humid|hot|warm|cold|cool|chilly|dry|damp|stuffy|muggy)\b"
+                r"|\b(?:un)?healthy\b"
+                r"|\b(?:is|are)\s+(?:that|this|it|these|those|they|the\s+[\w.\-]+(?:\s+[\w.\-]+)?)"
+                r"\s+(?:normal|typical|acceptable|reasonable)\b"
+                r"|\bnormal\s+for\s+(?:an?|the|this)\b",
+                _q_lower,
+            )
+        )
+        if _asks_comfort_judgement or any(
             kw in _q_lower
             for kw in [
                 "ashrae",
@@ -1378,11 +1402,28 @@ Use ✅ for compliant, ⚠️ for borderline, ❌ for non-compliant.
         # a different "standard comfort range" each run (21-25, 22-25, 20-24 °C), and an energy
         # answer invented "a typical threshold of 300 kWh per floor". A number with no source is
         # a fabrication however plausible. Standards may be named only when they are supplied.
+        # ONE FIGURE HAS NOTHING TO BE COMPARED WITH (BUG-1605). "What was the peak noise in room
+        # 2.13?" produced one line, "Max: 62.80 dB", and the comparison rule below made the model
+        # write "That value is also the lowest recorded ... giving a spread of 0 dB".
+        _stat_lines = re.findall(
+            r"^\s*(?:max|maximum|min|minimum|mean|average|avg|median|sum|total|count|peak)\b"
+            r"[^:\n]*:\s*-?\d",
+            str(output or ""),
+            flags=re.IGNORECASE | re.MULTILINE,
+        )
+        _single_figure = len(sensor_metadata or {}) <= 1 and len(_stat_lines) == 1
         if compliance_hint:
             context_rules = (
                 "2. Provides context against the reference values listed above ONLY — name the "
                 "standard a value is compared with, and never cite one that is not listed\n"
                 "3. Uses ✅/⚠️/❌ status icons only for a comparison against those listed values"
+            )
+        elif _single_figure:
+            context_rules = (
+                "2. There is ONE figure. Report it with its unit and the window it covers; do NOT "
+                "call it the lowest, the highest of several, or a spread, and do NOT name any "
+                "standard, comfort range or threshold\n"
+                "3. Uses no ✅/⚠️/❌ compliance icons"
             )
         else:
             context_rules = (
@@ -1407,6 +1448,16 @@ Use ✅ for compliant, ⚠️ for borderline, ❌ for non-compliant.
             else "5. Ends with the finding itself. Gives NO recommendation, audit, calibration "
             "check, alert threshold or next step: the question did not ask for advice"
         )
+        # A FUTURE QUESTION ANSWERED FROM PAST READINGS IS NOT A FORECAST (BUG-1545). "Will floor 3
+        # be warmer than floor 4 tomorrow?" was answered "**Floor 3 will be warmer than Floor 4
+        # tomorrow.**" from two past means 0.1 C apart. No forecast was computed on this path.
+        future_rule = ""
+        if _FUTURE_ASK_RE.search(user_query or ""):
+            future_rule = (
+                "\n12. The question asks about a FUTURE time, and these are PAST readings: no "
+                "forecast was made. Open by saying so in one short clause, report what the readings "
+                "show, and NEVER state what will happen, will be, or is going to be."
+            )
         summary_prompt = f"""You are an expert building analytics assistant. Convert this sensor data analysis into a professional, factual response.
 
 User Query: {user_query}
@@ -1448,7 +1499,7 @@ Generate a response that:
    observed, report it as an observation, and do not restate or contradict any declared figure
    already given in this answer. Measured failures: "The maximum occupancy recorded for this
    room is 30.00 people", four lines under "has a design occupancy of 40 people"; and "The
-   design occupancy for Room 5.01 is **30 people**", where 30 was the highest reading
+   design occupancy for Room 5.01 is **30 people**", where 30 was the highest reading{future_rule}
 
 Response:"""
 
@@ -1464,6 +1515,11 @@ Response:"""
         )
         try:
             summary = await llm_manager.generate(summary_prompt, task_type=TaskType.ANALYTICS)
-            return summary.strip() + plot_markdown, media
+            # The model may not add a year the output, the question or the window does not hold
+            # (2026-10-11: "27 September 2023" for a week of 2026).
+            from orchestrator.services.narration_validators import correct_unwritten_years
+
+            summary = correct_unwritten_years(summary.strip(), [str(output), user_query], window)
+            return summary + plot_markdown, media
         except Exception:
             return f"Analysis complete. Output:\n{output}" + plot_markdown, media

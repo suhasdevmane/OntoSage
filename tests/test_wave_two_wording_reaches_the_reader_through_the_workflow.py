@@ -170,7 +170,8 @@ def test_a_chart_caption_says_the_quantity_the_place_and_the_period(monkeypatch)
     caption = _run(
         agent._generate_description("Plot CO2", "line_chart", {"data": rows}, state=state)
     )
-    assert caption.startswith("Chart of Room 5.01 CO2 sensor (ppm) — 18 Sep 22:50 to 19 Sep 03:50")
+    # The stored stamps are UTC; the caption is in building time (BUG-1570), BST in September.
+    assert caption.startswith("Chart of Room 5.01 CO2 sensor (ppm) — 18 Sep 23:50 to 19 Sep 04:50")
 
 
 # ── 2. the fallback takes the shape of the question ─────────────────────────

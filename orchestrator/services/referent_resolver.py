@@ -105,6 +105,31 @@ NOT_FOUND = "not_found"
 NO_REFERENT = "no_referent"
 SKIPPED = "skipped"  # existence check could not run (e.g. GraphDB down) — fail open
 AMBIGUOUS = "ambiguous"  # the label matches several real ids and names none of them
+#: The building holds this KIND and the modifier describes it -- the gate has nothing to refuse,
+#: so the lanes answer. Distinct from SKIPPED on purpose (2026-10-11): the workflow and the
+#: capability agent read SKIPPED as "the existence check could not complete" and refuse (BUG-136),
+#: so every step-aside that returned SKIPPED told the reader "I couldn't verify 'glass atrium'
+#: ... the existence check didn't complete in time" about a check that had completed.
+STEPPED_ASIDE = "stepped_aside"
+
+
+#: Words that pick one instance of a kind OUT OF several: a modifier among these names a
+#: different instance, not the one the building holds. Generic English, no building's words.
+_CONTRASTIVE_MODIFIERS = frozenset(
+    "north south east west northern southern eastern western northeast northwest southeast "
+    "southwest upper lower left right front back rear first second third fourth fifth main old "
+    "new inner outer top bottom middle central big small large little other another".split()
+)
+
+
+def _one_of_its_kind(typed: "TypedReferent", suggestion: str) -> bool:
+    """The single same-kind place IS what the phrase describes (CAVEAT-1629)."""
+    head = (typed.head or "").lower()
+    words = re.findall(r"[a-z]+", (suggestion or "").lower())
+    if not head or not any(w == head or w == head + "s" or w + "s" == head for w in words):
+        return False
+    modifiers = [w for w in re.findall(r"[a-z]+", (typed.phrase or "").lower()) if w != head]
+    return not any(m in _CONTRASTIVE_MODIFIERS for m in modifiers)
 
 
 # ── Typed referents (BUG-103) ────────────────────────────────────────────────────
@@ -947,7 +972,7 @@ class ReferentResolver:
         # that is exactly the fabrication this gate was built to stop (BUG-189).
         numbered = bool(re.search(r"\d", typed.phrase or ""))
         if head_exists and not suggestions and not numbered:
-            return ReferentResolution(status=SKIPPED, referent=typed.phrase)
+            return ReferentResolution(status=STEPPED_ASIDE, referent=typed.phrase)
 
         # AND A HEAD THAT NAMES A KIND THE BUILDING OFFERS. "car parking" DID find same-kind
         # suggestions ("Ground Level Parking"), so it was refused with a "did you mean" instead of
@@ -964,9 +989,42 @@ class ReferentResolver:
         if not exists and not numbered and typed.kind != KIND_MEASURAND:
             try:
                 if await self._holds_amenity_kind(typed.head, namespace):
-                    return ReferentResolution(status=SKIPPED, referent=typed.phrase)
+                    return ReferentResolution(status=STEPPED_ASIDE, referent=typed.phrase)
             except Exception as e:
                 logger.warning(f"[referent_resolver] amenity-kind check failed, refusing: {e}")
+                return ReferentResolution(
+                    status=NOT_FOUND,
+                    referent=typed.phrase,
+                    suggestions=suggestions,
+                    message=self._typed_clarification(
+                        typed, suggestions, building_name, for_admin=for_admin
+                    ),
+                    kind=typed.kind,
+                )
+
+        # ONE OF ITS KIND CANNOT BE CHOSEN AMONG (CAVEAT-1629). "the glass atrium" was answered
+        # "'glass atrium' does not exist in this building" while "the atrium" read 750 ppm: the
+        # building holds exactly one atrium, so a describing word cannot pick a different one.
+        # Three things must hold, each pinned by a test: the head is a WHOLE WORD of the one
+        # suggestion ("Carpool Bay" holds no "pool"); the asked modifier is not a word that
+        # CONTRASTS one instance with another ("west wing" beside "East Wing" -- "which wing?" is
+        # a real question); and a failed amenity check above has already refused. Several
+        # same-kind places ("public corridor" among many) still get the "which one?" reply.
+        if head_exists and len(suggestions) == 1 and not numbered:
+            # A suggestion is an IRI local name ("Room1.04"); its LABEL says what it is ("Room
+            # 1.04 -- Common Area / Atrium"), so the head is looked for there too.
+            label = await self._label_of(suggestions[0], namespace)
+            if _one_of_its_kind(typed, f"{suggestions[0]} {label}"):
+                # The ONE candidate travels with the step-aside, so the workflow can bind it: a
+                # bare step-aside let the lane read "glass atrium" as nothing and answer with the
+                # whole building's CO2 -- the wrong-place answer this gate exists to stop.
+                return ReferentResolution(
+                    status=STEPPED_ASIDE,
+                    referent=typed.phrase,
+                    suggestions=[suggestions[0]],
+                    message=label or suggestions[0],
+                    kind=typed.kind,
+                )
 
         return ReferentResolution(
             status=NOT_FOUND,
@@ -977,6 +1035,22 @@ class ReferentResolver:
             ),
             kind=typed.kind,
         )
+
+    async def _label_of(self, local: str, namespace: str) -> str:
+        """The rdfs:label(s) of one of the building's own entities, joined; "" when unreadable."""
+        if not re.fullmatch(r"[A-Za-z0-9_.\-]+", str(local or "")):
+            return ""
+        q = (
+            "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n"
+            f"SELECT ?l WHERE {{ BIND(<{namespace}{local}> AS ?s) ?s rdfs:label ?l . "
+            f"FILTER(STRSTARTS(STR(?s), '{namespace}')) }} LIMIT 3"
+        )
+        try:
+            rows = _bindings(await self._exec(q))
+        except Exception as e:  # the check then sees the local name alone
+            logger.debug(f"[referent_resolver] label lookup failed: {e}")
+            return ""
+        return " ".join(str((b.get("l") or {}).get("value") or "") for b in rows)
 
     async def _holds_amenity_kind(self, head: str, namespace: str) -> bool:
         """True when some instance is typed with an ontosage class whose name says ``head``.

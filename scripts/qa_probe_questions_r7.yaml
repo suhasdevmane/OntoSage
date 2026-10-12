@@ -1,0 +1,162 @@
+# Round-7 probe questions for scripts/qa_probe.py (--pool scripts/qa_probe_questions_r7.yaml).
+# Written 2026-10-11 by stakeholder group (the 13 groups of
+# tasks/PLAN_2026-10-11_STAKEHOLDER_INTENT_COVERAGE.md), mixing lay and expert wording and every
+# intent shape (now, past period, trend/plot, forecast, where/how to get there, procedure, records,
+# judgement, multi-criteria). A routing and delivery check read by hand, NOT an evaluation set and
+# never evidence about unseen questions. No Paper 3 study task, room, date or criterion is used.
+families:
+  g01_students_academics:
+    - {q: "Is it too noisy to study in room 2.05 right now?"}
+    - {q: "Where's a quiet place to work on floor 3 at the moment?"}
+    - {q: "Which study spaces can I use in the evening?"}
+    - {q: "How warm has office 4.07 been this week?"}
+    - {q: "Is the air fresh in lab 1.06 right now?"}
+    - {q: "Can I print somewhere in the building?"}
+    - {q: "How good is the wifi in the atrium?"}
+    - {q: "Which rooms on floor 2 have the best light for reading right now?"}
+    - {q: "Is there a microwave I can use?"}
+    - {q: "When is the building open at weekends?"}
+    - {q: "Has the temperature in room 3.10 been stable today?"}
+    - {q: "Plot the CO2 in lab 1.06 over the last week"}
+  g02_visitors:
+    - {q: "Where is the reception?"}
+    - {q: "How do I get from the main entrance to room 3.15?"}
+    - {q: "Is there visitor parking?"}
+    - {q: "Where can I get a coffee?"}
+    - {q: "Is there a lift to the fifth floor?"}
+    - {q: "What is this building used for?"}
+    - {q: "Are there toilets on the ground floor?"}
+    - {q: "What time does the building close today?"}
+    - {q: "Is there somewhere to leave my bag?"}
+    - {q: "Where is the nearest first aid point to the atrium?"}
+  g03_accessibility:
+    - {q: "Is there step-free access to floor 4?"}
+    - {q: "Where are the accessible toilets on floor 2?"}
+    - {q: "Is there a hearing loop in any meeting room?"}
+    - {q: "Which entrances have automatic doors?"}
+    - {q: "Where is the quietest space for someone sensitive to noise right now?"}
+    - {q: "Are there accessible parking bays?"}
+    - {q: "What happens in a fire evacuation if I use a wheelchair?"}
+    - {q: "Is the lift working right now?"}
+    - {q: "Which rooms are brightest for someone with low vision?"}
+    - {q: "Is there a prayer or quiet reflection room?"}
+  g04_facilities_estates:
+    - {q: "Which work orders are overdue?"}
+    - {q: "How many faults were reported this month?"}
+    - {q: "When was the chiller last serviced?"}
+    - {q: "Which assets are due for replacement soon?"}
+    - {q: "Who is the contractor for lift maintenance?"}
+    - {q: "Which rooms had the most complaints?"}
+    - {q: "Show the trend of reported faults over the last three months"}
+    - {q: "What condition is the roof in?"}
+    - {q: "Which floors used the most water last week?"}
+    - {q: "Were any doors left open after hours last night?"}
+    - {q: "What is the status of the air handling units right now?"}
+    - {q: "What planned maintenance is coming up?"}
+  g05_bms_me:
+    - {q: "What is the supply air temperature of the floor 3 AHU right now?"}
+    - {q: "Is the heat pump running and how efficient is it?"}
+    - {q: "Compare the chiller's flow and return water temperatures today"}
+    - {q: "Which zones are outside their temperature setpoint?"}
+    - {q: "Show the boiler leaving water temperature over the last 24 hours"}
+    - {q: "Are any AHU filters dirty or overdue?"}
+    - {q: "What's the fan status on floor 5?"}
+    - {q: "Which dampers are fully closed?"}
+    - {q: "How much electricity did the heat pump use yesterday?"}
+    - {q: "Forecast the CO2 in room 2.13 for tomorrow"}
+    - {q: "Are any sensors flatlined or reporting faulty values?"}
+    - {q: "When was the CO2 sensor in room 2.13 last calibrated?"}
+  g06_energy_leadership_finance:
+    - {q: "How much electricity did the building use last month?"}
+    - {q: "What is our carbon footprint this year?"}
+    - {q: "Which floor is the least energy efficient?"}
+    - {q: "How much did we spend on energy last month?"}
+    - {q: "Are we on track for our net zero target?"}
+    - {q: "How much solar energy did we generate this week?"}
+    - {q: "Compare energy use this week with last week"}
+    - {q: "What is the building's energy rating?"}
+    - {q: "What is our biggest energy cost?"}
+    - {q: "How much water did the building use yesterday?"}
+    - {q: "What was the average occupancy of the building this week?"}
+    - {q: "Give me a short summary of building performance for the board"}
+  g07_safety_security:
+    - {q: "Where are the fire assembly points?"}
+    - {q: "When was the last fire drill?"}
+    - {q: "Which fire safety checks are overdue?"}
+    - {q: "Were there any security incidents this month?"}
+    - {q: "Who accessed the server room yesterday?"}
+    - {q: "Is the carbon monoxide level safe in the car park right now?"}
+    - {q: "How many people are in the building right now?"}
+    - {q: "Which doors were held open this week?"}
+    - {q: "What should I do if I smell gas?"}
+    - {q: "Where are the defibrillators?"}
+    - {q: "What are the emergency contact numbers?"}
+    - {q: "Is any area above safe CO2 levels right now?"}
+  g08_cleaning_waste:
+    - {q: "Which bins are nearly full?"}
+    - {q: "How much waste did we produce last week?"}
+    - {q: "Which rooms need cleaning based on how busy they were today?"}
+    - {q: "What is the cleaning schedule for floor 2?"}
+    - {q: "Which toilets are used the most?"}
+    - {q: "How much recycling versus general waste did we produce this month?"}
+    - {q: "When is the next waste collection?"}
+    - {q: "Which kitchens are busiest at lunchtime?"}
+    - {q: "Who is the waste contractor?"}
+    - {q: "Were any spills or hygiene problems reported this week?"}
+  g09_space_timetabling:
+    - {q: "How well used were the seminar rooms this week?"}
+    - {q: "Which rooms are underused?"}
+    - {q: "How many bookings were no-shows last week?"}
+    - {q: "What is the capacity of room 3.15?"}
+    - {q: "Which teaching sessions are in lab 1.06 this week?"}
+    - {q: "What AV equipment is in room 2.13?"}
+    - {q: "Is the projector in room 3.16 working?"}
+    - {q: "Which rooms can hold 30 people and have a projector?"}
+    - {q: "Book room 2.13 for 3pm"}
+    - {q: "How busy is floor 4 on weekdays on average?"}
+    - {q: "Which floor has the most free desks right now?"}
+    - {q: "Which meeting rooms are free tomorrow morning?"}
+  g10_it:
+    - {q: "What's the temperature in the server room right now?"}
+    - {q: "Is the server room humidity within limits?"}
+    - {q: "Has the UPS raised any alarms?"}
+    - {q: "Where are the network cabinets on each floor?"}
+    - {q: "How much power do the comms rooms use?"}
+    - {q: "Are any telecom rooms overheating?"}
+    - {q: "How many sensors are connected and reporting?"}
+    - {q: "Which sensors stopped reporting today?"}
+    - {q: "What data sources does the building have?"}
+    - {q: "When was the building's sensor data last updated?"}
+  g11_researchers:
+    - {q: "What sensors are in room 2.13?"}
+    - {q: "Export the temperature readings for floor 3 yesterday as CSV"}
+    - {q: "Is there a relationship between occupancy and CO2 in room 2.13?"}
+    - {q: "How complete is the humidity data for floor 2 this month?"}
+    - {q: "How often do the noise sensors report?"}
+    - {q: "Show the daily occupancy pattern of the atrium"}
+    - {q: "Which room had the highest average CO2 last week?"}
+    - {q: "How accurate are your temperature forecasts?"}
+    - {q: "Download the energy data for last month"}
+    - {q: "What units are the illuminance readings in?"}
+  g12_assurance:
+    - {q: "Is the building compliant with fire regulations?"}
+    - {q: "When was the last fire risk assessment and what did it find?"}
+    - {q: "Which statutory inspections are overdue?"}
+    - {q: "Show evidence that the lifts have been inspected"}
+    - {q: "Which permits to work are open?"}
+    - {q: "What insurance-relevant incidents happened this year?"}
+    - {q: "Which risks are rated high on the risk register?"}
+    - {q: "Is legionella testing up to date?"}
+    - {q: "Who signed off the last electrical inspection?"}
+    - {q: "What certifications does the building hold?"}
+  g13_architects:
+    - {q: "What is the total floor area of the building?"}
+    - {q: "How many rooms are there on each floor?"}
+    - {q: "What is the largest room in the building?"}
+    - {q: "When was the building built?"}
+    - {q: "What is the facade made of?"}
+    - {q: "How is the building ventilated?"}
+    - {q: "Which rooms get the most daylight?"}
+    - {q: "What is the floor-to-ceiling height?"}
+    - {q: "How many floors does the building have?"}
+    - {q: "Where are the plant rooms?"}

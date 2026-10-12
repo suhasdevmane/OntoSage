@@ -53,6 +53,8 @@ def _rebuild(building_id: str) -> Dict[str, Any]:
     _attach_bands(points)
     _apply_declared_room_ceilings(points)
     _drop_correlated_series(points)
+    _apply_occupancy_model(points)
+    _apply_generation_shapes(points)
 
     out = _REPO / "input" / f"{building_id}_narrow_publish_map.json"
     before: Dict[str, Any] = {}
@@ -72,6 +74,46 @@ def _rebuild(building_id: str) -> Dict[str, Any]:
     Path(tmp).write_text(json.dumps(points, indent=2, sort_keys=True), encoding="utf-8")
     os.replace(tmp, out)
     return {"points": len(points), "tables": len(tables), "added": added, "written": True}
+
+
+def _apply_occupancy_model(points: Dict[str, Any]) -> None:
+    """Keep the generated occupancy coherent across rebuilds (BUG-1540).
+
+    `scripts/derive_occupancy_model.py` owns the rule (floor counters as the sum of their rooms,
+    presence flags from their room's count, room ceilings by space kind). A rebuild that did not
+    apply it discarded it: two TTL uploads on 2026-10-10 each rewrote the map and the publisher
+    went back to six floor counters drawn independently of the 200 rooms under them.
+    """
+    try:
+        from derive_occupancy_model import apply_occupancy_model, fetch_place_rows  # type: ignore
+
+        stats = apply_occupancy_model(points, fetch_place_rows(_endpoint()))
+        logger.info(
+            f"[publisher_map] occupancy model: {stats['floors']} floor counter(s) summed from "
+            f"their rooms, {stats['flags']} presence flag(s) derived, {stats['bands']} room "
+            f"ceiling(s) set"
+        )
+    except Exception as exc:  # the map is still a correct map without it, only less coherent
+        logger.warning(f"[publisher_map] occupancy model not applied: {exc}")
+
+
+def _apply_generation_shapes(points: Dict[str, Any]) -> None:
+    """Generated PV output follows the sun, not an energy meter's day (BUG-1580).
+
+    The rule lives beside the generator (`scripts/derive_generation_shapes.py`), as the occupancy
+    model's does: this service decides nothing about a point's shape, it only calls the rule on
+    every rebuild so the next rebuild cannot discard it (BUG-1540's lesson).
+    """
+    try:
+        from derive_generation_shapes import apply_generation_shapes  # type: ignore
+
+        stats = apply_generation_shapes(points, _endpoint())
+        logger.info(
+            f"[publisher_map] {stats['pv']} PV generation point(s) given the solar shape, "
+            f"{stats.get('water', 0)} building water meter(s) the interval-volume shape"
+        )
+    except Exception as exc:  # the map is still a correct map without it
+        logger.warning(f"[publisher_map] PV shapes not applied: {exc}")
 
 
 #: A band that predates this stamp. NOT a date, on purpose: on 2026-09-30 an audit found

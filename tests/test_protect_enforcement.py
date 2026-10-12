@@ -173,6 +173,9 @@ def test_shadow_sql_fetch_proceeds_unchanged(monkeypatch):
     class _Stub:
         sql_agent = _RecordingSQLAgent()
         smart_cache = None
+        # BUG-1487: the node now offers an empty own-sensor read a zone second chance; with no
+        # sensor_binding on the bus it returns the result untouched, so the real method is safe.
+        _zone_series_second_chance = WorkflowOrchestrator._zone_series_second_chance
 
         def _build_sensor_metadata_from_bindings(self, bindings):
             return {}

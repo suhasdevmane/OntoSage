@@ -138,7 +138,9 @@ def test_a_survey_of_the_building_keeps_its_plain_ranking():
     is about the building, not about where its asker may sit."""
     text, _ = _render(SURVEY, "noise", [31.0, 33.0, 35.0], [("Office",)] * 3)
     assert "Check you can use it first" not in text
-    assert "Best match: Room 0" in text
+    # One measured criterion is a superlative and leads with the reading (BUG-1507); the room
+    # that reads best is still first.
+    assert text.startswith("**Room 0 has the lowest noise")
 
 
 def test_an_open_space_carries_no_access_line():

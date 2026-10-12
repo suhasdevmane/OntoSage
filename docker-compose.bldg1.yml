@@ -102,6 +102,15 @@ services:
       - BYPASS_MODEL_ACCESS_CONTROL=true   # one shared model: every signed-in user must see it
       - DEFAULT_MODELS=ontobot-pipeline     # preselect the OntoSage pipeline in new chats
       - ENABLE_FORWARD_USER_INFO_HEADERS=true  # send X-OpenWebUI-User-* so OntoSage can apply per-user RBAC
+      # BUG-1484 / Paper 3 study: Open WebUI's background tasks (titles, follow-up suggestions,
+      # tags, autocomplete) were sent to the only model -- the OntoSage pipeline -- as if a person
+      # had asked them ("### Task: Suggest 3-5 relevant follow-up questions..."): a full pipeline
+      # turn between every answer, stored in turn_memory, and suggestion chips that could tell a
+      # participant what to ask. Off. A chat is then titled with its first message.
+      - ENABLE_TITLE_GENERATION=false
+      - ENABLE_FOLLOW_UP_GENERATION=false
+      - ENABLE_TAGS_GENERATION=false
+      - ENABLE_AUTOCOMPLETE_GENERATION=false
     networks:
       - ontobot-agentic
     restart: unless-stopped

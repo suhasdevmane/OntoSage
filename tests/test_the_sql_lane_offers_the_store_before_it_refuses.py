@@ -42,7 +42,7 @@ def registry(monkeypatch):
 async def test_an_aggregate_answer_is_returned_instead_of_the_refusal(registry, monkeypatch):
     seen = {}
 
-    async def fake_lane(self, uuids, question, storage_map, start, end, metadata, *limits):
+    async def fake_lane(self, uuids, question, storage_map, start, end, metadata, *limits, **kw):
         seen.update(n=len(uuids), question=question, start=start, end=end)
         return {
             "success": True,
@@ -67,7 +67,7 @@ async def test_an_aggregate_answer_is_returned_instead_of_the_refusal(registry, 
 
 
 async def test_when_the_aggregate_lane_declines_the_old_refusal_stands(registry, monkeypatch):
-    async def steps_aside(self, *args):
+    async def steps_aside(self, *args, **kw):
         return None
 
     monkeypatch.setattr(SQLAgent, "_try_aggregate_lane", steps_aside)

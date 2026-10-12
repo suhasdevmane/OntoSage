@@ -33,7 +33,7 @@ from orchestrator.services.deliberation.operations import (
     fmt,
     with_unit,
 )
-from orchestrator.services.deliberation.plan_executor import ExecutionOutcome
+from orchestrator.services.deliberation.plan_executor import ExecutionOutcome, free_phrase
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -561,6 +561,12 @@ def _facet_lines(dossier: EvidenceDossier, top: List[DossierRanked]) -> List[str
     return lines
 
 
+#: "free", "available", "unbooked" as AVAILABILITY -- never "step-free", "hands-free" or "free of".
+_ASKS_FREE_RE = re.compile(
+    r"(?<![-\w])(?:free|available|unbooked|vacant)\b(?!\s+of\b)|\bnot\s+booked\b", re.IGNORECASE
+)
+
+
 def _facet_footer(dossier: EvidenceDossier) -> List[str]:
     """Which criteria came from records and which from sensors; what could not be checked."""
     lines: List[str] = []
@@ -579,7 +585,7 @@ def _facet_footer(dossier: EvidenceDossier) -> List[str]:
     if free_checks:
         # availability the deterministic fold checked (v1's path) is a bookings criterion too
         words = sources.setdefault("bookings", [])
-        phrase = f"free for the next {free_checks[0].window_hours:g} h"
+        phrase = free_phrase(free_checks[0])
         if phrase not in words:
             words.append(phrase)
     if sources:
@@ -594,6 +600,18 @@ def _facet_footer(dossier: EvidenceDossier) -> List[str]:
             + " ".join(n[:1].upper() + n[1:].rstrip(".") + "." for n in dossier.not_assessable)
             + " The ranking above does not use it."
         )
+    # AVAILABILITY ASKED AND NEVER READ (BUG-1615). "Which quiet meeting rooms are free tomorrow
+    # afternoon?" checked kind and noise profile, read no booking, and opened "these spaces each
+    # meet everything you asked for that could be checked" with nothing under "Not checked".
+    event_checked = any(
+        str(c.facet).startswith("event:") and c.checked for c in dossier.facet_criteria
+    )
+    if _ASKS_FREE_RE.search(dossier.raw_query or "") and not free_checks and not event_checked:
+        lines.append(
+            "**Not checked:** whether these spaces are free at the time you asked — no booking was "
+            "read for this answer. Ask which rooms are free at that time on its own and the "
+            "booking records answer it."
+        )
     if dossier.facet_notes:
         lines.append(
             "**About the recorded criteria:** "
@@ -602,8 +620,143 @@ def _facet_footer(dossier: EvidenceDossier) -> List[str]:
     return lines
 
 
+def _raw_leader(dossier: EvidenceDossier) -> str:
+    """The lead when a score tie is broken by the asked quantity's own readings, or "".
+
+    BUG-1496 (Paper 3 development form S4-D, 2026-10-10): "which of rooms X and Y was warmer"
+    read 29.955 and 28.925, both above the 20-26 band temperature is weighed against, so both
+    scored 1 and the answer said "the order below is not a preference between them" -- while
+    the scorer had ordered them by those very readings (WB-13) and the question asked exactly
+    which reads higher. Only for a maximise/minimise ask on the plan's FIRST criterion, which is
+    the one the tie-break uses; an unbounded above/below FILTER stays a tie (BUG-868).
+    """
+    cons = list(dossier.constraints or [])
+    first = [c for c in cons if c.hardness == "hard"] + [c for c in cons if c.hardness != "hard"]
+    if not first or len(dossier.ranked) < 2:
+        return ""
+    direction = str(first[0].direction).lower()
+    if direction not in ("maximize", "minimize"):
+        return ""
+    modality = first[0].modality
+    a, b = dossier.ranked[0], dossier.ranked[1]
+    va, vb = a.criteria.get(modality), b.criteria.get(modality)
+    if va is None or vb is None or va == vb or (va > vb) != (direction == "maximize"):
+        return ""
+    word = "higher" if direction == "maximize" else "lower"
+    basis = next(
+        (e.basis for e in dossier.evidence if e.space == a.space and e.modality == modality), ""
+    )
+    return (
+        f"**{a.space} read the {word} {modality}: {va:g}, against {vb:g} for {b.space}**"
+        + (f" ({basis})" if basis else "")
+        + "."
+    )
+
+
+def _modality_unit(modality: str) -> str:
+    """The declared display unit of a modality ("dB", "ppm"), or "" when none is declared."""
+    try:
+        from orchestrator.services.deliberation.coverage_audit import load_modalities
+        from orchestrator.services.modality_units import display_unit
+
+        for spec in load_modalities(None):
+            if spec.name == modality:
+                return display_unit((spec.sat or {}).get("unit")) or ""
+    except Exception:  # a missing unit is said as no unit, never guessed
+        return ""
+    return ""
+
+
+def _superlative_lead(dossier: EvidenceDossier) -> str:
+    """The lead for a plain superlative over ONE measured quantity, or "" (BUG-1507).
+
+    "Which room had the highest noise level yesterday?" was answered "Best match: Room 3.57
+    (score 0.5438 out of 1, where 1 fits everything you asked for)" with no unit: a preference
+    score where the reader asked for a fact. With exactly one sensed criterion, maximised or
+    minimised, and no record criterion, the answer IS the extreme reading, so it is stated as one.
+    """
+    cons = list(dossier.constraints or [])
+    if len(cons) != 1 or dossier.facet_criteria or not dossier.ranked:
+        return ""
+    direction = str(cons[0].direction).lower()
+    if direction not in ("maximize", "minimize"):
+        return ""
+    modality = cons[0].modality
+    best = dossier.ranked[0]
+    value = best.criteria.get(modality)
+    if value is None or best.unverified:
+        return ""
+    basis = next(
+        (e.basis for e in dossier.evidence if e.space == best.space and e.modality == modality), ""
+    )
+    try:
+        from orchestrator.services.aggregate_lane import display_name
+
+        name = display_name(modality) or modality
+    except Exception:
+        name = modality
+    unit = _modality_unit(modality)
+    u = f" {unit}" if unit else ""
+    word = "highest" if direction == "maximize" else "lowest"
+    past = "mean over" in basis
+    verb = f"had the {word} average" if past else f"has the {word}"
+    lead = f"**{best.space} {verb} {name}: {value:g}{u}**" + (f" ({basis})" if basis else "") + "."
+    runners = [
+        f"{s.space} ({s.criteria.get(modality):g}{u})"
+        for s in dossier.ranked[1:3]
+        if s.criteria.get(modality) is not None
+    ]
+    if runners:
+        lead += " Next: " + "; ".join(runners) + "."
+    return lead
+
+
+def _field(obj: Any, name: str) -> Any:
+    """A dossier field from the model or from its dict form on the bus."""
+    return obj.get(name) if isinstance(obj, dict) else getattr(obj, name, None)
+
+
+def nothing_met(dossier: Any) -> bool:
+    """True when the plan is facet criteria only and NO space met any of them (BUG-1607).
+
+    "Which meeting rooms are free this afternoon?" compiled one kind criterion that 0 of 195
+    spaces met, and the answer still ranked three of them -- "Primary: Room 0.01 — Main
+    Reception", each marked "not what you asked for". A ranking in which every space scores
+    nothing is not a recommendation. Reads the model or its dict form, so the renderer and the
+    recheck and backup blocks agree.
+    """
+    ranked = list(_field(dossier, "ranked") or [])
+    criteria = [
+        c for c in (_field(dossier, "facet_criteria") or []) if _field(c, "checked") is not False
+    ]
+    if not ranked or not criteria or (_field(dossier, "constraints") or []):
+        return False
+    return all(
+        round(float(_field(s, "total") or 0.0), 6) == 0.0 and not (_field(s, "unverified") or [])
+        for s in ranked
+    )
+
+
 def _render_facet_answer(dossier: EvidenceDossier, top_k: int) -> str:
     """The answer for a plan with facet criteria (v2). Every number comes from the dossier."""
+    if nothing_met(dossier):
+        asked = [c.phrase or c.label for c in dossier.facet_criteria if c.checked]
+        asked = [a for a in asked if a]
+        lines = [
+            "**No space met what you asked for**"
+            + (f" ({_join(asked)})" if asked else "")
+            + f": none of the {len(dossier.ranked)} spaces considered qualifies, so there is no "
+            "recommendation."
+        ]
+        for note in dossier.guidance_notes[:2]:
+            lines.append("")
+            lines.append(str(note))
+        lines.append("")
+        lines.extend(_facet_footer(dossier))
+        if dossier.assumptions:
+            lines.append("**Assumptions:** " + "; ".join(a.text for a in dossier.assumptions) + ".")
+        lines.append(f"**Coverage:** {dossier.coverage_summary}.")
+        return "\n".join(lines)
     if not dossier.ranked:
         lines = ["I couldn't rank any spaces for this request."]
         reasons: List[str] = []
@@ -637,12 +790,15 @@ def _render_facet_answer(dossier: EvidenceDossier, top_k: int) -> str:
         and round(dossier.ranked[1].total or 0.0, 6) == round(best.total or 0.0, 6)
     )
     lines: List[str] = []
+    raw_lead = _raw_leader(dossier) if (flat or tied_top) else ""
     if best.unverified:
         lines.append(
             f"**No space is confirmed on everything you asked for.** The closest is "
             f"**{best.space}** (floor {best.floor}) — {_join(best.unverified)} could not be "
             "checked for it."
         )
+    elif raw_lead:
+        lines.append(raw_lead)
     elif flat or tied_top:
         if (best.total or 0.0) >= 1.0:
             lines.append(
@@ -696,8 +852,8 @@ def _render_facet_answer(dossier: EvidenceDossier, top_k: int) -> str:
     if free_checks:
         n_free = sum(1 for ec in free_checks if ec.free)
         lines.append(
-            f"Availability: {n_free} of {len(free_checks)} candidate(s) free for the next "
-            f"{free_checks[0].window_hours:g}h (booked spaces are listed under exclusions)."
+            f"Availability: {n_free} of {len(free_checks)} candidate(s) "
+            f"{free_phrase(free_checks[0], unit_sep='')} (booked spaces are listed under exclusions)."
         )
     if dossier.applied_policies:
         lines.append(
@@ -874,7 +1030,7 @@ def _filter_texts(dossier: EvidenceDossier) -> List[str]:
             out.append(f"{c.label} {value}" if value is not None else c.label)
     free_checks = [ec for ec in dossier.event_checks if ec.kind == "free_window"]
     if free_checks:
-        out.append(f"free for the next {free_checks[0].window_hours:g} h")
+        out.append(free_phrase(free_checks[0]))
     return list(dict.fromkeys(out))
 
 
@@ -1543,7 +1699,13 @@ def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
     _flat = all((s.total or 0.0) <= 0.0 for s in dossier.ranked) or (
         len(dossier.ranked) > 1 and len(_totals) == 1
     )
-    if _flat:
+    _raw_lead = _raw_leader(dossier) if _flat else ""
+    _sup_lead = "" if _flat else _superlative_lead(dossier)
+    if _raw_lead:
+        lines.append(_raw_lead)
+    elif _sup_lead:
+        lines.append(_sup_lead)
+    elif _flat:
         lines.append(
             "**The readings don't separate these spaces.** On what you asked for, every "
             "space I could measure scores the same, so picking a best one would be "
@@ -1604,8 +1766,8 @@ def render_answer(dossier: EvidenceDossier, top_k: int = 3) -> str:
     if free_checks:
         n_free = sum(1 for ec in free_checks if ec.free)
         lines.append(
-            f"Availability: {n_free} of {len(free_checks)} candidate(s) free for the next "
-            f"{free_checks[0].window_hours:g}h (booked spaces are listed under exclusions)."
+            f"Availability: {n_free} of {len(free_checks)} candidate(s) "
+            f"{free_phrase(free_checks[0], unit_sep='')} (booked spaces are listed under exclusions)."
         )
     if dossier.applied_policies:
         # THE POLICY'S NAME IS NOT THE READER'S BUSINESS, AND ITS MECHANISM IS NOT EITHER.

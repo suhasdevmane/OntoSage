@@ -18,13 +18,6 @@
 @prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 @prefix ontosage: <http://ontosage.org/capabilities#> .
 
-bldg:amenity_status_13 a ontosage:AssetStatus ;
-    ontosage:statusOf bldg:Amenity_StudyArea_Floor0 ;
-    ontosage:statusValue "out_of_service" ;
-    ontosage:statusSource "estates_helpdesk" ;
-    ontosage:statusObservedAt "2026-09-06T10:03:43"^^xsd:dateTime ;
-    ontosage:statusReason "scheduled servicing" ;
-    ontosage:assistanceContact "Estates helpdesk, ext 1234"  .
 bldg:amenity_status_14 a ontosage:AssetStatus ;
     ontosage:statusOf bldg:Amenity_StudyArea_Floor1 ;
     ontosage:statusValue "operational" ;

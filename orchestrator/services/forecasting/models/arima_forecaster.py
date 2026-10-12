@@ -91,6 +91,19 @@ class ARIMAForecaster:
         test_pred = model.predict(n_periods=n_test)
         metrics = compute_metrics(test_values, test_pred, self.name)
 
+        # THE FUTURE STARTS AFTER THE LAST OBSERVATION (BUG-1538). The model was fitted to the
+        # training span only, so predicting from it began where TRAINING ended, while the stamps
+        # below are built from the end of the WHOLE series: hold-out values relabelled as the
+        # future. The hold-out is appended to the fitted model (same orders, no re-search).
+        try:
+            model.update(test_values)
+        except (
+            Exception
+        ) as e:  # pragma: no cover - the orders were found; a failed update is logged
+            logger.warning(
+                f"[arima] hold-out update failed ({e}); forecasting from the training fit"
+            )
+
         # Forecast future with 95% CI (we'll compute the others manually)
         fc, ci_95 = model.predict(
             n_periods=n_steps,

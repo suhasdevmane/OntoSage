@@ -155,6 +155,12 @@ class EventCriterion(BaseModel):
 
     kind: str = Field(..., description="free_window | low_booking_pressure")
     hours: float = Field(2.0, description="Window length for free_window")
+    # CAVEAT-1617: a NAMED period ("tomorrow morning", "on Friday") is checked as itself, not
+    # as the next N hours from now. Store-clock (UTC) bounds, "%Y-%m-%d %H:%M:%S", and the
+    # reader's phrase for it. None/"" for a window that starts now.
+    start: Optional[str] = Field(None, description="UTC start of a named free_window period")
+    end: Optional[str] = Field(None, description="UTC end of a named free_window period")
+    period: str = Field("", description="The named period as the reader said it")
 
 
 class FacetOperator(str, Enum):

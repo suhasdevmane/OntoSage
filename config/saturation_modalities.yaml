@@ -254,6 +254,10 @@ modalities:
   water_usage:
     brick_classes:
       - Water_Usage_Sensor
+      # The building's main water meter: litres drawn per interval, asserted only as
+      # Building_Water_Meter, so the explicit-class lookup found no modality for it and the
+      # building's water use had no measurand (2026-10-11, TODO-1633).
+      - Building_Water_Meter
     sat:
       brick_class: Water_Usage_Sensor
       table: waterflow_data
@@ -620,5 +624,8 @@ modalities:
     sat:
       brick_class: Water_Flow_Sensor
       table: waterflow_data
-      unit: L/s
+      # L/min, not L/s (BUG-1557): the points are generated in a 0-50 band, the building's main
+      # flow sensor declares L-PER-MIN over the same band, and read as L/s the integrated daily
+      # volume came out at 12,661 m3 -- a river through a building, sixty times too large.
+      unit: L/min
       scope: floor

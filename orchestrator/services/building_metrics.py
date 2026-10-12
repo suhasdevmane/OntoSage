@@ -33,10 +33,10 @@ logger = get_logger(__name__)
 #: to announce "8 unique CO2 sensors". The graph holds 280 (BUG-431). Two qualifier words
 #: are allowed, which covers every Brick class name shape this repo has seen.
 _INVENTORY_RE = re.compile(
-    r"(how many\s+(?:[A-Za-z0-9][\w-]*\s+){0,2}(sensors?|points?|devices?|cameras?|meters?"
+    r"(how many\s+(?:[A-Za-z0-9][\w.-]*\s+){0,2}(sensors?|points?|devices?|cameras?|meters?"
     r"|floors?|rooms?)"
     r"|(sensor|point|device)\s+count"
-    r"|number of\s+(?:[A-Za-z0-9][\w-]*\s+){0,2}(sensors?|points?|devices?|cameras?"
+    r"|number of\s+(?:[A-Za-z0-9][\w.-]*\s+){0,2}(sensors?|points?|devices?|cameras?"
     r"|floors?|rooms?)"
     r"|total\s+(number of\s+)?(sensors?|points?|devices?|floors?|rooms?)"
     r"|how (big|large|tall) is the building"
@@ -56,7 +56,12 @@ _CONDITION_QUALIFIER_RE = re.compile(
     re.IGNORECASE,
 )
 # A specific floor/zone/room scope → NOT building-wide; let the normal path handle it.
-_FLOOR_SCOPE_RE = re.compile(r"(floor\s*\d|\bzone\b|\broom\b|\d{1,2}\.\d{1,2})", re.IGNORECASE)
+# A room id is a dotted number standing alone: "PM2.5" is a pollutant, not room 2.5 (BUG-1586),
+# and reading it as one sent "how many PM2.5 sensors does the building have?" to a lane that
+# answered "one".
+_FLOOR_SCOPE_RE = re.compile(
+    r"(floor\s*\d|\bzone\b|\broom\b|(?<![A-Za-z\d.])\d{1,2}\.\d{1,2}(?![\d.]))", re.IGNORECASE
+)
 
 
 def is_inventory_count_question(query: str) -> bool:
@@ -90,7 +95,7 @@ def is_inventory_count_question(query: str) -> bool:
 
 #: "how many CO2 sensors" carries a class qualifier; "how many sensors" does not.
 _CLASS_QUALIFIED_RE = re.compile(
-    r"\b(?:how many|number of)\s+([A-Za-z0-9][\w-]*(?:\s+[A-Za-z0-9][\w-]*)?)\s+"
+    r"\b(?:how many|number of)\s+([A-Za-z0-9][\w.-]*(?:\s+[A-Za-z0-9][\w.-]*)?)\s+"
     r"(sensors?|points?|devices?|cameras?|meters?)\b",
     re.IGNORECASE,
 )
@@ -627,7 +632,39 @@ def record_snapshot_figures(snap: BuildingMetricsSnapshot) -> None:
         logger.debug(f"[building_metrics] evidence recording skipped: {e}")
 
 
-def render_metrics_block(snap: BuildingMetricsSnapshot, building_name: str) -> str:
+def asked_figure_lead(snap: BuildingMetricsSnapshot, building_name: str, question: str) -> str:
+    """The one figure a count question asked for, as a first line, or "" (BUG-1595).
+
+    "How many floors does the building have?" was answered with seven figures, the floors fifth
+    and stated as "8" (six storeys plus a rooftop and a parking level). The figure asked for comes
+    first, in the words of the question; the full block stays beneath it.
+    """
+    q = (question or "").lower()
+    if re.search(r"\bhow many\s+(?:floors|storeys|stories|levels)\b|\bnumber of floors\b", q):
+        if snap.floor_count is None:
+            return ""
+        storeys = sum(n for k, n in snap.floor_kinds if k in ("Floor", "Storey"))
+        extra = snap.floor_count - storeys if storeys else 0
+        if storeys and extra > 0:
+            return (
+                f"**{building_name} has {storeys} storeys.** Its model also counts "
+                f"{extra} other level{'s' if extra != 1 else ''} (such as a rooftop or parking "
+                f"level) as floors, {snap.floor_count} in all."
+            )
+        return f"**{building_name} has {snap.floor_count} floors.**"
+    if re.search(r"\bhow many\s+rooms\b|\bnumber of rooms\b", q) and snap.room_count is not None:
+        return f"**{building_name} has {snap.room_count:,} rooms** in its model."
+    if (
+        re.search(r"\bhow many\s+sensors\b|\bnumber of sensors\b", q)
+        and snap.total_sensors is not None
+    ):
+        return f"**{snap.total_sensors:,} sensors are declared** in {building_name}'s model."
+    return ""
+
+
+def render_metrics_block(
+    snap: BuildingMetricsSnapshot, building_name: str, question: str = ""
+) -> str:
     """Render the snapshot as an authoritative, human-readable markdown block.
 
     Every reader sees this block, so it is worded for someone who has never heard of an
@@ -638,7 +675,8 @@ def render_metrics_block(snap: BuildingMetricsSnapshot, building_name: str) -> s
     # evidence" is true of the RENDER and not only of the fetch. A caller that assembles a
     # snapshot itself still gets a bindable answer, and a repeat record overwrites.
     record_snapshot_figures(snap)
-    lines = [
+    lead = asked_figure_lead(snap, building_name, question)
+    lines = ([lead, ""] if lead else []) + [
         f"**Live building figures for {building_name}** "
         "(computed now from the building's own model):"
     ]

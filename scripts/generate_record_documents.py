@@ -159,6 +159,17 @@ def contracts() -> str:
             "Notice served",
             "Facilities",
         ],
+        # BUG-1531: "Who services the chillers?" had no answer although the cost lines carry HVAC
+        # planned and reactive maintenance and the warranty register names the chiller's supplier.
+        [
+            "CON-2026-007",
+            "Chillers, heat pumps and air handling units — planned maintenance and reactive callout",
+            "Coldstream Refrigeration",
+            d(-190),
+            d(540),
+            "Active",
+            "Estates Mechanical",
+        ],
         [
             "CON-2025-011",
             "Fire alarm and emergency lighting servicing",

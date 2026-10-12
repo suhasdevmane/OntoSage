@@ -125,3 +125,25 @@ def test_the_reason_it_is_disclosure_and_not_ranking_is_recorded():
     src = inspect.getsource(assumed_place_note)
     assert "Recency is a defensible reading" in src or "recency" in src.lower()
     assert "BUG-943" in src
+
+
+@pytest.mark.parametrize(
+    "original, rewritten, want",
+    [
+        # "it" was the dispenser in the room, not the room (2026-10-11)
+        (
+            "is it working?",
+            "Is the drinking water dispenser in Room 3.17 working?",
+            'Taking "it" as the drinking water dispenser in room 3.17.',
+        ),
+        # "there" is always the place
+        (
+            "and the humidity there?",
+            "What is the humidity in Room 5.01?",
+            'Taking "there" as room 5.01.',
+        ),
+        ("is it stuffy?", "Is Room 5.01 stuffy?", 'Taking "it" as room 5.01.'),
+    ],
+)
+def test_it_names_the_thing_when_it_is_a_thing_in_the_place(original, rewritten, want):
+    assert assumed_place_note(original, rewritten) == want

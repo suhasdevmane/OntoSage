@@ -51,6 +51,7 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
 import random
 from datetime import datetime
 from typing import Dict, Optional, Tuple
@@ -70,6 +71,8 @@ CADENCE_S: Dict[str, int] = {
     "contact": 300,
     "runtime_h": 600,
     "kwh": 900,
+    "pv_kw": 900,
+    "water_l": 900,
     "generic": 300,
 }
 _DEFAULT_CADENCE_S = 300
@@ -152,7 +155,57 @@ def centre(value_col: str, lo: float, hi: float, when: datetime, phase: float) -
     # Trough overnight, peak around 13:00.
     cycle = (math.sin((hours - 7.0) / 24.0 * 2 * math.pi) + 1) / 2
     base = lo + (hi - lo) * (0.5 * (1 - swing) + swing * cycle)
+    if value_col == "occupancy" and when.weekday() >= 5:
+        # A weekend building is mostly empty (BUG-1506): Saturday at 13:00 read as full as a
+        # Tuesday. The waste stream's occupancy factor already says the same (0.15).
+        base = lo + (base - lo) * 0.15
     return base + (hi - lo) * 0.08 * phase
+
+
+#: PV generation (BUG-1580). The arrays' power points were shaped like an energy meter -- a mild
+#: daytime bump around a mid-range centre -- so a "solar" array reported 1.4 kW at 02:00. A PV
+#: array produces nothing at night and follows the sun by day, so its shape is the daylight arc
+#: of the building's own latitude and date, scaled by season and by a cloud factor that is fixed
+#: per day (a deterministic hash, so a backfill and the live publisher agree on the same day).
+_PV_LATITUDE_DEG = float(os.environ.get("BUILDING_LATITUDE", "51.5"))
+_PV_TZ = os.environ.get("BUILDING_TIMEZONE", "Europe/London")
+
+
+def _local(when: datetime) -> datetime:
+    """``when`` (naive UTC, the stores' clock) as naive building-local time."""
+    try:
+        from zoneinfo import ZoneInfo
+
+        return (
+            when.replace(tzinfo=ZoneInfo("UTC")).astimezone(ZoneInfo(_PV_TZ)).replace(tzinfo=None)
+        )
+    except Exception:  # no zone database: the UTC clock is a near, honest stand-in
+        return when
+
+
+def solar_fraction(when: datetime) -> float:
+    """0..1: how much of its peak a PV array produces at ``when`` (naive UTC). 0 at night."""
+    local = _local(when)
+    doy = local.timetuple().tm_yday
+    # Day length and solar declination for the latitude (standard sunrise equation).
+    decl = math.radians(23.44) * math.sin(2 * math.pi * (284 + doy) / 365.0)
+    lat = math.radians(_PV_LATITUDE_DEG)
+    cos_h = -math.tan(lat) * math.tan(decl)
+    cos_h = max(-1.0, min(1.0, cos_h))
+    daylen = 2 * math.degrees(math.acos(cos_h)) / 15.0
+    # Solar noon on the local clock: 12:00 plus the zone's offset from UTC at this moment.
+    offset_h = (local - when).total_seconds() / 3600.0
+    noon = 12.0 + offset_h
+    hours = local.hour + local.minute / 60.0
+    rise, set_ = noon - daylen / 2, noon + daylen / 2
+    if not (rise < hours < set_):
+        return 0.0
+    arc = math.sin(math.pi * (hours - rise) / daylen)
+    # Peak elevation sets the season's ceiling: low winter sun gives a fraction of June's output.
+    elevation = math.sin(math.pi / 2 - lat + decl)
+    digest = hashlib.sha256(local.strftime("%Y-%m-%d").encode("utf-8")).digest()
+    cloud = 0.35 + 0.65 * (digest[0] / 255.0)
+    return max(0.0, min(1.0, (arc**1.3) * max(0.0, elevation) * cloud))
 
 
 def flip_rate_for(value_col: str, step_s: Optional[float] = None) -> float:
@@ -196,6 +249,25 @@ def on_probability(value_col: str, lo: float, hi: float, when: datetime, phase: 
     return min(1.0, max(0.0, p))
 
 
+#: Building water use per 15-minute interval: a small overnight base (cisterns, a leak allowance),
+#: a cleaning bump before opening, the working day peaking over lunch, and a weekend at about a
+#: quarter of a weekday. As a fraction of the point's declared maximum per interval.
+_WATER_HOURLY = (
+    0.05, 0.04, 0.04, 0.04, 0.05, 0.08, 0.14, 0.22, 0.32, 0.36, 0.38, 0.42,
+    0.50, 0.46, 0.38, 0.35, 0.33, 0.30, 0.22, 0.14, 0.10, 0.08, 0.06, 0.05,
+)  # fmt: skip
+_WATER_DAY_FACTOR = (1.0, 1.0, 1.0, 1.0, 0.95, 0.28, 0.22)
+
+
+def water_fraction(when: datetime) -> float:
+    """Expected share of the maximum interval volume at this local time (deterministic)."""
+    local = _local(when)
+    h = local.hour + local.minute / 60.0
+    i = int(h) % 24
+    frac = _WATER_HOURLY[i] + (_WATER_HOURLY[(i + 1) % 24] - _WATER_HOURLY[i]) * (h - int(h))
+    return frac * _WATER_DAY_FACTOR[local.weekday()]
+
+
 def next_value(
     uuid: str,
     value_col: str,
@@ -217,6 +289,24 @@ def next_value(
     when = when or datetime.utcnow()
     phase = _phase(uuid)
     span = float(hi) - float(lo)
+
+    if value_col == "pv_kw":
+        # The sun, not a mean-reverting centre: zero at night exactly, and a small per-reading
+        # flicker by day (a passing cloud), never a negative output.
+        frac = solar_fraction(when)
+        value = 0.0
+        if frac > 0:
+            value = float(hi) * frac * (1.0 + random.gauss(0, 0.03))  # nosec B311 - synthetic
+        value = max(0.0, min(float(hi), value))
+        _LAST_VALUE[uuid] = value
+        return (int(round(value)) if dec == 0 else round(value, dec)), value
+
+    if value_col == "water_l":
+        # Volume drawn in the interval, following the working week; never negative.
+        value = float(hi) * water_fraction(when) * (1.0 + random.gauss(0, 0.08))  # nosec B311
+        value = max(float(lo), min(float(hi), value))
+        _LAST_VALUE[uuid] = value
+        return (int(round(value)) if dec == 0 else round(value, dec)), value
 
     if dec == 0 and span <= 1.0:
         p_on = on_probability(value_col, lo, hi, when, phase)

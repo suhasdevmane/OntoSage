@@ -89,7 +89,7 @@ def waste_series(waste_doc):
         conn.calls.clear()
         publisher.publish_waste(conn, now_dt=when)
         for _sql, rows in conn.calls:
-            for uuid, value in rows:
+            for uuid, _when, value in rows:  # (uuid, timestamp, value)
                 out.setdefault(uuid, []).append(float(value))
         when += timedelta(minutes=5)
     return out
@@ -248,7 +248,7 @@ def test_damper_position_tracks_the_fan_it_belongs_to():
         conn.calls.clear()
         publisher.publish_plant(conn)
         for _sql, rows in conn.calls:
-            for uuid, value in rows:
+            for uuid, _when, value in rows:  # (uuid, timestamp, value)
                 seen.setdefault(uuid, []).append(float(value))
 
     for name, damper_id, fan_id in pairs:

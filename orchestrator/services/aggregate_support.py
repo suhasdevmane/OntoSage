@@ -21,7 +21,7 @@ conflict and are reported, not resolved: nothing here can tell which is right.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 _BRACKET_UNIT = re.compile(r"\[([^\[\]]{1,16})\]\s*$")
 _STATUS_WORDS = re.compile(
@@ -144,8 +144,11 @@ def names_a_period(question: str) -> bool:
 #: A SPECIFIC place the question names. The noun must follow a spatial preposition, so "which
 #: zones show elevated CO2" (a grouping) is not read as naming one, while "in the atrium" is.
 _NAMED_PLACE = re.compile(
-    r"\b(?:floor|level|storey)\s*\d+\b"
-    r"|\b(?:room|zone|space)\s*\d+(?:\.\d+)?\b"
+    r"\b(?:floor|level|storey)\s*\d+\b" r"|\b(?:room|zone|space)\s*\d+(?:\.\d+)?\b"
+    # A room named by its KIND and id (BUG-1565): "is lab 4.20 stuffy right now?" read as a
+    # building question, so the lane summarised the building over one lab's sensor and the
+    # relevance gate rightly deleted the answer. 1 of 4,060 bank questions moves.
+    r"|\b(?:lab|laboratory|office|classroom|studio|suite|rm)\s*\d+(?:\.\d+)?\b"
     r"|\b(?:in|at|on|inside|within|near|outside)\s+(?:the\s+|my\s+|a\s+)?"
     r"(?:atrium|lobby|foyer|reception|corridor|kitchen|toilet|washroom|canteen|cafe|"
     r"library|auditorium|theatre|gym|plant\s*room|server\s*room|lift|stairwell|"
@@ -260,6 +263,25 @@ def names_a_possessive_place(question: str) -> bool:
 def names_a_place(question: str) -> bool:
     """Does the question name a SPECIFIC place, so a building-wide summary would answer another?"""
     return bool(_NAMED_PLACE.search(question or ""))
+
+
+_FLOOR_NUMBER_RE = re.compile(r"\b(?:floor|level|storey)\s*(\d+)\b", re.IGNORECASE)
+
+
+def names_only_floors(question: str) -> Optional[Set[str]]:
+    """The floor numbers a question names, when FLOORS are the only places it names, else None.
+
+    "How much water did floor 2 use this week?" names one floor and nothing narrower, so a figure
+    over sensors that are all on floor 2 answers it (BUG-1571). A question that also names a room,
+    or names no floor at all, gets None and keeps the place veto.
+    """
+    q = question or ""
+    floors = set(_FLOOR_NUMBER_RE.findall(q))
+    if not floors:
+        return None
+    if _NAMED_PLACE.search(_FLOOR_NUMBER_RE.sub(" ", q)):
+        return None
+    return floors
 
 
 #: A question whose HEAD is "which <place or route>" ("which exit", "which student-accessible study

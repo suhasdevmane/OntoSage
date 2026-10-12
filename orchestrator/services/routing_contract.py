@@ -566,7 +566,10 @@ _INVENTORY_EXISTENTIAL_RE = re.compile(
     r"|\b(?:are|is)\s+(?:in|inside|on|at)\s+(?:the|this)\b"
     r"|\b(?:what|which)\s+(?:kinds?|types?|sorts?)\s+of\b"
     r"|\b(?:list|show|tell\s+me\s+about|give\s+me\s+a\s+list)\b"
-    r"|\b(?:exist|exists)\b",
+    r"|\b(?:exist|exists)\b"
+    # BUG-1552: "What sensors are in room 2.03?" -- the place-scoped inventory (0 of 4,060 bank).
+    r"|\b(?:what|which)\s+(?:sensors?|devices?|equipment|points|meters?|instruments?)\s+(?:are|is)\s+"
+    r"(?:in|on|inside|installed\s+in|fitted\s+in|located\s+in)\s+(?:room|floor|zone|level|the|this)\b",
     re.IGNORECASE,
 )
 
@@ -1336,6 +1339,10 @@ EVENTS_RE = re.compile(
     r"|\bmaintenance backlog\b"
     r"|\bfootfall\b|\bentrance\b.{0,30}\b(?:busy|arrivals|count)\b"
     r"|\bhow busy was\b.{0,30}\b(?:entrance|building)\b"
+    # BUG-1554: "How many people came through the main entrance last week?" reached analytics,
+    # which read a DAILY counter and said a weekly total was not available. 0 of 4,060 bank.
+    r"|\bhow\s+many\s+(?:people|visitors|persons|staff|students)\s+(?:came|come|went|walked|"
+    r"passed|entered)\s+(?:in|through|into)\b"
     # RECURRENCE over the report history (V7-T73). "Which cleaning-related defects keep
     # recurring in the same place?" reached the capability lane, which searched the
     # cleaning SCHEDULE and honestly said it did not answer — it cannot, because a
@@ -1432,6 +1439,25 @@ _TIMETABLE_RECORD_RE = re.compile(
 )
 
 
+#: "What incidents or near misses were logged in September?" names the incident LOG, a register
+#: (BUG-1521). The events lane's "incident" words belong to the USER-REPORT store's safety
+#: category, and it declined over the 15-row register. Only the log shape -- which / how many /
+#: any incidents, logged / recorded / happened / in a period -- is claimed: 2 of the 4,060 bank
+#: questions, none of them about procedure ("how should incidents be handled?" keeps its lane).
+_INCIDENT_NOUN = r"(?:incidents?|near[\s-]+miss(?:es)?)"
+_INCIDENT_LOG_RE = re.compile(
+    r"\b(?:which|what|how\s+many|any|list|show)\s+(?:\w+\s+){0,2}"
+    + _INCIDENT_NOUN
+    + r"\b[^?.!]{0,40}\b(?:logged|recorded|reported|occurred|happened|were\s+there|took\s+place|"
+    r"open|closed|this|last|in\s+(?:january|february|march|april|may|june|july|august|"
+    r"september|october|november|december))\b"
+    r"|\b"
+    + _INCIDENT_NOUN
+    + r"\s+(?:were|have\s+been|has\s+been)\s+(?:logged|recorded|reported)\b",
+    re.IGNORECASE,
+)
+
+
 def register_owns_the_record(query: str) -> bool:
     """True when an authored register, not the events store, is the source for this question.
 
@@ -1452,6 +1478,7 @@ def register_owns_the_record(query: str) -> bool:
         _WORK_ORDER_RECORD_RE.search(q)
         or _TIMETABLE_RECORD_RE.search(q)
         or booking_register_question(q)
+        or _INCIDENT_LOG_RE.search(q)
     )
 
 
@@ -1751,6 +1778,28 @@ def measured_reading_question(query: str) -> bool:
     return bool(_MEASURED_QUANTITY_RE.search(q) and _READING_SHAPE_RE.search(q))
 
 
+#: "How bright is the seminar room 3.13 at the moment?" (BUG-1566): a comfort adjective asked of
+#: ONE named room is a reading of that room. The held-record shortcut matched PublicEvent on
+#: "seminar" and answered from 17 event records, because neither the measured-quantity list
+#: (VOCs, CO2, temperature...) nor its reading shapes ("level", "how high") holds "how bright".
+_COMFORT_ADJ_RE = re.compile(
+    r"\bhow\s+(?:bright|dark|dim|loud|noisy|quiet|warm|hot|cold|cool|chilly|humid|damp|dry|"
+    r"stuffy|fresh)\b",
+    re.IGNORECASE,
+)
+_NAMED_ROOM_ID_RE = re.compile(
+    r"\b(?:room|rm|lab|laboratory|office|classroom|studio|suite)\s*\d+(?:\.\d+)?\b"
+    r"|(?<![\d.])\d{1,2}\.\d{2,3}(?![\d.])",
+    re.IGNORECASE,
+)
+
+
+def comfort_reading_of_a_named_room(query: str) -> bool:
+    """'How <comfort adjective> is <named room>?': a reading of that room, never a register row."""
+    q = query or ""
+    return bool(_COMFORT_ADJ_RE.search(q) and _NAMED_ROOM_ID_RE.search(q))
+
+
 ROUTE_COMPARISON_RE = re.compile(
     r"\b(?:slower|faster|quicker|longer|shorter)\s+than\b|\bfloor\s+pairs?\b"
     r"|\bcompare\s+(?:the\s+)?(?:routes?|travel\s+times?)\b",
@@ -1891,7 +1940,23 @@ def _r_observability_query(c: _Ctx) -> Optional[str]:
     # "where is X happening, and what detection covers it?" -- measured, and answered with a
     # floor-plan PICKER in response to a fire-safety question. The reach patterns never match
     # "show me floor 3" or "where is the server room", so no genuine floor-plan request moves.
-    if c.intent not in _WEAK_INTENTS + ("sensor_data", "metadata", "discovery", "floor_plan"):
+    # `analytics` too (BUG-1519): "Which sensors have stopped reporting?" was classified analytics
+    # and answered "No sensor data was found" -- the freshness lane never ran. The detector matches
+    # 16 of the 4,060 bank questions, one of which carries an analytic word.
+    # `anomaly` ONLY for a silence question (CAVEAT-1579): "Which sensors have stopped reporting in
+    # the last hour?" was classified anomaly and got a generic non-answer while the freshness lane
+    # derives exactly that. Any other anomaly question keeps its lane.
+    if c.intent == "anomaly":
+        from orchestrator.services.observability import is_silence_question
+
+        return "observability" if is_silence_question(c.query) else None
+    if c.intent not in _WEAK_INTENTS + (
+        "sensor_data",
+        "metadata",
+        "discovery",
+        "floor_plan",
+        "analytics",
+    ):
         return None
     if c.sr.is_control_command(c.query):
         return None
@@ -1925,7 +1990,19 @@ def _r_consumption_query(c: _Ctx) -> Optional[str]:
 
     if classify_inference(c.query):
         return None
+    # A RATING is a published statement, not a meter reading (BUG-1590): "What is the building's
+    # energy rating?" was answered with six meters' kWh and the remark that this "does not
+    # constitute an energy rating". The building's own records say what rating it holds.
+    if _ENERGY_RATING_RE.search(c.query or ""):
+        return None
     return "analytics" if consumption_question(c.query) else None
+
+
+_ENERGY_RATING_RE = re.compile(
+    r"\b(?:energy|epc|dec|breeam|leed|nabers|carbon)\s+(?:rating|grade|certificat\w*|band|score)\b"
+    r"|\b(?:epc|dec)\b|\benergy\s+performance\s+certificate\b|\bdisplay\s+energy\s+certificate\b",
+    re.IGNORECASE,
+)
 
 
 def _r_plant_point_query(c: _Ctx) -> Optional[str]:
@@ -2380,6 +2457,11 @@ def _r_data_query_promotion(c: _Ctx) -> Optional[str]:
     # has just been chosen for it: promoting it back to a reading lookup would undo that.
     if maintenance_record_question(c.query or ""):
         return None
+    # The same for a register the parse stage chose by its own rule (BUG-1518): "What timetabled
+    # sessions are in room 1.06 today?" was sent to the timetable register and promoted straight
+    # back to a reading lookup, which declined over 686 session rows.
+    if register_owns_the_record(c.query or "") or door_records_question(c.query or ""):
+        return None
     return "sensor_data"
 
 
@@ -2514,6 +2596,96 @@ _NOT_A_QUANTITY = frozenset(
 )
 
 
+#: A day- or week-scale period: the scale the meters answer and the cost register (monthly bills)
+#: does not. A month is left to the register, whose lines are what was actually billed.
+_DAY_OR_WEEK_PERIOD_RE = re.compile(
+    r"\b(?:yesterday|today|this\s+week|last\s+week|past\s+week|this\s+morning|this\s+afternoon|"
+    r"last\s+\d+\s+days|past\s+\d+\s+days|on\s+(?:mon|tues|wednes|thurs|fri|satur|sun)day)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_metered_cost_is_computed(c: _Ctx) -> Optional[str]:
+    """'How much did the water cost last week?' is the metered total x the tariff in force.
+
+    The classifier filed it as a records question and the cost register answered with its monthly
+    lines (2026-10-11). The register holds bills; a week's cost is computed from the meters and the
+    registered tariff, which the aggregate lane now does (TODO-1646, `utility_cost`). Only for a
+    day- or week-scale period and a concept the building meters (water, energy); a monthly bill,
+    or a cost of something unmetered, keeps its lane.
+    """
+    if c.intent not in ("metadata", "register", "capability", "general", "general_knowledge"):
+        return None
+    from orchestrator.services.utility_cost import asks_for_cost
+
+    if not (asks_for_cost(c.query) and _DAY_OR_WEEK_PERIOD_RE.search(c.query or "")):
+        return None
+    for concept in c.normalized.get("concepts") or []:
+        cid = str(
+            concept.get("concept_id", "")
+            if isinstance(concept, dict)
+            else getattr(concept, "concept_id", "")
+        ).lower()
+        if any(w in cid for w in ("water_usage", "energy", "electric")):
+            return "analytics"
+    return None
+
+
+def _r_record_comparison_is_not_a_series(c: _Ctx) -> Optional[str]:
+    """A comparison or trend that names no measured quantity and no place reads the records.
+
+    The compare and trend lanes compare READINGS. On the role-stratified bank sample of 2026-10-11
+    they received comparisons of records -- completion records against service states, a baseline
+    against what was observed, work over months -- and answered "I have no measured series for
+    Contractor_Completion_Record, ..., so there is nothing to compare from readings" (4 compare,
+    4 trend declines). The metadata lane reads the registers, filters them by period and counts
+    them.
+
+    NARROW: only `compare` / `trend`, only when the concept resolver found no measurand, and only
+    when no place is named ("compare floor 3 with floor 4" keeps its lane, which asks what to
+    compare). The reach rule above runs first, so an unmeasured QUANTITY has already gone to
+    observability and is not seen here.
+    """
+    if c.intent not in ("compare", "trend"):
+        return None
+    from orchestrator.services.aggregate_support import names_a_place
+
+    # ANY concept that maps to a Brick class is measured here -- a meter as much as a sensor.
+    # `has_measurand_concept` counts *_Sensor classes only, and the first live check of this rule
+    # sent "how much water did we use last week compared with the week before?" (water_usage ->
+    # Building_Water_Meter | Water_Meter) to the records lane, which printed a meter's UUID.
+    for concept in c.normalized.get("concepts") or []:
+        classes = (
+            concept.get("brick_classes", [])
+            if isinstance(concept, dict)
+            else getattr(concept, "brick_classes", [])
+        )
+        if any(str(cls).strip() for cls in classes or []):
+            return None
+    if names_a_place(c.query or ""):
+        return None
+    # Concepts are not the only evidence of a quantity: "Which floor has the fewest people?"
+    # names one in the lane vocabulary, and asks WHICH PLACE, a comparison over readings. The
+    # unit suite caught both reaching metadata when no concept had been resolved (2026-10-11).
+    if re.search(r"\bwhich\s+(?:floor|room|space|zone|area|level)s?\b", c.query or "", re.I):
+        return None
+    from orchestrator.services.aggregate_lane import question_measurands
+
+    if question_measurands(c.query or ""):
+        return None
+    # A question that SELECTS spaces ("find me a quiet room with a projector") is not a records
+    # comparison; turning it into metadata would hand it to the compound rule through a lane that
+    # rule takes from, a back door round its own from-list (test_compound_facets_routing).
+    try:
+        from orchestrator.services.deliberation.facet_routing import selects_spaces
+
+        if selects_spaces(c.query or ""):
+            return None
+    except Exception:  # a broken predicate must not move a question
+        return None
+    return "metadata"
+
+
 def _r_unmeasured_quantity_is_reach(c: _Ctx) -> Optional[str]:
     """A question about a quantity this building does not measure -> the reach lane.
 
@@ -2566,6 +2738,12 @@ _AGGREGATE_SHAPE_RE = re.compile(
     r"last (?:week|month|term|year)|per (?:square|floor|room|day|week|hour)|"
     r"peak|minimum|maximum|distribution|breakdown|correlat)\b",
     re.IGNORECASE,
+)
+
+#: A specific room/zone/space named by IDENTIFIER ("room 1.06", "zone 3.12", "rm 2.01"). A floor
+#: is deliberately not here (BUG-1505): "is drinking water available on floor 3?" is an amenity.
+_NAMED_SPACE_ID_RE = re.compile(
+    r"\b(?:room|rm|zone|space|lab|office|meeting room)\s*\d+(?:\.\d+)+[a-z]?\b", re.IGNORECASE
 )
 
 
@@ -2722,6 +2900,13 @@ def _r_capability_measurand_is_data(c: _Ctx) -> Optional[str]:
             metered_quantity_question(c.query)
             or measured_reading_question(c.query)
             or bool(_AGGREGATE_SHAPE_RE.search(c.ql))
+            # A CONDITION IN A NAMED ROOM IS THAT ROOM'S READING (BUG-1505). "Is the air stuffy
+            # in room 1.06?" matched the knowledge topic 'Temperature Comfort Complaints' (whose
+            # lay terms carry "stuffy") and was answered with the complaints procedure, while
+            # the room's CO2 sensor sat readable. A room/zone IDENTIFIER plus a resolved
+            # measurand asks about that space's air; a floor ("is drinking water available on
+            # floor 3?") is not an identifier here, so the amenity controls keep their lane.
+            or bool(_NAMED_SPACE_ID_RE.search(c.ql))
         )
         if not _asks_for_a_value:
             logger.info(
@@ -3019,7 +3204,15 @@ _NEAR_PERIOD = (
 )
 
 MAINTENANCE_RECORD_RE = re.compile(
-    r"\bwhen\s+(?:was|were|did|has|have)\b[^?.!]{0,50}"
+    # BUG-1520: "What maintenance was done last month?" reached the intake lane, which listed the
+    # six static issue CATEGORIES as "all the maintenance actions recorded"; "Who maintains the
+    # lifts?" got the false-absence guard's apology. Both are register questions (work orders,
+    # contracts, service schedules). Measured: 0 of the 4,060 bank questions newly match.
+    r"\bwhat\s+(?:maintenance|servicing|repairs?|upkeep)\b[^?.!]{0,30}"
+    r"\b(?:done|carried\s+out|completed|performed|undertaken)\b"
+    r"|\bwho\s+(?:maintains|services|repairs|looks\s+after|cleans)\b"
+    r"|\bwho\s+(?:is|are)\s+responsible\s+for\s+(?:maintaining|servicing|repairing)\b"
+    r"|\bwhen\s+(?:was|were|did|has|have)\b[^?.!]{0,50}"
     r"\b(?:serviced|maintained|repaired|overhauled|inspected|cleaned|replaced)\b"
     r"|\b(?:what|which)\s+date\b[^?.!]{0,60}"
     r"\b(?:serviced|maintained|repaired|overhauled|inspected|cleaned|replaced)\b"
@@ -3457,7 +3650,16 @@ _ENV_REQUEST_RE = re.compile(
     r"\b(?:can|could|would|will)\s+you\s+(?:please\s+)?(?:reduce|lower|cut|quieten|quiet|dim|"
     r"brighten|warm|cool|heat|ventilate|increase|raise|decrease|adjust|change)\s+"
     r"(?:the\s+|this\s+|my\s+|our\s+|some\s+)?(?:noise|temperature|heat|lights?|lighting|air|"
-    r"humidity|ventilation|draught|glare|brightness|sound|volume|music|smell|odou?r)\b",
+    r"humidity|ventilation|draught|glare|brightness|sound|volume|music|smell|odou?r)\b"
+    # BUG-1550: the imperative comfort shape. "Make room 2.03 warmer please." was classified
+    # sensor_data and declined. Anchored at the start, so a question ("is it warmer ...?") never
+    # matches; 0 of the 4,060 bank questions do.
+    r"|^\s*(?:please\s+)?(?:(?:can|could|would|will)\s+you\s+(?:please\s+)?)?(?:make|get|keep)\s+"
+    r"(?:it|this|the\s+[\w\s.]{1,30}?|room\s+[\d.]+|[\w\s.]{1,30}?)\s+"
+    r"(?:a\s+bit\s+|a\s+little\s+|slightly\s+)?(?:warmer|cooler|colder|hotter|brighter|darker|quieter|"
+    r"less\s+(?:noisy|stuffy|humid|bright|cold|hot|warm)|more\s+(?:comfortable|ventilated))\b"
+    r"|^\s*(?:please\s+)?turn\s+(?:up|down)\s+(?:the\s+)?(?:heat|heating|temperature|lights?|"
+    r"lighting|ac|air\s+con\w*|fan)\b",
     re.IGNORECASE,
 )
 
@@ -4011,6 +4213,49 @@ def _r_asset_state_without_a_family(c: _Ctx) -> Optional[str]:
     return "sensor_data"
 
 
+#: A FILE FORMAT named as the thing wanted: "as a PDF", "a Word document", "in Excel", "CSV".
+_FILE_FORMAT_RE = re.compile(
+    r"\b(?:pdf|word\s+document|docx|csv|excel|xlsx|spreadsheet)\b", re.IGNORECASE
+)
+
+
+def _r_file_request_is_an_export(c: _Ctx) -> Optional[str]:
+    """A question about readings that names a file format is an export, and gets the file.
+
+    "Give me a Word document summarising yesterday's energy use for the building" reached the
+    report planner and declined; "... as a PDF report" was summarised in prose (2026-10-11). The
+    export lane fetches the readings, writes the file in the named format with a per-sensor
+    summary, and links it. Only from the READINGS lanes: a document about records ("a PDF of the
+    cost register") is not a sensor export and keeps its lane. No regression-gate question names
+    a file format.
+    """
+    if c.intent not in ("report", "planner", "analytics", "sensor_data", "trend", "compare"):
+        return None
+    return "export" if _FILE_FORMAT_RE.search(c.query or "") else None
+
+
+def _r_diagnosis_without_a_quantity(c: _Ctx) -> Optional[str]:
+    """A why-question the diagnosis lane cannot diagnose goes to the records, not to a refusal.
+
+    The diagnosis lane explains a COMFORT condition ("why is it so stuffy in 2.05?"): it needs a
+    measured quantity and a direction, which ``is_why_question`` reads. The classifier also files
+    why-questions about records, procedures and decisions there, and the lane can only decline
+    them -- measured on the role-stratified bank sample of 2026-10-11, the lane received 6 and
+    declined 6, while the metadata lane, which reads the registers, declined 13 of 91.
+
+    Fires ONLY when the intent is already `diagnosis` and the lane's own predicate finds nothing
+    to diagnose, so every turn the lane can answer is untouched (same shape as
+    `asset_state_without_a_family`).
+    """
+    if c.intent != "diagnosis":
+        return None
+    from orchestrator.services.anomaly.diagnosis import is_why_question  # local: no cycle
+
+    if is_why_question(c.query):
+        return None
+    return "metadata"
+
+
 POST_STAGE_RULES: Tuple[Rule, ...] = (
     Rule(
         "data_query_promotion",
@@ -4024,6 +4269,22 @@ POST_STAGE_RULES: Tuple[Rule, ...] = (
         "the asset-state lane was chosen but knows no family for this asset -> sensor_data "
         "(never a refusal that blames the reader)",
         _r_asset_state_without_a_family,
+        preserve_analytics=True,
+    ),
+    # Never touches a diagnosis the lane can serve; neither rule above produces `diagnosis`.
+    Rule(
+        "diagnosis_without_a_quantity",
+        "the diagnosis lane was chosen but the question names no comfort quantity to diagnose "
+        "-> metadata, the lane that reads the records (never a refusal)",
+        _r_diagnosis_without_a_quantity,
+        preserve_analytics=True,
+    ),
+    # Last: a named file format decides the LANE whatever reading lane was chosen (2026-10-11).
+    Rule(
+        "file_request_is_an_export",
+        "a readings question naming a file format (PDF, Word, CSV, Excel) -> export, which "
+        "writes the file and links it (never a prose summary or a planner decline)",
+        _r_file_request_is_an_export,
         preserve_analytics=True,
     ),
 )
@@ -4081,6 +4342,8 @@ _COMPOUND_TAKES_FROM = (
 #: one series and drops what it is related to. Only a C5 signal takes from these two; C1-C3 keep
 #: `_COMPOUND_TAKES_FROM` exactly as measured.
 _RELATION_ALSO_TAKES_FROM = ("trend", "anomaly")
+#: The facets the events lane's availability answer covers by itself (BUG-1613).
+_EVENTS_OWN_FACETS = frozenset({"spatial:space_kind", "event:free_window"})
 
 
 def _compound_shape_owned_elsewhere(c: _Ctx) -> Optional[str]:
@@ -4171,6 +4434,22 @@ def _r_compound_facets_to_deliberate(c: _Ctx) -> Optional[str]:
         operation = None  # the series lanes are left only for a relation
     if signal is None and operation is None:
         return None
+    # A KIND OF ROOM AND A FREE WINDOW, AND NOTHING ELSE, IS THE EVENTS LANE'S OWN QUESTION
+    # (BUG-1613). "Which meeting rooms are free this afternoon?" was taken from the events lane --
+    # which answers "14 of 18 meeting rooms have no booking this afternoon" for the period named --
+    # to the deliberation lane, which checks a free window only as "the next N hours": one run
+    # ranked the reception desk first on an empty kind criterion, another listed meeting rooms as
+    # meeting "everything you asked for" with availability never checked. A third facet (quiet,
+    # seats, a projector) keeps the escalation. 4 of 4,060 bank questions take this shape.
+    if signal is not None and set(signal.facet_keys) <= _EVENTS_OWN_FACETS:
+        from orchestrator.services.event_query_service import classify_event_question
+
+        if classify_event_question(c.query or "") in ("availability_list", "availability_check"):
+            logger.info(
+                "[routing-contract] compound_facets_to_deliberate stands down: a kind of room "
+                "and a free window only — the events lane's availability answer"
+            )
+            return None
     owner = _compound_shape_owned_elsewhere(c)
     if owner:
         logger.debug(f"[routing-contract] compound_facets_to_deliberate stands down: {owner}")
@@ -4230,6 +4509,21 @@ CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
         "'is the ventilation keeping up with occupancy?' judges one measured quantity AGAINST "
         "another, which is a ranking on two modalities at once → deliberate (W1-03, pack #27)",
         _r_one_quantity_judged_against_another,
+    ),
+    # 2026-10-11: after every rule that can claim a measured or unmeasured quantity, and before
+    # the compound rule, which takes from `metadata` exactly as it takes from `compare`.
+    Rule(
+        "record_comparison_is_not_a_series",
+        "a comparison or trend naming no measured quantity and no place -> metadata, the lane "
+        "that reads and counts the records (never 'no measured series for <record>')",
+        _r_record_comparison_is_not_a_series,
+    ),
+    Rule(
+        "metered_cost_is_computed",
+        "the cost of a metered utility (water, energy) over a day or a week -> analytics, which "
+        "multiplies the metered total by the tariff in force; a monthly bill stays with the cost "
+        "register (TODO-1646)",
+        _r_metered_cost_is_computed,
     ),
     # v2 P6 -- LAST IN THE CONCEPT STAGE, and both halves of that are the decision.
     #

@@ -40,6 +40,28 @@ def _parse_ts(value: Any) -> Optional[datetime]:
     return None
 
 
+#: Quantities whose reading is the amount of its own interval, so a total is a SUM of readings:
+#: interval energy, and interval VOLUME -- litres drawn per quarter-hour (2026-10-11: the building
+#: water meter's day was reported as "8.90 L", its LATEST reading, exactly as BUG-1437's energy
+#: day was before this module existed).
+_ADDITIVE_KINDS = frozenset({"energy", "volume"})
+
+
+def _is_additive(meta: Dict[str, Any]) -> bool:
+    """An interval-energy or interval-volume series: its readings add up to a total."""
+    from orchestrator.services.units import _KIND, normalise
+
+    unit = str(meta.get("unit") or "").strip()
+    return _is_energy(meta) or _KIND.get(normalise(unit)) == "volume"
+
+
+def _interval_noun(unit: str) -> str:
+    """'energy of' / 'volume drawn in' -- what each reading of an additive series measures."""
+    from orchestrator.services.units import _KIND, normalise
+
+    return "volume drawn in" if _KIND.get(normalise(unit)) == "volume" else "energy of"
+
+
 def _is_energy(meta: Dict[str, Any]) -> bool:
     unit = str(meta.get("unit") or "").strip().lower()
     if unit in _ENERGY_UNITS:
@@ -89,7 +111,7 @@ def summarise_groups(
     if not decision.ok:
         return f"Per-{key} aggregates were NOT computed: {decision.reason}."
     unit = decision.target
-    is_energy = _KIND.get(normalise(unit)) == "energy"
+    is_energy = _KIND.get(normalise(unit)) in _ADDITIVE_KINDS
 
     def _order(g: str) -> Tuple[int, str]:
         return (int(g), g) if g.lstrip("-").isdigit() else (10**9, g)
@@ -119,8 +141,8 @@ def summarise_groups(
         lines.append(f"- {key.capitalize()} {group}: " + "; ".join(parts))
     if is_energy:
         lines.append(
-            "Totals are sums of the readings, which are the energy of each reading interval; "
-            "a floor with more readings in the window has more interval energy counted."
+            f"Totals are sums of the readings, which are the {_interval_noun(unit)} each "
+            "reading interval; a floor with more readings in the window has more of it counted."
         )
     return "\n".join(lines)
 
@@ -293,10 +315,10 @@ def summarise_energy_totals(
         per.setdefault(key, []).append((ts, value))
     if not per:
         return None
-    if not all(_is_energy(metadata.get(k) or {}) for k in per):
+    if not all(_is_additive(metadata.get(k) or {}) for k in per):
         return None
     decision = aggregation_decision({str((metadata.get(k) or {}).get("unit") or "") for k in per})
-    if not decision.ok or _KIND.get(normalise(decision.target)) != "energy":
+    if not decision.ok or _KIND.get(normalise(decision.target)) not in _ADDITIVE_KINDS:
         return None
     unit = decision.target
 
@@ -358,7 +380,8 @@ def summarise_energy_totals(
     if len(per) > max_series:
         lines.append(f"- …and {len(per) - max_series} more series not shown")
     lines.append(
-        "Each reading is the energy of its own interval, so a total is the SUM of the readings."
+        f"Each reading is the {_interval_noun(unit)} its own interval, so a total is the SUM "
+        "of the readings."
     )
     if stamps:
         # "What was the total energy use last month?" was answered "5,531 kWh for the period" from
@@ -615,7 +638,7 @@ def summarise_periods(
     if not decision.ok:
         return f"Per-period aggregates were NOT computed: {decision.reason}."
     unit = decision.target
-    is_energy = _KIND.get(normalise(unit)) == "energy"
+    is_energy = _KIND.get(normalise(unit)) in _ADDITIVE_KINDS
 
     per_bucket: Dict[str, List[float]] = {}
     stamps_by: Dict[str, List[datetime]] = {}

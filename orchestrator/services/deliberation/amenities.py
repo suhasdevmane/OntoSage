@@ -47,6 +47,33 @@ _PREFIXES = (
 )
 
 
+#: Spaces no amenity is placed in (BUG-1516). Round-robin placement put the ground floor's
+#: study area in a Mechanical Plant Room, and the capability lane then told people to go and
+#: study there. Matched as lower-case substrings of the space's label; generic room kinds only.
+_SERVICE_SPACE_WORDS = (
+    "plant",
+    "service room",
+    "office",
+    "reception",
+    "mechanical",
+    "electrical",
+    "telecom",
+    "server",
+    "riser",
+    "storage",
+    "store room",
+    "loading",
+    "cleaner",
+    "switch room",
+    "substation",
+)
+
+
+def _suitable(room: SpaceCoverage) -> bool:
+    text = (room.label or _local(room.space_iri)).lower()
+    return not any(word in text for word in _SERVICE_SPACE_WORDS)
+
+
 def plan_amenities(spaces: List[SpaceCoverage]) -> Dict[str, List[dict]]:
     """{amenity_kind: [placement]} — one of each kind per floor, deterministic."""
     by_floor: Dict[str, List[SpaceCoverage]] = {}
@@ -56,7 +83,17 @@ def plan_amenities(spaces: List[SpaceCoverage]) -> Dict[str, List[dict]]:
     for floor in sorted(by_floor):
         rooms = sorted(by_floor[floor], key=lambda s: s.space_iri)
         for idx, (kind, label, lay) in enumerate(_AMENITY_KINDS):
-            room = rooms[idx % len(rooms)]
+            # The same round-robin start as before, stepping FORWARD past service spaces, so
+            # a floor whose pick was already suitable keeps it. A floor with no suitable space
+            # gets none of this amenity: an amenity in a plant room is worse than no amenity.
+            room = None
+            for step in range(len(rooms)):
+                candidate = rooms[(idx + step) % len(rooms)]
+                if _suitable(candidate):
+                    room = candidate
+                    break
+            if room is None:
+                continue
             plan[kind].append(
                 {
                     "floor": floor,

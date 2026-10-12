@@ -1173,3 +1173,37 @@ def apply_validators(
 ) -> str:
     """The cleaned text alone (what ``polish_answer`` uses)."""
     return validate_narration(question, text, intent, evidence).text
+
+
+_MONTHS_RE = (
+    r"(?:January|February|March|April|May|June|July|August|September|October|November|December"
+    r"|Jan|Feb|Mar|Apr|Jun|Jul|Aug|Sep|Sept|Oct|Nov|Dec)"
+)
+_DATED_YEAR_RE = re.compile(
+    rf"\b(\d{{1,2}}(?:st|nd|rd|th)?\s+{_MONTHS_RE}|{_MONTHS_RE}\s+\d{{1,2}}(?:st|nd|rd|th)?,?)"
+    r"\s+((?:19|20)\d{2})\b",
+    re.IGNORECASE,
+)
+_ANY_YEAR_RE = re.compile(r"(?<!\d)((?:19|20)\d{2})(?!\d)")
+
+
+def correct_unwritten_years(text: str, sources: List[str], window: Optional[Tuple] = None) -> str:
+    """A year written on a date that neither the sources nor the fetched window hold is the
+    model's, not the data's (2026-10-11): an energy total for the week of 28 September 2026 was
+    narrated as "27 September 2023". When the window lies in one year that year replaces it;
+    otherwise the year is dropped rather than guessed.
+    """
+    if not text:
+        return text
+    window_years = sorted({int(y) for w in (window or ()) for y in _ANY_YEAR_RE.findall(str(w))})
+    seen = set(_ANY_YEAR_RE.findall(" ".join(str(s or "") for s in sources)))
+    seen |= {str(y) for y in window_years}
+
+    def _fix(m: "re.Match") -> str:
+        if m.group(2) in seen:
+            return m.group(0)
+        if len(window_years) == 1:
+            return f"{m.group(1)} {window_years[0]}"
+        return m.group(1)
+
+    return _DATED_YEAR_RE.sub(_fix, text)

@@ -256,6 +256,11 @@ ontosage:PrinterPoint ontosage:layTerms "printer", "printers", "photocopier", "p
 ontosage:VendingMachine ontosage:layTerms "vending machine", "vending machines", "vending",
     "snack machine", "snack machines", "drinks machine", "drinks machines", "drink machine" .
 
+ontosage:Kitchenette ontosage:layTerms "kitchenette", "kitchenettes", "microwave", "microwaves",
+    "kettle", "kettles", "fridge", "fridges", "tea point", "tea points", "heat my lunch",
+    "heat my food", "heat up food", "heat up my lunch", "make a cup of tea", "make tea",
+    "make coffee" .
+
 # NO "drinking water" (an hbco:water_quality term: "is the drinking water safe?" asks about
 # quality) and no bare "water" (leaks, supply, meters).
 ontosage:DrinkingWater ontosage:layTerms "water fountain", "water fountains",
@@ -1323,6 +1328,17 @@ ontosage:Locker rdfs:subClassOf ontosage:Amenity ; a owl:Class ;
 ontosage:PrinterPoint rdfs:subClassOf ontosage:Amenity ; a owl:Class ;
     rdfs:label "Printer / copy point"@en ; rdfs:comment "A shared printing location."@en .
 
+# 2026-10-11: "where can I heat my lunch?" had no kind to land on. The ROOM is rec:Kitchenette /
+# brick:Office_Kitchen; this is the AMENITY an occupant comes for, located in such a room, so the
+# capability lane can place it. An instance names the room only where the building's own room
+# records call it a kitchen, and its answer does not claim equipment those records do not list.
+# No bare "kitchen" lay term: "how many kitchens" is a question about rooms and the metadata lane
+# answers it from the room records (BUG-1410).
+ontosage:Kitchenette rdfs:subClassOf ontosage:Amenity ; a owl:Class ;
+    rdfs:label "Kitchenette / tea point"@en ;
+    rdfs:comment "Shared microwave, kettle and fridge for occupants' own food and drink."@en ;
+    skos:example "\"where can I heat my lunch?\"" .
+
 # ── Module K — Sensor classes Brick does not define  (V5-T10, 2026-08-18) ─────────────────────
 #
 # WHY THIS MODULE EXISTS.  The SATURATE provisioner used to mint every configured
@@ -1364,6 +1380,12 @@ ontosage:Rainfall_Sensor a owl:Class ;
     rdfs:label "Rainfall sensor"@en ;
     rdfs:comment "Measures precipitation depth over an interval, normally in millimetres. Declared by OntoSage because the pinned Brick version defines no precipitation class; relevant to green-roof retention and rainwater harvesting questions."@en ;
     skos:example "\"how much rain fell on the roof this week?\"" .
+
+ontosage:PV_Generation_Power_Sensor a owl:Class ;
+    rdfs:subClassOf brick:Active_Power_Sensor ;
+    rdfs:label "PV generation power sensor"@en ;
+    rdfs:comment "Measures the electrical power a photovoltaic array or inverter is generating, normally in kW. Declared by OntoSage because the pinned Brick version has PV equipment (PV_Panel, PV_Array, Photovoltaic_Inverter) but no generation-power point class, so a question about solar output could only resolve to every power sensor in the building -- and was answered with the floor energy meters."@en ;
+    skos:example "\"how much power are the solar panels generating right now?\"" .
 
 ontosage:Noise_Level_Sensor a owl:Class ;
     rdfs:subClassOf ontosage:Sound_Level_Sensor ;
@@ -2433,6 +2455,15 @@ ontosage:utilityKind a owl:DatatypeProperty ;
     rdfs:label "utility"@en ;
     rdfs:comment "Electricity, gas, water, heat."@en .
 
+# 2026-10-11: a unit rate is a price PER something, and the record did not say per what -- the
+# tariff document did ("per kWh for electricity and gas, and per cubic metre for water"). Without
+# it a cost is a guess about units; with it, metered consumption converts to the rate's unit first.
+ontosage:rateUnit a owl:DatatypeProperty ;
+    rdfs:domain ontosage:Tariff ; rdfs:range xsd:string ;
+    rdfs:label "rate unit"@en ;
+    rdfs:comment "The unit the unit rate is charged per (kWh, m3). Transcribed from the tariff's own document, never assumed from the utility."@en ;
+    skos:example "bldg:tariff/TAR-WATER-2026 ontosage:rateUnit \"m3\" ." .
+
 ontosage:bookedByRole a owl:DatatypeProperty ;
     rdfs:domain ontosage:Booking ; rdfs:range xsd:string ;
     rdfs:label "booked by role"@en ;
@@ -2685,7 +2716,7 @@ ontosage:PublicEvent ontosage:layTerms "seminar", "public lecture", "public lect
 # to answer and could not reach — "When was the restroom cleaned?", "how often is this area
 # cleaned or sanitized?", "how often are the filters cleaned", "When was the last time the
 # lobby was cleaned?" — because the scorer matches \b<term>\b and "cleaning" does not.
-ontosage:CleaningTask ontosage:layTerms "cleaning", "cleaned", "cleaner", "caretaker",
+ontosage:CleaningTask ontosage:layTerms "cleaning", "cleaned", "cleaner", "cleans", "who cleans", "caretaker",
     "caretaking", "janitorial", "housekeeping", "my zone", "my round", "task list",
     "cleaning schedule", "cleaning standard", "which rooms must be ready", "my shift",
     "washroom should i service", "washrooms should i service", "washroom service",
@@ -2695,8 +2726,16 @@ ontosage:CleaningTask ontosage:layTerms "cleaning", "cleaned", "cleaner", "caret
 ontosage:Permit ontosage:layTerms "permit", "permits", "permit to work", "ptw", "hot works permit",
     "roof access permit", "work authorisation", "isolation permit" .
 
+# WHO MAINTAINS IT (BUG-1520, 2026-10-10). "Who maintains the lifts?" selected no register and the
+# false-absence guard apologised, while CON-2023-014 names the lift contractor. Measured with the
+# terms below over the 4,060-question bank: 1 question newly selects this class ("service
+# providers"), none moves away from another register. Bare "contractor"/"contractors" were MEASURED
+# AND REJECTED: 15 bank questions moved here from the permit, incident, competency and other
+# registers, where a contractor is mentioned without the contract being asked about.
 ontosage:Contract ontosage:layTerms "contract", "contracts", "agreement", "agreements",
-    "service agreement", "maintenance contract", "supplier", "framework" .
+    "service agreement", "maintenance contract", "supplier", "framework",
+    "who maintains", "who services", "who looks after", "maintained by", "serviced by",
+    "maintenance contractor", "service provider", "service providers" .
 
 ontosage:Warranty ontosage:layTerms "warranty", "warranties", "guarantee", "guarantees",
     "under warranty", "in warranty", "defects liability" .
@@ -2841,7 +2880,10 @@ ontosage:WorkOrder ontosage:layTerms "work order", "work orders", "job", "jobs",
     "assigned task", "assigned tasks",
     "task at risk", "tasks at risk",
     "remedial", "remedial work", "remedial scope", "rectification",
-    "jetting", "drain jetting", "drain clearance", "blocked drain", "drain blockage" .
+    "jetting", "drain jetting", "drain clearance", "blocked drain", "drain blockage",
+    "maintenance done", "maintenance was done", "maintenance carried out",
+    "maintenance was carried out", "maintenance work", "repairs done", "repairs carried out",
+    "work done", "work carried out", "work completed" .
 
 ontosage:TimetabledSession ontosage:layTerms "timetabled session", "timetabled sessions",
     "timetable", "scheduled class", "scheduled classes", "teaching session",

@@ -78,7 +78,18 @@ _KIND_RES: List[Tuple[str, re.Pattern]] = [
             re.IGNORECASE,
         ),
     ),
-    ("bookings_list", re.compile(r"\b(bookings?|reservations?|booked)\b", re.IGNORECASE)),
+    (
+        "bookings_list",
+        re.compile(
+            r"\b(bookings?|reservations?|booked)\b"
+            # BUG-1553: "What's on in room 1.25 tomorrow?" -> "this building doesn't keep a
+            # record of that". Tied to a room or a day, so "what is on floor 3" never matches.
+            r"|\bwhat(?:'s|\s+is)\s+(?:on|happening|scheduled|planned)\b"
+            r"(?=.{0,40}\b(?:room|tomorrow|today|tonight|this\s+(?:morning|afternoon|evening|week)|"
+            r"next\s+week|monday|tuesday|wednesday|thursday|friday|saturday|sunday)\b)",
+            re.IGNORECASE,
+        ),
+    ),
 ]
 
 #: "Which problems keep coming back in the same place?" — a RECURRENCE question (V7-T73).
@@ -259,6 +270,26 @@ def _narrow_to_question(
     return out, info
 
 
+#: "can I book room 2.13", "could we reserve 1.06", "I'd like to book a meeting room".
+_BOOKING_REQUEST_RE = re.compile(
+    r"\b(?:can|could|may)\s+(?:i|we)\s+(?:book|reserve|hire)\b"
+    r"|\b(?:i(?:'d| would)\s+like|i\s+want|we\s+want|we(?:'d| would)\s+like)\s+to\s+"
+    r"(?:book|reserve|hire)\b",
+    re.IGNORECASE,
+)
+_ROOM_ID_RE = re.compile(r"(?<![\d.])\d{1,2}\.\d{2,3}(?![\d])")
+
+
+def booking_request_note(question: str) -> str:
+    """The sentence a booking REQUEST gets: the check is answered, the booking is not made here."""
+    if not _BOOKING_REQUEST_RE.search(question or ""):
+        return ""
+    return (
+        "I can check the bookings and the timetable, but I can't make a booking myself — ask "
+        '"how do I book a room?" for this building\'s booking process.'
+    )
+
+
 def classify_event_question(question: str) -> Optional[str]:
     """Kind or None (None => not an event question; router should not have sent it)."""
     q = question or ""
@@ -280,6 +311,12 @@ def classify_event_question(question: str) -> Optional[str]:
 
     if asks_free_overview(q):
         return "availability_list"
+    # A BOOKING REQUEST is an availability question (BUG-1569). "Can I book room 2.13 for tomorrow
+    # afternoon?" matched no kind ("book" is not "booked") and was told the building keeps no
+    # record of that, while its bookings and timetable answer exactly whether the slot is free.
+    # One named room is a check; none is the list.
+    if _BOOKING_REQUEST_RE.search(q):
+        return "availability_check" if _ROOM_ID_RE.search(q) else "availability_list"
     for kind, pat in _KIND_RES:
         if pat.search(q):
             return kind
@@ -472,7 +509,20 @@ class EventQueryService:
                 if probe and len(probe) >= 3 and probe in qn:
                     if best is None or len(probe) > best[0]:
                         best = (len(probe), local)
-        return best[1] if best else None
+        if best:
+            return best[1]
+        # A ROOM NAMED BY ITS ID AND SOME OTHER NOUN (BUG-1569): "Is computer lab 1.07 free now?"
+        # never contains the word the local name is spelled with ("Room_1.07"), so the check above
+        # found nothing and the lane answered "I couldn't match that room name". The dotted id is
+        # the room's identity; it must match exactly one local name, or nothing is guessed.
+        ids = re.findall(r"(?<![\d.])(\d{1,2}\.\d{2,3})(?![\d])", question or "")
+        hits = {
+            local
+            for rid in ids
+            for local in self._rooms
+            if re.search(rf"(?<![\d.]){re.escape(rid)}(?![\d])", local)
+        }
+        return next(iter(hits)) if len(hits) == 1 else None
 
     def _person_access_refusal(self) -> Dict[str, Any]:
         return {
@@ -681,6 +731,9 @@ class EventQueryService:
                 "timetable, so I cannot tell you whether a class or a standing meeting uses it — "
                 "only that nothing is booked ad hoc."
             )
+        _note = booking_request_note(question)
+        if _note:
+            text += "\n\n" + _note
         return {
             "success": True,
             "kind": "availability_check",
@@ -749,10 +802,7 @@ class EventQueryService:
         if not opaque:
             return rows
         try:
-            from orchestrator.services.aggregate_lane import (
-                build_location_query,
-                parse_locations,
-            )
+            from orchestrator.services.aggregate_lane import build_location_query, parse_locations
             from orchestrator.services.deliberation.live import sparql_exec
 
             query = build_location_query(sorted(set(opaque)))
@@ -779,9 +829,7 @@ class EventQueryService:
         rather than characterising the cause — which is a competent person's judgement,
         not this service's.
         """
-        from orchestrator.services.report_intake_service import (
-            get_report_intake_service,
-        )
+        from orchestrator.services.report_intake_service import get_report_intake_service
 
         low = (question or "").lower()
         category = ""
@@ -903,6 +951,9 @@ class EventQueryService:
             + "\n\n_Availability = no booking on record; walk-in use isn't tracked here._"
             + self._kind_note(kind_phrase, scoped)
         )
+        _note = booking_request_note(question)
+        if _note:
+            text += "\n\n" + _note
         return {
             "success": True,
             "kind": "availability_list",
@@ -1108,9 +1159,7 @@ class EventQueryService:
         contract: the join is additive where both stores exist.
         """
         try:
-            from orchestrator.services.report_intake_service import (
-                get_report_intake_service,
-            )
+            from orchestrator.services.report_intake_service import get_report_intake_service
             from orchestrator.services.tickets import counts as ticket_counts
             from orchestrator.services.tickets import (
                 merge,

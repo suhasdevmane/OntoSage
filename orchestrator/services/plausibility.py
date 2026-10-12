@@ -112,8 +112,15 @@ _IDENTIFIER_PREFIX_RE = re.compile(r"(?:[A-Za-z]-|#|\bno\.\s*|\bref\s*)$")
 #: %, so it is most likely raw or unscaled sensor output ... the sensor's scaling should be checked
 #: before this reading is relied on". The stored series for that sensor is a clean 30-70 %RH with
 #: not one impossible value, and the forecast's own predictions were 52.66 %RH (BUG-872).
+#: Up to two words may sit between the number and the noun (BUG-1546): "displays 156 humidity
+#: readings" opened a humidity chart with "the recorded humidity value (156) is outside the range".
+#: A hyphen may join the count to its noun (BUG-1604): "over the 1000‑point window" (a
+#: non-breaking hyphen, as the model writes it) opened a humidity answer with "the recorded
+#: humidity value (1000) is outside the range".
 _COUNT_NOUN_RE = re.compile(
-    r"^\s*(?:data\s+)?(?:readings?|sensors?|samples?|rooms?|spaces?|points?|records?|rows?|series|"
+    r"^[\s\-‐‑]*"
+    r"(?:(?!(?:in|on|at|for|of|from|to|per|by|the|a|an|and|degrees?|deg)\b)[A-Za-z][\w.\-]*\s+){0,2}?"
+    r"(?:data\s+)?(?:readings?|sensors?|samples?|rooms?|spaces?|points?|records?|rows?|series|"
     r"floors?|meters?|devices?|values?|measurements?|people|persons?|times|occurrences?|"
     r"episodes?|findings?|reports?|days?|hours?|minutes?|seconds?|weeks?)\b",
     re.IGNORECASE,
