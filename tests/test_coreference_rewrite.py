@@ -118,10 +118,13 @@ async def test_rewrite_strips_quotes(agent):
 @pytest.mark.asyncio
 async def test_rewrite_noop_when_unchanged(agent):
     # LLM judged it already self-contained and echoed it back → None.
-    state = _state("temperature on floor 3", "21C", "what about floor 2")
+    # (This used "what about floor 2" until 2026-10-11; a place-only follow-up is now resolved
+    # deterministically before the model is asked -- CAVEAT-1619 -- so it no longer reaches the
+    # echo path this test pins.)
+    state = _state("temperature on floor 3", "21C", "and the humidity?")
     with patch(
         "orchestrator.agents.dialogue_agent.llm_manager.generate",
-        new=AsyncMock(return_value="what about floor 2"),
+        new=AsyncMock(return_value="and the humidity?"),
     ):
         assert await agent.rewrite_to_standalone(state) is None
 

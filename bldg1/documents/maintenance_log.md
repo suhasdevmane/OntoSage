@@ -68,5 +68,15 @@ repaired asset returned to the same abnormal pattern?"* actually requires.
 | WO-022 | Annual service | AEP-011 | Main passenger lift | 2026-05-04 | planned | Mechanical technician | 2.6 | routine |  | In progress |  |
 | WO-023 | Rope tension check | AEP-011 | Main passenger lift | 2026-05-03 | planned | Lift engineer | 2.4 | routine | 2026-05-03 | Completed | Task type corrected: the source recorded 'Belt tensioning', which this asset class cannot receive |
 | WO-024 | Mechanical seal inspection | AEP-008 | Chiller Pump 1 | 2026-05-22 | planned | Mechanical technician | 1.9 | routine | 2026-05-22 | Completed | Task type corrected: the source recorded 'Smoke test', which this asset class cannot receive |
+| WO-025 | Filter replacement | AEP-004 | Air Handling Unit - Floor 3 | 2026-09-02 | planned | Mechanical technician | 1.5 | routine | 2026-09-03 | Completed |  |
+| WO-026 | Fault investigation | AEP-007 | Chiller 1 - Building Central Cooling Plant | 2026-09-08 | reactive | Mechanical technician | 3.2 | high | 2026-09-09 | Completed | High condenser pressure alarm; condenser coil cleaned under contract CON-2026-007 |
+| WO-027 | Annual service | AEP-010 | Cooling Tower 1 - Rooftop | 2026-09-14 | planned | Mechanical technician | 4.0 | routine | 2026-09-15 | Completed | Legionella sample taken by the water hygiene contractor the same day |
+| WO-028 | Door interlock adjustment | AEP-011 | Main passenger lift | 2026-09-17 | reactive | Lift engineer | 1.2 | high | 2026-09-17 | Completed |  |
+| WO-029 | Load bank test | AEP-012 | Emergency Diesel Generator | 2026-09-22 | planned | Electrical technician | 3.0 | routine | 2026-09-22 | Completed |  |
+| WO-030 | Thermal imaging survey | AEP-021 | Electrical Breaker Panel - Floor 3 | 2026-09-25 | planned | Electrical technician | 1.4 | routine | 2026-09-26 | Completed |  |
+| WO-031 | Fan belt replacement | AEP-017 | Exhaust Fan - Parking Level Ventilation | 2026-09-29 | reactive | Mechanical technician | 2.2 | high | 2026-09-30 | Completed |  |
+| WO-032 | Sensor recalibration | AEP-005 | Air Handling Unit - Floor 4 | 2026-10-02 | planned | Controls technician | 1.8 | routine | 2026-10-02 | Completed |  |
+| WO-033 | Fault investigation | AEP-024 | Turnstile / Access Barrier - Main Entrance | 2026-10-06 | reactive | Controls technician | 1.0 | high |  | In progress | The barrier intermittently refuses valid cards |
+| WO-034 | Preventive maintenance | AEP-009 | Chilled Water Pump 1 | 2026-10-08 | planned | Mechanical technician | 1.6 | routine |  | Pending |  |
 
 **24 work orders across six assets. 9 are not complete, and 8 rows carried a task type the asset could not receive and have been corrected against their asset class. Every technician name in the source has been replaced by a trade.**

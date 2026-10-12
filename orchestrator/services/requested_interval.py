@@ -328,12 +328,13 @@ _LAST_RE = {u: re.compile(rf"\b(?:last|previous|prior|preceding)\s+{u}\b") for u
 #: Wednesday those two differ by three days at each end. The module's rule is that a window
 #: whose boundaries are in dispute gets no window at all, so the compiled range is left
 #: alone — which is what the system did before this function existed, rather than a guess.
+#: The ARTICLE is what makes it a duration (2026-10-11): "for last week", "during last week" and
+#: "in last month" name the calendar period, and "export the CO2 readings for floor 3 for last
+#: week" was fetched as the default 30 days. Measured: 3 of 4,060 bank questions move (during
+#: last year / during last week / in last month), 0 study texts.
 _TRAILING_RE = {
     u: re.compile(
-        rf"\b(?:over|in|during|for|across|within|the)\s+(?:the\s+)?"
-        rf"(?:last|past|previous|prior)\s+{u}\b"
-        rf"|\bpast\s+{u}\b"
-        rf"|\b\d+\s+{u}s?\b"
+        rf"\bthe\s+(?:last|past|previous|prior)\s+{u}\b" rf"|\bpast\s+{u}\b" rf"|\b\d+\s+{u}s?\b"
     )
     for u in _PERIOD_UNITS
 }
@@ -444,6 +445,360 @@ def calendar_period_bounds(
         to_store(start_local, tz_name).strftime(STAMP),
         to_store(end_local, tz_name).strftime(STAMP),
     )
+
+
+# ── A DATE THE QUESTION WRITES OUT (BUG-1490) ───────────────────────────────────────────────
+#
+# "What was the average temperature in room 5.23 in March 2025?" names its period as plainly as
+# a question can, and the window still came from the classifier. On two identical asks
+# (2026-10-10) it returned 2025-03-01 .. 2025-03-31 once and NOTHING the second time, so the
+# second read the last 30 days of 2026 and headed them "March 2025". `calendar_period_bounds`
+# resolves only RELATIVE periods ("this week", "last month"); a written-out date was always left
+# to the model. A written-out date is arithmetic, not interpretation, so it is computed here.
+#
+# Narrow on purpose, by this module's rule that a window in dispute gets no window at all:
+#   * a YEAR is required. "on 3 April" has two readings and is left to the classifier.
+#   * a numeric date other than ISO is refused: 03/04/2025 is April to one reader, March to another.
+#   * two dates are ONE SPAN only when the words join them ("from .. to", "between .. and",
+#     "6 to 12 October 2025"); two dates otherwise are a comparison and are left alone.
+#   * a date after "since", "after", "before", "until" or "as of" is an open interval: refused.
+#   * a time of day narrows a SINGLE named day, and only a clock time counts (a colon, am/pm,
+#     noon, midday, midnight): "between 20 and 24 °C" is a band, not two o'clock times.
+# The end is inclusive because both SQL builders emit `<=`, so it is one second before the named
+# end: "from 10:00 to 16:00" reads [10:00, 16:00), exactly what a half-open key computes.
+
+_MON = (
+    r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|"
+    r"sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?"
+)
+_MONTH_NUM = {
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4, "may": 5, "jun": 6,
+    "jul": 7, "aug": 8, "sep": 9, "oct": 10, "nov": 11, "dec": 12,
+}  # fmt: skip
+_YEAR = r"((?:19|20)\d{2})(?!\d|[.:]\d)"  # "2025." ends a sentence; "2025.5" is no year
+_ORD = r"(?:st|nd|rd|th)?"
+_WEEKDAY = r"(?:(?:mon|tues?|wed(?:nes)?|thu(?:rs)?|fri|sat(?:ur)?|sun)(?:day)?\.?,?\s+)"
+_JOIN = r"(?:to|and|until|till|through|thru|-|–|—)"
+
+#: "6 to 12 October 2025", "between 6 and 12 October 2025": a day span sharing one month.
+_DAY_SPAN_DF = re.compile(
+    rf"\b(\d{{1,2}}){_ORD}\s*{_JOIN}\s*{_WEEKDAY}?(\d{{1,2}}){_ORD}\s+(?:of\s+)?{_MON},?\s+{_YEAR}"
+)
+#: "October 6-12, 2025".
+_DAY_SPAN_MF = re.compile(
+    rf"\b{_MON}\s+(\d{{1,2}}){_ORD}\s*{_JOIN}\s*(\d{{1,2}}){_ORD},?\s+{_YEAR}"
+)
+#: "January to March 2025": a month span sharing one year.
+_MONTH_SPAN = re.compile(rf"\b{_MON}\s*{_JOIN}\s*{_MON},?\s+{_YEAR}")
+#: "3 April 2025", "3rd of April, 2025".
+_DAY_DF = re.compile(rf"(?<![\d.:])\b(\d{{1,2}}){_ORD}\s+(?:of\s+)?{_MON},?\s+{_YEAR}")
+#: "January 13, 2025".
+_DAY_MF = re.compile(rf"\b{_MON}\s+(\d{{1,2}}){_ORD},?\s+{_YEAR}")
+#: "2025-01-13".
+_DAY_ISO = re.compile(r"(?<![\d.:])\b((?:19|20)\d{2})-(\d{2})-(\d{2})\b")
+#: "March 2025".
+_MONTH_YEAR = re.compile(rf"\b{_MON},?\s+{_YEAR}")
+
+#: A clock time: "10:00", "9am", "2.30 pm" is NOT one (a room number looks like it), "noon".
+_CLOCK = r"(?:\d{1,2}(?::[0-5]\d)?\s*(?:a\.?m\.?|p\.?m\.?)(?![a-z])|\d{1,2}:[0-5]\d|noon|midday|midnight)"
+_TIME_SPAN = re.compile(rf"(?<![\d.:])({_CLOCK})\s*{_JOIN}\s*({_CLOCK})")
+_TIME_AT = re.compile(rf"\b(?:at|around|about)\s+({_CLOCK})")
+#: An open interval: the date is one end of it, not the period.
+_OPEN_BEFORE = re.compile(
+    r"\b(?:since|after|before|until|till|by|as\s+of|starting|beginning|from)\s+(?:the\s+)?"
+    rf"{_WEEKDAY}?$"
+)
+#: A date used as a NAME: "use the May 2021 framework", "the 3 March 2025 incident". An article or
+#: possessive directly before the date, with no temporal preposition before THAT, makes the date
+#: describe a thing, not bound a period. Measured 2026-10-10: the only two of 4,060 bank questions
+#: the resolver claimed were both this shape (a dated document); "on the 13th of January" is not.
+_ATTRIBUTIVE = re.compile(r"\b(?:the|a|an|its|their|our|his|her|your|my)\s+$")
+_TEMPORAL_ARTICLE = re.compile(
+    r"\b(?:on|in|during|for|over|throughout|across|of|from|between|to|until|till|through)\s+"
+    r"(?:the|a|an|its|their|our|his|her|your|my)\s+$"
+)
+#: "the week of 8 October 2025": the ISO week holding that day.
+_WEEK_OF = re.compile(r"\bweek\s+(of|beginning|starting|commencing)\s+(?:the\s+)?" rf"{_WEEKDAY}?$")
+#: What may sit between two dates for them to be one span: a join word and perhaps a weekday.
+_SPAN_GAP = re.compile(rf"^\s*{_JOIN}\s*{_WEEKDAY}?(?:the\s+)?$")
+
+
+def _month_of(token: str) -> int:
+    return _MONTH_NUM[token.lower().rstrip(".")[:3]]
+
+
+def _clock_minutes(token: str, is_end: bool) -> Optional[int]:
+    """Minutes after local midnight for one clock token; None when it is not a real time."""
+    t = token.lower().replace(".", "").replace(" ", "")
+    if t in ("noon", "midday"):
+        return 12 * 60
+    if t == "midnight":
+        return 24 * 60 if is_end else 0
+    m = re.fullmatch(r"(\d{1,2})(?::(\d{2}))?(am|pm)?", t)
+    if not m:
+        return None
+    hour, minute, ampm = int(m.group(1)), int(m.group(2) or 0), m.group(3)
+    if ampm:
+        if not 1 <= hour <= 12:
+            return None
+        hour = hour % 12 + (12 if ampm == "pm" else 0)
+    elif hour > 24 or (hour == 24 and minute):
+        return None
+    return hour * 60 + minute
+
+
+def _dated_spans(low: str) -> List[Tuple[int, int, date, date, str]]:
+    """Every written-out date or month in the text as (start, end, first day, last day, kind)."""
+    found: List[Tuple[int, int, date, date, str]] = []
+    taken: List[Tuple[int, int]] = []
+
+    def free(a: int, b: int) -> bool:
+        return all(b <= s or a >= e for s, e in taken)
+
+    def add(a: int, b: int, d0: date, d1: date, kind: str) -> None:
+        found.append((a, b, d0, d1, kind))
+        taken.append((a, b))
+
+    def month_end(y: int, m: int) -> date:
+        return _month_start_back(date(y, m, 1), -1) - timedelta(days=1)
+
+    # Spans first, so "6 to 12 October 2025" is not read as the 12th alone.
+    for m in _DAY_SPAN_DF.finditer(low):
+        y, mo = int(m.group(4)), _month_of(m.group(3))
+        add(m.start(), m.end(), date(y, mo, int(m.group(1))), date(y, mo, int(m.group(2))), "span")
+    for m in _DAY_SPAN_MF.finditer(low):
+        if free(m.start(), m.end()):
+            y, mo = int(m.group(4)), _month_of(m.group(1))
+            add(
+                m.start(),
+                m.end(),
+                date(y, mo, int(m.group(2))),
+                date(y, mo, int(m.group(3))),
+                "span",
+            )
+    for m in _MONTH_SPAN.finditer(low):
+        if free(m.start(), m.end()):
+            y, m0, m1 = int(m.group(3)), _month_of(m.group(1)), _month_of(m.group(2))
+            add(m.start(), m.end(), date(y, m0, 1), month_end(y, m1), "span")
+    for rx, order in ((_DAY_DF, "dmy"), (_DAY_MF, "mdy"), (_DAY_ISO, "ymd")):
+        for m in rx.finditer(low):
+            if not free(m.start(), m.end()):
+                continue
+            if order == "dmy":
+                y, mo, d = int(m.group(3)), _month_of(m.group(2)), int(m.group(1))
+            elif order == "mdy":
+                y, mo, d = int(m.group(3)), _month_of(m.group(1)), int(m.group(2))
+            else:
+                y, mo, d = int(m.group(1)), int(m.group(2)), int(m.group(3))
+            day = date(y, mo, d)  # raises on 31 February: the caller treats that as no window
+            add(m.start(), m.end(), day, day, "day")
+    for m in _MONTH_YEAR.finditer(low):
+        if free(m.start(), m.end()):
+            y, mo = int(m.group(2)), _month_of(m.group(1))
+            add(m.start(), m.end(), date(y, mo, 1), month_end(y, mo), "month")
+    return sorted(found)
+
+
+def explicit_date_bounds(
+    text: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Optional[Tuple[str, str]]:
+    """Store-clock bounds of the date, day span or month a question WRITES OUT, or None.
+
+    See the block above for what is refused and why. Returns ``(start, end)`` as ``STAMP``
+    strings on the stores' UTC clock; the dates themselves are the building's local days.
+    A question that names a day WITHOUT a year ("on Wednesday", "8 October") is resolved by
+    ``named_date_bounds`` (CAVEAT-1616); ``now`` is the building's local time, for tests.
+    """
+    low = (text or "").lower()
+    if not low:
+        return None
+    if not re.search(r"(?:19|20)\d{2}", low):
+        return named_date_bounds(low, tz_name, now=now)
+    try:
+        spans = _dated_spans(low)
+    except ValueError:  # a date that does not exist names no period
+        return None
+    if not spans:
+        return None
+    if len(spans) == 2:
+        (a0, a1, d0, _, k0), (b0, b1, _, d1, k1) = spans
+        if not _SPAN_GAP.match(low[a1:b0]) or d1 < d0 or ("month" in (k0, k1) and k0 != k1):
+            return None  # two dates not joined as one span are a comparison
+        spans = [(a0, b1, d0, d1, "span")]
+    if len(spans) != 1:
+        return None
+    start, end, first, last, kind = spans[0]
+    before = low[max(0, start - 40) : start]
+    week = _WEEK_OF.search(before) if kind == "day" else None
+    if week is not None:
+        if week.group(1) == "of":
+            first = first - timedelta(days=first.isoweekday() - 1)
+        last = first + timedelta(days=6)
+        kind = "span"
+    elif kind != "span" and _OPEN_BEFORE.search(before):
+        return None  # a joined span carries its own "from"/"between"; a lone date does not
+    elif kind != "span" and _ATTRIBUTIVE.search(before) and not _TEMPORAL_ARTICLE.search(before):
+        return None  # the date names a thing ("the May 2021 framework"), not a period
+    if last < first:
+        return None
+
+    start_local = datetime(first.year, first.month, first.day)
+    end_local = datetime(last.year, last.month, last.day) + timedelta(days=1)
+    if kind == "day":
+        times = _TIME_SPAN.search(low)
+        if times is not None:
+            t0 = _clock_minutes(times.group(1), is_end=False)
+            t1 = _clock_minutes(times.group(2), is_end=True)
+            if t0 is None or t1 is None or t1 <= t0:
+                return None  # a time span that runs backwards or past midnight is not guessed at
+            day0 = start_local
+            start_local, end_local = day0 + timedelta(minutes=t0), day0 + timedelta(minutes=t1)
+        else:
+            at = _TIME_AT.search(low)
+            t = _clock_minutes(at.group(1), is_end=False) if at is not None else None
+            if t is not None:
+                # "at noon": the readings either side of it, never the whole day.
+                mid = start_local + timedelta(minutes=t)
+                start_local, end_local = mid - timedelta(minutes=30), mid + timedelta(minutes=30)
+    end_local -= timedelta(seconds=1)
+    return (
+        to_store(start_local, tz_name).strftime(STAMP),
+        to_store(end_local, tz_name).strftime(STAMP),
+    )
+
+
+# ── A DAY NAMED WITHOUT A YEAR (CAVEAT-1616) ────────────────────────────────────────────────
+#
+# "How much energy did the solar panels produce on Wednesday?" read ten days of readings and said
+# no daily figure exists; "was it higher or lower than on Thursday, 8 October?" resolved no window
+# at all. A weekday, or a day and month, said about the PAST names one local day as plainly as
+# "yesterday" does: the most recent such day. Every lane prints the window it read, so the reader
+# sees which day was taken.
+#
+#   * the most recent PAST occurrence; "on <weekday>" on that weekday is today, "last <weekday>"
+#     is never today;
+#   * a weekday AND a day-month ("Monday 13 January") take the most recent year in which that date
+#     fell on that weekday -- the reader has said which year without writing it;
+#   * refused: a future question (a forecast's to read), a plural or recurring weekday ("on
+#     Mondays", "every Monday", a pattern), an open interval ("since Monday"), a date naming a
+#     thing ("the Wednesday meeting"), two named days (a comparison: each half resolves alone),
+#     "this <weekday>" still ahead this week, and the month "May" without a year (a verb as often).
+
+_WEEKDAY_NUM = {
+    "monday": 0, "tuesday": 1, "wednesday": 2, "thursday": 3,
+    "friday": 4, "saturday": 5, "sunday": 6,
+}  # fmt: skip
+_NAMED_WEEKDAY_RE = re.compile(
+    r"\b(?:(?P<rel>last|this\s+past|past|this|on|for|from)\s+)?(?:the\s+)?"
+    r"(?P<wd>monday|tuesday|wednesday|thursday|friday|saturday|sunday)(?P<plural>s)?\b"
+)
+_NOYEAR_MON = (
+    r"(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|june?|july?|aug(?:ust)?|"
+    r"sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\.?"
+)
+_NO_YEAR_AFTER = r"(?!,?\s+(?:19|20)\d{2})(?![\d.:])"
+_DAY_DF_NOYEAR = re.compile(
+    rf"(?<![\d.:])\b(\d{{1,2}}){_ORD}\s+(?:of\s+)?{_NOYEAR_MON}\b{_NO_YEAR_AFTER}"
+)
+_DAY_MF_NOYEAR = re.compile(rf"\b{_NOYEAR_MON}\s+(\d{{1,2}}){_ORD}\b{_NO_YEAR_AFTER}")
+#: Future, and availability: "is room 2.13 free on Monday?" asks about the coming Monday, and the
+#: events lane reads its own period for bookings.
+_FUTURE_DAY_RE = re.compile(
+    r"\b(?:will|going\s+to|tomorrow|next|forecast|predict\w*|expected|upcoming|coming|"
+    r"free|available|availability|book|booking|reserve|reservation)\b"
+)
+_RECURRING_RE = re.compile(r"\b(?:every|each|usually|typically|normally|on\s+average)\b")
+_NOYEAR_OPEN_BEFORE = re.compile(
+    r"\b(?:since|after|before|until|till|by|as\s+of|starting|beginning)\s+(?:the\s+)?(?:on\s+)?$"
+)
+
+
+def _local_date_bounds(low: str, day: date, tz_name: Optional[str]) -> Optional[Tuple[str, str]]:
+    """One local day as store-clock bounds, narrowed by a clock time the text writes out."""
+    start_local = datetime(day.year, day.month, day.day)
+    end_local = start_local + timedelta(days=1)
+    times = _TIME_SPAN.search(low)
+    if times is not None:
+        t0 = _clock_minutes(times.group(1), is_end=False)
+        t1 = _clock_minutes(times.group(2), is_end=True)
+        if t0 is None or t1 is None or t1 <= t0:
+            return None
+        start_local, end_local = (
+            start_local + timedelta(minutes=t0),
+            start_local + timedelta(minutes=t1),
+        )
+    else:
+        at = _TIME_AT.search(low)
+        t = _clock_minutes(at.group(1), is_end=False) if at is not None else None
+        if t is not None:
+            mid = start_local + timedelta(minutes=t)
+            start_local, end_local = mid - timedelta(minutes=30), mid + timedelta(minutes=30)
+    end_local -= timedelta(seconds=1)
+    return (
+        to_store(start_local, tz_name).strftime(STAMP),
+        to_store(end_local, tz_name).strftime(STAMP),
+    )
+
+
+def named_date_bounds(
+    text: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Optional[Tuple[str, str]]:
+    """Store-clock bounds of a day named without a year ("on Wednesday", "8 October"), or None."""
+    low = (text or "").lower()
+    if not low or _FUTURE_DAY_RE.search(low) or _RECURRING_RE.search(low):
+        return None
+    today = (now or local_now(tz_name)).date()
+
+    weekdays = [m for m in _NAMED_WEEKDAY_RE.finditer(low)]
+    dated: List[Tuple[int, int, int, int]] = []  # (start, end, day, month)
+    taken: List[Tuple[int, int]] = []
+    for rx, dm in ((_DAY_DF_NOYEAR, True), (_DAY_MF_NOYEAR, False)):
+        for m in rx.finditer(low):
+            if any(not (m.end() <= s or m.start() >= e) for s, e in taken):
+                continue
+            d, mon = (m.group(1), m.group(2)) if dm else (m.group(2), m.group(1))
+            day_n = int(d)
+            if not 1 <= day_n <= 31:
+                continue
+            dated.append((m.start(), m.end(), day_n, _month_of(mon)))
+            taken.append((m.start(), m.end()))
+    if len(dated) > 1 or len(weekdays) > 1:
+        return None  # two named days are a comparison: each half resolves on its own
+    if any(w.group("plural") for w in weekdays):
+        return None  # "on Mondays": a recurring day, not one day
+    # On the weekday WORD, so "the Wednesday meeting" shows its article to the attributive test.
+    anchor = dated[0][0] if dated else (weekdays[0].start("wd") if weekdays else None)
+    if anchor is None:
+        return None
+    before = low[max(0, anchor - 40) : anchor]
+    if _NOYEAR_OPEN_BEFORE.search(before):
+        return None  # "since Monday": one end of an open interval
+    if _ATTRIBUTIVE.search(before) and not _TEMPORAL_ARTICLE.search(before):
+        return None  # "the Wednesday meeting": a date naming a thing
+
+    wd = weekdays[0] if weekdays else None
+    wd_num = _WEEKDAY_NUM[wd.group("wd")] if wd else None
+    if dated:
+        _s, _e, day_n, mon = dated[0]
+        for back in range(0, 8):
+            y = today.year - back
+            try:
+                cand = date(y, mon, day_n)
+            except ValueError:
+                continue  # 29 February in a year that has none
+            if cand > today:
+                continue
+            if wd_num is not None and cand.weekday() != wd_num:
+                continue
+            return _local_date_bounds(low, cand, tz_name)
+        return None
+    rel = re.sub(r"\s+", " ", (wd.group("rel") or "")).strip()
+    back = (today.weekday() - wd_num) % 7
+    if rel == "last" and back == 0:
+        back = 7
+    if rel == "this" and wd_num > today.weekday():
+        return None  # "this Friday" on a Wednesday is still ahead
+    return _local_date_bounds(low, today - timedelta(days=back), tz_name)
 
 
 # ── TWO PERIODS SIDE BY SIDE (v2 compound questions, shape C4) ──────────────────────────────

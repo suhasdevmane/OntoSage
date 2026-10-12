@@ -113,7 +113,10 @@ def test_classes_are_ranked_by_specificity_not_unioned():
     block = src[src.index("if _hint_classes:") : src.index("# Timeseries-bearing points first")]
     assert "VALUES ?cls" not in block, "the union is the bug; one class at a time"
     assert "_count_readable_instances" in block
-    assert "sorted(" in block and "_ranked" in block
+    # 2026-10-11: the order moved into _rank_hint_classes, which puts a class the question
+    # names first and keeps fewest-first among the rest; the one-class-at-a-time loop is unchanged.
+    assert "_rank_hint_classes" in block and "_ranked" in block
+    assert "sorted(" in inspect.getsource(SPARQLAgent._rank_hint_classes)
 
 
 def test_specificity_is_asked_of_the_graph_not_guessed_from_the_name():
@@ -127,7 +130,7 @@ def test_specificity_is_asked_of_the_graph_not_guessed_from_the_name():
 def test_a_class_with_no_instances_is_never_chosen():
     src = _src()
     block = src[src.index("if _hint_classes:") : src.index("# Timeseries-bearing points first")]
-    assert "if n > 0" in block
+    assert "if n > 0" in inspect.getsource(SPARQLAgent._rank_hint_classes)
 
 
 def test_a_narrow_class_drops_the_token_filter():
@@ -146,7 +149,18 @@ def test_a_broad_class_keeps_the_token_filter_and_the_narrowing():
     src = _src()
     block = src[src.index("if _hint_classes:") : src.index("# Timeseries-bearing points first")]
     assert "_narrow_to_best_match" in block
-    assert "if _used_n > self._CLASS_IS_THE_ANSWER_CAP:" in block
+    assert "_used_n > self._CLASS_IS_THE_ANSWER_CAP or _names_a_place" in block
+
+
+def test_a_space_identifier_always_keeps_the_token_filter():
+    """BUG-1503: 'Plot the temperature in room 1.06' resolved Room_1.06 to the ONE outside-air
+    sensor, because the narrowest class dropped its tokens. An entity with an identifier names a
+    PLACE; its tokens are not a restatement of the class and must always apply."""
+    src = _src()
+    block = src[src.index("_names_a_place = ") : src.index("# Timeseries-bearing points first")]
+    assert 're.fullmatch(r"\\d+(?:\\.\\d+)+", t)' in block
+    joined = " ".join(block.split())
+    assert "_n <= self._CLASS_IS_THE_ANSWER_CAP and not _names_a_place" in joined
 
 
 def test_the_cap_sits_below_a_floors_worth_of_one_modality():

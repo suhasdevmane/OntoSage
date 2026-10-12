@@ -128,3 +128,16 @@ bldg:Amenity_PrayerRoom_Floor1
     ontosage:locationText "Ground Level Parking, at the Abacws site, with six electric-vehicle charging stations on the same level" ;
     ontosage:answerText "The building records a ground-level parking area with six electric-vehicle charging stations. How many bays are free is measured separately, by the building's parking-occupancy point, so a current count is read from that rather than from this record. NO PARKING CHARGE IS RECORDED: there is no parking line in the building's cost register and no parking tariff among its registered tariffs, so a daily rate cannot be quoted and must not be assumed. What the building does record about paying to park is an arrangement rather than a price — the university car park on Corbett Road requires a permit for staff, and on-street parking near the site is pay-and-display — so anyone needing a figure should ask estates." ;
     rdfs:comment "No parking charge is recorded for this area in any of the building's records — checked against its 4 registered tariffs, its 24 cost lines and its documents on 2026-09-29. The absence is stated deliberately; a rate belongs in an ontosage:Tariff instance with its authority and validity period if the owner confirms one." .
+
+# EV CHARGING (BUG-1548, 2026-10-10). "Where can I charge my electric car?" was declined, though the
+# graph holds EV_Charger_1..6 on the parking level and the parking record above names them. Stated
+# by the building's own points; no position finer than the parking level is claimed, and no price
+# (none is recorded). Availability is a READING (the charger state points), never this record.
+# Lay terms measured: 4 of the 4,060 bank questions use them, all about EV charging.
+<http://abacwsbuilding.cardiff.ac.uk/abacws#Amenity_EVCharging_GroundLevel>
+    a ontosage:Amenity ;
+    rdfs:label "Electric vehicle charging — Ground Level Parking"@en ;
+    ontosage:layTerms "ev charging, ev charger, ev chargers, electric vehicle charging, electric car charging, charge my car, charge my electric car, charge an electric car, car charging, charging point, charging points, charging station, charging stations, electric car, electric vehicle" ;
+    ontosage:locatedIn <http://abacwsbuilding.cardiff.ac.uk/abacws#Parking_Level_Ground> ;
+    ontosage:locationText "Six electric-vehicle charging stations (EV Charging Station 1 to 6) on the ground-level parking at the Abacws site" ;
+    ontosage:answerText "There are six electric-vehicle charging stations, EV Charging Station 1 to 6, on the ground-level parking. Each station's power draw is metered, and chargers 1 and 2 report a live state (available, charging or fault), so whether a charger is free right now is read from those readings rather than from this record. No charging tariff is recorded, so a price cannot be quoted." .

@@ -327,6 +327,10 @@ _FOLLOWUP_MARKER_WORDS = frozenset(
         "those",
         "these",
         "it",
+        # "what's its leaving water temperature?" after the heat pump read all four plants: a
+        # possessive anaphor is a reference too (BUG-1612).
+        "its",
+        "their",
         "them",
         "they",
         "same",
@@ -345,6 +349,15 @@ _FOLLOWUP_MARKER_PHRASES = (
     "what about",
     "how about",
     "what of",
+    # BUG-1600: "which of the two was higher?" after floor 3 and floor 4 is six words with no
+    # marker, so no rewrite ran and the classifier asked "which comparison?" with options
+    # from no turn of this chat. A pair reference is a reference.
+    "the two",
+    "those two",
+    "these two",
+    "which of them",
+    "both of them",
+    "either of them",
 )
 _FOLLOWUP_START_PREFIXES = (
     "and ",
@@ -816,12 +829,17 @@ class DialogueAgent:
             amenities_in_reply,
             place_of,
             places_in_reply,
+            resolve_compare_with_before,
+            resolve_counted_instruments,
+            resolve_elliptical_superlative,
             resolve_location_statement,
             resolve_ordinal,
             resolve_pair_reference,
+            resolve_place_swap,
             resolve_relative_day_followup,
             resolve_report_reference,
             resolve_sole_floor_or_amenity_anaphor,
+            resolve_sole_record_anaphor,
             resolve_sole_room_anaphor,
         )
 
@@ -834,9 +852,19 @@ class DialogueAgent:
         for _resolver, _context in (
             (resolve_report_reference, _previous_reply),
             (resolve_ordinal, _previous_reply),
+            # A record before a room: "when is it due?" after one work order (BUG-1603).
+            (resolve_sole_record_anaphor, _previous_reply),
             (resolve_sole_room_anaphor, _previous_reply),
             (resolve_location_statement, _previous_user_q),
             (resolve_relative_day_followup, _previous_user_q),
+            # "what did they record?" after "how many water meters?" (CAVEAT-1628)
+            (resolve_counted_instruments, _previous_user_q),
+            # "which floor used the most?" after a question naming the quantity (2026-10-11)
+            (resolve_elliptical_superlative, _earlier_user),
+            # "how does that compare with the week before?" (2026-10-11)
+            (resolve_compare_with_before, _earlier_user),
+            # "what about room 2.53?": the previous question with only its place changed
+            (resolve_place_swap, _earlier_user),
             (resolve_pair_reference, _earlier_user),
         ):
             _fixed = _resolver(latest, _context)
@@ -946,7 +974,10 @@ class DialogueAgent:
             'context. Resolve references such as "there", "that", "it", '
             '"those", "the same", "again" to the concrete entity (room, '
             "floor, zone, sensor, system, or time period) mentioned earlier. "
-            "Preserve the user's intent and any NEW details they added. If the "
+            "Preserve the user's intent and any NEW details they added. Keep time "
+            'expressions exactly as the conversation wrote them ("today", "yesterday", '
+            '"last week", "this morning"): never turn them into calendar dates and never '
+            "add a year. If the "
             "message is already self-contained, return it unchanged. Return ONLY "
             "the rewritten question — no quotes, labels, or explanation."
         )
@@ -965,6 +996,10 @@ class DialogueAgent:
             return None
         if rewritten.lower() == latest.lower():
             return None
+        # NOR A YEAR NOBODY WROTE (BUG-1620): "plot it" became "... on Saturday, 10 October 2023".
+        from orchestrator.services.context_switch import strip_invented_years
+
+        rewritten = strip_invented_years(rewritten, [getattr(m, "content", "") for m in msgs])
 
         # A REWRITE MAY ADD A REFERENT. IT MAY NOT CHANGE ONE (V12-11, review A14).
         #
@@ -1300,14 +1335,18 @@ class DialogueAgent:
         # question asking what a plant circuit READS belongs to the lanes that can read them.
         from orchestrator.services.routing_contract import (
             PLANT_READING_RE,
+            comfort_reading_of_a_named_room,
             measured_reading_question,
         )
 
         # also a sensor VALUE asked for by name: "are VOC levels safe in my workspace?" (wave 9)
+        # and a comfort reading of one named room: "how bright is the seminar room 3.13?"
+        # (BUG-1566), which matched PublicEvent on "seminar".
         _asks_a_plant_reading = (
             bool(_plant_point_question(user_query or ""))
             or bool(PLANT_READING_RE.search(user_query or ""))
             or measured_reading_question(user_query)
+            or comfort_reading_of_a_named_room(user_query)
         )
         _ranks_by_measurement = bool(
             DELIBERATE_RE.search(user_query or "")

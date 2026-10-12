@@ -273,7 +273,12 @@ class MultiIntentDetector:
 
         q_lower = query.lower()
 
-        has_connective = any(phrase in q_lower for phrase in _CONNECTIVE_PHRASES)
+        # A dotted identifier is not a numbered list (BUG-1515): "1." matched "room 1.06", so
+        # "Compare CO2 in room 1.06 this morning with yesterday morning" was split into three
+        # sub-tasks and the planner returned nothing. Measured over the 4,060-question bank:
+        # 2 questions leave the gate, both carrying a room id; none enter it.
+        q_conn = re.sub(r"\d+(?:\.\d+)+", " ", q_lower)
+        has_connective = any(phrase in q_conn for phrase in _CONNECTIVE_PHRASES)
         if not has_connective:
             return False
 

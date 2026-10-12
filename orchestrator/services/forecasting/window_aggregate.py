@@ -185,3 +185,136 @@ def reduce_to_requested_figure(
         f"{interval}.** Computed over the {len(values)} predicted step(s) that fall inside "
         f"it, out of {len(forecast)} in the horizon.{note}"
     )
+
+
+#: "Will meeting room 4.11 get STUFFY this afternoon?" (BUG-1592): (pattern, measurand, which
+#: end of the comfort band, how the answer names it). A forecast table with no verdict was deleted
+#: by the relevance gate as not answering the question asked.
+_FUTURE_ASK = re.compile(r"\b(?:will|going\s+to|likely\s+to|expected\s+to|about\s+to)\b", re.I)
+_COMFORT_ASKS = (
+    (re.compile(r"\bstuff(?:y|ier)\b", re.I), "co2", "upper", "stuffy"),
+    (
+        re.compile(
+            r"\btoo\s+(?:warm|hot)\b|\boverheat\w*\b|\b(?:get|become)\s+(?:warm|hot)\b", re.I
+        ),
+        "temperature",
+        "upper",
+        "too warm",
+    ),
+    (
+        re.compile(r"\btoo\s+(?:cold|cool|chilly)\b|\b(?:get|become)\s+(?:cold|chilly)\b", re.I),
+        "temperature",
+        "lower",
+        "too cold",
+    ),
+    (re.compile(r"\b(?:too\s+)?humid\b|\bmuggy\b", re.I), "humidity", "upper", "too humid"),
+    (re.compile(r"\btoo\s+dry\b", re.I), "humidity", "lower", "too dry"),
+)
+#: The unit a forecast must carry for its measurand, so a limit is never compared across units.
+_UNIT_OF = {"co2": ("ppm",), "temperature": ("°c", "degc", "c"), "humidity": ("%", "percent")}
+
+
+def comfort_verdict(
+    question: str,
+    future_index: Sequence[str],
+    forecast: Sequence[float],
+    lower_95: Sequence[float],
+    upper_95: Sequence[float],
+    unit: str = "",
+    horizon_label: str = "",
+    tz_name: Optional[str] = None,
+    occupied_hours: Tuple[Optional[int], Optional[int]] = (None, None),
+) -> Optional[str]:
+    """'Will it get stuffy this afternoon?' answered against the standards table, or None.
+
+    The forecast's peak (or trough, for "too cold") over the window asked about, and the edge of
+    its 95% band, are compared with the band the system's standards table gives the measurand.
+    Three outcomes, worded by what the band allows: above the limit (likely), the band reaches it
+    (possibly), the band stays clear (unlikely). None when the question names no comfort word, the
+    unit does not match the measurand, or no band is listed: then no verdict is invented.
+    """
+    if not forecast or not _FUTURE_ASK.search(question or ""):
+        return None
+    ask = next((a for a in _COMFORT_ASKS if a[0].search(question or "")), None)
+    if ask is None:
+        return None
+    _rx, measurand, end, word = ask
+    u = (unit or "").strip()
+    if not any(u.lower() == x or u.lower().endswith(x) for x in _UNIT_OF[measurand]):
+        return None
+    try:
+        import json
+
+        from orchestrator.services import aggregate_lane as al
+
+        table = json.loads(al._STANDARDS_FILE.read_text(encoding="utf-8"))
+        entry = table.get(al._DEFAULT_STANDARD) or {}
+        band = entry.get(measurand)
+        lo_lim, hi_lim = float(band[0]), float(band[1])
+        standard = str(entry.get("name") or al._DEFAULT_STANDARD)
+    except Exception as exc:  # no listed band, no verdict
+        logger.debug(f"[forecast_window] no comfort band for {measurand}: {exc}")
+        return None
+
+    steps = list(range(len(forecast)))
+    window = horizon_label or "the forecast horizon"
+    try:
+        from orchestrator.services.evidence.time_windows import detect_mask
+
+        mask = detect_mask(question, occupied_hours[0], occupied_hours[1])
+    except Exception:  # pragma: no cover - no mask is the whole horizon
+        mask = None
+    passed = ""
+    if mask is not None:
+        stamps = [_to_local(s, tz_name) for s in future_index]
+        if any(s is None for s in stamps[: len(forecast)]):
+            return None
+        covered = [i for i in steps if i < len(stamps) and mask.covers(stamps[i])]
+        if covered:
+            steps, window = covered, mask.describe()
+        else:
+            # THE WINDOW ASKED ABOUT IS NOT IN THE FORECAST (BUG-1611). "Will room 4.11 get stuffy
+            # this afternoon?" asked at 19:03 printed a six-hour table and no verdict: the
+            # afternoon had passed and no step fell in it. Say so, then judge the horizon there is.
+            first, last = stamps[0], stamps[min(len(forecast), len(stamps)) - 1]
+            hours = ""
+            if getattr(mask, "start_hour", None) is not None and mask.start_hour != mask.end_hour:
+                hours = f", {mask.start_hour:02d}:00–{mask.end_hour % 24:02d}:00"
+            passed = (
+                f"The time asked about ({mask.describe()}{hours}) is not in this forecast, which "
+                f"runs from {first:%a %H:%M} to {last:%a %H:%M}. "
+            )
+    sp = " " if u and not u.startswith("°") and u != "%" else ""
+    values = [float(forecast[i]) for i in steps]
+    if end == "upper":
+        point = max(values)
+        edge = max(float(upper_95[i]) for i in steps if i < len(upper_95)) if upper_95 else point
+        limit, beyond, side = hi_lim, point > hi_lim, "above"
+        reaches = edge > hi_lim
+        shape = "peaks at"
+    else:
+        point = min(values)
+        edge = min(float(lower_95[i]) for i in steps if i < len(lower_95)) if lower_95 else point
+        limit, beyond, side = lo_lim, point < lo_lim, "below"
+        reaches = edge < lo_lim
+        shape = "falls to"
+    name = {"co2": "CO2"}.get(measurand, measurand)
+    cite = (
+        f"the {limit:g}{sp}{u} limit for {name} in the {standard} entry of this system's "
+        "standards table"
+    )
+    if beyond:
+        lead = (
+            f"**Likely yes:** the forecast for {window} {shape} {point:.0f}{sp}{u}, {side} {cite}."
+        )
+    elif reaches:
+        lead = (
+            f"**Possibly:** the forecast for {window} {shape} {point:.0f}{sp}{u}, inside {cite}, "
+            f"but the edge of its 95% band reaches {edge:.0f}{sp}{u}."
+        )
+    else:
+        lead = (
+            f"**Unlikely:** the forecast for {window} {shape} {point:.0f}{sp}{u}, and even the edge "
+            f"of its 95% band ({edge:.0f}{sp}{u}) stays inside {cite}."
+        )
+    return passed + lead + f" ('{word}' is read as {name} {side} that limit.)"

@@ -243,6 +243,37 @@ def test_a_budget_shortfall_that_persists_gives_up_and_names_the_budget(monkeypa
     assert "budget of 8192" in str(info.value)
 
 
+def test_a_reply_cut_at_the_limit_is_retried_once_at_double_the_budget(monkeypatch, caplog):
+    """BUG-1495: a compile plan one brace short was returned as if whole and failed to parse."""
+    lm = _lm()
+    mgr = _hosted_manager(lm, monkeypatch)
+    monkeypatch.setattr(lm.settings, "HOSTED_LLM_MAX_TOKENS", 4096)
+    gateway = _Gateway([('{"decision": "select_one"', "length"), ('{"decision": "select_one"}', "stop")])
+    mgr.client = mgr.client_fast = gateway
+
+    with caplog.at_level(logging.WARNING):
+        out = asyncio.run(mgr.generate("compile this"))
+
+    assert out == '{"decision": "select_one"}'
+    assert [c["max_tokens"] for c in gateway.calls] == [4096, 8192]
+    assert "cut at max_tokens=4096" in caplog.text
+
+
+def test_a_reply_still_cut_after_the_retry_is_used_as_written_and_logged(monkeypatch, caplog):
+    lm = _lm()
+    mgr = _hosted_manager(lm, monkeypatch)
+    monkeypatch.setattr(lm.settings, "HOSTED_LLM_MAX_TOKENS", 4096)
+    gateway = _Gateway([("a long answer that stops", "length")])
+    mgr.client = mgr.client_fast = gateway
+
+    with caplog.at_level(logging.WARNING):
+        out = asyncio.run(mgr.generate("x"))
+
+    assert out == "a long answer that stops"
+    assert [c["max_tokens"] for c in gateway.calls] == [4096, 8192]
+    assert "still cut at max_tokens=8192" in caplog.text
+
+
 def test_an_empty_stop_is_not_mistaken_for_a_budget_shortfall(monkeypatch):
     """Only finish_reason=length means the budget was spent; any other empty answer is a
     plain empty completion and does not double the budget."""

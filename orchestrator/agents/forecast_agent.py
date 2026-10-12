@@ -175,7 +175,7 @@ class ForecastAgent:
         if scope_request:
             labels = [str((m or {}).get("label", "")) for m in (sensor_metadata or {}).values()]
             how = _scope.how_to_combine(labels, user_query)
-            folded, n_sensors = _scope.aggregate_records(records, how)
+            folded, n_sensors = _scope.aggregate_records(records, how, freq=horizon.freq)
             if n_sensors > 1 and folded:
                 records = folded
                 uuid = "__aggregate__"
@@ -263,6 +263,20 @@ class ForecastAgent:
         except Exception as _cal_err:  # calibration must never cost a forecast
             logger.debug(f"[forecast_agent] calibration skipped: {_cal_err}")
 
+        # A SERIES THAT HAS NEVER BEEN NEGATIVE IS NOT FORECAST NEGATIVE (BUG-1511). "Predict
+        # occupancy for the building tomorrow morning" projected -0.83, -3.63 and -4.97 people,
+        # and the plausibility check then told the reader the SENSOR was probably unscaled --
+        # the model's extrapolation, blamed on the instrument. The floor is read from the
+        # history itself, so no quantity list is needed and a signed series is untouched.
+        fc_values = list(selection["forecast"])
+        try:
+            if len(series) and float(series.min()) >= 0.0:
+                _floor = lambda xs: [max(0.0, float(x)) for x in xs]  # noqa: E731
+                fc_values = _floor(fc_values)
+                lo80, hi80, lo95, hi95 = _floor(lo80), _floor(hi80), _floor(lo95), _floor(hi95)
+        except Exception as _clamp_err:  # the floor must never cost the forecast
+            logger.debug(f"[forecast_agent] non-negative floor skipped: {_clamp_err}")
+
         # Build result
         result = ForecastResult(
             success=True,
@@ -270,7 +284,7 @@ class ForecastAgent:
             sensor_uuid=uuid,
             horizon=horizon,
             model_name=selection["winner"],
-            forecast=selection["forecast"],
+            forecast=fc_values,
             future_index=selection["future_index"],
             lower_80=lo80,
             upper_80=hi80,
@@ -577,6 +591,28 @@ class ForecastAgent:
             )
         except Exception as exc:  # a headline must never cost a forecast
             logger.debug(f"[forecast_agent] requested-figure reduction skipped: {exc}")
+        if not headline:
+            # "Will it get stuffy this afternoon?" asks for a verdict, not a table (BUG-1592).
+            try:
+                from orchestrator.services.forecasting.window_aggregate import comfort_verdict
+                from orchestrator.services.requested_interval import building_tz
+
+                headline = (
+                    comfort_verdict(
+                        user_query,
+                        result.future_index,
+                        result.forecast,
+                        result.lower_95,
+                        result.upper_95,
+                        unit=unit,
+                        horizon_label=result.horizon.label,
+                        tz_name=building_tz(),
+                        occupied_hours=self._occupied_hours(),
+                    )
+                    or ""
+                )
+            except Exception as exc:  # a verdict must never cost a forecast
+                logger.debug(f"[forecast_agent] comfort verdict skipped: {exc}")
 
         # ── Header ────────────────────────────────────────────────────────────
         lines = [

@@ -42,6 +42,65 @@ NON_OCCUPIABLE_KINDS = frozenset(
      "Waste_Room", "Riser"}
 )
 
+#: A CHOICE AMONG SPACES THE QUESTION NAMES (BUG-1492). "Which of rooms 5.05 and 5.31 was warmer
+#: ... and does the warmer room have a recorded capacity of at least 10?" was ranked over 195 of
+#: 234 spaces and answered "Best match: Room 3.01", although the dialogue stage had extracted
+#: exactly the two rooms. A list of identifiers after a space noun is read here from the question's
+#: own words and matched against the building's own space inventory, never a literal.
+_SPACE_NOUN = r"(?:rooms?|spaces?|offices?|labs?|laborator(?:y|ies)|zones?)"
+_SPACE_TOKEN = r"[a-z]{0,4}-?\d+(?:[.\-]\d+)*[a-z]?"
+_NAMED_SPACE_LIST = re.compile(
+    rf"\b{_SPACE_NOUN}\s+({_SPACE_TOKEN}(?:\s*(?:,|and|or|&|vs\.?|versus|against)\s*"
+    rf"(?:the\s+)?(?:{_SPACE_NOUN}\s+)?{_SPACE_TOKEN})*)(?![\w.])",
+    re.IGNORECASE,
+)
+_ONE_TOKEN = re.compile(rf"(?<![\w.]){_SPACE_TOKEN}(?![\w.])", re.IGNORECASE)
+
+
+def _token_shape(token: str) -> str:
+    return re.sub(r"\d", "9", token.lower())
+
+
+def named_spaces(raw_query: str, spaces) -> Tuple[List[str], List[str]]:
+    """(space IRIs, identifiers that match no space) for a choice among NAMED spaces.
+
+    Fires only when the question lists two or more identifiers after a space noun ("rooms 5.05
+    and 5.31", "Room 1.20 or Room 1.21"); every later identifier must have the first one's shape,
+    so "room 5.05 and 10 people" does not name a room 10. An identifier that matches more than
+    one space makes the whole list ambiguous and nothing is restricted: ranking more spaces than
+    asked is the state before this existed, guessing which room was meant is not.
+    """
+    tokens: List[str] = []
+    for m in _NAMED_SPACE_LIST.finditer(raw_query or ""):
+        found = _ONE_TOKEN.findall(m.group(1))
+        if not found:
+            continue
+        shape = _token_shape(found[0])
+        for tok in found:
+            if _token_shape(tok) == shape and tok.lower() not in (t.lower() for t in tokens):
+                tokens.append(tok)
+    if len(tokens) < 2:
+        return [], []
+    resolved: List[str] = []
+    unknown: List[str] = []
+    for tok in tokens:
+        rx = re.compile(rf"(?<![\w.]){re.escape(tok)}(?![\w]|\.\d)", re.IGNORECASE)
+        hits = sorted(
+            {
+                s.space_iri
+                for s in spaces
+                if rx.search(s.label or "") or rx.search(_local(s.space_iri).replace("_", " "))
+            }
+        )
+        if len(hits) > 1:
+            return [], []
+        if hits:
+            resolved.append(hits[0])
+        else:
+            unknown.append(tok)
+    return (resolved, unknown) if resolved else ([], [])
+
+
 #: A question asking for somewhere a PERSON goes.
 _FOR_PEOPLE_RE = re.compile(
     r"\b(?:work|working|study|studying|sit|seat|meet|meeting|focus|focused|desk|concentrat\w*|"
@@ -191,12 +250,31 @@ def enumerate_candidates(
     geometry = geometry or {}
     ledger = CoverageLedger()
 
-    # 1. scope: floor / single-space anchors narrow the field
+    # 1. scope: floor / single-space anchors narrow the field, and so does a named set
+    named: set = set()
+    if not admission.space_anchor:
+        _named, _unknown = named_spaces(getattr(cqir, "raw_query", "") or "", schema.spaces)
+        named = set(_named)
+        for tok in _unknown:
+            ledger.excluded.append(
+                LedgerEntry(tok, tok, "no space with this name is recorded in this building")
+            )
+        if named:
+            logger.info(f"[candidates] the question names {len(named)} space(s); ranking only those")
+    hosts: Optional[set] = None
+    _host_kind = getattr(admission, "host_kind_anchor", None)
+    if _host_kind:
+        hosts = {a.space_iri for a in schema.amenities if a.kind == _host_kind}
+        logger.info(f"[candidates] scoped to the {len(hosts)} space(s) hosting a {_host_kind}")
     scoped = []
     for s in schema.spaces:
         if admission.floor_anchor and s.floor != admission.floor_anchor:
             continue
+        if hosts is not None and s.space_iri not in hosts:
+            continue
         if admission.space_anchor and s.space_iri != admission.space_anchor:
+            continue
+        if named and s.space_iri not in named:
             continue
         scoped.append(s)
     ledger.in_scope = len(scoped)
@@ -231,7 +309,8 @@ def enumerate_candidates(
         # coolest place to work in the building?" ranked a male restroom first. Decided by the
         # space's own Brick class, so it holds in any building that types its rooms.
         _kinds = set(getattr(s, "kinds", ()) or ())
-        if _for_people and _kinds & NON_OCCUPIABLE_KINDS:
+        # "ask about it by name to include it": a space the question NAMES is included.
+        if _for_people and _kinds & NON_OCCUPIABLE_KINDS and s.space_iri not in named:
             ledger.excluded.append(
                 LedgerEntry(
                     s.space_iri,

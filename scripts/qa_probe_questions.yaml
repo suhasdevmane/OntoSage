@@ -1,0 +1,156 @@
+# Probe questions for scripts/qa_probe.py — written for routing and delivery checks, NOT an
+# evaluation set and never evidence about unseen questions. No Paper 3 study task is quoted or
+# paraphrased here (this repository is public), and no study room, date or criterion is used.
+#
+# Each item: q (the question), expect (intents that are a correct route; the turn's
+# intent_after_overrides must be one of them), and optional tags:
+#   chart    an image must be produced and must load
+#   decline  an honest decline is the right answer (the building does not hold it, or must not say)
+#   statement a report or command, not a question
+#   persona  ask as this forwarded account instead of the default
+families:
+  current_reading:
+    - {q: "What's the temperature in room 5.01 right now?", expect: [sensor_data, analytics]}
+    - {q: "How humid is it in room 3.10 at the moment?", expect: [sensor_data, analytics]}
+    - {q: "Is the air stuffy in room 1.06?", expect: [sensor_data, analytics, compliance]}
+    - {q: "What's the noise level in room 2.01 right now?", expect: [sensor_data, analytics]}
+    - {q: "How bright is room 4.03 now?", expect: [sensor_data, analytics]}
+    - {q: "What is the PM2.5 level in room 2.01?", expect: [sensor_data, analytics]}
+    - {q: "How many people are in the building right now?", expect: [sensor_data, analytics]}
+    - {q: "Which floor is the busiest right now?", expect: [sensor_data, analytics, compare]}
+    - {q: "What's the CO2 level in room 4.03?", expect: [sensor_data, analytics]}
+    - {q: "Is anyone in room 1.06 right now?", expect: [sensor_data, analytics, events]}
+    - {q: "What's the carbon monoxide reading on floor 0?", expect: [sensor_data, analytics]}
+    - {q: "How warm is the atrium?", expect: [sensor_data, analytics]}
+  aggregate:
+    - {q: "What was the average temperature on floor 2 today?", expect: [analytics, sensor_data]}
+    - {q: "What was the highest CO2 on floor 4 yesterday?", expect: [analytics, sensor_data]}
+    - {q: "Which room had the highest noise level yesterday?", expect: [analytics, sensor_data, compare]}
+    - {q: "What was the average humidity on floor 1 last week?", expect: [analytics, sensor_data]}
+    - {q: "How much electricity did the building use yesterday?", expect: [analytics, sensor_data]}
+    - {q: "Which floor used the most electricity yesterday?", expect: [analytics, sensor_data, compare]}
+    - {q: "What was the peak occupancy of the building today?", expect: [analytics, sensor_data]}
+    - {q: "What's the average light level across floor 3 this morning?", expect: [analytics, sensor_data]}
+    - {q: "How much water did the building use in the last 24 hours?", expect: [analytics, sensor_data]}
+    - {q: "What was the lowest temperature recorded on floor 5 overnight?", expect: [analytics, sensor_data]}
+  trend_forecast:
+    - {q: "How has CO2 in room 5.01 changed over the last week?", expect: [trend, analytics]}
+    - {q: "Forecast the temperature on floor 3 for tomorrow.", expect: [trend, analytics]}
+    - {q: "Will room 4.03 get stuffy this afternoon?", expect: [trend, analytics]}
+    - {q: "Is energy use trending up or down this week?", expect: [trend, analytics, compare]}
+    - {q: "Predict occupancy for the building tomorrow morning.", expect: [trend, analytics]}
+    - {q: "How has humidity on floor 2 varied over the past three days?", expect: [trend, analytics]}
+  chart:
+    - {q: "Plot the temperature in room 1.06 over the last 24 hours.", expect: [visualization, trend, analytics, sensor_data], tags: [chart]}
+    - {q: "Show me a chart of CO2 on floor 2 for the past week.", expect: [visualization, trend, analytics, sensor_data], tags: [chart]}
+    - {q: "Graph daily electricity use for the last 7 days.", expect: [visualization, trend, analytics, sensor_data], tags: [chart]}
+    - {q: "Chart the building's occupancy today.", expect: [visualization, trend, analytics, sensor_data], tags: [chart]}
+    - {q: "Draw a bar chart of average noise by floor yesterday.", expect: [visualization, analytics, compare, sensor_data], tags: [chart]}
+    - {q: "Visualise humidity in room 3.10 over the last two days.", expect: [visualization, trend, analytics, sensor_data], tags: [chart]}
+    - {q: "Plot temperature on floor 1 and floor 4 together for today.", expect: [visualization, compare, trend, analytics, sensor_data], tags: [chart]}
+    - {q: "Can you show a graph of light levels in room 4.03 this week?", expect: [visualization, trend, analytics, sensor_data], tags: [chart]}
+  compare:
+    - {q: "Compare the temperature on floor 2 and floor 4 today.", expect: [compare, analytics]}
+    - {q: "Is room 5.01 warmer than room 3.10 right now?", expect: [compare, analytics, sensor_data]}
+    - {q: "How does this week's electricity use compare with last week?", expect: [compare, analytics, trend]}
+    - {q: "Which is noisier, floor 1 or floor 3?", expect: [compare, analytics, sensor_data]}
+    - {q: "Compare CO2 in room 1.06 this morning with yesterday morning.", expect: [compare, analytics, trend]}
+  recommend:
+    - {q: "Where's the quietest place to study right now?", expect: [deliberate, recommend]}
+    - {q: "Find me a cool, bright room on floor 3.", expect: [deliberate, recommend]}
+    - {q: "Which meeting room is best for 10 people with good air quality?", expect: [deliberate, recommend]}
+    - {q: "Where can I take a quiet phone call now?", expect: [deliberate, recommend, capability]}
+    - {q: "Which room would be most comfortable for a two-hour workshop this afternoon?", expect: [deliberate, recommend]}
+    - {q: "Suggest a warm place to sit on floor 1.", expect: [deliberate, recommend]}
+  anomaly_diagnosis:
+    - {q: "Are there any sensor faults right now?", expect: [anomaly, observability, diagnosis]}
+    - {q: "Were there any unusual readings today?", expect: [anomaly, diagnosis]}
+    - {q: "Why is room 2.01 so warm?", expect: [diagnosis, anomaly, analytics]}
+    - {q: "Which sensors have stopped reporting?", expect: [observability, anomaly]}
+    - {q: "Is any room's CO2 abnormally high today?", expect: [anomaly, analytics, compliance]}
+  register_documents:
+    - {q: "When is room 1.06 cleaned?", expect: [register, metadata, capability]}
+    - {q: "Which assets have warranties expiring in the next year?", expect: [register, metadata]}
+    - {q: "Who maintains the lifts?", expect: [register, metadata, capability]}
+    - {q: "Which permits to work are currently active?", expect: [register, metadata]}
+    - {q: "What public events are coming up in the building?", expect: [register, events, metadata]}
+    - {q: "How many boxes of paper towels are in stock?", expect: [register, metadata]}
+    - {q: "Which risk assessments are due for review?", expect: [register, metadata, compliance]}
+    - {q: "What does the evacuation plan say about refuge points?", expect: [register, capability, metadata, general_guidance]}
+    - {q: "Which doors have access control fitted?", expect: [register, metadata]}
+    - {q: "What are the building's sustainability targets?", expect: [register, capability, metadata]}
+    - {q: "What electricity tariff does the building pay?", expect: [register, metadata, capability]}
+    - {q: "What incidents or near misses were logged in September?", expect: [register, metadata, events]}
+    - {q: "Which hazardous substances are kept in the building?", expect: [register, metadata, capability]}
+    - {q: "Which contracts are up for renewal soon?", expect: [register, metadata]}
+    - {q: "When was the last fire drill?", expect: [register, metadata, compliance, capability]}
+    - {q: "Which departments are based on floor 4?", expect: [register, metadata, spatial_query]}
+    - {q: "What maintenance was done last month?", expect: [register, metadata, events]}
+    - {q: "When is the next waste collection?", expect: [register, metadata, capability]}
+    - {q: "What audio-visual equipment is in room 4.03?", expect: [register, metadata, capability]}
+    - {q: "Who should I contact about a heating problem?", expect: [register, capability, metadata, general_guidance]}
+  capability_amenity:
+    - {q: "Where is the nearest accessible toilet?", expect: [capability, spatial_query, floor_plan]}
+    - {q: "Is there a cafe in the building?", expect: [capability]}
+    - {q: "Where can I get drinking water?", expect: [capability, spatial_query]}
+    - {q: "Are there showers in the building?", expect: [capability]}
+    - {q: "Where can I lock my bike?", expect: [capability]}
+    - {q: "Is there a prayer or quiet room?", expect: [capability]}
+    - {q: "What are the building's opening hours?", expect: [capability, register, metadata]}
+    - {q: "Is there step-free access to every floor?", expect: [capability, register, metadata]}
+    - {q: "Where is the first aid kit on floor 2?", expect: [capability, spatial_query, register]}
+    - {q: "Can visitors use the wifi?", expect: [capability, general_guidance]}
+  floor_plan_spatial:
+    - {q: "Show me floor 3.", expect: [floor_plan], tags: [chart]}
+    - {q: "Where is room 4.03?", expect: [floor_plan, spatial_query]}
+    - {q: "How big is room 1.06?", expect: [spatial_query, metadata]}
+    - {q: "Which rooms are next to room 2.01?", expect: [spatial_query]}
+    - {q: "How many rooms are on floor 5?", expect: [spatial_query, metadata]}
+    - {q: "What is the total floor area of floor 2?", expect: [spatial_query, metadata]}
+    - {q: "Which floor is room 3.10 on?", expect: [spatial_query, metadata, floor_plan]}
+    - {q: "What's the largest room on floor 1?", expect: [spatial_query, metadata]}
+  events_bookings:
+    - {q: "Is room 3.10 booked this afternoon?", expect: [events, register]}
+    - {q: "Which meeting rooms are free right now?", expect: [events, deliberate, recommend]}
+    - {q: "What timetabled sessions are in room 1.06 today?", expect: [events, register]}
+    - {q: "How busy was the main entrance today?", expect: [events, analytics, sensor_data]}
+    - {q: "When is the next booking in room 4.03?", expect: [events, register]}
+    - {q: "Which rooms are booked tomorrow morning?", expect: [events, register]}
+  metadata_discovery:
+    - {q: "How many sensors does the building have?", expect: [metadata, discovery, observability]}
+    - {q: "What kinds of sensors are in room 5.01?", expect: [metadata, discovery]}
+    - {q: "Which rooms have a noise sensor?", expect: [metadata, discovery]}
+    - {q: "What types of equipment are in the plant room?", expect: [metadata, discovery, register, asset_state]}
+    - {q: "How many floors does the building have?", expect: [metadata, discovery, spatial_query]}
+    - {q: "What does the building measure?", expect: [metadata, discovery, self_description]}
+  compliance:
+    - {q: "Is CO2 in room 5.01 within recommended limits today?", expect: [compliance, analytics, sensor_data]}
+    - {q: "Does floor 2 meet thermal comfort standards today?", expect: [compliance, analytics]}
+    - {q: "Are noise levels in the library area acceptable for study?", expect: [compliance, analytics, sensor_data]}
+  plant_equipment:
+    - {q: "What is the supply air temperature of the air handling unit?", expect: [sensor_data, analytics, asset_state]}
+    - {q: "Is the heat pump running right now?", expect: [asset_state, sensor_data, analytics]}
+    - {q: "What's the delta-T across the heating circuit?", expect: [analytics, sensor_data, asset_state]}
+    - {q: "How full are the waste bins?", expect: [sensor_data, analytics, asset_state]}
+    - {q: "Is the filter on the air handler dirty?", expect: [asset_state, sensor_data, analytics, diagnosis]}
+  control:
+    - {q: "Turn off the lights in room 1.06.", expect: [control], tags: [statement, decline]}
+    - {q: "Set the temperature in room 5.01 to 21 degrees.", expect: [control], tags: [statement, decline]}
+    - {q: "Open the windows on floor 2.", expect: [control], tags: [statement, decline]}
+  report_intake:
+    - {q: "The lights in the floor 2 corridor keep flickering.", expect: [maintenance, complaint, safety_report], tags: [statement]}
+    - {q: "Suggestion: it would be great to have more bike racks outside.", expect: [suggestion, feedback], tags: [statement]}
+    - {q: "Room 3.10 is far too cold this morning.", expect: [complaint, maintenance, analytics], tags: [statement]}
+  privacy_scope_general:
+    - {q: "Where was John Smith in the building yesterday?", expect: [privacy_refusal, scope_boundary], tags: [decline]}
+    - {q: "What's the weather forecast for London tomorrow?", expect: [scope_boundary, general, general_guidance], tags: [decline]}
+    - {q: "Hello!", expect: [greeting, general]}
+    - {q: "What can you help me with?", expect: [self_description, general]}
+    - {q: "Who swiped into room 4.03 this morning?", expect: [privacy_refusal, register], tags: [decline]}
+    - {q: "Tell me a joke.", expect: [general, scope_boundary, greeting]}
+    - {q: "How do I book a room?", expect: [capability, general_guidance, lab_booking, register]}
+  honest_absence:
+    - {q: "What's the radon level on floor 0?", expect: [sensor_data, analytics, metadata, discovery], tags: [decline]}
+    - {q: "What's the ozone concentration in room 2.01?", expect: [sensor_data, analytics, metadata, discovery], tags: [decline]}
+    - {q: "How much natural gas did the building burn yesterday?", expect: [analytics, sensor_data, metadata], tags: [decline]}
+    - {q: "What is the vibration level of the lift motor?", expect: [sensor_data, analytics, asset_state, metadata], tags: [decline]}

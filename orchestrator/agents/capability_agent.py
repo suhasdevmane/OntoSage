@@ -56,6 +56,42 @@ def _effective_query(state: ConversationState) -> str:
     return state.user_message or ""
 
 
+_TABLE_START_RE = re.compile(r"\s\|\s")
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?:])\s+(?=[A-Z0-9*])|\s#{1,6}\s+|\s+(?=\d{1,2}\.\s)")
+
+
+def _relevant_sentences(question: str, text: str, limit: int = 4) -> str:
+    """The sentences of a document chunk that are about the question, in document order.
+
+    2026-10-11: the topic answer appended its declared document's best CHUNK verbatim -- a
+    flattened page with the title, a heading and the first row of a register table run together.
+    A chunk is a retrieval unit, not something to read; the sentences sharing the question's own
+    terms are. Table rows are left out (the register lane answers from them). The document was
+    declared by the topic, so a chunk sharing no word with the question is still quoted -- its
+    leading sentences ("eduroam covers all floors" answers "how do I connect to the wifi?").
+    """
+    from orchestrator.services.grounding_guard import content_terms
+
+    if not text:
+        return ""
+    asked = content_terms(question)
+    body = text.strip()
+    table = _TABLE_START_RE.search(body)
+    if table:
+        body = body[: table.start()]
+    body = re.sub(r"^#{1,6}\s+", "", body)
+    parts = [p.strip() for p in _SENTENCE_SPLIT_RE.split(body) if p and p.strip()]
+    scored = [(len(asked & content_terms(p)), i, p) for i, p in enumerate(parts) if len(p) > 12]
+    best = max((s for s, _, _ in scored), default=0)
+    if best == 0:
+        return " ".join(p for _, _, p in scored[:limit])
+    need = 2 if best >= 2 else 1
+    keep = sorted(
+        sorted((t for t in scored if t[0] >= need), key=lambda t: -t[0])[:limit], key=lambda t: t[1]
+    )
+    return " ".join(p for _, _, p in keep)
+
+
 # Count / area questions are answered from the live graph + floor plans (BuildingMetrics),
 # never from frozen prose. When one of these matches, a TBOX SPARQL COUNT + DWG area supplies
 # the authoritative live figures.
@@ -690,7 +726,9 @@ class CapabilityAgent:
 
                     snap = await get_building_metrics().snapshot(building_id)
                     if snap.has_counts() or snap.has_area():
-                        block = render_metrics_block(snap, building_name)
+                        block = render_metrics_block(
+                            snap, building_name, question=_effective_query(state)
+                        )
                         state.intermediate_results["capability_result"] = {
                             "success": True,
                             "response": (
@@ -875,10 +913,14 @@ class CapabilityAgent:
                     _extra = await _search_documents(
                         _effective_query(state), building_id, only_document=_doc_ref
                     )
-                    if _extra:
+                    _excerpt = (
+                        _relevant_sentences(_effective_query(state), _extra[0].get("text", ""))
+                        if _extra
+                        else ""
+                    )
+                    if _excerpt:
                         _parts.append(
-                            f"\nFrom the full policy document (**{_doc_ref}**):\n\n"
-                            + _extra[0].get("text", "").strip()
+                            f"\nFrom the full policy document (**{_doc_ref}**):\n\n{_excerpt}"
                         )
                         _sources.append(f"document {_doc_ref}")
                         logger.info(f"[capability] detail scoped to declared document {_doc_ref}")
@@ -911,10 +953,60 @@ class CapabilityAgent:
                 render_census,
             )
 
+            # "Which floor has the most PM2.5 sensors?" -- the class, counted floor by floor
+            # (BUG-1614). The class is the census's own match for the instruments named.
+            from orchestrator.services.ontology_inventory import (
+                count_by_floor,
+                count_concept_by_floor,
+                per_floor_instrument_ask,
+                pick_counted_class,
+                render_floor_census,
+            )
+
+            _per_floor = per_floor_instrument_ask(_effective_query(state))
+            if _per_floor:
+                from orchestrator.agents.sparql_agent import (
+                    GRAPHDB_QUERY_ENDPOINT,
+                    _active_namespace,
+                )
+
+                _thing, _direction = _per_floor
+                _cls_rows = await class_census(_thing, _active_namespace(), GRAPHDB_QUERY_ENDPOINT)
+                _cls = pick_counted_class(_cls_rows, _thing)
+                _counted = (
+                    await count_by_floor(_cls, _active_namespace(), GRAPHDB_QUERY_ENDPOINT)
+                    if _cls
+                    else None
+                )
+                if not _counted or not _counted[0]:
+                    # No Brick class NAME carries the words ("noise sensors" are typed
+                    # ontosage:Sound_Level_Sensor): the lay-term resolver's class is counted.
+                    _alt = await count_concept_by_floor(
+                        _thing, _active_namespace(), GRAPHDB_QUERY_ENDPOINT
+                    )
+                    if _alt:
+                        _cls, _counted = _alt[0], (_alt[1], _alt[2])
+                if _cls and _counted:
+                    _block = render_floor_census(
+                        _cls, _counted[0], _counted[1], _direction, building_name
+                    )
+                    if _block:
+                        state.intermediate_results["capability_result"] = {
+                            "success": True,
+                            "response": _block,
+                            "provenance": "ontology_inventory",
+                            "building_name": building_name,
+                        }
+                        logger.info(f"[capability] counted {_cls} per floor ({_direction})")
+                        return state
             # "Are there duplicate assets?" asks about a QUALITY of what is held; a census of
             # equipment classes is a different fact and was returned as though it answered.
-            if is_inventory_question(_effective_query(state)) and _census_can_answer(
-                _effective_query(state)
+            # A per-floor ask whose instruments matched no class is not answered with the
+            # building's whole census either: every class listed is not what was asked.
+            if (
+                not _per_floor
+                and is_inventory_question(_effective_query(state))
+                and _census_can_answer(_effective_query(state))
             ):
                 from orchestrator.agents.sparql_agent import (
                     GRAPHDB_QUERY_ENDPOINT,
@@ -1267,6 +1359,14 @@ class CapabilityAgent:
                 # Every retrieved passage failed the relevance gate: nothing to compose from.
                 composed, _decided = None, True
             _searched = doc_hits or _gated_out
+            if composed is not None and len(re.findall(r"[A-Za-z0-9]+", composed)) < 3:
+                # A FRAGMENT IS NOT AN ANSWER (2026-10-11). "What condition is the roof in?"
+                # was answered with the single letter "C" -- the survey's grade, with nothing
+                # saying what it grades or on what scale. Declined as unanswered instead.
+                logger.info(
+                    f"[capability] composed answer is a fragment ({composed!r}) -- declined"
+                )
+                composed, _decided = None, True
             if composed is not None:
                 _cited = sorted({h["doc_name"].replace("_", " ").title() for h in doc_hits})
                 state.intermediate_results["capability_result"] = {

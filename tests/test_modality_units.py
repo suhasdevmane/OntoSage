@@ -112,7 +112,9 @@ def test_the_qudt_convention_is_read(build):
 def test_an_asserted_unit_beats_the_config(build):
     """The building said it. Nothing here second-guesses that."""
     got = _unit(build, "Zone Air Temperature", f"{_BRICK}Zone_Air_Temperature_Sensor", unit="degF")
-    assert got == "degF"
+    # Fahrenheit, as asserted, not the config's Celsius -- printed as a reader writes it since
+    # BUG-1581 ("7.34 degC" reached an answer verbatim).
+    assert got == "°F"
 
 
 def test_the_brick_literal_wins_over_the_qudt_iri(build):

@@ -35,9 +35,9 @@ import os
 import re
 from collections import Counter
 from dataclasses import dataclass, field, replace
+from datetime import date, timedelta
 from functools import lru_cache
 from pathlib import Path
-from datetime import date, timedelta
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Sequence, Set, Tuple
 
 import yaml
@@ -508,6 +508,318 @@ def _facets(
     return out, text
 
 
+#: A storey the QUESTION names: "on floor 4", "level 2", "the 3rd floor", "the ground floor".
+_STOREY_ASK_RE = re.compile(
+    r"\b(?:on\s+|of\s+|at\s+)?(?:the\s+)?(?:floor|level|storey)\s+(\d{1,2})\b"
+    r"|\b(?:on\s+|of\s+|at\s+)?(?:the\s+)?(\d{1,2})(?:st|nd|rd|th)\s+(?:floor|level|storey)\b"
+    r"|\b(?:on\s+|of\s+|at\s+)?(?:the\s+)?(ground)\s+(?:floor|level)\b",
+    re.IGNORECASE,
+)
+
+
+def _storey_in_text(text: str, storey: int) -> bool:
+    """True when a record's free text places it on ``storey``, in any of the usual spellings."""
+    t = text or ""
+    if re.search(rf"\b(?:floor|level|storey|lvl|l)\s*0?{storey}\b", t, re.IGNORECASE):
+        return True
+    if re.search(rf"\b0?{storey}(?:st|nd|rd|th)\s+(?:floor|level)\b", t, re.IGNORECASE):
+        return True
+    if storey == 0 and re.search(r"\bground\s+(?:floor|level)\b", t, re.IGNORECASE):
+        return True
+    for lo, hi in re.findall(
+        r"\b(?:floors|levels|storeys)\s+(\d{1,2})\s*(?:to|-|–|through|and)\s*(\d{1,2})\b",
+        t,
+        re.IGNORECASE,
+    ):
+        if int(lo) <= storey <= int(hi):
+            return True
+    return False
+
+
+_FLOOR_COLUMN_RE = re.compile(r"floor|level|storey", re.IGNORECASE)
+
+
+def _storey_of_cell(col: str, value: str) -> Optional[int]:
+    """The storey a FLOOR column's bare value states ("1" in onFloor), else None."""
+    v = (value or "").strip()
+    if _FLOOR_COLUMN_RE.search(col) and re.fullmatch(r"-?\d{1,2}", v):
+        return int(v)
+    return None
+
+
+def _storey_filter(
+    rows: List[Dict], columns: Sequence[str], text: str
+) -> Tuple[Optional[int], Optional[Set[int]], str]:
+    """A storey the question names, read from the records' own location text (BUG-1522).
+
+    "Which departments are based on floor 4?" was answered with one record "mentioning 'floor'"
+    and the 4 dropped: the Department register writes "Level 4 admin office" and "Levels 3 to 5",
+    has no floor column for the facet step to use, and a bare number is not a word term. Returns
+    (storey, matching row indexes, text with the phrase removed), or (None, None, text) when no
+    storey is named. Rows are matched on location-like text only, so a storey word inside a note
+    ("flooring replaced") never counts.
+    """
+    m = _STOREY_ASK_RE.search(text or "")
+    if not m:
+        return None, None, text
+    raw = m.group(1) or m.group(2) or m.group(3)
+    storey = 0 if str(raw).lower() == "ground" else int(raw)
+    loc_cols = [
+        c
+        for c in columns
+        if re.search(r"location|floor|level|storey|place|where|room|space|area", c, re.IGNORECASE)
+    ] or ["label"]
+
+    def _on(r: Dict, c: str) -> bool:
+        cell = _storey_of_cell(c, _value(r, c))
+        return cell == storey if cell is not None else _storey_in_text(_value(r, c), storey)
+
+    hit = {i for i, r in enumerate(rows) if any(_on(r, c) for c in loc_cols)}
+    return storey, hit, _blank_span(text, m.span())
+
+
+def _states_storeys(rows: List[Dict], columns: Sequence[str]) -> bool:
+    """True when most records say which storey they are on (a floor column, or 'Level N' text)."""
+    cols = [c for c in columns if _FLOOR_COLUMN_RE.search(c) or re.search("location", c, re.I)]
+    if not rows or not cols:
+        return False
+    stating = sum(
+        1
+        for r in rows
+        if any(
+            _storey_of_cell(c, _value(r, c)) is not None
+            or any(_storey_in_text(_value(r, c), s) for s in range(0, 11))
+            for c in cols
+        )
+    )
+    return stating * 2 > len(rows)
+
+
+_MONTHS = (
+    "january",
+    "february",
+    "march",
+    "april",
+    "may",
+    "june",
+    "july",
+    "august",
+    "september",
+    "october",
+    "november",
+    "december",
+)
+_RECORD_PERIOD_RE = re.compile(
+    r"\b(?:during|over|in|for)?\s*(?:the\s+)?"
+    r"(today|yesterday|tomorrow|"
+    r"(?:this|last|next|previous|past)\s+(?:week|month|year)|"
+    r"(?:since|in|during)\s+(?:" + "|".join(_MONTHS) + r")(?:\s+(\d{4}))?)\b",
+    re.IGNORECASE,
+)
+#: Columns that say when a record HAPPENED. A due, next, review, expiry or renewal date is an
+#: obligation in the future, never when the thing occurred, and is never read for a period.
+_NOT_OCCURRENCE_RE = re.compile(
+    r"due|next|review|expir|renew|valid|retriev|version|warrant|deadline|until|target",
+    re.IGNORECASE,
+)
+_DONE_WORDS_RE = re.compile(r"\b(?:done|completed?|finished|carried\s+out|closed|resolved)\b", re.I)
+_EXPIRY_WORDS_RE = re.compile(
+    r"\b(?:expir(?:e|es|ed|ing|y)|ends?|ended|ending|lapsed?|lapses|lapsing|runs?\s+out|ran\s+out|"
+    r"up\s+for\s+renewal|renew(?:s|al)?)\b",
+    re.I,
+)
+#: "started / raised / happened in September": the START date alone, never an overlap.
+_START_WORDS_RE = re.compile(
+    r"\b(?:start(?:ed|s)?|began|begun|commenced|raised|opened|logged|reported|occurred|happened|"
+    r"took\s+place)\b",
+    re.I,
+)
+
+
+_DATE_PHRASE_RE = re.compile(
+    r"\(?\b(?:\d{1,2}\s+)?(" + "|".join(_MONTHS) + r")(?:\s+(\d{4}))?"
+    r"(?:\s+(?:to|until|-|–)\s+(?:\d{1,2}\s+)?(" + "|".join(_MONTHS) + r")(?:\s+(\d{4}))?)?\b\)?",
+    re.IGNORECASE,
+)
+
+
+def _restated_period_spans(
+    text: str, start: date, end: date, taken: Sequence[Tuple[int, int]]
+) -> List[Tuple[int, int]]:
+    """Date phrases that only restate the period already read, e.g. a follow-up rewritten as
+    "... due this month (1 October 2026 to 31 October 2026)?" -- left in, "october" was reported
+    as a word the register does not record (2026-10-11). A month outside the period stays.
+    """
+    out: List[Tuple[int, int]] = []
+    for m in _DATE_PHRASE_RE.finditer(text or ""):
+        months = [(m.group(1), m.group(2)), (m.group(3), m.group(4))]
+        inside = True
+        for name, year in months:
+            if not name:
+                continue
+            mo = _MONTHS.index(name.lower()) + 1
+            y = int(year) if year else start.year
+            first = date(y, mo, 1)
+            last = date(y + (mo // 12), mo % 12 + 1, 1) - timedelta(days=1)
+            inside = inside and first <= end and last >= start
+        overlaps = any(m.start() < b and a < m.end() for a, b in taken)
+        if inside and not overlaps:
+            out.append(m.span())
+    return out
+
+
+def _record_period(
+    text: str, today: Optional[date]
+) -> Optional[Tuple[date, date, str, Tuple[int, int]]]:
+    """(first day, last day, label, span) of the period a register question names, else None."""
+    if today is None:
+        return None
+    m = _RECORD_PERIOD_RE.search(text or "")
+    if not m:
+        return None
+    phrase = m.group(1).lower()
+    word = phrase.split()[-1]
+    if phrase in ("today", "yesterday", "tomorrow"):
+        d = today + timedelta(days={"today": 0, "yesterday": -1, "tomorrow": 1}[phrase])
+        return d, d, phrase, m.span()
+    if word in ("week", "month", "year"):
+        step = {"this": 0, "last": -1, "previous": -1, "past": -1, "next": 1}[phrase.split()[0]]
+        if word == "week":
+            start = today - timedelta(days=today.weekday()) + timedelta(weeks=step)
+            return start, start + timedelta(days=6), phrase, m.span()
+        if word == "month":
+            y, mo = today.year, today.month + step
+            y, mo = y + (mo - 1) // 12, (mo - 1) % 12 + 1
+            start = date(y, mo, 1)
+            nxt = date(y + (mo // 12), mo % 12 + 1, 1)
+            return start, nxt - timedelta(days=1), phrase, m.span()
+        y = today.year + step
+        return date(y, 1, 1), date(y, 12, 31), phrase, m.span()
+    lead, month = phrase.split()[0], phrase.split()[1]
+    mo = _MONTHS.index(month) + 1
+    y = int(m.group(2)) if m.group(2) else today.year
+    start = date(y, mo, 1)
+    end = date(y + (mo // 12), mo % 12 + 1, 1) - timedelta(days=1)
+    if lead == "since":
+        return start, today, f"since {start:%B %Y}", m.span()
+    return start, end, f"{start:%B %Y}", m.span()
+
+
+def _period_filter(
+    rows: List[Dict], columns: Sequence[str], text: str, today: Optional[date]
+) -> Tuple[Optional[str], Optional[Set[int]], str]:
+    """Records whose own date says they HAPPENED in the period the question names (BUG-1530).
+
+    "What incidents or near misses were logged in September?" listed seven near misses from every
+    month and said the register "does not record logged and september"; "How many incidents
+    happened last month?" said it "does not record when incidents happened" -- every incident
+    carries effectiveFrom. "What maintenance was done last month?" has the same shape. The date
+    read is the one that says when the record happened: the completion date when the question asks
+    what was DONE, else the record's start (effectiveFrom, overlapped with effectiveTo when it has
+    one), else another occurrence date. Returns (label, matching rows, text without the phrase), or
+    (None, None, text) when no period is named or no record carries such a date.
+    """
+    period = _record_period(text, today)
+    if period is None:
+        return None, None, text
+    start, end, label, span = period
+    dated = [
+        c
+        for c in columns
+        if not _NOT_OCCURRENCE_RE.search(c)
+        and sum(1 for r in rows if _as_date(_value(r, c))) * 2 > len(rows)
+    ]
+    # A completion date is blank on every job not yet done, so it qualifies on ANY dated row:
+    # a register where most work is still open must still answer "what was done last month".
+    done = [
+        c
+        for c in columns
+        if re.search(r"complet|done|closed|resolved|finish", c, re.I)
+        and not _NOT_OCCURRENCE_RE.search(c)
+        and any(_as_date(_value(r, c)) for r in rows)
+    ]
+    # "Which compliance checks are DUE this month?" asks about the obligation date, which the
+    # occurrence rule excludes on purpose -- it was filtered on the completion date and answered
+    # "no record matches" (2026-10-11). Read the due/next date only when the question says so.
+    due_cols = [
+        c
+        for c in columns
+        if re.search(r"due|next", c, re.I) and any(_as_date(_value(r, c)) for r in rows)
+    ]
+    due_m = re.search(r"\b(?:due|fall(?:s|ing)?\s+due)\b", text or "", re.I)
+    if not dated and not done and not (due_cols and due_m):
+        return None, None, text
+    # "Which contracts EXPIRE next year?" asks about the END of each record, a date the
+    # occurrence rule above excludes on purpose. Read it only when the question says so.
+    ending = [
+        c
+        for c in columns
+        if re.search(r"effectiveTo|(?:^|[^a-z])end|expir|until", c, re.I)
+        and any(_as_date(_value(r, c)) for r in rows)  # an open-ended record has none, as above
+    ]
+    expiry_m = _EXPIRY_WORDS_RE.search(text or "")
+    spans = [span]
+    if due_cols and due_m and not expiry_m:
+        chosen, end_col = due_cols[0], None
+        spans.append(due_m.span())  # "due" names the date, not the recorded state "due"
+    elif ending and expiry_m:
+        chosen, end_col = ending[0], None
+        if today is not None and start > today:
+            # a future period: "expire next year" asks for records still IN force that end then,
+            # so the verb must not also select the recorded state "expired"
+            spans.append(expiry_m.span())
+    elif done and _DONE_WORDS_RE.search(text or ""):
+        chosen, end_col = done[0], None
+    elif "effectiveFrom" in dated:
+        chosen = "effectiveFrom"
+        # Overlap ("in force during") unless the question names the start itself.
+        end_col = (
+            "effectiveTo"
+            if "effectiveTo" in columns and not _START_WORDS_RE.search(text or "")
+            else None
+        )
+    elif dated:
+        chosen, end_col = dated[0], None
+    else:
+        return None, None, text
+    hit: Set[int] = set()
+    for i, r in enumerate(rows):
+        d0 = _as_date(_value(r, chosen))
+        if d0 is None:
+            continue
+        d1 = _as_date(_value(r, end_col)) if end_col else None
+        if d1 is not None and d1 >= d0:
+            if d0 <= end and d1 >= start:  # the record's interval overlaps the period
+                hit.add(i)
+        elif start <= d0 <= end:
+            hit.add(i)
+    where = f"{label} ({_fmt_date(start)} to {_fmt_date(end)})" if start != end else label
+    spans.extend(_restated_period_spans(text, start, end, spans))
+    for s in sorted(spans, reverse=True):  # the later span first: blanking changes the length
+        text = _blank_span(text, s)
+    return f"{_label(chosen)}: {where}", hit, text
+
+
+def _drop_register_alternative(
+    text: str, register_label: str, register_terms: Sequence[str]
+) -> str:
+    """ "incidents OR near misses": when one side of an "or" names the register, the other side is
+    a kind of it and must not narrow the records (BUG-1530). Returns the text with that side blanked.
+    """
+    names = {stem(w) for t in [register_label, *register_terms] for w in words_of(t) if len(w) >= 4}
+    if not names:
+        return text
+    m = re.search(r"\b([a-z][a-z-]+)\s+or\s+([a-z][a-z-]+(?:\s+[a-z][a-z-]+)?)\b", text, re.I)
+    if not m:
+        return text
+    left, right = m.group(1), m.group(2)
+    if stem(left.lower()) in names:
+        return text[: m.start(2)] + " " * len(right) + text[m.end(2) :]
+    if stem(right.split()[-1].lower()) in names:
+        return text[: m.start(1)] + " " * len(left) + text[m.end(1) :]
+    return text
+
+
 def _criteria(
     rows: List[Dict],
     columns: Sequence[str],
@@ -751,6 +1063,40 @@ def resolve(
             res.other_filters.append(f"{_label(col)}: {_join(sorted(matched), 'or')}")
             res.structured = True
 
+    # 0b-storey. a storey named in free-text locations, when no floor column took it (BUG-1522)
+    # Only when the records state storeys at all: a register keyed by room id ("Room 5.15") says
+    # nothing here and is left exactly as it was, never declared empty for a floor.
+    storey, storey_idx, storey_work = _storey_filter(res.rows, columns, work)
+    if storey is not None and (storey_idx or _states_storeys(res.rows, columns)):
+        # A register whose records state their storeys answers "none on the ground floor" with
+        # NONE: "Where can I study on the ground floor?" listed seven Level 1 workspaces as
+        # ground-floor ones when the filter stood aside (BUG-1522, second half).
+        work = storey_work
+        where = "the ground floor" if storey == 0 else f"floor {storey}"
+        if len(storey_idx or ()) < n:
+            other_sets.append(set(storey_idx or ()))
+            res.other_filters.append(f"on {where}")
+            res.structured = True
+
+    # 0b-or. "incidents or near misses": the register's own name on one side keeps the other side
+    # from narrowing it (BUG-1530)
+    work = _drop_register_alternative(work, register_label, register_terms)
+
+    # 0b-period. a period the records' own dates can be read against (BUG-1530) -- but not for a
+    # question that GROUPS the register ("which rooms have sessions this week?"): that path reports
+    # the whole register and says it was not narrowed, because a validity date ("effective from"
+    # the term's start) is not the date a session happens on (BUG-1597).
+    if grouping_words(work, vocab):
+        period_label, period_idx, period_work = None, None, work
+    else:
+        period_label, period_idx, period_work = _period_filter(res.rows, columns, work, today)
+    if period_label is not None:
+        work = period_work
+        if len(period_idx or ()) < n:
+            other_sets.append(set(period_idx or ()))
+            res.other_filters.append(period_label)
+            res.structured = True
+
     # 0b''. conditions on a level: "power", "good Wi-Fi", "a low risk of noise"
     criteria, work = _criteria(res.rows, columns, work, vocab, header)
     for col, matched, idx in criteria:
@@ -823,19 +1169,29 @@ def resolve(
     recorded = sorted({_value(r, STATUS) for r in res.rows if _value(r, STATUS)})
     selected_values: Set[str] = set()
     group_stems: Set[str] = set()
-    for group in vocab.status_groups_in(work):
+    # "WHEN does the warranty expire?" asks for a DATE (BUG-1549): the expiry verb must not also
+    # select the recorded state "expired", which consumed it and left the end date unshown.
+    # And a VERB of expiring asks for a date whatever the question opens with (BUG-1585): "Which
+    # contracts expire before the end of the year?" selected the two contracts whose STATE reads
+    # "expired" and reported "all 2 recorded dates have already passed" while three more end
+    # this year. Only the state word itself ("which contracts have expired?") filters by state.
+    status_work = re.sub(r"\bexpir(?:e|es|ing|y|ies)\b", " ", work, flags=re.IGNORECASE)
+    if re.search(r"^\s*(?:when|what\s+date|by\s+when)\b", work, re.IGNORECASE):
+        status_work = re.sub(r"\bexpir\w*", " ", status_work, flags=re.IGNORECASE)
+    status_low = status_work.lower()
+    for group in vocab.status_groups_in(status_work):
         hits = [v for v in recorded if group.matches_recorded(v)]
         if hits:
             selected_values.update(hits)
             res.group_hits[group.name] = hits
-            group_stems |= group.consumed_stems(low)
+            group_stems |= group.consumed_stems(status_low)
             res.status_groups.append(group)
         elif group.name == "overdue":
-            group_stems |= group.consumed_stems(low)
+            group_stems |= group.consumed_stems(status_low)
             res.group_hits[group.name] = []
             res.status_groups.append(group)
         else:
-            res.unplaced |= group.consumed_stems(low)
+            res.unplaced |= group.consumed_stems(status_low)
     consumed |= group_stems
 
     # 2. the fields the question asks for ("who owns" -> the owner column)
@@ -1362,8 +1718,13 @@ def _when_lines(res: Resolution, concept: Concept, today: Optional[date]) -> Lis
         past = [t for t in dated if today and t[0] < today]
         dated = sorted(upcoming, key=key) + sorted(past, key=key)
     d0, r0, c0 = dated[0]
+    # "last tested on" as a noun: "The most recent last tested on on record" (2026-10-11).
+    words = _label(c0).split()
+    while words and words[-1].lower() in ("on", "at", "by", "date"):
+        words.pop()
+    noun = " ".join(words + ["date"])
     if latest:
-        lead = f"The most recent {_label(c0)} on record is **{_fmt_date(d0)}** — {_who(r0)}."
+        lead = f"The most recent {noun} on record is **{_fmt_date(d0)}** — {_who(r0)}."
     elif today and d0 < today and len(dated) == 1:
         lead = (
             f"The {_label(c0)} for {_who(r0)} was **{_fmt_date(d0)}** and has already passed"
@@ -1376,7 +1737,7 @@ def _when_lines(res: Resolution, concept: Concept, today: Optional[date]) -> Lis
         )
     else:
         lead = (
-            f"The soonest {_label(c0)} on record is **{_fmt_date(d0)}** — "
+            f"The soonest {noun} on record is **{_fmt_date(d0)}** — "
             f"{_who(r0)}{_status_note(r0)}."
         )
     lines = [lead]

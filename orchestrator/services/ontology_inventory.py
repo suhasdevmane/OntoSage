@@ -18,7 +18,7 @@ vocabulary, so the same lookup works everywhere: a building that calls its rooms
 from __future__ import annotations
 
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Sequence, Tuple
 
 import httpx
 
@@ -100,7 +100,11 @@ _COUNT_OR_LIST_SHAPE = re.compile(
     r"|\bwhat\s+(?:are|were)\s+(?:the|all\s+the|our)\s+\w+s\b(?!\s+\w+\s+(?:for|to|that|which))"
     r"|\bdo\s+(?:we|you)\s+have\b|\bdoes\s+.{0,20}\bhave\b|\bare\s+there\b|\bis\s+there\b"
     r"|\b(?:is|are)\s+installed\b|\binstalled\b|\bexist\b|\bwhat\s+\w+(?:\s+\w+)?\s+(?:do|are)\s+"
-    r"(?:we|you|there)\b",
+    r"(?:we|you|there)\b"
+    # BUG-1552: a place-scoped inventory. "What sensors are in room 2.03?" was answered with
+    # readings; "What kinds of sensors are in room 5.01?" already reached the census.
+    r"|\b(?:what|which)\s+(?:sensors?|devices?|equipment|points|meters?|instruments?)\s+(?:are|is)\s+"
+    r"(?:in|on|inside|installed\s+in|fitted\s+in|located\s+in)\s+(?:room|floor|zone|level|the|this)\b",
     re.IGNORECASE,
 )
 
@@ -206,7 +210,14 @@ def is_inventory_question(query: str) -> bool:
 
 def _query_terms(query: str) -> List[str]:
     """The question's own nouns, as candidate Brick class name fragments."""
-    words = [w for w in re.findall(r"[a-z]+", (query or "").lower()) if len(w) > 2]
+    # Letters-only tokens cut "CO2" to "co" and "PM2.5" to "pm", both then dropped as too short,
+    # so "how many CO2 sensors?" counted EVERY sensor class (BUG-1573). A token starts with a
+    # letter and may carry digits and an inner dot; a bare number or a room id is never one.
+    words = [
+        w.rstrip(".")
+        for w in re.findall(r"[a-z][a-z0-9.]*", (query or "").lower())
+        if len(w.rstrip(".")) > 2
+    ]
     out: List[str] = []
     for w in words:
         if w in _STOP:
@@ -288,15 +299,19 @@ async def _census_query(
     require_all: bool,
 ) -> List[Tuple[str, int]]:
     """One census pass — see class_census for why it runs twice."""
+
     # Match the class NAME, so "equipment" finds Equipment and HVAC_Equipment
     # whatever the building calls its individual units.
+    # A regex escape inside a SPARQL string literal needs its backslash doubled: "pm2\.5" is an
+    # invalid string escape and the whole query would be rejected (BUG-1573).
+    def _lit(t: str) -> str:
+        return re.escape(t).replace("\\", "\\\\")
+
     if require_all:
-        root_filter = "\n  ".join(
-            f'FILTER(REGEX(STR(?root), "{re.escape(t)}", "i"))' for t in terms
-        )
+        root_filter = "\n  ".join(f'FILTER(REGEX(STR(?root), "{_lit(t)}", "i"))' for t in terms)
     else:
         root_filter = 'FILTER(REGEX(STR(?root), "{}", "i"))'.format(
-            "|".join(re.escape(t) for t in terms)
+            "|".join(_lit(t) for t in terms)
         )
     # Match on one type and report ALL of the instance's types. Matching the
     # reported class instead answers "what equipment is here?" with "Equipment:
@@ -343,10 +358,12 @@ SELECT ?cls (COUNT(DISTINCT ?s) AS ?n) (MIN(STR(?s)) AS ?lo) (MAX(STR(?s)) AS ?h
             found.append(
                 (local, n, b.get("lo", {}).get("value", ""), b.get("hi", {}).get("value", ""))
             )
-    return collapse_synonyms(found)
+    return collapse_synonyms(found, prefer=terms)
 
 
-def collapse_synonyms(rows: List[Tuple[str, int, str, str]]) -> List[Tuple[str, int]]:
+def collapse_synonyms(
+    rows: List[Tuple[str, int, str, str]], prefer: Sequence[str] = ()
+) -> List[Tuple[str, int]]:
     """Keep one name per distinct instance SET — the most descriptive one.
 
     Brick types one population under several names at once: the same 132 boxes are
@@ -361,10 +378,19 @@ def collapse_synonyms(rows: List[Tuple[str, int, str, str]]) -> List[Tuple[str, 
     collapse only when they span the identical set.
     """
     best: dict = {}
+    want = [t.lower() for t in prefer]
+
+    def _rank(name: str) -> Tuple[int, int]:
+        # The name that says what the reader asked for wins over a longer, more general one:
+        # the same 280 devices are CO2_Sensor and Air_Quality_Sensor, and "how many CO2 sensors?"
+        # was answered "Air Quality Sensor — 280" (BUG-1573).
+        hits = sum(1 for t in want if t in name.lower())
+        return hits, len(name)
+
     for local, n, lo, hi in rows:
         key = (n, lo, hi)
         current = best.get(key)
-        if current is None or len(local) > len(current):
+        if current is None or _rank(local) > _rank(current):
             best[key] = local
     return sorted(((name, key[0]) for key, name in best.items()), key=lambda r: -r[1])
 
@@ -518,4 +544,238 @@ def render_census(
             pass
     lines.append("\n*Counted now from the building's own model.*")
     lines.extend("\n" + n for n in notes)
+    return "\n".join(lines)
+
+
+# ── Instruments counted per floor (BUG-1614) ──────────────────────────────────────────────
+#
+# "Which floor has the most PM2.5 sensors?" was answered with PM2.5 LEVELS per floor (the
+# aggregate lane read "most" as a statistic, BUG-1606) and, once that was stopped, declined: a
+# census answers "how many" for the building, and nothing counted a class floor by floor. The
+# graph holds the answer -- every point sits in a space and every space on a floor -- so it is
+# counted there, never estimated. 0 of 4,060 bank questions take this shape; it came from a
+# conversation ("How many PM2.5 sensors are there?" -> "which floor has the most of them?").
+
+_INSTRUMENT_NOUN = r"(?:sensors?|devices?|meters?|detectors?|monitors?)"
+_PER_FLOOR_RANK_RE = re.compile(
+    r"\b(?:which|what)\s+(?:floor|level|storey)s?\b[^?]{0,40}?\b(?:has|have|holds?|contains?)\s+"
+    r"the\s+(?P<dir>most|fewest|least|(?:greatest|highest|largest|smallest|lowest)\s+number\s+of)"
+    r"\s+(?P<thing>(?:[\w.\-]+\s+){0,3}?" + _INSTRUMENT_NOUN + r")\b",
+    re.IGNORECASE,
+)
+_PER_FLOOR_EACH_RE = re.compile(
+    r"\bhow\s+many\s+(?P<thing>(?:[\w.\-]+\s+){0,3}?" + _INSTRUMENT_NOUN + r")\b[^?]{0,30}?"
+    r"\b(?:on\s+each|per|by|on\s+every|for\s+each|in\s+each)\s+(?:floor|level|storey)\b"
+    r"|\b(?P<thing2>(?:[\w.\-]+\s+){0,3}?" + _INSTRUMENT_NOUN + r")\s+"
+    r"(?:per|by|on\s+each|for\s+each)\s+(?:floor|level|storey)\b",
+    re.IGNORECASE,
+)
+
+
+def per_floor_instrument_ask(question: str) -> Optional[Tuple[str, str]]:
+    """(the instruments named, "most" | "fewest" | "each") for a per-floor count, else None."""
+    q = question or ""
+    m = _PER_FLOOR_RANK_RE.search(q)
+    if m:
+        d = m.group("dir").lower()
+        direction = "fewest" if d.startswith(("fewest", "least", "smallest", "lowest")) else "most"
+        return m.group("thing").strip(), direction
+    m = _PER_FLOOR_EACH_RE.search(q)
+    if m:
+        return (m.group("thing") or m.group("thing2") or "").strip(), "each"
+    return None
+
+
+def pick_counted_class(rows: Sequence[Tuple[str, int]], thing: str) -> Optional[str]:
+    """The census class whose NAME carries every word of the instruments asked about, or None.
+
+    "energy meters" ranked the umbrella class Equipment first, and counting every Equipment
+    instance per floor answered a different question. With no class naming all the words the
+    per-floor count is not given (the question falls through as before).
+    """
+    terms = _query_terms(thing)
+    if not terms:
+        return None
+    for local, _n in rows or []:
+        low = str(local).lower()
+        if all(t in low for t in terms):
+            return str(local)
+    return None
+
+
+#: The SCHEMA namespaces a counted class may come from: Brick, and the OCBV classes this system
+#: declares where Brick has none (``ontosage:Sound_Level_Sensor``). No building namespace.
+_SCHEMA_PREFIXES = {
+    "brick": "https://brickschema.org/schema/Brick#",
+    "ontosage": "http://ontosage.org/capabilities#",
+    "hbco": "http://ontosage.org/hbco#",
+}
+
+
+def class_iri(ref: str) -> Optional[str]:
+    """A class as a full IRI: a bare name is Brick's, a CURIE uses a schema prefix; else None."""
+    ref = (ref or "").strip()
+    if ref.startswith(("http://", "https://")):
+        return None if re.search(r"[\s<>\"{}|\^`]", ref) else ref
+    pfx, _, local = ref.partition(":")
+    if not local:
+        pfx, local = "brick", ref
+    if pfx not in _SCHEMA_PREFIXES or not re.fullmatch(r"[A-Za-z0-9_.\-]+", local):
+        return None
+    return _SCHEMA_PREFIXES[pfx] + local
+
+
+def class_local_name(ref: str) -> str:
+    """'ontosage:Sound_Level_Sensor' -> 'Sound_Level_Sensor'."""
+    return re.split(r"[#/:]", (ref or "").rstrip("#/"))[-1]
+
+
+async def count_by_floor(
+    class_ref: str, namespace: str, endpoint: str
+) -> Optional[Tuple[List[Tuple[str, int]], int]]:
+    """([(floor label, count)], total) for one class, from the graph; None on failure.
+
+    The walk is the one ``scripts/floor_modality_matrix.py`` measures with: a point is located
+    in, is a point of, or is part of a space, and the space is (transitively) part of a floor.
+    The total counts every instance, so the ones placed on no floor can be stated, not dropped.
+    """
+    iri = class_iri(class_ref)
+    if iri is None:
+        return None
+    cls = f"<{iri}>"
+    per_floor = f"""
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+PREFIX rdfs:  <http://www.w3.org/2000/01/rdf-schema#>
+SELECT ?floor (SAMPLE(?fl) AS ?label) (COUNT(DISTINCT ?s) AS ?n) WHERE {{
+  ?s a {cls} .
+  FILTER(STRSTARTS(STR(?s), '{namespace}'))
+  ?s brick:hasLocation|brick:isPointOf|brick:isPartOf ?space .
+  ?space brick:isPartOf* ?floor .
+  ?floor a brick:Floor .
+  OPTIONAL {{ ?floor rdfs:label ?fl }}
+}} GROUP BY ?floor ORDER BY DESC(?n) LIMIT 100"""
+    total_q = f"""
+SELECT (COUNT(DISTINCT ?s) AS ?n) WHERE {{
+  ?s a {cls} .
+  FILTER(STRSTARTS(STR(?s), '{namespace}'))
+}}"""
+    try:
+        async with httpx.AsyncClient(timeout=25.0) as client:
+            auth = (
+                (settings.GRAPHDB_USER, settings.GRAPHDB_PASSWORD)
+                if settings.GRAPHDB_USER
+                else None
+            )
+            out = []
+            for sparql in (per_floor, total_q):
+                resp = await client.post(
+                    endpoint,
+                    auth=auth,
+                    data={"query": sparql},
+                    headers={"Accept": "application/sparql-results+json"},
+                )
+                resp.raise_for_status()
+                out.append(resp.json().get("results", {}).get("bindings", []))
+    except Exception as e:
+        logger.warning(f"[inventory] per-floor count failed: {describe_exception(e)}")
+        return None
+    rows: List[Tuple[str, int]] = []
+    for b in out[0]:
+        iri = b.get("floor", {}).get("value", "")
+        label = b.get("label", {}).get("value", "") or iri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+        try:
+            n = int(b.get("n", {}).get("value", "0"))
+        except (TypeError, ValueError):
+            continue
+        if n > 0:
+            rows.append((label, n))
+    try:
+        total = int((out[1][0] if out[1] else {}).get("n", {}).get("value", "0"))
+    except (TypeError, ValueError):
+        total = sum(n for _, n in rows)
+    return rows, total
+
+
+async def count_concept_by_floor(
+    thing: str, namespace: str, endpoint: str
+) -> Optional[Tuple[str, List[Tuple[str, int]], int]]:
+    """(class, per-floor rows, total) for the class the lay-term resolver gives ``thing``.
+
+    For instruments no Brick class NAME carries: "noise sensors" are typed
+    ``ontosage:Sound_Level_Sensor`` here, which a name match on "noise" cannot find. Of the
+    concept's classes the one with the most instances in this building is counted; None when
+    the concept resolves nothing or none of its classes is held.
+    """
+    try:
+        from orchestrator.services.concept_resolver import concept_resolver
+
+        matches = await concept_resolver.resolve(thing)
+    except Exception as e:  # pragma: no cover - defensive
+        logger.debug(f"[inventory] concept resolution skipped: {e}")
+        return None
+    classes = next((list(m.brick_classes) for m in matches if m.brick_classes), [])
+    best: Optional[Tuple[str, List[Tuple[str, int]], int]] = None
+    for ref in classes[:4]:
+        got = await count_by_floor(ref, namespace, endpoint)
+        if got and got[1] > 0 and (best is None or got[1] > best[2]):
+            best = (ref, got[0], got[1])
+    return best
+
+
+def _short_floor(label: str) -> str:
+    """'Floor 4 (Fourth Floor)' -> 'Floor 4'; any other label is kept as given."""
+    return re.sub(r"\s*\(.*\)\s*$", "", label or "").strip() or label
+
+
+def render_floor_census(
+    class_local: str,
+    rows: List[Tuple[str, int]],
+    total: int,
+    direction: str,
+    building_name: str,
+) -> Optional[str]:
+    """The per-floor count as an answer, or None when no instance sits on any floor."""
+    if not rows:
+        return None
+    name = class_local_name(class_local).replace("_", " ")
+    placed = sum(n for _, n in rows)
+    ordered = sorted(rows, key=lambda r: (-r[1], r[0]))
+    try:
+        from orchestrator.services.evidence import computed
+
+        computed.record(
+            EVIDENCE_SOURCE,
+            {**{f"{_short_floor(f)} {name}": float(n) for f, n in ordered}, "total": float(total)},
+        )
+    except Exception as e:  # pragma: no cover - defensive
+        logger.debug(f"[inventory] evidence recording skipped: {e}")
+    lines: List[str] = []
+    if direction in ("most", "fewest"):
+        pick = ordered[0][1] if direction == "most" else ordered[-1][1]
+        tied = [_short_floor(f) for f, n in ordered if n == pick]
+        word = "most" if direction == "most" else "fewest"
+        if len(tied) == len(ordered) > 1:
+            lines.append(f"**Every floor has the same number of {name}s: {pick}.**\n")
+        else:
+            who = tied[0] if len(tied) == 1 else " and ".join([", ".join(tied[:-1]), tied[-1]])
+            verb = "has" if len(tied) == 1 else "have"
+            tie = "" if len(tied) == 1 else " (tied)"
+            lines.append(f"**{who} {verb} the {word} {name}s: {pick}{tie}.**\n")
+    else:
+        lines.append(f"**{name}s per floor in {building_name}:**\n")
+    lines.append(f"| Floor | {name}s |")
+    lines.append("|---|---|")
+    for f, n in ordered:
+        lines.append(f"| {_short_floor(f)} | {n} |")
+    unplaced = max(0, total - placed)
+    lines.append("")
+    if unplaced:
+        one = unplaced == 1
+        lines.append(
+            f"{unplaced} of the {total} {'is' if one else 'are'} not placed on a floor in the "
+            f"building model, so {'it is' if one else 'they are'} not in this table."
+        )
+    else:
+        lines.append(f"All {total} are placed on a floor.")
+    lines.append("\n*Counted now from the building's own model.*")
     return "\n".join(lines)

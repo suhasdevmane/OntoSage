@@ -35,7 +35,7 @@ import re as _re
 # rejected by the other.
 _UUID_RE = _re.compile(r"^[0-9A-Za-z][0-9A-Za-z-]{7,63}$")
 _IDENT_RE = _re.compile(r"^[A-Za-z0-9_]+$")
-_DT_RE = _re.compile(r"^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}:\d{2})?$")
+_DT_RE = _re.compile(r"^\d{4}-\d{2}-\d{2}( \d{2}:\d{2}(:\d{2})?)?$")
 
 # SQL keywords that are forbidden for safety.
 # Word-boundary regex matches regardless of trailing whitespace/newline variant.
@@ -442,6 +442,85 @@ class MySQLAdapter(DatabaseAdapter):
             out[uid] = None
         return out
 
+    async def _span_conditions(self, uuids: Optional[List[str]]) -> Optional[List[str]]:
+        """SQL conditions selecting rows that hold a reading of any of ``uuids``.
+
+        ``[""]`` is the whole table; ``[]`` means none of the sensors is in this store. A wide
+        table's sensors are COLUMNS, so a row counts when one of them is not NULL, in chunks
+        of ``_LAST_SEEN_CHUNK`` for the statement size.
+        """
+        if uuids is None:
+            return [""]
+        try:
+            known = {str(c) for c in (await self.get_columns() or set())}
+        except Exception:  # pragma: no cover - schema probe is best-effort
+            return None
+        cols = [str(u) for u in dict.fromkeys(uuids) if _UUID_RE.match(str(u)) and str(u) in known]
+        return [
+            "("
+            + " OR ".join(f"`{c}` IS NOT NULL" for c in cols[i : i + self._LAST_SEEN_CHUNK])
+            + ")"
+            for i in range(0, len(cols), self._LAST_SEEN_CHUNK)
+        ]
+
+    async def months_with_readings(
+        self, uuids: Optional[List[str]] = None, max_months: int = 72
+    ) -> Optional[Dict[str, Any]]:
+        """``{"first", "last", "months"}``: the first and last reading of ``uuids`` (or of the
+        whole table) and every calendar month between them that holds at least one reading.
+
+        "How long has CO2 been recorded?" (2026-10-11) needs the earliest reading AND the gaps:
+        bldg1's wide table holds a snapshot from early 2025, nothing for eleven months, then the
+        live record, and "since January 2025" alone would claim a continuity the store does not
+        have. Every probe is an index range read that stops at its first row, so a month with
+        readings costs one row and a month with no rows costs none. None when the store cannot
+        be asked.
+        """
+        ts = await self._timestamp_column()
+        if not ts:
+            return None
+        conds = await self._span_conditions(uuids)
+        if conds is None:
+            return None
+        if not conds:
+            return {"first": None, "last": None, "months": []}
+        table = self._wide_table()
+
+        async def one(sql: str) -> Optional[datetime]:
+            result = await self.execute_query(sql)
+            if not getattr(result, "success", False) or not getattr(result, "data", None):
+                return None
+            return self._as_datetime((result.data[0] or {}).get("t"))
+
+        def where(cond: str, extra: str = "") -> str:
+            parts = [p for p in (cond, extra) if p]
+            return ("WHERE " + " AND ".join(parts)) if parts else ""
+
+        firsts, lasts = [], []
+        for cond in conds:
+            for order, bucket in (("ASC", firsts), ("DESC", lasts)):
+                stamp = await one(
+                    f"SELECT `{ts}` AS t FROM `{table}` {where(cond)} ORDER BY `{ts}` {order} LIMIT 1"
+                )
+                if stamp is not None:
+                    bucket.append(stamp)
+        if not firsts or not lasts:
+            return {"first": None, "last": None, "months": []}
+        first, last = min(firsts), max(lasts)
+        months: List[str] = []
+        y, m = first.year, first.month
+        for _ in range(max_months):
+            if (y, m) > (last.year, last.month):
+                break
+            ny, nm = (y + 1, 1) if m == 12 else (y, m + 1)
+            bounds = f"`{ts}` >= '{y:04d}-{m:02d}-01' AND `{ts}` < '{ny:04d}-{nm:02d}-01'"
+            for cond in conds:
+                if await one(f"SELECT `{ts}` AS t FROM `{table}` {where(cond, bounds)} LIMIT 1"):
+                    months.append(f"{y:04d}-{m:02d}")
+                    break
+            y, m = ny, nm
+        return {"first": first, "last": last, "months": months}
+
     @staticmethod
     def _as_datetime(raw: Any) -> Optional[datetime]:
         """A store value as a datetime, or None when it is not one."""
@@ -524,11 +603,21 @@ class MySQLAdapter(DatabaseAdapter):
 
     @staticmethod
     def _sanitize_dt(value: Optional[str]) -> Optional[str]:
-        """Accept only 'YYYY-MM-DD[ HH:MM:SS]'. Anything else is dropped, never interpolated."""
+        """Accept a full calendar date, optionally with a time ('T' or space, seconds optional).
+
+        Anything else is dropped, never interpolated. BUG-1488: this accepted only
+        'YYYY-MM-DD[ HH:MM:SS]', while the SQL lane passes ISO bounds ('2025-01-31T10:00:00') that
+        the narrow adapter and the SQL agent both accept. The wide store -- every installed
+        sensor -- silently dropped such a bound and read the last 30 days instead, so a question
+        about a past period with a time of day was answered from the newest top-up rows. Now the
+        same forms as `MySQLNarrowAdapter._sanitize_dt`, normalised to 'YYYY-MM-DD HH:MM[:SS]'.
+        """
         if not value:
             return None
-        text = str(value).strip()
-        return text if _DT_RE.match(text) else None
+        text = str(value).strip().replace("T", " ")
+        if _DT_RE.match(text):
+            return text[:19]
+        return None
 
     async def write_records(self, records: List[Any]) -> int:
         """Persist feed records (uuid, timestamp, value) into wide sensor_data.

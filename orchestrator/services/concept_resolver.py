@@ -192,6 +192,50 @@ def _term_regex(term: str) -> Pattern[str]:
     return re.compile(r"(?<![a-z])" + body + tail + r"(?![a-z])")
 
 
+def drop_subsumed(matches: List["ConceptMatch"], text: str) -> List["ConceptMatch"]:
+    """The matches, less any concept whose term appears ONLY inside another concept's longer term.
+
+    "Is carbon monoxide being detected anywhere right now?" matched `carbon_monoxide` on "carbon
+    monoxide" AND `carbon_footprint` on "carbon" -- the same word, read twice. The footprint
+    concept's energy-meter class then won the entity binding and six floor energy meters were
+    narrated as the answer to a gas-safety question (BUG-1567). A word that is part of a longer
+    lay term of ANOTHER concept is evidence for that concept, not for both. A term that also stands
+    on its own somewhere in the question still counts ("how much carbon did we emit, and what is
+    the carbon monoxide level?" keeps both). Model-chosen (semantic) matches carry no span and are
+    left alone.
+    """
+    t = (text or "").lower()
+    spans: Dict[int, List[Tuple[int, int]]] = {}
+    for m in matches:
+        if m.semantic or not m.lay_term:
+            continue
+        spans[id(m)] = [(x.start(), x.end()) for x in _term_regex(m.lay_term.lower()).finditer(t)]
+    kept: List["ConceptMatch"] = []
+    for m in matches:
+        mine = spans.get(id(m))
+        if not mine:
+            kept.append(m)
+            continue
+        others = [
+            span
+            for o in matches
+            if o is not m and o.concept_id != m.concept_id
+            for span in spans.get(id(o), [])
+        ]
+        free = any(
+            not any(a <= s0 and e0 <= b and (b - a) > (e0 - s0) for a, b in others)
+            for s0, e0 in mine
+        )
+        if free:
+            kept.append(m)
+        else:
+            logger.info(
+                f"[concept_resolver] '{m.lay_term}' ({m.concept_id}) appears only inside a longer "
+                "term of another concept — dropped"
+            )
+    return kept
+
+
 #: The word that FOLLOWS a hyphen, when a lay term opens a compound.
 _COMPOUND_HEAD_RE = re.compile(r"-([a-z]+)")
 
@@ -294,8 +338,18 @@ def _slip_target(word: str, vocabulary: FrozenSet[str]) -> Optional[str]:
 #: flat", "ventilation against occupancy". Deliberately small and about grammar, not about any
 #: building's vocabulary -- it only decides whether to ASK the model, never what the answer is.
 _COORDINATORS = (
-    " and ", " while ", " versus ", " vs ", " against ", " alongside ", " as well as ",
-    " together with ", " compared with ", " compared to ", " but ", " yet ",
+    " and ",
+    " while ",
+    " versus ",
+    " vs ",
+    " against ",
+    " alongside ",
+    " as well as ",
+    " together with ",
+    " compared with ",
+    " compared to ",
+    " but ",
+    " yet ",
 )
 
 
@@ -356,7 +410,10 @@ class ConceptResolver:
             # The referent gate must not decline a quantity the lay vocabulary explains.
             try:
                 from orchestrator.services.referent_resolver import register_concept_terms
-            except (ImportError, KeyError):  # the offline reach loader has no package to import from
+            except (
+                ImportError,
+                KeyError,
+            ):  # the offline reach loader has no package to import from
                 return self._vocabulary
             register_concept_terms(t for e in concept_map.values() for t in e.get("lay_terms", []))
         return self._vocabulary
@@ -459,6 +516,7 @@ class ConceptResolver:
                     )
                 )
 
+        matches = drop_subsumed(matches, normalized)
         # Sort: longer lay term first (more specific), then by confidence
         _conf_order = {"high": 0, "medium": 1, "low": 2, "": 3}
         matches.sort(key=lambda m: (-len(m.lay_term), _conf_order.get(m.confidence, 3)))
@@ -527,7 +585,7 @@ class ConceptResolver:
         already = {m.concept_id for m in (exclude or [])}
         by_id = {str(e.get("concept_id")): e for e in concept_map.values()}
         out: List[ConceptMatch] = []
-        for cid in (got.concept_ids or [got.concept_id]):
+        for cid in got.concept_ids or [got.concept_id]:
             if cid in already:
                 continue
             entry = by_id.get(cid, {})
@@ -546,7 +604,9 @@ class ConceptResolver:
         if out:
             logger.info(
                 "[concept_resolver] semantic match %r -> %s (%s)",
-                " ".join(str(text).split())[:60], [m.concept_id for m in out], got.reason[:60],
+                " ".join(str(text).split())[:60],
+                [m.concept_id for m in out],
+                got.reason[:60],
             )
         return out
 

@@ -41,6 +41,33 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 
+#: What the reader is told when the records a plan reached hold nothing measured (CAVEAT-1630).
+_NO_READINGS_TEXT = (
+    "The records this request reached hold no readings to compute from, so I have not produced "
+    "figures or a file. Ask for a measured quantity and a period -- for example the energy use "
+    "per floor last month -- and I can export that."
+)
+
+
+def _readings_or_refusal(result: Any) -> Any:
+    """The SQL step's result, or a refusal when its rows carry no measured value (CAVEAT-1630).
+
+    A plan's SQL step can return rows that are identifiers, not readings ("a timestamp of None and
+    a value that is a UUID"); handed on, a model narrated them as data. Rows are readings when
+    ``viz_honesty.plottable_rows`` finds a number in them -- the same test the chart path uses.
+    """
+    from orchestrator.services.viz_honesty import plottable_rows
+
+    if not (isinstance(result, dict) and result.get("success")):
+        return result
+    data = result.get("results")
+    rows = data.get("data") if isinstance(data, dict) else data
+    if not isinstance(rows, list) or not rows or plottable_rows(data):
+        return result
+    logger.info(f"[planner] SQL step returned {len(rows)} row(s) with no measured value")
+    return {"success": False, "error": _NO_READINGS_TEXT, "rows_without_readings": len(rows)}
+
+
 # Phase 6 — the intent registry is the single source of truth.  These two sets
 # previously had to be kept in sync with dialogue_agent.py, multi_intent_detector.py,
 # and the YAML registry.  Now they derive from the registry; legacy hardcoded sets
@@ -565,6 +592,7 @@ Rules:
             uuids = context.get("uuids", [])
             storage_map = context.get("storage_map", {})
             result = await self._run_sql(state, effective_query, uuids, storage_map, step.params)
+            result = _readings_or_refusal(result)
             context["sql_result"] = result
             return result
 
@@ -745,6 +773,13 @@ Rules:
                         "plan_rationale": plan.rationale,
                         "context": context,
                     }
+        sql = context.get("sql_result")
+        if isinstance(sql, dict) and sql.get("rows_without_readings"):
+            return {
+                "success": False,
+                "formatted_response": _NO_READINGS_TEXT,
+                "provenance": provenance,
+            }
         return {
             "success": False,
             "formatted_response": "The plan executed but produced no usable output.",
@@ -806,6 +841,10 @@ Rules:
         from orchestrator.agents.analytics_agent import AnalyticsAgent
 
         sql_result = ctx.get("sql_result", {})
+        if isinstance(sql_result, dict) and sql_result.get("rows_without_readings"):
+            # CAVEAT-1630: nothing measured to analyse; a model given these rows narrated a UUID
+            # as a reading "with a timestamp of None".
+            return {"success": False, "error": _NO_READINGS_TEXT}
         data = sql_result.get("results", {}) if isinstance(sql_result, dict) else {}
         if not isinstance(data, dict) or "data" not in data:
             data = {"data": data} if isinstance(data, list) else {"data": []}
@@ -826,6 +865,10 @@ Rules:
     ) -> Dict:
         from orchestrator.agents.report_agent import ReportAgent
 
+        _sql = ctx.get("sql_result")
+        if isinstance(_sql, dict) and _sql.get("rows_without_readings"):
+            return {"success": False, "error": _NO_READINGS_TEXT}  # CAVEAT-1630
+
         # BUG-586: the planner's report never put the uuid -> label map on the bus, so a floor
         # report listed "22.884 °C (sensor 00b54ae6-…)" for 49 sensors. The SPARQL step already
         # holds the labels; hand them to the report the way the main lane does.
@@ -844,6 +887,10 @@ Rules:
 
     async def _run_export(self, ctx: Dict, params: Dict) -> Dict:
         from orchestrator.agents.data_export_agent import DataExportAgent
+
+        _sql = ctx.get("sql_result")
+        if isinstance(_sql, dict) and _sql.get("rows_without_readings"):
+            return {"success": False, "error": _NO_READINGS_TEXT}  # CAVEAT-1630: no empty file
 
         data = (
             ctx.get("sql_result") or ctx.get("anomaly_result") or ctx.get("analytics_result") or {}

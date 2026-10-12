@@ -395,7 +395,17 @@ def skip_reason(
         return "deterministic 'does not exist' / 'not measured' decline"
     if any(rx.search(body) for rx in _HONEST_DECLINE_RES):
         return "the system's own deterministic decline"
+    if _COUNTED_REGISTER_RE.search(body):
+        # "None of the 28 records in the Workspace profile register match (on the ground floor)"
+        # is a COUNT over the whole register, not a search that missed. Reworded as a miss it
+        # read "I did not find any in the Workspace profile register match ..." (BUG-1537).
+        return "the register's own counted answer"
     return None
+
+
+_COUNTED_REGISTER_RE = re.compile(
+    r"\b(?:none|\d[\d,]*)\s+of\s+the\s+\d[\d,]*\s+records\s+in\s+the\b", re.IGNORECASE
+)
 
 
 # ── 2. what to look for ─────────────────────────────────────────────────────────────────────────

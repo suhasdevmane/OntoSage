@@ -40,7 +40,8 @@ The procedural content of the earlier document is unchanged and still applies:
    nearest fire exit.
 2. **Do not use the lift** during a fire evacuation - use the stairs. The lift homes to
    ground on alarm and its doors open.
-3. Assembly point: **Maindy Road car park** (north side, 50 metres from the main entrance).
+3. Assembly point: **Fire Assembly Point A — Senghennydd Road (north side)**, the open area
+   directly outside the main entrance. Fire Assembly Point B is the car park (south side).
 4. Report to your floor warden at the assembly point.
 
 People who cannot use stairs should go to the nearest refuge point and use the communication

@@ -116,6 +116,83 @@ SILENCE_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: The same health sweep asked POSITIVELY (2026-10-11): "How many sensors are connected and
+#: reporting?" was answered "18 sensors" from a label lookup, and "When was the building's sensor
+#: data last updated?" with "the data set does not contain a timestamp" -- while the sweep this
+#: lane runs answers both ("all 3543 of 3543 wrote within their freshness limit, as of ...").
+#: Measured over the 4,060 bank: 1 question newly matches; 0 study texts.
+REPORTING_RE = re.compile(
+    rf"\b(?:how\s+many|are\s+all|are\s+the|is\s+every|which)\b[^.?!]{{0,30}}?{_INSTRUMENTS}"
+    r"[^.?!]{0,30}?\b(?:connected|online|reporting|live|up\s+to\s+date|working)\b"
+    r"|\bdata\b[^.?!]{0,20}?\b(?:last\s+updated|up\s+to\s+date|fresh|stale)\b",
+    re.IGNORECASE,
+)
+
+#: "What units are the illuminance readings in?" was answered "the unit is not recorded"
+#: (2026-10-11) while the building declares one per quantity. Generic English, no building's words.
+UNITS_RE = re.compile(
+    # Not a bare "which unit": "which unit manages the building?" is an organisational unit.
+    r"\bwhat\s+units?\b(?!\s+of\s+(?!measure))|\bin\s+what\s+units?\b|\bmeasured\s+in\s+what\b"
+    r"|\bwhat\s+(?:is|are)\s+the\s+units?\b",
+    re.IGNORECASE,
+)
+#: Everyday words for a quantity whose modality name is technical.
+_UNIT_SYNONYMS = {
+    "light": "illuminance",
+    "lighting": "illuminance",
+    "brightness": "illuminance",
+    "lux": "illuminance",
+    "sound": "noise",
+    "loudness": "noise",
+    "carbon dioxide": "co2",
+    "people": "occupancy",
+    "headcount": "occupancy",
+    "electricity": "energy_submeter",
+    "energy": "energy_submeter",
+    "power": "electric_power",
+    "pm2.5": "pm25",
+}
+
+
+def units_answer(question: str, building_id: Optional[str] = None) -> Optional[str]:
+    """The declared unit of each quantity a 'what units' question names; None if it is not one."""
+    if not UNITS_RE.search(question or ""):
+        return None
+    from orchestrator.services.deliberation.coverage_audit import load_modalities
+    from orchestrator.services.modality_units import display_unit
+
+    q = (question or "").lower()
+    units = {}
+    for spec in load_modalities(building_id):
+        unit = display_unit((spec.sat or {}).get("unit"))
+        if unit:
+            units[spec.name] = unit
+    asked = [
+        name
+        for name in units
+        if re.search(r"\b" + re.escape(name.replace("_", " ")) + r"\b", q)
+        or re.search(r"\b" + re.escape(name) + r"\b", q)
+    ]
+    for word, name in _UNIT_SYNONYMS.items():
+        if name in units and name not in asked and re.search(r"\b" + re.escape(word) + r"\b", q):
+            asked.append(name)
+    if asked:
+        shown = {"co2": "CO2", "pm25": "PM2.5", "pm10": "PM10", "pm1": "PM1", "voc": "VOC"}
+        lines = [
+            f"**{shown.get(name, name.replace('_', ' ').capitalize())}** readings are in "
+            f"**{units[name]}**."
+            for name in asked
+        ]
+        return "\n".join(lines) + "\n\n_The unit the building declares for that quantity._"
+    table = "\n".join(
+        f"| {name.replace('_', ' ')} | {unit} |" for name, unit in sorted(units.items())
+    )
+    return (
+        "The building declares a unit for each quantity it measures:\n\n"
+        f"| Quantity | Unit |\n|---|---|\n{table}"
+    )
+
+
 #: Asking whether a question is answerable, rather than asking it.
 CAN_ANSWER_RE = re.compile(
     r"\bcan you answer\b|\bare you able to answer\b|\bdo you know whether you can\b"
@@ -235,6 +312,25 @@ PROCEDURE_ASK_RE = re.compile(
 )
 
 
+#: "What does the building measure?" -- the menu, asked of the building rather than of "you"
+#: (BUG-1524). It reached the capability lane and was answered with the COST-LINE register
+#: (electricity supply, water, lift maintenance). 0 of the 4,060 bank questions match it.
+BUILDING_MEASURES_RE = re.compile(
+    r"\bwhat\s+(?:does|do|can)\s+(?:this|the|your|our)\s+building\s+(?:measure|monitor|sense|track)\b"
+    r"|\bwhat\s+(?:sensors|quantities|measurements)\s+(?:does|do)\s+(?:this|the|your|our)\s+"
+    r"building\s+have\b"
+    # The same menu for ONE space (BUG-1552): "What sensors are in room 2.03?" was answered by
+    # the discovery lane from eight label-matched points and narrated as "two sensors"; the
+    # per-space reach answer lists every quantity the room's coverage holds.
+    r"|\b(?:what|which)\s+(?:sensors?|devices?|instruments?|points|meters?)\s+(?:are|is)\s+"
+    r"(?:in|on|inside|installed\s+in|fitted\s+in|located\s+in)\s+(?:room|zone|space)\b"
+    # "What data sources does the building have?" was declined (2026-10-11); the menu of what is
+    # measured is its answer. 0 bank questions newly match; 0 study texts.
+    r"|\bwhat\s+(?:data\s+sources|sources\s+of\s+data|kinds?\s+of\s+data|types?\s+of\s+data)\b",
+    re.IGNORECASE,
+)
+
+
 def is_observability_question(text: str) -> bool:
     """True when the question is about the system's REACH rather than about a reading.
 
@@ -253,8 +349,20 @@ def is_observability_question(text: str) -> bool:
         # topic; this lane has nothing to say about it.
         return False
     return bool(
-        CAN_MEASURE_RE.search(text) or CAN_ANSWER_RE.search(text) or is_silence_question(text)
+        CAN_MEASURE_RE.search(text)
+        or CAN_ANSWER_RE.search(text)
+        or is_silence_question(text)
+        or BUILDING_MEASURES_RE.search(text)
+        or UNITS_RE.search(text)
+        or _is_record_span(text)
     )
+
+
+def _is_record_span(text: str) -> bool:
+    """'How long has CO2 been recorded?' -- the history of the stores (record_span)."""
+    from orchestrator.services.record_span import is_record_span_question
+
+    return is_record_span_question(text)
 
 
 def is_silence_question(text: str) -> bool:
@@ -267,7 +375,7 @@ def is_silence_question(text: str) -> bool:
     sensors listed have a reading at the most recent timestamp ... none of them appear to have
     stopped reporting", asserted over a sensor that had been dead for twelve days.
     """
-    return bool(SILENCE_RE.search(text or ""))
+    return bool(SILENCE_RE.search(text or "") or REPORTING_RE.search(text or ""))
 
 
 #: "what can you measure here" — the OPEN question, asking for the menu rather than about one
@@ -321,7 +429,7 @@ NAMED_QUANTITY_RE = re.compile(
 
 def is_open_question(text: str) -> bool:
     """True when the asker wants the menu rather than a verdict on one quantity."""
-    return bool(OPEN_QUESTION_RE.search(text or ""))
+    return bool(OPEN_QUESTION_RE.search(text or "") or BUILDING_MEASURES_RE.search(text or ""))
 
 
 #: What each events-store kind records, in the words a reader would use.

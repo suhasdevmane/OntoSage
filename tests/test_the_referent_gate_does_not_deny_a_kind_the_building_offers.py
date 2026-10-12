@@ -90,14 +90,14 @@ async def resolve(
 async def test_a_compound_whose_head_an_amenity_class_names_is_not_refused() -> None:
     graph = FakeGraph(["parking_level_ground"], amenity_classes=["parking"], suggest=[])
     res = await resolve(graph, typed("car parking", "parking"), ["Ground Level Parking"])
-    assert res.status == rr.SKIPPED, "the gate steps aside and lets the lanes answer"
+    assert res.status == rr.STEPPED_ASIDE, "the gate steps aside and lets the lanes answer"
 
 
 @pytest.mark.asyncio
 async def test_a_head_the_building_holds_with_nothing_to_suggest_is_not_an_absence() -> None:
     graph = FakeGraph(["parking_level_ground"], amenity_classes=[], suggest=[])
     res = await resolve(graph, typed("car parking", "parking"), [])
-    assert res.status == rr.SKIPPED
+    assert res.status == rr.STEPPED_ASIDE
 
 
 @pytest.mark.asyncio

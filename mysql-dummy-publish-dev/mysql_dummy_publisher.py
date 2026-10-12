@@ -9,6 +9,7 @@ Requires: pip install PyMySQL
 """
 from __future__ import annotations
 
+import calendar
 import glob
 import hashlib
 import json
@@ -149,6 +150,9 @@ def load_narrow_sensors(filepath=None):
                 "lo": e.get("lo"),
                 "hi": e.get("hi"),
                 "dec": e.get("dec", 2),
+                # BUG-1506: a floor counter is the SUM of its spaces' people counts and a
+                # presence flag is "its space's count >= 1", so the streams cannot disagree.
+                "derive": e.get("derive"),
             }
             for e in entries
             if e.get("uuid") and e.get("table")
@@ -194,8 +198,41 @@ _TABLE_TO_VALUE_COL = {
 }
 
 
-def publish_narrow(conn, verbose=False) -> int:
-    """Insert one fresh (uuid, NOW(), value) row into each narrow modality table."""
+#: uuid -> the value last written by publish_narrow, read by the derived points (BUG-1506).
+_NARROW_LAST: Dict[str, float] = {}
+
+
+def _epoch(when: datetime) -> float:
+    """Seconds since the epoch for a NAIVE UTC datetime (time.time()'s clock, for `due`)."""
+    return calendar.timegm(when.timetuple()) + when.microsecond / 1e6
+
+
+def _sink_or_write(conn, sink, table: str, rows: List[tuple], verbose=False) -> int:
+    """Rows are (uuid, datetime, value). With a sink they are collected for a batched replay
+    (catch-up / outage backfill); without one they are written now, as the live loop always has.
+    """
+    if not rows:
+        return 0
+    if sink is not None:
+        sink.setdefault(table, []).extend(rows)
+        return len(rows)
+    with conn.cursor() as cur:
+        cur.executemany(
+            f"INSERT INTO `{table}` (`uuid`, `datetime`, `value`) "
+            f"VALUES (%s, %s, %s) "
+            f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
+            rows,
+        )
+    return len(rows)
+
+
+def publish_narrow(conn, verbose=False, at: Optional[datetime] = None, sink=None) -> int:
+    """One fresh (uuid, at, value) row per due narrow point (at = now, UTC, when live).
+
+    ``at``/``sink`` let the catch-up and the outage backfill replay a PAST window through this
+    same function, so a replayed row and a live row come from one cadence rule and one value
+    model (the lesson of BUG-1139). Live behaviour is unchanged.
+    """
     if not NARROW_SENSORS:
         return 0
     # Batched per table. This wrote one INSERT per sensor, which was fine for the 19
@@ -210,10 +247,14 @@ def publish_narrow(conn, verbose=False) -> int:
     # (CAVEAT-233 / CAVEAT-405). A point is written only when its own modality interval has
     # elapsed, so a CO2 sensor reports every minute and an energy meter every fifteen -- what
     # a real building does, and about 80% fewer writes than every point every 30 seconds.
-    now_s = time.time()
-    now_dt = datetime.utcnow()
+    now_dt = at or datetime.utcnow()
+    now_s = _epoch(at) if at else time.time()
     by_table = {}
+    derived = []
     for s in NARROW_SENSORS:
+        if s.get("derive"):
+            derived.append(s)
+            continue
         if not _signal.due(s["uuid"], s["value_col"], now_s):
             continue
         # THE POINT'S OWN BAND WINS over the column default. A narrow table holds one column
@@ -227,23 +268,35 @@ def publish_narrow(conn, verbose=False) -> int:
         else:
             lo, hi, dec = _NARROW_RANGES.get(s["value_col"], (0.0, 100.0, 2))
         value, _raw = _signal.next_value(s["uuid"], s["value_col"], lo, hi, dec, now_dt)
-        by_table.setdefault(s["table"], []).append((s["uuid"], value))
+        by_table.setdefault(s["table"], []).append((s["uuid"], now_dt, value))
         _signal.mark_written(s["uuid"], now_s)
+        _NARROW_LAST[s["uuid"]] = float(value)
+
+    # Derived points, from the members' latest values, at their own cadence (BUG-1506).
+    for s in derived:
+        if not _signal.due(s["uuid"], s["value_col"], now_s):
+            continue
+        spec = s["derive"] or {}
+        members = [_NARROW_LAST[m] for m in (spec.get("of") or []) if m in _NARROW_LAST]
+        if not members:
+            continue  # nothing to derive from yet; never invent a value
+        if spec.get("op") == "sum":
+            value = int(round(sum(members)))
+        elif spec.get("op") == "present":
+            value = 1 if max(members) >= 1 else 0
+        else:
+            continue
+        by_table.setdefault(s["table"], []).append((s["uuid"], now_dt, value))
+        _signal.mark_written(s["uuid"], now_s)
+        _NARROW_LAST[s["uuid"]] = float(value)
 
     written = 0
-    with conn.cursor() as cur:
-        for table, rows in by_table.items():
-            try:
-                cur.executemany(
-                    f"INSERT INTO `{table}` (`uuid`, `datetime`, `value`) "
-                    f"VALUES (%s, NOW(), %s) "
-                    f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
-                    rows,
-                )
-                written += len(rows)
-            except Exception as e:
-                if verbose:
-                    print(f"[py-dummy] narrow insert {table} failed: {e}", flush=True)
+    for table, rows in by_table.items():
+        try:
+            written += _sink_or_write(conn, sink, table, rows, verbose)
+        except Exception as e:
+            if verbose:
+                print(f"[py-dummy] narrow insert {table} failed: {e}", flush=True)
     return written
 
 
@@ -336,10 +389,11 @@ def _walk(prev, lo, hi):
 _PLANT_LAST: Dict[str, float] = {}
 
 
-def publish_plant(conn, verbose=False) -> int:
-    """One coherent sample per equipment group into the plant table."""
+def publish_plant(conn, verbose=False, at: Optional[datetime] = None, sink=None) -> int:
+    """One coherent sample per equipment group into the plant table (stamped ``at``, UTC)."""
     if not PLANT_GROUPS:
         return 0
+    at = at or datetime.utcnow()
 
     rows: List[Tuple[str, float]] = []
     for group in PLANT_GROUPS:
@@ -399,14 +453,7 @@ def publish_plant(conn, verbose=False) -> int:
     if not rows:
         return 0
     try:
-        with conn.cursor() as cur:
-            cur.executemany(
-                f"INSERT INTO `{PLANT_TABLE}` (`uuid`, `datetime`, `value`) "
-                f"VALUES (%s, UTC_TIMESTAMP(), %s) "
-                f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
-                rows,
-            )
-        return len(rows)
+        return _sink_or_write(conn, sink, PLANT_TABLE, [(u, at, v) for u, v in rows], verbose)
     except Exception as e:
         if verbose:
             print(f"[py-dummy] plant insert failed: {e}", flush=True)
@@ -470,8 +517,8 @@ def _occupancy_factor(now_dt) -> float:
     return 1.0 if 7 <= now_dt.hour < 19 else 0.12
 
 
-def publish_waste(conn, verbose=False, now_dt=None) -> int:
-    """Advance every bin's fill, derive its weight, and write both."""
+def publish_waste(conn, verbose=False, now_dt=None, sink=None) -> int:
+    """Advance every bin's fill, derive its weight, and write both (stamped ``now_dt``, UTC)."""
     if not WASTE_BINS:
         return 0
     now_dt = now_dt or datetime.utcnow()
@@ -512,20 +559,11 @@ def publish_waste(conn, verbose=False, now_dt=None) -> int:
 
     written = 0
     try:
-        with conn.cursor() as cur:
-            for table, rows in (
-                (WASTE_FILL_TABLE, fill_rows),
-                (WASTE_WEIGHT_TABLE, weight_rows),
-            ):
-                if not rows:
-                    continue
-                cur.executemany(
-                    f"INSERT INTO `{table}` (`uuid`, `datetime`, `value`) "
-                    f"VALUES (%s, UTC_TIMESTAMP(), %s) "
-                    f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
-                    rows,
-                )
-                written += len(rows)
+        for table, rows in (
+            (WASTE_FILL_TABLE, fill_rows),
+            (WASTE_WEIGHT_TABLE, weight_rows),
+        ):
+            written += _sink_or_write(conn, sink, table, [(u, now_dt, v) for u, v in rows], verbose)
     except Exception as e:
         if verbose:
             print(f"[py-dummy] waste insert failed: {e}", flush=True)
@@ -905,36 +943,32 @@ def load_extended_sensors(filepath=None):
         print(f"[py-dummy] Extended sensors not loaded ({filepath}): {e}")
 
 
-def publish_extended(conn, verbose=False) -> int:
-    """Insert one fresh (uuid, NOW(), value) row per extended sensor into its narrow table."""
+def publish_extended(conn, verbose=False, at: Optional[datetime] = None, sink=None) -> int:
+    """One fresh (uuid, at, value) row per due extended sensor (at = now, UTC, when live)."""
     if not EXTENDED_SENSORS:
         return 0
+    now_dt = at or datetime.utcnow()
+    now_s = _epoch(at) if at else time.time()
+    by_table: Dict[str, List[tuple]] = {}
+    for s in EXTENDED_SENSORS:
+        lo, hi, dec = s["lo"], s["hi"], s["dec"]
+        # These carry per-Brick-class ranges but no value_col, so the modality is
+        # inferred from the table for cadence and diurnal shape; a table this does
+        # not recognise falls back to the generic 300s interval rather than being
+        # skipped (CAVEAT-405).
+        col = _modality_of(str(s["table"]))
+        if not _signal.due(s["uuid"], col, now_s):
+            continue
+        val, _raw = _signal.next_value(s["uuid"], col, lo, hi, dec, now_dt)
+        _signal.mark_written(s["uuid"], now_s)
+        by_table.setdefault(str(s["table"]), []).append((s["uuid"], now_dt, val))
     written = 0
-    now_s = time.time()
-    now_dt = datetime.utcnow()
-    with conn.cursor() as cur:
-        for s in EXTENDED_SENSORS:
-            try:
-                lo, hi, dec = s["lo"], s["hi"], s["dec"]
-                # These carry per-Brick-class ranges but no value_col, so the modality is
-                # inferred from the table for cadence and diurnal shape; a table this does
-                # not recognise falls back to the generic 300s interval rather than being
-                # skipped (CAVEAT-405).
-                col = _modality_of(str(s["table"]))
-                if not _signal.due(s["uuid"], col, now_s):
-                    continue
-                val, _raw = _signal.next_value(s["uuid"], col, lo, hi, dec, now_dt)
-                _signal.mark_written(s["uuid"], now_s)
-                cur.execute(
-                    f"INSERT INTO `{s['table']}` (`uuid`, `datetime`, `value`) "
-                    f"VALUES (%s, NOW(), %s) "
-                    f"ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)",
-                    (s["uuid"], val),
-                )
-                written += 1
-            except Exception as e:
-                if verbose:
-                    print(f"[py-dummy] extended insert {s['table']} failed: {e}", flush=True)
+    for table, rows in by_table.items():
+        try:
+            written += _sink_or_write(conn, sink, table, rows, verbose)
+        except Exception as e:
+            if verbose:
+                print(f"[py-dummy] extended insert {table} failed: {e}", flush=True)
     return written
 
 
@@ -999,7 +1033,7 @@ _WIDE_RANGES = (
 _INT_TYPES = ("tinyint", "smallint", "mediumint", "int", "integer", "bigint")
 
 
-def get_realistic_value(sensor_name, uuid, enum_opts=None):
+def get_realistic_value(sensor_name, uuid, enum_opts=None, at: Optional[datetime] = None):
     """A value this sensor could physically produce, or None if the name is unrecognised.
 
     Returns a SHAPED value (mean-reverting toward a diurnal centre, per-sensor phase) rather
@@ -1033,7 +1067,8 @@ def get_realistic_value(sensor_name, uuid, enum_opts=None):
         except Exception:
             pass
 
-    value, _raw = _signal.next_value(str(uuid), key, lo, hi, dec, datetime.utcnow())
+    # The row's own time, not the clock: a replayed 03:00 row must carry 03:00's diurnal value.
+    value, _raw = _signal.next_value(str(uuid), key, lo, hi, dec, at or datetime.utcnow())
     return value
 
 
@@ -1064,6 +1099,8 @@ SETTINGS = {
     # must never land there. Wide-table publishing is therefore opt-in (dev only);
     # the narrow synthetic-labeled tables are this publisher's actual job.
     "PUBLISH_WIDE": os.environ.get("PUBLISH_WIDE", "false").strip().lower() in ("1", "true", "yes"),
+    # On start, replay from each table's newest row to now before publishing live (catch_up).
+    "CATCHUP": os.environ.get("PUBLISHER_CATCHUP", "true"),
     # Batching: when >1 uses executemany per tick
     "BATCH_SIZE": 1,  # set to e.g. 50 for batch mode
     # Limits: set to 0 to run forever (recommended)
@@ -1333,7 +1370,7 @@ def load_columns(conn, cfg) -> Tuple[str, List[Dict[str, object]]]:
     return ts_col, value_cols
 
 
-def gen_value(col: Dict[str, object]):
+def gen_value(col: Dict[str, object], at: Optional[datetime] = None):
     """Generate value using both sensor semantics and schema constraints."""
     uuid = col["cname"]
     sensor_name = SENSOR_MAP.get(uuid)
@@ -1343,7 +1380,7 @@ def gen_value(col: Dict[str, object]):
     # Try realistic value generation if sensor is known
     if sensor_name:
         enum_opts = parse_enum_options(ctype) if dt == "enum" else None
-        val = get_realistic_value(sensor_name, uuid, enum_opts)
+        val = get_realistic_value(sensor_name, uuid, enum_opts, at=at)
         if val is not None:
             return val
 
@@ -1379,11 +1416,17 @@ def gen_value(col: Dict[str, object]):
     return None if isnull else f"val_{rand_int(0, 9999)}"
 
 
-def build_insert_sql(cfg, ts_col: str, cols: List[Dict[str, object]]):
+def build_insert_sql(cfg, ts_col: str, cols: List[Dict[str, object]], ignore: bool = False):
+    """The wide INSERT, its timestamp a PARAMETER (first value) rather than SQL NOW().
+
+    The session is pinned to +00:00, so a UTC datetime passed here lands exactly where NOW()
+    did; making it a parameter is what lets the catch-up and the outage backfill write a past
+    row through this same statement. ``ignore`` (backfill) skips a timestamp already present.
+    """
     col_names = [ts_col] + [c["cname"] for c in cols]
-    placeholders = ["NOW()"] + ["%s" for _ in cols]
+    placeholders = ["%s" for _ in col_names]
     sql = (
-        f"INSERT INTO `{cfg['db']}`.`{cfg['table']}` ("
+        f"INSERT {'IGNORE ' if ignore else ''}INTO `{cfg['db']}`.`{cfg['table']}` ("
         + ", ".join([f"`{n}`" for n in col_names])
         + ") VALUES ("
         + ", ".join(placeholders)
@@ -1392,8 +1435,10 @@ def build_insert_sql(cfg, ts_col: str, cols: List[Dict[str, object]]):
     return sql
 
 
-def make_row_values(cols: List[Dict[str, object]]):
-    return [gen_value(c) for c in cols]
+def make_row_values(cols: List[Dict[str, object]], at: Optional[datetime] = None):
+    """[timestamp, value per column] for one wide row (timestamp = now, UTC, when live)."""
+    at = at or datetime.utcnow()
+    return [at] + [gen_value(c, at=at) for c in cols]
 
 
 def insert_single(conn, sql: str, vals: List[object], verbose=False):
@@ -1442,7 +1487,7 @@ def print_debug_sample(cols: List[Dict[str, object]]):
     print("[DEBUG] Sample of last sent data:", flush=True)
     print("=" * 80, flush=True)
 
-    vals = LAST_SENT_DATA.get("values", [])
+    vals = list(LAST_SENT_DATA.get("values", []))[1:]  # the first value is the row's timestamp
     timestamp = LAST_SENT_DATA.get("timestamp", 0)
     print(f"Timestamp: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(timestamp))}", flush=True)
     print(f"Total columns: {len(vals)}", flush=True)
@@ -1458,6 +1503,314 @@ def print_debug_sample(cols: List[Dict[str, object]]):
         print(f"  ... and {len(vals) - 20} more columns", flush=True)
 
     print("=" * 80 + "\n", flush=True)
+
+
+# ── Catch-up and outage backfill: the SAME streams, replayed over a past window ─────────────
+#
+# Generated history followed this machine's uptime. Measured 2026-10-10 over the previous 30
+# days: every generated table had the same ~24 outages, about 176 hours in all, the newest
+# running from 8 Oct 11:50 to 10 Oct 01:31 UTC -- so ALL of 9 October was missing and every
+# "yesterday" question asked on the 10th found nothing, while a freshness check reported every
+# point current (it was, from the moment the publisher came back). Nothing re-covered a gap:
+# events had a 7-day lookback, the sensor streams had none.
+#
+# Two remedies, one mechanism:
+#   * on start, the publisher replays from each table's newest row to now (at most
+#     CATCHUP_MAX_DAYS), before the live loop, so downtime no longer leaves a hole;
+#   * `--backfill-gaps --since <date>` finds past outage windows table by table and replays them.
+# Both drive the live publish_* functions with an explicit timestamp, so a replayed row and a
+# live row come from one cadence rule and one value model (BUG-1139). Both only write INSIDE a
+# table's own gap: a replay never adds rows where a table already has them, and it never moves
+# a table's existing history.
+
+#: The longest window a start-up catch-up replays.
+CATCHUP_MAX_DAYS = float(os.environ.get("CATCHUP_MAX_DAYS", "14") or 14)
+#: A silence longer than this is an outage. Longer than the slowest live cadence (energy and
+#: plant write every 15 and 5 minutes), so an ordinary interval is never mistaken for a gap.
+OUTAGE_MIN_S = int(os.environ.get("OUTAGE_MIN_S", "1800") or 1800)
+_BUCKET_S = 300
+
+
+def gaps_from_buckets(
+    buckets: List[int], bucket_s: int, min_gap_s: int
+) -> List[Tuple[datetime, datetime]]:
+    """Outage windows from sorted occupied time buckets (epoch // bucket_s), as naive UTC.
+
+    A window runs from the END of the last occupied bucket to the START of the next, and only
+    when that silence exceeds ``min_gap_s``. Pure, so it is unit-tested without a database.
+    """
+    out: List[Tuple[datetime, datetime]] = []
+    for a, b in zip(buckets, buckets[1:]):
+        if (b - a - 1) * bucket_s >= min_gap_s:
+            out.append(
+                (
+                    datetime.utcfromtimestamp((a + 1) * bucket_s),
+                    datetime.utcfromtimestamp(b * bucket_s),
+                )
+            )
+    return out
+
+
+def clip_windows(
+    windows: List[Tuple[datetime, datetime]], lo: datetime, hi: datetime
+) -> List[Tuple[datetime, datetime]]:
+    """Windows cut to [lo, hi); empty ones dropped."""
+    out = []
+    for s, e in windows:
+        s, e = max(s, lo), min(e, hi)
+        if e > s:
+            out.append((s, e))
+    return out
+
+
+def merge_windows(windows: List[Tuple[datetime, datetime]]) -> List[Tuple[datetime, datetime]]:
+    """The union of possibly overlapping windows, sorted."""
+    merged: List[List[datetime]] = []
+    for s, e in sorted(windows):
+        if merged and s <= merged[-1][1]:
+            merged[-1][1] = max(merged[-1][1], e)
+        else:
+            merged.append([s, e])
+    return [(s, e) for s, e in merged]
+
+
+def _inside(when: datetime, windows: List[Tuple[datetime, datetime]]) -> bool:
+    return any(s <= when < e for s, e in windows)
+
+
+def table_gaps(
+    conn, table: str, ts_col: str, since: datetime, until: datetime
+) -> List[Tuple[datetime, datetime]]:
+    """Outage windows of one table inside [since, until), read from its occupied 5-min buckets.
+
+    Read from a day before ``since`` so a gap that STARTED before it is still seen (and then
+    clipped); a trailing silence up to ``until`` counts as a gap as well.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            f"SELECT DISTINCT FLOOR(UNIX_TIMESTAMP(`{ts_col}`) / {_BUCKET_S}) AS b FROM `{table}` "
+            f"WHERE `{ts_col}` >= %s AND `{ts_col}` < %s ORDER BY b",
+            (since - timedelta(days=1), until),
+        )
+        buckets = [int(r["b"] if isinstance(r, dict) else r[0]) for r in cur.fetchall()]
+    if not buckets:
+        return []  # a table with no rows at all is not ours to invent a history for
+    end_bucket = int(_epoch(until) // _BUCKET_S)
+    windows = gaps_from_buckets(buckets + [end_bucket + 1], _BUCKET_S, OUTAGE_MIN_S)
+    return clip_windows(windows, since, until)
+
+
+def _stream_tables(wide: Optional[Dict[str, object]]) -> Dict[str, str]:
+    """{table: timestamp column} for every table a live stream writes."""
+    tables: Dict[str, str] = {}
+    for s in NARROW_SENSORS:
+        tables[str(s["table"])] = "datetime"
+    for s in EXTENDED_SENSORS:
+        tables[str(s["table"])] = "datetime"
+    if PLANT_GROUPS:
+        tables[PLANT_TABLE] = "datetime"
+    if WASTE_BINS:
+        tables[WASTE_FILL_TABLE] = "datetime"
+        tables[WASTE_WEIGHT_TABLE] = "datetime"
+    if wide:
+        tables[str(wide["table"])] = str(wide["ts_col"])
+    return tables
+
+
+def replay(
+    conn,
+    windows_by_table: Dict[str, List[Tuple[datetime, datetime]]],
+    wide: Optional[Dict[str, object]] = None,
+    interval_s: int = 30,
+    plant_interval_s: int = 300,
+    dry_run: bool = False,
+    verbose: bool = False,
+) -> Dict[str, int]:
+    """Run every live stream over the union of the windows; keep each table's rows inside ITS gaps."""
+    union = merge_windows([w for ws in windows_by_table.values() for w in ws])
+    counts: Dict[str, int] = {}
+    sink: Dict[str, List[tuple]] = {}
+    wide_rows: List[list] = []
+    wide_table = str(wide["table"]) if wide else ""
+
+    def flush() -> None:
+        with conn.cursor() as cur:
+            for table, rows in sink.items():
+                keep = [r for r in rows if _inside(r[1], windows_by_table.get(table, []))]
+                if keep and not dry_run:
+                    for i in range(0, len(keep), 5000):
+                        cur.executemany(
+                            f"INSERT IGNORE INTO `{table}` (`uuid`, `datetime`, `value`) "
+                            f"VALUES (%s, %s, %s)",
+                            keep[i : i + 5000],
+                        )
+                counts[table] = counts.get(table, 0) + len(keep)
+            if wide and wide_rows:
+                keep = [r for r in wide_rows if _inside(r[0], windows_by_table.get(wide_table, []))]
+                if keep and not dry_run:
+                    for i in range(0, len(keep), 200):
+                        cur.executemany(str(wide["sql_ignore"]), keep[i : i + 200])
+                counts[wide_table] = counts.get(wide_table, 0) + len(keep)
+        sink.clear()
+        wide_rows.clear()
+
+    for start, end in union:
+        if verbose:
+            print(
+                f"[py-dummy] replaying {start:%Y-%m-%d %H:%M} .. {end:%Y-%m-%d %H:%M} UTC",
+                flush=True,
+            )
+        t, last_plant, ticks = start, None, 0
+        while t < end:
+            if wide and _inside(t, windows_by_table.get(wide_table, [])):
+                wide_rows.append(make_row_values(wide["cols"], at=t))
+            publish_narrow(conn, False, at=t, sink=sink)
+            publish_extended(conn, False, at=t, sink=sink)
+            if last_plant is None or (t - last_plant).total_seconds() >= plant_interval_s:
+                publish_plant(conn, False, at=t, sink=sink)
+                publish_waste(conn, False, now_dt=t, sink=sink)
+                last_plant = t
+            ticks += 1
+            if ticks % 240 == 0:
+                flush()
+            t += timedelta(seconds=max(1, interval_s))
+        flush()
+    return counts
+
+
+def catch_up(
+    conn, wide, interval_s: int, plant_interval_s: int, verbose: bool = False
+) -> Dict[str, int]:
+    """Replay from each table's newest row to now (bounded), so downtime leaves no hole."""
+    now = datetime.utcnow()
+    floor = now - timedelta(days=CATCHUP_MAX_DAYS)
+    windows: Dict[str, List[Tuple[datetime, datetime]]] = {}
+    with conn.cursor() as cur:
+        for table, ts_col in _stream_tables(wide).items():
+            cur.execute(f"SELECT MAX(`{ts_col}`) AS t FROM `{table}`")
+            row = cur.fetchone() or {}
+            newest = row.get("t") if isinstance(row, dict) else row[0]
+            if newest is None:
+                continue  # never written: not a gap, and not ours to invent a history for
+            start = max(newest + timedelta(seconds=interval_s), floor)
+            if (now - start).total_seconds() >= OUTAGE_MIN_S:
+                windows[table] = [(start, now)]
+    if not windows:
+        return {}
+    print(
+        f"[py-dummy] catch-up: {len(windows)} table(s) behind; replaying up to "
+        f"{max((now - ws[0][0]).total_seconds() for ws in windows.values()) / 3600:.1f} h",
+        flush=True,
+    )
+    counts = replay(conn, windows, wide, interval_s, plant_interval_s, verbose=verbose)
+    print(
+        f"[py-dummy] catch-up wrote {sum(counts.values())} row(s) across {len(counts)} table(s)",
+        flush=True,
+    )
+    return counts
+
+
+def backfill_gaps(
+    conn,
+    wide,
+    since: datetime,
+    until: datetime,
+    interval_s: int,
+    plant_interval_s: int,
+    dry_run: bool = False,
+    verbose: bool = True,
+) -> Dict[str, int]:
+    """Find every table's outage windows in [since, until) and replay them."""
+    windows: Dict[str, List[Tuple[datetime, datetime]]] = {}
+    for table, ts_col in _stream_tables(wide).items():
+        ws = table_gaps(conn, table, ts_col, since, until)
+        if ws:
+            windows[table] = ws
+            hours = sum((e - s).total_seconds() for s, e in ws) / 3600
+            print(f"[py-dummy] {table:24s} {len(ws):3d} gap(s), {hours:7.1f} h", flush=True)
+    if not windows:
+        print("[py-dummy] no outage windows found", flush=True)
+        return {}
+    counts = replay(
+        conn, windows, wide, interval_s, plant_interval_s, dry_run=dry_run, verbose=verbose
+    )
+    verb = "would write" if dry_run else "wrote"
+    print(f"[py-dummy] backfill {verb} {sum(counts.values())} row(s):", flush=True)
+    for table, n in sorted(counts.items()):
+        print(f"    {table:24s} {n:9d}", flush=True)
+    return counts
+
+
+def _wide_spec(conn, cfg) -> Optional[Dict[str, object]]:
+    """The wide stream's columns and statements, or None when wide publishing is off."""
+    if not bool(SETTINGS.get("PUBLISH_WIDE", False)):
+        return None
+    ts_col, cols = load_columns(conn, cfg)
+    cols = [c for c in cols if c and c.get("cname") is not None]
+    return {
+        "table": cfg["table"],
+        "ts_col": ts_col,
+        "cols": cols,
+        "sql": build_insert_sql(cfg, ts_col, cols),
+        "sql_ignore": build_insert_sql(cfg, ts_col, cols, ignore=True),
+    }
+
+
+def _cfg() -> Dict[str, object]:
+    return {
+        "host": SETTINGS["HOST"],
+        "port": int(SETTINGS["PORT"]),
+        "user": SETTINGS["USER"],
+        "password": SETTINGS["PASSWORD"],
+        "db": SETTINGS["DB"],
+        "table": SETTINGS["TABLE"],
+        "ts_col_override": SETTINGS.get("TIMESTAMP_COLUMN") or "",
+    }
+
+
+def _load_all_maps() -> None:
+    load_sensor_map()
+    load_schema_map()
+    load_narrow_sensors()
+    load_extended_sensors()
+    load_plant_groups()
+    load_waste_bins()
+    load_events()
+
+
+def backfill_main(argv: List[str]) -> int:
+    """`python mysql_dummy_publisher.py --backfill-gaps --since 2026-09-21 [--until ...] [--dry-run]`."""
+    import argparse
+
+    ap = argparse.ArgumentParser(description="Replay past outage windows through the live streams")
+    ap.add_argument("--backfill-gaps", action="store_true")
+    ap.add_argument("--since", required=True, help="UTC date/time; nothing before it is touched")
+    ap.add_argument("--until", default="", help="UTC; default: 10 minutes ago")
+    ap.add_argument("--dry-run", action="store_true")
+    args = ap.parse_args(argv)
+    since = datetime.fromisoformat(args.since)
+    until = (
+        datetime.fromisoformat(args.until)
+        if args.until
+        else datetime.utcnow() - timedelta(minutes=10)
+    )
+    cfg = _cfg()
+    conn = connect_mysql(cfg)
+    try:
+        _load_all_maps()
+        wide = _wide_spec(conn, cfg)
+        backfill_gaps(
+            conn,
+            wide,
+            since,
+            until,
+            int(SETTINGS.get("INTERVAL_SECONDS", 30)),
+            int(SETTINGS.get("PLANT_INTERVAL_S", 300)),
+            dry_run=args.dry_run,
+        )
+    finally:
+        conn.close()
+    return 0
 
 
 def main() -> int:
@@ -1488,21 +1841,14 @@ def main() -> int:
     conn = connect_mysql(cfg)
 
     # Load sensor and schema maps
-    load_sensor_map()
-    load_schema_map()
-    load_narrow_sensors()
-    load_extended_sensors()
-    load_plant_groups()
-    load_waste_bins()
-    load_events()
+    _load_all_maps()
 
     try:
         publish_wide = bool(SETTINGS.get("PUBLISH_WIDE", False))
         ts_col, cols, sql = None, [], None
+        wide = _wide_spec(conn, cfg) if publish_wide else None
         if publish_wide:
-            ts_col, cols = load_columns(conn, cfg)
-            cols = [c for c in cols if c and c.get("cname") is not None]
-            sql = build_insert_sql(cfg, ts_col, cols)
+            ts_col, cols, sql = wide["ts_col"], wide["cols"], wide["sql"]
 
             if verbose:
                 mode = "batch" if batch_size > 1 else "single"
@@ -1524,6 +1870,20 @@ def main() -> int:
 
         total = 0
         plant_interval = max(0, int(SETTINGS.get("PLANT_INTERVAL_S", 300)))
+        # CATCH UP FIRST: replay from each table's newest row to now, so the time this
+        # publisher was down is not a hole in every generated series (see catch_up).
+        if str(SETTINGS.get("CATCHUP", "true")).strip().lower() not in ("0", "false", "no"):
+            # Up to three passes: a long replay leaves its OWN duration behind, and the next
+            # pass covers it once that exceeds the outage threshold.
+            for _pass in range(3):
+                try:
+                    if not catch_up(conn, wide, max(1, interval), plant_interval, verbose=verbose):
+                        break
+                except Exception as e:  # a failed catch-up must never stop live publishing
+                    print(
+                        f"[py-dummy] catch-up failed (live publishing continues): {e}", flush=True
+                    )
+                    break
         # Publish plant on the FIRST tick rather than one interval in: the series has been
         # stale since publishing stopped, and making a restart wait five minutes to prove
         # itself is five minutes of not knowing whether it works.
@@ -1634,4 +1994,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if "--backfill-gaps" in sys.argv[1:]:
+        raise SystemExit(backfill_main(sys.argv[1:]))
     raise SystemExit(main())

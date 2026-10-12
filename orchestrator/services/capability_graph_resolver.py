@@ -476,6 +476,10 @@ _FRAME_WORDS = frozenset(
     "somewhere anywhere inside outside around one ones "
     # cost framing: "is it free", "do I have to pay / buy" asks about the amenity itself
     "free paid pay buy cost costs charge need must "
+    # quality framing (2026-10-11): "how good is the wifi in the atrium?" asks about the wifi;
+    # with "good" and "atrium" left over the topic was refused. Measured over the 4,060 bank:
+    # 2 questions gain a topic (Sustainability, WiFi), 0 lose or change one.
+    "good bad reliable strong weak fast slow quality "
     # FUNCTION WORDS LONGER THAN TWO LETTERS (BUG-1392).
     #
     # The short prepositions were already excluded by accident, not by design:
@@ -709,7 +713,38 @@ def subject_facts(question: str, facts: Any) -> List[Any]:
         if leftover and _named_by_a_fully_explained_topic(leftover, f, question, pool):
             continue
         kept.append(f)
+    if kept or not pool:
+        return kept
+    # TWO QUESTIONS IN ONE (CAVEAT-1618). "Which floors have accessible toilets and where is baby
+    # changing?" left words of the second question over for every topic, so neither qualified
+    # and the lane declined while it holds both. Asked clause by clause, each topic is judged
+    # against the question it answers. Only a clause JOIN splits ("and where", "and when", a new
+    # sentence), never a noun list ("toilets and showers" is one question).
+    clauses = [c for c in _CLAUSE_SPLIT_RE.split(question or "") if c and c.strip()]
+    if len(clauses) < 2:
+        return kept
+    # EVERY clause must have a topic it is about. One answerable half and one not would be half a
+    # question answered as if whole; measured on the 4,060 bank, the split alone moved 111
+    # questions (among them "Working Hours" for "the next 12 hours", BUG-1396's shape), this rule 5.
+    if not all(any(topic_is_the_subject(c, f) for f in pool) for c in clauses):
+        return kept
+    for f in pool:
+        for clause in clauses:
+            if topic_is_the_subject(clause, f):
+                leftover = _subject_leftover(clause, f) or []
+                if leftover and _named_by_a_fully_explained_topic(leftover, f, clause, pool):
+                    continue
+                kept.append(f)
+                break
     return kept
+
+
+#: Where one question ends and another begins: "..., and where is ...", "...? When ...".
+_CLAUSE_SPLIT_RE = re.compile(
+    r"\s*(?:,\s*)?\band\s+(?=(?:where|when|which|what|how|who|whom|whose|is|are|can|could|do|"
+    r"does|did|will|would|should)\b)|(?<=[?!.;])\s+(?=[A-Za-z])",
+    re.IGNORECASE,
+)
 
 
 def _score(query_lc: str, lay_phrases: List[str]) -> int:

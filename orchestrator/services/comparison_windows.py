@@ -86,6 +86,13 @@ _AGO_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: "the day before" / "the week before" (BUG-1547): one unit back. "Was yesterday warmer than the
+#: day before on floor 4?" resolved no baseline and answered that the day before had no reading.
+_BEFORE_RE = re.compile(
+    r"\b(?:the\s+)?(day|week|month|quarter|year)\s+before\b(?!\s+(?:yesterday|last))",
+    re.IGNORECASE,
+)
+
 _DAYS = {"day": 1, "week": 7, "month": 30, "quarter": 91, "year": 365}
 
 #: How close in length two periods must be to be compared as given. A calendar month
@@ -106,6 +113,9 @@ class WindowPair:
     #: that it was interpreted.
     shifted: bool = False
     shift_phrase: str = ""
+    #: The question each period is asked as, when the reader's own words would make the
+    #: aggregate lane refuse it ("has it GONE UP since..." is, correctly, not a summary).
+    lane_question: str = ""
 
 
 def split_question(question: str) -> Optional[Tuple[str, str]]:
@@ -123,18 +133,34 @@ def split_question(question: str) -> Optional[Tuple[str, str]]:
         parts = _LEAD_SPLIT_RE.split(q, maxsplit=1)
         if len(parts) == 2 and parts[0].strip() and parts[1].strip():
             return parts[0].strip(), parts[1].strip()
+    # "Is floor 3 warmer THIS WEEK OR LAST WEEK?" (BUG-1598): a choice between two periods. Split
+    # on "or" only when what follows it opens with a period word, so "CO2 or temperature" and
+    # "room 1.06 or 1.07" are never torn into periods.
+    parts = _OR_PERIOD_RE.split(q, maxsplit=1)
+    if len(parts) == 2 and parts[0].strip() and parts[1].strip():
+        return parts[0].strip(), parts[1].strip()
     return None
+
+
+_OR_PERIOD_RE = re.compile(
+    r"\s+or\s+(?=(?:last|previous|the\s+previous|the\s+week\s+before|the\s+day\s+before|"
+    r"yesterday|the\s+same\s+(?:day|week|month))\b)",
+    re.IGNORECASE,
+)
 
 
 def shift_for(phrase: str) -> Optional[Tuple[timedelta, str]]:
     """How far back a baseline phrase steps, and the words it was read from."""
     text = str(phrase or "")
-    for rx in (_SHIFT_RE, _AGO_RE):
+    for rx in (_SHIFT_RE, _AGO_RE, _BEFORE_RE):
         m = rx.search(text)
         if not m:
             continue
-        n = int(m.group(1)) if m.group(1) else 1
-        unit = m.group(2).rstrip("s")
+        if rx is _BEFORE_RE:
+            n, unit = 1, m.group(1).lower()
+        else:
+            n = int(m.group(1)) if m.group(1) else 1
+            unit = m.group(2).rstrip("s")
         days = _DAYS.get(unit)
         if not days:
             continue
@@ -143,7 +169,7 @@ def shift_for(phrase: str) -> Optional[Tuple[timedelta, str]]:
 
 
 def _span_words(delta: timedelta) -> str:
-    """"7 days" / "24 hours" — the length of a period, for a label a reader can check."""
+    """ "7 days" / "24 hours" — the length of a period, for a label a reader can check."""
     days = delta.days
     if days >= 1:
         return f"{days} day" + ("s" if days != 1 else "")
@@ -156,6 +182,144 @@ def _span(window) -> Optional[Tuple[datetime, datetime]]:
 
     a, b = _stamp(getattr(window, "start", None)), _stamp(getattr(window, "end", None))
     return (a, b) if a and b else None
+
+
+_THIS_PART_RE = re.compile(
+    r"\b(?:this|tonight'?s?)\s+(morning|afternoon|evening)\b|\btonight\b", re.I
+)
+
+
+def _part_day_pair(
+    current_text: str, baseline_text: str, tz_name: Optional[str], now: Optional[datetime]
+) -> Optional[WindowPair]:
+    """Two PARTS of days compared like for like ("this morning vs yesterday morning"), or None.
+
+    BUG-1529: "Compare CO2 in room 1.06 this morning with yesterday morning" fetched this morning
+    only and said yesterday morning had no data -- `resolve_window` reads whole days, so "this
+    morning" resolved to nothing and "yesterday morning" to all of yesterday. A part of a day has
+    no undisputed boundary, which is why the single-period resolver refuses it; a COMPARISON does
+    not need one, only the SAME one on both sides. The hours are the events lane's own definition
+    (one definition, `event_query_service._PARTS`), stated in each label, and when the current part
+    is still in progress both sides are cut at the same time of day.
+    """
+    from orchestrator.services.aggregate_lane import STAMP, Window, resolve_window
+    from orchestrator.services.event_query_service import _part_of_day
+
+    part_cur = _part_of_day(current_text.lower())
+    part_base = _part_of_day(baseline_text.lower())
+    if not (part_cur or part_base):
+        return None
+    if part_cur and part_base and part_cur[:2] != part_base[:2]:
+        return None  # "this morning vs yesterday evening" compares different hours on purpose
+    part = part_cur or part_base
+
+    def _day(text: str):
+        day_text = _THIS_PART_RE.sub(" today ", text)
+        return resolve_window(day_text, None, None, tz_name, now=now)
+
+    cur_day, base_day = _day(current_text), _day(baseline_text)
+    if not cur_day or not base_day or cur_day.latest or base_day.latest:
+        return None
+    cur_span, base_span = _span(cur_day), _span(base_day)
+    if not cur_span or not base_span or cur_span[0] == base_span[0]:
+        return None
+    if (cur_span[1] - cur_span[0]) > timedelta(hours=25):
+        return None  # a part of a WEEK is not a part of a day
+    h0, h1, label = part
+    cur_start = cur_span[0] + timedelta(hours=h0)
+    cur_end = cur_span[0] + timedelta(hours=h1) - timedelta(seconds=1)
+    base_start = base_span[0] + timedelta(hours=h0)
+    base_end = base_span[0] + timedelta(hours=h1) - timedelta(seconds=1)
+    from orchestrator.services.requested_interval import store_now
+
+    at = now or store_now()
+    so_far = ""
+    if cur_start <= at < cur_end:
+        elapsed = at - cur_start
+        cur_end, base_end = at, base_start + elapsed
+        so_far = " so far"
+    elif at < cur_start:
+        return None  # the current part has not started; there is nothing to compare yet
+
+    def _label(start: datetime, end: datetime) -> str:
+        from orchestrator.services.requested_interval import to_local
+
+        try:
+            ls, le = to_local(start, tz_name), to_local(end, tz_name)
+        except Exception:  # pragma: no cover - a label in store time is still a true label
+            ls, le = start, end
+        return f"{label}{so_far}, {ls:%a %d %b %H:%M}–{le:%H:%M} (building time)"
+
+    return WindowPair(
+        current=Window(
+            cur_start.strftime(STAMP), cur_end.strftime(STAMP), _label(cur_start, cur_end)
+        ),
+        baseline=Window(
+            base_start.strftime(STAMP), base_end.strftime(STAMP), _label(base_start, base_end)
+        ),
+    )
+
+
+#: "Has the CO2 in lab 2.05 GONE UP SINCE THIS MORNING?" (BUG-1593): a change from this morning to
+#: now. The trend lane read a stale sample and said no morning reading existed.
+_CHANGE_WORDS = (
+    r"(?:gone|went|go|goes)\s+(?:up|down)|risen|rose|fallen|fell|dropped|climbed|"
+    r"increased|decreased|changed|got\s+(?:higher|lower|warmer|colder|worse|better)"
+)
+_SINCE_MORNING_RE = re.compile(
+    rf"\b(?:{_CHANGE_WORDS})\b.{{0,40}}\bsince\s+(?:this\s+morning|first\s+thing"
+    r"(?:\s+this\s+morning)?)\b",
+    re.IGNORECASE,
+)
+#: The MORNING's hours, from the one definition the events lane uses.
+_MORNING_HOURS = (6, 12)
+
+
+def since_morning_pair(
+    question: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Optional[WindowPair]:
+    """The last hour against this morning so far, or None when the question is not that shape.
+
+    "Has it gone up since this morning?" compares where the quantity is NOW with where it was
+    this morning. Now is the last hour (one reading is a snapshot, and the lane refuses to
+    subtract snapshots); this morning is 06:00 until the last hour began, so the two never
+    overlap. Before 07:00 there is no morning to compare with yet, and None is returned.
+    """
+    if not _SINCE_MORNING_RE.search(question or ""):
+        return None
+    from orchestrator.services.aggregate_lane import STAMP, Window
+    from orchestrator.services.requested_interval import store_now, to_local, to_store
+
+    at = now or store_now()
+    local_now = to_local(at, tz_name)
+    m0 = local_now.replace(hour=_MORNING_HOURS[0], minute=0, second=0, microsecond=0)
+    m1 = local_now.replace(hour=_MORNING_HOURS[1], minute=0, second=0, microsecond=0)
+    cur_local = local_now - timedelta(hours=1)
+    if cur_local <= m0:
+        return None
+    base_end_local = min(m1, cur_local)
+    core = re.sub(rf"\b(?:{_CHANGE_WORDS})\b", " ", question or "", flags=re.IGNORECASE)
+    core = re.sub(
+        r"\bsince\s+(?:this\s+morning|first\s+thing(?:\s+this\s+morning)?)\b",
+        " ",
+        core,
+        flags=re.IGNORECASE,
+    )
+    core = re.sub(r"^\s*(?:has|have|did|is|are|was)\s+", "", core, flags=re.IGNORECASE)
+    core = " ".join(core.replace("?", " ").split())
+    return WindowPair(
+        current=Window(
+            to_store(cur_local, tz_name).strftime(STAMP),
+            at.strftime(STAMP),
+            f"the last hour, {cur_local:%H:%M}–{local_now:%H:%M} (building time)",
+        ),
+        baseline=Window(
+            to_store(m0, tz_name).strftime(STAMP),
+            to_store(base_end_local, tz_name).strftime(STAMP),
+            f"this morning, {m0:%H:%M}–{base_end_local:%H:%M} (building time)",
+        ),
+        lane_question=f"What was the average of {core}?",
+    )
 
 
 def resolve_pair(
@@ -171,14 +335,30 @@ def resolve_pair(
     """
     from orchestrator.services.aggregate_lane import STAMP, Window, resolve_window
 
+    since = since_morning_pair(question, tz_name, now)
+    if since is not None:
+        return since
+
     halves = split_question(question)
     if not halves:
         return None
     current_text, baseline_text = halves
 
+    part_pair = _part_day_pair(current_text, baseline_text, tz_name, now)
+    if part_pair is not None:
+        return part_pair
+
     shift = shift_for(baseline_text)
 
-    current = resolve_window(current_text, start_date, end_date, tz_name, now=now)
+    # The current half's OWN words win over the pipeline's bounds (BUG-1598): for "this week or
+    # last week" the SQL stage read the whole question as one three-week span, and that span
+    # became the current period while the baseline was a shifted copy overlapping it.
+    own = resolve_window(current_text, None, None, tz_name, now=now)
+    current = (
+        own
+        if own is not None and not own.latest
+        else resolve_window(current_text, start_date, end_date, tz_name, now=now)
+    )
     if current is None and (start_date or end_date):
         # The pipeline's bounds describe the CURRENT period; without words of its own the
         # current half still has them. Only consulted when bounds exist -- re-reading the WHOLE
@@ -220,8 +400,10 @@ def resolve_pair(
     if baseline is not None and not baseline.latest and base_span and base_span != cur_span:
         cur_len = (cur_span[1] - cur_span[0]).total_seconds()
         base_len = (base_span[1] - base_span[0]).total_seconds()
-        comparable = cur_len > 0 and base_len > 0 and (
-            min(cur_len, base_len) / max(cur_len, base_len) >= LENGTH_TOLERANCE
+        comparable = (
+            cur_len > 0
+            and base_len > 0
+            and (min(cur_len, base_len) / max(cur_len, base_len) >= LENGTH_TOLERANCE)
         )
         if comparable or not shift:
             if not comparable:

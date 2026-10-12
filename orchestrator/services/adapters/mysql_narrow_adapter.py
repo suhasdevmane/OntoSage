@@ -153,6 +153,16 @@ class MySQLNarrowAdapter(MySQLAdapter):
         """
         return await self.latest_by_uuid(uuids)
 
+    async def _span_conditions(self, uuids: Optional[List[str]]) -> Optional[List[str]]:
+        """A narrow table's sensors are ROWS: one ``uuid IN (...)`` selects them (see the wide
+        adapter, whose sensors are columns)."""
+        if uuids is None:
+            return [""]
+        wanted = [u for u in dict.fromkeys(uuids) if _UUID_RE.match(str(u))]
+        if not wanted:
+            return []
+        return ["`uuid` IN (" + ", ".join(f"'{u}'" for u in wanted) + ")"]
+
     async def _timestamp_column(self) -> Optional[str]:
         """Always `datetime` — the narrow contract, not a discovered name.
 

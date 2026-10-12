@@ -19,11 +19,7 @@ import httpx
 from orchestrator.agents.dialogue_agent import format_conversation_history
 from orchestrator.llm_manager import TaskType, llm_manager
 from orchestrator.redis_manager import redis_manager
-from orchestrator.services.hybrid_retrieval import (
-    QueryType,
-    classify_query_type,
-    hybrid_retrieval,
-)
+from orchestrator.services.hybrid_retrieval import QueryType, classify_query_type, hybrid_retrieval
 from orchestrator.services.ontology_introspector import ontology_introspector
 from orchestrator.services.prompt_builder import get_prompt_builder
 from orchestrator.services.self_correction_engine import SelfCorrectionEngine
@@ -487,9 +483,7 @@ Your Answer:"""
         quantity = self._humanise_class(plant or cls or classes[0])
         subject = f"{quantity} measurement {where}"
 
-        from orchestrator.services.retrieval_outcome import (
-            classify as _classify_nothing,
-        )
+        from orchestrator.services.retrieval_outcome import classify as _classify_nothing
 
         outcome = _classify_nothing(declared=False, subject=subject)
         logger.info(
@@ -547,7 +541,12 @@ Your Answer:"""
             rooms_of_kind = await self._rooms_of_kind(user_query)
             if rooms_of_kind is not None:
                 return rooms_of_kind
-            deterministic = await self._whole_register(state, user_query)
+            # A metered utility's cost over a day or week is computed from the METERS (TODO-1646):
+            # the routing contract said so this turn, and the word "cost" must not send the fetch
+            # to the cost register's monthly lines instead.
+            _ir = getattr(state, "intermediate_results", None) or {}
+            _metered_cost = "metered_cost_is_computed" in (_ir.get("concept_rules_applied") or [])
+            deterministic = None if _metered_cost else await self._whole_register(state, user_query)
             if deterministic is not None:
                 return deterministic
 
@@ -578,6 +577,7 @@ Your Answer:"""
             entities = [e for e in raw_entities if _valid_ent_re.match(str(e))]
             if entities:
                 logger.info(f"Using entities extracted by DialogueAgent (filtered): {entities}")
+            _partial_guess: List[str] = []
             if not entities:
                 # These are guesses built from natural-language patterns in one
                 # building's naming convention ("zone 3" → bldg:Zone_3). Keep
@@ -588,7 +588,20 @@ Your Answer:"""
                 _guessed = self._extract_entities(user_query)
                 if _guessed:
                     entities = await self._filter_existing(_guessed)
-                    if not entities:
+                    if entities and len(entities) < len(_guessed):
+                        # A PARTIAL GUESS LOSES ONE SIDE OF A COMPARISON (BUG-1514). "Is room
+                        # 5.01 warmer than room 3.10?" guessed Zone_5.01 and Zone_3.10; only
+                        # the first is in the graph, so the query ran on 5.01 alone and the
+                        # answer said "no temperature data for room 3.10" -- a room with a
+                        # temperature sensor. Resolve every named place by label instead, and
+                        # keep the partial guess only if that finds nothing.
+                        logger.info(
+                            f"[sparql] only {entities} of the guessed {_guessed} are in the "
+                            f"graph — resolving every named place by label instead"
+                        )
+                        _partial_guess = entities
+                        entities = []
+                    if not entities and not _partial_guess:
                         logger.info(
                             f"[sparql] pattern-guessed entities {_guessed} are not in this "
                             f"building's graph — falling back to label resolution"
@@ -656,6 +669,8 @@ Your Answer:"""
                         ts_bearing=ts_entities,
                         class_hints=_floor_classes,
                     )
+            if not entities and _partial_guess:
+                entities = _partial_guess
             # T05: prefer HBCO concept brick class over static keyword map
             class_target = None
             _concept_classes: List[str] = []
@@ -742,8 +757,17 @@ Your Answer:"""
             # Phase 3.1: Template-first routing (zero LLM for common patterns)
             # Expanded dynamically using OntologyIntrospector discovered classes
             if sparql_query is None:
+                _over = None
+                if not entities and _concept_classes and _concept_populated is not False:
+                    _over = await self._class_over_keyword(
+                        user_query, class_target, _concept_classes
+                    )
                 sparql_query = self._template_sparql(
-                    user_query, entities, ts_entities, concept_class=class_target
+                    user_query,
+                    entities,
+                    ts_entities,
+                    concept_class=class_target,
+                    class_over_keyword=_over,
                 )
 
             used_template = sparql_query is not None
@@ -814,9 +838,7 @@ Your Answer:"""
             # SPARQL repair targets the right ontology graph.
             _bctx_for_correction = None
             try:
-                from orchestrator.services.building_context import (
-                    resolve_building_context,
-                )
+                from orchestrator.services.building_context import resolve_building_context
 
                 _bctx_for_correction = resolve_building_context(getattr(state, "building_id", None))
             except Exception:
@@ -1415,10 +1437,7 @@ Your Answer:"""
         register is too large to hand over whole — in both cases the normal path runs.
         """
         try:
-            from orchestrator.services.record_registry import (
-                held_record_class,
-                record_classes,
-            )
+            from orchestrator.services.record_registry import held_record_class, record_classes
 
             record = held_record_class(user_query, await record_classes())
         except Exception as exc:  # pragma: no cover - never block on this
@@ -1435,10 +1454,18 @@ Your Answer:"""
         # the same rule has to hold here or the guard only moves the wrong answer one lane.
         from orchestrator.services.routing_contract import (
             PLANT_READING_RE,
+            comfort_reading_of_a_named_room,
             measured_reading_question,
         )
 
-        if PLANT_READING_RE.search(user_query or "") or measured_reading_question(user_query):
+        # The same holds for a comfort reading of one named room (BUG-1566): with the dialogue
+        # shortcut fixed, "how bright is the seminar room 3.13?" reached sensor_data and was
+        # answered from the public-event register HERE, by the second resolution of the class.
+        if (
+            PLANT_READING_RE.search(user_query or "")
+            or measured_reading_question(user_query)
+            or comfort_reading_of_a_named_room(user_query)
+        ):
             logger.info(
                 f"[sparql] {record.local_name} matches, but the question asks what a plant "
                 f"circuit READS — leaving it to the data lanes"
@@ -1865,9 +1892,7 @@ Your Answer:"""
         try:  # 2D-06: a lookup the rows settle (or a whole-subject state question) skips the model
             from orchestrator.services import register_projection as _rp
             from orchestrator.services.record_registry import record_classes as _rc0
-            from orchestrator.services.requested_interval import (
-                building_local_now as _bln0,
-            )
+            from orchestrator.services.requested_interval import building_local_now as _bln0
 
             _rows_answer = await _rp.answer_before_narration(
                 user_query,
@@ -1895,9 +1920,7 @@ Your Answer:"""
             )
         )
         try:  # BUG-589: completeness of an overdue answer is not left to the narration
-            from orchestrator.services.requested_interval import (
-                building_local_now as _bln,
-            )
+            from orchestrator.services.requested_interval import building_local_now as _bln
 
             if not _rows_answer:
                 _narration += completeness_line(
@@ -1910,9 +1933,7 @@ Your Answer:"""
             logger.warning(f"[sparql] completeness line skipped: {type(exc).__name__}: {exc}")
         try:  # W19 + 2D-06: a denial of a field the rows hold is REPLACED by its values.
             from orchestrator.services import register_projection as _rp
-            from orchestrator.services.requested_interval import (
-                building_local_now as _bln,
-            )
+            from orchestrator.services.requested_interval import building_local_now as _bln
 
             if not _rows_answer:
                 _narration = _rp.guard_narration(
@@ -2292,9 +2313,7 @@ TRIPLES (Graph Structure):
 
         # C.2: Build dynamic building profile from live introspector data (if available)
         try:
-            from orchestrator.services.ontology_introspector import (
-                ontology_introspector,
-            )
+            from orchestrator.services.ontology_introspector import ontology_introspector
 
             _sensor_classes = (
                 ontology_introspector.sensor_classes if ontology_introspector.is_ready() else []
@@ -2822,8 +2841,14 @@ SELECT DISTINCT ?sensor ?label ?floorNum ?uuid ?storage ?metricCls WHERE {{
         entities: List[str],
         ts_entities: Optional[Set[str]] = None,
         concept_class: Optional[str] = None,
+        class_over_keyword: Optional[str] = None,
     ) -> Optional[str]:
-        """Return a direct SPARQL template for common sensor/location/entity queries with feature detection."""
+        """Return a direct SPARQL template for common sensor/location/entity queries with feature detection.
+
+        ``class_over_keyword`` replaces the keyword map's class in the class-level templates.
+        The caller sets it only when a populated concept class and the keyword class are
+        UNRELATED in the TBox (BUG-1599), so a subclass refinement never moves a binding.
+        """
         uq = user_query.lower()
         features = self._classify_query(uq)
         ts_entities = ts_entities or set()
@@ -3277,7 +3302,9 @@ SELECT ?building ?label WHERE {
             union_block = " UNION ".join(patterns)
             return (
                 self._prefix_block()
-                + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid ?storage ?unit WHERE {{ {union_block} }} LIMIT 100"
+                # ?qunit is PROJECTED, not only bound (BUG-1581): the QUDT unit was matched and
+                # then dropped from the result, so a PV point declaring kW took its store's kWh.
+                + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid ?storage ?unit ?qunit WHERE {{ {union_block} }} LIMIT 100"
             )
 
         # T3b: Sensors located in a specific zone/floor/room (entity = location)
@@ -3307,7 +3334,9 @@ SELECT ?building ?label WHERE {
             union_block = " UNION ".join(patterns)
             return (
                 self._prefix_block()
-                + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid ?storage ?unit WHERE {{ {union_block} }} LIMIT 100"
+                # ?qunit is PROJECTED, not only bound (BUG-1581): the QUDT unit was matched and
+                # then dropped from the result, so a PV point declaring kW took its store's kWh.
+                + f"\nSELECT DISTINCT ?sensor ?label ?type ?uuid ?storage ?unit ?qunit WHERE {{ {union_block} }} LIMIT 100"
             )
 
         # T4: Equipment / HVAC / AHU / VAV listing
@@ -3385,6 +3414,8 @@ SELECT ?parent ?parentLabel ?child ?childLabel WHERE {
             if k in uq:
                 target_class = v
                 break
+        if class_over_keyword:
+            target_class = class_over_keyword
         if features["wants_count"] and target_class:
             # Roll up subclasses so "how many temperature sensors" counts every
             # Brick subclass of the target (air/water/zone/…), not just the exact type.
@@ -3532,9 +3563,7 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
         let similarity decide.
         """
         try:
-            from orchestrator.services.deliberation.coverage_audit import (
-                load_modality_raw,
-            )
+            from orchestrator.services.deliberation.coverage_audit import load_modality_raw
         except Exception:  # pragma: no cover - defensive
             return None
         try:
@@ -3612,9 +3641,7 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
         """
         family = {plant_class}
         try:
-            from orchestrator.services.deliberation.coverage_audit import (
-                load_modality_raw,
-            )
+            from orchestrator.services.deliberation.coverage_audit import load_modality_raw
 
             raw = load_modality_raw() or {}
         except Exception:  # pragma: no cover - defensive, config is optional
@@ -3764,6 +3791,49 @@ SELECT ?type (COUNT(?sensor) AS ?count) WHERE {
             if hits:
                 return hits
         return instances
+
+    async def _class_over_keyword(
+        self, user_query: str, concept_class: Optional[str], concept_classes: List[str]
+    ) -> Optional[str]:
+        """The concept's class when the keyword map would pick an UNRELATED one, else None.
+
+        BUG-1599: "How much solar energy did we generate the day before yesterday?" resolved
+        the solar_output concept to the PV generation class (2 points), and the class-level
+        template still bound brick:Energy_Sensor because the keyword map's first hit was the
+        word "energy" -- six floor electricity meters, 2,323 kWh, called solar. The concept
+        resolver reads the longer term; the keyword map reads the first substring.
+
+        Only when the two classes are unrelated in the TBox (neither subsumes the other, and
+        the keyword class is not one of the concept's own). A subclass refinement -- "too
+        cold" resolving below brick:Air_Temperature_Sensor -- leaves the keyword class in
+        place, so ordinary temperature questions bind exactly as before. Measured on 100 bank
+        questions: 8 of 22 with both classes differ by NAME, and most of those are such
+        refinements. When the graph cannot say, nothing changes.
+        """
+        if not concept_class:
+            return None
+        uq = user_query.lower()
+        keyword = next((v for k, v in self._get_extended_class_map().items() if k in uq), None)
+        if not keyword or keyword == concept_class:
+            return None
+
+        def _local(c: str) -> str:
+            return str(c).rsplit("#", 1)[-1].rsplit(":", 1)[-1]
+
+        if _local(keyword) in {_local(c) for c in concept_classes}:
+            return None
+        ancestors, _ = await self._class_relations([keyword, concept_class])
+        if ancestors is None:
+            return None
+        if keyword in ancestors.get(concept_class, set()) or concept_class in ancestors.get(
+            keyword, set()
+        ):
+            return None
+        logger.info(
+            f"[sparql] concept class {concept_class} replaces keyword class {keyword}: "
+            f"unrelated in the TBox (BUG-1599)"
+        )
+        return concept_class
 
     def _infer_class(self, uq: str) -> Optional[str]:
         """Phase 3.1: Uses _get_extended_class_map for class inference."""
@@ -4189,6 +4259,25 @@ SELECT ?s WHERE {{ ?s rdf:type {brick_class} . FILTER(STRSTARTS(STR(?s), '{bldg_
     #: this sits well below "a place's sensors" and well above "the sensor for this quantity".
     _CLASS_IS_THE_ANSWER_CAP = 12
 
+    @staticmethod
+    def _rank_hint_classes(counts: Dict[str, int], question: str) -> List[Tuple[int, str]]:
+        """Hinted classes in the order to try: a class the question NAMES first, then fewest.
+
+        "Fewest instances" picks the most specific of NESTED classes (outdoor air temperature
+        inside air temperature inside temperature). It is meaningless across two different
+        quantities: a concept such as thermal comfort hints temperature AND humidity, and "is the
+        server room temperature okay?" bound the humidity sensors because there were fewer of
+        them (2026-10-11). A class whose own words appear in the question is what was asked for.
+        """
+        asked = {w.rstrip("s") for w in re.findall(r"[a-z]+", (question or "").lower())}
+
+        def named(cls: str) -> int:
+            local = cls.split(":")[-1].split("#")[-1]
+            words = {w.lower().rstrip("s") for w in local.split("_") if len(w) >= 3}
+            return len((words - {"sensor"}) & asked)
+
+        return [(n, c) for _, n, c in sorted((-named(c), n, c) for c, n in counts.items() if n > 0)]
+
     async def _resolve_floor_structurally(
         self,
         name: str,
@@ -4252,6 +4341,89 @@ SELECT DISTINCT ?s WHERE {{
             f"[sparql] '{name}' resolved STRUCTURALLY to {len(hits)} point(s) of "
             f"{classes[:3]} on that floor, taking {min(len(hits), limit)}"
         )
+        return hits[:limit]
+
+    #: Words that, alone, name the WHOLE building rather than a point or a space (BUG-1512).
+    _BUILDING_SCOPE_WORDS = frozenset({"building", "whole", "entire", "overall", "total", "the"})
+    #: Floor-level points that measure a FLOW, not a level: summed with a floor's headcount they
+    #: would count everyone twice (entries are people coming in, not people present).
+    _FLOW_LABEL_RE = re.compile(r"\b(?:entry|entries|entrance|exit|per\s*day|/\s*day)\b", re.I)
+
+    async def _resolve_building_structurally(
+        self, bldg_ns: str, limit: int, class_hints: Optional[Sequence[str]] = None
+    ) -> List[str]:
+        """Points of the hinted class sited on a FLOOR (a floor's own counter), or [] (BUG-1512).
+
+        A whole-building question about a quantity a building measures floor by floor (people) is
+        answered from the floors' own instruments. When the class has no floor-level point, []
+        tells the caller to leave the entity unresolved rather than label-match the word
+        "building" to whichever room happens to be called "Building Management Office".
+        """
+        classes = [str(c) for c in (class_hints or []) if str(c).strip()]
+        if not classes:
+            return []
+        values = " ".join(c if ":" in c else f"brick:{c}" for c in classes[:8])
+        # THE BUILDING'S OWN METER FIRST (2026-10-11). Where a point of the hinted class IS a
+        # brick:Building_Meter, it measures the whole building, and its floor meters are parts
+        # of it: "how much water did the building use?" bound the main water meter AND the 18
+        # floor water points, a total that counts the same water twice -- and the floors' hot and
+        # chilled circuits split the measurand vote, so no lane claimed the turn at all.
+        meter_query = f"""{self._prefix_block()}
+SELECT DISTINCT ?s WHERE {{
+  VALUES ?cls {{ {values} }}
+  ?s a ?cls , brick:Building_Meter ; ref:hasExternalReference ?r .
+  FILTER(STRSTARTS(STR(?s), '{bldg_ns}'))
+}} LIMIT 20"""
+        try:
+            res = await self._execute_query(meter_query)
+            rows = ((res or {}).get("results") or {}).get("bindings") or []
+        except Exception as exc:  # pragma: no cover - fall through to the floors
+            logger.warning(f"[sparql] building-meter lookup skipped: {exc}")
+            rows = []
+        pfx = _active_prefix()
+        meters = []
+        for b in rows:
+            iri = str((b.get("s") or {}).get("value") or "")
+            if iri.startswith(bldg_ns):
+                curie = f"{pfx}:{iri[len(bldg_ns):]}"
+                if curie not in meters:
+                    meters.append(curie)
+        if meters:
+            logger.info(
+                f"[sparql] the whole building has its own meter of {classes[:3]}: {meters} "
+                "(its floor meters are parts of it, so they are not added)"
+            )
+            return meters[:limit]
+        query = f"""{self._prefix_block()}
+SELECT DISTINCT ?s ?l WHERE {{
+  VALUES ?cls {{ {values} }}
+  ?floor a brick:Floor .
+  {{ ?s brick:isPartOf ?floor }} UNION {{ ?s brick:hasLocation ?floor }}
+  ?s a ?cls ; ref:hasExternalReference ?r .
+  OPTIONAL {{ ?s rdfs:label ?l }}
+  FILTER(STRSTARTS(STR(?s), '{bldg_ns}'))
+}} LIMIT 200"""
+        try:
+            res = await self._execute_query(query)
+            rows = ((res or {}).get("results") or {}).get("bindings") or []
+        except Exception as exc:  # pragma: no cover - the caller then leaves the entity alone
+            logger.warning(f"[sparql] building-scope resolution skipped: {exc}")
+            return []
+        pfx = _active_prefix()
+        hits: List[str] = []
+        for b in rows:
+            iri = str((b.get("s") or {}).get("value") or "")
+            label = str((b.get("l") or {}).get("value") or "")
+            if not iri.startswith(bldg_ns) or self._FLOW_LABEL_RE.search(label):
+                continue
+            curie = f"{pfx}:{iri[len(bldg_ns):]}"
+            if curie not in hits:
+                hits.append(curie)
+        if hits:
+            logger.info(
+                f"[sparql] the whole building resolved STRUCTURALLY to {len(hits)} floor-level "
+                f"point(s) of {classes[:3]} (BUG-1512)"
+            )
         return hits[:limit]
 
     async def _resolve_entities_by_label(
@@ -4318,14 +4490,44 @@ SELECT DISTINCT ?s WHERE {{
             # own words still picks the measurement asked for.
             if any(re.fullmatch(r"\d+(?:\.\d+)+", t) for t in tokens):
                 tokens = [t for t in tokens if t not in _LOCATION_HEAD_WORDS] or tokens
+            # A PLURAL NAMES THE SAME THING (BUG-1561). Every token must be CONTAINED in the
+            # haystack, so "EV chargers" matched no point labelled "EV Charger 1" and the answer
+            # said the building had no EV charger sensors. The singular stem is still a substring
+            # of the plural, so it matches both; identifiers and "-ss" words are left alone.
+            tokens = [
+                (
+                    t[:-1]
+                    if len(t) > 4
+                    and t.endswith("s")
+                    and not t.endswith("ss")
+                    and not t[0].isdigit()
+                    else t
+                )
+                for t in tokens
+            ]
             if not tokens:
+                continue
+            # THE WHOLE BUILDING IS A SCOPE, NOT A NAME (BUG-1512).
+            if set(tokens) <= self._BUILDING_SCOPE_WORDS and "building" in tokens:
+                whole = await self._resolve_building_structurally(bldg_ns, 50, class_hints)
+                if whole:
+                    structural_found = True
+                    resolved.extend(h for h in whole if h not in resolved)
+                    ts_bearing.update(whole)
                 continue
             # Escape for safe embedding in a SPARQL string literal.
             filters = " && ".join(
                 'CONTAINS(?hay, "{}")'.format(t.replace("\\", "\\\\").replace('"', '\\"'))
                 for t in tokens
             )
-            hay = 'BIND(LCASE(CONCAT(STR(?s), " ", COALESCE(STR(?l), ""))) AS ?hay)'
+            # The LOCAL NAME, not the IRI (BUG-1512): this building's namespace is
+            # "...abacwsbuilding...", so a token "building" matched EVERY point and "chart the
+            # building's occupancy" narrowed to two seminar rooms by word overlap. A namespace
+            # says which building a point belongs to, never what the point is.
+            hay = (
+                'BIND(LCASE(CONCAT(REPLACE(STR(?s), "^.*[/#]", ""), " ", '
+                'COALESCE(STR(?l), ""))) AS ?hay)'
+            )
             # THE RESOLVED CLASS OUTRANKS A WORD IN A LABEL (CAVEAT-892).
             #
             # The lay-term resolver has already decided which quantity the question is about;
@@ -4365,6 +4567,13 @@ SELECT DISTINCT ?s WHERE {{
             #      stand alone and the tokens still narrow it.
             _hint_classes = [str(c) for c in (class_hints or []) if str(c).strip()][:8]
             _typed_hits = []
+            # AN IDENTIFIER NAMES A PLACE, NOT A CLASS (BUG-1503). Dropping the tokens is right
+            # when the entity restates the class ("Outdoor_Temperature_Sensor"); it is wrong when
+            # the entity carries a space identifier. "Plot the temperature in room 1.06" resolved
+            # Room_1.06 to the building's ONE Outside_Air_Temperature_Sensor (the weather feed),
+            # because that class had the fewest instances and its token filter was dropped -- and
+            # the chart was captioned as room 1.06. With an identifier, the tokens always apply.
+            _names_a_place = any(re.fullmatch(r"\d+(?:\.\d+)+", t) for t in tokens)
             if _hint_classes:
                 _seen_cls = []
                 for _c in _hint_classes:
@@ -4372,10 +4581,12 @@ SELECT DISTINCT ?s WHERE {{
                     if _q not in _seen_cls:
                         _seen_cls.append(_q)
                 _counts = await self._count_readable_instances(_seen_cls, bldg_ns)
-                _ranked = sorted((n, c) for c, n in _counts.items() if n > 0)
+                _ranked = self._rank_hint_classes(_counts, user_query)
                 for _n, _cls in _ranked[:3]:
                     _tok_filter = (
-                        "" if _n <= self._CLASS_IS_THE_ANSWER_CAP else f"FILTER({filters})"
+                        ""
+                        if _n <= self._CLASS_IS_THE_ANSWER_CAP and not _names_a_place
+                        else f"FILTER({filters})"
                     )
                     _typed = f"""{self._prefix_block()}
 SELECT DISTINCT ?s WHERE {{
@@ -4394,11 +4605,12 @@ SELECT DISTINCT ?s WHERE {{
                         _used_cls, _used_n = _cls, _n
                         break
                 if _typed_hits:
-                    if _used_n > self._CLASS_IS_THE_ANSWER_CAP:
+                    _tokens_applied = _used_n > self._CLASS_IS_THE_ANSWER_CAP or _names_a_place
+                    if _tokens_applied:
                         _typed_hits = self._narrow_to_best_match(_typed_hits, user_query)
                     logger.info(
                         f"[sparql] '{name}' resolved by CLASS {_used_cls} (n={_used_n}, "
-                        f"tokens {'ignored' if _used_n <= self._CLASS_IS_THE_ANSWER_CAP else 'applied'}) "
+                        f"tokens {'applied' if _tokens_applied else 'ignored'}) "
                         f"rather than by label: {_typed_hits[:3]}"
                     )
                     resolved.extend(h for h in _typed_hits if h not in resolved)
@@ -4672,9 +4884,7 @@ SELECT ?s WHERE {{ ?s ?p ?o . FILTER(STRSTARTS(STR(?s),'{bldg_ns}') && CONTAINS(
         """
         if building_id:
             try:
-                from orchestrator.services.building_context import (
-                    resolve_building_context,
-                )
+                from orchestrator.services.building_context import resolve_building_context
 
                 bctx = resolve_building_context(building_id)
                 custom = _STANDARD_PREFIXES + [f"PREFIX {bctx.prefix}: <{bctx.namespace}>"]

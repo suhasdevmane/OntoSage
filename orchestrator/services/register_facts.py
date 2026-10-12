@@ -404,6 +404,7 @@ _STOPWORDS = frozenset(
     total two under until upon use used using usually very via want was way ways well were
     what whatever when where whether which while who whom whose why will with within without
     work working would yes yet you your yours
+    based located situated housed sited logged happened occurred carried started began commenced
     """.split()
 )
 

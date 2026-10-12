@@ -19,6 +19,7 @@ the caller must decline — never assume.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Dict, List, Optional, Tuple
 
@@ -107,6 +108,9 @@ class AdmissionResult:
     floor_anchor: Optional[str] = None  # floor local name (e.g. 'floor1')
     amenity_anchor: Optional[str] = None  # amenity kind (e.g. 'DrinkingWater')
     space_anchor: Optional[str] = None  # space IRI
+    #: an amenity KIND the question scopes to ("the quietest study area"): rank only the spaces
+    #: that host one. Not a space name -- looked up as one, "StudyArea" was reported unknown.
+    host_kind_anchor: Optional[str] = None
     coverage: Dict[str, Dict[str, int]] = field(default_factory=dict)
     #: v2 — facet key -> executable | partial | not_assessable. Empty for every v1 plan.
     facet_admission: Dict[str, str] = field(default_factory=dict)
@@ -352,7 +356,7 @@ def validate(
         )
 
     # 2. spatial anchors must resolve against the building's own inventory
-    floor_anchor = amenity_anchor = space_anchor = None
+    floor_anchor = amenity_anchor = space_anchor = host_kind_anchor = None
     for q in cqir.spatial:
         if q.relation == SpatialRelation.ON_FLOOR:
             floor_anchor = _norm_floor(q.anchor, schema.floors)
@@ -407,11 +411,32 @@ def validate(
             # and "which room in the building has the best air", and admission asked the user
             # which room they meant.
             token = q.anchor.strip().lower()
+            # "the quietest study area" compiled to IN_SPACE 'StudyArea': an amenity KIND, not a
+            # space name, and the reader was asked "Did you mean Room0.01, Room0.04 ...?". A kind
+            # the building locates scopes the ranking to the spaces that host one.
+            _kinds = {k.lower(): k for k in schema.amenity_kinds}
+            _squashed = re.sub(r"[\s_-]+", "", token)
+            _singular = _squashed[:-1] if _squashed.endswith("s") else ""
+            _host = _kinds.get(_squashed) or _kinds.get(_singular)
+            if q.relation == SpatialRelation.IN_SPACE and _host:
+                host_kind_anchor = _host
+                continue
             matches = [
                 s.space_iri
                 for s in schema.spaces
                 if token in s.space_iri.lower() or token in (s.label or "").lower()
             ]
+            # "office 4.07" names room 4.07 by its kind (BUG-1624): the phrase is in no IRI or
+            # label, and the reader was asked "Did you mean Room0.01, Room0.04 ...?" about a room
+            # the building holds. With no match on the phrase, its dotted id decides.
+            _id = re.search(r"(?<![\d.])(\d{1,2}\.\d{1,3})(?![\d.])", token)
+            if not matches and _id:
+                _id_re = re.compile(rf"(?<![\d.]){re.escape(_id.group(1))}(?![\d.])")
+                matches = [
+                    s.space_iri
+                    for s in schema.spaces
+                    if _id_re.search(_local(s.space_iri)) or _id_re.search(s.label or "")
+                ]
             if len(matches) == 1:
                 space_anchor = matches[0]
             elif not matches:
@@ -440,14 +465,17 @@ def validate(
                 )
 
     if facet_plan:
-        return _admit_facets(
+        result = _admit_facets(
             cqir, schema, catalogue, coverage, missing, floor_anchor, amenity_anchor, space_anchor
         )
+        result.host_kind_anchor = host_kind_anchor
+        return result
     return AdmissionResult(
         verdict=ADMIT,
         floor_anchor=floor_anchor,
         amenity_anchor=amenity_anchor,
         space_anchor=space_anchor,
+        host_kind_anchor=host_kind_anchor,
         coverage=coverage,
     )
 

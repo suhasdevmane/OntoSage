@@ -387,7 +387,7 @@ async def test_the_aggregate_lane_is_handed_the_resolved_window(registry, monkey
     """Resolved ABOVE the aggregate lane, because a wrong window is wrong in every lane."""
     seen = {}
 
-    async def fake_lane(self, uuids, question, storage_map, start, end, metadata, *limits):
+    async def fake_lane(self, uuids, question, storage_map, start, end, metadata, *limits, **kw):
         seen.update(start=start, end=end)
         return {"success": True, "formatted_response": "answered in the store"}
 

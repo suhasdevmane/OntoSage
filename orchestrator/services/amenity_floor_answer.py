@@ -73,6 +73,14 @@ _DECLARED_FLOOR_RE = re.compile(r"(-?\d+)\s*$")
 #: How many "nearest" amenities are named. Every one at the minimum distance, up to this many.
 _NEAREST_SHOWN = 3
 
+#: "what time does it close", "when is it open until", "opening hours": a question about WHEN,
+#: which a list of what is on the floor does not answer (BUG-1609).
+_ASKS_A_TIME_RE = re.compile(
+    r"\bwhat\s+time\b|\bwhen\s+(?:does|do|will|is|are)\b[^?]{0,40}?\b(?:open|close|shut)\w*"
+    r"|\b(?:opening|closing)\s+(?:hours|times?)\b",
+    re.IGNORECASE,
+)
+
 
 def floor_in_question(question: str) -> Optional[int]:
     """The floor a question names ("floor 2", "level 3", "the second floor"); None when none."""
@@ -266,7 +274,15 @@ def capability_answer(
     withheld: Sequence[Any],
     building_name: str,
 ) -> Optional[Dict[str, Any]]:
-    """The capability lane's result for a floor-scoped answer; None when the question names no floor."""
+    """The capability lane's result for a floor-scoped answer; None when the question names no floor.
+
+    None too for a question asking a TIME (BUG-1609): "What time does the Abacws Cafe on the
+    ground floor close?" -- the floor came from the rewrite naming the cafe -- was answered "On
+    floor 0: Cafe", a where-answer to a when-question. 0 of 4,060 bank questions name a floor and
+    ask a time, so no floor question loses its floor answer.
+    """
+    if _ASKS_A_TIME_RE.search(question or ""):
+        return None
     text = floor_scoped_answer(question, facts, withheld)
     if not text:
         return None

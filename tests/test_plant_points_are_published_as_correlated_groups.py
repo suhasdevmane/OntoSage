@@ -92,7 +92,9 @@ def samples(spec):
     for _ in range(200):
         conn.rows.clear()
         publisher.publish_plant(conn)
-        for uuid, value in conn.rows:
+        # rows are (uuid, timestamp, value): the timestamp is a parameter since the
+        # catch-up replay (outage backfill) writes past rows through this function
+        for uuid, _when, value in conn.rows:
             out.setdefault(uuid, []).append(float(value))
     return out
 
@@ -215,7 +217,8 @@ def test_every_group_writes_every_one_of_its_points_each_tick(spec):
     publisher.publish_plant(conn)
     expected = sum(len(g["roles"]) for g in spec["groups"])
     assert len(conn.rows) == expected
-    assert len({u for u, _ in conn.rows}) == expected, "a uuid was written twice in one tick"
+    assert len({r[0] for r in conn.rows}) == expected, "a uuid was written twice in one tick"
+    assert len({r[1] for r in conn.rows}) == 1, "one tick is one timestamp"
 
 
 def test_a_missing_map_disables_plant_publishing_rather_than_raising():

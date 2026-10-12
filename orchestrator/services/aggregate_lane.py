@@ -52,17 +52,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import (
-    Any,
-    Awaitable,
-    Callable,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-)
+from typing import Any, Awaitable, Callable, Dict, Iterable, List, Optional, Sequence, Tuple
 
 from shared.utils import get_logger
 
@@ -152,13 +142,27 @@ _EXCEED = re.compile(
     # CO2 sensors, while "has CO2 been high anywhere this week?" was answered per floor.
     r"|\b(?:sustained|persistent|prolonged|repeated)\s+(?:\w+\s+){0,2}"
     r"(?:elevated|high|excessive|raised)\b"
-    r"|\b(?:elevated|excessive)\s+(?:\w+\s+){0,2}(?:level|reading|concentration)s?\b",
+    r"|\b(?:elevated|excessive)\s+(?:\w+\s+){0,2}(?:level|reading|concentration)s?\b"
+    # "Did any room GO OVER 1000 ppm yesterday?" (BUG-1572): the reader's own limit, with its
+    # unit, is as much an exceedance question as "has CO2 been high anywhere".
+    r"|\b(?:go|goes|went|gone|going|rise|rises|rose|risen|climb(?:s|ed)?|get|got)\s+"
+    r"(?:over|above|past)\b"
+    r"|\b(?:over|above|more\s+than|higher\s+than|exceed\w*)\s+" + r"[\d,.]+\s*"
+    r"(?:ppm|ppb|°|degrees?|db\b|lux\b|%|percent|µg|ug)",
     re.IGNORECASE,
 )
 _TOTAL = re.compile(
     r"\bhow\s+much\b|\btotal\b|\bin\s+total\b|\baltogether\b"
     r"|\b(?:did|do|does|have|has)\s+(?:we|you|it|the\s+building|(?:floor|level)\s*\d+)\s+us(?:e|ed)\b"
-    r"|\bconsum\w*\b",
+    r"|\bconsum\w*\b"
+    # "electricity USE per floor" is the same quantity as "consumption" (BUG-1591): the bar-chart
+    # request parsed to no statistic and was drawn as six raw meter lines.
+    r"|\b(?:electricity|energy|power|water|gas)\s+(?:use|usage)\b(?!\s+intensity)"
+    # What a metered utility COST is its total priced (TODO-1646): "what did the electricity cost
+    # yesterday?", "the water bill last week", "the cost of energy this week".
+    r"|\b(?:electricity|energy|power|water|gas)\b[^.?!]{0,25}?\bcost\b"
+    r"|\bcost\s+of\s+(?:the\s+)?(?:electricity|energy|power|water|gas)\b"
+    r"|\b(?:electricity|energy|power|water|gas)\s+(?:bill|spend)\b",
     re.IGNORECASE,
 )
 _MAX = re.compile(
@@ -207,13 +211,31 @@ _MONITORING_METHOD = (
     r"gather|gathers|gathered|determined?|determines|assessed?|assesses)\b"
 )
 
+#: One named day: "today", "yesterday", "this afternoon" -- a day, never a pattern (BUG-1622).
+_ONE_DAY_RE = re.compile(
+    r"\b(?:today|yesterday|this\s+(?:morning|afternoon|evening)|the\s+day\s+before\s+yesterday|"
+    r"last\s+night)\b",
+    re.IGNORECASE,
+)
+
 #: Questions that use an aggregate word but ask for something else: a forecast, a change over time,
 #: a time of day, or the METHOD by which something is monitored. "Which floor will have the highest
 #: CO2 tomorrow" is not a maximum of the past, and "how is humidity monitored" is not a mean of it.
 _NOT_AN_AGGREGATE = re.compile(
     r"\b(?:will|going\s+to|tomorrow|next\s+(?:hour|day|week|month)|forecast|predict\w*|"
     r"expected|trend\w*|rise|rose|risen|rising|fall|fell|fallen|falling|increase[sd]?|"
-    r"decrease[sd]?|chang(?:e|ed|es|ing)|over\s+time|what\s+time|when)\b"
+    r"decrease[sd]?|chang(?:e|ed|es|ing)|over\s+time|what\s+time|when|"
+    # "has the CO2 GONE UP since this morning?" is a change question (BUG-1587): the lane
+    # summarised the period and the relevance gate deleted it as not answering yes or no.
+    r"(?:gone|went|go|goes|going)\s+(?:up|down)|dropp(?:ed|ing)|climb(?:ed|ing|s)?)\b"
+    # A COUNT OF INSTRUMENTS is not a statistic of what they read (BUG-1606): "which floor has
+    # the most PM2.5 sensors?" was answered with PM2.5 levels per floor. "points" is left out on
+    # measurement: 2 bank questions say "fewest ... points" of pinch and decision points. The noun
+    # must END the question, so "which floor has the most sensors above 1000 ppm?" stays an
+    # exceedance. 0 of 4,060 bank questions move.
+    r"|\b(?:most|fewest|least|(?:greatest|highest|largest|smallest|lowest)\s+number\s+of)"
+    r"\s+(?:[\w.\-]+\s+){0,3}(?:sensors?|devices?|meters?|detectors?|monitors?)"
+    r"(?:\s+(?:installed|fitted|deployed|are\s+there|in\s+(?:it|total)))?\s*[?.!]?\s*$"
     r"|\b" + _MONITORING_METHOD,
     re.IGNORECASE,
 )
@@ -299,12 +321,80 @@ def _show(when: datetime, tz_name: Optional[str]) -> str:
     return f"{to_local(when, tz_name):%a %d %b %H:%M}"
 
 
+#: Below this share of the asked window, the readings' own span is stated beside the figure.
+COVERAGE_NOTE_BELOW = 0.9
+
+
+def coverage_note(aggs: Sequence["SensorAgg"], window: "Window", tz_name: Optional[str]) -> str:
+    """One sentence when the readings span much less of the window than was asked (BUG-1491).
+
+    "The average temperature in room 5.23 in March 2025" was answered 33.2 over a window of
+    1-31 March whose readings stop on the 9th (the real snapshot ends there): a correct mean of
+    nine days, headed as the month's. The span is read from the store's own first and last
+    reading per sensor, never inferred, and the sentence says what the figure is OF.
+    """
+    w0, w1 = _stamp(window.start), _stamp(window.end)
+    firsts = [a.first for a in aggs if a.n and a.first]
+    lasts = [a.last for a in aggs if a.n and a.last]
+    if not (w0 and w1 and firsts and lasts) or w1 <= w0:
+        return ""
+    first, last = min(firsts), max(lasts)
+    asked = (w1 - w0).total_seconds()
+    held = max(0.0, (min(last, w1) - max(first, w0)).total_seconds())
+    if asked < 3600 or held >= COVERAGE_NOTE_BELOW * asked:
+        return ""
+    share = 100.0 * held / asked
+    return (
+        f"_The readings stored for this period run only from {_show(first, tz_name)} to "
+        f"{_show(last, tz_name)} (building time), about {share:.0f}% of it, so this figure "
+        "describes those readings, not the whole period._"
+    )
+
+
 _PERIOD = re.compile(
     r"\b(?:(?:in\s+)?the\s+)?(?:last|past|previous)\s+(\d+|a|an|one|two|three)\s*"
     r"(hour|hr|day|week|month)s?\b",
     re.IGNORECASE,
 )
 _WORD_NUM = {"a": 1, "an": 1, "one": 1, "two": 2, "three": 3}
+
+
+def _names_a_day_or_period(question: str) -> bool:
+    """A period the words name: relative ("last week") or a written or named day (CAVEAT-1616)."""
+    from orchestrator.services.aggregate_support import names_a_period
+
+    if names_a_period(question):
+        return True
+    try:
+        from orchestrator.services.requested_interval import explicit_date_bounds
+
+        return explicit_date_bounds(question) is not None
+    except Exception:  # a resolver failure names no period
+        return False
+
+
+#: A period that is OVER: no partial last day or week to mis-compare (BUG-936's concern).
+_COMPLETED_PERIOD_RE = re.compile(
+    r"\b(?:yesterday|(?:last|previous|past)\s+(?:week|month|year|quarter)"
+    r"|the\s+(?:week|month|day)\s+before)\b",
+    re.IGNORECASE,
+)
+
+
+def _names_a_completed_period(question: str) -> bool:
+    """'Yesterday', 'last week', 'last month', or a written past date."""
+    if _COMPLETED_PERIOD_RE.search(question or ""):
+        return True
+    try:
+        from orchestrator.services.requested_interval import explicit_date_bounds
+
+        bounds = explicit_date_bounds(question)
+    except Exception:  # a resolver failure names no period
+        return False
+    if not bounds:
+        return False
+    # STAMP strings on the stores' UTC clock compare as text in the same format.
+    return str(bounds[1]) <= datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
 
 
 def resolve_window(
@@ -346,6 +436,12 @@ def resolve_window(
     else:
         local = to_local(end_now, tz_name) if now is not None else local_now(tz_name)
         day = calendar_day_bounds(question, tz_name, now=local)
+        if not day:
+            # "on Wednesday", "8 October", "13 January 2025" (CAVEAT-1616, BUG-1490): a day the
+            # words name, resolved by the one module that owns calendar arithmetic.
+            from orchestrator.services.requested_interval import explicit_date_bounds
+
+            day = explicit_date_bounds(question, tz_name, now=local)
         if day:
             start_dt, end_dt = _stamp(day[0]), _stamp(day[1])
         else:
@@ -412,6 +508,87 @@ _MEASURAND_UNITS = {
 }
 
 
+#: A limit the reader states with its unit: "over 1000 ppm", "above 26 degrees", "more than 70 dB".
+_ASKED_LIMIT_RE = re.compile(
+    r"\b(?:over|above|exceed(?:s|ed|ing)?|more\s+than|higher\s+than|greater\s+than|past)\s+"
+    r"(\d{1,3}(?:,\d{3})+|\d+(?:\.\d+)?)\s*"
+    r"(ppm|ppb|°\s*c\b|°|degrees?(?:\s+c(?:elsius)?)?|db\b|lux\b|%|percent|µg/m³|µg/m3|ug/m3)",
+    re.IGNORECASE,
+)
+#: The measurand each stated unit can only be a limit for. A number in the wrong unit is not this
+#: question's limit and is ignored rather than converted.
+_UNIT_MEASURAND = (
+    (re.compile(r"ppm", re.IGNORECASE), "co2", "ppm"),
+    (re.compile(r"ppb", re.IGNORECASE), "voc", "ppb"),
+    (re.compile(r"°|degree", re.IGNORECASE), "temperature", "°C"),
+    (re.compile(r"%|percent", re.IGNORECASE), "humidity", "%"),
+    (re.compile(r"µg|ug", re.IGNORECASE), "pm25", "µg/m³"),
+    (re.compile(r"db", re.IGNORECASE), "sound", "dB"),
+    (re.compile(r"lux", re.IGNORECASE), "illuminance", "lux"),
+)
+#: `Threshold.standard` for a limit the reader gave: the answer cites the reader, not a standard.
+ASKED_LIMIT = "__asked__"
+
+#: A question about the inside of the building, and one that names the outside (BUG-1584).
+_INDOOR_WORDS = re.compile(
+    r"\b(?:rooms?|offices?|labs?|laborator(?:y|ies)|classrooms?|spaces?|indoors?|inside|"
+    r"floors?|zones?|meeting\s+rooms?)\b",
+    re.IGNORECASE,
+)
+_OUTDOOR_WORDS = re.compile(
+    r"\b(?:outside|outdoors?|exterior|external|ambient|weather|roof(?:top)?)\b", re.IGNORECASE
+)
+
+
+def _is_outdoor(f: "Facts") -> bool:
+    """Is this sensor outside air, by its Brick class or its placement on the exterior?"""
+    cls = str(getattr(f, "brick_class", "") or "").lower()
+    where = f"{getattr(f, 'room', '') or ''} {getattr(f, 'label', '') or ''}".lower()
+    return (
+        "outside" in cls
+        or "outdoor" in cls
+        or bool(re.search(r"\b(?:exterior|outdoor|outside)\b", where))
+    )
+
+
+#: The names the lane's own measurand may carry for each unit's quantity. The question side says
+#: "sound" while the bound sensors' measurand can be "noise" or "sound level", and an exact match
+#: lost "over 70 dB" to a plain ranking.
+_MEASURAND_SYNONYMS = {
+    "co2": ("co2", "carbon dioxide"),
+    "voc": ("voc", "tvoc", "volatile"),
+    "temperature": ("temperature", "temp"),
+    "humidity": ("humidity",),
+    "pm25": ("pm25", "pm2.5", "pm 2.5", "particul"),
+    "sound": ("sound", "noise", "acoustic"),
+    "illuminance": ("illuminance", "light", "lux"),
+}
+
+
+def _measurand_is(kind: str, measurand: str) -> bool:
+    m = (measurand or "").lower()
+    return any(s in m for s in _MEASURAND_SYNONYMS.get(kind, (kind,)))
+
+
+def asked_threshold(measurand: Optional[str], question: str = "") -> Optional[Threshold]:
+    """The limit the question states for this measurand, with its unit, or None (BUG-1572).
+
+    "Did any room go over 1000 ppm CO2 yesterday?" was answered with a floor summary because the
+    only limits this lane knew were the standards table's. The reader's number answers the
+    reader's question; a standard would answer a different one.
+    """
+    if not measurand:
+        return None
+    for m in _ASKED_LIMIT_RE.finditer(question or ""):
+        for rx, kind, unit in _UNIT_MEASURAND:
+            if rx.search(m.group(2)) and _measurand_is(kind, measurand):
+                try:
+                    return Threshold(float(m.group(1).replace(",", "")), unit, ASKED_LIMIT, kind)
+                except ValueError:
+                    return None
+    return None
+
+
 def cited_threshold(
     measurand: Optional[str], question: str = "", path: Optional[Path] = None
 ) -> Optional[Threshold]:
@@ -468,7 +645,11 @@ _LAY_QUANTITY_RE = re.compile(
 _LAY_MEASURANDS = (
     (
         re.compile(
-            r"\boverheat\w*\b|(?<![-\w])(?:too\s+)?(?:hot|warm|cold|chilly|freezing)\b"
+            # comparatives and superlatives too (BUG-1556): "Was yesterday WARMER than the day
+            # before on floor 4?" named no quantity this lane recognised, so both windows of the
+            # comparison were refused.
+            r"\boverheat\w*\b|(?<![-\w])(?:too\s+)?(?:hot|hotter|hottest|warm|warmer|warmest|cold|"
+            r"colder|coldest|cool|cooler|coolest|chilly|chillier|freezing)\b"
             r"(?![-\s]water)",
             re.IGNORECASE,
         ),
@@ -476,7 +657,12 @@ _LAY_MEASURANDS = (
     ),
     (re.compile(r"\b(?:stuffy|stale)\b", re.IGNORECASE), "co2"),
     (re.compile(r"\b(?:humid|muggy)\b", re.IGNORECASE), "humidity"),
-    (re.compile(r"\b(?:noisy|loud)\b", re.IGNORECASE), "sound"),
+    (
+        re.compile(
+            r"\b(?:noisy|noisier|noisiest|loud|louder|loudest|quieter|quietest)\b", re.IGNORECASE
+        ),
+        "sound",
+    ),
     # busy / crowded / quiet-as-in-empty is occupancy; "ambient light" and "bright" are light.
     # "occupied" is deliberately NOT here: "during an approved occupied period" describes a period
     # of a CO2 question, and made that question's own quantity include occupancy.
@@ -484,7 +670,7 @@ _LAY_MEASURANDS = (
     (
         re.compile(
             r"\b(?:ambient\s+)?light(?:ing)?\b(?!\s*(?:switch|bulb|fitting|fixture))"
-            r"|\b(?:bright|dim|dark)\b",
+            r"|\b(?:bright|brighter|brightest|dim|dimmer|dark|darker|darkest)\b",
             re.IGNORECASE,
         ),
         "illuminance",
@@ -574,7 +760,9 @@ def _class_local(iri: str) -> str:
 
 
 def measurand_from_classes(
-    classes: Iterable[str], building_id: Optional[str] = None
+    classes: Iterable[str],
+    building_id: Optional[str] = None,
+    labels: Optional[Sequence[str]] = None,
 ) -> Optional[str]:
     """The quantity a set of sensors measures, read from their BRICK CLASSES (BUG-1442).
 
@@ -590,13 +778,27 @@ def measurand_from_classes(
         from shared.config import settings
 
         building_id = getattr(settings, "BUILDING_ID", None) or None
+    specs = list(load_modalities(building_id))
     owners: Dict[str, set] = {}
-    for spec in load_modalities(building_id):
+    for spec in specs:
         for c in spec.brick_classes:
             owners.setdefault(_class_local(c), set()).add(spec.name)
     votes: Dict[str, int] = {}
-    for cls in classes:
-        names = owners.get(_class_local(cls) or "\0", set())
+    label_list = list(labels) if labels is not None else []
+    for i, cls in enumerate(classes):
+        local = _class_local(cls)
+        names = owners.get(local or "\0", set())
+        if len(names) > 1 and i < len(label_list):
+            # A SHARED CLASS IS DECIDED BY THE POINT'S LABEL (BUG-1508), by the rule
+            # `modality_units.unit_for_sensor` already applies (CAVEAT-1412): a modality that
+            # discriminates by label and matches outranks one that does not discriminate.
+            # Occupancy_Count_Sensor is declared by people counts AND parking bays, so "How many
+            # people are in the building right now?" over six floor counters had no measurand at
+            # all and the aggregate lane declined a headcount it was built to answer.
+            text = f"{label_list[i]} {cls}"
+            hits = [s for s in specs if s.matches(local, text)]
+            disc = [s for s in hits if getattr(s, "label_contains", None)]
+            names = {s.name for s in (disc or hits)}
         if len(names) == 1:
             key = lane_measurand(next(iter(names)))
             votes[key] = votes.get(key, 0) + 1
@@ -810,6 +1012,75 @@ class Place:
     room: str = ""  # the label of the space the sensor is in
     floor: str = ""  # the floor number, as the graph spells it
     on_floor: bool = False  # located on the FLOOR itself: a floor-level meter, not a room's
+
+
+def build_class_query(uuids: Sequence[str]) -> str:
+    """SPARQL for sensor -> its ASSERTED Brick classes (explicit graph: no inferred superclass)."""
+    values = " ".join(f'"{u}"' for u in uuids if _SAFE_ID.match(str(u)))
+    return (
+        "SELECT DISTINCT ?uuid ?cls FROM <http://www.ontotext.com/explicit> WHERE {\n"
+        f"  VALUES ?uuid {{ {values} }}\n"
+        '  ?ref ?hid ?uuid . FILTER(STRENDS(STR(?hid), "hasTimeseriesId"))\n'
+        '  ?sensor ?hx ?ref . FILTER(STRENDS(STR(?hx), "hasExternalReference"))\n'
+        "  ?sensor a ?cls .\n"
+        '  FILTER(STRSTARTS(STR(?cls), "https://brickschema.org/schema/Brick#"))\n'
+        "} LIMIT 20000"
+    )
+
+
+async def fill_missing_classes(
+    uuids: Sequence[str], metadata: Dict[str, Dict[str, Any]], sparql_exec
+) -> Dict[str, Dict[str, Any]]:
+    """``metadata`` with each bound sensor's Brick class filled in where the template left it out.
+
+    BUG-1536: "Compare CO2 in room 1.06 this morning with yesterday morning" bound
+    CO2_Level_Sensor_1.06 through a template that does not bind the point's class, so the lane
+    refused both windows with `measurand=None` -- the class is the only thing it reads the quantity
+    from (BUG-1442), and the label must not stand in for it. The class is asked of the graph
+    instead; of several asserted classes, the one that names a modality is kept.
+    """
+    # Missing, OR present but naming no modality: a template that returns one row per inferred
+    # type leaves whichever came last ("Building_Meter", "Equipment"), and the building's water
+    # meter was then refused with measurand=None while its Water_Meter class named one (2026-10-11).
+    missing = [
+        u
+        for u in uuids
+        if not (metadata.get(u) or {}).get("brick_class")
+        or measurand_from_classes([str((metadata.get(u) or {}).get("brick_class"))]) is None
+    ]
+    if not missing or sparql_exec is None:
+        return metadata
+    try:
+        result = await sparql_exec(build_class_query(missing))
+    except Exception as exc:  # a lookup that fails leaves the lane exactly as it was
+        logger.debug(f"[aggregate] class lookup skipped: {exc}")
+        return metadata
+    by_uuid: Dict[str, List[str]] = {}
+    for b in ((result or {}).get("results") or {}).get("bindings") or []:
+        u, c = (b.get("uuid") or {}).get("value"), (b.get("cls") or {}).get("value")
+        if u and c:
+            by_uuid.setdefault(u, []).append(c)
+    out = dict(metadata)
+    for u, classes in by_uuid.items():
+        label = str((metadata.get(u) or {}).get("label") or "")
+        named = [(c, measurand_from_classes([c], labels=[label])) for c in classes]
+        named = [(c, m) for c, m in named if m]
+        if not named:
+            continue
+        # The building asserts superclasses too (CO2_Level_Sensor, CO2_Sensor AND
+        # Air_Quality_Sensor), so the quantity most of the point's own classes name wins, and of
+        # its classes the most specific (longest local name) is kept.
+        votes: Dict[str, int] = {}
+        for _, m in named:
+            votes[m] = votes.get(m, 0) + 1
+        best = max(votes.values())
+        winners = {m for m, n in votes.items() if n == best}
+        if len(winners) != 1:
+            continue  # two quantities equally named: the class does not decide, so neither is set
+        m0 = next(iter(winners))
+        cls = max((c for c, m in named if m == m0), key=lambda c: len(_class_local(c)))
+        out[u] = {**(metadata.get(u) or {}), "brick_class": cls}
+    return out
 
 
 def build_location_query(uuids: Sequence[str]) -> str:
@@ -1941,6 +2212,14 @@ def _place_name(group: str, key: str) -> str:
     return key
 
 
+def _only_room(answered: Iterable[str], facts: Dict[str, Any]) -> str:
+    """The room every answered sensor sits in, when there is exactly one; else ''."""
+    rooms = {str(getattr(facts.get(u), "room", "") or "") for u in answered}
+    if len(rooms) != 1:
+        return ""
+    return rooms.pop()
+
+
 def render_extreme(
     intent: AggregateIntent,
     ranked: Sequence[GroupStat],
@@ -1965,7 +2244,9 @@ def render_extreme(
     """The answer to 'which floor/room ... highest/lowest/most/least', with its boundary."""
     if not ranked:
         return ""
-    name = quantity or display_name(measurand)
+    # A fallback name arrives with its own article ("the reading"), and every lead below supplies
+    # one: "had the highest the reading in the period".
+    name = re.sub(r"^the\s+", "", quantity or display_name(measurand) or "")
     u = f" {unit}" if unit else ""
     top = ranked[0]
     who = _place_name(intent.group, top.key)
@@ -1991,6 +2272,15 @@ def render_extreme(
         lead += "."
     elif additive and measurand == "occupancy":
         lead = f"**{who} has the {word} people in it right now: {_n(top.value)}**."
+    elif len(ranked) == 1 and not now:
+        # ONE PLACE IS NOT A RANKING (BUG-1491). "HVAC Zone 5.23 had the highest average
+        # temperature in the period" answered a question that asked for one room's average and
+        # named no other; the superlative claimed a comparison that was never made.
+        plain = {"max": "highest", "min": "lowest", "mean": "average"}.get(intent.stat, word)
+        lead = f"**The {plain} {name} in {who} in the period was {_n(top.value, 1)}{u}**"
+        if intent.stat in ("max", "min") and peak_at:
+            lead += f" (first reached {peak_at})"
+        lead += "."
     else:
         lead = f"**{who} had the {word} {name} {'right now' if now else 'in the period'}: {_n(top.value, 1)}{u}**"
         if intent.stat in ("max", "min") and not now and intent.group != "room" and top.peak_room:
@@ -2123,7 +2413,12 @@ def render_exceedance(
     over_sensors = sum(g.exceed_sensors for g in ranked_rooms)
     limit = f"{_n(threshold.value)}{u}"
     cite = (
-        f"the limit for {name} in the {threshold.standard} entry of this system's standards table"
+        "the limit you gave"
+        if threshold.standard == ASKED_LIMIT
+        else (
+            f"the limit for {name} in the {threshold.standard} entry of this system's standards "
+            "table"
+        )
     )
     if over_readings == 0:
         lead = f"**No.** No {name} reading was above {limit} ({cite}) in the period."
@@ -2138,8 +2433,10 @@ def render_exceedance(
     else:
         share = over_readings / total_readings * 100 if total_readings else 0.0
         lead = (
-            f"**Yes.** {name} was above {limit} ({cite}) on {over_sensors} of {sensors_used} sensors, "
-            f"in {over_readings:,} of {total_readings:,} readings ({share:.1f}%)."
+            f"**Yes.** {name[:1].upper() + name[1:]} was above {limit} ({cite}) on {over_sensors} "
+            f"of {sensors_used} sensors, "
+            f"in {over_readings:,} of {total_readings:,} readings "
+            f"({'<0.1' if 0 < share < 0.05 else f'{share:.1f}'}%)."
         )
         lines = [lead, ""]
         rows = [g for g in ranked_rooms if g.exceed_readings]
@@ -2234,8 +2531,14 @@ def render_summary(
     bands_checked: bool,
     band_text: str = "",
     quantity: str = "",
+    group: str = "floor",
+    place_named: bool = False,
+    only_room: str = "",
 ) -> str:
     """What a quantity is doing across the building and floor by floor.
+
+    ``only_room`` is the one room every sensor read sits in, when they share one: the read is
+    then that room, whatever the question's words, and the lead names it (BUG-1601).
 
     The answer to a question that names a measurand and no place. It states the building figure
     first, because that is what was asked about, and then the floors, because that is the cheapest
@@ -2263,8 +2566,19 @@ def render_summary(
         whole = sum(values) / len(values) if values else None
 
     word = "is averaging" if now else "averaged"
-    lead = f"**Across the building {name} {word} {_n(whole, 1)}{u}**"
-    if highs and lows:
+    # ONE NAMED PLACE IS NOT THE BUILDING (BUG-1525). A question naming a room, claimed over that
+    # room's sensors, was headed "Across the building CO2 averaged 689 ppm" from ONE sensor.
+    # A READ OF ONE ROOM IS THAT ROOM (BUG-1601). "and the CO2?" bound one room's sensor from the
+    # conversation and was headed "Across the building CO2 is averaging 909 ppm, ranging from 909
+    # to 909" -- the question named no place, so the headline assumed the building.
+    if only_room and len(ranked) == 1:
+        where = f"In {only_room},"
+    elif place_named and len(ranked) == 1:
+        where = f"In {_place_name(group, ranked[0].key)},"
+    else:
+        where = "Across the building"
+    lead = f"**{where} {name} {word} {_n(whole, 1)}{u}**"
+    if highs and lows and _n(min(lows), 1) != _n(max(highs), 1):
         lead += f", ranging from {_n(min(lows), 1)} to {_n(max(highs), 1)}{u}"
     lead += "."
 
@@ -2627,6 +2941,64 @@ def wants_lane(
     kinds = set(unit_kinds)
     if intent.stat == "total" and "volumetric_flow" in kinds:
         return intent
+    # A total of POWER over a named period is an energy, and only an integral gives it
+    # (BUG-1582). "How much power is it generating right now?" is a reading and stays out.
+    if (
+        intent.stat == "total"
+        and "power" in kinds
+        and not intent.now
+        and _names_a_day_or_period(question)
+    ):
+        return intent
+    # Interval ENERGY totalled PER FLOOR over a named period is a GROUP BY the store does whole
+    # (BUG-1591): "make a bar chart of electricity use per floor this week" fetched raw rows and was
+    # drawn as six meter lines, because no case here took it and the bar chart needs the figures.
+    if (
+        intent.stat == "total"
+        and intent.group == "floor"
+        and kinds
+        and kinds <= {"energy"}
+        and not intent.now
+        and _names_a_day_or_period(question)
+    ):
+        return intent
+    # Interval VOLUME totalled over a named period is a SUM, as interval energy is: "how much water
+    # did the building use yesterday?" was reported as the meter's LATEST reading (2026-10-11).
+    if (
+        intent.stat == "total"
+        and kinds
+        and kinds <= {"volume"}
+        and not intent.now
+        and _names_a_day_or_period(question)
+    ):
+        return intent
+    # What interval ENERGY over a named period COST (TODO-1646). Only when a cost is asked: an
+    # energy total with no cost stays with the period summary, which treats a partial week by
+    # day (BUG-936), and this case must not take those questions from it.
+    from orchestrator.services.utility_cost import asks_for_cost
+
+    if (
+        intent.stat == "total"
+        and kinds
+        and kinds <= {"energy"}
+        and not intent.now
+        and asks_for_cost(question)
+        and _names_a_day_or_period(question)
+    ):
+        return intent
+    # Interval ENERGY over a COMPLETED period is a sum the store does whole (2026-10-11): "How much
+    # electricity did the building use last week?" went to the analytics template, whose narration
+    # printed the week's UTC bounds under an invented year ("27 September 2023"). A period that is
+    # over has no partial last unit, so the reason energy totals stay with the period summary
+    # (BUG-936, partial weeks) does not arise.
+    if (
+        intent.stat == "total"
+        and kinds
+        and kinds <= {"energy"}
+        and not intent.now
+        and _names_a_completed_period(question)
+    ):
+        return intent
     if (
         intent.stat == "total"
         and _CONSUME.search(question or "")
@@ -2634,7 +3006,21 @@ def wants_lane(
         and kinds <= _LEVEL_KINDS
     ):
         return intent
-    if headcount and intent.group == "floor" and (intent.now or not names_a_period(question)):
+    # The building's AVERAGE headcount over a named period: the sum of its floor counters' means
+    # (2026-10-11), which the caller computes in `_answer_headcount_mean`.
+    if (
+        headcount
+        and intent.stat == "mean"
+        and intent.group == "building"
+        and not intent.now
+        and _names_a_day_or_period(question)
+    ):
+        return intent
+    if (
+        headcount
+        and intent.group == "floor"
+        and (intent.now or not _names_a_day_or_period(question))
+    ):
         # "Which floor has the most people?" names no period, and for a headcount that means now.
         # A floor's headcount summed over a week is not a quantity anyone means, so a question
         # that DOES name a period is left alone.
@@ -2763,6 +3149,7 @@ async def try_answer(
         is_readings_question,
         names_a_period,
         names_a_place,
+        names_only_floors,
         presence_question,
         resolve_unit,
     )
@@ -2788,8 +3175,12 @@ async def try_answer(
     # point is what a building's naming convention says and it moved this answer's count: a
     # point whose name lacked "CO2" was kept or dropped with its name. A set whose classes do not
     # resolve to one quantity has no measurand, and no summary is given for it.
+    # The label is consulted ONLY to split a class two modalities share (BUG-1508); the class
+    # still decides, and a label alone never names a quantity.
+    metadata = await fill_missing_classes(uuids, metadata or {}, sparql_exec)
     measurand = measurand_from_classes(
-        [str((metadata.get(u) or {}).get("brick_class") or "") for u in uuids]
+        [str((metadata.get(u) or {}).get("brick_class") or "") for u in uuids],
+        labels=[str((metadata.get(u) or {}).get("label") or "") for u in uuids],
     )
     kinds = _kinds_of(units)
     labels = [str((metadata.get(u) or {}).get("label") or "") for u in uuids]
@@ -2825,6 +3216,13 @@ async def try_answer(
     # refused BOTH of its windows with `not claimed: measurand=co2 place=True`, which is what
     # left W1-04 and W2-03 PARTIAL.
     _place_named = names_a_place(question)
+    # A FLOOR named and nothing narrower (BUG-1571). "How much water did floor 2 use this week?"
+    # was vetoed as naming a place although the pipeline had bound floor 2's own sensors, so the
+    # rows went to a narration that averaged a flow and the relevance gate deleted it. The veto
+    # protects against summarising sensors that are not the place's; here that is CHECKED once
+    # the graph has placed every sensor (below), instead of assumed.
+    _floors_only = None if allow_named_place else names_only_floors(question)
+    allow_named_place = bool(allow_named_place or _floors_only)
     summary_ok = bool(
         measurand
         and question_asks_about(question, measurand)
@@ -2915,7 +3313,12 @@ async def try_answer(
         # source "how many people are in the building" uses. A summary whose lead figure is the mean
         # of room counters ("averaging 2.2 people") is not a headcount and disagrees with it.
         intent = AggregateIntent("max", "floor", True, False, True, ())
-    if headcount and intent.group == "floor" and not intent.now and not names_a_period(question):
+    if (
+        headcount
+        and intent.group == "floor"
+        and not intent.now
+        and not _names_a_day_or_period(question)
+    ):
         # Present tense with no period named: "which floor has the most people" is about now.
         intent = AggregateIntent(intent.stat, intent.group, intent.descending, False, True)
     _grp = "floor" if _FLOOR_NAMED_RE.search(question or "") else "room"
@@ -2950,6 +3353,20 @@ async def try_answer(
             intent.worst,
         )
         logger.info(f"[aggregate] place-scoped claim: grouping by {_grp} so the figures name it")
+    # ONE DAY'S PEAK IS NOT A PATTERN (BUG-1622). "When was the highest CO2 level on floor 2
+    # today?" was answered "CO2 usually runs highest around 14:00" from a week of readings, while
+    # today's hourly table put the peak at 13:00. A question naming one day and no pattern word
+    # gets that day hour by hour, whose lead names the peak hour. 3 of 4,060 bank questions and 0
+    # study texts take this shape.
+    from orchestrator.services.aggregate_breakdown import _PATTERN_RE as _PATTERN_WORDS
+
+    _one_day = bool(
+        intent.stat == "profile"
+        and _ONE_DAY_RE.search(question or "")
+        and not _PATTERN_WORDS.search(question or "")
+    )
+    if _one_day:
+        intent = AggregateIntent("mean", intent.group, True, False, False, intent.floors)
     window = resolve_window(question, start_date, end_date, tz_name, latest=intent.now, now=now)
     if intent.stat == "profile":
         # A pattern needs several days. A pipeline window of a class-length afternoon would give one
@@ -2975,6 +3392,75 @@ async def try_answer(
         except Exception as exc:  # placement is an enrichment; the answer degrades, not fails
             logger.warning(f"[aggregate] locations unavailable: {exc}")
     facts = facts_from(uuids, metadata, places)
+    if _floors_only:
+        # The check the veto stood in for (BUG-1571): every sensor must be on a floor the
+        # question names, by the graph's own placement. One that is not, or is unplaced, and the
+        # figure would not be the floor's -- so the lane steps back exactly as it did before.
+        _off = [u for u in uuids if str(facts[u].floor or "").strip() not in _floors_only]
+        if _off:
+            logger.info(
+                f"[aggregate] floor-named claim withdrawn: {len(_off)} of {len(uuids)} sensors "
+                f"are not placed on floor(s) {sorted(_floors_only)}"
+            )
+            return None
+
+    # A QUESTION ABOUT ROOMS IS NOT ABOUT THE WEATHER (BUG-1584). "Were any rooms more than 60%
+    # humidity this week?" bound every humidity sensor by class, the building's outdoor sensor
+    # among them, and led its table with "Building exterior 91 %". A sensor the graph types as
+    # outside air, or places on the exterior, is left out of an indoor question and the answer
+    # says so; a question that mentions outdoors keeps it.
+    if _INDOOR_WORDS.search(question or "") and not _OUTDOOR_WORDS.search(question or ""):
+        _outdoor = [u for u in uuids if _is_outdoor(facts[u])]
+        if _outdoor and len(_outdoor) < len(uuids):
+            logger.info(
+                f"[aggregate] {len(_outdoor)} outdoor sensor(s) left out of an indoor question"
+            )
+            uuids = [u for u in uuids if u not in set(_outdoor)]
+
+    # A FIGURE PER DAY OR PER HOUR (BUG-1563): "the daily average ... for the last 7 days" was
+    # answered with one mean for the week. Reduced in the store bucket by bucket; None leaves the
+    # question to the paths below.
+    from orchestrator.services.aggregate_breakdown import answer_breakdown, per_period_bucket
+
+    _bucket = per_period_bucket(question) or ((3600, "hour") if _one_day else None)
+    if (
+        _bucket is not None
+        and not intent.now
+        and intent.stat not in ("total", "profile")
+        and not aggregate_only
+        and not (resolution_clamp_s and _bucket[0] < resolution_clamp_s)
+    ):
+        if bands is None:
+            bands, _checked = await _bands_for(uuids, sparql_exec)
+        _rooms = {_group_key(facts[u], "room") for u in uuids if facts[u].room}
+        _floors = {facts[u].floor for u in uuids if facts[u].floor}
+        _where = (
+            next(iter(_rooms))
+            if len(_rooms) == 1 and _place_named and not _floors_only
+            else (
+                f"Floor {_floor_name(next(iter(_floors)))}"
+                if len(_floors) == 1 and _place_named
+                else ""
+            )
+        )
+        _res = await answer_breakdown(
+            question=question,
+            bucket=_bucket,
+            uuids=uuids,
+            facts=facts,
+            storage_map=storage_map,
+            window=window,
+            tz_name=tz_name,
+            adapter_for=adapter_for,
+            store_key=store_key,
+            bands=bands,
+            quantity=asked_quantity_name(
+                question, measurand, [str(facts[u].label or "") for u in uuids]
+            ),
+            place=_where,
+        )
+        if _res is not None:
+            return _res
 
     if resolution_clamp_s and (intent.now or measurand == "occupancy"):
         return None  # a clamped reader keeps the clamped (row-based) path
@@ -2982,8 +3468,14 @@ async def try_answer(
         return None
 
     if intent.stat == "total":
-        return await _answer_total(
+        answer = await _answer_total(
             intent, question, uuids, storage_map, facts, window, adapter_for, store_key, measurand
+        )
+        # What it COST, when that was asked: the total x the tariff in force (TODO-1646).
+        from orchestrator.services.utility_cost import append_cost
+
+        return await append_cost(
+            answer, question, measurand, window.start, window.end, tz_name, sparql_exec
         )
 
     if intent.stat == "profile":
@@ -3071,6 +3563,16 @@ async def try_answer(
     not_counting = len(uuids) - len(counting)
     if headcount and counting:
         uuids = counting
+    if headcount and intent.stat == "mean" and intent.group == "building" and not intent.now:
+        # THE BUILDING'S AVERAGE HEADCOUNT is the sum of its floor counters' averages: each
+        # counts the people on its floor, so floors add. A mean over the counters would be
+        # people PER FLOOR labelled as the building (BUG-1464's shape). 2026-10-11: "What was
+        # the average occupancy of the building this week?" had no lane that did this.
+        _hm = await _answer_headcount_mean(
+            intent, uuids, storage_map, facts, window, adapter_for, store_key
+        )
+        if _hm is not None:
+            return _hm
 
     # One unit family per answer: ppm and µg/m³ are not one quantity, and the rest are named.
     by_unit: Dict[str, List[str]] = {}
@@ -3090,7 +3592,9 @@ async def try_answer(
     limit_t: Optional[Threshold] = None
     no_limit_note = False
     if intent.verdict:
-        limit_t = cited_threshold(measurand, question, standards_path)
+        limit_t = asked_threshold(measurand, question) or cited_threshold(
+            measurand, question, standards_path
+        )
         if limit_t is None:
             no_limit_note = True
             intent = AggregateIntent("max", intent.group, True, False, intent.now, intent.floors)
@@ -3222,6 +3726,9 @@ async def try_answer(
         text = render_summary(
             ranked,
             floors_seen=len({facts[u].floor for u in answered if facts[u].floor}),
+            group=intent.group,
+            place_named=bool(allow_named_place and _place_named),
+            only_room=_only_room(answered, facts),
             **common,
         )
         if not text:
@@ -3251,6 +3758,10 @@ async def try_answer(
         }
     )
     extra: List[str] = [basis] if basis else []
+    if not intent.now:
+        _cov = coverage_note([a for a in aggs if a.uuid in answered], window, tz_name)
+        if _cov:
+            extra.append(_cov)
     # "My shared office is usually busy": the reader's own space cannot be resolved, so the answer
     # is the building's, and says so, rather than being refused or passed off as the office's.
     from orchestrator.services.aggregate_support import (
@@ -3279,9 +3790,7 @@ async def try_answer(
             # then nothing is claimed about sensors.
             floors_with: Optional[List[str]] = None
             try:
-                from orchestrator.services.aggregate_support import (
-                    build_floors_with_class_query,
-                )
+                from orchestrator.services.aggregate_support import build_floors_with_class_query
 
                 _classes = _measurand_classes(measurand)
                 if _classes:
@@ -3622,6 +4131,18 @@ async def _answer_total(
         return await _answer_energy(
             intent, energy, storage_map, facts, window, adapter_for, store_key, scope
         )
+    # Interval volume (litres drawn per reading) adds up exactly as interval energy does.
+    volume = by_kind.get("volume", [])
+    if volume and len(volume) * 2 >= len(use):
+        return await _answer_energy(
+            intent, volume, storage_map, facts, window, adapter_for, store_key, scope, "volume"
+        )
+
+    power = by_kind.get("power", [])
+    if power and len(power) * 2 >= len(use) and not intent.now:
+        return await _answer_power_energy(
+            question, intent, power, storage_map, facts, window, adapter_for, store_key, scope
+        )
 
     levels = [
         u
@@ -3654,6 +4175,44 @@ async def _answer_total(
     return None
 
 
+async def _answer_headcount_mean(
+    intent: AggregateIntent,
+    uuids: Sequence[str],
+    storage_map: Dict[str, str],
+    facts: Dict[str, Facts],
+    window: Window,
+    adapter_for: Callable[[str], Any],
+    store_key: Callable[[str], str],
+) -> Optional[Dict[str, Any]]:
+    """The building's average headcount over a period: the sum of its floor counters' means."""
+    counters = [u for u in uuids if facts[u].on_floor]
+    if not counters:
+        return None
+    ready, _unsupported = await _stores_ready(counters, storage_map, adapter_for, store_key)
+    aggs: List[SensorAgg] = []
+    for _key, (adapter, members) in ready.items():
+        got, _bad = await run_aggregates(adapter, members, window, None, None)
+        aggs.extend(a for a in got if a.n)
+    if not aggs:
+        return None
+    per_floor = sorted(
+        ((facts[a.uuid].floor or "?", a.total / a.n) for a in aggs), key=lambda p: _floor_sort(p[0])
+    )
+    total = sum(m for _, m in per_floor)
+    table = "| Floor | Average people |\n|---|---|\n" + "\n".join(
+        f"| Floor {_floor_name(f)} | {m:,.1f} |" for f, m in per_floor
+    )
+    text = (
+        f"**On average about {total:,.0f} people were in the building**, {window.label}.\n\n"
+        f"{table}\n\n"
+        f"The building's figure is the sum of its {len(aggs)} floor counters' averages: each "
+        "counts the people on its own floor, so the floors add up. It is averaged over every "
+        "hour of the period, nights and any weekend included."
+    )
+    figures = {"building mean": total, **{f"Floor {_floor_name(f)} mean": m for f, m in per_floor}}
+    return _result(text, intent, window, len(aggs), figures, unit="people")
+
+
 async def _answer_energy(
     intent: AggregateIntent,
     energy: Sequence[str],
@@ -3663,8 +4222,9 @@ async def _answer_energy(
     adapter_for: Callable[[str], Any],
     store_key: Callable[[str], str],
     scope: str,
+    noun: str = "energy",
 ) -> Optional[Dict[str, Any]]:
-    """Interval energy summed in the store; a reading is the energy of its own interval."""
+    """Interval energy (or volume) summed in the store; a reading is its own interval's amount."""
     from orchestrator.services.units import aggregation_decision
 
     decision = aggregation_decision({facts[u].unit for u in energy})
@@ -3690,13 +4250,91 @@ async def _answer_energy(
             )
             + "\n\n"
         )
+    headline = f"{_n(total)} {unit}"
+    if noun == "volume" and unit == "L" and total >= 1000:
+        headline += f" ({total / 1000.0:,.1f} m³)"
+    what = "volume drawn in" if noun == "volume" else "energy of"
     text = (
-        f"**{_n(total)} {unit} was used{scope}**, {window.label}.\n\n{table}"
-        f"Each reading is the energy of its own interval, so a total is their sum "
+        f"**{headline} was used{scope}**, {window.label}.\n\n{table}"
+        f"Each reading is the {what} its own interval, so a total is their sum "
         f"({sum(a.n for a in aggs):,} readings from {len(aggs)} meters)."
     )
     figures = {**group_figures(groups), "total": total, "readings": float(sum(a.n for a in aggs))}
-    return _result(text, intent, window, len(aggs), figures)
+    return _result(text, intent, window, len(aggs), figures, unit=unit)
+
+
+#: Energy unit for each power unit a point may declare.
+_ENERGY_OF_POWER = {"W": "Wh", "kW": "kWh", "MW": "MWh"}
+#: Longest gap between readings that still counts as a REGULAR series. Integrating across a longer
+#: hole would invent the energy of the hours nobody measured.
+_MAX_POWER_SPACING_H = 1.5
+_GENERATE = re.compile(r"\b(?:generat\w*|produc\w*|export\w*|yield\w*)\b", re.IGNORECASE)
+
+
+async def _answer_power_energy(
+    question: str,
+    intent: AggregateIntent,
+    power: Sequence[str],
+    storage_map: Dict[str, str],
+    facts: Dict[str, Facts],
+    window: Window,
+    adapter_for: Callable[[str], Any],
+    store_key: Callable[[str], str],
+    scope: str,
+) -> Optional[Dict[str, Any]]:
+    """Energy from POWER readings: each series integrated over the hours its readings cover.
+
+    "How much solar energy did we generate yesterday?" was answered "135 kWh" by summing 15-minute
+    kW readings as though each were the energy of its interval -- four times too much (BUG-1582).
+    A power reading is a rate; its energy is the rate times the time it held. With a regular
+    cadence that is the store's SUM times the spacing between readings, which the store also
+    gives (first, last, count). A series with gaps longer than an hour and a half is left out and
+    named, because integrating across a hole invents the energy nobody measured.
+    """
+    units = {facts[u].unit for u in power}
+    if len(units) != 1:
+        return None
+    unit = next(iter(units))
+    e_unit = _ENERGY_OF_POWER.get(unit)
+    if not e_unit:
+        return None
+    ready, _unsupported = await _stores_ready(power, storage_map, adapter_for, store_key)
+    aggs: List[SensorAgg] = []
+    for _key, (adapter, members) in ready.items():
+        got, _bad = await run_aggregates(adapter, members, window, None, None)
+        aggs.extend(got)
+    rows: List[Tuple[str, float, float]] = []
+    left_out: List[str] = []
+    for a in aggs:
+        if a.n < 2 or a.first is None or a.last is None:
+            continue
+        spacing_h = (a.last - a.first).total_seconds() / 3600.0 / (a.n - 1)
+        if spacing_h <= 0 or spacing_h > _MAX_POWER_SPACING_H:
+            left_out.append(facts[a.uuid].label or a.uuid)
+            continue
+        rows.append((facts[a.uuid].label or a.uuid, a.total * spacing_h, spacing_h))
+    if not rows:
+        return None
+    total = sum(e for _l, e, _s in rows)
+    verb = "generated" if _GENERATE.search(question or "") else "used"
+    lines = [f"**About {_n(total)} {e_unit} was {verb}{scope}**, {window.label}.", ""]
+    if len(rows) > 1:
+        lines += ["| Point | Energy |", "|---|---|"]
+        lines += [f"| {label} | {_n(e)} {e_unit} |" for label, e, _s in rows]
+        lines.append("")
+    minutes = sorted({round(s * 60) for _l, _e, s in rows})
+    lines.append(
+        f"These points record POWER ({unit}), so each figure is the readings integrated over time "
+        f"(power x the time between readings, about {' / '.join(str(m) for m in minutes)} "
+        "minutes), not a sum of the readings."
+    )
+    if left_out:
+        lines.append(
+            f"Left out because their readings have gaps too long to integrate: {', '.join(left_out)}."
+        )
+    figures = {f"{label} {e_unit}": float(e) for label, e, _s in rows}
+    figures["total"] = float(total)
+    return _result("\n".join(lines), intent, window, len(rows), figures)
 
 
 def _asked_noun(question: str) -> str:
@@ -3824,6 +4462,7 @@ def _result(
     window: Window,
     sensors: int,
     figures: Optional[Dict[str, float]] = None,
+    unit: str = "",
 ) -> Dict[str, Any]:
     """The dict the SQL lane returns: the answer, written, and marked so nothing rewrites it.
 
@@ -3850,6 +4489,8 @@ def _result(
             "group": intent.group,
             "window": {"start": window.start, "end": window.end},
             "sensors": sensors,
+            # the unit the figures are in, so a caller comparing two answers can say it
+            "unit": unit,
         },
         # The figures the text quotes, machine-readable (W1-04). They were computed here and
         # recorded as evidence, and then only the PROSE left this function -- so a caller that

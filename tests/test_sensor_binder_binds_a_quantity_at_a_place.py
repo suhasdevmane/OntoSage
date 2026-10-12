@@ -195,6 +195,10 @@ async def test_stuffy_in_a_named_room_binds_that_rooms_own_co2_sensor():
     # It carries the routing the SQL lane needs, unchanged: uuid and where it is stored.
     row = binding.envelope()["results"]["bindings"][0]
     assert row["uuid"]["value"] == U_CO2 and row["storage"]["value"] == NS + "store_a"
+    # BUG-1489: the class it was selected by rides as `metricCls`, which is where the metadata
+    # builder reads `brick_class` and the aggregate lane reads the measurand from.
+    assert row["metricCls"]["value"] == row["type"]["value"]
+    assert row["metricCls"]["value"].endswith("CO2_Level_Sensor")
     # ...and it never asked the "sensor count per space" question that caused the defect.
     assert not any("COUNT(" in q for q in graph.queries)
 

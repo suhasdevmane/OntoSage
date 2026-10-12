@@ -90,6 +90,14 @@ INDIVIDUAL_PATTERN_RE = re.compile(
     # view the badge-in/out logs", asserted from access-permission-group records, and "who
     # badged into room 2.01 last night?" matched nothing here at all.
     rf"|\bwho\b.{{0,30}}\b(?:badged|swiped|tapped in|scanned in|clocked in|signed in)\b"
+    # BUG-1551: the same ask through a person noun. "Which staff member badged in first today?"
+    # reached the access-event register; "the first person to arrive" isolates one individual.
+    # A place ("which rooms were entered") never matches; 0 of the 4,060 bank questions do.
+    rf"|\bwhich\s+(?:staff\s+member|person|employee|colleague|student|user|member\s+of\s+staff|"
+    rf"visitor)s?\b.{{0,25}}\b(?:badged|swiped|tapped|scanned|clocked|signed|arrived|came\s+in|"
+    rf"left|entered)\b"
+    rf"|\b(?:first|last)\s+(?:person|one|staff\s+member|employee|colleague|student)\s+to\s+"
+    rf"(?:arrive|leave|badge|swipe|enter|come\s+in|sign\s+in)\b"
     rf"|\bwhen (?:(?:did|does|do|will)\s+)?(?:i|he|she|they|someone|people|staff|my \w+)\s+"
     rf"(?:badge|swipe|tap|clock|sign)(?:s|ed)?\s+(?:in|out|into|on|off)\b"
     rf"|\b(?:my|his|her|their|someone'?s|a person'?s|staff)\s+(?:access|entry|door|badge|swipe|"

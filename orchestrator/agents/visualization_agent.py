@@ -425,7 +425,9 @@ Respond with ONLY the Python code, wrapped in ```python blocks."""
             from orchestrator.services.chart_policy import caption_header
 
             meta = (getattr(state, "intermediate_results", None) or {}).get("sensor_metadata") or {}
-            header = caption_header(_vh.plottable_rows(data), meta)
+            header = caption_header(
+                _vh.plottable_rows(data), meta, tz_name=getattr(settings, "BUILDING_TIMEZONE", None)
+            )
         except Exception as exc:  # a header is a courtesy, never a reason to lose the caption
             logger.debug(f"[visualization_agent] caption header skipped: {exc}")
 

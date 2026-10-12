@@ -108,6 +108,12 @@ _QUDT_LOCAL: Dict[str, str] = {
     "microgm-per-m3": "µg/m³",
     "m3-per-hr": "m³/h",
     "m3-per-sec": "m³/s",
+    # litres per time (BUG-1560): "L-PER-MIN" was printed as the unit of every water-flow answer
+    "l-per-min": "L/min",
+    "l-per-sec": "L/s",
+    "l-per-hr": "L/h",
+    "l-per-day": "L/day",
+    "m3": "m³",
     "l": "L",
     "kilogm": "kg",
     "millim": "mm",

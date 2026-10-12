@@ -28,8 +28,11 @@ concepts:
     shape: who
     # "responsibilities" and "responsibility" do not reduce to one stem (the -y/-ies pair is not
     # one the stemmer folds), so both forms are declared rather than derived.
-    question: [owner, owners, own, owns, owned, ownership, responsible, responsibility, responsibilities, accountable, accountability, accountabilities, custodian, steward, people, person, staff, personnel]
-    phrases: ["in charge", "look after", "looks after", "looked after", "who manages", "who runs"]
+    question: [owner, owners, own, owns, owned, ownership, responsible, responsibility, responsibilities, accountable, accountability, accountabilities, custodian, steward, people, person, staff, personnel, assignee, assignees]
+    # "who is assigned to WO-008?" (BUG-1602) listed the record and no party. A phrase, not the
+    # bare word: "assigned" is also a recorded STATUS in some registers. 0 of 4,060 bank
+    # questions match either form.
+    phrases: ["in charge", "look after", "looks after", "looked after", "who manages", "who runs", 're:\bwho(?:\s+\w+){0,3}\s+assigned\b']
     columns: [owner, responsible, accountable, custodian, steward]
     exclude: [for]
     stamps: [recordOwner]
@@ -38,10 +41,23 @@ concepts:
     plain: next due date
     shape: when
     pick: earliest
-    question: [due, deadline, expires, expiry, expire, expiring, renewal, renews]
+    question: [due, deadline, renewal, renews]
     phrases: ["due date", "due for", "when is it due", "when are they due", 're:\bnext\b(?:\s+(?:\w+ed|\w+tion|service|test|visit|due|check|review|maintenance))?']
-    columns: [next, due, deadline, expir, renew]
+    columns: [next, due, deadline, renew]
     exclude: []
+    stamps: []
+  # WHEN A RECORD ENDS (BUG-1549). "When does the lift warranty expire?" listed the warranty and
+  # no date: the expiry words sat on `due`, whose columns name no end date, and a warranty's end
+  # is its effectiveTo. A column split as effective|to is matched on "to"; columns where "to"
+  # names a person or a route (reportTo, assignedTo, escalateTo) are excluded.
+  ends:
+    plain: end date
+    shape: when
+    pick: earliest
+    question: [expires, expiry, expire, expiring, ends, ending]
+    phrases: ["end date", "run out", "runs out", "come to an end"]
+    columns: [expir, end, to]
+    exclude: [report, assigned, sent, applies, addressed, escalate, escalated, refer, referred, route, owner]
     stamps: []
 
   last_done:

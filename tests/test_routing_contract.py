@@ -460,6 +460,12 @@ def test_precedence_order_is_pinned():
         # pump running?" reached a lane that knows lifts, AV and network, and was refused with
         # "I couldn't tell which asset you meant" — for a building with one heat pump.
         "asset_state_without_a_family",
+        # 2026-10-11: the diagnosis lane received 6 why-questions on the role-stratified bank
+        # sample and declined all 6; none named a comfort quantity it can diagnose.
+        "diagnosis_without_a_quantity",
+        # 2026-10-11: a readings question naming a file format (PDF/Word/CSV/Excel) -> export,
+        # which writes and links the file. No regression-gate question names a file format.
+        "file_request_is_an_export",
     ]
 
 
@@ -968,6 +974,13 @@ def test_concept_stage_precedence_is_pinned():
         # passed its offline tests — which supplied the concepts — and never fired once on a
         # live turn, because the context it read was empty there.
         "one_quantity_judged_against_another",
+        # 2026-10-11: compare/trend with no measurand and no place -> metadata. After every rule
+        # that claims a quantity (so an unmeasured one has already gone to observability), before
+        # the compound rule, which takes from metadata as it takes from compare.
+        "record_comparison_is_not_a_series",
+        # 2026-10-11 (TODO-1646): a day/week cost of a metered utility -> analytics, which prices
+        # the metered total at the tariff in force. 0 of 4,060 bank questions reach it.
+        "metered_cost_is_computed",
         # v2 P6 (2026-10-08): LAST in the LAST stage. The concept stage is the only one every
         # question reaches — the held-record and amenity-triple short-circuits return before the
         # parse stage — and last because it only escalates from single-facet lanes, deferring to

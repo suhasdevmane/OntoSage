@@ -130,8 +130,10 @@ MAPPED = [
     ("Is it possible to temporarily disable a door sensor?", "unexpected_open_window"),
     ("What are the current lux levels on the lights in the rooms?", "lighting_comfort"),
     ("how much does the lux level near the windows let us dim the lights?", "lighting_comfort"),
-    ("what is the current water flow rate?", "water_usage"),
-    ("Does a high water flow in the pipes during closing hours mean a leak?", "water_usage"),
+    # A flow RATE is its own concept since BUG-1557 split it from usage (a volume): a floor's
+    # L/min reading was being summed as litres used.
+    ("what is the current water flow rate?", "water_flow"),
+    ("Does a high water flow in the pipes during closing hours mean a leak?", "water_flow"),
     ("What is the power usage?", "energy_consumption"),
     ("Which devices use the most energy?", "energy_consumption"),
     ("which floors consume the most energy?", "energy_consumption"),

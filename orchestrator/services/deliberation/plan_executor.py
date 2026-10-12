@@ -40,6 +40,7 @@ from orchestrator.services.deliberation.capability_schema import (
 from orchestrator.services.deliberation.cqir import (
     CQIR,
     SCORING_OPERATORS,
+    Direction,
     FacetCriterion,
     FacetOperator,
     Hardness,
@@ -105,12 +106,28 @@ NOW_PER_UUID_LIMIT = 90
 DEFAULT_PER_UUID_LIMIT = 500
 
 
-def fetch_plan(basis: Any, window_hours: Optional[float], n_candidates: int, n_modalities: int):
+def fetch_plan(
+    basis: Any,
+    window_hours: Optional[float],
+    n_candidates: int,
+    n_modalities: int,
+    resolved: bool = False,
+):
     """(window_hours, per_uuid_limit, estimated_rows) for a deliberation fetch."""
     if basis == TimeBasis.NOW:
         hours, limit = NOW_WINDOW_HOURS, NOW_PER_UUID_LIMIT
     elif basis == TimeBasis.FORECAST:
         hours, limit = 72.0, DEFAULT_PER_UUID_LIMIT
+    elif resolved and window_hours:
+        # A WRITTEN-OUT INTERVAL IS READ WHOLE AT TEN-SECOND CADENCE where the budget allows
+        # (BUG-1492). The one-minute assumption below gave a one-hour interval a 60-row read, which
+        # on a 10-second series is its last ten minutes; a "stayed below" check was then judged
+        # on a sixth of the hour. Falls through to the duration rules when it does not fit.
+        hours = float(window_hours)
+        limit = int(min(MAX_RESOLVED_PER_UUID, max(60, hours * 360)))
+        if n_candidates * max(1, n_modalities) * limit <= MAX_FETCH_ROWS:
+            return hours, limit, n_candidates * max(1, n_modalities) * limit
+        return fetch_plan(basis, window_hours, n_candidates, n_modalities)
     else:
         hours = float(window_hours or 24.0)
         # CAVEAT-578: the WHOLE window at one-minute cadence, where the row budget allows. The
@@ -128,6 +145,9 @@ def fetch_plan(basis: Any, window_hours: Optional[float], n_candidates: int, n_m
 
 #: Three days at one-minute cadence — the longest window read whole per series.
 MAX_WINDOW_PER_UUID = 4320
+
+#: One day at ten-second cadence — the longest WRITTEN-OUT interval read whole per series.
+MAX_RESOLVED_PER_UUID = 8640
 
 
 def window_coverage_note(
@@ -215,6 +235,30 @@ class EventCheck:
     free: Optional[bool] = None
     detail: str = ""  # e.g. 'booked 14:00–16:00' / 'booked 22% of next 7 days'
     window_hours: float = 0.0
+    period: str = ""  # a named period checked ("tomorrow morning"); "" = from now (CAVEAT-1617)
+
+
+def _local_hhmm(value: Any) -> str:
+    """A stored (UTC) booking time as the building's local HH:MM -- what the reader means."""
+    from datetime import datetime as _dt
+
+    from orchestrator.services.requested_interval import building_tz, to_local
+
+    if isinstance(value, str):
+        try:
+            value = _dt.fromisoformat(value.replace("T", " ")[:19])
+        except ValueError:
+            return value[11:16]
+    if isinstance(value, _dt):
+        return to_local(value, building_tz()).strftime("%H:%M")
+    return str(value)[11:16]
+
+
+def free_phrase(check: "EventCheck", unit_sep: str = " ") -> str:
+    """'free tomorrow morning' for a named period, 'free for the next 2 h' from now."""
+    if getattr(check, "period", ""):
+        return f"free {check.period}"
+    return f"free for the next {check.window_hours:g}{unit_sep}h"
 
 
 @dataclass
@@ -407,7 +451,13 @@ async def _event_availability(
         return list(result.data or []) if getattr(result, "success", False) else []
 
     if free_crit:
-        rows = await _overlaps(now, now + timedelta(hours=free_crit.hours))
+        win_start, win_end = now, now + timedelta(hours=free_crit.hours)
+        period = getattr(free_crit, "period", "") or ""
+        if getattr(free_crit, "start", None) and getattr(free_crit, "end", None):
+            # CAVEAT-1617: a named period ("tomorrow morning") is checked as itself.
+            win_start = datetime.strptime(free_crit.start, "%Y-%m-%d %H:%M:%S")
+            win_end = datetime.strptime(free_crit.end, "%Y-%m-%d %H:%M:%S")
+        rows = await _overlaps(win_start, win_end)
         busy: Dict[str, str] = {}
         for row in rows:
             subj = str(row.get("subject_uuid") or (row[2] if not isinstance(row, dict) else ""))
@@ -416,14 +466,18 @@ async def _event_availability(
                 continue
             s = row.get("start_dt") if isinstance(row, dict) else row[3]
             e = row.get("end_dt") if isinstance(row, dict) else row[4]
-            busy[iri] = f"booked {str(s)[11:16]}–{str(e)[11:16]}"
+            busy[iri] = f"booked {_local_hhmm(s)}–{_local_hhmm(e)}"
+        free_detail = (
+            f"no booking {period}" if period else f"no booking in the next {free_crit.hours:g}h"
+        )
         for iri in subject_by_iri:
             checks[iri] = EventCheck(
                 space_iri=iri,
                 kind="free_window",
                 free=iri not in busy,
-                detail=busy.get(iri, f"no booking in the next {free_crit.hours:g}h"),
+                detail=busy.get(iri, free_detail),
                 window_hours=free_crit.hours,
+                period=period,
             )
     if pressure:
         rows = await _overlaps(now, now + timedelta(days=7))
@@ -525,7 +579,7 @@ def route_question(query: str) -> bool:
 _SHOWN_RANKS = 3
 
 
-def _out_of_band_notes(score, anchors) -> List[str]:
+def _out_of_band_notes(score, anchors, first=None) -> List[str]:
     """Say when a shown criterion runs past the range the same answer scores it against.
 
     Row 58 of the stakeholder read offered three rooms, quoted "the 0-8 band" in its own
@@ -566,10 +620,25 @@ def _out_of_band_notes(score, anchors) -> List[str]:
             if len(modalities) > 1
             else "the order between them is not something these readings support"
         )
-        notes.append(
+        head = (
             f"**Every {modality} reading above sits {end} the {anchor.lo:g} to "
-            f"{anchor.hi:g} range used to weigh it**, so on that count these spaces are "
-            f"all at the same end of the scale and {rest}."
+            f"{anchor.hi:g} range used to weigh it**"
+        )
+        if (
+            first is not None
+            and first.modality == modality
+            and first.direction in (Direction.MAXIMIZE, Direction.MINIMIZE)
+        ):
+            # BUG-1496: the scorer breaks this tie on these very readings (WB-13), so for the
+            # quantity a maximise/minimise ask is about, the readings DO order the spaces.
+            notes.append(
+                f"{head}, so that range does not separate these spaces; they are listed by the "
+                "readings themselves."
+            )
+            continue
+        notes.append(
+            f"{head}, so on that count these spaces are all at the same end of the scale and "
+            f"{rest}."
         )
     return notes
 
@@ -977,7 +1046,11 @@ async def execute(
     # reader has no way to tell — so the question is handed back with the narrowing that
     # would make it answerable, which the user can act on immediately.
     _plan_hours, _plan_limit, _plan_rows = fetch_plan(
-        cqir.time.basis, cqir.time.window_hours, len(candidates), len(modalities)
+        cqir.time.basis,
+        cqir.time.window_hours,
+        len(candidates),
+        len(modalities),
+        resolved=cqir.time.basis == TimeBasis.WINDOW and cqir.time.is_resolved_interval,
     )
     # A facet plan with no sensed criterion fetches no series, so no row budget applies to it.
     _budget_applies = bool(modalities) or not facet_mode
@@ -1066,11 +1139,23 @@ async def execute(
             # 14 September's mean "mean over 2026-09-13".
             try:
                 from datetime import datetime as _dt
+                from datetime import timedelta as _td
 
                 from orchestrator.services.requested_interval import building_tz, to_local
 
-                _day = to_local(_dt.fromisoformat(str(fetch_start)[:19]), building_tz()).date()
+                _t0 = to_local(_dt.fromisoformat(str(fetch_start)[:19]), building_tz())
+                _t1 = to_local(_dt.fromisoformat(str(fetch_end)[:19]), building_tz())
+                _day = _t0.date()
                 agg_window_note = f"mean over {_day.isoformat()}"
+                if _t1.date() != _day:
+                    # BUG-1492: a written-out span is labelled by both ends, not its first day
+                    agg_window_note = f"mean over {_day.isoformat()} to {_t1.date().isoformat()}"
+                elif (_t1 - _t0).total_seconds() < 23 * 3600:
+                    # ...and a part of one day by its hours ("16:00 to 18:00")
+                    _end = _t1 + _td(seconds=1)
+                    agg_window_note = (
+                        f"mean over {_day.isoformat()} {_t0:%H:%M}-{_end:%H:%M} (building time)"
+                    )
             except Exception:
                 agg_window_note = f"mean over {fetch_start[:10]}"
     else:
@@ -1417,7 +1502,10 @@ async def execute(
     if _coverage_note and score.ranked:
         event_notes = [_coverage_note] + list(event_notes)
 
-    band_notes = _out_of_band_notes(score, _anchors)
+    _ordered = [c for c in cqir.constraints if c.hardness == Hardness.HARD] + [
+        c for c in cqir.constraints if c.hardness != Hardness.HARD
+    ]
+    band_notes = _out_of_band_notes(score, _anchors, first=_ordered[0] if _ordered else None)
 
     # The fingerprint covers the facet criteria (cqir.plan_fingerprint includes them whenever
     # there are some), so the plan hash does too.

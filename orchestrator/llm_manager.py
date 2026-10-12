@@ -272,6 +272,19 @@ HOSTED_BLIP_S = float(os.environ.get("HOSTED_BLIP_S", "60"))
 HOSTED_MAX_ATTEMPTS = 2
 
 
+class HostedReplyCut(Exception):
+    """A hosted reply that stopped at max_tokens part-way through (finish_reason=length).
+
+    Not an EmptyCompletionError: there IS text. `_call_provider` retries it once at double the
+    budget and, if it is cut again, returns the partial text with a warning (BUG-1495).
+    """
+
+    def __init__(self, budget: int, partial: str) -> None:
+        super().__init__(f"hosted reply cut at max_tokens={budget} ({len(partial)} chars)")
+        self.budget = budget
+        self.partial = partial
+
+
 class HostedBudgetExhausted(EmptyCompletionError):
     """A hosted reasoning model spent its whole max_tokens budget before any visible text.
 
@@ -1101,6 +1114,21 @@ class LLMManager:
                         f"once with max_tokens={exc.budget * 2}"
                     )
                     budget = exc.budget * 2
+                except HostedReplyCut as exc:
+                    if budget_try == 2:
+                        # What the model wrote is still better than nothing, and every reader of
+                        # it validates what it gets; the cut is logged, never silent.
+                        logger.warning(
+                            f"[hosted] {client_label} reply still cut at max_tokens={exc.budget} "
+                            f"(finish_reason=length, {len(exc.partial)} chars) — using it as written"
+                        )
+                        return exc.partial
+                    logger.warning(
+                        f"[hosted] {client_label} reply was cut at max_tokens={exc.budget} "
+                        f"(finish_reason=length, {len(exc.partial)} chars). Retrying once with "
+                        f"max_tokens={exc.budget * 2}"
+                    )
+                    budget = exc.budget * 2
         raise AssertionError("unreachable: the budget loop returns or raises")  # pragma: no cover
 
     # Injected into every LLM call to prevent language drift
@@ -1150,10 +1178,14 @@ class LLMManager:
             generation = result.generations[0][0]
             text = generation.message.content
             blank = not text or (isinstance(text, str) and not text.strip())
+            finish = (generation.generation_info or {}).get("finish_reason")
             if blank:
-                finish = (generation.generation_info or {}).get("finish_reason")
                 if finish == "length":
                     raise HostedBudgetExhausted(int(invoke_kwargs["max_tokens"]))
+            elif finish == "length":
+                # A REPLY CUT AT THE LIMIT IS NOT A REPLY (BUG-1495): a compile plan one brace
+                # short failed to parse 3 of 3 times and the question was declined as unmapped.
+                raise HostedReplyCut(int(invoke_kwargs["max_tokens"]), str(text))
             return text
 
         else:  # ollama (local)

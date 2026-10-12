@@ -1,0 +1,16 @@
+# The unit each registered tariff's rate is charged per (2026-10-11, TODO-1646).
+#
+# Transcribed from documents/energy_tariffs.md, which states: "Rates are shown per kWh for
+# electricity and gas, and per cubic metre for water. All rates exclude VAT." The tariff records
+# themselves are lifted from that document by the register mapping; this file adds the one fact
+# the lift did not carry, so a cost can convert metered consumption to the rate's unit.
+
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+# Declared because the boot validator requires every building TTL to name its namespace; the
+# tariff IRIs below are written in full because their local part contains "/".
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+<http://abacwsbuilding.cardiff.ac.uk/abacws#tariff/TAR-ELEC-2025> ontosage:rateUnit "kWh" .
+<http://abacwsbuilding.cardiff.ac.uk/abacws#tariff/TAR-ELEC-2026> ontosage:rateUnit "kWh" .
+<http://abacwsbuilding.cardiff.ac.uk/abacws#tariff/TAR-GAS-2026> ontosage:rateUnit "kWh" .
+<http://abacwsbuilding.cardiff.ac.uk/abacws#tariff/TAR-WATER-2026> ontosage:rateUnit "m3" .

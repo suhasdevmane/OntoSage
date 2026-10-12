@@ -1,0 +1,21 @@
+# Round-5 probe questions for scripts/qa_probe.py (--pool scripts/qa_probe_questions_r5.yaml).
+# Single-question checks written AFTER round 5's conversation fixes, to test new phrasings of the
+# shapes those conversations exposed. Same contract as the earlier pools: a routing and delivery
+# check, NOT an evaluation set and never evidence about unseen questions. No Paper 3 study task is
+# quoted or paraphrased, and no study room, date or criterion is used.
+families:
+  instruments_per_floor:
+    - {q: "Which floor has the fewest CO2 sensors?", expect: [capability, metadata]}
+    - {q: "How many noise sensors are on each floor?", expect: [capability, metadata]}
+    - {q: "Which floor has the most occupancy sensors?", expect: [capability, metadata]}
+  availability_by_kind:
+    - {q: "Which meeting rooms are free tomorrow morning?", expect: [events]}
+    - {q: "Are any meeting rooms available this evening?", expect: [events]}
+  availability_with_a_third_facet:
+    - {q: "Which quiet meeting rooms are free tomorrow afternoon?", expect: [deliberate, events]}
+  register_party:
+    - {q: "Who is assigned to WO-010?", expect: [metadata, register]}
+  power_energy:
+    - {q: "How much energy did the solar panels produce on Wednesday?", expect: [analytics, sensor_data]}
+  single_figure:
+    - {q: "What was the highest noise level in meeting room 3.15 today?", expect: [analytics, sensor_data]}

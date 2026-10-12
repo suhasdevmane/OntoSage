@@ -60,6 +60,16 @@ def _parse_window_start(value: Optional[str]) -> Optional[datetime]:
 
 logger = get_logger(__name__)
 
+#: The question asks for a FILE (an export, a download, a CSV / PDF / Word / Excel document), so
+#: the rows must reach the export step rather than be summarised in prose (2026-10-11).
+_FILE_REQUEST_RE = re.compile(
+    r"\b(?:export|download)\w*\b"
+    r"|\bas\s+(?:an?\s+)?(?:csv|pdf|excel|xlsx|word|docx|spreadsheet)\b"
+    r"|\b(?:csv|pdf|excel|xlsx|docx)\s+(?:file|document|report|export|format)\b"
+    r"|\bin\s+(?:csv|excel|pdf|word)\s+format\b|\bword\s+document\b|\bspreadsheet\b",
+    re.IGNORECASE,
+)
+
 #: How many sensors this lane will read for one question before declining as too broad.
 #:
 #: A budget, not a property of any building: it bounds what can be fetched, summarised and
@@ -210,6 +220,46 @@ def resolve_named_window(
                 end_date,
             )
         return bounds[0], bounds[1], origin
+
+    # 3. A DATE THE QUESTION WRITES OUT IS ARITHMETIC TOO (BUG-1490). "in March 2025" got the
+    #    right month from the classifier on one ask and no window on the next, and the second read
+    #    the last 30 days of 2026 under the heading "March 2025". The written date sets the OUTER
+    #    bound; a compiled window lying wholly inside it is a refinement the resolver could not
+    #    make ("the morning of 14 February 2025") and is kept. A written date still in the future
+    #    selects no rows, so correction 2's reasoning applies and it is not imposed.
+    try:
+        from orchestrator.services.requested_interval import explicit_date_bounds
+
+        written = explicit_date_bounds(user_query, building_tz())
+    except Exception as exc:  # a resolver failure must not cost the turn
+        logger.warning(f"[sql] written-date resolution failed (non-fatal): {exc}")
+        written = None
+    written_start = _parse_window_start(written[0]) if written else None
+    if written and written_start is not None and written_start < now:
+        cs = str(start_date or "").replace("T", " ")
+        ce = str(end_date or "").replace("T", " ")
+        if cs and ce and written[0] <= cs <= ce <= written[1] and (cs, ce) != written:
+            origin.update(
+                {
+                    "source": "classifier_within_explicit_date",
+                    "start": cs,
+                    "end": ce,
+                    "explicit_start": written[0],
+                    "explicit_end": written[1],
+                }
+            )
+            return start_date, end_date, origin
+        origin.update({"source": "explicit_date", "start": written[0], "end": written[1]})
+        if (cs, ce) != written:
+            logger.info(
+                "[sql] the question writes out its period — window set to %s .. %s "
+                "(compiled was %s .. %s) (BUG-1490)",
+                written[0],
+                written[1],
+                start_date,
+                end_date,
+            )
+        return written[0], written[1], origin
 
     begins = _parse_window_start(start_date)
     if begins is not None and begins >= now - timedelta(minutes=1):
@@ -468,6 +518,7 @@ class SQLAgent:
         sensor_metadata: Optional[Dict[str, Dict[str, str]]],
         max_resolution_s: Optional[float] = None,
         aggregate_across_sensors: bool = False,
+        one_bound_place: bool = False,
     ) -> Optional[Dict[str, Any]]:
         """The store's own aggregates for a per-floor / whole-building question, else None.
 
@@ -476,6 +527,13 @@ class SQLAgent:
         store's uuid as a column name. The policy decision's two limits ride along: a reader held
         to a coarser resolution, or to building-wide aggregates, is not handed finer detail.
         """
+        if _FILE_REQUEST_RE.search(user_query or ""):
+            # A FILE WAS ASKED FOR (2026-10-11). "Export the temperature readings for floor 3
+            # yesterday as CSV" and "... as a PDF report" were answered by this lane with a
+            # written summary and no file -- its answer is marked so nothing downstream rewrites
+            # it, so the export step never ran. The rows go on to the export step instead.
+            logger.info("[sql] a file was asked for -- the aggregate lane stands down for export")
+            return None
         try:
             from orchestrator.services import aggregate_lane
             from orchestrator.services.deliberation.live import sparql_exec
@@ -511,11 +569,24 @@ class SQLAgent:
                 **_lane_kwargs,
             )
             if answer is None:
+                # BUG-1489: one named space, bound by the pipeline, over a NAMED PERIOD: the store's
+                # own statistic over the whole window, not the newest 1,000 rows. Measured on the
+                # Paper 3 development forms, 10 Oct: "the average temperature in room 5.23 in March
+                # 2025" was the mean of the last three hours of 9 March, headlined as March's. The
+                # same flag the comparison lane already passes; present-tense questions and
+                # multi-place questions are left exactly as they were.
+                from orchestrator.services.aggregate_support import names_a_period
+                from orchestrator.services.requested_interval import explicit_date_bounds
+
+                # A written-out date ("in March 2025") names a period as surely as "last week";
+                # `names_a_period` reads only the relative words (BUG-1490).
+                _period = names_a_period(user_query) or explicit_date_bounds(user_query) is not None
                 answer = await aggregate_lane.try_answer(
                     question=user_query,
                     start_date=start_date,
                     end_date=end_date,
                     tz_name=settings.BUILDING_TIMEZONE,
+                    allow_named_place=bool(one_bound_place and _period),
                     **_lane_kwargs,
                 )
             # SAY WHICH WORDS WERE NOT HONOURED (2026-09-19). "Which COMMISSIONED CO2-monitored
@@ -543,9 +614,15 @@ class SQLAgent:
         sensor_metadata: Optional[Dict[str, Dict[str, str]]] = None,
         max_resolution_s: Optional[float] = None,
         aggregate_across_sensors: bool = False,
+        one_bound_place: bool = False,
     ) -> Dict[str, Any]:
         """
         Fetch data for specific UUIDs, respecting storage locations.
+
+        ``one_bound_place`` (BUG-1489): the caller's binder bound every one of these sensors to ONE
+        named space. A statistic over a named period for that space is then computed by the store
+        over the whole window (the aggregate lane, labelled with the place) instead of from the
+        newest rows the per-sensor cap leaves.
 
         Args:
             uuids: List of sensor UUIDs
@@ -600,6 +677,7 @@ class SQLAgent:
                 sensor_metadata,
                 max_resolution_s,
                 aggregate_across_sensors,
+                one_bound_place=one_bound_place,
             )
             if _agg is not None:
                 return _agg
@@ -1197,6 +1275,17 @@ Return ONLY the SQL query, no markdown, no explanations.
             # applies the same test to its own append, and this is the other place it is made.
             if rows_capped and not gives_a_figure(formatted):
                 logger.info("[sql_agent] capped fetch not disclosed: the prose states no figure")
+                rows_capped = False
+            # A "RIGHT NOW" READ IS CAPPED ON PURPOSE (BUG-1504). `rows_per_uuid_for` gives a
+            # present-tense question NOW_ROWS_PER_UUID rows by design -- it asks for the latest
+            # readings, not a period -- so reaching that limit is not a truncated period and the
+            # "SAMPLE of the newest data ... newest part of the last 30 days" note under "What's
+            # the temperature in room 5.01 right now?" told the reader about a cap that changed
+            # nothing they asked for. Only when no window was named either.
+            if rows_capped and _rows_per_uuid == NOW_ROWS_PER_UUID and not start_date:
+                logger.info(
+                    "[sql_agent] capped fetch not disclosed: a 'now' read is capped by design"
+                )
                 rows_capped = False
             if rows_capped:
                 from orchestrator.services.disclosure_gate import truncation_note

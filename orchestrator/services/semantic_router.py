@@ -758,6 +758,12 @@ _CONTROL_COMMAND_PHRASES: FrozenSet[str] = frozenset(
 
 # Actuation VERB ... (within ~40 chars) ... controllable TARGET. Verb-first so it
 # matches commands ("open the door") but not status questions ("is the door open").
+_DETERMINED_VERB_RE = _re.compile(
+    r"\b(the|an?|any|all|every|its|their|our|my|these|those|which|what|how\s+many)\s+"
+    r"(open|closed?|locked|lock|start|stop|release)\b",
+    _re.IGNORECASE,
+)
+
 _CONTROL_VERB_TARGET_RE = _re.compile(
     r"\b(unlock|lock|open|close|shut|turn\s+on|turn\s+off|switch\s+on|switch\s+off|"
     r"power\s+on|power\s+off|adjust|increase|decrease|dim|brighten|raise|lower|"
@@ -1183,6 +1189,11 @@ class SemanticRouter:
         # "what happens if we turn off the AHU at 6pm?" is a what-if, not an instruction.
         # "fail open / fail locked / fail safe" is a device PROPERTY, never an instruction.
         probe = _FAIL_MODE_RE.sub(" ", query)
+        # A verb after a determiner is an ADJECTIVE or a noun (BUG-1568): "List THE OPEN work orders
+        # for the lifts" matched open...lifts and an operator was told they lack permission to
+        # control building systems. "the open", "any open", "an open window" describe a state; an
+        # order puts the verb first. 2 of 4,060 bank questions move, both a state, not an order.
+        probe = _DETERMINED_VERB_RE.sub(lambda m: m.group(1) + " _", probe)
         if _INFORMATION_QUESTION_RE.search(probe) or _SUBORDINATE_LEAD_QUESTION_RE.search(probe):
             return False
         if _AUX_BARE_SUBJECT_QUESTION_RE.search(

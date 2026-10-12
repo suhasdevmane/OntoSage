@@ -128,7 +128,8 @@ _SYNONYMS: Dict[str, Tuple[str, ...]] = {
     "co2": ("co2", "carbon dioxide"),
     "air quality": ("air quality", "co2", "pm", "voc", "particulate", "aqi", "iaq"),
     "sound": ("sound", "noise", "acoustic", "decibel"),
-    "illuminance": ("illuminance", "lux", "light"),
+    # "luminance" too: a building may name its light-level points "Luminance Sensor" (BUG-1513)
+    "illuminance": ("illuminance", "luminance", "lux", "light"),
     "occupancy": ("occupancy", "people", "presence", "motion"),
     "pressure": ("pressure",),
     "flow": ("flow",),
@@ -185,7 +186,7 @@ def quantities_named(question: str) -> List[str]:
 
 def _meta_text(meta: Dict[str, Any]) -> str:
     return " ".join(
-        str(meta.get(k, "")) for k in ("label", "kind", "sensor_uri", "unit", "type")
+        str(meta.get(k, "")) for k in ("label", "kind", "sensor_uri", "unit", "type", "brick_class")
     ).lower()
 
 
@@ -272,7 +273,9 @@ def _fmt(ts: datetime) -> str:
 
 
 def caption_header(
-    rows: Sequence[Dict[str, Any]], metadata: Optional[Dict[str, Dict[str, Any]]] = None
+    rows: Sequence[Dict[str, Any]],
+    metadata: Optional[Dict[str, Dict[str, Any]]] = None,
+    tz_name: Optional[str] = None,
 ) -> str:
     """'CO2 (ppm) — Room 5.01 CO2 sensor — 18 Sep 22:50 to 19 Sep 03:50 (60 readings).' or ''.
 
@@ -300,6 +303,11 @@ def caption_header(
         if label and label not in labels:
             labels.append(label)
         unit = str(meta.get("unit") or "").strip()
+        if unit.startswith("http"):
+            # a QUDT IRI is not a unit a reader can read (BUG-1510): ".../unit/KiloW-HR" -> "kWh"
+            from orchestrator.services.modality_units import qudt_unit_display
+
+            unit = qudt_unit_display(unit) or unit
         if unit and unit not in units:
             units.append(unit)
         floor = str(meta.get("floor") or "").strip()
@@ -313,7 +321,20 @@ def caption_header(
         where = f" on floor {floors[0]}" if len(floors) == 1 else ""
         what = f"{len(labels)} sensors{where}"
     unit_part = f" ({units[0]})" if len(units) == 1 else ""
+    if (
+        unit_part
+        and labels
+        and all(f"({units[0]})" in lab or f"[{units[0]}]" in lab for lab in labels)
+    ):
+        unit_part = ""  # the labels already say it: "Array 1 (kW) and Array 2 (kW) (kW)"
     period = ""
     if stamps:
-        period = f" — {_fmt(min(stamps))} to {_fmt(max(stamps))}"
+        lo, hi = min(stamps), max(stamps)
+        if tz_name:
+            # Stored times are UTC; the reader's clock is the building's (BUG-1570). The caption
+            # said "8 Oct 14:30 to 10 Oct 14:27" directly above a narration saying 15:30 and 15:27.
+            from orchestrator.services.requested_interval import to_local
+
+            lo, hi = to_local(lo, tz_name), to_local(hi, tz_name)
+        period = f" — {_fmt(lo)} to {_fmt(hi)}"
     return f"Chart of {what}{unit_part}{period}, {len(plotted)} readings."

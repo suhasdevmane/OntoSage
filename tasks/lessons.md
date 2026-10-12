@@ -3988,3 +3988,130 @@ trailing commas, blank-line rules) — it does not inherit a *project's* line-le
 Pairing it with `black --line-length N` requires passing `--line-length N` to `isort` too, or
 the two tools will fight on every file near the boundary between their two defaults, and nothing
 will surface it except a test that happens to pin an exact line.
+
+## #195 — A word inside another word's lay term was counted twice, and the wrong count won (2026-10-10)
+
+"Is carbon monoxide being detected anywhere right now?" resolved TWO concepts: `carbon_monoxide`
+on "carbon monoxide" and `carbon_footprint` on "carbon" — the same characters, read twice. The
+footprint concept's energy-meter class won the entity binding, and six floor energy meters were
+narrated as the answer to a gas-safety question. "pm1" inside "pm10" had the same shape and a
+test pinned it as correct ("pm10 outranks pm1 when BOTH match"). A matcher that scores each
+vocabulary entry independently cannot see that two of its hits are one span of the question.
+
+**The practice that generalises:** when several vocabularies match one text, resolve overlapping
+SPANS before ranking concepts — a term whose every occurrence lies inside a longer term of
+another concept is not evidence for its own. Then measure the move on the whole bank (here 47 of
+4,060, every one a generic concept losing to a specific one) rather than on the question that
+found it.
+
+## #196 — A VERB and a STATE that share a stem are two different questions (2026-10-10)
+
+"Which contracts EXPIRE before the end of the year?" was filtered to the two rows whose recorded
+status is "expired" and answered "all 2 recorded dates have already passed" — six contracts end
+that year, three still to come. The same day, "List the OPEN work orders" was refused as an order
+to open something, and "PM2.5" was read as room 2.5. All three are one word doing two jobs, and in
+each the system picked the job that made a confident, wrong answer. The fix each time was to read
+the word's ROLE from its neighbours (a verb form vs the state "expired"; a determiner before
+"open"; a letter before "2.5"), never to drop the word from the vocabulary.
+
+## #197 — A protection that reads a field nobody copies has never protected anything (2026-10-10)
+
+BUG-873 stopped the relevance gate from replacing a grounded answer with "I couldn't answer that
+from the records" when the turn had produced evidence. `_grounded_evidence_behind` lists
+`aggregate_result` and looks for its `figures`, the unit test fed it a dict WITH `figures`, and
+both were green for weeks. The SQL node builds the bus copy of `aggregate_result` from the answer
+text and the `aggregate` block only, so in production the field was never there and the store-
+computed lane was never protected. Found because a follow-up ("and the day before?") gave the gate
+the bare words to judge and it deleted a correct 35 kWh answer.
+
+**The practice that generalises:** a guard that keys on a field must be tested against the object
+the PRODUCER actually builds, not a hand-made one. When writing the guard's test, construct the
+input through the code path that writes it, or assert in the same test that the producer copies
+the field.
+
+## #198 — Single questions passing says little about follow-ups (2026-10-10)
+
+After four probe rounds of single questions, the first multi-turn battery had a defect in 10 of
+its 20 follow-up turns, and the worst were confidently wrong: a solar follow-up summed the floor
+electricity meters, a "which of the two" offered comparisons from other chats, "and the CO2?" was
+headed "across the building" from one room, and a correct answer was deleted by a gate that judged
+the bare follow-up rather than its rewrite. Each cause sat between stages: the rewrite was right
+and a later stage ignored it, or read the user's raw words, or read the previous reply's
+suggestion chips as part of the answer.
+
+**The practice that generalises:** any stage after the co-reference rewrite must say which text
+it reads (the rewrite or the user's words) and why; and probe conversations, not only questions,
+before claiming a lane works.
+
+## #199 — A rewrite may resolve a reference; it may not add a fact (2026-10-10)
+
+"plot it" after an hourly table headed "Sat 10 Oct" was rewritten to "Plot the hourly average CO2
+levels for Floor 2 on Saturday, 10 October 2023." Every guard on the rewrite checked PLACES (it
+may not change a room the user named, BUG-940, or invent one), and none checked anything else the
+model added. Since BUG-1490 a written-out year is authoritative for every lane, so the invented
+year became a 2023 fetch and a decline, with the rewrite logged as a success.
+
+**The practice that generalises:** list what a rewrite is allowed to add (a referent the
+conversation contains) and check each kind of fact the downstream treats as authoritative --
+places, years, dates, ids -- against the conversation's own text. And when a fix introduces a
+pattern over real identifiers, test it on the identifiers the system actually prints: the round-5
+record-id pattern took "CON-2025-003" as "CON-2025", which the second battery found within an hour.
+
+## #200 — Stepping aside is not binding; and one status must not mean two things (2026-10-11)
+
+"What is the CO2 in the glass atrium?" was refused "'glass atrium' does not exist". The first fix
+let the referent gate step aside for the building's only atrium. Live, the step-aside then read as
+"the existence check didn't complete in time" -- because the resolver returned SKIPPED, and the
+workflow reads SKIPPED as a check that could not run (BUG-136) and refuses. The unit tests asserted
+SKIPPED and passed; their own docstring said "the gate steps aside and lets the lanes answer", which
+the integration never did. With a distinct STEPPED_ASIDE status the gate stood aside -- and the lane,
+holding nothing it could resolve, answered with the WHOLE BUILDING's CO2. Only binding the one
+candidate (Room 1.04) for the turn, with a footnote, produced the right answer.
+
+**The practice that generalises:** a gate that stops refusing must hand the lane what it resolved,
+or the lane answers about something else; and before reusing a status, read every consumer of it.
+A unit test that asserts a status value proves nothing about what a consumer does with it.
+
+## #201 — Grep the building's own text before writing "the building does not state it" (2026-10-11)
+
+Twice in one session I wrote that the building's records did not hold something and was wrong: a
+tracker row said no text states where a printer is (a KnowledgeTopic says MFDs on every floor), and
+the kitchen amenities said "the records do not list the appliances" while the catering topic says
+the kitchen/breakout areas have microwaves and filtered water. Both were caught only because the r7
+pool asked the question and the answer quoted the topic.
+
+**The practice:** before authoring "not recorded", search every `answerText` / `rdfs:comment` /
+document for the thing -- the building's prose topics hold facts the structured records do not.
+
+## #202 — A new building TTL must pass the boot validator BEFORE the restart (2026-10-11)
+
+A four-triple TTL without `@prefix bldg:` halted the orchestrator's startup three times in a row
+(HARD_FAIL), ten minutes of an unavailable stack, while I waited on a health check that could never
+pass. `ttl_validator.validate_building_ttls(...)` runs offline in a second; run it whenever a
+restart follows an `input/*.ttl` change.
+
+
+## #203 — A wrong value in one answer becomes the next question (2026-10-11)
+
+"How much electricity did the building use last week?" was narrated as "27 September 2023" for a
+week of 2026. The follow-up "how does that compare with the week before?" was then rewritten by the
+model with that answer's literal dates, invented year included, and the comparison found no
+readings. One invented fact cost two turns, and the second failure looked like a comparison bug.
+The rewrite copies figures and dates from the reply because the reply is the most specific text in
+its context.
+
+**The practice:** resolve a follow-up from the USER's own earlier words wherever the shape allows
+(`resolve_compare_with_before`, `resolve_elliptical_superlative`), and treat any year a narration
+writes that its inputs do not hold as an error to correct, not a style issue.
+
+## #204 — A threshold that keeps a lane narrow must be re-measured when its reason is narrower (2026-10-11)
+
+The aggregate lane left every energy total without a cost to the period summary, because a
+PARTIAL week compared badly (BUG-936). That reason applies only to a period still running; for
+"last week" or "yesterday" the restriction sent the question to a narrated template that invented
+a year. Measured, claiming completed periods moved 0 of 4,060 bank questions. Two tests pinned the
+old boundary with "yesterday" as their example; they were updated to a running period, which is
+what the reason was about.
+
+**The practice:** when a restriction exists for a stated reason, scope it to that reason, and
+measure before widening — a pinned example in a test records the boundary, not the reason.

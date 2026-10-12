@@ -105,10 +105,20 @@ def _base_form(word: str) -> str:
     return w
 
 
+#: Words that name no quantity whatever phrase they sit in. The lay hints are phrases ("number
+#: of people", "lights on"), and a token-by-token match made "of" mean occupancy and "on" mean
+#: illuminance (BUG-1494): the all-unmapped salvage takes the FIRST word that maps, so "Which of
+#: rooms 5.11 and 5.05 was warmer ..." would have ranked on occupancy, not temperature.
+_NOT_A_LAY_TERM = frozenset(
+    "a an the of on in at to for by from with and or is are was were be been it its this that "
+    "these those my our your their there here as per off up out over under into onto than".split()
+)
+
+
 def _modality_from_lay_term(term: str) -> Optional[str]:
     """Map a lay word — in any inflection — to the modality it describes, or None."""
     wanted = _base_form(term)
-    if not wanted:
+    if not wanted or wanted in _NOT_A_LAY_TERM or (term or "").strip().lower() in _NOT_A_LAY_TERM:
         return None
     for name, hint in _LAY_HINTS.items():
         for phrase in hint.split(","):
@@ -149,8 +159,12 @@ _LAY_POLARITY: Dict[str, Direction] = {
 #: contains ("avoids the noisiest areas" is minimize, not maximize). Rather than guess which
 #: way round, a phrase carrying one of these is left unmapped — the salvage below only runs
 #: on plainly-worded phrases.
+#: "AT LEAST 10" and "LESS THAN 25" are thresholds, not avoidances (BUG-1494): "does the warmer
+#: room have a recorded capacity of at least 10?" was left wholly unmapped because "least" read as
+#: the avoidance "the least noisy". "less noisy" (a word follows) is still an avoidance.
 _AVOIDANCE_RE = re.compile(
-    r"\b(?:avoid|avoids|avoiding|without|away from|free of|free from|less|least|"
+    r"\b(?:avoid|avoids|avoiding|without|away from|free of|free from|"
+    r"less(?!\s+than\s+\d)|(?<!at )least|"
     r"no|not|never|except|excluding|other than)\b",
     re.IGNORECASE,
 )
@@ -182,7 +196,28 @@ def _direction_from_phrase_polarity(phrase: str) -> Optional[Direction]:
     return found.pop() if len(found) == 1 else None
 
 
-def _constraint_from_phrase(phrase: str, known: set, decision: DecisionKind):
+def _polarity_elsewhere(query: str, modality: str) -> Optional[Direction]:
+    """The end the QUESTION asks for on ``modality``, from a polarity word outside the phrase.
+
+    BUG-1494: "Which of rooms X and Y was WARMER on <date> between <hours>, and ..." compiled with
+    the clause "temperature between 10:00 and 12:00 on <date>" unmapped. That clause names the
+    quantity and no end, so the salvage refused it, although the question's own "warmer" says
+    which end. One word, of the same quantity, with no avoidance word in the three before it;
+    two such words that disagree give None.
+    """
+    tokens = _WORD_RE.findall(query or "")
+    found: set = set()
+    for i, tok in enumerate(tokens):
+        base = _base_form(tok)
+        if base not in _LAY_POLARITY or _modality_from_lay_term(tok) != modality:
+            continue
+        if _AVOIDANCE_RE.search(" ".join(tokens[max(0, i - 3) : i])):
+            return None
+        found.add(_LAY_POLARITY[base])
+    return next(iter(found)) if len(found) == 1 else None
+
+
+def _constraint_from_phrase(phrase: str, known: set, decision: DecisionKind, query: str = ""):
     """A lay word inside an UNMAPPED phrase, turned into the constraint it names — or None.
 
     BUG (row 117 of the 2026-09-17 stakeholder read): "I'm pregnant and overheating — where's
@@ -207,7 +242,11 @@ def _constraint_from_phrase(phrase: str, known: set, decision: DecisionKind):
         modality = _modality_from_lay_term(token)
         if not modality or modality not in known:
             continue
-        direction = _LAY_POLARITY.get(base) or _infer_direction(modality, decision, None)
+        direction = (
+            _LAY_POLARITY.get(base)
+            or _infer_direction(modality, decision, None)
+            or _polarity_elsewhere(query, modality)
+        )
         if direction is None:
             continue
         return Constraint(
@@ -716,6 +755,49 @@ def _cache_enabled() -> bool:
     )
 
 
+def _close_cut_json(raw: str) -> Optional[Dict[str, Any]]:
+    """A compile reply cut off after its last complete value, with its brackets closed — or None.
+
+    BUG-1495 (Paper 3 development form S4-D, 2026-10-10): the hosted reasoning model returned a
+    CORRECT plan (temperature maximised, capacity at least 10, a two-hour window) that stopped
+    one character short, without its final brace, 3 of 3 times. The parse failed and the whole
+    question was reported back as "I couldn't map part of your request". Closing brackets the
+    reply already opened adds no content the model did not write: a reply cut INSIDE a string,
+    or mid-value, is still refused, and every field is validated below exactly as before.
+    """
+    start = raw.find("{")
+    if start < 0:
+        return None
+    text = raw[start:].rstrip()
+    stack: List[str] = []
+    in_string = escaped = False
+    for ch in text:
+        if in_string:
+            if escaped:
+                escaped = False
+            elif ch == "\\":
+                escaped = True
+            elif ch == '"':
+                in_string = False
+        elif ch == '"':
+            in_string = True
+        elif ch in "{[":
+            stack.append("}" if ch == "{" else "]")
+        elif ch in "}]":
+            if not stack or stack.pop() != ch:
+                return None
+    if in_string or not stack:
+        return None
+    text = text.rstrip(",").rstrip()
+    if text.endswith(":"):
+        return None  # cut between a key and its value
+    try:
+        data = json.loads(text + "".join(reversed(stack)))
+    except json.JSONDecodeError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
 def _parse_compiled(
     raw: str,
     query: str,
@@ -738,19 +820,22 @@ def _parse_compiled(
     step needs (the model's inspect requests, facets whose values failed validation).
     """
     match = re.search(r"\{[\s\S]*\}", raw or "")
-    if not match:
+    data = None
+    exc_text = "no JSON in LLM output"
+    if match:
+        try:
+            data = json.loads(match.group(0))
+        except json.JSONDecodeError as exc:
+            exc_text = f"bad JSON: {exc}"
+    if data is None:
+        data = _close_cut_json(raw or "")
+        if data is not None:
+            logger.warning("[cqir] the compile reply was cut short; its open brackets were closed")
+    if not isinstance(data, dict):
         return CQIR(
             decision=DecisionKind.SELECT_ONE,
             raw_query=query,
-            signals=[AmbiguitySignal(kind="vague", phrase=query, note="no JSON in LLM output")],
-        )
-    try:
-        data = json.loads(match.group(0))
-    except json.JSONDecodeError as exc:
-        return CQIR(
-            decision=DecisionKind.SELECT_ONE,
-            raw_query=query,
-            signals=[AmbiguitySignal(kind="vague", phrase=query, note=f"bad JSON: {exc}")],
+            signals=[AmbiguitySignal(kind="vague", phrase=query, note=exc_text)],
         )
 
     signals: List[AmbiguitySignal] = []
@@ -809,6 +894,16 @@ def _parse_compiled(
                         f"[compiler] direction for {modality} read from the phrase "
                         f"{phrase!r} -> {inferred.value}"
                     )
+                else:
+                    # BUG-1494: the model's phrase can leave out the word that carries the end
+                    # ("temperature between 10:00 and 12:00 on <date>" for "which ... was
+                    # WARMER ..."). The question's own polarity word for THIS quantity decides.
+                    inferred = _polarity_elsewhere(query, modality)
+                    if inferred is not None:
+                        logger.info(
+                            f"[compiler] direction for {modality} read from the question -> "
+                            f"{inferred.value}"
+                        )
             if inferred is None:
                 signals.append(
                     AmbiguitySignal(
@@ -957,7 +1052,7 @@ def _parse_compiled(
         _kept: List[AmbiguitySignal] = []
         for s in signals:
             salvaged = (
-                _constraint_from_phrase(s.phrase, known, decision)
+                _constraint_from_phrase(s.phrase, known, decision, query)
                 if s.kind == "unmapped_term"
                 else None
             )
@@ -1107,6 +1202,38 @@ def _match_enum(value: str, allowed: Sequence[str]) -> Optional[str]:
     return None
 
 
+#: Words that name a space of ANY kind; matching on them would keep every recorded value.
+_GENERIC_SPACE_WORDS = frozenset(
+    {"room", "rooms", "space", "spaces", "area", "areas", "place", "places", "spot", "spots"}
+)
+_VALUE_STOPWORDS = frozenset({"the", "and", "for", "with", "any", "some", "where", "which"})
+
+
+def _match_enum_by_word(value: str, allowed: Sequence[str], query: str) -> List[str]:
+    """Recorded values carrying every word of ``value`` that the QUESTION itself used (BUG-1517).
+
+    "Where's the quietest place to study?" compiled space function = "Open study"; the records
+    hold "Study room", "Study room / seminar room" and "... group study room", so an exact match
+    failed and the whole question was sent back as "I couldn't map part of your request". The
+    model added "open"; the user said "study". Only the user's words count, generic space words
+    never do, and with no such word, or no recorded value carrying them all, this returns [].
+    """
+    q_words = set(_WORD_RE.findall((query or "").lower()))
+    keys = [
+        w
+        for w in _WORD_RE.findall(str(value or "").lower())
+        if len(w) > 2 and w in q_words and w not in _GENERIC_SPACE_WORDS and w not in _VALUE_STOPWORDS
+    ]
+    if not keys:
+        return []
+    out: List[str] = []
+    for candidate in allowed:
+        words = set(_WORD_RE.findall(str(candidate).lower()))
+        if all(k in words or (k.endswith("s") and k[:-1] in words) for k in keys):
+            out.append(str(candidate))
+    return out
+
+
 def _floor_named(value: str, floors: Sequence[str]) -> bool:
     """True when ``value`` names one of the building's floors (any spelling of its number)."""
     from orchestrator.services.deliberation.capability_schema import _norm_floor
@@ -1198,7 +1325,44 @@ def _facet_item(
         return _event_facet(facet, op, value, hardness, phrase, query)
     if facet.key == _FLOOR_FACET:
         return _floor_facet(facet, op, value, hardness, phrase)
+    facet = _facet_recording_value(facet, value, catalogue)
     return _recorded_facet(facet, op, value, hardness, group, phrase, query)
+
+
+def _facet_recording_value(facet, value, catalogue: "FacetCatalogue"):
+    """The ONE other space enum facet that records ``value`` verbatim, when ``facet`` does not.
+
+    BUG-1517, second half: "Where's the quietest place to study?" compiled workspace kind =
+    "study room"; that is a value of SPACE FUNCTION, not of workspace kind. Word-matching inside
+    the wrong facet then took workspace kind's "open study" -- one space, with no noise sensor --
+    and the answer ranked three rooms each marked "not what you asked for". A value the building
+    records verbatim on exactly one other facet names that facet. Anything else is left exactly as
+    it was, for the validation below to accept or refuse.
+    """
+    if facet.value_type != "enum" or not value_set_complete(facet):
+        return facet
+    values = value if isinstance(value, list) else [value]
+    values = [str(v).strip() for v in values if str(v or "").strip()]
+    if not values or all(_match_enum(v, facet.examples) is not None for v in values):
+        return facet
+    # The OTHER facet need not have its whole value set read yet (it is read lazily during a live
+    # compile): a value listed verbatim among its recorded examples is evidence enough.
+    others = [
+        f
+        for f in catalogue
+        if f is not facet
+        and f.entity_type == "space"
+        and f.value_type == "enum"
+        and f.examples
+        and all(_match_enum(v, f.examples) is not None for v in values)
+    ]
+    if len(others) != 1:
+        return facet
+    logger.info(
+        f"[compiler] {facet.key}: {values} are recorded verbatim on {others[0].key} — "
+        f"the criterion moves there"
+    )
+    return others[0]
 
 
 def _sensor_facet(facet, op, value, hardness, phrase, query, known) -> _FacetParse:
@@ -1369,6 +1533,14 @@ def _recorded_facet(facet, op, value, hardness, group, phrase, query) -> _FacetP
             for v in values:
                 match = _match_enum(v, facet.examples)
                 if match is None:
+                    by_word = _match_enum_by_word(v, facet.examples, query)
+                    if by_word:
+                        logger.info(
+                            f"[compiler] {facet.key}: '{v}' is not a recorded value; the "
+                            f"question's own words match {by_word}"
+                        )
+                        canonical.extend(w for w in by_word if w not in canonical)
+                        continue
                     return _facet_signal(
                         "invalid_facet",
                         phrase or v,
@@ -1376,7 +1548,24 @@ def _recorded_facet(facet, op, value, hardness, group, phrase, query) -> _FacetP
                         f"(recorded: {', '.join(facet.examples)})",
                         inspect_key=facet.key,
                     )
-                canonical.append(match)
+                if match not in canonical:
+                    canonical.append(match)
+                # A COMPOUND VALUE IS STILL THAT KIND (BUG-1541). "Study room" matched exactly and
+                # took only the one space recorded so; "Study room / seminar room" and "group study
+                # room" are study rooms too, and with the one exact space unmeasured the ranking
+                # offered three rooms each marked "not what you asked for". Recorded values that
+                # carry every non-generic word of the matched one are taken with it.
+                _words = {
+                    w
+                    for w in _WORD_RE.findall(match.lower())
+                    if len(w) > 2 and w not in _GENERIC_SPACE_WORDS and w not in _VALUE_STOPWORDS
+                }
+                if _words:
+                    for other in facet.examples:
+                        if str(other) in canonical:
+                            continue
+                        if _words <= set(_WORD_RE.findall(str(other).lower())):
+                            canonical.append(str(other))
             values = canonical
         if op == FacetOperator.EQUALS and len(values) > 1:
             op = FacetOperator.ONE_OF
@@ -2933,15 +3122,62 @@ _LOW_PRESSURE_RE = re.compile(
 )
 
 
+#: Availability asked for a NAMED period, not a window from now (CAVEAT-1617).
+_AVAILABILITY_RE = re.compile(
+    r"\b(?:free|available|not booked|unbooked|no bookings?|vacant)\b", re.IGNORECASE
+)
+_NAMED_PERIOD_RE = re.compile(
+    r"\b(?:tomorrow|tonight|morning|afternoon|evening|monday|tuesday|wednesday|thursday|"
+    r"friday|saturday|sunday)\b|\bat\s+\d{1,2}(?::\d{2})?\s*(?:am|pm)?\b",
+    re.IGNORECASE,
+)
+
+
+def _named_free_window(query: str, now_local=None, tz_name=None):
+    """A free_window criterion for a named future period, or None (CAVEAT-1617).
+
+    "Which meeting room is free tomorrow morning?" was checked for the next hour from now. The
+    events lane's own calendar parser (``event_query_service.parse_window``) reads the period in
+    building-local time; its bounds are converted to the stores' clock here, at compile time, so
+    every later stage compares like with like. A period already over is not a free window.
+    """
+    from orchestrator.services.deliberation.cqir import EventCriterion
+    from orchestrator.services.event_query_service import parse_window
+    from orchestrator.services.requested_interval import building_tz, local_now, to_store
+
+    q = query or ""
+    if not (_AVAILABILITY_RE.search(q) and _NAMED_PERIOD_RE.search(q)):
+        return None
+    if re.search(r"\b(?:yesterday|last|was|were)\b", q, re.IGNORECASE):
+        return None  # a past period is history, not availability
+    tz = tz_name if tz_name is not None else building_tz()
+    now = now_local or local_now(tz)
+    start, end, label = parse_window(q, now)
+    start = max(start, now)
+    if end <= start:
+        return None
+    fmt = "%Y-%m-%d %H:%M:%S"
+    return EventCriterion(
+        kind="free_window",
+        hours=round((end - start).total_seconds() / 3600.0, 2),
+        start=to_store(start, tz).strftime(fmt),
+        end=to_store(end, tz).strftime(fmt),
+        period=label,
+    )
+
+
 def _fold_event_criteria(query: str) -> list:
     from orchestrator.services.deliberation.cqir import EventCriterion
 
     out = []
     m = _FREE_WINDOW_RE.search(query or "")
+    named = None if m else _named_free_window(query)
     if m:
         out.append(
             EventCriterion(kind="free_window", hours=max(0.25, min(24.0, float(m.group(1)))))
         )
+    elif named is not None:
+        out.append(named)
     elif _FREE_NOW_RE.search(query or ""):
         out.append(EventCriterion(kind="free_window", hours=1.0))
     if _LOW_PRESSURE_RE.search(query or ""):
@@ -3244,7 +3480,20 @@ def _fold_named_calendar_day(
 
     bounds = calendar_day_bounds(query, tz_name, now=now)
     if not bounds:
-        return False
+        # A WRITTEN-OUT DATE is the same kind of fact (BUG-1490): "on 14 February 2025 between
+        # 10:00 and 12:00" compiled to NOW, and the lane ranked 195 rooms on readings from the
+        # last three hours of 2026. Imposed only when it lies in the past; a future date is a
+        # forecast's to read, and a window that has not happened selects nothing.
+        from orchestrator.services.requested_interval import (
+            STAMP,
+            explicit_date_bounds,
+            store_now,
+        )
+
+        written = explicit_date_bounds(query, tz_name)
+        if not written or written[0] >= store_now().strftime(STAMP):
+            return False
+        bounds = written
 
     start, end = bounds
     if (time_spec.resolved_start, time_spec.resolved_end) != (start, end):

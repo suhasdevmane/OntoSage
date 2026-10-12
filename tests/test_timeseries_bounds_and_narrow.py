@@ -19,6 +19,7 @@ import pytest
 
 from orchestrator.agents.dialogue_agent import _resolve_relative_dt
 from orchestrator.agents.sql_agent import SQLAgent
+from orchestrator.services.adapters.mysql_adapter import MySQLAdapter
 from orchestrator.services.adapters.mysql_narrow_adapter import MySQLNarrowAdapter
 from orchestrator.services.adapters.postgresql_adapter import PostgreSQLAdapter
 
@@ -59,6 +60,9 @@ _SANITIZERS = [
     ("postgres", PostgreSQLAdapter._sanitize_dt),
     ("mysql_narrow", MySQLNarrowAdapter._sanitize_dt),
     ("sql_agent_wide", lambda v: SQLAgent.__new__(SQLAgent)._sanitize_datetime(v)),
+    # BUG-1488: the WIDE MySQL adapter (every installed sensor) was missing from this list, and it
+    # rejected the ISO 'T' bound the others accept -- silently reading the last 30 days instead.
+    ("mysql_wide", MySQLAdapter._sanitize_dt),
 ]
 
 

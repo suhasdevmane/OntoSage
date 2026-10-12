@@ -106,23 +106,24 @@ def detect(question: str) -> Optional[ScopeRequest]:
         return None
     if _NAMED_ROOM_RE.search(q):
         return None
+    # The scope names the place; the possessive belongs to the sentence ("Forecast: the
+    # building's (total)" headed a forecast).
+    _place = re.sub(r"(?:'s|s'|’s)$", "", scope.group(0).strip())
     if not agg:
         # "What will the building's energy use be tomorrow?" names no aggregate word and is
         # plainly one: a scope covering many sensors, and a question asking for ITS figure.
         # A bare scope is enough, because a question about a floor is not a question about an
         # unnamed room on it under any reading.
-        return ScopeRequest(
-            how="mean", phrase=scope.group(0).strip(), scope_only=scope.group(0).strip()
-        )
+        return ScopeRequest(how="mean", phrase=_place, scope_only=_place)
     return ScopeRequest(
         how="mean",
-        phrase=f"{agg.group(0)} {scope.group(0)}".strip(),
-        scope_only=scope.group(0).strip(),
+        phrase=f"{agg.group(0)} {_place}".strip(),
+        scope_only=_place,
     )
 
 
 def how_to_combine(labels: Sequence[str], question: str = "") -> str:
-    """"total" when the quantity ADDS across sensors, else "mean". Never guessed from wording.
+    """ "total" when the quantity ADDS across sensors, else "mean". Never guessed from wording.
 
     A floor's energy is the sum of its meters and a floor's CO2 is the mean of its rooms, and
     the difference is a property of the quantity rather than of how the question was phrased.
@@ -142,15 +143,28 @@ def aggregate_records(
     time_key: str = "timestamp",
     value_key: str = "value",
     pseudo_uuid: str = "__aggregate__",
+    freq: str = "1h",
 ) -> Tuple[List[Dict[str, Any]], int]:
     """One series from many sensors: ``(records, n_sensors)``.
 
-    Folded per TIME BUCKET, so the existing preprocessing and model selection run over it
-    unchanged. A bucket in which only some sensors reported is still that bucket's best
-    estimate for a MEAN; for a TOTAL it is an undercount, and the caller is told how many
-    sensors contributed so it can say so.
+    Folded per TIME BUCKET of ``freq`` (the forecast's own resolution), so the existing
+    preprocessing and model selection run over it unchanged. Each sensor is first reduced to its
+    mean in the bucket, and the bucket's figure is then the sum (total) or mean of those.
+
+    THE BUCKET IS A TIME GRID, NOT AN EXACT STAMP (BUG-1539). Folding on the raw timestamp put
+    each floor counter's reading in a bucket of its own -- they report at different seconds --
+    so a "total over 6 sensors" was the mean of single counters: the building's occupancy forecast
+    came out near 30 people while its six floor counters summed to about 225. For a TOTAL, a bucket
+    in which fewer than four in five sensors reported is left out rather than published as an
+    undercount; a MEAN uses whatever reported.
     """
-    by_bucket: Dict[Any, List[float]] = defaultdict(list)
+    import pandas as _pd
+
+    try:
+        step = _pd.Timedelta(freq)
+    except (ValueError, TypeError):
+        step = _pd.Timedelta("1h")
+    per_sensor: Dict[Tuple[str, Any], List[float]] = defaultdict(list)
     sensors = set()
     for row in records or []:
         stamp = row.get(time_key) or row.get("datetime") or row.get("Datetime")
@@ -159,15 +173,30 @@ def aggregate_records(
             continue
         try:
             value = float(raw)
+            ts = _pd.Timestamp(str(stamp).replace("T", " ").replace("Z", ""))
         except (TypeError, ValueError):
             continue
-        by_bucket[stamp].append(value)
-        sensors.add(str(row.get(uuid_key) or row.get("sensor_uuid") or ""))
+        sensor = str(row.get(uuid_key) or row.get("sensor_uuid") or "")
+        per_sensor[(sensor, ts.floor(step))].append(value)
+        sensors.add(sensor)
+    by_bucket: Dict[Any, List[float]] = defaultdict(list)
+    for (_sensor, bucket), values in per_sensor.items():
+        by_bucket[bucket].append(sum(values) / len(values))
+    n_sensors = len({s for s in sensors if s}) or len(sensors)
+    need = max(1, int(round(0.8 * n_sensors))) if how == "total" else 1
     out: List[Dict[str, Any]] = []
-    for stamp in sorted(by_bucket, key=lambda s: str(s)):
-        values = by_bucket[stamp]
+    for bucket in sorted(by_bucket):
+        values = by_bucket[bucket]
+        if len(values) < need:
+            continue
         folded = sum(values) if how == "total" else sum(values) / len(values)
-        out.append({uuid_key: pseudo_uuid, time_key: stamp, value_key: folded})
+        out.append(
+            {
+                uuid_key: pseudo_uuid,
+                time_key: bucket.strftime("%Y-%m-%d %H:%M:%S"),
+                value_key: folded,
+            }
+        )
     return out, len({s for s in sensors if s})
 
 

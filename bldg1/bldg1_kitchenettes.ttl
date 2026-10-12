@@ -1,0 +1,45 @@
+# Kitchens and breakout areas occupants can use, as located amenities (2026-10-11).
+#
+# WHAT IS AUTHORED, AND FROM WHAT. The building's catering topic (Cap_catering_amenities) states:
+# "Kitchen/breakout areas on Floors 2, 3, and 4 with microwaves and filtered water". The room
+# records name one such room on each of those floors -- 2.66 (Staff Break Room / Kitchen), 3.18
+# (Kitchen) and 4.70 (Staff Break Room, floor 4's only break room) -- so each is located here and
+# its answer repeats the topic's statement about equipment. 5.26 is labelled a kitchen in the room
+# records but floor 5 is not in the topic, so its answer says the appliances are not listed.
+#
+# DELIBERATELY NOT AUTHORED: lockers (no statement anywhere in the building's text) and vending
+# machines (the catering topic says floors 1 and 3, the floor plan draws one on the ground floor;
+# bldg1_amenity_stated.ttl records the conflict for the owner). Printing is a knowledge topic
+# (Printing Scanning: MFDs on every floor) and needs no located instance.
+
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+
+bldg:Kitchenette_Room2.66 a ontosage:Amenity , ontosage:Kitchenette ;
+    rdfs:label "Staff kitchen — Room 2.66, Staff Break Room / Kitchen"@en ;
+    ontosage:layTerms "staff break room, break room, staff kitchen, breakout area" ;
+    ontosage:locatedIn bldg:Room2.66 ; ontosage:onFloor "Floor2" ;
+    ontosage:locationText "Kitchen in Room 2.66 — Staff Break Room / Kitchen (floor Floor2)" ;
+    ontosage:answerText "Room 2.66 on floor 2 is the staff break room and kitchen. The building's catering information says the kitchen and breakout areas on floors 2, 3 and 4 have microwaves and filtered water." .
+
+bldg:Kitchenette_Room3.18 a ontosage:Amenity , ontosage:Kitchenette ;
+    rdfs:label "Kitchen — Room 3.18"@en ;
+    ontosage:layTerms "kitchen on floor 3, floor 3 kitchen, breakout area" ;
+    ontosage:locatedIn bldg:Room3.18 ; ontosage:onFloor "Floor3" ;
+    ontosage:locationText "Kitchen in Room 3.18 (floor Floor3)" ;
+    ontosage:answerText "Room 3.18 on floor 3 is a kitchen. The building's catering information says the kitchen and breakout areas on floors 2, 3 and 4 have microwaves and filtered water." .
+
+bldg:Kitchenette_Room4.70 a ontosage:Amenity , ontosage:Kitchenette ;
+    rdfs:label "Staff break room — Room 4.70"@en ;
+    ontosage:layTerms "staff break room, break room, breakout area" ;
+    ontosage:locatedIn bldg:Room4.70 ; ontosage:onFloor "Floor4" ;
+    ontosage:locationText "Breakout area in Room 4.70 — Staff Break Room (floor Floor4)" ;
+    ontosage:answerText "Room 4.70 is the staff break room on floor 4. The building's catering information says the kitchen and breakout areas on floors 2, 3 and 4 have microwaves and filtered water." .
+
+bldg:Kitchenette_Room5.26 a ontosage:Amenity , ontosage:Kitchenette ;
+    rdfs:label "Staff kitchen — Room 5.26, Staff Break Room / Kitchen"@en ;
+    ontosage:layTerms "staff break room, break room, staff kitchen" ;
+    ontosage:locatedIn bldg:Room5.26 ; ontosage:onFloor "Floor5" ;
+    ontosage:locationText "Kitchen in Room 5.26 — Staff Break Room / Kitchen (floor Floor5)" ;
+    ontosage:answerText "Room 5.26 on floor 5 is the staff break room and kitchen. The building's records do not list the appliances in it." .

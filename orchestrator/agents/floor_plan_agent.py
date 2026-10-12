@@ -403,10 +403,13 @@ class FloorPlanAgent:
             f"**Space found:** {space.label}  |  Type: *{space.type.replace('_', ' ').title()}*",
             f"**Zone ID:** `{space.zone_id}`",
         ]
-        if space.ontology_iri:
-            md_lines.append(f"**Ontology IRI:** `{space.ontology_iri}`")
+        # No ontology IRI here (2026-10-11): every reader saw "http://...#Room4.07" printed as a
+        # link. The plan itself is shown inline -- Open WebUI renders an image, and the 20-26 MB
+        # PDF stays one click away for the full-resolution drawing.
+        md_lines += [""]
+        if image_url:
+            md_lines += [f"![{floor_label} plan]({image_url})", ""]
         md_lines += [
-            "",
             f"📄 **[View {floor_label} Plan (PDF)]({pdf_url})**",
             "",
             "💬 *Would you like to:*",
@@ -442,6 +445,11 @@ class FloorPlanAgent:
         md_lines = [
             f"## 🏢 {manifest.building_name} — {floor_label}",
             "",
+        ]
+        if image_url:
+            # inline, so Open WebUI shows the plan; the PDF remains the full-resolution drawing
+            md_lines += [f"![{floor_label} plan]({image_url})", ""]
+        md_lines += [
             f"📄 **[Open {floor_label} Plan (PDF)]({pdf_url})**",
             "",
             f"I've pulled up the floor plan for **{floor_label}**. "
@@ -531,16 +539,29 @@ class FloorPlanAgent:
         building_id: str,
         building_name: str,
     ) -> FloorPlanResult:
-        floors = [fl for bid, fl in pipeline.list_manifests() if bid == building_id]
+        manifests = list(pipeline.list_manifests())
+        floors = [fl for bid, fl in manifests if bid == building_id]
+        if not floors and len({bid for bid, _ in manifests}) == 1:
+            # The plans are keyed by the building's plan name ("abacws"), not its id ("bldg1"),
+            # and v1 serves ONE building: when one building's plans are loaded they are this
+            # building's. "Where are the network cabinets on each floor?" was told "No floor
+            # plans are available" with six floors of plans on the file server (2026-10-11).
+            building_id = manifests[0][0]
+            floors = [fl for _bid, fl in manifests]
+        _name = (
+            building_name
+            if building_name.lower().endswith("building")
+            else f"{building_name} Building"
+        )
         if not floors:
             return FloorPlanResult(
                 building_id=building_id,
-                markdown=f"No floor plans are available for the {building_name} Building.",
+                markdown=f"No floor plans are available for {_name}.",
                 interactive=False,
             )
 
         md_lines = [
-            f"## 🏢 {building_name} Building — Floor Overview",
+            f"## 🏢 {_name} — Floor Overview",
             "",
         ]
 

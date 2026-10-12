@@ -75,11 +75,14 @@ def test_a_qualifier_the_bound_sensors_do_not_carry_is_refused():
     """The safety property: the name cannot claim a quantity the bound set does not measure.
 
     If the reader asks for the outside air temperature and the pipeline binds room sensors, the
-    coarse name is kept and the relevance gate goes on catching the off-topic answer as before.
+    answer names what the SENSORS carry (BUG-1403's fallback, `_shared_qualifier`), never the
+    reader's qualifier, and the relevance gate goes on catching the off-topic answer as before.
+    This asserted the coarse "temperature" from the commit that added that fallback, and failed
+    from then on (found 2026-10-10, failing at HEAD in a clean parked worktree).
     """
-    assert al.asked_quantity_name(
-        "What is the outside air temperature?", "temperature", ROOM_TEMP
-    ) == ("temperature")
+    got = al.asked_quantity_name("What is the outside air temperature?", "temperature", ROOM_TEMP)
+    assert "outside" not in got
+    assert got == "office temperature"
     # ... and the same question against the sensors that DO carry it is named precisely.
     outside = [f"Outside Air Temperature Sensor feed outside_weather_temperature {n}" for n in "ab"]
     assert (

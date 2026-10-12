@@ -451,7 +451,10 @@ def test_each_kind_is_evaluated_no_faster_than_its_cadence(enabled):
 
 def test_the_main_loop_loads_and_publishes_events():
     src = inspect.getsource(publisher.main)
-    assert "load_events()" in src
+    # The maps are loaded through one helper shared with the outage backfill, so a replay
+    # and the live loop can never load different maps.
+    assert "_load_all_maps()" in src
+    assert "load_events()" in inspect.getsource(publisher._load_all_maps)
     assert "publish_events(conn" in src
 
 
