@@ -1,0 +1,4278 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/phase0/room_identity_cascade/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Room identity cascade: bldg1, 2026-09-17 - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../../assets/overrides.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#room-identity-cascade-bldg1-2026-09-17" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Room identity cascade: bldg1, 2026-09-17
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-what-changed-already-applied-to-the-ttl-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. What changed (already applied to the TTL sources)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-where-the-reception-really-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Where the reception really is
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-cascade-inventory" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Cascade inventory
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Cascade inventory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#31-timetabled-sessions-inputdocumentstimetabled_sessionsmd-and-inputbldg1_timetablecsv" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.1 Timetabled sessions: input/documents/timetabled_sessions.md and input/bldg1_timetable.csv
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#32-events-store-sensordbevents-read-only" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.2 Events store (sensordb.events, read-only)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#33-register-documents-inputdocumentsmd" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.3 Register documents (input/documents/*.md)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#34-graph-instances-in-the-building-ttls-that-point-at-a-changed-room" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.4 Graph instances in the building TTLs that point at a changed room
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#35-floor-plan-manifests-volumesbldg1floor-plans-not-in-git" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.5 Floor-plan manifests (volumes/bldg1/floor-plans, not in git)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#36-question-sources" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3.6 Question sources
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-order-if-the-owner-approves" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Order, if the owner approves
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-decisions-only-the-owner-can-make" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Decisions only the owner can make
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-a-the-132-rooms-whose-identity-changed" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix A — the 132 rooms whose identity changed
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-b-rooms-left-as-they-were-because-the-drawing-does-not-settle-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix B — rooms left as they were because the drawing does not settle them
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-c-hbcospacefunction-corrected-in-bldg1_enrichment_metadatattl" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix C — hbco:spaceFunction corrected in bldg1_enrichment_metadata.ttl
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/phase0/room_identity_cascade.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="room-identity-cascade-bldg1-2026-09-17">Room identity cascade: bldg1, 2026-09-17<a class="headerlink" href="#room-identity-cascade-bldg1-2026-09-17" title="Permanent link">&para;</a></h1>
+<p><strong>Status: inventory only. Only the room-identity triples have moved; nothing else in this file has.</strong>
+The building owner ruled that the architect's drawings are authoritative for room identity (the
+lead passed this on 2026-09-17). The identity triples are corrected in the TTL source files
+(section 1). Everything that <em>refers</em> to those rooms is listed below with a proposed correction,
+and none of it has changed yet. Nothing has been uploaded, restarted or written to a database.</p>
+<p>How it was measured, all offline or read-only:
+- <strong>The drawings:</strong> the committed DXFs, extracted to <code>tests/fixtures/floor_plans/bldg1_drawing_rooms.json</code>.
+  That file lists 225 room outlines, each holding exactly one room number and its text.
+- <strong>The building's TTL files:</strong> read with rdflib.
+- <strong>The live graph:</strong> read-only SPARQL against <code>bldg</code>.
+- <strong>The events store:</strong> read-only SQL in a <code>READ ONLY</code> transaction, session pinned to <code>+00:00</code>.
+  The store clock read 2026-09-17 14:28 UTC.
+- <strong>The register documents:</strong> <code>input/documents/*.md</code>.
+- <strong>The floor-plan manifests:</strong> <code>volumes/bldg1/floor-plans</code>.
+- <strong>The question banks.</strong></p>
+<hr />
+<h2 id="1-what-changed-already-applied-to-the-ttl-sources">1. What changed (already applied to the TTL sources)<a class="headerlink" href="#1-what-changed-already-applied-to-the-ttl-sources" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>file</th>
+<th>triples</th>
+<th>change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>input/bldg1_abacws_metadata.ttl</code></td>
+<td>132 <code>rdf:type</code> and 132 <code>rdfs:label</code> replaced; 4 <code>brick:Room</code> added</td>
+<td>132 of 225 room blocks contradicted the drawing</td>
+</tr>
+<tr>
+<td><code>input/bldg1_enrichment_metadata.ttl</code></td>
+<td>19 <code>hbco:spaceFunction</code> replaced</td>
+<td>e.g. 1.06 "Teaching room" became "Office"; 0.01 "Atrium / reception area" became "Lecture theatre"</td>
+</tr>
+<tr>
+<td><code>input/bldg1_enhancements.ttl</code></td>
+<td>29 <code>bldg:maxOccupancy</code> rewritten, Room2.15's removed</td>
+<td>same drawing rule as <code>hbco:roomCapacity</code></td>
+</tr>
+<tr>
+<td><code>input/bldg1_enrichment_metadata.ttl</code></td>
+<td>19 <code>hbco:roomCapacity</code> + <code>ontosage:capacityBasis</code></td>
+<td>BUG-671</td>
+</tr>
+</tbody>
+</table>
+<p>Other files that assert room identity were checked and needed no change:
+- <code>bldg1_expanded_protege_clean.ttl</code> asserts only <code>owl:NamedIndividual</code>.
+- <code>bldg1_zone_room_links.ttl</code> asserts only a provenance comment.
+- <code>bldg1_enhancements.ttl</code> asserts only <code>brick:Room</code> on 1.04.</p>
+<p>Room IRIs are unchanged.</p>
+<p><strong>The changes, by kind of room:</strong></p>
+<table>
+<thead>
+<tr>
+<th>kind</th>
+<th style="text-align: right;">rooms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>offices</td>
+<td style="text-align: right;">96</td>
+</tr>
+<tr>
+<td>plant rooms</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr>
+<td>teaching</td>
+<td style="text-align: right;">9</td>
+</tr>
+<tr>
+<td>lecture theatres</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>stores</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>meeting rooms</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>workshops</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>break-out</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>laboratory</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Offices the graph had typed as something else:</strong></p>
+<table>
+<thead>
+<tr>
+<th>old type</th>
+<th style="text-align: right;">rooms</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Laboratory ("Computer/Research Laboratory")</td>
+<td style="text-align: right;">64</td>
+</tr>
+<tr>
+<td>Conference_Room</td>
+<td style="text-align: right;">14</td>
+</tr>
+<tr>
+<td>Restroom</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td>Break_Room / Office_Kitchen</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td>Telecom_Room</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr>
+<td>Mechanical_Room</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>Storage_Room</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr>
+<td>Server_Room</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Brick 1.4 has no lecture-hall or classroom class</strong> (checked against <code>Brick_v1.4.ttl</code>), so:
+- Lecture theatres are <code>brick:Auditorium</code> plus <code>brick:Room</code>. Auditorium is a Common_Space, not a Room, and the explicit Room keeps coverage from losing them (CAVEAT-301).
+- Seminar and teaching rooms are <code>brick:Conference_Room</code>.
+- Computer rooms are <code>brick:Laboratory</code>.
+- A class such as <code>ontosage:Teaching_Room</code> would be more exact. That file belongs to VOCAB and is not changed here.</p>
+<p><strong>Left as they were, because the drawing does not settle them:</strong>
+- 1.38 "IT Hub"
+- 2.14 / 3.65 / 5.45 "Project Rm"
+- 3.27 "Magic Room"
+- 4.07 "Cyber Security"</p>
+<p><strong>Not yet live.</strong> The running graph still holds the old triples. The default graph can shadow a
+named graph (BUG-194), so after re-upload, check that no <code>Laboratory</code> type or "Computer
+Laboratory" label survives on Room1.06 in any graph.</p>
+<p>Tests: <code>tests/test_room_identity_matches_drawing.py</code>. On the pre-change files, three rule tests
+fail with 82, 128 and 148 findings; on the corrected files all 34 pass.</p>
+<hr />
+<h2 id="2-where-the-reception-really-is">2. Where the reception really is<a class="headerlink" href="#2-where-the-reception-really-is" title="Permanent link">&para;</a></h2>
+<p><strong>The drawing shows no room named reception.</strong> On the Abacws floor-0 DXF (GIA 1,622.88 m²),
+outline 0.01 contains only "120 Person Lecture Theatre". No text anywhere on floor 0 says
+reception, and the main entrance is not a numbered outline.</p>
+<p>The nearest front-of-house function the drawing records is <strong>Room 0.19</strong>: "3 Person Prof Serv &amp;
+Post", with the ROOM ASSIGNMENT layer text "STUDENT SERVICES" inside the same outline. 0.18
+("9 Person Prof Serv") and 0.20 ("2 Person Prof Serv") sit next to it. The circulation and
+collaboration zones ("41P Collab S" 0Z21, "Collab Sp Soft Seat" 0Z23, "Vending" 0Z19) have no
+room IRI.</p>
+<p>The "0.01 Meeting Room / Reception / 0.13 College Room / 0.18 Boardroom" text that looked like
+evidence is in the <strong>floor-4</strong> PDF and DXF. It is an inset of a different ground floor: it does
+not match the floor-0 drawing, where 0.18 is Prof Serv and 0.10 is Gas Meter &amp; Tank.</p>
+<p><strong>Proposal:</strong>
+- Model "Main Entrance / Reception" as its own space, not as Room0.01.
+- Ask the owner whether 0.19 (Student Services) is the reception desk.</p>
+<p>Until that is answered, anything described below as "reception" has no correct room to move to.</p>
+<hr />
+<h2 id="3-cascade-inventory">3. Cascade inventory<a class="headerlink" href="#3-cascade-inventory" title="Permanent link">&para;</a></h2>
+<h3 id="31-timetabled-sessions-inputdocumentstimetabled_sessionsmd-and-inputbldg1_timetablecsv">3.1 Timetabled sessions: <code>input/documents/timetabled_sessions.md</code> and <code>input/bldg1_timetable.csv</code><a class="headerlink" href="#31-timetabled-sessions-inputdocumentstimetabled_sessionsmd-and-inputbldg1_timetablecsv" title="Permanent link">&para;</a></h3>
+<p><strong>646 of the 675 sessions (96%) sit in 42 rooms whose identity changed. All 646 rows still carry the old label.</strong></p>
+<p>The timetable is synthetic: the provisioner chose "teaching rooms" by Brick class, so wrong types
+put the classes in offices (commit 8f04d3a). By what the drawing now says the host room is:</p>
+<table>
+<thead>
+<tr>
+<th>drawing says</th>
+<th style="text-align: right;">sessions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Office</td>
+<td style="text-align: right;">507</td>
+</tr>
+<tr>
+<td>DB Room (2.15, 7.83 m²)</td>
+<td style="text-align: right;">24</td>
+</tr>
+<tr>
+<td>ICT LAN (3.57)</td>
+<td style="text-align: right;">14</td>
+</tr>
+<tr>
+<td>PhD research offices</td>
+<td style="text-align: right;">41</td>
+</tr>
+<tr>
+<td>research office</td>
+<td style="text-align: right;">21</td>
+</tr>
+<tr>
+<td>90P Lecture (5.05)</td>
+<td style="text-align: right;">23</td>
+</tr>
+<tr>
+<td>16-20P Meeting (3.01)</td>
+<td style="text-align: right;">16</td>
+</tr>
+</tbody>
+</table>
+<p>By session kind:</p>
+<table>
+<thead>
+<tr>
+<th>kind</th>
+<th style="text-align: right;">sessions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>laboratory session</td>
+<td style="text-align: right;">471</td>
+</tr>
+<tr>
+<td>seminar</td>
+<td style="text-align: right;">66</td>
+</tr>
+<tr>
+<td>computer lab session</td>
+<td style="text-align: right;">60</td>
+</tr>
+<tr>
+<td>small-group session</td>
+<td style="text-align: right;">49</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Proposed moves.</strong> Each is a drawn room of the right kind and capacity, on the same floor where
+one exists. Every move was clash-checked against the CSV, and none produces an overlapping
+session.</p>
+<table>
+<thead>
+<tr>
+<th>sessions now in</th>
+<th>kind</th>
+<th style="text-align: right;">n</th>
+<th>move to</th>
+<th>drawing</th>
+<th style="text-align: right;">capacity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Room 1.06</strong> (Office)</td>
+<td>computer lab</td>
+<td style="text-align: right;">23</td>
+<td><strong>Room 1.39</strong></td>
+<td>42P Computer Room, floor 1</td>
+<td style="text-align: right;">42</td>
+</tr>
+<tr>
+<td>Room 1.07 (Office)</td>
+<td>computer lab</td>
+<td style="text-align: right;">15</td>
+<td>Room 1.34</td>
+<td>60P Computer Room, floor 1</td>
+<td style="text-align: right;">60</td>
+</tr>
+<tr>
+<td>Room 4.05 (Office)</td>
+<td>computer lab</td>
+<td style="text-align: right;">6</td>
+<td>Room 1.34</td>
+<td>(no computer room on floor 4)</td>
+<td style="text-align: right;">60</td>
+</tr>
+<tr>
+<td>Room 2.08, 3.05 (Offices)</td>
+<td>computer lab</td>
+<td style="text-align: right;">16</td>
+<td>Room 2.35</td>
+<td>48P Computer Room, floor 2</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr>
+<td>Room 1.26 (6P Research Office)</td>
+<td>seminar</td>
+<td style="text-align: right;">21</td>
+<td>Room 1.04</td>
+<td>30P Seminar Room, floor 1</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr>
+<td>Room 2.15 (DB Room)</td>
+<td>seminar</td>
+<td style="text-align: right;">24</td>
+<td>Room 3.38</td>
+<td>48P Seminar Room (no seminar room on floor 2)</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr>
+<td>Room 4.13 (Office)</td>
+<td>seminar</td>
+<td style="text-align: right;">13</td>
+<td>Room 4.35</td>
+<td>20 P Seminar, floor 4</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td>Room 5.16 (Office)</td>
+<td>seminar</td>
+<td style="text-align: right;">8</td>
+<td>Room 5.44</td>
+<td>60P Teaching, floor 5</td>
+<td style="text-align: right;">60</td>
+</tr>
+<tr>
+<td>Room 3.16 (Office)</td>
+<td>small-group</td>
+<td style="text-align: right;">21</td>
+<td>Room 3.15</td>
+<td>8-12 Exec Meeting, floor 3</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr>
+<td>Room 3.26 (6P PHD Research)</td>
+<td>small-group</td>
+<td style="text-align: right;">8</td>
+<td>Room 3.01</td>
+<td>16-20P Meeting, floor 3</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td>Room 5.17 (Office)</td>
+<td>small-group</td>
+<td style="text-align: right;">20</td>
+<td>Room 1.40</td>
+<td>8-12P Meet Rm (no meeting room on floor 5)</td>
+<td style="text-align: right;">12</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The 471 "laboratory sessions" in 30 rooms cannot be hand-moved.</strong> Of those rooms, 28 are
+offices, PhD offices or an ICT LAN room on the drawing; the other two are 5.05 and 3.01. The drawing holds only two
+laboratories (2.53 "Research Lab", 4.38 "Financial Lab") plus two workshops (4.47, 4.71). Moving
+them there would stack about 470 sessions into four rooms.</p>
+<p><strong>Proposal:</strong> regenerate the timetable with <code>scripts/provision_synthetic_sources.py</code> after the
+corrected types are loaded. It already picks rooms by Brick class, so the corrected graph gives
+it the drawn teaching rooms. The same run fixes:
+- 5.05, which is now a lecture theatre holding "laboratory sessions";
+- 3.01, now a meeting room.</p>
+<p>The regression case "Which teaching sessions are scheduled in Room 1.06?" (expects <code>23</code>) must
+follow whichever room the 23 sessions go to.</p>
+<h3 id="32-events-store-sensordbevents-read-only">3.2 Events store (<code>sensordb.events</code>, read-only)<a class="headerlink" href="#32-events-store-sensordbevents-read-only" title="Permanent link">&para;</a></h3>
+<p>8,923 rows name a drawn room as their subject: 8,500 <code>booking</code>, 423 <code>workorder</code>. The generator
+booked every room, whatever it is.</p>
+<ul>
+<li><strong>Rows in the 18 rooms the drawing shows unoccupied</strong> (DB rooms, ICT LAN, stores, UPS, switch
+  room, gas meter room, refuse store, Server Rm): 640 past bookings, 17 future bookings, 23 work
+  orders.</li>
+<li><strong>Proposal:</strong> delete the future bookings; keep the work orders, since plant rooms do get work
+    orders; regenerate past bookings so none falls in such a room.</li>
+<li><strong>Bookings whose attendee count exceeds the drawing capacity:</strong> 5,008 past and 104 future,
+  across 172 rooms. The worst are cellular offices with 36-41 over-capacity bookings each (2.56,
+  2.11, 2.12, 3.53, 4.21, 2.21, 5.08, 2.05).</li>
+<li><strong>Proposal:</strong> regenerate bookings restricted to the drawn bookable kinds (Conference_Room,
+    Auditorium, computer-room Laboratory), with attendees capped at <code>hbco:roomCapacity</code>.</li>
+<li><strong><code>asset_outage</code> rows whose attributes name 0.01 (2), 0.04 (2) and 0.07 (1).</strong> They describe
+  reception, plant-room and service-room assets.</li>
+<li><strong>Proposal:</strong> re-point them with the asset moves in 3.4.</li>
+</ul>
+<p>Every one of the 132 changed rooms carries bookings, 17 to 65 each: Room1.06 has 61 bookings (2
+in the future) and 2 work orders. The per-room table is Appendix A.</p>
+<h3 id="33-register-documents-inputdocumentsmd">3.3 Register documents (<code>input/documents/*.md</code>)<a class="headerlink" href="#33-register-documents-inputdocumentsmd" title="Permanent link">&para;</a></h3>
+<p><strong>866 rows in 22 registers name a changed room.</strong></p>
+<table>
+<thead>
+<tr>
+<th>register</th>
+<th style="text-align: right;">rows</th>
+<th style="text-align: right;">rooms</th>
+<th style="text-align: right;">rows still carrying the old label</th>
+<th>proposed correction</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>timetabled_sessions</td>
+<td style="text-align: right;">646</td>
+<td style="text-align: right;">42</td>
+<td style="text-align: right;">646</td>
+<td>section 3.1</td>
+</tr>
+<tr>
+<td>workspace_profile_register</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">25</td>
+<td style="text-align: right;">0 (uses "Room X - label")</td>
+<td>see below</td>
+</tr>
+<tr>
+<td>accessible_route_register</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">20</td>
+<td>routes "to Reception" end at Main Entrance (section 2); "to Level 1 Computer Laboratory" goes to Room 1.39; "to Level 2/3/4 laboratories" go to 2.53 / (none) / 4.38</td>
+</tr>
+<tr>
+<td>event_activity_register</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">22</td>
+<td>open-day and outreach activities in 1.06 go to Room 1.39 (42) or the 96-person lecture theatre 0.34 for talks; the "Laboratory demonstration" in 2.01/2.02 (stated capacity 30) goes to 2.53 Research Lab</td>
+</tr>
+<tr>
+<td>av_readiness_register</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">21</td>
+<td>see below</td>
+</tr>
+<tr>
+<td>asset_engineering_register</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0</td>
+<td>see 3.4 (plant rooms)</td>
+</tr>
+<tr>
+<td>cleaning_task_register</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">14</td>
+<td>relabel; "Presentation" standard for 0.01 now means a lecture theatre; "Enhanced" lab cleaning in offices 2.03/3.06/5.01 drops to "Standard"</td>
+</tr>
+<tr>
+<td>room_bookings</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">16</td>
+<td>5.15 / 5.16 / 5.01 / 5.04 (12-24 attendees, all offices now) go to 5.44 (60); 5.17 (30 attendees, office) goes to 5.44; 5.18 (6 attendees, PhD office) goes to 1.40 or 3.15</td>
+</tr>
+<tr>
+<td>public_event_register</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">12</td>
+<td>"Open day" and "Schools outreach" in 1.06 go to 1.39 / 0.34; 1.04 events above 30 people ("Careers fair", "Alumni evening reception") need a larger venue, and the atrium they were written for is not a numbered room on the drawing</td>
+</tr>
+<tr>
+<td>waste_collection_register</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">11</td>
+<td>reception bins have no room until section 2 is answered; atrium bins in 1.04 have no drawn atrium; sharps bins in 2.01 / 3.01 go to 2.53 Research Lab</td>
+</tr>
+<tr>
+<td>incident_and_near_miss_log</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0</td>
+<td>history: keep what was recorded, relabel the room</td>
+</tr>
+<tr>
+<td>coshh_and_lev</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0</td>
+<td>fume cupboards in offices 2.05 / 2.06 / 3.01 go to 2.53 Research Lab; solvent store in 2.05 goes to a store; asbestos flue remnant "in 0.04" now sits in a seminar room, <strong>so the owner must confirm where the plant room is</strong></td>
+</tr>
+<tr>
+<td>approval_evidence_register</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td>"Room 1.06 Computer Laboratory — teaching use" goes to 1.39; COSHH approvals for 2.01 / 3.06 go to 2.53</td>
+</tr>
+<tr>
+<td>continuity_provision_register</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td>BMS depends on "0.04 Mechanical Plant Room" (now a seminar room); fire alarm panel in 0.08 (Switch Room); "Teaching AV in Level 1 laboratories" (1.06 / 1.07) goes to 1.39 / 1.34</td>
+</tr>
+<tr>
+<td>fire_safety</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0</td>
+<td>fire alarm control panel "in 0.10" is now in a gas meter room; the fire door on 1.06 is described as a computer laboratory suite</td>
+</tr>
+<tr>
+<td>patrol_checkpoint_register</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
+<td>"Main reception desk" (section 2); "Level 1 atrium" (1.04 is a seminar room); "Mechanical plant room" (0.04); "Comms room" (0.07 is UPS &amp; Battery)</td>
+</tr>
+<tr>
+<td>access_permission_register</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
+<td>"Mechanical plant room" on 0.04; "Server and comms room" on 0.07; lab permissions on offices 2.01 / 3.06</td>
+</tr>
+<tr>
+<td>door_hardware_register</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+<td>reception turnstile on 0.01; plant-room door on 0.04; "Level 5 conference suite door" on office 5.15</td>
+</tr>
+<tr>
+<td>hvac_operation</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td>"Server room cooling" scoped to office 2.13; "Level 5 seminar, conference" scope on offices 5.15 / 5.16</td>
+</tr>
+<tr>
+<td>maintenance_log</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td>fan coil unit in office 5.03: consistent, relabel only</td>
+</tr>
+<tr>
+<td>coordination_function_register</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td>lab spill response in office 3.06 goes to 2.53</td>
+</tr>
+<tr>
+<td>service_schedules</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+<td>"Atrium glazing" on 1.04: no drawn atrium</td>
+</tr>
+</tbody>
+</table>
+<p><strong>AV readiness (the "ready for my class" questions).</strong> Records sit in 1.06 (6 components,
+including the hearing loop "Unevidenced"), 1.04 (4), 2.01 (3), 2.02 (2), 3.01 (4), 4.01 (2) and
+5.04 (1). Of those, only 1.04 and 3.01 are teaching or meeting rooms on the drawing.</p>
+<p>Proposal:
+- Move the six-component 1.06 set to <strong>Room 1.39</strong> (the same "computer lab" rig, the same floor,
+  42 seats), keeping the unevidenced hearing loop so the demo still shows a named blocker.
+- 1.04 keeps its set. Relabel it from "Atrium" to "Seminar Room".
+- 2.01 / 2.02 go to 2.35 (computer room, floor 2).
+- 4.01 goes to 4.35.
+- 5.04 goes to 5.44.
+- 3.01 keeps its set.</p>
+<p><strong>Workspace profiles.</strong></p>
+<table>
+<thead>
+<tr>
+<th>profile</th>
+<th>now</th>
+<th>proposal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>WS-02..05 "Level 1 computer lab"</td>
+<td>offices 1.06-1.09 (24-30 seats)</td>
+<td>1.39 (42) and 1.34 (60)</td>
+</tr>
+<tr>
+<td>WS-08/09</td>
+<td>2.07 / 2.08</td>
+<td>2.35</td>
+</tr>
+<tr>
+<td>WS-13/14</td>
+<td>3.05 / 3.06</td>
+<td>no computer room on floor 3: drop or point to 2.35</td>
+</tr>
+<tr>
+<td>WS-06/07 "Seminar room"</td>
+<td>1.25 / 1.26</td>
+<td>1.04</td>
+</tr>
+<tr>
+<td>WS-12</td>
+<td>2.15 (DB room)</td>
+<td>drop</td>
+</tr>
+<tr>
+<td>WS-15/16</td>
+<td>3.13 / 3.14</td>
+<td>3.38 / 3.02</td>
+</tr>
+<tr>
+<td>WS-24</td>
+<td>4.13</td>
+<td>4.35</td>
+</tr>
+<tr>
+<td>WS-25/26</td>
+<td>5.15 / 5.16</td>
+<td>5.44</td>
+</tr>
+<tr>
+<td>WS-10/18/20/22/23/27/28 "Meeting room"</td>
+<td>2.13 / 3.16 / 3.26 / 4.11 / 4.12 / 5.17 / 5.18</td>
+<td>only 1.40 / 3.15 / 3.01 / 0.17 are drawn meeting rooms; floors 2, 4 and 5 have none</td>
+</tr>
+<tr>
+<td>WS-19 "Staff common room"</td>
+<td>3.17</td>
+<td>3.36 "Staff Room"</td>
+</tr>
+</tbody>
+</table>
+<p>This changes the answers to "Which bookable rooms are suitable for a confidential call?" (expects
+5.17 / 5.18) and "Where can I work for three hours…" (expects 1.25 / 1.06 / "computer lab").</p>
+<h3 id="34-graph-instances-in-the-building-ttls-that-point-at-a-changed-room">3.4 Graph instances in the building TTLs that point at a changed room<a class="headerlink" href="#34-graph-instances-in-the-building-ttls-that-point-at-a-changed-room" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>file</th>
+<th style="text-align: right;">referring subjects</th>
+<th style="text-align: right;">rooms</th>
+<th style="text-align: right;">subjects whose own label names the old function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>bldg1_saturation_*.ttl</code> (11 modality files)</td>
+<td style="text-align: right;">1,132 sensors</td>
+<td style="text-align: right;">132</td>
+<td style="text-align: right;"><strong>1,030</strong> name a non-office function, e.g. "Room 0.01 — Main Reception illuminance [lux]"; all 1,132 embed the old label</td>
+</tr>
+<tr>
+<td><code>bldg1_configuration_history.ttl</code></td>
+<td style="text-align: right;">779 ConfigurationPeriod</td>
+<td style="text-align: right;">131</td>
+<td style="text-align: right;">0 (no labels; the location link stays valid)</td>
+</tr>
+<tr>
+<td><code>bldg1_floors_0_4_sensors.ttl</code></td>
+<td style="text-align: right;">312 sensors</td>
+<td style="text-align: right;">104</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>bldg1_door_access_events.ttl</code> (not loaded)</td>
+<td style="text-align: right;">148 AccessEvent</td>
+<td style="text-align: right;">1 (Room0.01)</td>
+<td style="text-align: right;">door events at the "reception" turnstile: re-point to the Main Entrance space</td>
+</tr>
+<tr>
+<td><code>bldg1_waste_points.ttl</code></td>
+<td style="text-align: right;">24 fill/weight points</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">24</td>
+</tr>
+<tr>
+<td><code>bldg1_amenity_locations.ttl</code></td>
+<td style="text-align: right;">24 amenities</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">23</td>
+</tr>
+<tr>
+<td><code>bldg1_enhancements.ttl</code></td>
+<td style="text-align: right;">44</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td><code>bldg1_zone_room_links.ttl</code></td>
+<td style="text-align: right;">12 HVAC zones</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td><code>bldg1_synthetic_status.ttl</code></td>
+<td style="text-align: right;">7 AV rigs</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td><code>bldg1_abacws_metadata.ttl</code> (non-room subjects: 6 telecom rooms, 2 server rooms, 3 AEDs, 1 camera)</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">re-parent, see below</td>
+</tr>
+<tr>
+<td><code>bldg1_alarm_events.ttl</code> (not loaded)</td>
+<td style="text-align: right;">1 AlarmEvent</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1 ("Leak Detector - Ground Floor Plant Room" on 0.04)</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Saturation sensor labels.</strong> They embed the old room label: 1,030 labels across 11 files.
+Proposal: regenerate from the new <code>rdfs:label</code>, the same generator with no identity change. The
+point IRIs (<code>Room1.06_sat_co2</code>) are unaffected.</p>
+<p><strong>The waste bins provisioned today</strong> (<code>bldg1_waste_points.ttl</code>, 12 bins x fill + weight).
+<code>provision_damper_and_waste_points.py</code> put one pair per floor in "that floor's own kitchen / break
+room / common area", as the graph typed them:</p>
+<table>
+<thead>
+<tr>
+<th>now in</th>
+<th>old identity</th>
+<th>drawing says</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Room0.01</td>
+<td>Main Reception</td>
+<td>120 Person Lecture Theatre</td>
+</tr>
+<tr>
+<td>Room1.04</td>
+<td>Common Area / Atrium</td>
+<td>30P Seminar Room</td>
+</tr>
+<tr>
+<td>Room2.66</td>
+<td>Staff Break Room / Kitchen</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room3.18</td>
+<td>Kitchen</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room4.70</td>
+<td>Staff Break Room</td>
+<td>6P Prof Serv- IT</td>
+</tr>
+<tr>
+<td>Room5.26</td>
+<td>Staff Break Room / Kitchen</td>
+<td>Small Research</td>
+</tr>
+</tbody>
+</table>
+<p>The drawing holds <strong>one</strong> break-out room in the whole building: <strong>3.36 "Staff Room"</strong> (84.77 m²).
+It has no drawn kitchen and no drawn atrium, and 0.29 is a "Refuse Store".</p>
+<p>Proposal:
+- The floor-3 pair goes to 3.36.
+- The floor-0 pair goes to 0.29 Refuse Store, or to the Main Entrance space once it exists (section 2).
+- Floors 1, 2, 4 and 5: locate the pairs at floor level (<code>brick:hasLocation bldg:FloorN</code>) rather
+  than in a room the drawing says is an office or a seminar room.</p>
+<p>The same applies to the older bins in <code>bldg1_enhancements.ttl</code>: WasteBin_*_F0_Reception, _F2_Kitchen (2.66), _F3_Common (3.17), _F3_Kitchen (3.18), _F5_Break (5.26).</p>
+<p><strong>Amenities</strong> (<code>bldg1_amenity_locations.ttl</code>).
+- 12 drinking-water points and 6 study areas sit in rooms such as 1.06 "Computer Laboratory".
+- 6 <strong>toilet facilities</strong> are located in 0.04 (seminar room), 1.07 (office), 2.02 (research office), 3.02 (64-person seminar room), 4.02 (PhD office) and 5.02 (PhD office).
+- The drawing numbers no toilets; the WCs are unnumbered core spaces.</p>
+<p>Proposal: locate all 24 at floor level with a <code>locationText</code> naming the core ("Level 1 WCs, next
+to the lifts") until the core spaces are modelled. Do not leave a toilet answer pointing into a
+PhD office.</p>
+<p><strong><code>bldg1_enhancements.ttl</code> (other subjects).</strong>
+- Occupancy-count and booking-status sensors labelled "Seminar Room 1.25 / 1.26 / 2.15 / 4.13 / 5.15 / 5.16", "Meeting Room 3.13 / 3.26" and "Lab 3.01 / 4.01 / 5.01". Relabel, or move with the bookable rooms in 3.3.
+- CCT luminaires and commands in "Lab 3.01 / 5.01": relabel.
+- Door sensors "Server Room Floor 2 (Room 2.44)" and "Floor 5 (Room 5.44)": 2.44 is a PhD office and 5.44 a 60-person teaching room. There is no drawn server room on floors 2 or 5; 4.44 is the only Server Rm.
+- Leak detector "Ground Floor Plant Room" on 0.04: needs the owner (section 5).
+- <strong>Main-entrance access reader, entry counter and door sensor are <code>isPartOf Room0.01</code>.</strong> Re-point them to the Main Entrance space.</p>
+<p><strong><code>bldg1_abacws_metadata.ttl</code> (non-room subjects).</strong>
+- Telecom_Room_F0..F5 are <code>isPartOf</code> 0.34 / 1.34 / 2.34 / 3.38 / 4.34 / 5.34, which are lecture theatres, computer rooms, PhD offices and a seminar room.
+  - Proposal: floors 2-5 go to the drawn ICT LAN rooms 2.24 / 3.57 / 4.24 / 5.57; floors 0 and 1 have no drawn LAN room.
+- Server_Room_F2 / F5 are in 2.44 / 5.44; only F4 (4.44) matches the drawing.
+- AED_Reception (0.01), AED_Floor3 (3.17, an office) and AED_Floor5 (5.26, a small research office) need a real location from Estates.</p>
+<p><strong>AV rigs</strong> (<code>bldg1_synthetic_status.ttl</code>).
+- av_Room0.05 (Records Store), av_Room0.07 (UPS &amp; Battery), av_Room0.08 (Switch Room) and av_Room0.10 (Gas Meter &amp; Tank): <strong>remove</strong>.
+- av_Room0.01 (lecture theatre) and av_Room0.04 (seminar room) now fit: relabel.
+- av_Room0.17 (Meeting Room) fits: relabel.</p>
+<h3 id="35-floor-plan-manifests-volumesbldg1floor-plans-not-in-git">3.5 Floor-plan manifests (<code>volumes/bldg1/floor-plans</code>, not in git)<a class="headerlink" href="#35-floor-plan-manifests-volumesbldg1floor-plans-not-in-git" title="Permanent link">&para;</a></h3>
+<p>139 manifest spaces link to changed rooms. Their DWG-derived types mostly agree with the drawing already. <strong>10 contradict it:</strong>
+- <strong>7 in <code>floor_4.manifest.json</code></strong> carry floor-0 IRIs (Room0.01 / 0.04 / 0.05 / 0.07 / 0.08 / 0.10 / 0.17) with no area. They are typed from the floor-4 inset of another building: 0.07 and 0.08 as toilets, 0.01 as a meeting room, 0.17 as storage.
+  - Proposal: remove those links. The spaces are not on floor 4 and not in Abacws.
+- <strong>Room2.44</strong> is typed <code>lab</code>; the drawing says 5P PHD Research.
+- <strong>Room4.47</strong> is typed <code>lab</code>; the drawing says I.T Workshop.
+- <strong>Room4.36</strong> is typed <code>meeting_room</code>; the drawing says 5P Research. Its alias "4P Tut Niche 4Z24 5P Research 4.36 20 P Seminar 4.35" smears a neighbour's "20 P Seminar" onto it.</p>
+<h3 id="36-question-sources">3.6 Question sources<a class="headerlink" href="#36-question-sources" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>file</th>
+<th>lines naming a changed room or its old function</th>
+<th>proposal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>docs/demo_script_questions.txt</code></td>
+<td>L13 "Is Room 1.06 ready for my class?", L14 "Is Room1.06 free for the next two hours?", L7/L34/L36 room 5.01, L51 room 2.01, L75 "radiation level in the atrium"</td>
+<td><strong>Use Room 1.39 for L13 and L14.</strong> It is the drawing's 42-person computer room on the same floor, and it receives 1.06's 23 sessions and AV set under 3.1 / 3.3. Its 35 bookings (1 in the future) keep "free for the next two hours?" answerable. L7/L34/L36/L51 are sensor questions, so the room change does not break them, but 5.01 and 2.01 are now PhD offices and the answer text will say so. L75: 1.04 is no longer an atrium, so the referent gate may now answer "no such space" rather than "not measured"; the owner should say whether the atrium is a space to model.</td>
+</tr>
+<tr>
+<td><code>scripts/regression_cases.json</code></td>
+<td>L45-46 (1.25, 1.06, "computer lab"), L61-62 and L385-386 (5.17, 5.18), L204 (sessions in 1.06, expects 23), L215/L422/L535/L550 (5.01), L341 ("Level 1 computer laboratories", expects 26), L397 (1.06 ready, expects "hearing loop"), L409 (3.13 ready), L469 ("seminar room from reception"), L666-667 (3.01 / 3.05 on "Show me floor 3"), L679 (atrium)</td>
+<td>Change these together with the data moves, <strong>one rule at a time with the probe green before and after</strong>. The 1.06 cases follow the room chosen in 3.1 (1.39). The 5.17 / 5.18 workspace markers follow the workspace decision in 3.3. L469 waits on section 2.</td>
+</tr>
+<tr>
+<td><code>docs/demo_question_bank.jsonl</code> (67 lines)</td>
+<td>none</td>
+<td>nothing to do</td>
+</tr>
+<tr>
+<td><code>docs/phase0/phase0_bank.jsonl</code> (147 lines)</td>
+<td>none by room number or old function</td>
+<td>nothing to do</td>
+</tr>
+<tr>
+<td><code>docs/phase0/guard_set.jsonl</code> (VOCAB)</td>
+<td>names 1.06</td>
+<td>tell VOCAB</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="4-order-if-the-owner-approves">4. Order, if the owner approves<a class="headerlink" href="#4-order-if-the-owner-approves" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Load the corrected identity TTLs. Verify no old label or type survives in any graph (BUG-194).</li>
+<li>Regenerate the derived and synthetic data from the corrected graph, not by hand:</li>
+<li>saturation labels;</li>
+<li>the timetable (<code>provision_synthetic_sources.py</code>);</li>
+<li>bookings in the events store (the same generator, restricted to bookable kinds and capped at capacity);</li>
+<li>the capacity file <code>tasks/held_back/bldg1_room_capacity.ttl.held</code>, whose regeneration is already done offline.</li>
+<li>Apply the hand decisions: AV set 1.06 → 1.39; workspace profiles; room_bookings; public events; bins; amenities; telecom / server / AED re-parenting; manifest links.</li>
+<li>Flush <code>resp_cache:*</code>, run the probe, then move the regression markers one group at a time.</li>
+</ol>
+<h2 id="5-decisions-only-the-owner-can-make">5. Decisions only the owner can make<a class="headerlink" href="#5-decisions-only-the-owner-can-make" title="Permanent link">&para;</a></h2>
+<ol>
+<li>Where the reception and the main entrance are (section 2). Is 0.19 "Student Services" the reception desk?</li>
+<li>Where the mechanical plant room is. <code>asset_engineering</code>, <code>coshh_and_lev</code>, <code>continuity_provision</code>, <code>patrol_checkpoint</code>, <code>door_hardware</code> and <code>fire_safety</code> all place AHUs, pumps, the BMS head end, an asbestos remnant and the fire alarm panel in 0.04 / 0.05 / 0.10. The drawing names those rooms a 30-person seminar room, a records store and a gas meter room. The only "Plant Room" text is in the floor-4 inset of another building.</li>
+<li>Whether the atrium is a space to model. 1.04 is a seminar room, and seven registers held events, bins, patrols and cleaning in "the atrium".</li>
+<li>The six ambiguous rooms (Appendix B), in particular 4.07 "Cyber Security": laboratory or teaching room?</li>
+<li>Whether 2.26 "120S Lecture Theatre - Group Bench seating style 30SD Cap." is really a 120-seat theatre. Its drawn outline is 27.44 m², so the outline is incomplete. Capacity is withheld for now.</li>
+</ol>
+<h2 id="appendix-a-the-132-rooms-whose-identity-changed">Appendix A — the 132 rooms whose identity changed<a class="headerlink" href="#appendix-a-the-132-rooms-whose-identity-changed" title="Permanent link">&para;</a></h2>
+<p>Drawing text is verbatim from the room's own outline. Old values are what <code>bldg1_abacws_metadata.ttl</code> asserted before 2026-09-17; sessions are rows in <code>input/bldg1_timetable.csv</code>; bookings are <code>booking</code> rows in the events store whose subject is the room (all dates).</p>
+<table>
+<thead>
+<tr>
+<th>room</th>
+<th>drawing says</th>
+<th>old type</th>
+<th>old label</th>
+<th>new type</th>
+<th>new label</th>
+<th style="text-align: right;">sessions</th>
+<th style="text-align: right;">bookings</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Room0.01</td>
+<td>120 Person Lecture Theatre</td>
+<td>Reception</td>
+<td>Main Reception</td>
+<td>Auditorium, Room</td>
+<td>Lecture Theatre (120 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr>
+<td>Room0.04</td>
+<td>30 P Seminar</td>
+<td>Mechanical_Room</td>
+<td>Mechanical Plant Room</td>
+<td>Conference_Room</td>
+<td>Seminar Room (30 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room0.05</td>
+<td>Records Storage</td>
+<td>Mechanical_Room</td>
+<td>Mechanical Plant Room</td>
+<td>Storage_Room</td>
+<td>Records Store</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room0.07</td>
+<td>Main UPS &amp; Batt</td>
+<td>Mechanical_Room</td>
+<td>Service Room</td>
+<td>Electrical_Room</td>
+<td>UPS and Battery Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room0.08</td>
+<td>Switch Room</td>
+<td>Mechanical_Room</td>
+<td>Service Room</td>
+<td>Electrical_Room</td>
+<td>Switch Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room0.10</td>
+<td>Gas Meter &amp; Tank</td>
+<td>Office</td>
+<td>Building Management Office</td>
+<td>Service_Room</td>
+<td>Gas Meter and Tank Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room0.17</td>
+<td>Meeting Room</td>
+<td>Office</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room0.29</td>
+<td>Refuse Store</td>
+<td>Storage_Room</td>
+<td>Storage Room</td>
+<td>Waste_Storage</td>
+<td>Refuse Store</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr>
+<td>Room0.31</td>
+<td>Records Storage</td>
+<td>Mechanical_Room</td>
+<td>Mechanical/Service Room</td>
+<td>Storage_Room</td>
+<td>Records Store</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room0.32</td>
+<td>4 P Prof Serv</td>
+<td>Mechanical_Room</td>
+<td>Mechanical/Service Room</td>
+<td>Shared_Office</td>
+<td>Professional Services Office (4 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">41</td>
+</tr>
+<tr>
+<td>Room0.33</td>
+<td>3 P Prof Serv</td>
+<td>Mechanical_Room</td>
+<td>Mechanical/Service Room</td>
+<td>Shared_Office</td>
+<td>Professional Services Office (3 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr>
+<td>Room0.34</td>
+<td>96P Lecture</td>
+<td>Telecom_Room</td>
+<td>Building Telecommunications Room</td>
+<td>Auditorium, Room</td>
+<td>Lecture Theatre (96 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+</tr>
+<tr>
+<td>Room1.04</td>
+<td>30P Seminar Room</td>
+<td>Common_Space</td>
+<td>Common Area / Atrium</td>
+<td>Conference_Room</td>
+<td>Seminar Room (30 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">17</td>
+</tr>
+<tr>
+<td>Room1.06</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">61</td>
+</tr>
+<tr>
+<td>Room1.07</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">51</td>
+</tr>
+<tr>
+<td>Room1.08</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">28</td>
+</tr>
+<tr>
+<td>Room1.09</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room1.25</td>
+<td>8P Research Office</td>
+<td>Conference_Room</td>
+<td>Conference/Seminar Room</td>
+<td>Shared_Office</td>
+<td>Research Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr>
+<td>Room1.26</td>
+<td>6P Research Office</td>
+<td>Conference_Room</td>
+<td>Conference/Seminar Room</td>
+<td>Shared_Office</td>
+<td>Research Office (6 people)</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">64</td>
+</tr>
+<tr>
+<td>Room1.34</td>
+<td>60P Computer Room 16 SD Cap.</td>
+<td>Telecom_Room</td>
+<td>Telecommunications Room</td>
+<td>Laboratory</td>
+<td>Computer Room (60 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room1.37</td>
+<td>DB Room</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Electrical_Room</td>
+<td>Distribution Board Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room1.39</td>
+<td>42P Computer Room 14SD cap.</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Laboratory</td>
+<td>Computer Room (42 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room1.40</td>
+<td>8-12P Meet Rm</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Conference_Room</td>
+<td>Meeting Room (8-12 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr>
+<td>Room2.01</td>
+<td>8P PHD Students</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Shared_Office</td>
+<td>PhD Students' Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr>
+<td>Room2.02</td>
+<td>4P Research</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Shared_Office</td>
+<td>Research Office (4 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room2.03</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room2.04</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room2.05</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">47</td>
+</tr>
+<tr>
+<td>Room2.06</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr>
+<td>Room2.07</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr>
+<td>Room2.08</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">43</td>
+</tr>
+<tr>
+<td>Room2.13</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room2.15</td>
+<td>DB Room</td>
+<td>Conference_Room</td>
+<td>Seminar Room</td>
+<td>Electrical_Room</td>
+<td>Distribution Board Room</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">53</td>
+</tr>
+<tr>
+<td>Room2.17</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">58</td>
+</tr>
+<tr>
+<td>Room2.18</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room2.19</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr>
+<td>Room2.20</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">51</td>
+</tr>
+<tr>
+<td>Room2.21</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">60</td>
+</tr>
+<tr>
+<td>Room2.22</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">59</td>
+</tr>
+<tr>
+<td>Room2.24</td>
+<td>ICT LAN</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Telecom_Room</td>
+<td>ICT LAN Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+</tr>
+<tr>
+<td>Room2.26</td>
+<td>120S Lecture Theatre - Group Bench seating style 30SD Cap.</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Auditorium, Room</td>
+<td>Lecture Theatre (120 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">41</td>
+</tr>
+<tr>
+<td>Room2.34</td>
+<td>8P PHD Students</td>
+<td>Telecom_Room</td>
+<td>Telecommunications Room</td>
+<td>Shared_Office</td>
+<td>PhD Students' Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room2.35</td>
+<td>48P Computer Room 14 SD Cap.</td>
+<td>Restroom</td>
+<td>Restroom (Male)</td>
+<td>Laboratory</td>
+<td>Computer Room (48 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room2.36</td>
+<td>8P PHD Students</td>
+<td>Restroom</td>
+<td>Restroom (Female)</td>
+<td>Shared_Office</td>
+<td>PhD Students' Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room2.44</td>
+<td>5P PHD Research</td>
+<td>Server_Room</td>
+<td>Server Room</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (5 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+</tr>
+<tr>
+<td>Room2.52</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">41</td>
+</tr>
+<tr>
+<td>Room2.54</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">57</td>
+</tr>
+<tr>
+<td>Room2.55</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">38</td>
+</tr>
+<tr>
+<td>Room2.56</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">44</td>
+</tr>
+<tr>
+<td>Room2.57</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room2.66</td>
+<td>Office</td>
+<td>Break_Room</td>
+<td>Staff Break Room / Kitchen</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">39</td>
+</tr>
+<tr>
+<td>Room2.67</td>
+<td>5P PHD Students</td>
+<td>Storage_Room</td>
+<td>Storage Room</td>
+<td>Shared_Office</td>
+<td>PhD Students' Office (5 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room3.01</td>
+<td>16-20P Meeting</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Conference_Room</td>
+<td>Meeting Room (16-20 people)</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr>
+<td>Room3.02</td>
+<td>64P Seminar Room</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Conference_Room</td>
+<td>Seminar Room (64 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room3.03</td>
+<td>6P PHD Research</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (6 people)</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">45</td>
+</tr>
+<tr>
+<td>Room3.04</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">56</td>
+</tr>
+<tr>
+<td>Room3.05</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">44</td>
+</tr>
+<tr>
+<td>Room3.06</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr>
+<td>Room3.13</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Seminar Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">43</td>
+</tr>
+<tr>
+<td>Room3.14</td>
+<td>Exec PA</td>
+<td>Conference_Room</td>
+<td>Seminar Room</td>
+<td>Enclosed_Office</td>
+<td>Executive PA Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room3.16</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr>
+<td>Room3.17</td>
+<td>Office</td>
+<td>Break_Room</td>
+<td>Staff Common Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room3.18</td>
+<td>Office</td>
+<td>Office_Kitchen</td>
+<td>Kitchen</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr>
+<td>Room3.26</td>
+<td>6P PHD Research</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (6 people)</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">41</td>
+</tr>
+<tr>
+<td>Room3.36</td>
+<td>Staff Room</td>
+<td>Restroom</td>
+<td>Restroom (Male)</td>
+<td>Break_Room</td>
+<td>Staff Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room3.37</td>
+<td>5P Research</td>
+<td>Restroom</td>
+<td>Restroom (Female)</td>
+<td>Shared_Office</td>
+<td>Research Office (5 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">43</td>
+</tr>
+<tr>
+<td>Room3.38</td>
+<td>48P Seminar Room</td>
+<td>Telecom_Room</td>
+<td>Telecommunications Room</td>
+<td>Conference_Room</td>
+<td>Seminar Room (48 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr>
+<td>Room3.50</td>
+<td>DB Room</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Electrical_Room</td>
+<td>Distribution Board Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room3.51</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">53</td>
+</tr>
+<tr>
+<td>Room3.52</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr>
+<td>Room3.53</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">51</td>
+</tr>
+<tr>
+<td>Room3.54</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room3.56</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room3.57</td>
+<td>ICT LAN</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Telecom_Room</td>
+<td>ICT LAN Room</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">47</td>
+</tr>
+<tr>
+<td>Room3.58</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">57</td>
+</tr>
+<tr>
+<td>Room4.01</td>
+<td>7P PHD Research</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (7 people)</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">49</td>
+</tr>
+<tr>
+<td>Room4.02</td>
+<td>8P PHD Research</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">41</td>
+</tr>
+<tr>
+<td>Room4.03</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room4.05</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room4.06</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Computer Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">26</td>
+</tr>
+<tr>
+<td>Room4.11</td>
+<td>6P Research</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+<td>Shared_Office</td>
+<td>Research Office (6 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room4.12</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+</tr>
+<tr>
+<td>Room4.13</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Seminar Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">52</td>
+</tr>
+<tr>
+<td>Room4.16</td>
+<td>DB Room</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Electrical_Room</td>
+<td>Distribution Board Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+</tr>
+<tr>
+<td>Room4.18</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">45</td>
+</tr>
+<tr>
+<td>Room4.19</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room4.20</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">38</td>
+</tr>
+<tr>
+<td>Room4.21</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">65</td>
+</tr>
+<tr>
+<td>Room4.22</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">43</td>
+</tr>
+<tr>
+<td>Room4.24</td>
+<td>ICT LAN</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Telecom_Room</td>
+<td>ICT LAN Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr>
+<td>Room4.34</td>
+<td>8P PHD Research</td>
+<td>Telecom_Room</td>
+<td>Telecommunications Room</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr>
+<td>Room4.35</td>
+<td>20 P Seminar</td>
+<td>Restroom</td>
+<td>Restroom (Male)</td>
+<td>Conference_Room</td>
+<td>Seminar Room (20 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">38</td>
+</tr>
+<tr>
+<td>Room4.36</td>
+<td>5P Research</td>
+<td>Restroom</td>
+<td>Restroom (Female)</td>
+<td>Shared_Office</td>
+<td>Research Office (5 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+</tr>
+<tr>
+<td>Room4.38</td>
+<td>Financial Lab</td>
+<td>Mechanical_Room</td>
+<td>Mechanical/Service Room</td>
+<td>Laboratory</td>
+<td>Financial Laboratory</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr>
+<td>Room4.47</td>
+<td>I.T Workshop</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Workshop</td>
+<td>IT Workshop</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room4.55</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">53</td>
+</tr>
+<tr>
+<td>Room4.56</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr>
+<td>Room4.57</td>
+<td>Visiting Staff</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Visiting Staff Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room4.58</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: right;">57</td>
+</tr>
+<tr>
+<td>Room4.59</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room4.60</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr>
+<td>Room4.67</td>
+<td>I.T. Store</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Storage_Room</td>
+<td>IT Store</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">29</td>
+</tr>
+<tr>
+<td>Room4.70</td>
+<td>6P Prof Serv- IT</td>
+<td>Break_Room</td>
+<td>Staff Break Room</td>
+<td>Shared_Office</td>
+<td>Professional Services Office (6 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr>
+<td>Room4.71</td>
+<td>Maker Rm</td>
+<td>Storage_Room</td>
+<td>Storage Room</td>
+<td>Workshop</td>
+<td>Maker Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">39</td>
+</tr>
+<tr>
+<td>Room5.01</td>
+<td>8P PHD Research</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr>
+<td>Room5.02</td>
+<td>8P PHD Research</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room5.03</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">45</td>
+</tr>
+<tr>
+<td>Room5.04</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room5.05</td>
+<td>90P Lecture</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Auditorium, Room</td>
+<td>Lecture Theatre (90 people)</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">59</td>
+</tr>
+<tr>
+<td>Room5.06</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">54</td>
+</tr>
+<tr>
+<td>Room5.15</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Seminar / Conference Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room5.16</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Seminar / Conference Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room5.17</td>
+<td>Office</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">50</td>
+</tr>
+<tr>
+<td>Room5.18</td>
+<td>5P PHD Research</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (5 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr>
+<td>Room5.26</td>
+<td>Small Research</td>
+<td>Break_Room</td>
+<td>Staff Break Room / Kitchen</td>
+<td>Enclosed_Office</td>
+<td>Small Research Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr>
+<td>Room5.34</td>
+<td>8P PHD Research</td>
+<td>Telecom_Room</td>
+<td>Telecommunications Room</td>
+<td>Shared_Office</td>
+<td>PhD Research Office (8 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">38</td>
+</tr>
+<tr>
+<td>Room5.35</td>
+<td>10P PHD Students</td>
+<td>Restroom</td>
+<td>Restroom (Male)</td>
+<td>Shared_Office</td>
+<td>PhD Students' Office (10 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room5.36</td>
+<td>6P Research</td>
+<td>Restroom</td>
+<td>Restroom (Female)</td>
+<td>Shared_Office</td>
+<td>Research Office (6 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room5.44</td>
+<td>60P Teaching</td>
+<td>Server_Room</td>
+<td>Server Room</td>
+<td>Conference_Room</td>
+<td>Teaching Room (60 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">38</td>
+</tr>
+<tr>
+<td>Room5.49</td>
+<td>DB Room</td>
+<td>Office</td>
+<td>Academic Office</td>
+<td>Electrical_Room</td>
+<td>Distribution Board Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr>
+<td>Room5.50</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room5.51</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room5.52</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">52</td>
+</tr>
+<tr>
+<td>Room5.53</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">44</td>
+</tr>
+<tr>
+<td>Room5.54</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+<tr>
+<td>Room5.56</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">32</td>
+</tr>
+<tr>
+<td>Room5.57</td>
+<td>ICT LAN</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Telecom_Room</td>
+<td>ICT LAN Room</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">33</td>
+</tr>
+<tr>
+<td>Room5.58</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr>
+<td>Room5.59</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr>
+<td>Room5.60</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr>
+<td>Room5.61</td>
+<td>Office</td>
+<td>Laboratory</td>
+<td>Research Laboratory</td>
+<td>Enclosed_Office</td>
+<td>Office</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">56</td>
+</tr>
+<tr>
+<td>Room5.71</td>
+<td>4P Research</td>
+<td>Storage_Room</td>
+<td>Storage Room</td>
+<td>Shared_Office</td>
+<td>Research Office (4 people)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">35</td>
+</tr>
+</tbody>
+</table>
+<h2 id="appendix-b-rooms-left-as-they-were-because-the-drawing-does-not-settle-them">Appendix B — rooms left as they were because the drawing does not settle them<a class="headerlink" href="#appendix-b-rooms-left-as-they-were-because-the-drawing-does-not-settle-them" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>room</th>
+<th>drawing says</th>
+<th>type kept</th>
+<th>label kept</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Room1.38</td>
+<td>IT Hub</td>
+<td>Office</td>
+<td>Academic Office</td>
+</tr>
+<tr>
+<td>Room2.14</td>
+<td>Project Rm - 1</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+</tr>
+<tr>
+<td>Room3.27</td>
+<td>Magic Room</td>
+<td>Conference_Room</td>
+<td>Meeting Room</td>
+</tr>
+<tr>
+<td>Room3.65</td>
+<td>Project Rm - 2</td>
+<td>Office</td>
+<td>Academic Office</td>
+</tr>
+<tr>
+<td>Room4.07</td>
+<td>Cyber Security</td>
+<td>Office</td>
+<td>Academic Office</td>
+</tr>
+<tr>
+<td>Room5.45</td>
+<td>Project Rm - 3</td>
+<td>Office</td>
+<td>Academic Office</td>
+</tr>
+</tbody>
+</table>
+<h2 id="appendix-c-hbcospacefunction-corrected-in-bldg1_enrichment_metadatattl">Appendix C — hbco:spaceFunction corrected in <code>bldg1_enrichment_metadata.ttl</code><a class="headerlink" href="#appendix-c-hbcospacefunction-corrected-in-bldg1_enrichment_metadatattl" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>room</th>
+<th>old</th>
+<th>new</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Room5.01</td>
+<td>Seminar room</td>
+<td>PhD research office</td>
+</tr>
+<tr>
+<td>Room5.02</td>
+<td>Seminar room</td>
+<td>PhD research office</td>
+</tr>
+<tr>
+<td>Room5.03</td>
+<td>Lecture / seminar room</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room5.04</td>
+<td>Seminar room</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room5.05</td>
+<td>Seminar room</td>
+<td>Lecture theatre</td>
+</tr>
+<tr>
+<td>Room5.06</td>
+<td>Meeting room / office</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room5.07</td>
+<td>Meeting room / office</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room5.08</td>
+<td>Large seminar / teaching room</td>
+<td>Research office</td>
+</tr>
+<tr>
+<td>Room5.09</td>
+<td>Seminar room</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room5.10</td>
+<td>Seminar room</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room4.01</td>
+<td>Research lab / seminar room</td>
+<td>PhD research office</td>
+</tr>
+<tr>
+<td>Room4.05</td>
+<td>Teaching lab</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room3.01</td>
+<td>Collaborative pod / group study room</td>
+<td>Meeting room</td>
+</tr>
+<tr>
+<td>Room3.05</td>
+<td>Teaching room</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room2.01</td>
+<td>Study room / seminar room</td>
+<td>PhD research office</td>
+</tr>
+<tr>
+<td>Room2.05</td>
+<td>Teaching lab</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room1.04</td>
+<td>Study room</td>
+<td>Seminar room</td>
+</tr>
+<tr>
+<td>Room1.06</td>
+<td>Teaching room</td>
+<td>Office</td>
+</tr>
+<tr>
+<td>Room0.01</td>
+<td>Atrium / reception area</td>
+<td>Lecture theatre</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

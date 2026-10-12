@@ -1,0 +1,2517 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/V6_Implementation_QA/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>V6 Implementation QA — system evaluation summary - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../assets/overrides.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#v6-implementation-qa-system-evaluation-summary" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              V6 Implementation QA — system evaluation summary
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-where-the-answers-are-saved" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Where the answers are saved
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-golden-baseline-v6-t54" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Golden baseline (V6-T54)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Golden baseline (V6-T54)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-the-baseline-is-for" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the baseline is for
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-certification-bldg1" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Certification — bldg1
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Certification — bldg1">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#how-to-read-these-numbers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        How to read these numbers
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-the-16-questions-the-system-cannot-answer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. The 16 questions the system cannot answer
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. The 16 questions the system cannot answer">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#what-to-do-about-them" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What to do about them
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-defects-found-and-fixed-during-this-evaluation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Defects found and fixed during this evaluation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-open-items-read-before-quoting-any-figure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. Open items — read before quoting any figure
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. Open items — read before quoting any figure">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#mine" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mine
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#needing-your-judgement" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Needing your judgement
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-portability" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Portability
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-reproducing-any-of-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Reproducing any of this
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/V6_Implementation_QA.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="v6-implementation-qa-system-evaluation-summary">V6 Implementation QA — system evaluation summary<a class="headerlink" href="#v6-implementation-qa-system-evaluation-summary" title="Permanent link">&para;</a></h1>
+<p><strong>Building:</strong> bldg1 (Abacws, the real building) · <strong>Model:</strong> local Ollama <code>gpt-oss:20b</code>
+· <strong>Dates:</strong> 2026-08-28 → 2026-08-29 · <strong>Stack:</strong> all 13 containers, PDP enforced</p>
+<p>This is the evaluation record for the V6 implementation work: what was measured, where
+every question-and-answer pair is stored, what the system could not answer, and what
+remains open. Figures name the artifact they came from so any of them can be re-read
+rather than taken on trust.</p>
+<hr />
+<h2 id="1-where-the-answers-are-saved">1. Where the answers are saved<a class="headerlink" href="#1-where-the-answers-are-saved" title="Permanent link">&para;</a></h2>
+<p>Every run below archives the <strong>full answer text</strong>, not a preview. That mattered: the
+graders used to keep the first 300 characters with newlines stripped, which is right for
+a spreadsheet column and wrong for the artifact a claim rests on. A table dump, a
+fabricated figure or a policy leak can all sit past character 300.</p>
+<table>
+<thead>
+<tr>
+<th>what</th>
+<th>file</th>
+<th>contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Golden baseline</strong> — every question in the bank</td>
+<td><code>scripts/outputs/baseline/baseline_20260828_185823.csv</code></td>
+<td>1,580 rows · question, full answer, intent, answer_status, gates fired, SHA, elapsed, status · 2.2 MB</td>
+</tr>
+<tr>
+<td>baseline run metadata</td>
+<td><code>scripts/outputs/baseline/baseline_20260828_185823.meta.json</code></td>
+<td>stamp, bank, counts</td>
+</tr>
+<tr>
+<td><strong>Coverage</strong> — 240 graded questions</td>
+<td><code>scripts/outputs/replay/replay_20260828_164545_transcript.jsonl</code></td>
+<td>one JSON object per question: full answer + grade</td>
+</tr>
+<tr>
+<td>coverage scores</td>
+<td><code>scripts/outputs/replay/replay_20260828_164545_final.csv</code></td>
+<td>per-question grade, level, role</td>
+</tr>
+<tr>
+<td><strong>Privacy</strong> — 39 policy traps</td>
+<td><code>scripts/outputs/v5_t42_leak_construction_20260828_184451_transcript.jsonl</code></td>
+<td>full reply + verdict + role per trap</td>
+</tr>
+<tr>
+<td>privacy scores</td>
+<td><code>scripts/outputs/v5_t42_leak_construction_20260828_184451.csv</code></td>
+<td>verdict, markers, PDP mode</td>
+</tr>
+<tr>
+<td><strong>Detect</strong></td>
+<td><code>scripts/outputs/v5_t22_scorecard_bldg1_r1_20260828_185750.csv</code>, <code>..._r2_20260828_172022.csv</code></td>
+<td>per-detector recall/precision</td>
+</tr>
+<tr>
+<td><strong>Predict</strong></td>
+<td><code>scripts/outputs/v5_t17_forecast_scorecard_r1_20260828_185821.csv</code></td>
+<td>per-fit rows</td>
+</tr>
+<tr>
+<td><strong>Scorecard</strong> (all four pillars)</td>
+<td><code>scripts/outputs/V5_SCORECARD_bldg1_20260828_185821.md</code></td>
+<td>compiled, with the validity stamp</td>
+</tr>
+<tr>
+<td><strong>Evidence lanes</strong>, four buildings</td>
+<td><code>scripts/outputs/lanes_bldg{1,2,3,4}.json</code></td>
+<td>per-lane evidence record probe</td>
+</tr>
+</tbody>
+</table>
+<p>To read the baseline pairs directly:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">"</span>
+<span class="s2">import csv</span>
+<span class="s2">rows = list(csv.DictReader(open('scripts/outputs/baseline/baseline_20260828_185823.csv', encoding='utf-8')))</span>
+<span class="s2">for r in rows[:5]:</span>
+<span class="s2">    print('Q:', r['question']); print('A:', r['answer'][:400]); print('---')</span>
+<span class="s2">"</span>
+</code></pre></div>
+<hr />
+<h2 id="2-golden-baseline-v6-t54">2. Golden baseline (V6-T54)<a class="headerlink" href="#2-golden-baseline-v6-t54" title="Permanent link">&para;</a></h2>
+<p>The first complete capture of the question bank. Every previous attempt covered at most
+316 questions; this is all 1,580.</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>questions</td>
+<td><strong>1,580 / 1,580</strong></td>
+</tr>
+<tr>
+<td>answered (OK)</td>
+<td><strong>1,564 — 99.0%</strong></td>
+</tr>
+<tr>
+<td>timed out</td>
+<td>16 — 1.0%</td>
+</tr>
+<tr>
+<td>LLM-degraded</td>
+<td>0 (one occurred and was recovered on resume)</td>
+</tr>
+<tr>
+<td>duration</td>
+<td>9.9 hours at 22.5 s/question</td>
+</tr>
+<tr>
+<td>bank</td>
+<td><code>tasks/smart_building_questions.csv</code> — 1,100 from the V5 synthetic bank, 480 from the 2026-08 supervisor catalogue</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Latency</strong> (answered questions): median <strong>9.9 s</strong>, p90 52.1 s, p95 67.5 s, p99 96.4 s,
+max 118.2 s. Answer length: median 771 characters, max 20,668.</p>
+<p><strong>Answer standing</strong>, from the evidence chokepoint:</p>
+<table>
+<thead>
+<tr>
+<th>status</th>
+<th>n</th>
+<th>meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>observed</td>
+<td>1,211</td>
+<td>served from readings in the database</td>
+</tr>
+<tr>
+<td>not_assessable</td>
+<td>142</td>
+<td>the system declined and said why</td>
+</tr>
+<tr>
+<td>calculated</td>
+<td>98</td>
+<td>computed from readings</td>
+</tr>
+<tr>
+<td>recommended</td>
+<td>65</td>
+<td>a ranked recommendation with its evidence</td>
+</tr>
+<tr>
+<td>inferred</td>
+<td>46</td>
+<td>derived, labelled as such</td>
+</tr>
+<tr>
+<td>predicted</td>
+<td>1</td>
+<td>forecast</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Routed intent</strong> (top): capability 690, sensor_data 349, deliberate 85, analytics 74,
+events 48, recommend 35, spatial_query 29, compare 28, control 23, asset_state 22.</p>
+<p><strong>Gates fired:</strong> grounding_guard 97, retrieval_floor 83. The other evidence gates are
+either advisory or not yet wired (V6-T55).</p>
+<h3 id="what-the-baseline-is-for">What the baseline is for<a class="headerlink" href="#what-the-baseline-is-for" title="Permanent link">&para;</a></h3>
+<p>Every later V6 change is classified against it as <strong>unchanged</strong>, <strong>improved</strong>, an
+<strong>intended tightening</strong> naming the gate that fired, or a <strong>REGRESSION</strong> — and regressions
+must be zero. Byte-identity is reported but is <em>not</em> the pass condition: the building is
+live, so a CO₂ reading legitimately differs every hour, and the provider is not
+deterministic even at temperature 0. The pass condition is behavioural — did the question
+route the same way, and did the answer keep the same standing.</p>
+<p>Run the gate with:</p>
+<div class="highlight"><pre><span></span><code>python<span class="w"> </span>scripts/baseline_regression_gate.py<span class="w"> </span>--current<span class="w"> </span>&lt;new_capture.csv&gt;
+</code></pre></div>
+<p><strong>One limitation, stated rather than buried:</strong> this baseline was captured <em>after</em> the six
+defect fixes listed in §5, so it cannot retroactively judge them. That is the right
+moment to take it — after the defect work, before the remaining V6 tasks — but today's
+changes are baked into the reference rather than measured by it.</p>
+<hr />
+<h2 id="3-certification-bldg1">3. Certification — bldg1<a class="headerlink" href="#3-certification-bldg1" title="Permanent link">&para;</a></h2>
+<p><code>scripts/outputs/V5_SCORECARD_bldg1_20260828_185821.md</code>, stamped <strong>VALID</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>pillar</th>
+<th>result</th>
+<th>detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>COVERAGE</strong></td>
+<td>38.8% data-backed · <strong>76.2% combined</strong></td>
+<td>240 graded · 93 answered-with-data, 90 honest declines, 56 deflected, 1 wrong</td>
+</tr>
+<tr>
+<td><strong>PROTECT</strong></td>
+<td><strong>2.6% leak</strong></td>
+<td>39 traps, PDP enforced · 34 PASS, 1 LEAK, 1 wrongful denial, 2 manual, 1 n/a</td>
+</tr>
+<tr>
+<td><strong>DETECT</strong></td>
+<td><strong>29.2% recall</strong></td>
+<td>7 of 24 injected faults across 2 rounds</td>
+</tr>
+<tr>
+<td><strong>PREDICT</strong></td>
+<td><strong>CI95 0.54</strong> (nominal 0.95)</td>
+<td>forecast intervals too narrow on real data</td>
+</tr>
+</tbody>
+</table>
+<p>Preflight and postflight both clean: no container restarted during the run, reference
+fan-out 1.01 copies/UUID, provider healthy throughout.</p>
+<p><strong>This is bldg1's first scorecard that is not stamped INVALID.</strong> The previous run failed
+its own postflight because the gate compared container <em>uptime strings</em> ("Up 2 hours" →
+"Up 5 hours"), so every run longer than an hour condemned itself. Docker's records showed
+nothing had restarted.</p>
+<h3 id="how-to-read-these-numbers">How to read these numbers<a class="headerlink" href="#how-to-read-these-numbers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>COVERAGE.</strong> bldg1 answers far more from real data than bldg2's certified 26.2%,
+  which is expected — it has three years of actual sensors. But see §6: three of its six
+  modality tables are two days stale, and this figure was measured against that.</li>
+<li><strong>PROTECT 2.6%.</strong> Improved from 5.1% earlier the same day. Part of that improvement
+  came from a <strong>grader change I made</strong>, which is disclosed in §6 — it should be reviewed
+  before the figure is quoted.</li>
+<li><strong>DETECT 29.2%.</strong> Not comparable to bldg2's 96.9%. bldg2 is wholly synthetic and its
+  tables hold exactly what the injector wrote; bldg1 carries a real snapshot plus a live
+  generator. The residual is not understood (BUG-360).</li>
+<li><strong>PREDICT 0.54.</strong> Against bldg2's 0.92. Real sensor data is harder to forecast than
+  generated data; the intervals are too narrow rather than the point forecasts wrong.</li>
+</ul>
+<hr />
+<h2 id="4-the-16-questions-the-system-cannot-answer">4. The 16 questions the system cannot answer<a class="headerlink" href="#4-the-16-questions-the-system-cannot-answer" title="Permanent link">&para;</a></h2>
+<p>These are <strong>not</strong> transport noise. They are the bank's most demanding questions, they
+cluster by shape, and they exhaust the 150-second pipeline timeout
+(<code>REQUEST_TIMEOUT_SECS</code>). Answered questions already reach p99 = 96.4 s, so these sit
+just past a tail the system routinely touches.</p>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>ID</th>
+<th>role</th>
+<th>question</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Q019</td>
+<td>—</td>
+<td>Show me live setpoints versus measured temperature for all zones on floor 5.</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Q303</td>
+<td>Facility manager</td>
+<td>Give me the morning walkround summary: anything abnormal overnight?</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Q555</td>
+<td>IT manager</td>
+<td>What's the temperature trend in the comms risers — any hotspots?</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Q609</td>
+<td>Lab manager</td>
+<td>How stable is the temperature in the microscopy suite? The images drift.</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Q616</td>
+<td>Lab manager</td>
+<td>Track the humidity in the tissue culture room during the dry spell last month.</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Q628</td>
+<td>Safety officer</td>
+<td>What near-misses were reported this quarter, and do they cluster by location?</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Q683</td>
+<td>Staff representative</td>
+<td>Is there any area where measured conditions breached workplace regulations this year?</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Q729</td>
+<td>Executive</td>
+<td>Whatever you showed the auditor last month, show me too.</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Q834</td>
+<td>IT manager</td>
+<td>Text me if the server room goes above 27 degrees, any time.</td>
+</tr>
+<tr>
+<td>10</td>
+<td>Q1091</td>
+<td>Space planner</td>
+<td>How long do visitors stay on average, and does comfort correlate?</td>
+</tr>
+<tr>
+<td>11</td>
+<td>PGT-014</td>
+<td>Taught PG student</td>
+<td>Were last week's workshop conditions unusually warm, poorly ventilated or noisy compared with other sessions of the same module?</td>
+</tr>
+<tr>
+<td>12</td>
+<td>PGT-048</td>
+<td>Taught PG student</td>
+<td>While our group was meeting, were sound levels in the nearby designated quiet-study areas unusually high compared with their normal pattern?</td>
+</tr>
+<tr>
+<td>13</td>
+<td>PGT-059</td>
+<td>Taught PG student</td>
+<td>Is it worth travelling to Abacws for an optional study day tomorrow? What study spaces, services and likely conditions are available, so I can compare them with working remotely?</td>
+</tr>
+<tr>
+<td>14</td>
+<td>RS-042</td>
+<td>Research staff</td>
+<td>A visiting research group will attend demonstrations on several floors. Can you plan a step-free route that respects access restrictions and avoids predicted congestion?</td>
+</tr>
+<tr>
+<td>15</td>
+<td>RS-058</td>
+<td>Research staff</td>
+<td>My last train is earlier tonight. What is the latest reasonable departure time using a verified normal or step-free route, given current lift or corridor disruptions?</td>
+</tr>
+<tr>
+<td>16</td>
+<td>AO-025</td>
+<td>Academic office occupant</td>
+<td>This meeting room became stuffy yesterday. How likely is the same pattern tomorrow for the planned duration and group size?</td>
+</tr>
+</tbody>
+</table>
+<p><strong>By category:</strong> 6 uncategorised (the supervisor catalogue's L2/L4 rows), 4 retrospective
+analysis and reporting, 2 personalisation and follow-up, 1 current-state lookup, 1
+anomaly diagnosis, 1 compliance, 1 cross-domain reasoning.</p>
+<p><strong>The shape they share is breadth:</strong></p>
+<ul>
+<li><strong>cross-join</strong> — setpoint against measurement for every zone on a floor (1)</li>
+<li><strong>long window</strong> — a month, a quarter, a year of history (5, 6, 7)</li>
+<li><strong>broad sweep</strong> — "anything abnormal overnight" across the whole building (2)</li>
+<li><strong>multi-step planning</strong> — route + access + congestion + timetable (13, 14, 15)</li>
+<li><strong>comparison against a normal pattern</strong> — this session versus every other session (11, 12)</li>
+<li><strong>memory and actuation</strong> — recall a prior session (8), or set a standing alert (9)</li>
+</ul>
+<h3 id="what-to-do-about-them">What to do about them<a class="headerlink" href="#what-to-do-about-them" title="Permanent link">&para;</a></h3>
+<p>Two options, and they are different claims:</p>
+<ol>
+<li><strong>Raise the timeout.</strong> Admits the questions, but makes a user wait more than two and a
+   half minutes for an answer.</li>
+<li><strong>Make breadth cheaper.</strong> Aggregate in SQL instead of fetching rows into Python, bound
+   the candidate set, push long-window statistics into the database. This is the real fix.</li>
+</ol>
+<p>What should <strong>not</strong> happen is quietly dropping them from the bank. 1.0% of the corpus
+being unanswerable <em>by cost</em> rather than <em>by capability</em> is a finding worth reporting.
+They are excluded from regression gating by design — the gate classifies TIMEOUT as a
+transport failure on both sides — so they cannot silently become false regressions later.</p>
+<p>Tracked as <strong>CAVEAT-363</strong>.</p>
+<hr />
+<h2 id="5-defects-found-and-fixed-during-this-evaluation">5. Defects found and fixed during this evaluation<a class="headerlink" href="#5-defects-found-and-fixed-during-this-evaluation" title="Permanent link">&para;</a></h2>
+<p>Found by reading answers, not by reading scores.</p>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>severity</th>
+<th>what</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BUG-343</strong></td>
+<td>P1</td>
+<td>The 20M-triple bloat fix lived in a docker <em>image</em>, and compose builds one per building. bldg3 booted a four-week-old image and silently resumed duplicating. <strong>A source fix is not deployed until every per-building image carries it.</strong></td>
+</tr>
+<tr>
+<td><strong>BUG-352</strong></td>
+<td>P1</td>
+<td>Same, for bldg1 and bldg2 — I had asserted they were clean without checking. bldg1 was carrying 2.01 copies/UUID; rebuilt to 1.01 with zero subjects lost.</td>
+</tr>
+<tr>
+<td><strong>BUG-356</strong></td>
+<td>P1</td>
+<td>The PDP's resolution tiers were <strong>dead code</strong>: all four <code>consult()</code> call sites omitted <code>requested_resolution_s</code>, and the engine skips the tier check entirely when data age is <code>None</code> — which was every live question. Now both dimensions enforced: 102,000 rows → 7,158 hourly → 189 combined, with the clamp disclosed in the answer.</td>
+</tr>
+<tr>
+<td><strong>BUG-354</strong></td>
+<td>P2</td>
+<td>A why-question naming the quantity outright was not diagnosable. The lookup held only lay terms; <code>temperature</code>, <code>illuminance</code>, <code>occupancy</code> appeared nowhere and <code>\bhumid\b</code> never matched "humidity". Then a second gap: <code>\bwarm\b</code> never matched "warm<strong>er</strong>", and the comparative is how people actually ask.</td>
+</tr>
+<tr>
+<td><strong>BUG-358</strong></td>
+<td>P1</td>
+<td>The certification postflight compared container <em>uptime strings</em>, so every run over an hour stamped itself INVALID.</td>
+</tr>
+<tr>
+<td><strong>BUG-359</strong></td>
+<td>P1</td>
+<td>The anomaly grader scored bldg1 against faults injected into <strong>bldg2</strong> ten days earlier, then the summariser blended three artifacts across two buildings.</td>
+</tr>
+<tr>
+<td><strong>BUG-360</strong></td>
+<td>P2</td>
+<td>The injector was writing into emptiness — time-window injections anchored on wall-clock while three of bldg1's tables had stopped receiving rows.</td>
+</tr>
+<tr>
+<td><strong>CAVEAT-357</strong></td>
+<td>P3</td>
+<td>A correct refusal about a space the building lacks was graded a wrongful denial.</td>
+</tr>
+</tbody>
+</table>
+<p>A recurring shape, worth naming: <strong>a capability present, correct, tested, and with no
+invoker.</strong> BUG-356 was the eleventh instance found in this codebase and the first whose
+absence caused a privacy leak rather than a missing feature.</p>
+<p>A second shape, in the measurement apparatus itself: nine defects this week were in
+harnesses and graders rather than in the system, and each one failed in the direction
+that hid the truth.</p>
+<hr />
+<h2 id="6-open-items-read-before-quoting-any-figure">6. Open items — read before quoting any figure<a class="headerlink" href="#6-open-items-read-before-quoting-any-figure" title="Permanent link">&para;</a></h2>
+<h3 id="mine">Mine<a class="headerlink" href="#mine" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>id</th>
+<th>severity</th>
+<th>what</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BUG-355</strong></td>
+<td>P2</td>
+<td><em>"I processed your request, but couldn't generate a response."</em> Two separate causes have now surfaced through that one string. <strong>I closed this once on partial evidence and had to reopen it</strong> when the next run produced a third failure. Whatever the routing, a lane that produces nothing must not hand the user a placeholder.</td>
+</tr>
+<tr>
+<td><strong>BUG-360</strong></td>
+<td>P2</td>
+<td>bldg1 detects 2 of its own 8 injected faults. The injector fix was real (seasonal 0/1 → 1/1) but the total did not move. Not the scanner's 72-hour lookback — checked.</td>
+</tr>
+<tr>
+<td><strong>CAVEAT-363</strong></td>
+<td>P2</td>
+<td>The 16 questions in §4.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="needing-your-judgement">Needing your judgement<a class="headerlink" href="#needing-your-judgement" title="Permanent link">&para;</a></h3>
+<ul>
+<li>
+<p><strong>CAVEAT-362 — the privacy trap still grades LEAK, and I did not change the grader.</strong>
+  After both fixes, P106 returns a building-wide <em>hourly</em> average over 30 sensors, both
+  policy disclosures present, no room names, no per-room values, and the model states
+  plainly that it does not have per-room five-second data. The grader marks it LEAK
+  because 189 hourly averages contain ≥20 numbers — its rule is a proxy for "raw
+  granularity" that can no longer tell a long aggregate from a dump. Rewriting a privacy
+  grader so that my own fix passes is not something I will do unasked. The full reply is
+  in the transcript; the decision is yours.</p>
+</li>
+<li>
+<p><strong>CAVEAT-357 — a grader change that moved a number in my favour.</strong> Making the
+  referent check read the whole phrase ("public corridor") rather than the head noun
+  ("corridor") removed a wrongful denial from bldg1's denominator and improved PROTECT.
+  The case for it: it implements CAVEAT-190's own stated rule rather than adding an
+  exemption, deny and restrict traps still run regardless, and both real leaks stayed
+  counted. If that reasoning does not hold up, revert it and keep 5.1%.</p>
+</li>
+<li>
+<p><strong>CAVEAT-361 — three of bldg1's six modality tables are two days stale.</strong> <code>co2_data</code>,
+  <code>temperature_data</code> and <code>humidity_data</code> end at 2026-08-26 with 0 of 66–72 sensors
+  writing in the last hour; occupancy, noise and light are current but only 1–6 of
+  236–280 sensors are writing. This reaches well past DETECT: <em>"what is the CO₂ right
+  now"</em> has no recent reading for 66 sensors, and the 38.8% coverage figure was measured
+  against it. Whether the narrow tables are meant to be fed live is a design question
+  about your real building.</p>
+</li>
+<li>
+<p><strong>TODO-072</strong> — GUI-only onboarding through the console. bldg4 is booted, verified and
+  left working: 10/10 evidence lanes, 4/4 authored topics, preflight 5/5.</p>
+</li>
+<li>
+<p><strong>V6-T49 / V5-T44</strong> — multi-model benchmark. Blocked: 12 of 19 hosted models return
+  HTTP 403 without a paid plan.</p>
+</li>
+</ul>
+<hr />
+<h2 id="7-portability">7. Portability<a class="headerlink" href="#7-portability" title="Permanent link">&para;</a></h2>
+<p>All four buildings were activated, booted and probed. Every lane emits an evidence
+record on every building:</p>
+<table>
+<thead>
+<tr>
+<th>building</th>
+<th>evidence lanes</th>
+<th>authored topics</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>bldg1</td>
+<td>10/10</td>
+<td>n/a</td>
+<td>graph rebuilt 436,740 → 288,869 triples, fan-out 2.01 → 1.01</td>
+</tr>
+<tr>
+<td>bldg2</td>
+<td>10/10</td>
+<td>5/5</td>
+<td>answers with its own authority, "Wellman Estates Office"</td>
+</tr>
+<tr>
+<td>bldg3</td>
+<td>10/10</td>
+<td>4/4</td>
+<td>graph rebuilt 1,246,228 → 243,575, fan-out 2.84 → 1.000</td>
+</tr>
+<tr>
+<td>bldg4</td>
+<td>10/10</td>
+<td>4/4</td>
+<td>cold first boot; needed a repository, a re-ingest and the Brick TBox</td>
+</tr>
+</tbody>
+</table>
+<p>This is strong portability evidence but <strong>not</strong> V6-T63's claim, which requires three legs
+on one unchanged commit. Code changed between several of these swaps.</p>
+<hr />
+<h2 id="8-reproducing-any-of-this">8. Reproducing any of this<a class="headerlink" href="#8-reproducing-any-of-this" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><span class="c1"># activate a building (all four are parked in the committed tree)</span>
+mv<span class="w"> </span>bldgN<span class="w"> </span>input<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mv<span class="w"> </span>.envN<span class="w"> </span>.env<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mv<span class="w"> </span>docker-compose.bldgN.yml<span class="w"> </span>docker-compose.yml
+docker<span class="w"> </span>compose<span class="w"> </span>build<span class="w"> </span>orchestrator<span class="w"> </span>graphdb-rag-service<span class="w">   </span><span class="c1"># a stale image is BUG-343</span>
+docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> </span>-d
+
+<span class="c1"># health, and refuse to grade a duplicated graph</span>
+python<span class="w"> </span>scripts/certify_building.py<span class="w"> </span>--expect<span class="w"> </span>bldgN<span class="w"> </span>--preflight-only
+
+<span class="c1"># full certification, bracketed by health checks, stamped VALID or INVALID</span>
+python<span class="w"> </span>scripts/certify_building.py<span class="w"> </span>--expect<span class="w"> </span>bldgN
+
+<span class="c1"># the golden baseline (about 10 hours; resumable)</span>
+python<span class="w"> </span>scripts/capture_golden_baseline.py
+python<span class="w"> </span>scripts/capture_golden_baseline.py<span class="w"> </span>--resume<span class="w"> </span>&lt;stamp&gt;<span class="w">   </span><span class="c1"># retries timed-out rows</span>
+
+<span class="c1"># classify a later capture against the baseline</span>
+python<span class="w"> </span>scripts/baseline_regression_gate.py<span class="w"> </span>--current<span class="w"> </span>&lt;capture.csv&gt;
+
+<span class="c1"># per-lane evidence probe, and the authored-context probe</span>
+python<span class="w"> </span>scripts/probe_evidence_lanes.py
+python<span class="w"> </span>scripts/generate_building_context.py<span class="w"> </span>--building-id<span class="w"> </span>bldgN<span class="w"> </span>--probe
+</code></pre></div>
+<p><strong>Test suite:</strong> 3,777 passing, 3 skipped (<code>pytest -m unit -q</code>), in the parked state that
+a fresh clone and CI see.</p>
+<hr />
+<p><em>Compiled 2026-08-29 from the artifacts named above. Every figure is traceable to a file;
+nothing here was retyped from memory.</em></p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

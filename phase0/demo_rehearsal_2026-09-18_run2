@@ -1,0 +1,1083 @@
+# Live asks — 2026-09-18 20:40
+
+44 question(s) x 1; response cache flushed before every ask, so every run is a real first pass.
+
+| question | runs ok | min s | median s | max s |
+|---|---|---|---|---|
+| What is the CO2 level in room 5.01 right now? | 1/1 | 24.9 | 24.9 | 24.9 |
+| Where's the coolest place to work on floor 5 right now? | 1/1 | 45.6 | 45.6 | 45.6 |
+| Is tap water free somewhere, or do I have to buy bottles? | 1/1 | 0.6 | 0.6 | 0.6 |
+| What is the nearest accessible toilet to room 3.10? | 1/1 | 13.4 | 13.4 | 13.4 |
+| Is Room 1.06 ready for my class? | 1/1 | 12.9 | 12.9 | 12.9 |
+| Is Room1.06 free for the next two hours? | 1/1 | 17.3 | 17.3 | 17.3 |
+| Which space on Floor 3 has the best conditions for focused work this afternoon? | 1/1 | 24.5 | 24.5 | 24.5 |
+| Where can I work for three hours with power, good Wi-Fi and a low risk of noise? | 1/1 | 23.6 | 23.6 | 23.6 |
+| How many open work orders are there, and which are overdue? | 1/1 | 6.7 | 6.7 | 6.7 |
+| Which HVAC systems run outside normal hours, and is each exception approved? | 1/1 | 22.5 | 22.5 | 22.5 |
+| Which permits are open? | 1/1 | 7.3 | 7.3 | 7.3 |
+| Is the lift working? | 1/1 | 79.4 | 79.4 | 79.4 |
+| Which floor used the most energy yesterday? | 1/1 | 31.3 | 31.3 | 31.3 |
+| can you provide energy saving suggestion? | 1/1 | 55.9 | 55.9 | 55.9 |
+| Which fire safety assets are overdue or cannot be evidenced? | 1/1 | 11.5 | 11.5 | 11.5 |
+| Which hazard controls are overdue for test? | 1/1 | 11.4 | 11.4 | 11.4 |
+| Which refuge points are defective, and who owns them? | 1/1 | 10.7 | 10.7 | 10.7 |
+| When was the CO2 sensor in Room 5.01 last calibrated? | 1/1 | 13.7 | 13.7 | 13.7 |
+| How many sensors are overdue for calibration? | 1/1 | 12.0 | 12.0 | 12.0 |
+| Give me a report on the CO2 in room 5.01 yesterday. | 1/1 | 145.2 | 145.2 | 145.2 |
+| What is this building and who runs it? | 1/1 | 8.0 | 8.0 | 8.0 |
+| Show me floor 3 | 1/1 | 11.0 | 11.0 | 11.0 |
+| Where's the coolest place to work in the building right now? | 1/1 | 43.3 | 43.3 | 43.3 |
+| Which room in the building is the quietest right now? | 1/1 | 21.8 | 21.8 | 21.8 |
+| Which room in the building has the best air quality right now? | 1/1 | 28.5 | 28.5 | 28.5 |
+| Which rooms in the building are the stuffiest right now? | 1/1 | 22.4 | 22.4 | 22.4 |
+| Which floor is the warmest right now? | 1/1 | 33.0 | 33.0 | 33.0 |
+| What is the average CO2 on each floor right now? | 1/1 | 40.5 | 40.5 | 40.5 |
+| Which floor has the lowest humidity right now? | 1/1 | 39.4 | 39.4 | 39.4 |
+| Which rooms in the building have the highest PM2.5 right now? | 1/1 | 23.3 | 23.3 | 23.3 |
+| What is the CO2 level in room 2.01 right now? | 1/1 | 29.7 | 29.7 | 29.7 |
+| Which shutters or doors fail open versus fail locked on power loss? | 1/1 | 8.7 | 8.7 | 8.7 |
+| What's the delta-T across the heating circuit, and is it healthy? | 1/1 | 50.5 | 50.5 | 50.5 |
+| Is it stuffy anywhere in the building? | 1/1 | 32.5 | 32.5 | 32.5 |
+| Is there anywhere quiet I can work? | 1/1 | 13.7 | 13.7 | 13.7 |
+| How many rooms are on floor 2? | 1/1 | 11.3 | 11.3 | 11.3 |
+| How has the temperature on floor 3 changed over the last week? | 1/1 | 35.0 | 35.0 | 35.0 |
+| Compare this week's electricity use with last week. | 1/1 | 42.2 | 42.2 | 42.2 |
+| What is the average TVOC on floor 3 today? | 1/1 | 36.0 | 36.0 | 36.0 |
+| Is the professor in her office? | 1/1 | 9.3 | 9.3 | 9.3 |
+| Can my manager see when I badge in and out? | 1/1 | 7.4 | 7.4 | 7.4 |
+| Open the windows on floor 3. | 1/1 | 7.6 | 7.6 | 7.6 |
+| What is the radiation level in the atrium? | 1/1 | 19.2 | 19.2 | 19.2 |
+| The toilet on floor 2 is leaking. | 1/1 | 7.1 | 7.1 | 7.1 |
+
+## Answers
+
+### What is the CO2 level in room 5.01 right now? — run 1 (24.9 s, OK)
+
+```
+_Served at 5-second resolution — this building's access policy sets the finest detail available to you for data this recent. The figures below are averages over each interval, not instantaneous readings._
+
+The CO2 level in room 5.01 is **785 ppm** as of **2026‑09‑18 20:20:45**.  
+
+Across all 60 readings taken from **18 Sep 19:51** to **18 Sep 20:20**, the average level was **775 ppm**, the lowest reading was **736 ppm**, and the highest was **818 ppm**. Recent measurements show a slight downward trend, hovering around 780–800 ppm.
+
+> **Spatial basis:** a served zone links these spaces, but the link is not validated
+
+---
+*Sources: `Building model` `Live Sensor Data`*
+```
+
+### Where's the coolest place to work on floor 5 right now? — run 1 (45.6 s, OK)
+
+```
+**Best match: Room 5.01 — Research Laboratory** (floor Floor5, score 0.6082 out of 1, where 1 fits everything you asked for).
+1. **Room 5.01 — Research Laboratory** — score 0.6082 (temperature: 22.351)
+2. **Room 5.13 — Academic Office** — score 0.5842 (temperature: 22.495)
+3. **Room 5.20 — Academic Office** — score 0.5652 (temperature: 22.609)
+
+**Check you can use it first.** Room 5.01 — Research Laboratory, Room 5.13 — Academic Office and Room 5.20 — Academic Office — each of those is a laboratory or an office someone else holds, not a room anyone may walk into. Readings describe what a room is like; they do not say who may be in it, and the building's records do not show you having the use of one. If you want somewhere you can simply go, ask me for a room that is open to everyone and I will rank only those.
+
+**Assumptions:** 'coolest place' scored as minimize temperature against the 20-26 band; all stated preferences weighted equally.
+**Coverage:** 46 of 51 spaces considered; temperature: 46/46 instrumented; 5 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: superlative over 46 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 5.01 — Research Laboratory | temperature | 22.351 | recent mean (last readings) | 15 | database1 |
+| Room 5.02 — Research Laboratory | temperature | 23.473 | recent mean (last readings) | 15 | database1 |
+| Room 5.03 — Research Laboratory | temperature | 23.146 | recent mean (last readings) | 15 | database1 |
+| Room 5.04 — Research Laboratory | temperature | 22.795 | recent mean (last readings) | 15 | database1 |
+| Room 5.05 — Research Laboratory | temperature | 23.11 | recent mean (last readings) | 15 | database1 |
+| Room 5.06 — Research Laboratory | temperature | 22.74 | recent mean (last readings) | 15 | database1 |
+| Room 5.07 — Academic Office | temperature | 22.695 | recent mean (last readings) | 15 | database1 |
+| Room 5.08 — Academic Office | temperature | 23.095 | recent mean (last readings) | 15 | database1 |
+| Room 5.09 — Academic Office | temperature | 22.886 | recent mean (last readings) | 15 | database1 |
+| Room 5.10 — Academic Office | temperature | 23.149 | recent mean (last readings) | 15 | database1 |
+| Room 5.11 — Academic Office | temperature | 22.616 | recent mean (last readings) | 15 | database1 |
+| Room 5.12 — Academic Office | temperature | 23.328 | recent mean (last readings) | 15 | database1 |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 5.34 — Telecommunications Room (not a place to work or sit); Room 5.35 — Restroom (Male) (not a place to work or sit); Room 5.36 — Restroom (Female) (not a place to work or sit); Room 5.44 — Server Room (not a place to work or sit); Room 5.71 — Storage Room (not a place to work or sit)
+
+**Scoring bands:** ASHRAE 55 comfort range 20-26 °C
+
+</details>
+
+**As measured at 20:18 on 18 Sep, 4 minutes ago.** Recheck by **20:33** (15 minutes of useful life). Switch if: temperature in Room 5.01 — Research Laboratory moves outside the range that made it the best option — the next best was Room 5.13 — Academic Office.
+
+> **Primary:** Room 5.01 — Research Laboratory. **No independent backup exists** — every other option depends on something the primary also depends on, so a single failure would take both. Every alternative shares: Floor5. That is a single point of failure worth raising with the estate team.
+```
+
+### Is tap water free somewhere, or do I have to buy bottles? — run 1 (0.6 s, OK)
+
+```
+Here is what I found for **Abacws Building**:
+
+
+**Bottle refill point - Room 0.10 — Building Management Office** — Bottle refill point in Room 0.10 — Building Management Office (floor Floor0). There is a bottle refill point in Room 0.10 — Building Management Office on floor Floor0. Each floor has two drinking-water points.
+
+**Bottle refill point - Room 1.04 — Common Area / Atrium** — Bottle refill point in Room 1.04 — Common Area / Atrium (floor Floor1). There is a bottle refill point in Room 1.04 — Common Area / Atrium on floor Floor1. Each floor has two drinking-water points.
+
+**Bottle refill point - Room 2.66 — Staff Break Room / Kitchen** — Bottle refill point in Room 2.66 — Staff Break Room / Kitchen (floor Floor2). There is a bottle refill point in Room 2.66 — Staff Break Room / Kitchen on floor Floor2. Each floor has two drinking-water points.
+
+
+*Answered live from the building's own records.*
+```
+
+### What is the nearest accessible toilet to room 3.10? — run 1 (13.4 s, OK)
+
+```
+**There is no accessible toilet recorded on 3.10's floor.** The nearest is Accessible WC - Floor 4 (Fourth Floor) — 1 floor up.
+
+Also recorded: Accessible WC - Floor 0 (Ground Floor).
+
+_From the building's amenity catalogue, measured in floors — not a surveyed route. It does not account for walking distance, door types or whether the lift is in service._
+```
+
+### Is Room 1.06 ready for my class? — run 1 (12.9 s, OK)
+
+```
+**Room 1.06 — Computer Laboratory — not ready**
+
+**Needs attention before the session:**
+- Hearing loop: **unevidenced** _(AV readiness register · date not recorded)_
+
+**Checked and in order:**
+- Display: **ready** _(AV readiness register · 2026-08-28)_
+- Projector: **ready** _(AV readiness register · 2026-08-28)_
+- Microphone: **ready** _(AV readiness register · 2026-08-28)_
+- Amplifier: **ready** _(AV readiness register · 2026-08-28)_
+- Camera: **ready** _(AV readiness register · 2026-08-28)_
+- Network: **strong** _(workspace profile (surveyed) · 2026-09-01)_
+- Setup allowance: **8.0 min** _(workspace profile · 2026-09-01)_
+
+_Compiled 2026-09-18 20:22 from the building's own records._
+```
+
+### Is Room1.06 free for the next two hours? — run 1 (17.3 s, OK)
+
+```
+**Room1.06 is free for the next 2 hours** — no bookings overlap that window.
+```
+
+### Which space on Floor 3 has the best conditions for focused work this afternoon? — run 1 (24.5 s, OK)
+
+```
+**Best match: Room 3.09 — Academic Office** (floor Floor3, score 0.5734 out of 1, where 1 fits everything you asked for).
+1. **Room 3.09 — Academic Office** — score 0.5734 (co2: 844.479, illuminance: 754.484, noise: 55.571, occupancy: 24.792, temperature: 23.302)
+2. **Room 3.67 — Academic Office** — score 0.5716 (co2: 823.983, illuminance: 746.667, noise: 55.247, occupancy: 24.288, temperature: 23.41)
+3. **Room 3.51 — Research Laboratory** — score 0.5637 (co2: 872.202, illuminance: 784.362, noise: 56.396, occupancy: 22.998, temperature: 23.309)
+
+**Every illuminance reading above sits above the 0 to 500 range used to weigh it**, so on that count these spaces are all at the same end of the scale and the order between them comes from the other things you asked for. **Every occupancy reading above sits above the 0 to 8 range used to weigh it**, so on that count these spaces are all at the same end of the scale and the order between them comes from the other things you asked for.
+
+**Assumptions:** 'quiet' scored as minimize noise against the 30-70 band; 'bright' scored as maximize illuminance against the 0-500 band; 'comfortable temperature' scored as near_value temperature against the 20-26 band; 'fresh air' scored as minimize co2 against the 420-1500 band; 'low occupancy' scored as minimize occupancy against the 0-8 band; all stated preferences weighted equally.
+**Coverage:** 45 of 48 spaces considered; co2: 45/45 instrumented; illuminance: 45/45 instrumented; noise: 45/45 instrumented; occupancy: 45/45 instrumented; temperature: 45/45 instrumented; 3 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+Note: the top choice can flip under ±25% preference-weight changes — the leading options are close.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: select_one over 45 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 3.01 — Research Laboratory | noise | 57.311 | window mean | 490 | noise_data |
+| Room 3.01 — Research Laboratory | illuminance | 754.409 | window mean | 279 | light_data |
+| Room 3.01 — Research Laboratory | temperature | 24.045 | window mean | 119 | database1_floors04 |
+| Room 3.01 — Research Laboratory | co2 | 859.437 | window mean | 119 | database1_floors04 |
+| Room 3.01 — Research Laboratory | occupancy | 24.651 | window mean | 490 | occupancy_data |
+| Room 3.02 — Research Laboratory | noise | 57.373 | window mean | 490 | noise_data |
+| Room 3.02 — Research Laboratory | illuminance | 731.108 | window mean | 279 | light_data |
+| Room 3.02 — Research Laboratory | temperature | 23.59 | window mean | 119 | database1_floors04 |
+| Room 3.02 — Research Laboratory | co2 | 853.815 | window mean | 119 | database1_floors04 |
+| Room 3.02 — Research Laboratory | occupancy | 24.918 | window mean | 490 | occupancy_data |
+| Room 3.03 — Research Laboratory | noise | 58.013 | window mean | 490 | noise_data |
+| Room 3.03 — Research Laboratory | illuminance | 781.789 | window mean | 279 | light_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 3.36 — Restroom (Male) (not a place to work or sit); Room 3.37 — Restroom (Female) (not a place to work or sit); Room 3.38 — Telecommunications Room (not a place to work or sit)
+
+**Scoring bands:** ASHRAE 55 comfort range 20-26 °C · ASHRAE 62.1 comfort band 420-1500 ppm · CIBSE office task range up to 500 lux · WHO guideline band 30-70 dB(A) indoor · relative occupancy band (0 = empty)
+
+</details>
+
+> **Primary:** Room 3.09 — Academic Office. **No independent backup exists** — every other option depends on something the primary also depends on, so a single failure would take both. Every alternative shares: Floor3. That is a single point of failure worth raising with the estate team.
+```
+
+### Where can I work for three hours with power, good Wi-Fi and a low risk of noise? — run 1 (23.6 s, OK)
+
+```
+All 25 workspaces that meet your criteria are listed below.  
+Each of them has power available (at every seat or at some seats), a network rating of **strong** or **adequate** (indicating good Wi‑Fi), and a noise profile of **quiet** or **silent** (low noise risk).  
+They are all open Mon‑Fri 08:00‑18:00 or 08:00‑20:00, so you can work there for at least three hours.
+
+**Floor 1**  
+• WS‑02 – Level 1 computer lab 1.06  
+• WS‑03 – Level 1 computer lab 1.07  
+• WS‑04 – Level 1 computer lab 1.08  
+• WS‑05 – Level 1 computer lab 1.09  
+• WS‑06 – Seminar room 1.25  
+• WS‑07 – Seminar room 1.26  
+
+**Floor 2**  
+• WS‑08 – Level 2 computer lab 2.07  
+• WS‑09 – Level 2 computer lab 2.08  
+• WS‑10 – Meeting room 2.13  
+• WS‑11 – Meeting room 2.14  
+• WS‑12 – Seminar room 2.15  
+
+**Floor 3**  
+• WS‑13 – Level 3 computer lab 3.05  
+• WS‑15 – Seminar room 3.13  
+• WS‑16 – Seminar room 3.14  
+• WS‑17 – Meeting room 3.15  
+• WS‑18 – Meeting room 3.16  
+
+**Floor 4**  
+• WS‑20 – Meeting room 3.26  
+• WS‑21 – Meeting room 3.27  
+• WS‑22 – Meeting room 4.11  
+• WS‑23 – Meeting room 4.12  
+• WS‑24 – Seminar room 4.13  
+
+**Floor 5**  
+• WS‑25 – Seminar room 5.15  
+• WS‑26 – Seminar room 5.16  
+• WS‑27 – Meeting room 5.17 (silent)  
+• WS‑28 – Meeting room 5.18 (silent)  
+
+These spaces satisfy all the recorded requirements you asked for.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### How many open work orders are there, and which are overdue? — run 1 (6.7 s, OK)
+
+```
+There are **24 work‑order records** in the building’s register.  
+The recorded states are:
+
+- **Completed** – 15 records  
+- **In progress** – 6 records  
+- **Open** – 3 records  
+
+**Open work orders**
+
+- **WO‑008** – Electrical inspection, Air Handling Unit – Floor 3  
+- **WO‑013** – Insulation resistance test, Electrical Breaker Panel – Floor 3  
+- **WO‑015** – Condensate drain clearance, Fan Coil Unit Room 5.03  
+
+The register does **not** contain any field that records an “overdue” status or a due date, so it cannot tell whether any of these open work orders are overdue.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which HVAC systems run outside normal hours, and is each exception approved? — run 1 (22.5 s, OK)
+
+```
+**HVAC systems that operate outside the building’s normal operating window (Mon‑Fri 07:00‑19:00) and the status of any recorded exception**
+
+- **Floor 0 – AHU Floor 0 supply air (REG‑001)**
+  - Runs until 22:00 on published open days.  
+  - *Exception approved* – the record states “Runs to 22:00 on published open days”.
+
+- **Floor 1 – AHU Floor 1 supply air (REG‑002)**
+  - Runs until 22:00 during assessment weeks.  
+  - *Exception approved* – the record says “Extended to 22:00 during assessment weeks, approved by the School”.
+
+- **Floor 2 – AHU Floor 2 supply air (REG‑003)**
+  - Operates continuously 24/7.  
+  - *No exception* – the record notes “Continuous operation is the approved regime, not an exception”.
+
+- **Floor 5 – AHU Floor 5 supply air (REG‑006)**
+  - Runs until 21:00 when a conference is booked in rooms 5.15 or 5.16.  
+  - *Exception approved* – the record states “Runs to 21:00 when a conference is booked…”.
+
+- **Chilled water system (REG‑007)**
+  - Enabled outside the cooling season when ambient temperature exceeds 18 °C.  
+  - *Exception approved* – the record says “Enabled outside the cooling season when ambient exceeds 18 °C”.
+
+- **Parking level ventilation (REG‑008)**
+  - Operates continuously 24/7.  
+  - *No exception* – the record contains no exception entry.
+
+- **Server room cooling (REG‑009)**
+  - Operates continuously 24/7.  
+  - *Exception approved* – the record states “No setback is permitted at any time; this is an approved permanent exception to the building night setback”.
+
+**Summary**
+
+- The building has **9 HVAC records** in total.  
+- **7 of those records** describe systems that run outside the normal operating window.  
+- Of those 7, **5 have an approved exception** recorded, while **2 (the continuous regimes on Floors 2 and 5 and the parking ventilation) do not have an exception**—their continuous operation is the approved regime.
+
+**Also recorded in this register:** *exception* — recorded as approved exception; *approved* — recorded as approved exception.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which permits are open? — run 1 (7.3 s, OK)
+
+```
+There are **15 permit‑to‑work records** held for the building.  
+The recorded status of each record is:
+
+- **Closed** – 11 records  
+- **Open** – 3 records  
+- **Suspended** – 1 record  
+
+**Permits that are currently recorded as “open”**
+
+| Permit ID | Location | Permit kind |
+|-----------|----------|-------------|
+| PTW‑2026‑0416 | Basement cold water storage tank | Confined space |
+| PTW‑2026‑0417 | Roof plant enclosure – AHU‑02 belt change | Roof access |
+| PTW‑2026‑0418 | Level 4 riser – pipe brazing | Hot works |
+
+These are the only permits whose recorded status is “open”. The register does not record any other open permits beyond these three.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Is the lift working? — run 1 (79.4 s, OK)
+
+```
+**All 2 lift(s) are operational** (last checked 33 hours ago). *This is the last KNOWN state, not a live one — the most recent check was 33 hours ago.*
+```
+
+### Which floor used the most energy yesterday? — run 1 (31.3 s, OK)
+
+```
+**Floor 3 consumed the most energy yesterday, totaling 89 kWh.**  
+Across the six floors, the energy usage ranged from 81.2 kWh on Floor 1 to 89 kWh on Floor 3, a spread of 7.8 kWh. Floor 3’s consumption is 7.8 kWh higher than the lowest floor and 0.8 kWh higher than the next highest floor (Floor 5).  
+Recommendation: Conduct a detailed audit of equipment and occupancy on Floor 3 to identify opportunities for reducing energy consumption.
+
+**Boundary:** summed across 6 meters (Energy_Meter_Floor0, Energy_Meter_Floor1, Energy_Meter_Floor2, Energy_Meter_Floor3, Energy_Meter_Floor4, Energy_Meter_Floor5), covering Floor 0 (Ground Floor), Floor 1 (First Floor), Floor 2 (Second Floor), Floor 3 (Third Floor), Floor 4 (Fourth Floor), Floor 5 (Fifth Floor). The total is the sum of those boundaries — it is not a separate whole-site reading.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model` `Energy Metering System` `Analytics Engine`*
+```
+
+### can you provide energy saving suggestion? — run 1 (55.9 s, OK)
+
+```
+**Energy‑saving actions you can start right away**
+
+| # | Recommendation | Why it matters (link to the data you already have) | What to do next |
+|---|----------------|-----------------------------------------------------|-----------------|
+| 1 | **Pinpoint the biggest energy user – Floor 3** | Floor 3 has the highest average energy use (mean = 3.63 kWh h⁻¹) and the highest peak (max = 6.21 kWh h⁻¹). Its night‑time mean (2.49 kWh h⁻¹) is also higher than every other floor, so it is the most likely source of waste. | Pull the most recent hourly readings from the Floor 3 meter and compare them to the same hour on the other floors. Look for patterns that coincide with HVAC or lighting operation. |
+| 2 | **Use the occupancy sensor on Floor 3 to time HVAC** | The day‑time mean on Floor 3 is 4.49 kWh h⁻¹, almost 0.3 kWh h⁻¹ higher than the next‑highest floor (Floor 5, 4.43 kWh h⁻¹). If the occupancy sensor shows that the floor is empty during part of the day, the HVAC is likely running unnecessarily. | Create a simple rule: when occupancy < 5 people for more than 15 min, reduce the supply‑air temperature setpoint by 1–2 °C or shut the fan off. Test the rule for one week and compare the energy meter. |
+| 3 | **Dim lighting on Floor 3 during daylight hours** | Floor 3’s higher energy use may also come from lighting. The lighting‑CCT and illuminance sensors are already installed. | Set a daylight‑harvesting schedule: when illuminance > 500 lux, dim the lights to 70 % of their nominal level. Verify that the illuminance stays above the comfort threshold (≈ 300 lux). |
+| 4 | **Close dampers at night on Floor 3** | The night‑time mean (2.49 kWh h⁻¹) is higher than on Floors 0–2, suggesting that the HVAC is still delivering conditioned air when the building is largely empty. | Use the damper‑position sensor to detect when the floor is unoccupied (e.g., no motion for 30 min). Then close the dampers or reduce the supply‑air flow to 50 % of the daytime value. |
+| 5 | **Check CO₂ levels on Floor 3 to balance ventilation** | The CO₂ sensor is already installed. If CO₂ stays below 800 ppm during occupied hours, you can safely reduce ventilation, which will cut cooling or heating load. | Run a short test: lower the ventilation rate by 20 % for 2 hours and monitor CO₂. If it stays < 800 ppm, keep the reduced rate. |
+
+---
+
+### Priority summary  
+**Most important action first:**  
+1. **Identify the problem** – Pull the latest hourly data from the Floor 3 energy meter and compare it to the other floors.  
+2. **Target HVAC timing** – Use the occupancy sensor on Floor 3 to shut down or reduce HVAC during unoccupied periods.  
+3. **Dim lighting** – Apply daylight harvesting on Floor 3 to cut lighting energy.  
+
+These steps use the data you already have, give you a clear “high‑impact” starting point, and can be tested quickly without installing new sensors.
+
+**Boundary:** summed across 6 meters (Energy_Meter_Floor0, Energy_Meter_Floor1, Energy_Meter_Floor2, Energy_Meter_Floor3, Energy_Meter_Floor4, Energy_Meter_Floor5), covering Floor 0 (Ground Floor), Floor 1 (First Floor), Floor 2 (Second Floor), Floor 3 (Third Floor), Floor 4 (Fourth Floor), Floor 5 (Fifth Floor). The total is the sum of those boundaries — it is not a separate whole-site reading.
+
+---
+*Sources: `Building model` `Energy Metering System`*
+```
+
+### Which fire safety assets are overdue or cannot be evidenced? — run 1 (11.5 s, OK)
+
+```
+There are **30 fire‑safety assets** recorded for the building.
+
+**Assets that are marked “overdue” (recorded status)**  
+• **FSA‑001 – Fire alarm control panel** – Room 0.10, Building Management Office  
+  *Next test due 2026‑09‑16 (passed) – evidence reference FA‑WK‑2026‑34*  
+• **FSA‑027 – Dry riser – main lift core** – Main lift core  
+  *Next test due 2026‑05‑05 (overdue) – no evidence reference recorded*
+
+**Assets that cannot be evidenced**  
+• **FSA‑027 – Dry riser – main lift core** – no evidence reference is present in the record.
+
+No other records in the register lack an evidence reference, and no other assets are recorded as overdue.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which hazard controls are overdue for test? — run 1 (11.4 s, OK)
+
+```
+There are 12 hazard‑control records in the building’s register.  
+- **Active**: 8 records (HZ‑001, HZ‑004, HZ‑005, HZ‑006, HZ‑007, HZ‑009, HZ‑011, HZ‑012)  
+- **Defective**: 2 records (HZ‑002, HZ‑008)  
+- **Overdue**: 2 records (HZ‑003, HZ‑010)
+
+**Hazard controls that are overdue for test**
+
+| Record | Location | Hazard kind | Test standard | Next test due | Status |
+|--------|----------|-------------|---------------|---------------|--------|
+| **HZ‑003** | Room 3.01 – Research Laboratory | Local exhaust ventilation | COSHH Regulation 9, 14‑monthly thorough examination | 2026‑08‑12 | Overdue |
+| **HZ‑010** | Level 5 – washrooms | Water system | L8 / HSG274 written scheme, weekly flushing | 2026‑09‑11 | Overdue |
+
+Both records have a recorded status of *overdue* and their next test due dates have already passed (today is 18 September 2026).  
+The register does not record any other hazard controls that are overdue for test.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### Which refuge points are defective, and who owns them? — run 1 (10.7 s, OK)
+
+```
+There are five refuge points recorded in the Evacuation provision register.  
+Only one of them is marked as **defective**:
+
+- **EV‑003 – Refuge point – Level 3 north stair**  
+  *Status:* defective  
+  *Owner:* not recorded in the Evacuation provision register
+
+The Evacuation provision register does not contain a field for ownership, so the records do not state who owns the refuge points.  
+The Approval and evidence register does record an owner (Estates Governance Lead), but that register does not link to the refuge point records.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### When was the CO2 sensor in Room 5.01 last calibrated? — run 1 (13.7 s, OK)
+
+```
+The CO₂ sensor that is specifically identified as being in **Room 5.01** (the “Room5.01_sat_co2” sensor) was last calibrated on **27 May 2026**.
+
+* For reference, the building also has another CO₂ sensor in the same room – “Air_CO2_Level_Sensor_5.01” – which was calibrated on 17 November 2025.
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building model`*
+```
+
+### How many sensors are overdue for calibration? — run 1 (12.0 s, OK)
+
+```
+There are **228 sensors** in the building whose calibration is overdue.  
+- The building model records 2,727 sensors that have a declared sampling or archival interval.  
+- Of those, 1,929 sensors are part of a calibration regime, and 228 of those are currently overdue for calibration.  
+
+If you’d like more details—such as which specific sensors are overdue or how the overdue status is determined—just let me know!
+
+---
+**You might also ask:** Show current readings for these sensors? | Compare zones? | Generate a report?
+
+---
+*Sources: `Building model`*
+```
+
+### Give me a report on the CO2 in room 5.01 yesterday. — run 1 (145.2 s, OK)
+
+```
+**Executive Summary**  
+The CO₂ sensor in room 5.01 recorded 2,681 readings yesterday, with an average concentration of 767.6 ppm, a minimum of 450.0 ppm, and a maximum of 1,101.0 ppm. The latest measurement (550.0 ppm) was logged at 23:59:34 on 17 September 2026. No anomalies were detected in the dataset.
+
+**Key Findings**  
+- CO₂ Level Sensor installed‑node 5.01: avg = 767.6 ppm, min = 450.0 ppm, max = 1,101.0 ppm (2,681 readings)
+
+**Anomalies / Concerns**  
+- None detected.
+
+**Recommendations**  
+1. **Maintain ventilation** – Ensure that the HVAC system is operating at the required airflow rates to keep CO₂ levels below the observed maximum.  
+2. **Schedule sensor calibration** – Perform a calibration check on the CO₂ sensor to confirm accuracy, especially after any maintenance or system changes.  
+3. **Implement real‑time monitoring alerts** – Configure the building management system to trigger alerts if CO₂ concentrations exceed 1,100 ppm, allowing prompt remedial action.
+
+---
+**You might also ask:** Export this report as PDF? | Compare with last month? | View raw data?
+
+> **Spatial basis:** a served zone links these spaces, but the link is not validated
+```
+
+### What is this building and who runs it? — run 1 (8.0 s, OK)
+
+```
+Here is what **Abacws Building** states about itself:
+
+- **Purpose:** A university teaching and research building housing the School of Computer Science and Informatics and the School of Mathematics, with lecture theatres, teaching laboratories, research space and academic offices.
+- **Primary function:** Education
+- **Who uses it:** University staff, researchers and students; not a residential building.
+- **Year built:** 2021
+- **Owner:** Cardiff University
+- **Operated by:** Cardiff University Estates
+- **Designed / built by:** Cardiff University Estates, with the main contractor appointed under the campus development programme
+- **Address:** Senghennydd Road, Cathays, Cardiff
+- **Access:** An academic building rather than a public one. Staff and students have card access; visitors should arrange their visit with the school they are attending and report to reception on arrival.
+```
+
+### Show me floor 3 — run 1 (11.0 s, OK)
+
+```
+## 🏢 Abacws — Floor 3
+
+📄 **[Open Floor 3 Plan (PDF)](http://localhost:8080/floor-plans/Abacws%20floor%203.pdf)**
+
+I've pulled up the floor plan for **Floor 3**. Use the plan above to locate the room or zone you're interested in.
+
+**Spaces on this floor:**
+- **Lab:** **10P Collab Sp**, **3Z01 10P Collab Sp 3Z01**
+- **Meeting Room:** **3.01**, **3.46**, **3.15**, **3.02**
+- **Office:** **3.08**, **3.05**, **3.04**, **3.66**, **3.64**, **3.63**
+- **Sensor zones:** `3.11`, `3.09`, `3Z004`, `3.06`, `3.03`, `3.71`, `3.70`, `3.67`, `3Z018`, `3.61`, `3.56`, `3.58` … (+33 more)
+
+💬 Which zone or room would you like sensor data for?  (e.g. *"zone 3.12"* or *"the meeting room"*)
+```
+
+### Where's the coolest place to work in the building right now? — run 1 (43.3 s, OK)
+
+```
+**Best match: Room 5.01 — Research Laboratory** (floor Floor5, score 0.6202 out of 1, where 1 fits everything you asked for).
+1. **Room 5.01 — Research Laboratory** — score 0.6202 (temperature: 22.279)
+2. **Room 2.52 — Research Laboratory** — score 0.6058 (temperature: 22.365)
+3. **Room 4.14 — Academic Office** — score 0.5983 (temperature: 22.41)
+
+**Check you can use it first.** Room 5.01 — Research Laboratory, Room 2.52 — Research Laboratory and Room 4.14 — Academic Office — each of those is a laboratory or an office someone else holds, not a room anyone may walk into. Readings describe what a room is like; they do not say who may be in it, and the building's records do not show you having the use of one. If you want somewhere you can simply go, ask me for a room that is open to everyone and I will rank only those.
+
+**Assumptions:** 'coolest place to work' scored as minimize temperature against the 20-26 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; temperature: 195/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: superlative over 195 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | temperature | 23.33 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.10 — Building Management Office | temperature | 23.76 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.17 — Office | temperature | 22.942 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.18 — Office | temperature | 22.89 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.19 — Office | temperature | 23.532 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.20 — Office | temperature | 23.433 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.04 — Common Area / Atrium | temperature | 23.305 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.06 — Computer Laboratory | temperature | 23.108 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.07 — Computer Laboratory | temperature | 23.098 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.08 — Computer Laboratory | temperature | 22.532 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.09 — Computer Laboratory | temperature | 23.102 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.25 — Conference/Seminar Room | temperature | 22.585 | recent mean (last readings) | 4 | database1_floors04 |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a place to work or sit); Room 0.05 — Mechanical Plant Room (not a place to work or sit); Room 0.06 — Loading and Goods Storage (not a place to work or sit); Room 0.07 — Service Room (not a place to work or sit); Room 0.08 — Service Room (not a place to work or sit); Room 0.29 — Storage Room (not a place to work or sit)
+
+**Scoring bands:** ASHRAE 55 comfort range 20-26 °C
+
+</details>
+
+**As measured at 20:28 on 18 Sep, 3 minutes ago.** Recheck by **20:43** (15 minutes of useful life). Switch if: temperature in Room 5.01 — Research Laboratory moves outside the range that made it the best option — the next best was Room 2.52 — Research Laboratory.
+
+> **Primary:** Room 5.01 — Research Laboratory. **Backup:** Room 2.52 — Research Laboratory — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.
+```
+
+### Which room in the building is the quietest right now? — run 1 (21.8 s, OK)
+
+```
+**Best match: Room 4.20 — Research Laboratory** (floor Floor4, score 0.5705 out of 1, where 1 fits everything you asked for).
+1. **Room 4.20 — Research Laboratory** — score 0.5705 (noise: 47.18)
+2. **Room 3.67 — Academic Office** — score 0.5672 (noise: 47.313)
+3. **Room 3.60 — Academic Office** — score 0.5647 (noise: 47.413)
+
+**Assumptions:** 'quietest' scored as minimize noise against the 30-70 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; noise: 194/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: superlative over 194 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | noise | 49.62 | recent mean (last readings) | 15 | noise_data |
+| Room 0.10 — Building Management Office | noise | 47.693 | recent mean (last readings) | 15 | noise_data |
+| Room 0.17 — Office | noise | 47.827 | recent mean (last readings) | 15 | noise_data |
+| Room 0.18 — Office | noise | 48.293 | recent mean (last readings) | 15 | noise_data |
+| Room 0.19 — Office | noise | 47.787 | recent mean (last readings) | 15 | noise_data |
+| Room 0.20 — Office | noise | 49.313 | recent mean (last readings) | 15 | noise_data |
+| Room 1.06 — Computer Laboratory | noise | 48.213 | recent mean (last readings) | 15 | noise_data |
+| Room 1.07 — Computer Laboratory | noise | 49.673 | recent mean (last readings) | 15 | noise_data |
+| Room 1.08 — Computer Laboratory | noise | 49.627 | recent mean (last readings) | 15 | noise_data |
+| Room 1.09 — Computer Laboratory | noise | 48.767 | recent mean (last readings) | 15 | noise_data |
+| Room 1.25 — Conference/Seminar Room | noise | 48.8 | recent mean (last readings) | 15 | noise_data |
+| Room 1.26 — Conference/Seminar Room | noise | 47.64 | recent mean (last readings) | 15 | noise_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** WHO guideline band 30-70 dB(A) indoor
+
+</details>
+
+**As measured at 20:31 on 18 Sep, 0 minutes ago.** Recheck by **20:36** (5 minutes of useful life). Switch if: noise in Room 4.20 — Research Laboratory moves outside the range that made it the best option — the next best was Room 3.67 — Academic Office.
+
+> **Primary:** Room 4.20 — Research Laboratory. **Backup:** Room 3.67 — Academic Office — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.
+```
+
+### Which room in the building has the best air quality right now? — run 1 (28.5 s, OK)
+
+```
+**Best match: Room 5.21 — Academic Office** (floor Floor5, score 0.3549 out of 1, where 1 fits everything you asked for).
+1. **Room 5.21 — Academic Office** — score 0.3549 (co2: 733.4, pm25: 21.267)
+2. **Room 5.14 — Academic Office** — score 0.3522 (co2: 739.333, pm25: 19.867)
+3. **Room 5.45 — Academic Office** — score 0.3506 (co2: 742.6, pm25: 18.75)
+
+**Every pm25 reading above sits above the 0 to 15 range used to weigh it**, so on that count these spaces are all at the same end of the scale and the order between them comes from the other things you asked for.
+
+**Assumptions:** 'best air quality' scored as minimize co2 against the 420-1500 band; 'best air quality' scored as minimize pm25 against the 0-15 band; all stated preferences weighted equally.
+**Coverage:** 195 of 234 spaces considered; co2: 195/195 instrumented; pm25: 195/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: select_one over 195 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | co2 | 808 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.01 — Main Reception | pm25 | 18.5 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.10 — Building Management Office | co2 | 807.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.10 — Building Management Office | pm25 | 18 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.17 — Office | co2 | 774.75 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.17 — Office | pm25 | 20 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.18 — Office | co2 | 783.75 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.18 — Office | pm25 | 19.5 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.19 — Office | co2 | 790.5 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.19 — Office | pm25 | 19 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.20 — Office | co2 | 778.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.20 — Office | pm25 | 18 | recent mean (last readings) | 4 | pm25_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** ASHRAE 62.1 comfort band 420-1500 ppm · WHO 2021 AQG 24-h PM2.5 guideline 15 ug/m3
+
+</details>
+
+**As measured at 20:28 on 18 Sep, 4 minutes ago.** Recheck by **20:33** (5 minutes of useful life). Switch if: co2 in Room 5.21 — Academic Office moves outside the range that made it the best option — the next best was Room 5.14 — Academic Office.
+
+> **Primary:** Room 5.21 — Academic Office. **No independent backup exists** — every other option depends on something the primary also depends on, so a single failure would take both. Every alternative shares: Floor5. That is a single point of failure worth raising with the estate team.
+```
+
+### Which rooms in the building are the stuffiest right now? — run 1 (22.4 s, OK)
+
+```
+**Best match: Room 3.04 — Research Laboratory** (floor Floor3, score 0.4 out of 1, where 1 fits everything you asked for).
+1. **Room 3.04 — Research Laboratory** — score 0.4 (co2: 852)
+2. **Room 2.12 — Academic Office** — score 0.3993 (co2: 851.25)
+3. **Room 3.52 — Research Laboratory** — score 0.3951 (co2: 846.75)
+
+**Assumptions:** 'stuffiest' scored as maximize co2 against the 420-1500 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; co2: 195/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: rank_all over 195 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | co2 | 808 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.10 — Building Management Office | co2 | 807.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.17 — Office | co2 | 774.75 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.18 — Office | co2 | 783.75 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.19 — Office | co2 | 790.5 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.20 — Office | co2 | 778.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.04 — Common Area / Atrium | co2 | 809.75 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.06 — Computer Laboratory | co2 | 824 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.07 — Computer Laboratory | co2 | 804.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.08 — Computer Laboratory | co2 | 820.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.09 — Computer Laboratory | co2 | 816 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.25 — Conference/Seminar Room | co2 | 788 | recent mean (last readings) | 4 | database1_floors04 |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** ASHRAE 62.1 comfort band 420-1500 ppm
+
+</details>
+
+**As measured at 20:28 on 18 Sep, 4 minutes ago.** Recheck by **20:33** (5 minutes of useful life). Switch if: co2 in Room 3.04 — Research Laboratory moves outside the range that made it the best option — the next best was Room 2.12 — Academic Office.
+
+> **Primary:** Room 3.04 — Research Laboratory. **Backup:** Room 2.12 — Academic Office — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.
+```
+
+### Which floor is the warmest right now? — run 1 (33.0 s, OK)
+
+```
+**Floors 0, 3, and 4 are tied for the warmest, each averaging 23.7 °C.**  
+Floor 1 is the coolest at 23.5 °C, while floors 2 and 5 average 23.6 °C.  
+The overall temperature spread across the building is 0.2 °C, with the highest and lowest means differing by that amount.  
+Because the top floors share the same mean, any localized temperature variations are likely due to sensor placement or micro‑climate effects.  
+**Recommendation:** Conduct a quick audit of the HVAC airflow on floors 0, 3, and 4 to ensure even distribution and rule out any blockage that could be causing the slight elevation.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model` `Sensor data` `Temperature Sensing System` `Live Sensor Data` `Analytics Engine`*
+```
+
+### What is the average CO2 on each floor right now? — run 1 (40.5 s, OK)
+
+```
+**Floor 3 has the highest average CO₂ at 853 ppm.**  
+The averages per floor are: Floor 0 – 847 ppm, Floor 1 – 846 ppm, Floor 2 – 851 ppm, Floor 3 – 853 ppm, Floor 4 – 846 ppm, and Floor 5 – 809 ppm.  
+Floor 3’s value is 4 ppm above Floor 2 and 7 ppm above Floor 0, while Floor 5 is 44 ppm lower than Floor 3, the largest spread among the floors.  
+The range of readings on each floor is 766–939 ppm (Floor 0), 746–932 ppm (Floor 1), 733–945 ppm (Floor 2), 751–949 ppm (Floor 3), 707–974 ppm (Floor 4), and 703–950 ppm (Floor 5).  
+**Recommendation:** Increase ventilation or monitor occupancy on Floor 5 to bring its CO₂ level closer to the other floors.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Sensor data` `CO2 Sensing System` `Indoor Air Quality System` `Live Sensor Data` `Analytics Engine`*
+```
+
+### Which floor has the lowest humidity right now? — run 1 (39.4 s, OK)
+
+```
+**Floor 5 has the lowest humidity at 52.2 %.**  
+Across the building, floor humidity ranges from 52.2 % on Floor 5 to 52.8 % on Floor 4, a spread of only 0.6 %. The other floors sit between 52.4 % (Floor 0) and 52.7 % (Floor 3).  
+Because Floor 5’s mean is the lowest, its sensors are reporting consistently lower moisture levels than the rest of the structure.  
+**Recommendation:** Increase ventilation or adjust the HVAC setpoint on Floor 5 to maintain a more uniform humidity profile across all floors.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model` `Humidity Sensing System` `Sensor data` `Live Sensor Data` `Analytics Engine`*
+```
+
+### Which rooms in the building have the highest PM2.5 right now? — run 1 (23.3 s, OK)
+
+```
+**Best match: Room 4.49 — Academic Office** (floor Floor4, score 1 out of 1, where 1 fits everything you asked for).
+1. **Room 4.49 — Academic Office** — score 1 (pm25: 21)
+2. **Room 5.48 — Academic Office** — score 1 (pm25: 21)
+3. **Room 5.66 — Academic Office** — score 1 (pm25: 21)
+
+**Every pm25 reading above sits above the 0 to 15 range used to weigh it**, so on that count these spaces are all at the same end of the scale and the order between them is not something these readings support.
+
+**Assumptions:** 'highest PM2.5 right now' scored as maximize pm25 against the 0-15 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; pm25: 195/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+Note: the top choice can flip under ±25% preference-weight changes — the leading options are close.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: rank_all over 195 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | pm25 | 18.25 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.10 — Building Management Office | pm25 | 18 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.17 — Office | pm25 | 20 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.18 — Office | pm25 | 19.75 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.19 — Office | pm25 | 18.5 | recent mean (last readings) | 4 | pm25_data |
+| Room 0.20 — Office | pm25 | 18 | recent mean (last readings) | 4 | pm25_data |
+| Room 1.04 — Common Area / Atrium | pm25 | 18.25 | recent mean (last readings) | 4 | pm25_data |
+| Room 1.06 — Computer Laboratory | pm25 | 20.75 | recent mean (last readings) | 4 | pm25_data |
+| Room 1.07 — Computer Laboratory | pm25 | 20.5 | recent mean (last readings) | 4 | pm25_data |
+| Room 1.08 — Computer Laboratory | pm25 | 18.75 | recent mean (last readings) | 4 | pm25_data |
+| Room 1.09 — Computer Laboratory | pm25 | 18 | recent mean (last readings) | 4 | pm25_data |
+| Room 1.25 — Conference/Seminar Room | pm25 | 18.75 | recent mean (last readings) | 4 | pm25_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** WHO 2021 AQG 24-h PM2.5 guideline 15 ug/m3
+
+</details>
+
+**As measured at 20:33 on 18 Sep, 2 minutes ago.** Recheck by **20:48** (15 minutes of useful life). Switch if: pm25 in Room 4.49 — Academic Office moves outside the range that made it the best option — the next best was Room 5.48 — Academic Office.
+
+> **Primary:** Room 4.49 — Academic Office. **Backup:** Room 5.48 — Academic Office — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.
+```
+
+### What is the CO2 level in room 2.01 right now? — run 1 (29.7 s, OK)
+
+```
+_Served at 5-second resolution — this building's access policy sets the finest detail available to you for data this recent. The figures below are averages over each interval, not instantaneous readings._
+
+The latest reading from the CO2 Level Sensor installed-node 2.01 is **830 ppm** at **2026‑09‑18 20:33:20**.  
+Across all 60 readings taken between **18 Sep 14:56** and **18 Sep 20:33**, the average CO₂ level was **875 ppm**, with a minimum of **824 ppm** and a maximum of **914 ppm**.
+
+---
+*Sources: `Building model` `Sensor data`*
+```
+
+### Which shutters or doors fail open versus fail locked on power loss? — run 1 (8.7 s, OK)
+
+```
+**Shutters or doors that lock when power is lost (5 records)**  
+- **DR‑006** – Server room door (floor 4)  
+- **DR‑007** – Communications room door (floor 3)  
+- **DR‑008** – Mechanical plant room door (floor 0)  
+- **DR‑015** – Basement tank room door (floor 0)  
+- **DR‑016** – Bike store door (floor 0)
+
+**Shutters or doors that open when power is lost (2 records)**  
+- **DR‑012** – Reception turnstile (floor 0)  
+- **DR‑013** – Car‑park vehicle barrier (floor 0)
+
+The building’s 16 recorded openings include these 7 that change state on power loss.  
+Other openings in the register have different power‑loss behaviours (e.g., “fail safe” or “fail closed”), but those were not requested.
+
+---
+**You might also ask:** Who owns these records? | Which of these are on floor 3? | Show the full register?
+```
+
+### What's the delta-T across the heating circuit, and is it healthy? — run 1 (50.5 s, OK)
+
+```
+_Served at 5-second resolution — this building's access policy sets the finest detail available to you for data this recent. The figures below are averages over each interval, not instantaneous readings._
+
+**Delta‑T across the heating circuit (Boiler 1, Boiler 2 and Heat Pump)**  
+
+| Circuit | Latest entering temperature | Latest leaving temperature | Latest ΔT | Mean ΔT (all 993 records) | Typical range (min – max) |
+|---------|-----------------------------|----------------------------|-----------|---------------------------|---------------------------|
+| Boiler 1 | 56.68 °C (2026‑09‑18 20:31:50) | 67.80 °C (2026‑09‑18 20:31:50) | **11.12 °C** | 8.4 °C | 0.0 – 13.1 °C |
+| Boiler 2 | 56.80 °C (2026‑09‑18 20:31:50) | 67.32 °C (2026‑09‑18 20:31:50) | **10.52 °C** | 8.3 °C | 0.0 – 12.7 °C |
+| Heat Pump 1 | 58.91 °C (2026‑09‑18 20:31:50) | 69.67 °C (2026‑09‑18 20:31:50) | **10.76 °C** | 8.3 °C | 0.0 – 13.0 °C |
+
+**Is it healthy?**  
+A ΔT of around 10–12 °C is typical for efficient heating circuits. The latest readings show ΔT values of 10.5–11.1 °C, which fall comfortably within the healthy operating range. The mean ΔT over the 14 Sep – 18 Sep period is about 8.3–8.4 °C, indicating that the system has been running consistently and efficiently.  
+
+**Key take‑away**  
+The heating circuit is operating well; the temperature rise from inlet to outlet is within the expected healthy range.
+
+---
+*Sources: `Building model` `Sensor data`*
+```
+
+### Is it stuffy anywhere in the building? — run 1 (32.5 s, OK)
+
+```
+**Best match: Room 2.12 — Academic Office** (floor Floor2, score 1 out of 1, where 1 fits everything you asked for).
+1. **Room 2.12 — Academic Office** — score 1 (co2: 855)
+2. **Room 3.04 — Research Laboratory** — score 1 (co2: 850.25)
+3. **Room 3.52 — Research Laboratory** — score 1 (co2: 841.5)
+
+**Assumptions:** 'stuffy anywhere in the building' scored as above co2 against the 420-1500 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; co2: 195/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+Note: the top choice can flip under ±25% preference-weight changes — the leading options are close.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: list_matching over 195 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | co2 | 810.75 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.10 — Building Management Office | co2 | 803.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.17 — Office | co2 | 772 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.18 — Office | co2 | 778 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.19 — Office | co2 | 800.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 0.20 — Office | co2 | 779.75 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.04 — Common Area / Atrium | co2 | 805 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.06 — Computer Laboratory | co2 | 817.25 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.07 — Computer Laboratory | co2 | 803.75 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.08 — Computer Laboratory | co2 | 819 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.09 — Computer Laboratory | co2 | 821 | recent mean (last readings) | 4 | database1_floors04 |
+| Room 1.25 — Conference/Seminar Room | co2 | 786 | recent mean (last readings) | 4 | database1_floors04 |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.05 — Mechanical Plant Room (not a space people occupy — ask about it by name to include it); Room 0.06 — Loading and Goods Storage (not a space people occupy — ask about it by name to include it); Room 0.07 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.08 — Service Room (not a space people occupy — ask about it by name to include it); Room 0.29 — Storage Room (not a space people occupy — ask about it by name to include it)
+
+**Scoring bands:** ASHRAE 62.1 comfort band 420-1500 ppm
+
+</details>
+
+**As measured at 20:33 on 18 Sep, 4 minutes ago.** Recheck by **20:38** (5 minutes of useful life). Switch if: co2 in Room 2.12 — Academic Office moves outside the range that made it the best option — the next best was Room 3.04 — Research Laboratory.
+
+> **Primary:** Room 2.12 — Academic Office. **Backup:** Room 3.04 — Research Laboratory — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.
+```
+
+### Is there anywhere quiet I can work? — run 1 (13.7 s, OK)
+
+```
+**Best match: Room 3.67 — Academic Office** (floor Floor3, score 0.583 out of 1, where 1 fits everything you asked for).
+1. **Room 3.67 — Academic Office** — score 0.583 (noise: 46.68)
+2. **Room 4.58 — Research Laboratory** — score 0.571 (noise: 47.16)
+3. **Room 3.46 — Academic Office** — score 0.5705 (noise: 47.18)
+
+**Assumptions:** 'quiet I can work' scored as minimize noise against the 30-70 band; all stated preferences weighted equally; interpreted as current conditions.
+**Coverage:** 195 of 234 spaces considered; noise: 194/195 instrumented; 39 excluded (listed).
+**Privacy:** computed under this building's access rules for your role, which limit how finely individual readings can be shown.
+The top choice is stable under ±25% preference-weight changes.
+
+<details>
+<summary>How I worked this out (evidence dossier)</summary>
+
+*Decision: list_matching over 194 ranked candidates; plan fingerprint in the evidence payload.*
+
+| space | modality | value | basis | points | source table |
+|---|---|---|---|---|---|
+| Room 0.01 — Main Reception | noise | 49.74 | recent mean (last readings) | 15 | noise_data |
+| Room 0.10 — Building Management Office | noise | 47.607 | recent mean (last readings) | 15 | noise_data |
+| Room 0.17 — Office | noise | 47.933 | recent mean (last readings) | 15 | noise_data |
+| Room 0.18 — Office | noise | 47.513 | recent mean (last readings) | 15 | noise_data |
+| Room 0.19 — Office | noise | 48.287 | recent mean (last readings) | 15 | noise_data |
+| Room 0.20 — Office | noise | 49.72 | recent mean (last readings) | 15 | noise_data |
+| Room 1.06 — Computer Laboratory | noise | 48.12 | recent mean (last readings) | 15 | noise_data |
+| Room 1.07 — Computer Laboratory | noise | 49.153 | recent mean (last readings) | 15 | noise_data |
+| Room 1.08 — Computer Laboratory | noise | 49.593 | recent mean (last readings) | 15 | noise_data |
+| Room 1.09 — Computer Laboratory | noise | 48.893 | recent mean (last readings) | 15 | noise_data |
+| Room 1.25 — Conference/Seminar Room | noise | 48.44 | recent mean (last readings) | 15 | noise_data |
+| Room 1.26 — Conference/Seminar Room | noise | 47.513 | recent mean (last readings) | 15 | noise_data |
+| … | | | further rows in the evidence payload | | |
+
+**Excluded:** Room 0.04 — Mechanical Plant Room (not a place to work or sit); Room 0.05 — Mechanical Plant Room (not a place to work or sit); Room 0.06 — Loading and Goods Storage (not a place to work or sit); Room 0.07 — Service Room (not a place to work or sit); Room 0.08 — Service Room (not a place to work or sit); Room 0.29 — Storage Room (not a place to work or sit)
+
+**Scoring bands:** WHO guideline band 30-70 dB(A) indoor
+
+</details>
+
+**As measured at 20:36 on 18 Sep, 1 minutes ago.** Recheck by **20:41** (5 minutes of useful life). Switch if: noise in Room 3.67 — Academic Office moves outside the range that made it the best option — the next best was Room 4.58 — Research Laboratory.
+
+> **Primary:** Room 3.67 — Academic Office. **Backup:** Room 4.58 — Research Laboratory — chosen because it shares none of the primary's dependencies, so a single failure cannot take both.
+```
+
+### How many rooms are on floor 2? — run 1 (11.3 s, OK)
+
+```
+## Room Count
+
+| Floor | Label | Rooms |
+|-------|-------|-------|
+| 2 | Floor 2 | 71 |
+```
+
+### How has the temperature on floor 3 changed over the last week? — run 1 (35.0 s, OK)
+
+```
+**Temperature on floor 3 rose from 23.0 °C on 2026‑09‑12 to 23.1 °C on 2026‑09‑18, an increase of 0.1 °C (+0.6 %).**  
+The highest daily mean was 24.3 °C on 2026‑09‑16, while the lowest was 23.0 °C on 2026‑09‑13, giving a spread of 1.3 °C across the week.  
+Daily means ranged from 22.5 °C on 2026‑09‑11 to 24.3 °C on 2026‑09‑16, with most days clustering around 23.0 °C.  
+The 0.1 °C rise over the week is modest compared to the 1.3 °C daily variation observed.  
+Maintain current HVAC settings but schedule a review if temperatures exceed 24.0 °C for more than two consecutive days.
+
+---
+**You might also ask:** Detect anomalies in this trend? | Compare with another sensor? | Export as CSV?
+
+---
+*Sources: `Building model` `Sensor data` `Temperature Sensing System` `Analytics Engine`*
+```
+
+### Compare this week's electricity use with last week. — run 1 (42.2 s, OK)
+
+```
+**Electricity use fell by 4,318 kWh (‑34.1 %) from week 2026‑W37 to week 2026‑W38.**  
+In week 2026‑W37 the building consumed 12,648 kWh, the highest figure in the two‑week window, while week 2026‑W38 recorded 8,330 kWh, the lowest. The spread between the two weeks is 4,318 kWh.  
+The reduction indicates a significant change in overall energy demand across all floors.  
+**Recommendation:** Conduct a detailed review of operational activities and equipment usage during week 2026‑W38 to identify the drivers of the drop and assess whether the lower consumption reflects a cost‑saving opportunity or an unintended outage.
+
+**Boundary:** summed across 6 meters (Energy_Meter_Floor0, Energy_Meter_Floor1, Energy_Meter_Floor2, Energy_Meter_Floor3, Energy_Meter_Floor4, Energy_Meter_Floor5), covering Floor 0 (Ground Floor), Floor 1 (First Floor), Floor 2 (Second Floor), Floor 3 (Third Floor), Floor 4 (Fourth Floor), Floor 5 (Fifth Floor). The total is the sum of those boundaries — it is not a separate whole-site reading.
+
+---
+**You might also ask:** Plot the comparison? | Export results? | Check for anomalies?
+
+---
+*Sources: `Building model` `Energy Metering System` `Analytics Engine`*
+```
+
+### What is the average TVOC on floor 3 today? — run 1 (36.0 s, OK)
+
+```
+**TVOC Level Sensor — Floor 3** reports the highest average TVOC at 252.04 ppb.  
+The second sensor, Floor3 tvoc [ppb], averages 248.98 ppb.  
+The spread between the two readings is 3.06 ppb, with the first sensor slightly higher.  
+Both values are close, indicating consistent measurements across the floor.  
+To ensure continued accuracy, schedule a calibration check for both sensors.
+
+---
+**You might also ask:** Plot this data? | Check compliance against ASHRAE? | Compare with another zone?
+
+---
+*Sources: `Building model` `Indoor Air Quality System` `Analytics Engine`*
+```
+
+### Is the professor in her office? — run 1 (9.3 s, OK)
+
+```
+**I can't answer that.** The system explains the building; it never tracks individuals. Denied for every role; aggregate alternatives are offered.
+
+You can instead:
+- ask "Is anyone in that office right now? (a count, not an identity)"
+- ask for room or floor level counts and conditions (never individuals)
+- ask about spaces you are assigned to, at full detail
+
+_Policy: `policy_inference_individual_presence`._
+```
+
+### Can my manager see when I badge in and out? — run 1 (7.4 s, OK)
+
+```
+**I can't answer that.** The system explains the building; it never tracks individuals. Denied for every role; aggregate alternatives are offered.
+
+You can instead:
+- ask for room or floor level counts and conditions (never individuals)
+- ask about spaces you are assigned to, at full detail
+
+_Policy: `policy_inference_individual_pattern`._
+```
+
+### Open the windows on floor 3. — run 1 (7.6 s, OK)
+
+```
+Nothing has been queued. To request a change I need which writable point and the value to set. The points this building lets me write are: `AHU-F5-SP`, `LIGHTING-3F-SP`, `VAV-501-SP`.
+```
+
+### What is the radiation level in the atrium? — run 1 (19.2 s, OK)
+
+```
+**No — radiation is not measured in this building.** There is no sensor of that kind there, so any figure I gave you would be invented.
+
+What IS measured there: air quality, co2, door contact, humidity, illuminance, lighting cct, noise, occupancy and more.
+```
+
+### The toilet on floor 2 is leaking. — run 1 (7.1 s, OK)
+
+```
+✅ Thank you — your **maintenance request** has been logged as **REP-4D54C9**.
+
+- **Category:** Maintenance request
+- **Priority:** HIGH
+- **Status:** OPEN
+
+An administrator has been notified and will review it. You can check progress any time by asking *"what's the status of REP-4D54C9"*.
+
+📍 I couldn't tell **where** this is. If you reply with the room, floor or area, I'll attach it — that is what lets the building notice when the same problem keeps coming back in the same place.
+```

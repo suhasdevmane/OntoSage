@@ -1,0 +1,28 @@
+source_system,questions,share_pct,distinct_roles,example_question
+sensor_telemetry,2357,79.6,37,"I'm coming to Abacws next Wednesday after 2 p.m. for about 90 minutes. Where am I most likely to find a calm, relatively quiet place with low foot traffic and r"
+space_inventory,801,27.1,30,"I have a 3 p.m. seminar in Abacws on Thursday and want two hours beforehand for dissertation writing. Where am I most likely to find a quiet, lightly used stude"
+it_network,693,23.4,36,"Where can I work for three hours on Friday with power, good Wi-Fi, useful daylight and a low risk of overheating?"
+booking,672,22.7,33,"I'm coming to Abacws next Wednesday after 2 p.m. for about 90 minutes. Where am I most likely to find a calm, relatively quiet place with low foot traffic and r"
+policy_governance,570,19.3,37,"This room is booked but looks empty. Am I allowed to use it, or should I find another space?"
+accessibility,566,19.1,31,"I have classes on Levels 1, 3 and 5 tomorrow. Where should I study between them so I spend less time walking and searching for a place?"
+access_control,502,17.0,36,"Is the lift on my step-free route working now, and what verified alternative should I use if it is not?"
+asset_register,488,16.5,33,"I present in 40 minutes. Is the booked room ready to use, and are the display, network and room power reporting normally? What backup should I use if something "
+permit_control,479,16.2,34,"I'm coming to Abacws next Wednesday after 2 p.m. for about 90 minutes. Where am I most likely to find a calm, relatively quiet place with low foot traffic and r"
+contract_warranty,413,14.0,23,"Which loan, visitor or contractor credentials are overdue, and which sponsor or custodian owns recovery action?"
+bms_plant,353,11.9,30,"For a lecture scheduled in Room 2.26, is the front, middle or rear usually less stuffy and less noisy?"
+project_handover,350,11.8,27,"I only need to collect approved equipment and leave. What is the shortest authorised route, and is the destination officially accessible now?"
+timetable,321,10.8,27,"I'm coming to Abacws next Wednesday after 2 p.m. for about 90 minutes. Where am I most likely to find a calm, relatively quiet place with low foot traffic and r"
+fire_life_safety,306,10.3,24,The fire alarm is sounding. What should I do?
+meter_energy,297,10.0,31,"If two study areas meet my needs, which one is already open and in use, so the building is less likely to serve another nearly empty area?"
+cmms_work,278,9.4,30,"The app says this area is nearly empty. How reliable is that estimate, and are any occupancy sensors or data feeds unavailable?"
+cleaning_waste,253,8.5,28,This room feels stuffy even though the CO2 reading is normal. What else could be contributing?
+finance_cost,225,7.6,24,Roughly how much building energy can reasonably be associated with our late-evening study session compared with a similar daytime session?
+weather_external,203,6.9,32,"I'm coming to Abacws next Wednesday after 2 p.m. for about 90 minutes. Where am I most likely to find a calm, relatively quiet place with low foot traffic and r"
+survey_condition,197,6.7,17,"Which brief items can we freeze now, which remain measurable targets, and which assumptions need a named client decision before the next stage gate?"
+user_reports,163,5.5,23,"The building says this room is comfortable. What did it measure, what did it not measure, and how confident should I be?"
+training_competency,157,5.3,22,"I need to test a small hardware or sensing prototype for a module. Which specialist space is appropriate for the activity and its supervision, extraction, parti"
+hr_identity,141,4.8,24,"Can you produce a transparent, permission-controlled evidence package for our project report that includes relevant building conditions but excludes research co"
+sustainability,123,4.2,21,"When the building makes a sustainability claim, what measurements support it, and what important areas are not monitored?"
+statutory_compliance,122,4.1,22,"Are all induction, training, competency and area-approval prerequisites effective for the requested restricted-zone interval?"
+security_incident,109,3.7,17,Which minimum approved permission package should be prepared for this verified starter on the authorised effective date?
+risk_insurance,14,0.5,8,"Which coordinated facade, lighting, acoustic and ventilation option best meets the signed priorities, and what residual penalties must the client accept?"

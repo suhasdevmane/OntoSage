@@ -1,0 +1,47 @@
+# 42 unscripted questions, written 2026-09-18 in the register a visiting supervisor would use.
+# Purpose: an UNBIASED read of the tail. The demo script (44) and the regression probe (60) are
+# green by construction; neither says how the first twenty minutes of free questioning go.
+# None was tuned against a fix. Disclosure: the author had already seen the amenity failures, so
+# the amenity/water items are NOT independent of the bugs found before this file was written.
+What's the temperature in Room 2.01 right now?
+Is the air quality okay in the atrium today?
+Which floor is the warmest at the moment?
+Has CO2 been high anywhere this week?
+How much electricity did the building use yesterday?
+What's our energy use like compared with last week?
+Which floor uses the most power?
+Is the heat pump running?
+How busy is the building right now?
+Which rooms are empty at the moment?
+What time is the building usually quietest?
+Is Room 1.06 in use this afternoon?
+Where is the main reception?
+How do I get to the lifts from the entrance?
+Which floor are the computer labs on?
+How many floors does the building have?
+Is there a lift I can use if I can't take stairs?
+Where can I charge my phone?
+Are there any showers in the building?
+What are the building opening hours?
+Are there any open faults right now?
+When was the lift last serviced?
+Which assets are overdue for maintenance?
+The light in the corridor on floor 3 is flickering, who do I tell?
+When is the next fire alarm test due?
+Where is the nearest fire exit to Room 2.01?
+Are all the fire doors passing their inspections?
+Who is the building's first aider?
+Is the building wheelchair accessible?
+Is there a quiet room I can use?
+How much water did we use this week?
+Where do I put batteries for recycling?
+Is the building's carbon footprint going down?
+What can you tell me about this building?
+What kinds of questions can you answer?
+How many sensors are in the building?
+Turn off the lights in Room 1.06.
+Who was in Room 2.01 at 3pm yesterday?
+What's the weather forecast for tomorrow?
+Should I buy Bitcoin?
+Compare floor 2 and floor 3 temperature today.
+Plot CO2 for the last 24 hours in the atrium.

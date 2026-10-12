@@ -1,0 +1,2798 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/phase0/phase0_rerun_read/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Phase 0 rerun, labelled by hand (READER-2) - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../../assets/overrides.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#phase-0-rerun-labelled-by-hand-reader-2" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Phase 0 rerun, labelled by hand (READER-2)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#headline" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Headline
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#transitions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Transitions
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Transitions">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#improved-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Improved rows
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#regressed-rows" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Regressed rows
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Regressed rows">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#row-6-ai-048-accessibility-inclusion-and-well-being-teams-good_decline-weird-newclosure-shortcut-confidence-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 6 (AI-048, Accessibility, inclusion, and well-being teams) — GOOD_DECLINE → WEIRD [NEW:closure-shortcut], confidence high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-12-au-075-auditors-and-certification-assessors-good_answer-weird-c4-confidence-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 12 (AU-075, Auditors and certification assessors) — GOOD_ANSWER → WEIRD [C4], confidence high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-25-er-031-emergency-responders-good_decline-weird-c2-confidence-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 25 (ER-031, Emergency responders) — GOOD_DECLINE → WEIRD [C2], confidence med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-26-er-008-emergency-responders-good_answer-weird-c10-confidence-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 26 (ER-008, Emergency responders) — GOOD_ANSWER → WEIRD [C10], confidence high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-36-fp-041-finance-and-procurement-teams-good_answer-weird-c7-confidence-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 36 (FP-041, Finance and procurement teams) — GOOD_ANSWER → WEIRD [C7], confidence med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-49-ir-045-insurers-and-risk-assessors-good_decline-weird-newquestion-filed-as-report-confidence-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 49 (IR-045, Insurers and risk assessors) — GOOD_DECLINE → WEIRD [NEW:question-filed-as-report], confidence high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-55-me-055-mechanical-and-electrical-engineers-good_decline-weird-c9-confidence-low" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 55 (ME-055, Mechanical and electrical engineers) — GOOD_DECLINE → WEIRD [C9], confidence low
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-69-rc-054-regulatory-and-institutional-compliance-teams-good_decline-weird-c3-confidence-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 69 (RC-054, Regulatory and institutional compliance teams) — GOOD_DECLINE → WEIRD [C3], confidence high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-70-rc-024-regulatory-and-institutional-compliance-teams-good_answer-weird-c7-confidence-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 70 (RC-024, Regulatory and institutional compliance teams) — GOOD_ANSWER → WEIRD [C7], confidence med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-81-lb-065-school-leadership-university-leadership-and-building-owners-good_decline-weird-c4-confidence-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 81 (LB-065, School leadership, university leadership, and building owners) — GOOD_DECLINE → WEIRD [C4], confidence med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-84-so-031-security-officers-good_answer-weird-c11-confidence-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 84 (SO-031, Security officers) — GOOD_ANSWER → WEIRD [C11], confidence med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-87-sp-031-space-planning-teams-good_decline-weird-c3-confidence-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 87 (SP-031, Space-planning teams) — GOOD_DECLINE → WEIRD [C3], confidence high
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-92-pgt-044-taught-postgraduate-students-good_answer-weird-c7-confidence-med" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 92 (PGT-044, Taught postgraduate students) — GOOD_ANSWER → WEIRD [C7], confidence med
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-102-ea-028-university-estates-and-asset-management-teams-good_answer-weird-c7-confidence-low" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 102 (EA-028, University estates and asset-management teams) — GOOD_ANSWER → WEIRD [C7], confidence low
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#row-105-ve-071-visitors-and-event-attendees-good_answer-weird-c4-confidence-high" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        row 105 (VE-071, Visitors and event attendees) — GOOD_ANSWER → WEIRD [C4], confidence high
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#per-class-counts-primary-class-of-each-weird-row" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Per-class counts (primary class of each WEIRD row)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Per-class counts (primary class of each WEIRD row)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#phrases-counted-mechanically-across-all-147-answers-secondary-defects-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Phrases counted mechanically across all 147 answers (secondary defects included)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-remains-ranked" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What remains, ranked
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What remains, ranked">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#most-visible-to-a-supervisor-in-a-live-demo" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Most visible to a supervisor in a live demo
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#things-i-could-not-tell" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Things I could not tell
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/phase0/phase0_rerun_read.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="phase-0-rerun-labelled-by-hand-reader-2">Phase 0 rerun, labelled by hand (READER-2)<a class="headerlink" href="#phase-0-rerun-labelled-by-hand-reader-2" title="Permanent link">&para;</a></h1>
+<ul>
+<li>input: <code>docs/phase0/phase0_rerun.md.jsonl</code> — the same 147 questions via <code>/v1</code> streaming as facility01, 2026-09-17 ~16:00–17:30, AFTER the day's fixes were loaded</li>
+<li>baseline: <code>docs/phase0/phase0_read.jsonl</code> (READER, same method, answers from 14:10–15:20)</li>
+<li>every rerun answer was read in full against its question and boundary; labels are in <code>docs/phase0/phase0_rerun_read.jsonl</code></li>
+<li>verdicts, causes and classes follow <code>phase0_read.md</code> exactly. WEIRD = would read as broken, off-topic, incomplete, invented, or as an instruction to add data. A decline is GOOD_DECLINE only when it is true and does not attribute the data to the user or ask for data. A clarification is GOOD_DECLINE (as the baseline reader labelled rows 127 and 138).</li>
+<li>offline only: no SPARQL, no live re-ask. Where I say the building holds something, I rely on the baseline reader's read-only counts or on another answer in the same run that shows the record (e.g. row 22 shows overdue patrol checkpoints used to judge row 86).</li>
+<li>Room 0.01 'Main Reception' wording was not counted against any answer.</li>
+<li><code>fix_status</code>/<code>fix_ids</code>/<code>offline_register_*</code> from the baseline file are not repeated; <code>baseline_verdict</code>, <code>baseline_class</code>, <code>change</code> and <code>class</code> are added.</li>
+<li>Four rows (26, 72, 84, 105) were fixed after the rerun and re-asked live. They are labelled FROM THE RERUN AS RECORDED; the re-ask outcome is in each row's <code>note</code>. I did not see those re-ask answers, only the summary I was given.</li>
+</ul>
+<h2 id="headline">Headline<a class="headerlink" href="#headline" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>verdict</th>
+<th style="text-align: right;">before n</th>
+<th style="text-align: right;">before share</th>
+<th style="text-align: right;">after n</th>
+<th style="text-align: right;">after share</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOOD_ANSWER</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">12.9%</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">6.8%</td>
+</tr>
+<tr>
+<td>GOOD_DECLINE</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">14.3%</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">16.3%</td>
+</tr>
+<tr>
+<td>WEIRD</td>
+<td style="text-align: right;">107</td>
+<td style="text-align: right;">72.8%</td>
+<td style="text-align: right;">113</td>
+<td style="text-align: right;">76.9%</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Weird share: 72.8% → 76.9%</strong> (107 → 113 rows). WEIRD at high confidence only: 60 → 68.</p>
+<p>The automatic grader counts 20 weird (13.6%) on the rerun, down from 29 (19.7%) on the baseline; by hand it is 113 (76.9%), up from 107. The grader moved the opposite way to the content. Exact agreement 52/147, weird-or-not agreement 52/147.</p>
+<p><strong>The net movement is small and two-way: 9 rows improved, 15 regressed, net -6.</strong> Of the 107 rows that were weird, 68 are weird for the same class and 30 changed shape and are still weird. The fixes removed several visible phrasings (the TTL/upload instruction, 'The room holds N records', the 'add or update it' document sentence, the 100-fold repetition, the 'temp'~'temporary' absence rewrite, the simulated dossier column) but most rows those phrasings sat on had a second defect underneath, and that defect is now the whole answer. New wrong routes also appeared on rows that were fine.</p>
+<h2 id="transitions">Transitions<a class="headerlink" href="#transitions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>before  after</th>
+<th style="text-align: right;">GOOD_ANSWER</th>
+<th style="text-align: right;">GOOD_DECLINE</th>
+<th style="text-align: right;">WEIRD</th>
+<th style="text-align: right;">total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GOOD_ANSWER</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr>
+<td>GOOD_DECLINE</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">21</td>
+</tr>
+<tr>
+<td>WEIRD</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">98</td>
+<td style="text-align: right;">107</td>
+</tr>
+</tbody>
+</table>
+<table>
+<thead>
+<tr>
+<th>change</th>
+<th style="text-align: right;">rows</th>
+<th>row numbers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>IMPROVED</td>
+<td style="text-align: right;">9</td>
+<td>19, 37, 39, 50, 52, 62, 79, 114, 133</td>
+</tr>
+<tr>
+<td>SAME_GOOD</td>
+<td style="text-align: right;">25</td>
+<td>5, 7, 18, 22, 23, 34, 38, 40, 59, 65, 67, 68, 94, 106, 108, 116, 120, 124, 125, 126, 127, 130, 131, 138, 140</td>
+</tr>
+<tr>
+<td>SAME_WEIRD</td>
+<td style="text-align: right;">68</td>
+<td>0, 1, 2, 3, 9, 10, 11, 14, 15, 16, 20, 21, 27, 29, 30, 31, 32, 35, 42, 45, 47, 53, 54, 56, 58, 60, 61, 64, 66, 71, 74, 75, 76, 77, 82, 89, 90, 96, 97, 98, 99, 100, 101, 107, 109, 110, 111, 112, 113, 115, 117, 118, 121, 122, 123, 128, 129, 132, 134, 135, 136, 137, 139, 141, 142, 143, 144, 145</td>
+</tr>
+<tr>
+<td>CHANGED_STILL_WEIRD</td>
+<td style="text-align: right;">30</td>
+<td>4, 8, 13, 17, 24, 28, 33, 41, 43, 44, 46, 48, 51, 57, 63, 72, 73, 78, 80, 83, 85, 86, 88, 91, 93, 95, 103, 104, 119, 146</td>
+</tr>
+<tr>
+<td>REGRESSED</td>
+<td style="text-align: right;">15</td>
+<td>6, 12, 25, 26, 36, 49, 55, 69, 70, 81, 84, 87, 92, 102, 105</td>
+</tr>
+</tbody>
+</table>
+<p>SAME_WEIRD means the same defect class as the baseline, not identical text: several of those answers were reworded (e.g. row 11's table is now complete but the containment list is invented).</p>
+<h3 id="improved-rows">Improved rows<a class="headerlink" href="#improved-rows" title="Permanent link">&para;</a></h3>
+<ul>
+<li>row 19 (CT-065, was C7 → GOOD_ANSWER): 'the <strong>next authorised collection is scheduled for 18 September 2026</strong>' (asked 17 Sep) with the two sharps bins, and 'No explicit "ready-before-arrival" instructions ... are recorded' — date now anchored and absence stated plainly.</li>
+<li>row 37 (FP-064, was C3 → GOOD_DECLINE): 'the building's data do not contain any information about conflicts of interest, related-party links, or segregation-of-duty controls' then a short, plain list of what the cost-line and approval registers hold — the 100-fold repetition and 'the data you have' are gone.</li>
+<li>row 39 (FS-041, was C15 → GOOD_DECLINE): 'I don't have that specific information on record for <strong>Abacws Building</strong>. For building-specific queries please contact your building's facilities / estates management team.' — the TTL/upload instruction is gone; no warden records exist.</li>
+<li>row 50 (IR-034, was C8 → GOOD_DECLINE): '<strong>Abacws Building's documents do not answer this.</strong> I searched Access Permission Register, Approval Evidence Register, Department Directory' — the waste register is no longer cited; chain-of-custody records are not held.</li>
+<li>row 52 (LT-059, was C11 → GOOD_DECLINE): '<strong>Abacws Building's documents do not answer this.</strong> I searched Av Readiness Register ... The owner of that record holds the answer.' — the 'add or update it' instruction is gone.</li>
+<li>row 62 (PHD-077, was C9 → GOOD_DECLINE): '<strong>Which space did you mean?</strong> I can say what is measured in a particular room, floor or zone, but I need to know which one' — a clarification for 'this office' where the baseline gave a false absence plus approval statistics.</li>
+<li>row 79 (RB-033, was C7 → GOOD_DECLINE): 'The records do not indicate whether a booking should remain protected from release. They only record each booking's status' — the invented release rule is gone.</li>
+<li>row 114 (Q516, was C15 → GOOD_DECLINE): 'I don't have that specific information on record for <strong>Abacws Building</strong>. For building-specific queries please contact your building's facilities / estates management team.' — TTL instruction gone; no capital-project outcome records.</li>
+<li>row 133 (Q224, was C10 → GOOD_DECLINE): '<strong>Abacws Building's documents do not answer this.</strong> I searched Asset Engineering Register' — the misleading bare 'Incoming main stop valve SV-1' is gone; no floor-level isolation is recorded.</li>
+</ul>
+<h2 id="regressed-rows">Regressed rows<a class="headerlink" href="#regressed-rows" title="Permanent link">&para;</a></h2>
+<h3 id="row-6-ai-048-accessibility-inclusion-and-well-being-teams-good_decline-weird-newclosure-shortcut-confidence-high">row 6 (AI-048, Accessibility, inclusion, and well-being teams) — GOOD_DECLINE → WEIRD [NEW:closure-shortcut], confidence high<a class="headerlink" href="#row-6-ai-048-accessibility-inclusion-and-well-being-teams-good_decline-weird-newclosure-shortcut-confidence-high" title="Permanent link">&para;</a></h3>
+<p>Q: Have closures, room moves and route changes reached each affected attendee and accompanying person through their selected authorised channels before travel?</p>
+<ul>
+<li><strong>before (21 s):</strong> "the building's data do <strong>not</strong> contain any information about whether closures, room moves or route changes were communicated to attendees or their accompanying persons through authorised channels. They only record the closure periods for the building's floors:…"</li>
+<li><strong>after (40 s):</strong> "<strong>3 planned closure(s) on record</strong>: - Floor2: planned electrical maintenance, from 2026-08-28T08:00 to 2026-08-28T17:00 - Floor0: deep clean, from 2026-09-13T08:00 to 2026-09-13T17:00 - Floor1: planned electrical maintenance, from 2026-09-18T08:00 to 2026-09-1…"</li>
+<li><strong>why weird:</strong> Whole answer is '<strong>3 planned closure(s) on record</strong>: - Floor2: planned electrical maintenance, from 2026-08-28T08:00 ...' — the notification question (did changes reach attendees through their channels) is neither answered nor declined; two of the three closures are past.</li>
+<li><strong>likely cause:</strong> Predicted by the baseline reader: 'closures' no longer selects the ClosurePeriod register through the register lane. A closure-list shortcut now answers anything mentioning closures, whatever was asked (it also took row 24).</li>
+</ul>
+<h3 id="row-12-au-075-auditors-and-certification-assessors-good_answer-weird-c4-confidence-high">row 12 (AU-075, Auditors and certification assessors) — GOOD_ANSWER → WEIRD [C4], confidence high<a class="headerlink" href="#row-12-au-075-auditors-and-certification-assessors-good_answer-weird-c4-confidence-high" title="Permanent link">&para;</a></h3>
+<p>Q: Which matters require a formal management representation because independent evidence is unavailable, incomplete or solely management-held?</p>
+<ul>
+<li><strong>before (43 s):</strong> "The records that lack independent evidence (no evidenceReference) and therefore need a formal management representation are: <strong>Service continuity provision</strong> | Record ID | Label (service) | Reason | |-----------|-----------------|--------| | CP‑003 | Research …"</li>
+<li><strong>after (35 s):</strong> "<strong>Answer</strong> The ontology data you provided does not contain any explicit list of “matters” that are flagged as requiring a formal management representation because independent evidence is unavailable, incomplete, or solely held by management. The only property …"</li>
+<li><strong>why weird:</strong> 'The ontology data you provided does not contain any explicit list of "matters" ... consult additional policy or governance documents that are not part of the current ontology' — the baseline answered from continuity/approval records with no evidenceReference.</li>
+<li><strong>likely cause:</strong> The register lane no longer picks up the continuity/approval evidence fields; the metadata RAG fallback (C4) answered instead, with 'The ontology data you provided'.</li>
+</ul>
+<h3 id="row-25-er-031-emergency-responders-good_decline-weird-c2-confidence-med">row 25 (ER-031, Emergency responders) — GOOD_DECLINE → WEIRD [C2], confidence med<a class="headerlink" href="#row-25-er-031-emergency-responders-good_decline-weird-c2-confidence-med" title="Permanent link">&para;</a></h3>
+<p>Q: What defensible aggregate occupancy range applied to each affected zone at the incident start time?</p>
+<ul>
+<li><strong>before (11 s):</strong> "The incident records do not contain defensible aggregate occupancy ranges for the affected zones at the incident start time. They record incident details such as status, location, effectiveFrom, and other incident‑specific information. --- **You might also ask…"</li>
+<li><strong>after (13 s):</strong> "That question reaches <strong>250 sensors</strong> — more than I can read and summarise in one request without either timing out or quietly answering from a fraction of them. Narrow it and I can answer directly: - one floor, or one room - one measurement at a time (tempera…"</li>
+<li><strong>why weird:</strong> 'That question reaches <strong>250 sensors</strong> — more than I can read ... Narrow it' — no incident is named; the baseline gave an honest decline from the incident register.</li>
+<li><strong>likely cause:</strong> The incident register is no longer selected; 'occupancy' sends the question to the sensor fetch lane, which trips the fetch budget (C2) instead of asking which incident.</li>
+</ul>
+<h3 id="row-26-er-008-emergency-responders-good_answer-weird-c10-confidence-high">row 26 (ER-008, Emergency responders) — GOOD_ANSWER → WEIRD [C10], confidence high<a class="headerlink" href="#row-26-er-008-emergency-responders-good_answer-weird-c10-confidence-high" title="Permanent link">&para;</a></h3>
+<p>Q: Which boundary-to-door route is currently evidenced for ambulance crews, stretcher teams and responders on foot, including step-free constraints?</p>
+<ul>
+<li><strong>before (17 s):</strong> "<strong>Boundary‑to‑door routes that are currently evidenced for ambulance crews, stretcher teams and responders on foot (step‑free)</strong> | Route ID | Label (from Accessible route) | From → To | Step‑free? | Approval status | Notes | |----------|-----------------------…"</li>
+<li><strong>after (12 s):</strong> "RTE-001 Accessible drop‑off to Reception --- <em>From Abacws Building's documents: Accessible Route Register, Asset Engineering Register, Stakeholder Group Register. For the current version, contact facility management.</em>"</li>
+<li><strong>why weird:</strong> Whole answer: 'RTE-001 Accessible drop-off to Reception' + document footer — a bare fragment where the baseline gave two step-free routes with status and constraints.</li>
+<li><strong>likely cause:</strong> Predicted: 'step-free' no longer selects AccessibleRoute. The document lane returned a one-line fragment (C10). The post-fix re-ask lists six routes but adds 'would not block a stretcher', which no record says, so the re-ask would still be WEIRD (C7).</li>
+</ul>
+<h3 id="row-36-fp-041-finance-and-procurement-teams-good_answer-weird-c7-confidence-med">row 36 (FP-041, Finance and procurement teams) — GOOD_ANSWER → WEIRD [C7], confidence med<a class="headerlink" href="#row-36-fp-041-finance-and-procurement-teams-good_answer-weird-c7-confidence-med" title="Permanent link">&para;</a></h3>
+<p>Q: Which assets should receive survey, maintenance, refurbishment or replacement funding first when criticality, condition, risk and whole-life cost are combined?</p>
+<ul>
+<li><strong>before (26 s):</strong> "The records do not contain any explicit “risk” or “whole‑life cost” figures, so the only factors we can combine are the <strong>criticality</strong> recorded in the Asset Engineering Profile register and the <strong>condition grade</strong> (plus remaining life) recorded in the Conditi…"</li>
+<li><strong>after (24 s):</strong> "The records show 24 assets in the building. From the data that is recorded we can combine: | Asset | Condition | Criticality | Whole‑life cost (value band) | Why it ranks high | |-------|-----------|-------------|-----------------------------|-----------------…"</li>
+<li><strong>why weird:</strong> Record status read as condition and value band as whole-life cost ('Condition | active', 'Whole-life cost (value band)'); 'AEP-007 – the only irreplaceable chiller' is invented; then 'No additional assumptions or calculations are made' and a '<strong>Boundary: not declared.</strong> ... the meter behind it' footer on a funding ranking (C6a).</li>
+<li><strong>likely cause:</strong> The condition-survey register is no longer read; narration takes record status as 'condition' and value band as 'whole-life cost', invents 'the only irreplaceable chiller', and the meter-boundary footer fires on a funding ranking.</li>
+</ul>
+<h3 id="row-49-ir-045-insurers-and-risk-assessors-good_decline-weird-newquestion-filed-as-report-confidence-high">row 49 (IR-045, Insurers and risk assessors) — GOOD_DECLINE → WEIRD [NEW:question-filed-as-report], confidence high<a class="headerlink" href="#row-49-ir-045-insurers-and-risk-assessors-good_decline-weird-newquestion-filed-as-report-confidence-high" title="Permanent link">&para;</a></h3>
+<p>Q: For each defect, what remedial scope and acceptance evidence were required, what was completed, and has the corrected condition remained stable?</p>
+<ul>
+<li><strong>before (66 s):</strong> "the building's data do <strong>not</strong> contain the information you asked for. They do not record: * <strong>Remedial scope</strong> - what work was planned or carried out to fix a defect. * <strong>Acceptance evidence required</strong> - the evidence that was needed to confirm the defect had b…"</li>
+<li><strong>after (95 s):</strong> "✅ Thank you — your <strong>maintenance request</strong> has been logged as <strong>REP-7420E1</strong>. - <strong>Category:</strong> Maintenance request - <strong>Priority:</strong> NORMAL - <strong>Status:</strong> OPEN An administrator has been notified and will review it. You can check progress any time by asking *"what'…"</li>
+<li><strong>why weird:</strong> An insurer's question is filed as a fault ticket: '✅ Thank you — your <strong>maintenance request</strong> has been logged as <strong>REP-7420E1</strong> ... An administrator has been notified' (95 s) — a write side effect and no answer.</li>
+<li><strong>likely cause:</strong> Report-intake capture: a question about defects, remedial scope and completion was classified as a maintenance report and written to user_reports (REP-7420E1, 'An administrator has been notified'). A side effect, not only a wrong answer.</li>
+</ul>
+<h3 id="row-55-me-055-mechanical-and-electrical-engineers-good_decline-weird-c9-confidence-low">row 55 (ME-055, Mechanical and electrical engineers) — GOOD_DECLINE → WEIRD [C9], confidence low<a class="headerlink" href="#row-55-me-055-mechanical-and-electrical-engineers-good_decline-weird-c9-confidence-low" title="Permanent link">&para;</a></h3>
+<p>Q: Which points and sampling rates should be trended so this commissioning or diagnostic test can observe the expected behaviour?</p>
+<ul>
+<li><strong>before (10 s):</strong> "The records do not contain sampling‑rate information; they only record observed duty values for each asset. --- <strong>You might also ask:</strong> Who owns these records? | Which of these are on floor 3? | Show the full register?"</li>
+<li><strong>after (10 s):</strong> "the building's data do not contain any sensor-point names or sampling-rate information. They only record: * <strong>Design duty</strong> (the intended flow or power) * <strong>Commissioned duty</strong> (the value that was verified at installation) * <strong>Observed duty</strong> (the value measur…"</li>
+<li><strong>why weird:</strong> 'the building's data do not contain any sensor-point names or sampling-rate information ... Because no sensor identifiers or data-sampling frequencies are listed, I can't tell you which points to trend' — the building model declares 3,248 named sensors; only the asset register lacks them.</li>
+<li><strong>likely cause:</strong> Same register and lane; the narration widened a true absence (sampling rates) into a false one ('do not contain any sensor-point names').</li>
+</ul>
+<h3 id="row-69-rc-054-regulatory-and-institutional-compliance-teams-good_decline-weird-c3-confidence-high">row 69 (RC-054, Regulatory and institutional compliance teams) — GOOD_DECLINE → WEIRD [C3], confidence high<a class="headerlink" href="#row-69-rc-054-regulatory-and-institutional-compliance-teams-good_decline-weird-c3-confidence-high" title="Permanent link">&para;</a></h3>
+<p>Q: Are compliance records retained for the correct period, in the authorised system and format, with integrity, access and disposal controls appropriate to their purpose?</p>
+<ul>
+<li><strong>before (9 s):</strong> "The records do not contain information about retention period, authorised system, format, integrity, access or disposal controls. They only record due dates, completion dates, status, responsible role and record ID. --- <strong>You might also ask:</strong> Who owns these r…"</li>
+<li><strong>after (11 s):</strong> "The records you have show that the building’s compliance checks are being logged in a single system, with each entry recording: * <strong>Label</strong> – the type of check (e.g., “Emergency lighting monthly function test”) * <strong>Due date</strong> – when the check was scheduled * *…"</li>
+<li><strong>why weird:</strong> '<strong>The records you have</strong> show that the building's compliance checks are being logged in a single system' and 'the data are stored in the building's compliance-management system' — attribution to the user plus an invented system claim; the substance of the decline is otherwise right.</li>
+<li><strong>likely cause:</strong> Same register; narration now opens 'The records you have' (user attribution, BUG-679 still open) and invents 'the building's compliance-management system'.</li>
+</ul>
+<h3 id="row-70-rc-024-regulatory-and-institutional-compliance-teams-good_answer-weird-c7-confidence-med">row 70 (RC-024, Regulatory and institutional compliance teams) — GOOD_ANSWER → WEIRD [C7], confidence med<a class="headerlink" href="#row-70-rc-024-regulatory-and-institutional-compliance-teams-good_answer-weird-c7-confidence-med" title="Permanent link">&para;</a></h3>
+<p>Q: Are accessible entrances, routes, lifts, doors, toilets, refuges and assistance arrangements available as currently published, including temporary alternatives?</p>
+<ul>
+<li><strong>before (47 s):</strong> "<strong>Answer to your question</strong> The building’s published records show that: | Feature | Register | Status | Key details | |---------|----------|--------|-------------| | <strong>Accessible entrances / routes</strong> | Accessible route | 13 open, 2 restricted, 1 closed | 13 ro…"</li>
+<li><strong>after (38 s):</strong> "<strong>Short answer:</strong> Yes – the building’s published records show that accessible entrances, routes, lifts, doors, toilets, refuges and assistance arrangements are all documented, and temporary alternatives are noted where a route or lift is not currently usable. …"</li>
+<li><strong>why weird:</strong> '<strong>Short answer:</strong> Yes' and '<strong>Bottom line:</strong> The building's published records confirm that all required accessible features ... are available' — while its own table lists 'RTE-010 ... <strong>Lift B</strong> – <em>in_service</em>' and 'RTE-016 ... <strong>Lift B</strong> – <em>out_of_service</em>', and offers 'Alternative: <strong>Lift B</strong> + north corridor' for RTE-006. The conflict is not reported and availability is certified.</li>
+<li><strong>likely cause:</strong> Same register; narration adds 'Short answer: Yes' and 'confirm that all ... are available' — certifying accessibility against the boundary — and does not report that Lift B is in_service on RTE-010 and out_of_service on RTE-016.</li>
+</ul>
+<h3 id="row-81-lb-065-school-leadership-university-leadership-and-building-owners-good_decline-weird-c4-confidence-med">row 81 (LB-065, School leadership, university leadership, and building owners) — GOOD_DECLINE → WEIRD [C4], confidence med<a class="headerlink" href="#row-81-lb-065-school-leadership-university-leadership-and-building-owners-good_decline-weird-c4-confidence-med" title="Permanent link">&para;</a></h3>
+<p>Q: Which dependency-aware recovery order should incident leaders adopt to restore priority services safely with the people and resources currently available?</p>
+<ul>
+<li><strong>before (8 s):</strong> "The records do not contain a dependency‑aware recovery order. They record the following for each incident: - <strong>Incident status</strong> (closed, open, monitoring) - <strong>Incident category</strong> (near miss, injury, service failure, etc.) - <strong>Potential severity</strong> (minor, mode…"</li>
+<li><strong>after (43 s):</strong> "I'm sorry, but the building's data only lists the building's sensors - it doesn't include any information about a recovery order or how priority services should be restored. <strong>What the results do show:</strong> - 257 sensor entries (e.g., "Entry Count Sensor - Main E…"</li>
+<li><strong>why weird:</strong> 'the building's data only lists the building's sensors - it doesn't include any information about a recovery order' (the continuity register records dependencies per service), generic 'HVAC depends on power, which depends on the main generator', and 'If you have access to those documents or a dependency map, I can help you interpret them'.</li>
+<li><strong>likely cause:</strong> The incident register is no longer selected; a sensor-listing SPARQL result was narrated as the whole building ('only lists the building's sensors'), so the continuity register's dependencies are denied, plus generic advice and an invitation to supply documents.</li>
+</ul>
+<h3 id="row-84-so-031-security-officers-good_answer-weird-c11-confidence-med">row 84 (SO-031, Security officers) — GOOD_ANSWER → WEIRD [C11], confidence med<a class="headerlink" href="#row-84-so-031-security-officers-good_answer-weird-c11-confidence-med" title="Permanent link">&para;</a></h3>
+<p>Q: Which events are due today, and which approved Security arrangements are current, missing or no longer valid for each one?</p>
+<ul>
+<li><strong>before (8 s):</strong> "None of the 12 event records record any events that are due today. They only record scheduled events with their effectiveFrom dates, and no security arrangements are recorded in these records. --- <strong>You might also ask:</strong> Who owns these records? | Which of thes…"</li>
+<li><strong>after (4 s):</strong> "<strong>Abacws Building's documents do not answer this.</strong> I searched Incident And Near Miss Log, Public Event Register, Service Schedules; they are the closest material and none of them contains the answer. The owner of that record holds the answer."</li>
+<li><strong>why weird:</strong> '<strong>Abacws Building's documents do not answer this.</strong> I searched Incident And Near Miss Log, Public Event Register, Service Schedules ... none of them contains the answer.' — the event register answers the 'which events are due today' half, which the baseline did.</li>
+<li><strong>likely cause:</strong> Predicted: 'events' no longer selects PublicEvent; the document catch-all declined. The post-fix re-ask reaches the event register but only says no security arrangements are recorded and does not list today's events, so it would still be INCOMPLETE.</li>
+</ul>
+<h3 id="row-87-sp-031-space-planning-teams-good_decline-weird-c3-confidence-high">row 87 (SP-031, Space-planning teams) — GOOD_DECLINE → WEIRD [C3], confidence high<a class="headerlink" href="#row-87-sp-031-space-planning-teams-good_decline-weird-c3-confidence-high" title="Permanent link">&para;</a></h3>
+<p>Q: Which functions must be co-located or kept within a stated travel time, which are preferences, and which adjacency claims lack evidence?</p>
+<ul>
+<li><strong>before (7 s):</strong> "The circulation records do <strong>not</strong> contain any information about functions that must be co‑located, preferences, or adjacency claims. They only record walking and step‑free travel times between floors and within levels. --- <strong>You might also ask:</strong> Who owns the…"</li>
+<li><strong>after (6 s):</strong> "The circulation records you provided only describe walking and step‑free travel times between floors in the building. They do not contain any information about which functions must be co‑located, any stated travel‑time preferences, or evidence for adjacency cl…"</li>
+<li><strong>why weird:</strong> 'The circulation records <strong>you provided</strong> only describe walking and step-free travel times between floors' — the decline is otherwise the same as the baseline's GOOD_DECLINE.</li>
+<li><strong>likely cause:</strong> Same register and decline; narration now says 'The circulation records you provided' (BUG-679 open).</li>
+</ul>
+<h3 id="row-92-pgt-044-taught-postgraduate-students-good_answer-weird-c7-confidence-med">row 92 (PGT-044, Taught postgraduate students) — GOOD_ANSWER → WEIRD [C7], confidence med<a class="headerlink" href="#row-92-pgt-044-taught-postgraduate-students-good_answer-weird-c7-confidence-med" title="Permanent link">&para;</a></h3>
+<p>Q: During group-project deadline week, which time windows are most likely to offer a suitable meeting space for our team?</p>
+<ul>
+<li><strong>before (29 s):</strong> "<strong>Answer</strong> During a group‑project deadline week the building’s bookable rooms (the 18 “bookable room” records) are the most likely to provide a quiet, group‑friendly space. All of those rooms have a <em>quietestPeriod</em> that falls after 16:00 on weekdays (or “late…"</li>
+<li><strong>after (42 s):</strong> "The building’s records show that all 28 work‑spaces are <strong>active</strong>. - <strong>Bookable rooms</strong>: 18 (Mon‑Fri 08:00‑18:00) - <strong>Common room</strong>: 1 (Mon‑Fri 07:00‑19:00) - <strong>Computer labs</strong>: 8 (Mon‑Fri 08:00‑20:00) - <strong>Open study</strong>: 1 (Mon‑Sun 07:00‑22:00) Each space list…"</li>
+<li><strong>why weird:</strong> 'Each space lists a <em>busiestPeriod</em> that is typical for a "group-project deadline week" (i.e., a teaching week)' (invented equivalence) and '<strong>15:00 – 18:00</strong> (after the latest busy period for labs and bookable rooms ...)' while its own table gives labs '10:00-16:00'.</li>
+<li><strong>likely cause:</strong> Same register; narration switched from quietestPeriod to busiestPeriod and then reasoned wrongly ('15:00 – 18:00 ... after the latest busy period for labs' when labs are busy to 16:00), with an invented 'deadline week = teaching week'.</li>
+</ul>
+<h3 id="row-102-ea-028-university-estates-and-asset-management-teams-good_answer-weird-c7-confidence-low">row 102 (EA-028, University estates and asset-management teams) — GOOD_ANSWER → WEIRD [C7], confidence low<a class="headerlink" href="#row-102-ea-028-university-estates-and-asset-management-teams-good_answer-weird-c7-confidence-low" title="Permanent link">&para;</a></h3>
+<p>Q: Which closed work orders lack enough asset, test or outcome evidence for estates teams to rely on the stated result?</p>
+<ul>
+<li><strong>before (19 s):</strong> "The building’s records show that <strong>all 15 completed work orders</strong> do not contain enough asset, test or outcome evidence for estates teams to rely on the stated result. None of the completed records have a comment, test result, or other evidence field populated…"</li>
+<li><strong>after (12 s):</strong> "The records do not contain any evidence of asset, test or outcome for closed work orders. They record the following for each work order: - <strong>Status</strong> (completed, in_progress, open) - <strong>Label</strong> (e.g., “Fault investigation”, “Annual service”) - <strong>Location</strong> (e.g…"</li>
+<li><strong>why weird:</strong> 'The records do not contain any evidence of asset, test or outcome for closed work orders' followed by its own field list including '<strong>Primary system</strong> (e.g., AEP-002, AEP-011)' — asset evidence is recorded; and no work order is named, where the baseline listed the 15 completed orders lacking test/outcome evidence.</li>
+<li><strong>likely cause:</strong> Same register; the narration declined ('do not contain any evidence of asset, test or outcome') while listing a primary-system field, and no longer names the 15 completed orders.</li>
+</ul>
+<h3 id="row-105-ve-071-visitors-and-event-attendees-good_answer-weird-c4-confidence-high">row 105 (VE-071, Visitors and event attendees) — GOOD_ANSWER → WEIRD [C4], confidence high<a class="headerlink" href="#row-105-ve-071-visitors-and-event-attendees-good_answer-weird-c4-confidence-high" title="Permanent link">&para;</a></h3>
+<p>Q: The event room has changed. What is the new confirmed room, and what public route should I take?</p>
+<ul>
+<li><strong>before (11 s):</strong> "The <strong>Postgraduate welcome</strong> event (EVT‑2026‑0045) has been moved. - <strong>New confirmed room:</strong> <strong>Room 1.04 — Common Area / Atrium</strong> - <strong>Public route to use:</strong> <strong>Main Entrance</strong> (the event’s visitor entrance is listed as “Main Entrance”). --- **You might also ask…"</li>
+<li><strong>after (24 s):</strong> "I’m sorry, but the building model doesn’t contain information about the event room’s new location or the public route to get there. The data I have shows how many sensors each space holds, but it doesn’t record room changes or navigation routes. **What the mod…"</li>
+<li><strong>why weird:</strong> 'the building model doesn't contain information about the event room's new location or the public route ... The data I have shows how many sensors each space holds' with sensor counts per floor — the baseline answered from the event register (EVT-2026-0045 moved to Room 1.04).</li>
+<li><strong>likely cause:</strong> Predicted: 'event' no longer selects PublicEvent; the metadata RAG path answered with sensor counts per floor and 'the building model doesn't contain information about the event room's new location'. Fixed on the post-fix re-ask.</li>
+</ul>
+<p>High-confidence regressions: 6, 12, 26, 49, 69, 87, 105. Medium/low: 25, 36, 55, 70, 81, 84, 92, 102.</p>
+<p>Three patterns account for most of them: (a) vocabulary changes that moved a question off the register that answered it (6, 26, 84, 105 — all four predicted by the baseline reader's offline reach, and 12, 25, 81 by the same mechanism, unpredicted); (b) the same register narrated worse this time — attribution, a blanket certification, a misread field (36, 55, 69, 70, 87, 92, 102), which is run-to-run narration variance as much as a code change and should be re-asked before being blamed on a fix; (c) one new capture: a question filed as a report (49).</p>
+<h2 id="per-class-counts-primary-class-of-each-weird-row">Per-class counts (primary class of each WEIRD row)<a class="headerlink" href="#per-class-counts-primary-class-of-each-weird-row" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>class</th>
+<th>name</th>
+<th style="text-align: right;">before</th>
+<th style="text-align: right;">after</th>
+<th>after rows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>C1</td>
+<td>Absence guard rewrites a valid decline because a modality alias matched inside another word</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C2</td>
+<td>Fetch-budget refusal for whole-building, multi-measurement questions</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">4</td>
+<td>0, 16, 17, 25</td>
+</tr>
+<tr>
+<td>C3</td>
+<td>Narration hygiene: 'the data you provided', raw field names, provenance flags, runaway repetition</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">5</td>
+<td>32, 41, 69, 77, 87</td>
+</tr>
+<tr>
+<td>C4</td>
+<td>Metadata/discovery RAG fallback: 'the ontology you provided', 'add entities', false absence, schema narrated as fact</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">14</td>
+<td>4, 12, 13, 28, 44, 57, 75, 76, 81, 88, 105, 121, 129, 139</td>
+</tr>
+<tr>
+<td>C5</td>
+<td>'I understood the question but could not put an answer together' — lane jargon, no content</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
+<td>10, 35, 73, 83, 95, 119</td>
+</tr>
+<tr>
+<td>C6a</td>
+<td>Recommendation shelf-life and meter-boundary footers attached to answers they do not describe</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td>54, 115, 118, 123</td>
+</tr>
+<tr>
+<td>C6b</td>
+<td>Deictic referent ('this room', 'here', 'the meeting room') resolved to an arbitrary sensor or declined</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td>74, 100, 101, 137</td>
+</tr>
+<tr>
+<td>C7</td>
+<td>Register narration misreads statuses, dates and fields, or invents conclusions</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">17</td>
+<td>3, 11, 15, 21, 27, 33, 36, 45, 51, 60, 63, 64, 70, 92, 102, 107, 113</td>
+</tr>
+<tr>
+<td>C8</td>
+<td>Register chosen on a single bare word; the lane then declines with unrelated register statistics</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">8</td>
+<td>1, 30, 42, 48, 72, 85, 97, 98</td>
+</tr>
+<tr>
+<td>C9</td>
+<td>The building holds the data but no lane reaches it (false absence)</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">8</td>
+<td>20, 43, 55, 66, 86, 111, 122, 134</td>
+</tr>
+<tr>
+<td>C10</td>
+<td>Document lane returns a bare fragment or an internal token as the whole answer</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">5</td>
+<td>26, 31, 93, 104, 143</td>
+</tr>
+<tr>
+<td>C11</td>
+<td>Catch-all 'documents do not answer this' for out-of-scope, planning or analytic requests</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">12</td>
+<td>8, 53, 78, 80, 82, 84, 90, 91, 103, 112, 144, 146</td>
+</tr>
+<tr>
+<td>C12</td>
+<td>Open-domain questions answered from general model knowledge, unlabelled</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td>135, 136, 141, 142</td>
+</tr>
+<tr>
+<td>C13</td>
+<td>Deliberation lane: an unmapped phrase blocks the query, rankings pick out-of-band spaces, routes reach ranking</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+<td>58, 61, 99, 117</td>
+</tr>
+<tr>
+<td>C14</td>
+<td>Compare/trend fallback claims 'no measured series'</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td>9</td>
+</tr>
+<tr>
+<td>C15</td>
+<td>'You can add it — upload a TTL' enablement hint as the answer (baseline: COVERED by TODO-692)</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0</td>
+<td>—</td>
+</tr>
+<tr>
+<td>C16</td>
+<td>Anomaly question answered from user reports, with UUIDs as place names</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td>29</td>
+</tr>
+<tr>
+<td>C17</td>
+<td>Future or hypothetical questions answered by the current-reading lane</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td>128</td>
+</tr>
+<tr>
+<td>C18</td>
+<td>Report lane answers a non-report question and recommends metadata edits</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td>96</td>
+</tr>
+<tr>
+<td>C19</td>
+<td>Assorted shortcut misroutes (operator shortcut, building figures, compliance template, space listing, readiness lane, sensor census)</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">6</td>
+<td>14, 46, 47, 71, 89, 110</td>
+</tr>
+<tr>
+<td>C20</td>
+<td>Referent gate treats a descriptive phrase as a named space</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td>2</td>
+</tr>
+<tr>
+<td>C22</td>
+<td>Recommend lane produces generic advice not grounded in the building</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+<td>56, 109, 132, 145</td>
+</tr>
+<tr>
+<td>NEW:closure-shortcut</td>
+<td>A closure-list shortcut answers any question mentioning closures with the raw closure list, ignoring what was asked</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">2</td>
+<td>6, 24</td>
+</tr>
+<tr>
+<td>NEW:question-filed-as-report</td>
+<td>A question is captured by report intake and filed as a maintenance ticket (write side effect)</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td>49</td>
+</tr>
+<tr>
+<td><strong>total</strong></td>
+<td></td>
+<td style="text-align: right;"><strong>107</strong></td>
+<td style="text-align: right;"><strong>113</strong></td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>Only the primary class is counted, as in the baseline. C21 does not exist in either list. C15 went to zero because TODO-692 removed the TTL instruction for non-admins, but both of its rows depended on the absence being true, and it was (rows 39, 114).</p>
+<p>Movement worth reading: C8 14→8, C11 6→12, C4 6→14, C5 4→6. The register-capture declines (C8) partly moved into the document catch-all (C11), the metadata RAG fallback (C4) and the 'could not put an answer together' template (C5): the wrong register is no longer chosen, and nothing better answers instead.</p>
+<h3 id="phrases-counted-mechanically-across-all-147-answers-secondary-defects-included">Phrases counted mechanically across all 147 answers (secondary defects included)<a class="headerlink" href="#phrases-counted-mechanically-across-all-147-answers-secondary-defects-included" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>phrase</th>
+<th style="text-align: right;">baseline answers</th>
+<th style="text-align: right;">rerun answers</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>meter footer 'Boundary: not declared'</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">10</td>
+</tr>
+<tr>
+<td>recheck footer 'Switch if: conditions in the space you chose'</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr>
+<td>'Evidence time: unknown'</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr>
+<td>user attribution ('you provided' / 'records or data you have' / 'you retrieved' / 'query you ran')</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr>
+<td>'simulated'</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr>
+<td>TTL / upload instruction</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>'The room holds N records'</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>'add or update it' (document sentence)</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td>'The owner of that record holds the answer.'</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr>
+<td>'I understood the question but could not put an answer together'</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr>
+<td>'That question reaches N sensors'</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr>
+<td>'couldn't render the chart'</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+<p>Every attribution hit was checked by eye ('the area you asked about' inside the meter footer is excluded). Rerun hits: rows 12, 13, 28, 30, 32, 41, 57, 69, 75, 87, 88, 109, 121, 129, 139. The TTL/upload instruction, 'The room holds' and 'add or update it' are gone; user attribution grew from 9 to 15 answers, and the new document-decline sentence appears 19 times.</p>
+<h2 id="what-remains-ranked">What remains, ranked<a class="headerlink" href="#what-remains-ranked" title="Permanent link">&para;</a></h2>
+<p>Ranked by severity, then by how visible it would be to a supervisor watching a live demo, then by row count. 'Demo risk' names the rows most likely to be asked or noticed.</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: right;">rank</th>
+<th>class</th>
+<th style="text-align: right;">rows</th>
+<th>severity</th>
+<th>demo visibility</th>
+<th>rows</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">1</td>
+<td>C13 Deliberation lane: an unmapped phrase blocks the query, rankings pick out-of-band spaces, routes reach ranking</td>
+<td style="text-align: right;">4</td>
+<td>P1</td>
+<td>very high</td>
+<td>58, 61, 99, 117</td>
+</tr>
+<tr>
+<td style="text-align: right;">2</td>
+<td>NEW:question-filed-as-report A question is captured by report intake and filed as a maintenance ticket (write side effect)</td>
+<td style="text-align: right;">1</td>
+<td>P1</td>
+<td>very high</td>
+<td>49</td>
+</tr>
+<tr>
+<td style="text-align: right;">3</td>
+<td>C7 Register narration misreads statuses, dates and fields, or invents conclusions</td>
+<td style="text-align: right;">17</td>
+<td>P1</td>
+<td>high</td>
+<td>3, 11, 15, 21, 27, 33, 36, 45, 51, 60, 63, 64, 70, 92, 102, 107, 113</td>
+</tr>
+<tr>
+<td style="text-align: right;">4</td>
+<td>C4 Metadata/discovery RAG fallback: 'the ontology you provided', 'add entities', false absence, schema narrated as fact</td>
+<td style="text-align: right;">14</td>
+<td>P1</td>
+<td>high</td>
+<td>4, 12, 13, 28, 44, 57, 75, 76, 81, 88, 105, 121, 129, 139</td>
+</tr>
+<tr>
+<td style="text-align: right;">5</td>
+<td>C9 The building holds the data but no lane reaches it (false absence)</td>
+<td style="text-align: right;">8</td>
+<td>P1</td>
+<td>high</td>
+<td>20, 43, 55, 66, 86, 111, 122, 134</td>
+</tr>
+<tr>
+<td style="text-align: right;">6</td>
+<td>C3 Narration hygiene: 'the data you provided', raw field names, provenance flags, runaway repetition</td>
+<td style="text-align: right;">5</td>
+<td>P1</td>
+<td>high</td>
+<td>32, 41, 69, 77, 87</td>
+</tr>
+<tr>
+<td style="text-align: right;">7</td>
+<td>C6b Deictic referent ('this room', 'here', 'the meeting room') resolved to an arbitrary sensor or declined</td>
+<td style="text-align: right;">4</td>
+<td>P1</td>
+<td>high</td>
+<td>74, 100, 101, 137</td>
+</tr>
+<tr>
+<td style="text-align: right;">8</td>
+<td>C22 Recommend lane produces generic advice not grounded in the building</td>
+<td style="text-align: right;">4</td>
+<td>P1</td>
+<td>high</td>
+<td>56, 109, 132, 145</td>
+</tr>
+<tr>
+<td style="text-align: right;">9</td>
+<td>C16 Anomaly question answered from user reports, with UUIDs as place names</td>
+<td style="text-align: right;">1</td>
+<td>P1</td>
+<td>high</td>
+<td>29</td>
+</tr>
+<tr>
+<td style="text-align: right;">10</td>
+<td>C6a Recommendation shelf-life and meter-boundary footers attached to answers they do not describe</td>
+<td style="text-align: right;">4</td>
+<td>P2</td>
+<td>very high</td>
+<td>54, 115, 118, 123</td>
+</tr>
+<tr>
+<td style="text-align: right;">11</td>
+<td>C5 'I understood the question but could not put an answer together' — lane jargon, no content</td>
+<td style="text-align: right;">6</td>
+<td>P2</td>
+<td>high</td>
+<td>10, 35, 73, 83, 95, 119</td>
+</tr>
+<tr>
+<td style="text-align: right;">12</td>
+<td>C19 Assorted shortcut misroutes (operator shortcut, building figures, compliance template, space listing, readiness lane, sensor census)</td>
+<td style="text-align: right;">6</td>
+<td>P2</td>
+<td>high</td>
+<td>14, 46, 47, 71, 89, 110</td>
+</tr>
+<tr>
+<td style="text-align: right;">13</td>
+<td>C10 Document lane returns a bare fragment or an internal token as the whole answer</td>
+<td style="text-align: right;">5</td>
+<td>P2</td>
+<td>high</td>
+<td>26, 31, 93, 104, 143</td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td>NEW:closure-shortcut A closure-list shortcut answers any question mentioning closures with the raw closure list, ignoring what was asked</td>
+<td style="text-align: right;">2</td>
+<td>P2</td>
+<td>high</td>
+<td>6, 24</td>
+</tr>
+<tr>
+<td style="text-align: right;">15</td>
+<td>C20 Referent gate treats a descriptive phrase as a named space</td>
+<td style="text-align: right;">1</td>
+<td>P2</td>
+<td>high</td>
+<td>2</td>
+</tr>
+<tr>
+<td style="text-align: right;">16</td>
+<td>C8 Register chosen on a single bare word; the lane then declines with unrelated register statistics</td>
+<td style="text-align: right;">8</td>
+<td>P2</td>
+<td>med</td>
+<td>1, 30, 42, 48, 72, 85, 97, 98</td>
+</tr>
+<tr>
+<td style="text-align: right;">17</td>
+<td>C2 Fetch-budget refusal for whole-building, multi-measurement questions</td>
+<td style="text-align: right;">4</td>
+<td>P2</td>
+<td>med</td>
+<td>0, 16, 17, 25</td>
+</tr>
+<tr>
+<td style="text-align: right;">18</td>
+<td>C14 Compare/trend fallback claims 'no measured series'</td>
+<td style="text-align: right;">1</td>
+<td>P2</td>
+<td>med</td>
+<td>9</td>
+</tr>
+<tr>
+<td style="text-align: right;">19</td>
+<td>C17 Future or hypothetical questions answered by the current-reading lane</td>
+<td style="text-align: right;">1</td>
+<td>P2</td>
+<td>med</td>
+<td>128</td>
+</tr>
+<tr>
+<td style="text-align: right;">20</td>
+<td>C18 Report lane answers a non-report question and recommends metadata edits</td>
+<td style="text-align: right;">1</td>
+<td>P2</td>
+<td>med</td>
+<td>96</td>
+</tr>
+<tr>
+<td style="text-align: right;">21</td>
+<td>C11 Catch-all 'documents do not answer this' for out-of-scope, planning or analytic requests</td>
+<td style="text-align: right;">12</td>
+<td>P3</td>
+<td>med</td>
+<td>8, 53, 78, 80, 82, 84, 90, 91, 103, 112, 144, 146</td>
+</tr>
+<tr>
+<td style="text-align: right;">22</td>
+<td>C12 Open-domain questions answered from general model knowledge, unlabelled</td>
+<td style="text-align: right;">4</td>
+<td>P3</td>
+<td>med</td>
+<td>135, 136, 141, 142</td>
+</tr>
+</tbody>
+</table>
+<h3 id="most-visible-to-a-supervisor-in-a-live-demo">Most visible to a supervisor in a live demo<a class="headerlink" href="#most-visible-to-a-supervisor-in-a-live-demo" title="Permanent link">&para;</a></h3>
+<p>These are the classes a supervisor would most likely see within a handful of questions, and the rows that show them. A demo question that resembles one of these rows is a live risk.</p>
+<ol>
+<li><strong>C7 — register narration invents conclusions (17 rows, P1).</strong> The most common defect after the fixes, and it reads as confident fact. The worst for a demo: row 63 (an emergency-message question answered with an instruction for a 'Mechanical Technician' to 'mark the alarm as closed'), row 70 ('Short answer: Yes ... all required accessible features ... are available' while Lift B is both in and out of service in its own table), row 60 ('all of which meet your confidential ... criteria' from a noise profile), row 64 ('Your access and workspace type are confirmed for the evening'), row 107 (a companion waiting permission no record states), row 113 ('8 plant items currently operating outside their normal schedule' from static duty figures).</li>
+<li><strong>C4 — metadata RAG fallback: 'the ontology data you provided', false absence (6 → 14 rows, P1).</strong> It more than doubled. The owner has said 'you provided' must never reach a user, and it now appears on rows 12, 13, 28, 57, 75, 121, 129, 139. Row 57 tells a person with accessibility needs that the building has no toilet records; row 105 (rerun) told a visitor the building does not know the moved event room (fixed on re-ask); row 88 says there are no occupancy sensors.</li>
+<li><strong>C13 — deliberation lane ranks the wrong thing (4 rows, P1, very high).</strong> The ranking dossier is the most impressive-looking output, so it is the most likely to be shown, and it is wrong on all four: row 117 ('I'm pregnant and overheating' → 'I couldn't map part of your request'), row 99 (a research laboratory recommended to a student, raw IRIs in the dossier, 'Recheck by 17:10' for next Wednesday), row 61 (a step-free route answered with an office), row 58 (seating answered with offices all scoring 0).</li>
+<li><strong>NEW:question-filed-as-report (1 row, P1, very high).</strong> Row 49: an insurer's question was logged as maintenance ticket REP-7420E1 and 'An administrator has been notified'. A write side effect in front of a supervisor is worse than any wrong sentence, and nothing says it is limited to that wording.</li>
+<li><strong>C6a — footers that describe nothing (4 primary rows, P2, very high).</strong> The meter-boundary footer or the 'Switch if: conditions in the space you chose' recheck footer appears on 14 rerun answers in total, most of them as a secondary defect (11, 36, 54, 56, 75, 76, 109, 113, 115, 118, 119, 123, 132, 145). It is attached to register tables, declines and a funding ranking, so a supervisor will see it within a few questions.</li>
+</ol>
+<p>Close behind: <strong>C11</strong> (12 rows) — 'Abacws Building's documents do not answer this ... The owner of that record holds the answer.' is now the single most repeated sentence in the run, and 'that record' never names a record. One such decline is fine; three in a demo reads as a canned brush-off. <strong>C5</strong> (6 rows) — 'The ontology lane, the time-series lane ran' is internal jargon. <strong>C8</strong> (8 rows) — declines that list the statistics of an unrelated register ('They record 10 operating regime entries' for a shared desk).</p>
+<h2 id="things-i-could-not-tell">Things I could not tell<a class="headerlink" href="#things-i-could-not-tell" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Whether the net worsening is real or reader and run variance.</strong> Both runs are one sample each at a non-zero temperature. Seven of the fifteen regressions (36, 55, 69, 70, 87, 92, 102) come from the same register and lane narrating worse, not from a routing change. They could flip back on a re-ask. Five of them (36, 55, 70, 92, 102) are medium or low confidence. If all five were really fine, the weird count would be 108, not 113: flat against the baseline's 107, not better. The claim I will stand behind is <strong>no measurable improvement in the weird share</strong>, not a precise worsening.</li>
+<li><strong>Whether READER-2 is stricter than READER.</strong> I applied the baseline's written definitions and matched its precedents: raw field names alone were not enough for WEIRD (row 12), past dates carried as current were tolerated at low confidence (row 22), and clarifications count as GOOD_DECLINE (rows 127, 138). I did not re-label the baseline. Without a second reader on the same rerun, a systematic difference cannot be ruled out, and it would move borderline rows in the same direction on both runs.</li>
+<li><strong>The four post-fix rows (26, 72, 84, 105).</strong> I have only the summary, not the answers. On that summary, 72 and 105 would now be GOOD_ANSWER, while 26 (the 'would not block a stretcher' claim) and 84 (today's events not listed) would still be WEIRD. That would give 111 weird rather than 113. The headline uses the rerun as recorded.</li>
+<li><strong>False-absence claims</strong> rely on the baseline reader's read-only SPARQL counts (calibration dates on 1,929 sensors, AVReadiness 22, CleaningTask 30, FirstAidPoint, ToiletFacility, 16 AccessibleRoute), or on another answer in the same run. I ran no query. The FCU claim on row 121 rests on work orders naming 'Fan Coil Unit Room 5.03' (row 125). The drinking-water points on row 132 rest on the baseline read.</li>
+<li><strong>Row 49 (question filed as a report).</strong> I cannot tell whether the ticket REP-7420E1 still sits in user_reports or whether the notification went out. Both would matter if the demo store is shown.</li>
+<li><strong>Rows 70 and 22 (Lift B).</strong> The accessible-route register itself may hold Lift B as in_service on RTE-010 and out_of_service on RTE-016. If so, the conflict is in the data, and the defect is only that the narration reports it as fine. I cannot tell which.</li>
+<li><strong>Rows 19, 34, 59, 79, 94, 116, 133 are GOOD at low confidence.</strong> Each is honest but weaker than it could be (19 omits that the level-3 sharps point is overdue, 34 and 116 drop evidence the baseline had shown, 59 says all 28 workspaces are authorised though one is staff-only).</li>
+<li><strong>Latency</strong> is not graded. Rerun answers over 60 s: rows 15 (103 s), 44 (70 s), 49 (96 s), 51 (60 s), 75 (209 s), 88 (60 s), 89 (78 s), 96 (129 s), 99 (123 s), 100 (125 s), 140 (63 s). Row 75 at 209 s is the slowest in the rerun; row 59 fell from 218 s to 17.5 s.</li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>

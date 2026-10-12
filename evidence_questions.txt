@@ -1,0 +1,34 @@
+# 25 questions for the supervisor evidence pack — one per line as `shape | question`.
+#
+# Every row of `docs/SUPERVISOR_BRIEF.md` is represented, INCLUDING the honest limits: a system that
+# declines a question it cannot ground is doing the right thing, and the screenshots have to show
+# that as well as the successes, or the pack only proves half the claim.
+#
+# Nothing here names a building. Another building runs the same file; questions that name a room or
+# a record id are the shapes, and a different site substitutes its own.
+
+A room or floor, and a quantity | What is the CO2 level in room 5.01 right now?
+A room or floor, and a quantity | Which floor is the warmest right now?
+A room or floor, and a quantity | What is the average CO2 on each floor right now?
+A comparison | Which floor used the most energy yesterday?
+A comparison | Where's the coolest place to work in the building right now?
+A register, by record id | Which permits are open?
+A register, by record id | When was the CO2 sensor in Room 5.01 last calibrated?
+A register, by record id | Which shutters or doors fail open versus fail locked on power loss?
+Which ... are overdue / open / have no ... | How many open work orders are there, and which are overdue?
+Which ... are overdue / open / have no ... | Which hazard controls are overdue for test?
+Which ... are overdue / open / have no ... | Which fire safety assets are overdue or cannot be evidenced?
+Which ... are overdue / open / have no ... | How many sensors are overdue for calibration?
+Where something is | What is the nearest accessible toilet to room 3.10?
+Where something is | Show me floor 3
+Where something is | Is tap water free somewhere, or do I have to buy bottles?
+Is a room ready or free | Is Room 1.06 ready for my class?
+Is a room ready or free | Is Room1.06 free for the next two hours?
+Asset state | Is the lift working?
+What the building is | What is this building and who runs it?
+Something the building does not measure | What is the radiation level in the atrium?
+A fault report | The toilet on floor 2 is leaking.
+A suggestion | Suggestion: add more bike racks near the main entrance.
+Refused by design — a person | Where was John Smith in the building yesterday?
+Declined — a prediction | Will the CO2 in room 5.01 exceed 1000 ppm tomorrow afternoon?
+Declined — a safety fact nobody recorded | Where is the nearest defibrillator?

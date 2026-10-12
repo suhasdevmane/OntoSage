@@ -1,0 +1,2309 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Agentic AI for Intelligent Buildings — with capability semantic routing">
+      
+      
+      
+        <link rel="canonical" href="https://suhasdevmane.github.io/OntoSage/phase0/qa_probe_rounds_2026-10-10/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>QA probe rounds through the Open WebUI endpoint — 10 October 2026 - OntoSage 2.0</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    
+      <link rel="stylesheet" href="../../assets/overrides.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#qa-probe-rounds-through-the-open-webui-endpoint-10-october-2026" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow md-header--lifted" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="OntoSage 2.0" class="md-header__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            OntoSage 2.0
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              QA probe rounds through the Open WebUI endpoint — 10 October 2026
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.3 16-.7-2h-3.2l-.7 2H7.8L11 7h2l3.2 9zM20 8.69V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12zm-9.15 3.96h2.3L12 9z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="blue"  aria-label="Switch to system preference"  type="radio" name="__palette" id="__palette_2">
+    
+      <label class="md-header__button md-icon" title="Switch to system preference" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+          <a href="javascript:void(0)" class="md-search__icon md-icon" title="Share" aria-label="Share" data-clipboard data-clipboard-text="" data-md-component="search-share" tabindex="-1">
+            
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9a3 3 0 0 0-3 3 3 3 0 0 0 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.15c-.05.21-.08.43-.08.66 0 1.61 1.31 2.91 2.92 2.91s2.92-1.3 2.92-2.91A2.92 2.92 0 0 0 18 16.08"/></svg>
+          </a>
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+    
+      
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Overview
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../PROJECT_STRUCTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Project Structure
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../ARCHITECTURE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Architecture
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../WORKFLOW/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Workflow Deep Dive
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../SERVICES/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Services
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CAPABILITY_ROUTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Capability Routing (v2.0)
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONVERSATION_INTELLIGENCE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Conversation Intelligence
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../FORECASTING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Forecasting
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../CONFIGURATION/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Configuration
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../GRAPHDB_SETUP/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  GraphDB Setup
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../BUILDING_ONBOARDING/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Building Onboarding
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../DEPLOYMENT/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Deployment
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../RUNBOOK/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Runbook
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Developer Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../USER_GUIDE/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  User Guide
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../SECURITY/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Security
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Design Notes
+
+        </a>
+      </li>
+    
+  
+
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+    
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="OntoSage 2.0" class="md-nav__button md-logo" aria-label="OntoSage 2.0" data-md-component="logo">
+      
+  <img src="../../assets/logo.svg" alt="logo">
+
+    </a>
+    OntoSage 2.0
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/suhasdevmane/OntoSage" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+  </div>
+  <div class="md-source__repository">
+    suhasdevmane/OntoSage
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../PROJECT_STRUCTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Structure
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../WORKFLOW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Workflow Deep Dive
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SERVICES/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Services
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CAPABILITY_ROUTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Routing (v2.0)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONVERSATION_INTELLIGENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Conversation Intelligence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../FORECASTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Forecasting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../CONFIGURATION/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../GRAPHDB_SETUP/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GraphDB Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../BUILDING_ONBOARDING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Onboarding
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEPLOYMENT/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../RUNBOOK/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Runbook
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../USER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../SECURITY/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17" >
+        
+          
+          <label class="md-nav__link" for="__nav_17" id="__nav_17_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Design Notes
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_17_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Design Notes
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_1" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_1" id="__nav_17_1_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Plans
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_1_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_1">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Plans
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-03-31-orchestrator-recovery/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-11-claude-config-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-11-paper-pipeline/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Pipeline
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-14-building-bootstrap/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-04-14-mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/plans/2026-05-21-capability-semantic-routing-plan/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_17_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_17_2" id="__nav_17_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Specs
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_17_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_17_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Specs
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-03-31-orchestrator-recovery-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Orchestrator Recovery Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-11-claude-config-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Config Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-11-paper-writing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Paper Writing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-14-building-bootstrap-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Building Bootstrap Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-04-14-mcp-server-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Server Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-05-21-capability-semantic-routing-design/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Capability Semantic Routing Design
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../superpowers/specs/2026-05-22-multi-intent-semantic-routing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Intent Semantic Routing
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+  
+
+<nav class="md-nav md-nav--secondary" aria-label="On this page">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      On this page
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#the-rounds" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The rounds
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-wrong-and-what-changed-tracker-bug-1503-bug-1561" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What was wrong, and what changed (tracker BUG-1503 … BUG-1561)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#round-3-tracker-bug-1563-bug-1582" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Round 3 (tracker BUG-1563 … BUG-1582)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#round-4-tracker-bug-1584-bug-1593" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Round 4 (tracker BUG-1584 … BUG-1593)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#round-5-conversations-tracker-bug-1599-bug-1614" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Round 5 — conversations (tracker BUG-1599 … BUG-1614)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#round-6-a-second-new-conversation-battery-tracker-bug-1620-bug-1626" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Round 6 — a second, NEW conversation battery (tracker BUG-1620 … BUG-1626)
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#checks-after-round-5-late-evening" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Checks after round 5 (late evening)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/suhasdevmane/OntoSage/edit/main/docs/phase0/qa_probe_rounds_2026-10-10.md" title="Edit this page" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="qa-probe-rounds-through-the-open-webui-endpoint-10-october-2026">QA probe rounds through the Open WebUI endpoint — 10 October 2026<a class="headerlink" href="#qa-probe-rounds-through-the-open-webui-endpoint-10-october-2026" title="Permanent link">&para;</a></h1>
+<p><strong>Scope.</strong> bldg1 (Abacws), live stack, questions asked through <code>/v1/chat/completions</code> exactly as
+Open WebUI asks them (its chat-id and user-email headers, streamed), as the QA account
+<code>facility03@example.com</code>, with all four answer and routing caches flushed before every ask.
+<code>scripts/qa_probe.py</code> records the route (<code>ontosage_route</code>), the answer, and whether every chart
+image it links actually loads.</p>
+<p><strong>What this is not.</strong> It is not an evaluation. Every question here was written by the developer,
+and every defect found was fixed against the question that found it, so these questions are
+tuned-on. "PASS" from the probe means <em>routed to an expected lane and delivered without an error,
+an unexpected decline or a missing image</em>; it does not mean <em>correct</em>. Correctness was judged by
+reading the answers, and several PASSes were wrong (they are in the tables below).
+No Paper 3 study task, room, date or criterion appears in any probe question.</p>
+<h2 id="the-rounds">The rounds<a class="headerlink" href="#the-rounds" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Run</th>
+<th>Questions</th>
+<th>Probe PASS</th>
+<th>Charts loaded</th>
+<th>What it was</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>round 1</td>
+<td>127</td>
+<td>104</td>
+<td>6</td>
+<td>the full pool, <code>scripts/qa_probe_questions.yaml</code></td>
+</tr>
+<tr>
+<td>round 2</td>
+<td>74</td>
+<td>63</td>
+<td>4</td>
+<td>74 NEW questions written after round 1, <code>scripts/qa_probe_questions_r2.yaml</code></td>
+</tr>
+<tr>
+<td>re-asks 1–6</td>
+<td>32 / 15 / 15 / 17 / 10 / 5</td>
+<td>23 / 13 / 14 / 17 / 10 / 4</td>
+<td>—</td>
+<td>the flagged questions after each batch of fixes</td>
+</tr>
+<tr>
+<td>bank sample</td>
+<td>40</td>
+<td>33 (7 declines or clarifications, 0 errors)</td>
+<td>—</td>
+<td>a seeded draw from the 4,060-question development bank (no route expectations)</td>
+</tr>
+<tr>
+<td>round 3</td>
+<td>72</td>
+<td>60</td>
+<td>4</td>
+<td>72 NEW questions by role (occupant, analyst, operator, sustainability, safety, visitor, student), asked as QA accounts of those roles, <code>scripts/qa_probe_questions_r3.yaml</code></td>
+</tr>
+<tr>
+<td>re-ask 7</td>
+<td>18</td>
+<td>17 (the 1 flag is a correct answer plus the "I can't make the booking" note)</td>
+<td>1</td>
+<td>round 3's failures after the fixes below</td>
+</tr>
+<tr>
+<td>round 4</td>
+<td>46</td>
+<td>43</td>
+<td>3</td>
+<td>46 NEW questions written to test whether round 3's fixes generalise to new phrasings, <code>scripts/qa_probe_questions_r4.yaml</code></td>
+</tr>
+<tr>
+<td>re-asks 8–9</td>
+<td>12 / 4</td>
+<td>12 / 4</td>
+<td>2</td>
+<td>round 4's failures after the fixes below, plus new phrasings of the two hardest</td>
+</tr>
+<tr>
+<td>bank sample v2</td>
+<td>40</td>
+<td>31 (9 declines, 0 errors)</td>
+<td>—</td>
+<td>a second seeded draw from the development bank (seed 20261011, excluding v1 and the gate), asked after round 3's fixes; questions are not printed, so the declines are counted, not judged</td>
+</tr>
+<tr>
+<td>round 5</td>
+<td>12 conversations, 32 turns</td>
+<td>read by hand: 10 of 20 follow-ups and 3 of 12 openers had a defect</td>
+<td>1</td>
+<td>multi-turn conversations, <code>docs/phase0/conversations_r5/</code>; the affected conversations re-asked twice after fixes (see Round 5)</td>
+</tr>
+<tr>
+<td>round 6</td>
+<td>10 NEW conversations, 30 turns</td>
+<td>read by hand: 7 defects (one a round-5 regression), all fixed; 2 minor open</td>
+<td>2 (re-ask)</td>
+<td>a second battery, <code>docs/phase0/conversations_r6/</code>, to test whether round 5's fixes generalise</td>
+</tr>
+<tr>
+<td>bank sample v3</td>
+<td>40</td>
+<td>33 (7 flagged, 0 errors)</td>
+<td>—</td>
+<td>a third seeded draw (seed 20261012, excluding v1 and v2), asked after rounds 5–6; answers read, questions not printed: 1 correct "which room do you mean by this room?", 3 generic declines, 1 false absence ("the glass atrium", CAVEAT-1629), 2 odd answers (a UUID narrated as a value, CAVEAT-1630; a "saturated + chilled + hot" water-flow sum)</td>
+</tr>
+</tbody>
+</table>
+<p>The bank sample's seven non-passes were read (answers only — bank questions are never printed): one
+correct "which room do you mean by <em>here</em>?" clarification and honest declines of compound
+questions about things the building does not record (installation constraints, utilisation by room
+class, a service-dependency map). None was a false absence that data could fix.</p>
+<p>Median answer time 19–39 s; the slowest are the deliberation lane and forecasts (up to ~3 min).</p>
+<h2 id="what-was-wrong-and-what-changed-tracker-bug-1503-bug-1561">What was wrong, and what changed (tracker BUG-1503 … BUG-1561)<a class="headerlink" href="#what-was-wrong-and-what-changed-tracker-bug-1503-bug-1561" title="Permanent link">&para;</a></h2>
+<p><strong>Wrong room, wrong quantity, wrong scope (P1s).</strong>
+- A room id was dropped when the hinted sensor class was narrow: "temperature in room 1.06" read
+  the outdoor weather feed; "light levels in room 4.03" read six floor-level sensors (BUG-1503).
+- "Is room 5.01 warmer than room 3.10?" lost room 3.10 and said it had no temperature data
+  (BUG-1514). Each named place is now resolved.
+- "What maintenance was done last month?" listed six static issue CATEGORIES as "all the
+  maintenance actions recorded" (BUG-1520). It now reads the work-order register by date.
+- Forecasts started where the training span ended, two days in the past (BUG-1538), and a
+  building "total" forecast was the mean of single sensors, ~30 people for ~225 (BUG-1539).
+- "Will floor 3 be warmer than floor 4 tomorrow?" was asserted from two past means 0.1 °C apart
+  (BUG-1545). Each floor is now forecast and the forecasts compared with their bands
+  (<code>services/forecast_comparison.py</code>).
+- Floor water flow was labelled L/s and integrated to 12,661 m³ in a day (BUG-1557).
+- "Which staff member badged in first today?" was not refused (BUG-1551).</p>
+<p><strong>Routing (each shape measured over the 4,060-question bank before it was added).</strong>
+Sensors that stopped reporting → freshness lane; incident and near-miss logs, work orders, who
+maintains / services / cleans → the registers; "what does the building measure" and "what sensors
+are in room X" → the reach answer; imperative comfort requests ("make room X warmer") → control;
+"what's on in room X tomorrow" → bookings; a room id like "1.06" no longer splits a question as a
+numbered list; the post stage no longer undoes a register decision.</p>
+<p><strong>Registers.</strong> A named period ("in September", "last month", "next year") now filters on the date
+that says when a record happened, ended or was completed; a floor named against free-text
+locations ("Level 4") filters by storey; "When does X expire?" gives the end date; a counted
+"none" is no longer rewritten as a search miss.</p>
+<p><strong>Charts.</strong> Light-level charts were refused as the wrong quantity; bar and forecast charts never
+reached Open WebUI (the executor's output key was misread, the forecast code imported a module the
+sandbox forbids, and base64 charts are not rendered by Open WebUI); bar charts now start at zero
+and name floors.</p>
+<p><strong>Narration.</strong> Chat shorthand ("temp in rm 5.01 now") is expanded; "muggy" is a humidity word,
+not a CO2 one; comparatives ("warmer", "noisier") name their quantity; "the day before" is a
+baseline; a count followed by a quantity word is no longer flagged as an impossible reading;
+QUDT units print as units.</p>
+<h2 id="round-3-tracker-bug-1563-bug-1582">Round 3 (tracker BUG-1563 … BUG-1582)<a class="headerlink" href="#round-3-tracker-bug-1563-bug-1582" title="Permanent link">&para;</a></h2>
+<p>Round 3's 60 "PASS"es hid at least 14 wrong or empty answers; every one below was found by reading
+the answer, and all but two are verified live after the fix.</p>
+<ul>
+<li><strong>A per-day or per-hour question got one figure for the whole period</strong> (BUG-1563). "The daily
+  average temperature in room 4.18 for the last 7 days" now returns one row per day and "CO2 in
+  room 1.06 hour by hour yesterday" one row per hour, reduced in the store (no row cap), days
+  aligned to the building's midnight (<code>services/aggregate_breakdown.py</code>).</li>
+<li><strong>A carbon-monoxide question was answered with the floor energy meters</strong> (BUG-1567, P1): the word
+  "carbon" inside "carbon monoxide" also resolved the carbon-footprint concept. A concept whose only
+  evidence sits inside another concept's longer term is now dropped (47 of 4,060 bank questions
+  change, all a generic concept losing to a specific one).</li>
+<li><strong>"List the open work orders for the lifts" was refused as a control command</strong> (BUG-1568, P1);
+  a verb after a determiner ("the open") is no longer an order.</li>
+<li><strong>Energy from power readings was summed, not integrated</strong> (BUG-1582, P1): "solar energy
+  yesterday" said 135 kWh; it is now about 34 kWh, stated as an integral of the kW readings.</li>
+<li><strong>A limit the reader states is used</strong> (BUG-1572): "did any room go over 1000 ppm yesterday?" →
+  "Yes … on 104 of 280 sensors (the limit you gave)".</li>
+<li>Named rooms by kind ("lab 4.20", "computer lab 1.07") are places (BUG-1565, BUG-1569); a booking
+  request is an availability check that says the booking itself is not made here (BUG-1569); "how
+  bright is the seminar room 3.13" is a reading, not the public-event register (BUG-1566, two
+  shortcuts); a floor-named total is checked against placement instead of vetoed (BUG-1571);
+  "how many CO2 sensors" counts CO2 sensors (BUG-1573); "too humid" gets a verdict against the
+  listed standards (BUG-1574); chart captions are in building time (BUG-1570); a point's own QUDT
+  unit is no longer dropped (BUG-1581); the route record names the contract rules that fired
+  (CAVEAT-1526); "which sensors stopped reporting" reaches the freshness lane.</li>
+</ul>
+<p><strong>Data (TTL-first, synthetic, no study referent):</strong> the chiller's water points are typed chilled
+water supply/return and the vocabulary knows those words (BUG-1564); a rooftop-solar topic and a
+gas-leak procedure were authored through the admin Capabilities API (BUG-1575/1576); a
+<code>PV_Generation_Power_Sensor</code> class, the PV points typed with it and declared in kW, a solar
+generation shape in the publisher (zero at night), and the last week of PV rows regenerated with
+it, backup in <code>outputs/backups/</code> (BUG-1580).</p>
+<p><strong>Deliberately not changed, because they would move answers for study rooms days before the
+freeze:</strong> linking floor 0–4 rooms to their HVAC zone (CAVEAT-1577), cleaning the floor-4 plan's
+ground-floor labels (CAVEAT-1578), extending the term timetable past 18 September
+(CAVEAT-1583), and typing the boilers' water points.</p>
+<h2 id="round-4-tracker-bug-1584-bug-1593">Round 4 (tracker BUG-1584 … BUG-1593)<a class="headerlink" href="#round-4-tracker-bug-1584-bug-1593" title="Permanent link">&para;</a></h2>
+<p><strong>Round 3's fixes generalised:</strong> every breakdown phrasing ("for each day this week", "hour by
+hour today", "daily … over the last 5 days" on a floor), every stated limit ("above 26 degrees",
+"more than 60% humidity"), every room named by kind ("office 4.07", "classroom 1.09"), and the new
+plant and solar vocabulary answered first time. Reading the answers found ten more defects, all
+fixed and verified live:</p>
+<ul>
+<li><strong>"Which contracts expire before the end of the year?" said two dates existed, both passed</strong>
+  (BUG-1585, P1): the verb "expire" selected the state "expired". Six contracts end this year,
+  three of them still to come; the answer now lists all six with their status.</li>
+<li><strong>"How many PM2.5 sensors?" answered "one"</strong> (BUG-1586, P1): "2.5" in "PM2.5" was read as a room.</li>
+<li>An indoor question no longer counts the outdoor sensor (BUG-1584); a change question ("gone up
+  since this morning") is answered by comparing the last hour with this morning (BUG-1587/1593);
+  "will it get stuffy this afternoon?" is forecast and answered against the standards band —
+  "Unlikely: peaks at 865 ppm, the band's edge at 988, inside the 1000 ppm limit" (BUG-1592); a
+  comparison answers its yes/no first (BUG-1588); "electricity use per floor" is a total, drawn as
+  a bar chart (BUG-1591); "energy rating" reads the building's recorded rating, not its meters
+  (BUG-1590); "when was the building opened?" reads its build year (BUG-1589).</li>
+</ul>
+<p><strong>Open from round 4:</strong> a forecast's "measured skill" line reported an MAE of ~800 ppm for one
+room (CAVEAT-1594): the skill registry was graded on 28 August, before the generator fixes, and
+should be re-graded after the study freeze.</p>
+<h2 id="round-5-conversations-tracker-bug-1599-bug-1614">Round 5 — conversations (tracker BUG-1599 … BUG-1614)<a class="headerlink" href="#round-5-conversations-tracker-bug-1599-bug-1614" title="Permanent link">&para;</a></h2>
+<p>Single questions were by now mostly right, so round 5 asked <strong>12 multi-turn conversations</strong> (32
+turns, <code>docs/phase0/conversations_r5/</code>, <code>scripts/run_conversations.py</code>, one chat id per
+conversation, as <code>facility03</code>): a value then "and the X?", a ranking then "there", a count then
+"which floor has the most of them?", a register list then "the first one" and "it", a judgement
+then "what about room Y?", a solar total then "and the day before?". <strong>In the first run 10 of the 20
+follow-up turns and 3 of the 12 opening questions had a defect</strong>, and the worst were confidently
+wrong rather than declined. Each was traced in the log to its cause and fixed, then the conversations were asked
+again after a restart with all four caches flushed (<code>outputs/qa_probe/conversations_r5{,b,c}.jsonl</code>).</p>
+<table>
+<thead>
+<tr>
+<th>Turn</th>
+<th>First run</th>
+<th>After the fixes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>"and the day before?" after solar yesterday</td>
+<td><strong>2,323 kWh from the six floor electricity meters, called solar</strong> (BUG-1599)</td>
+<td>"About 35 kWh was generated … Thu 08 Oct", the two PV arrays</td>
+</tr>
+<tr>
+<td>"which of the two was higher?" after floor 3 / floor 4 electricity</td>
+<td>"Which comparison? 1) Humidity in Room 2.03 vs 3.01 …" — none from this chat (BUG-1600)</td>
+<td>"Floor 4 used more electricity, 403 kWh against Floor 3's 389 kWh"</td>
+</tr>
+<tr>
+<td>"and the CO2?" after a clarification</td>
+<td>"Across the building CO2 is averaging 909 ppm, ranging from 909 to 909" from one room (BUG-1601)</td>
+<td>"In Room 5.09 — Academic Office, CO2 is averaging 845 ppm"</td>
+</tr>
+<tr>
+<td>"who is assigned to the first one?"</td>
+<td>WO-008 listed, no party (BUG-1602)</td>
+<td>"responsible role: Electrical technician; owner: M and E Maintenance Supervisor"</td>
+</tr>
+<tr>
+<td>"when is it due?"</td>
+<td>"it" taken as floor 3, read from a suggestion chip (BUG-1603)</td>
+<td>"The register does not record a next due date for this work order" (WO-008)</td>
+</tr>
+<tr>
+<td>"Is it too humid in room 2.52?"</td>
+<td>opened with "the recorded humidity value (1000) is outside the range" — 1000 was the row count (BUG-1604)</td>
+<td>no warning; "49.98 % RH … within the acceptable range"</td>
+</tr>
+<tr>
+<td>"what was the peak?"</td>
+<td>"62.80 dB … also the lowest recorded … a spread of 0 dB" (BUG-1605)</td>
+<td>"62.80 dB was the highest noise level recorded … on 10 Oct"</td>
+</tr>
+<tr>
+<td>"which floor has the most of them?" (PM2.5 sensors)</td>
+<td>PM2.5 LEVELS per floor (BUG-1606)</td>
+<td>declined, then <strong>counted from the graph: "Floor 5 has the most PM2.5 Level Sensors: 63"</strong> with the per-floor table (BUG-1614)</td>
+</tr>
+<tr>
+<td>"Which meeting rooms are free this afternoon?"</td>
+<td><strong>"Primary: Room 0.01 — Main Reception"</strong>, every room "not what you asked for" (BUG-1607)</td>
+<td>the events lane's answer: "14 of 18 meeting rooms have no booking this afternoon" (BUG-1613)</td>
+</tr>
+<tr>
+<td>(same)</td>
+<td>—</td>
+<td>a second run listed meeting rooms as meeting "everything you asked for" with availability <strong>never checked</strong> — the reason the routing was changed</td>
+</tr>
+<tr>
+<td>"and the day before?" (second run)</td>
+<td>the correct PV answer was <strong>deleted by the relevance gate</strong> ("only Oct 8") (BUG-1608)</td>
+<td>kept</td>
+</tr>
+<tr>
+<td>"what time does it close?" after the café</td>
+<td>"On floor 0: Cafe" (BUG-1609)</td>
+<td>the café's entry, "open 08:00–16:30 on weekdays"</td>
+</tr>
+<tr>
+<td>"is that normal for an office?"</td>
+<td>CO2 statistics, no judgement (BUG-1610)</td>
+<td>"Both CO₂ 781 ppm and temperature 23.7 °C are compliant" against ASHRAE 62.1 / 55</td>
+</tr>
+<tr>
+<td>"Will meeting room 4.11 get stuffy this afternoon?" at 19:03</td>
+<td>a six-hour table, no verdict (BUG-1611)</td>
+<td>"The time asked about (afternoons, 12:00–18:00) is not in this forecast … <strong>Unlikely:</strong> peaks at 801 ppm"</td>
+</tr>
+<tr>
+<td>"what's its leaving water temperature?" after the heat pump</td>
+<td>all four plants (BUG-1612)</td>
+<td>Heat Pump 1 only, 70.76 °C</td>
+</tr>
+</tbody>
+</table>
+<p><strong>The two findings worth carrying forward.</strong></p>
+<ol>
+<li><strong>The relevance gate's protection of grounded answers (BUG-873) never covered the aggregate
+   lane.</strong> <code>_grounded_evidence_behind</code> looks for <code>figures</code> on the bus copy of <code>aggregate_result</code>,
+   and the SQL node never copied them, so any store-computed answer the gate objected to was
+   replaced by "I couldn't answer that from the records". Found only because a follow-up gave the
+   gate the bare "and the day before?" to judge. Both halves are fixed (BUG-1608).</li>
+<li><strong>The v2 compound router took a question the events lane answers well and sent it to a lane
+   that cannot check the period it names.</strong> A kind of room plus a free window, and nothing else,
+   now stays with the events lane (4 of 4,060 bank questions; 0 of the 56 study texts mention
+   availability). A third facet (quiet, seats, a projector) still escalates. Separately, a
+   deliberation ranking in which every space scores 0 is no longer presented as a recommendation
+   (BUG-1607).</li>
+</ol>
+<p><strong>New single questions after the fixes (<code>scripts/qa_probe_questions_r5.yaml</code>, 9 questions): 9/9
+delivered</strong>, read by hand: per-floor counts of CO2, noise (<code>ontosage:Sound_Level_Sensor</code>, found
+through the lay-term resolver because no Brick class name says "noise") and occupancy sensors;
+"free tomorrow morning" and "available this evening" from the events lane; "who is assigned to
+WO-010?"; and "which QUIET meeting rooms are free tomorrow afternoon?" now names availability under
+"Not checked" (BUG-1615) instead of implying it was checked. One is still weak: <strong>"How much energy
+did the solar panels produce on Wednesday?" reads ten days and says no kWh exists</strong>, because a bare
+weekday is resolved by nothing deterministic (CAVEAT-1616) — and that is <strong>deferred for the study
+freeze: 25 of the 56 study texts name a weekday</strong>, so changing weekday resolution now would move
+study answers.</p>
+<p>Every new rule was measured on the 4,060-question bank before it was kept; most move 0 bank
+questions because conversation phrasings ("the two", "its", "who is assigned", "what time does it
+close") are rare in single questions. <strong>Still open:</strong> the deliberation lane cannot check availability for a named period
+(CAVEAT-1617; it now says so); a two-subject amenity question ("which floors have accessible
+toilets and where is baby changing?") declines under the capability subject test (CAVEAT-1618,
+the live test <code>test_floor_word_does_not_steal_capability</code> fails on it; not caused by this round);
+a follow-up that only changes the place ("what about room 2.53?") drops the "too humid?" judgement
+(CAVEAT-1619); and a clarification the user ignores ("and the CO2?" after "which one do you
+mean?") is answered for the room the classifier picked from the previous reply, which the answer
+now names but does not flag as assumed.</p>
+<h2 id="round-6-a-second-new-conversation-battery-tracker-bug-1620-bug-1626">Round 6 — a second, NEW conversation battery (tracker BUG-1620 … BUG-1626)<a class="headerlink" href="#round-6-a-second-new-conversation-battery-tracker-bug-1620-bug-1626" title="Permanent link">&para;</a></h2>
+<p>Ten new conversations (<code>docs/phase0/conversations_r6/</code>, 30 turns) written after round 5's fixes, to
+see whether they generalise to new follow-up shapes. Most did: a possessive ("what's its leaving
+water temperature?" → the chiller only, then "and the boiler's?"), a per-floor count of water
+meters, "compare it with room 3.16" then "which is quieter?", "and the day before?" on floor
+humidity, the nearest toilet after the nearest drinking water. Seven new defects, all fixed and
+re-asked live; <strong>one was a regression from round 5's own fix</strong>:</p>
+<ul>
+<li><strong>"What's the temperature in office 4.07?" → "I can't find 'office 4.07'"</strong> (BUG-1624, P1): the
+  v2 compound router read "in office" as choosing an office, and the deliberation lane could not
+  match "office 4.07". A kind plus a dotted id is now one named place (0 of the 451 bank
+  questions that select spaces change). Now 22.3 °C.</li>
+<li><strong>The rewrite invented a year</strong> (BUG-1620, P1): "plot it" became "… on Saturday, 10 October
+  <strong>2023</strong>", and since written years are authoritative the chart found nothing. A year that no
+  message contains is now removed, and the rewrite prompt keeps "today" as "today".</li>
+<li><strong>Record ids were cut at their first number</strong> (BUG-1626, P1, <em>my regression from BUG-1603</em>):
+  "the second one" of a contract list became "CON-2025", which two contracts share. Ids now keep
+  every part, and Unicode hyphens are normalised. Now "CON-2025-003 — Clearview Facilities …
+  ends 4 November 2026".</li>
+<li>"how much was that?" after "Floor 4 used the most electricity" is answered (BUG-1625); "when was
+  it highest?" keeps the CO2 instead of becoming "when was floor 2 highest?" (BUG-1623), and a
+  single day's peak is that day's hours, not "usually around 14:00" (BUG-1622); <strong>a per-hour
+  breakdown is now plotted as a line chart</strong> (BUG-1621; verified: two charts linked and loading).</li>
+</ul>
+<p><strong>Open from round 6 (minor, no study shape):</strong> "is it working?" after the nearest drinking water
+reads the room's sensors, not the water point's status (CAVEAT-1627); "what did they record
+yesterday?" after a count of water meters declines (CAVEAT-1628). A follow-up that turns "the day
+before" into "Thursday, 8 October" (no year) cannot be resolved to a window — the deferred weekday
+and date family (CAVEAT-1616).</p>
+<h2 id="checks-after-round-5-late-evening">Checks after round 5 (late evening)<a class="headerlink" href="#checks-after-round-5-late-evening" title="Permanent link">&para;</a></h2>
+<p><strong>Regression gate, run alone after every round-5 change:</strong> 49 of 51 recorded, flagged #37 and #70 —
+both read: #37 is the fresh-chat recall case ("Nothing has been asked in this conversation yet"),</p>
+<h1 id="70-the-correct-no-air-pressure-sensor-recorded-for-room-201-decline-the-classifier-misreads">70 the correct "no air-pressure sensor recorded for Room 2.01" decline the classifier misreads.<a class="headerlink" href="#70-the-correct-no-air-pressure-sensor-recorded-for-room-201-decline-the-classifier-misreads" title="Permanent link">&para;</a></h1>
+<p><strong>51/51 in substance</strong>; #17, the intermittent of the evening run, answered first time. Median
+13.0 s, slowest 78.3 s, 15.2 min in total
+(<code>scripts/outputs/regression_answerability_20261010_211559.json</code>).</p>
+<p><strong>Unit suite (bldg1 active), run alone after round 5:</strong> 15,565 pass, 2 fail, 30 error, 79 skip
+(61 min). All 32 are the known state-dependent set (CAVEAT-1500: 30 errors in three files that
+read parked paths, 2 failures comparing against the active <code>.env</code>), the same count as the
+morning; none is new.</p>
+<p><strong>After round 6, the gate again, alone:</strong> 49 of 51 recorded, the same two misreads (#37, #70), so
+<strong>51/51 in substance</strong>; median 14.1 s, slowest 77.1 s, 17.3 min
+(<code>scripts/outputs/regression_answerability_20261010_232123.json</code>). <strong>Unit suite after round 6, the last measurement of the session:</strong> 15,583 pass, 2 fail, 30 error, 79 skip (61 min) — again exactly the CAVEAT-1500 set, nothing new.</p>
+<h2 id="checks-on-the-final-build-evening">Checks on the final build (evening)<a class="headerlink" href="#checks-on-the-final-build-evening" title="Permanent link">&para;</a></h2>
+<p><strong>Unit suite, bldg1 active, run alone after rounds 3–4:</strong> 15,494 pass, 6 fail, 30 error, 79
+skip. The 30 errors and 2 of the failures are the known state-dependent set (tests that read
+parked paths or compare against the active <code>.env</code>; CAVEAT-1500, same count as this morning). The
+other 4 failures were mine and are fixed: the PV shape rule had been written into the service,
+which a test forbids (moved to <code>scripts/derive_generation_shapes.py</code>); a unit test pinned the raw
+token "degF" (now printed °F); and this morning's register period filter narrowed a "which rooms
+have sessions this week?" grouping to nothing (BUG-1597). The affected files re-run green; the
+full suite was <strong>not</strong> re-run after those fixes, so the expected 15,498 / 2 / 30 is not a
+measurement.</p>
+<p><strong>Regression gate, run alone on the final build:</strong> 48 of 51 recorded, flagged #17, #37, #70.</p>
+<h1 id="37-is-the-known-fresh-chat-case-70-is-a-correct-decline-no-air-pressure-sensor-listed-for">37 is the known fresh-chat case; #70 is a correct decline ("no air-pressure sensor listed for<a class="headerlink" href="#37-is-the-known-fresh-chat-case-70-is-a-correct-decline-no-air-pressure-sensor-listed-for" title="Permanent link">&para;</a></h1>
+<p>Room 2.01") that the gate's classifier misreads (CAVEAT-1415). <strong>#17 ("What is the average CO2
+on each floor right now?") declined once — the relevance gate judged that narration off-topic —
+and answered 3 of 3 when re-asked.</strong> It is an intermittent, and it counts as a first-pass
+failure, not a pass. Median 14.4 s, slowest 57.1 s, 16.5 min in total; orchestrator memory
+1.1–1.8 GiB over the run.</p>
+<h2 id="data-added-or-corrected-all-synthetic-no-study-referent-touched">Data added or corrected (all synthetic, no study referent touched)<a class="headerlink" href="#data-added-or-corrected-all-synthetic-no-study-referent-touched" title="Permanent link">&para;</a></h2>
+<ul>
+<li><strong>Occupancy made coherent:</strong> room counts bounded by space kind, floor counters = sum of their
+  rooms, presence from the room's count — and the boot-time map rebuild now keeps this (two TTL
+  uploads had silently reverted it, BUG-1540). This week's history (3–10 Oct) rescaled to match,
+  with a full backup in <code>outputs/backups/</code>.</li>
+<li><strong>Registers brought up to date:</strong> 10 work orders (Sep–Oct 2026), 4 incidents (Sep 2026), an
+  HVAC/chiller maintenance contract.</li>
+<li><strong>Amenities:</strong> EV charging at the ground-level parking; the ground-floor "study area" that had
+  been placed in a mechanical plant room removed.</li>
+<li><strong>Vocabulary (TTL-first):</strong> contract and work-order lay terms, "who cleans", the water-use /
+  water-flow split, "muggy" — every source CSV edit regenerated through its generator.</li>
+</ul>
+<h2 id="checks-after-every-change-was-in">Checks after every change was in<a class="headerlink" href="#checks-after-every-change-was-in" title="Permanent link">&para;</a></h2>
+<p><strong>Regression gate, run alone (<code>scripts/regression_answerability.py</code>, 51 cases):</strong> the script
+recorded 49 of 51 steady and flagged #37 and #68. Both answers were read:</p>
+<ul>
+<li><strong>#37</strong> ("the evidence behind your answer about the coolest room") is the known apparatus
+  case: the gate asks it in a fresh chat with no earlier answer, and the system correctly says
+  there is no earlier answer to explain. Same shape as BUG-1397 and every gate since 3 October.</li>
+<li><strong>#68</strong> is a correct decline worded in a way the gate's decline classifier does not list
+  ("it cannot answer what this question asks"). The answer asserts nothing.</li>
+</ul>
+<p>So <strong>51/51 in substance</strong>; median 12.7 s, slowest 68.2 s, 15.6 min in total
+(<code>scripts/outputs/regression_answerability_20261010_145819.json</code>). Orchestrator memory stayed
+flat at about 4.6–4.8 GiB through the run. That is higher than the ~2 GiB measured on 30
+September, but it did not climb.</p>
+<p><strong>The four development forms (S1-D … S4-D), re-asked after the changes:</strong> all four answer as
+before. One answer changed its form: S3-D (radon in a room) used to be a short decline and is now
+"No — radon is not measured in Room 4.09", because place-scoped "what is measured" questions now
+reach the observability lane. Both forms are correct. If the study's answer key quotes the old
+wording, check it.</p>
+<p><strong>Future comparisons, re-asked after the last edit:</strong> "Will floor 3 be warmer than floor 4
+tomorrow?" and "Will floor 2 be cooler than floor 5 tomorrow?" are each answered from two separate
+forecasts. In both cases the 80% bands overlap, so neither answer names a warmer or cooler floor,
+and the "cooler" question keeps its own word. Each forecast was trained on 85–169 hourly points,
+because the readings fetch stops at 1,000 rows (the answer says so).</p>
+<h2 id="open-and-what-needs-the-owner">Open, and what needs the owner<a class="headerlink" href="#open-and-what-needs-the-owner" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>CAVEAT-1527 (P1 for online sessions): chart images and floor-plan links are built on
+   <code>http://localhost:8080</code>.</strong> They render on this machine and in no browser that reaches Open WebUI
+   through the Cloudflare tunnel. Route the public hostname's <code>/static</code> and <code>/floor-plans</code> (or a
+   second hostname) to <code>127.0.0.1:8080</code> and set <code>STATIC_BASE_URL</code> in <code>.env</code>. No code change.</li>
+<li>Water used "yesterday" is now honest (it declines a total) but not answered: the building's
+   <code>litres/day</code> usage point has no well-defined generated shape for a daily total (CAVEAT-1562).
+   The EV charger state points report 0/1 codes with no declared meaning, so "are the chargers
+   available?" gives the codes, not "available"/"charging".</li>
+<li><del><code>ontosage_route.overrides_applied</code> is empty even when contract rules fired (CAVEAT-1526).</del>
+   Fixed and verified live the same day: it now lists <code>contract:</code> plus the parse and concept rules
+   that fired.</li>
+<li><strong>Deferred for the study freeze (they move study answers):</strong> a bare weekday ("on Wednesday")
+   resolved to that day (CAVEAT-1616 — 25 of the 56 study texts name a weekday), and the items
+   listed under Round 3 (CAVEAT-1577/1578/1583, the boilers' water typing, re-grading the stale
+   forecast-skill registry CAVEAT-1594). Each is a small change once the study data is collected.</li>
+<li>Open from round 5, none a study shape: availability for a named period in the deliberation lane
+   (CAVEAT-1617, now stated as not checked), a two-subject amenity question (CAVEAT-1618), a
+   place-only follow-up dropping its judgement (CAVEAT-1619).</li>
+<li>Nothing is committed. Park bldg1 and run both commit gates first (CLAUDE.md, Workflow rule 8).</li>
+</ol>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+    
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2026 OntoSage · Cardiff University — MIT Licensed
+
+    </div>
+  
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+    <a href="https://github.com/suhasdevmane/OntoSage" target="_blank" rel="noopener" title="OntoSage on GitHub" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+    <a href="https://suhasdevmane.github.io/OntoSage/" target="_blank" rel="noopener" title="Documentation" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 512H96c-53 0-96-43-96-96V96C0 43 43 0 96 0h304c26.5 0 48 21.5 48 48v288c0 20.9-13.4 38.7-32 45.3V448c17.7 0 32 14.3 32 32s-14.3 32-32 32zM96 384c-17.7 0-32 14.3-32 32s14.3 32 32 32h256v-64zm32-232c0 13.3 10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24H152c-13.3 0-24 10.7-24 24m24 72c-13.3 0-24 10.7-24 24s10.7 24 24 24h176c13.3 0 24-10.7 24-24s-10.7-24-24-24z"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+      <div class="md-progress" data-md-component="progress" role="progressbar"></div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky", "navigation.sections", "navigation.indexes", "navigation.instant", "navigation.instant.progress", "navigation.tracking", "navigation.top", "navigation.footer", "toc.follow", "search.suggest", "search.highlight", "search.share", "content.code.copy", "content.code.annotate", "content.tabs.link", "content.tooltips", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+      
+        <script src="../../assets/katex-init.js"></script>
+      
+    
+  </body>
+</html>
