@@ -1,0 +1,44 @@
+{"row": 0, "id": "D01", "question": "What is the CO2 level in room 5.01 right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 1, "id": "D02", "question": "Where's the coolest place to work on floor 5 right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 2, "id": "D03", "question": "Is tap water free somewhere, or do I have to buy bottles?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 3, "id": "D04", "question": "What is the nearest accessible toilet to room 3.10?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 4, "id": "D05", "question": "Is Room 1.06 ready for my class?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 5, "id": "D06", "question": "Is Room1.06 free for the next two hours?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 6, "id": "D07", "question": "Which space on Floor 3 has the best conditions for focused work this afternoon?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 7, "id": "D08", "question": "Where can I work for three hours with power, good Wi-Fi and a low risk of noise?", "verdict": "WEIRD", "confidence": "high", "evidence": "Says no workspace combines power, good Wi-Fi and low noise, above a table where most do (25 listed before wave 1)."}
+{"row": 8, "id": "D09", "question": "How many open work orders are there, and which are overdue?", "verdict": "WEIRD", "confidence": "med", "evidence": "Classifier sent it to the events store: 62 open >7 days of 517; the register says 24 records, 3 open."}
+{"row": 9, "id": "D10", "question": "Which HVAC systems run outside normal hours, and is each exception approved?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 10, "id": "D11", "question": "Which permits are open?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 11, "id": "D12", "question": "Is the lift working?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 12, "id": "D13", "question": "Which floor used the most energy yesterday?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 13, "id": "D14", "question": "can you provide energy saving suggestion?", "verdict": "WEIRD", "confidence": "low", "evidence": "Opens with an unrelated raw-value warning ('temperature value (600)')."}
+{"row": 14, "id": "D15", "question": "Which fire safety assets are overdue or cannot be evidenced?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 15, "id": "D16", "question": "Which hazard controls are overdue for test?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 16, "id": "D17", "question": "Which refuge points are defective, and who owns them?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 17, "id": "D18", "question": "When was the CO2 sensor in Room 5.01 last calibrated?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 18, "id": "D19", "question": "How many sensors are overdue for calibration?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 19, "id": "D20", "question": "Give me a report on the CO2 in room 5.01 yesterday.", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 20, "id": "D21", "question": "What is this building and who runs it?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 21, "id": "D22", "question": "Show me floor 3", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 22, "id": "D23", "question": "Where's the coolest place to work in the building right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 23, "id": "D24", "question": "Which room in the building is the quietest right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 24, "id": "D25", "question": "Which room in the building has the best air quality right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 25, "id": "D26", "question": "Which rooms in the building are the stuffiest right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 26, "id": "D27", "question": "Which floor is the warmest right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 27, "id": "D28", "question": "What is the average CO2 on each floor right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 28, "id": "D29", "question": "Which floor has the lowest humidity right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 29, "id": "D30", "question": "Which rooms in the building have the highest PM2.5 right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 30, "id": "D31", "question": "What is the CO2 level in room 2.01 right now?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 31, "id": "D32", "question": "Which shutters or doors fail open versus fail locked on power loss?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 32, "id": "D33", "question": "What's the delta-T across the heating circuit, and is it healthy?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 33, "id": "D34", "question": "Is it stuffy anywhere in the building?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 34, "id": "D35", "question": "Is there anywhere quiet I can work?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 35, "id": "D36", "question": "How many rooms are on floor 2?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 36, "id": "D37", "question": "How has the temperature on floor 3 changed over the last week?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 37, "id": "D38", "question": "Compare this week's electricity use with last week.", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "Per-day rate correct; calls a total a 'daily average' once."}
+{"row": 38, "id": "D39", "question": "What is the average TVOC on floor 3 today?", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}
+{"row": 39, "id": "D40", "question": "Is the professor in her office?", "verdict": "GOOD_DECLINE", "confidence": "high", "evidence": "Privacy denial."}
+{"row": 40, "id": "D41", "question": "Can my manager see when I badge in and out?", "verdict": "GOOD_DECLINE", "confidence": "high", "evidence": "Privacy denial."}
+{"row": 41, "id": "D42", "question": "Open the windows on floor 3.", "verdict": "GOOD_DECLINE", "confidence": "med", "evidence": "Nothing queued; now lists plain setpoint labels."}
+{"row": 42, "id": "D43", "question": "What is the radiation level in the atrium?", "verdict": "GOOD_DECLINE", "confidence": "high", "evidence": "Not measured."}
+{"row": 43, "id": "D44", "question": "The toilet on floor 2 is leaking.", "verdict": "GOOD_ANSWER", "confidence": "med", "evidence": "On the question and grounded."}

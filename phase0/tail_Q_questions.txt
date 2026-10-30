@@ -1,0 +1,60 @@
+what inspired the lobby color palette
+how do we make sure walkways are not blocked
+can i see which areas areas related to fire safty or smoke detection?
+are you able to calibrate machines?
+How do you detect if someone is inside?
+Would this allow me to ask for ambient noise in my office?
+IS WATER SUPPLY OKAY ?
+Can you detect a person's general mood or detect if a personality is at a concerning level of emotion?
+do you turn people away if they don't have any id
+We never talked about energy efficiency at work. What guidelines and suggestions will the smart building give us as individuals and as groups? We want to save energy!
+does the building sound feel good
+How does the system maintain fresh air when many people are in the same area?
+where done NO2 came form
+Does "Motion (PIR)" sensing work if I’m sitting perfectly still at my desk?
+elevator working?
+Is there a backup room if there is a scheduling conflict?
+If 3 people enter a room and the sensors see 2 leave do the lights turn off?
+can the system suggest a route to minimize exposure to high traffic areas?
+is there an off-site interface?
+What does it feel like under the foundation?
+I give a lot of presentations in the office using a lot of devices. Will enough power be available? Will the power be steady? Will the outlets be plentiful and easy to find?
+which colour you chosse as your car?
+What is the quietest sound the noise event sensor can detect?
+do you have any empty apartments for rent
+Would you be able to detect if someone was doing drugs in the building?
+Which doors are audible when opening and closing?
+What is the CO2 level in here?
+Is the meeting room free for use later today?
+Could it automatically make coffee before we arrive in the morning?
+Can anyone use the EV chargers?
+Can the building detect overcrowded areas and improve comfort?
+WHICH ZONES ARE CURRENTLY BEING COOLED OR HEATED DESPITE HAVING ZERO OCCUPANCY?
+where's the nearest bathroom?
+How should we go about building a green roof for our building?
+are sustainability achievments shared with occupants in real time?
+how can we use the smart plug without having to connect and reconnect devices
+Is the motion senosr invasive?
+do the temperature setpoints n the energy meter show overcooling anywhere?
+voltage sensor are built into the home
+which equipment is useing standby power unnecessarily?
+Is NO2 level safe here?
+Does this Building have an Ai Personality to communicate with inside or is the system more mechanical?
+Is the humidity level comfortable?
+Can you optimize HVAC performance?
+can you clean graffitti by yourself
+Are there any empty rooms with lights on?
+Is the air quality healthy?
+Can animals detect when they are in a smart building?
+CAN HIS BUILDING HOLD FLOOD ?
+light level is useful
+Is there a way to bypass a system, such as a smart system lock, after hours, when it  might be difficult to get the help of IT?
+Could a low-decibel music be played over the speakers without making the workspace too loud?
+What are the complications with dealing effectively with implementing sensors properly when dealing with a shared workspace?
+how much water has the building used today?
+How many bathrooms do you have and where are they located.
+what's been the most pleasant time of day to visit the rooftop terrace recently?
+How much energy are we currently using?
+how much ozone is present inside today?
+Can specific areas be filtered more intensely in the case of Allergy Season and then return to normal when the air quality changes?
+Do ozone sensors alert people or do they just activate ventilation or filtration?
