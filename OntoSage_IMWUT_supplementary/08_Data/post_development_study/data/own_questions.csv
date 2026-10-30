@@ -5,7 +5,7 @@ P02,OQ1,0,Where is the HVAC system are?,In each room or where is it.,,,
 P02,OQ2,0,Why is the temperature different between the rooms?,,1,No,No
 P02,OQ3,0,How many students/members are on the Building A xxx floor?,,,,
 P03,OQ1,0,can you tell me how much energy is used in the Building A and how green it is compared to standards?,i am curious about energy usage. I will use this information to look into energysaving options.,1,Yes,Yes
-P03,OQ2,0,how many floors are there and when was it built? you have information who built this architecture?,I wanted to find out who built abacw.,2,Yes,Yes
+P03,OQ2,0,how many floors are there and when was it built? you have information who built this architecture?,I wanted to find out who built Building A.,2,Yes,Yes
 P03,OQ3,0,what i can do with this system and how it will support me to my daily life? does the building records personal information? is Building A safe?,i want to make sure i live in the safe and secure building.,3,Partly,Yes
 P04,OQ1,0,What is the address of the building?,,1,No,No
 P05,OQ1,0,How does the ventilation work?,,2,Partly,No

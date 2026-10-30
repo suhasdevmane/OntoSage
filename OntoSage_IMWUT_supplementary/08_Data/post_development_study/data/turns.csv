@@ -874,7 +874,7 @@ P02-c3-t2,P02,3,2,task,4,S4-1,S4,task4_decision,decision,2000-01-01T00:25:12.249
 
 </details>
 
-Here are the most recent temperatures for the requested rooms, recorded at 2026‑10‑19 16:48:38 (Europe/London time):
+Here are the most recent temperatures for the requested rooms, recorded at [session date] 16:48:38 (Europe/London time):
 
 - **Air Temperature Sensor installed-node 5.18**: 24.34 °C (latest).  
   Over the period [session date] 08:28 – [session date] 16:48, the average was 24.5 °C, the minimum 23.0 °C, and the maximum 25.4 °C.
@@ -922,7 +922,7 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 </details>
 
-Here are the most recent temperatures for the requested rooms, recorded at 2026‑10‑19 16:48:38 (Europe/London time):
+Here are the most recent temperatures for the requested rooms, recorded at [session date] 16:48:38 (Europe/London time):
 
 - **Air Temperature Sensor installed-node 5.18**: 24.34 °C (latest).  
   Over the period [session date] 08:28 – [session date] 16:48, the average was 24.5 °C, the minimum 23.0 °C, and the maximum 25.4 °C.
@@ -1246,7 +1246,7 @@ P02-c5-t3,P02,5,3,task,2,S1-2,S1,task2_decision,decision,2000-01-01T00:37:02.249
 
 </details>
 
-The latest CO₂ reading in **Room 5.58 — Research Laboratory** is **973 ppm** at **2026‑10‑19 17:00:38**.  
+The latest CO₂ reading in **Room 5.58 — Research Laboratory** is **973 ppm** at **[session date] 17:00:38**.  
 
 Across the 24‑hour window from **18 [session date]:41** to **[session date] 17:00**, the sensor recorded:
 
@@ -1283,7 +1283,7 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 </details>
 
-The latest CO₂ reading in **Room 5.58 — Research Laboratory** is **973 ppm** at **2026‑10‑19 17:00:38**.  
+The latest CO₂ reading in **Room 5.58 — Research Laboratory** is **973 ppm** at **[session date] 17:00:38**.  
 
 Across the 24‑hour window from **18 [session date]:41** to **[session date] 17:00**, the sensor recorded:
 
@@ -3085,7 +3085,7 @@ P06-c1-t5,P06,1,5,task,4,S1-3,S1,task4_goal,goal,2000-01-01T00:16:20.626000+00:0
 
 </details>
 
-At 2026‑10‑20 15:45:10 the most recent readings were:
+At [session date] 15:45:10 the most recent readings were:
 
 - **Gas Boiler 1 — Building Central Plant entering water temperature:** 56.32 °C  
 - **Gas Boiler 1 — Building Central Plant leaving water temperature:** 67.38 °C  
@@ -3131,7 +3131,7 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 </details>
 
-At 2026‑10‑20 15:45:10 the most recent readings were:
+At [session date] 15:45:10 the most recent readings were:
 
 - **Gas Boiler 1 — Building Central Plant entering water temperature:** 56.32 °C  
 - **Gas Boiler 1 — Building Central Plant leaving water temperature:** 67.38 °C  
@@ -4256,8 +4256,8 @@ P08-c1-t3,P08,1,3,task,1,S4-3,S4,task1_goal,goal,2000-01-01T00:17:56.218000+00:0
 
 </details>
 
-**The available data only covers 2026‑10‑21, not 2026‑07‑29.**  
-For the morning window on 2026‑10‑21, the CO₂ level in *Room 5.58 — Research Laboratory* rose from 731 ppm at 06:00 to 1,034 ppm at 11:00, an increase of 303 ppm (+41.6 %). The highest recorded value was 1,034 ppm at 11:00, and the lowest was 731 ppm at 06:00, giving a spread of 303 ppm.  
+**The available data only covers [session date], not 2026‑07‑29.**  
+For the morning window on [session date], the CO₂ level in *Room 5.58 — Research Laboratory* rose from 731 ppm at 06:00 to 1,034 ppm at 11:00, an increase of 303 ppm (+41.6 %). The highest recorded value was 1,034 ppm at 11:00, and the lowest was 731 ppm at 06:00, giving a spread of 303 ppm.  
 Because the query concerns 29 July 2026, the data set provided does not contain the requested measurements, so the question cannot be answered with the current figures.
 
 
@@ -4295,8 +4295,8 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 </details>
 
-**The available data only covers 2026‑10‑21, not 2026‑07‑29.**  
-For the morning window on 2026‑10‑21, the CO₂ level in *Room 5.58 — Research Laboratory* rose from 731 ppm at 06:00 to 1,034 ppm at 11:00, an increase of 303 ppm (+41.6 %). The highest recorded value was 1,034 ppm at 11:00, and the lowest was 731 ppm at 06:00, giving a spread of 303 ppm.  
+**The available data only covers [session date], not 2026‑07‑29.**  
+For the morning window on [session date], the CO₂ level in *Room 5.58 — Research Laboratory* rose from 731 ppm at 06:00 to 1,034 ppm at 11:00, an increase of 303 ppm (+41.6 %). The highest recorded value was 1,034 ppm at 11:00, and the lowest was 731 ppm at 06:00, giving a spread of 303 ppm.  
 Because the query concerns 29 July 2026, the data set provided does not contain the requested measurements, so the question cannot be answered with the current figures.
 
 
@@ -4559,14 +4559,14 @@ Only sensor readings are stored for room 0.01 – there are no other types of 
 
 **Recent snapshots (building local time, Europe/London)**  
 
-- 2026‑10‑21 17:42:29 – **Room 0.01 — Main Reception occupancy**: 5 people  
-- 2026‑10‑21 17:41:59 – **Air Temperature Sensor installed‑node 0.01**: 23.93 °C  
-- 2026‑10‑21 17:41:59 – **CO₂ Level Sensor installed‑node 0.01**: 848 ppm  
-- 2026‑10‑21 17:41:59 – **Zone Air Humidity Sensor installed‑node 0.01**: 50.73 %  
-- 2026‑10‑21 17:41:59 – **Room 0.01 — Main Reception door_contact**: 0.0 (closed)  
-- 2026‑10‑21 17:41:59 – **Room 0.01 — Main Reception window_contact**: 0.0 (closed)  
-- 2026‑10‑21 17:41:29 – **Room 0.01 — Main Reception illuminance**: 740 lux  
-- 2026‑10‑21 17:41:29 – **Room 0.01 — Main Reception noise**: 55.1 dB  
+- [session date] 17:42:29 – **Room 0.01 — Main Reception occupancy**: 5 people  
+- [session date] 17:41:59 – **Air Temperature Sensor installed‑node 0.01**: 23.93 °C  
+- [session date] 17:41:59 – **CO₂ Level Sensor installed‑node 0.01**: 848 ppm  
+- [session date] 17:41:59 – **Zone Air Humidity Sensor installed‑node 0.01**: 50.73 %  
+- [session date] 17:41:59 – **Room 0.01 — Main Reception door_contact**: 0.0 (closed)  
+- [session date] 17:41:59 – **Room 0.01 — Main Reception window_contact**: 0.0 (closed)  
+- [session date] 17:41:29 – **Room 0.01 — Main Reception illuminance**: 740 lux  
+- [session date] 17:41:29 – **Room 0.01 — Main Reception noise**: 55.1 dB  
 
 These figures summarize all recorded data for room 0.01; no other record types are present.
 
@@ -4619,14 +4619,14 @@ Only sensor readings are stored for room 0.01 – there are no other types of 
 
 **Recent snapshots (building local time, Europe/London)**  
 
-- 2026‑10‑21 17:42:29 – **Room 0.01 — Main Reception occupancy**: 5 people  
-- 2026‑10‑21 17:41:59 – **Air Temperature Sensor installed‑node 0.01**: 23.93 °C  
-- 2026‑10‑21 17:41:59 – **CO₂ Level Sensor installed‑node 0.01**: 848 ppm  
-- 2026‑10‑21 17:41:59 – **Zone Air Humidity Sensor installed‑node 0.01**: 50.73 %  
-- 2026‑10‑21 17:41:59 – **Room 0.01 — Main Reception door_contact**: 0.0 (closed)  
-- 2026‑10‑21 17:41:59 – **Room 0.01 — Main Reception window_contact**: 0.0 (closed)  
-- 2026‑10‑21 17:41:29 – **Room 0.01 — Main Reception illuminance**: 740 lux  
-- 2026‑10‑21 17:41:29 – **Room 0.01 — Main Reception noise**: 55.1 dB  
+- [session date] 17:42:29 – **Room 0.01 — Main Reception occupancy**: 5 people  
+- [session date] 17:41:59 – **Air Temperature Sensor installed‑node 0.01**: 23.93 °C  
+- [session date] 17:41:59 – **CO₂ Level Sensor installed‑node 0.01**: 848 ppm  
+- [session date] 17:41:59 – **Zone Air Humidity Sensor installed‑node 0.01**: 50.73 %  
+- [session date] 17:41:59 – **Room 0.01 — Main Reception door_contact**: 0.0 (closed)  
+- [session date] 17:41:59 – **Room 0.01 — Main Reception window_contact**: 0.0 (closed)  
+- [session date] 17:41:29 – **Room 0.01 — Main Reception illuminance**: 740 lux  
+- [session date] 17:41:29 – **Room 0.01 — Main Reception noise**: 55.1 dB  
 
 These figures summarize all recorded data for room 0.01; no other record types are present.
 
@@ -5399,7 +5399,7 @@ P08-c4-t4,P08,4,4,task,5,S1-2,S1,task5_goal,goal,2000-01-01T01:01:31.218000+00:0
 
 I don’t have any CO₂ readings for Room 5.04 between 9:00 – 17:00 on Tuesday 21 January 2025.  
 
-From the data that is available, the sensor “Room 5.04 — Research Laboratory co2” recorded 1,000 readings between [session date] 20:53 and [session date] 18:11. The lowest value was 465 ppm, the highest was 1,082 ppm, and the average was 762 ppm. The most recent reading in the dataset was 924 ppm at 2026‑10‑21 18:11:59.
+From the data that is available, the sensor “Room 5.04 — Research Laboratory co2” recorded 1,000 readings between [session date] 20:53 and [session date] 18:11. The lowest value was 465 ppm, the highest was 1,082 ppm, and the average was 762 ppm. The most recent reading in the dataset was 924 ppm at [session date] 18:11:59.
 
 _The readings query reached its row limit of 1000 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from [session date] to [session date]. That is the newest part of the last 30 days, not the whole of it._
 
@@ -5433,7 +5433,7 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 I don’t have any CO₂ readings for Room 5.04 between 9:00 – 17:00 on Tuesday 21 January 2025.  
 
-From the data that is available, the sensor “Room 5.04 — Research Laboratory co2” recorded 1,000 readings between [session date] 20:53 and [session date] 18:11. The lowest value was 465 ppm, the highest was 1,082 ppm, and the average was 762 ppm. The most recent reading in the dataset was 924 ppm at 2026‑10‑21 18:11:59.
+From the data that is available, the sensor “Room 5.04 — Research Laboratory co2” recorded 1,000 readings between [session date] 20:53 and [session date] 18:11. The lowest value was 465 ppm, the highest was 1,082 ppm, and the average was 762 ppm. The most recent reading in the dataset was 924 ppm at [session date] 18:11:59.
 
 _The readings query reached its row limit of 1000 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from [session date] to [session date]. That is the newest part of the last 30 days, not the whole of it._
 
@@ -5568,7 +5568,7 @@ P08-c5-t3,P08,5,3,task,6,S2-3,S2,task6_decision,decision,2000-01-01T01:07:23.218
 
 The sensor “Room 3.68 — Academic Office occupancy [persons]” records how many people are in the room, not how many it can hold.  
 
-**Latest reading** – 2026‑10‑21 18:17:29: **1 person**.  
+**Latest reading** – [session date] 18:17:29: **1 person**.  
 
 **Overall statistics ([session date] 20:58 – [session date] 18:17)**  
 - Mean occupancy: **1 person**  
@@ -5608,7 +5608,7 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 The sensor “Room 3.68 — Academic Office occupancy [persons]” records how many people are in the room, not how many it can hold.  
 
-**Latest reading** – 2026‑10‑21 18:17:29: **1 person**.  
+**Latest reading** – [session date] 18:17:29: **1 person**.  
 
 **Overall statistics ([session date] 20:58 – [session date] 18:17)**  
 - Mean occupancy: **1 person**  
@@ -5687,7 +5687,7 @@ P08-c6-t3,P08,6,3,own_question,,,,own_live,own_live,2000-01-01T01:14:06.218000+0
 
 </details>
 
-The most recent temperature reading for **Room 5.45 — Academic Office temperature [degC]** is **23.47 °C**, taken at **2026‑10‑21 18:22:59**.  
+The most recent temperature reading for **Room 5.45 — Academic Office temperature [degC]** is **23.47 °C**, taken at **[session date] 18:22:59**.  
 
 Across all 60 recorded values for the period [session date] 13:21 to [session date] 18:22, the temperature ranged from a low of 23.5 °C to a high of 24.5 °C, with an average of 24.1 °C.  
 
@@ -5718,7 +5718,7 @@ No humidity data were recorded for this room.
 
 </details>
 
-The most recent temperature reading for **Room 5.45 — Academic Office temperature [degC]** is **23.47 °C**, taken at **2026‑10‑21 18:22:59**.  
+The most recent temperature reading for **Room 5.45 — Academic Office temperature [degC]** is **23.47 °C**, taken at **[session date] 18:22:59**.  
 
 Across all 60 recorded values for the period [session date] 13:21 to [session date] 18:22, the temperature ranged from a low of 23.5 °C to a high of 24.5 °C, with an average of 24.1 °C.  
 
@@ -5968,26 +5968,26 @@ P09-c1-t6,P09,1,6,task,2,S4-2,S4,task2_decision,decision,2000-01-01T00:35:26.625
 </details>
 
 Here are the latest readings for the Electrical Energy sensor on Floor 3 (sensor name not recorded).  
-The most recent reading was **6.03 (unit not recorded)** at **2026‑10‑22 13:33:25**.
+The most recent reading was **6.03 (unit not recorded)** at **[session date] 13:33:25**.
 
-**Key statistics (all 1000 records, 2026‑10‑11 20:48 – 2026‑10‑22 13:33)**  
+**Key statistics (all 1000 records, 2026‑10‑11 20:48 – [session date] 13:33)**  
 - Average: **4.2 (unit not recorded)**  
 - Minimum: **1.94 (unit not recorded)** at 2026‑10‑13 03:21  
-- Maximum: **6.51 (unit not recorded)** at 2026‑10‑20 14:55  
+- Maximum: **6.51 (unit not recorded)** at [session date] 14:55  
 - Night‑time (00‑06) mean: **2.54 (unit not recorded)**  
 - Day‑time (08‑18) mean: **5.37 (unit not recorded)**  
 
 **Latest ten readings**  
-1. 2026‑10‑22 13:33:25 – 6.03 (unit not recorded)  
-2. 2026‑10‑22 13:18:25 – 6.03 (unit not recorded)  
-3. 2026‑10‑22 13:03:25 – 5.93 (unit not recorded)  
-4. 2026‑10‑22 12:48:25 – 5.87 (unit not recorded)  
-5. 2026‑10‑22 12:33:25 – 5.95 (unit not recorded)  
-6. 2026‑10‑22 12:18:25 – 5.76 (unit not recorded)  
-7. 2026‑10‑22 12:03:25 – 5.64 (unit not recorded)  
-8. 2026‑10‑22 11:48:25 – 5.46 (unit not recorded)  
-9. 2026‑10‑22 11:33:25 – 5.35 (unit not recorded)  
-10. 2026‑10‑22 11:18:25 – 5.23 (unit not recorded)
+1. [session date] 13:33:25 – 6.03 (unit not recorded)  
+2. [session date] 13:18:25 – 6.03 (unit not recorded)  
+3. [session date] 13:03:25 – 5.93 (unit not recorded)  
+4. [session date] 12:48:25 – 5.87 (unit not recorded)  
+5. [session date] 12:33:25 – 5.95 (unit not recorded)  
+6. [session date] 12:18:25 – 5.76 (unit not recorded)  
+7. [session date] 12:03:25 – 5.64 (unit not recorded)  
+8. [session date] 11:48:25 – 5.46 (unit not recorded)  
+9. [session date] 11:33:25 – 5.35 (unit not recorded)  
+10. [session date] 11:18:25 – 5.23 (unit not recorded)
 
 _The readings query reached its row limit of 1000 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-11 19:48:46 to [session date]. That is the newest part of the last 30 days, not the whole of it._
 
@@ -6010,26 +6010,26 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 </details>
 
 Here are the latest readings for the Electrical Energy sensor on Floor 3 (sensor name not recorded).  
-The most recent reading was **6.03 (unit not recorded)** at **2026‑10‑22 13:33:25**.
+The most recent reading was **6.03 (unit not recorded)** at **[session date] 13:33:25**.
 
-**Key statistics (all 1000 records, 2026‑10‑11 20:48 – 2026‑10‑22 13:33)**  
+**Key statistics (all 1000 records, 2026‑10‑11 20:48 – [session date] 13:33)**  
 - Average: **4.2 (unit not recorded)**  
 - Minimum: **1.94 (unit not recorded)** at 2026‑10‑13 03:21  
-- Maximum: **6.51 (unit not recorded)** at 2026‑10‑20 14:55  
+- Maximum: **6.51 (unit not recorded)** at [session date] 14:55  
 - Night‑time (00‑06) mean: **2.54 (unit not recorded)**  
 - Day‑time (08‑18) mean: **5.37 (unit not recorded)**  
 
 **Latest ten readings**  
-1. 2026‑10‑22 13:33:25 – 6.03 (unit not recorded)  
-2. 2026‑10‑22 13:18:25 – 6.03 (unit not recorded)  
-3. 2026‑10‑22 13:03:25 – 5.93 (unit not recorded)  
-4. 2026‑10‑22 12:48:25 – 5.87 (unit not recorded)  
-5. 2026‑10‑22 12:33:25 – 5.95 (unit not recorded)  
-6. 2026‑10‑22 12:18:25 – 5.76 (unit not recorded)  
-7. 2026‑10‑22 12:03:25 – 5.64 (unit not recorded)  
-8. 2026‑10‑22 11:48:25 – 5.46 (unit not recorded)  
-9. 2026‑10‑22 11:33:25 – 5.35 (unit not recorded)  
-10. 2026‑10‑22 11:18:25 – 5.23 (unit not recorded)
+1. [session date] 13:33:25 – 6.03 (unit not recorded)  
+2. [session date] 13:18:25 – 6.03 (unit not recorded)  
+3. [session date] 13:03:25 – 5.93 (unit not recorded)  
+4. [session date] 12:48:25 – 5.87 (unit not recorded)  
+5. [session date] 12:33:25 – 5.95 (unit not recorded)  
+6. [session date] 12:18:25 – 5.76 (unit not recorded)  
+7. [session date] 12:03:25 – 5.64 (unit not recorded)  
+8. [session date] 11:48:25 – 5.46 (unit not recorded)  
+9. [session date] 11:33:25 – 5.35 (unit not recorded)  
+10. [session date] 11:18:25 – 5.23 (unit not recorded)
 
 _The readings query reached its row limit of 1000 rows, so these readings are a SAMPLE of the newest data and their number is not a count of what the period holds. The readings used run from 2026-10-11 19:48:46 to [session date]. That is the newest part of the last 30 days, not the whole of it._
 
@@ -6922,7 +6922,7 @@ P09-c1-t22,P09,1,22,own_question,,,,own_live,own_live,2000-01-01T01:10:32.625000
 
 </details>
 
-The Air Temperature Sensor installed‑node 3.71 recorded a temperature of **24.14 °C** at **2026‑10‑22 14:11:25**.  
+The Air Temperature Sensor installed‑node 3.71 recorded a temperature of **24.14 °C** at **[session date] 14:11:25**.  
 
 Across the 1,000 readings collected from **18 [session date]:41** to **[session date] 14:11**, the average temperature was **22.8 °C**, with a low of **21.3 °C** and a high of **24.4 °C**.  Nighttime (00‑06) readings averaged **21.8 °C**, while daytime (08‑18) readings averaged **23.5 °C**.
 
@@ -6953,7 +6953,7 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 </details>
 
-The Air Temperature Sensor installed‑node 3.71 recorded a temperature of **24.14 °C** at **2026‑10‑22 14:11:25**.  
+The Air Temperature Sensor installed‑node 3.71 recorded a temperature of **24.14 °C** at **[session date] 14:11:25**.  
 
 Across the 1,000 readings collected from **18 [session date]:41** to **[session date] 14:11**, the average temperature was **22.8 °C**, with a low of **21.3 °C** and a high of **24.4 °C**.  Nighttime (00‑06) readings averaged **21.8 °C**, while daytime (08‑18) readings averaged **23.5 °C**.
 
@@ -8336,22 +8336,22 @@ P11-c2-t3,P11,2,3,own_question,,,,own_live,own_live,2000-01-01T00:46:37.424000+0
 
 </details>
 
-**Building A – Environmental Performance Summary (Week of 2026‑10‑22)**  
+**Building A – Environmental Performance Summary (Week of [session date])**  
 
 **Executive Summary**  
 The building’s environmental sensors recorded 1,000 complete readings during the reporting period. All monitored parameters remained within the narrow ranges observed, indicating stable indoor conditions. No significant deviations or trends were detected across the sensor network.
 
 **Key Findings**  
-- **CO₂ Concentration** – 1.0 ppm (min = 1.0, max = 1.0, avg = 1.0) recorded at 2026‑10‑22 11:58:25.  
-- **Temperature** – 58.1 °C (min = 58.1, max = 58.1, avg = 58.1) recorded at 2026‑10‑22 11:58:25.  
-- **Humidity** – 1.0 % (min = 1.0, max = 1.0, avg = 1.0) recorded at 2026‑10‑22 11:58:25.  
-- **Energy Consumption** – 862.0 kWh (min = 862.0, max = 862.0, avg = 862.0) recorded at 2026‑10‑22 11:58:25.  
-- **Lighting Levels** – 824.0 lux (min = 824.0, max = 824.0, avg = 824.0) recorded at 2026‑10‑22 11:58:25.  
-- **Air Quality Index** – 820.0 units (min = 820.0, max = 820.0, avg = 820.0) recorded at 2026‑10‑22 11:58:25.  
-- **Ventilation Flow** – 884.0 cfm (min = 884.0, max = 884.0, avg = 884.0) recorded at 2026‑10‑22 11:58:25.  
-- **Noise Level** – 833.0 dB (min = 833.0, max = 833.0, avg = 833.0) recorded at 2026‑10‑22 11:58:25.  
-- **Outdoor Air Quality** – 856.0 units (min = 856.0, max = 856.0, avg = 856.0) recorded at 2026‑10‑22 11:58:25.  
-- **Occupancy** – 57.8 persons (min = 57.8, max = 57.8, avg = 57.8) recorded at 2026‑10‑22 11:58:25.  
+- **CO₂ Concentration** – 1.0 ppm (min = 1.0, max = 1.0, avg = 1.0) recorded at [session date] 11:58:25.  
+- **Temperature** – 58.1 °C (min = 58.1, max = 58.1, avg = 58.1) recorded at [session date] 11:58:25.  
+- **Humidity** – 1.0 % (min = 1.0, max = 1.0, avg = 1.0) recorded at [session date] 11:58:25.  
+- **Energy Consumption** – 862.0 kWh (min = 862.0, max = 862.0, avg = 862.0) recorded at [session date] 11:58:25.  
+- **Lighting Levels** – 824.0 lux (min = 824.0, max = 824.0, avg = 824.0) recorded at [session date] 11:58:25.  
+- **Air Quality Index** – 820.0 units (min = 820.0, max = 820.0, avg = 820.0) recorded at [session date] 11:58:25.  
+- **Ventilation Flow** – 884.0 cfm (min = 884.0, max = 884.0, avg = 884.0) recorded at [session date] 11:58:25.  
+- **Noise Level** – 833.0 dB (min = 833.0, max = 833.0, avg = 833.0) recorded at [session date] 11:58:25.  
+- **Outdoor Air Quality** – 856.0 units (min = 856.0, max = 856.0, avg = 856.0) recorded at [session date] 11:58:25.  
+- **Occupancy** – 57.8 persons (min = 57.8, max = 57.8, avg = 57.8) recorded at [session date] 11:58:25.  
 
 **Anomalies / Concerns**  
 - All sensor readings are identical for each parameter, suggesting either a single event captured by all sensors or a data collection artifact.  
@@ -8377,22 +8377,22 @@ The building’s environmental sensors recorded 1,000 complete readings during t
 
 </details>
 
-**Building A – Environmental Performance Summary (Week of 2026‑10‑22)**  
+**Building A – Environmental Performance Summary (Week of [session date])**  
 
 **Executive Summary**  
 The building’s environmental sensors recorded 1,000 complete readings during the reporting period. All monitored parameters remained within the narrow ranges observed, indicating stable indoor conditions. No significant deviations or trends were detected across the sensor network.
 
 **Key Findings**  
-- **CO₂ Concentration** – 1.0 ppm (min = 1.0, max = 1.0, avg = 1.0) recorded at 2026‑10‑22 11:58:25.  
-- **Temperature** – 58.1 °C (min = 58.1, max = 58.1, avg = 58.1) recorded at 2026‑10‑22 11:58:25.  
-- **Humidity** – 1.0 % (min = 1.0, max = 1.0, avg = 1.0) recorded at 2026‑10‑22 11:58:25.  
-- **Energy Consumption** – 862.0 kWh (min = 862.0, max = 862.0, avg = 862.0) recorded at 2026‑10‑22 11:58:25.  
-- **Lighting Levels** – 824.0 lux (min = 824.0, max = 824.0, avg = 824.0) recorded at 2026‑10‑22 11:58:25.  
-- **Air Quality Index** – 820.0 units (min = 820.0, max = 820.0, avg = 820.0) recorded at 2026‑10‑22 11:58:25.  
-- **Ventilation Flow** – 884.0 cfm (min = 884.0, max = 884.0, avg = 884.0) recorded at 2026‑10‑22 11:58:25.  
-- **Noise Level** – 833.0 dB (min = 833.0, max = 833.0, avg = 833.0) recorded at 2026‑10‑22 11:58:25.  
-- **Outdoor Air Quality** – 856.0 units (min = 856.0, max = 856.0, avg = 856.0) recorded at 2026‑10‑22 11:58:25.  
-- **Occupancy** – 57.8 persons (min = 57.8, max = 57.8, avg = 57.8) recorded at 2026‑10‑22 11:58:25.  
+- **CO₂ Concentration** – 1.0 ppm (min = 1.0, max = 1.0, avg = 1.0) recorded at [session date] 11:58:25.  
+- **Temperature** – 58.1 °C (min = 58.1, max = 58.1, avg = 58.1) recorded at [session date] 11:58:25.  
+- **Humidity** – 1.0 % (min = 1.0, max = 1.0, avg = 1.0) recorded at [session date] 11:58:25.  
+- **Energy Consumption** – 862.0 kWh (min = 862.0, max = 862.0, avg = 862.0) recorded at [session date] 11:58:25.  
+- **Lighting Levels** – 824.0 lux (min = 824.0, max = 824.0, avg = 824.0) recorded at [session date] 11:58:25.  
+- **Air Quality Index** – 820.0 units (min = 820.0, max = 820.0, avg = 820.0) recorded at [session date] 11:58:25.  
+- **Ventilation Flow** – 884.0 cfm (min = 884.0, max = 884.0, avg = 884.0) recorded at [session date] 11:58:25.  
+- **Noise Level** – 833.0 dB (min = 833.0, max = 833.0, avg = 833.0) recorded at [session date] 11:58:25.  
+- **Outdoor Air Quality** – 856.0 units (min = 856.0, max = 856.0, avg = 856.0) recorded at [session date] 11:58:25.  
+- **Occupancy** – 57.8 persons (min = 57.8, max = 57.8, avg = 57.8) recorded at [session date] 11:58:25.  
 
 **Anomalies / Concerns**  
 - All sensor readings are identical for each parameter, suggesting either a single event captured by all sensors or a data collection artifact.  
@@ -11317,7 +11317,7 @@ P16-c2-t3,P16,2,3,own_question,,,,own_live,own_live,2000-01-01T00:27:50.252000+0
 
 Here is what **Building A** states about itself:
 
-- **Purpose:** A university teaching and research building housing the School of Computer Science and Informatics and the School of Mathematics, with lecture theatres, teaching laboratories, research space and academic offices.
+- **Purpose:** A university teaching and research building housing the [school] and the [school], with lecture theatres, teaching laboratories, research space and academic offices.
 - **Primary function:** Education
 - **Who uses it:** University staff, researchers and students; not a residential building.
 - **Year built:** 2021
@@ -11351,7 +11351,7 @@ Here is what **Building A** states about itself:
 
 Here is what **Building A** states about itself:
 
-- **Purpose:** A university teaching and research building housing the School of Computer Science and Informatics and the School of Mathematics, with lecture theatres, teaching laboratories, research space and academic offices.
+- **Purpose:** A university teaching and research building housing the [school] and the [school], with lecture theatres, teaching laboratories, research space and academic offices.
 - **Primary function:** Education
 - **Who uses it:** University staff, researchers and students; not a residential building.
 - **Year built:** 2021
@@ -16501,7 +16501,7 @@ P24-c2-t2,P24,2,2,own_question,,,,own_live,own_live,2000-01-01T00:24:11.088000+0
 
 The noise level in Room 2.24 (Academic Office) is measured by the sensor “Room 2.24 — Academic Office noise” in decibels (dB).
 
-* **Latest reading** – 2026‑10‑23 15:11:06: **61.3 dB**  
+* **Latest reading** – [session date] 15:11:06: **61.3 dB**  
 * **Overall statistics** ([session date] 18:42 – [session date] 15:11):  
   * Minimum: **38.6 dB** (at [session date] 01:56)  
   * Mean: **50.2 dB**  
@@ -16540,7 +16540,7 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 The noise level in Room 2.24 (Academic Office) is measured by the sensor “Room 2.24 — Academic Office noise” in decibels (dB).
 
-* **Latest reading** – 2026‑10‑23 15:11:06: **61.3 dB**  
+* **Latest reading** – [session date] 15:11:06: **61.3 dB**  
 * **Overall statistics** ([session date] 18:42 – [session date] 15:11):  
   * Minimum: **38.6 dB** (at [session date] 01:56)  
   * Mean: **50.2 dB**  
@@ -18350,7 +18350,7 @@ P27-c2-t5,P27,2,5,own_question,,,,own_live,own_live,2000-01-01T00:20:25.896000+0
 
 </details>
 
-The most recent CO₂ reading in **Room 5.34 — Telecommunications Room** is **968 ppm** at **2026‑10‑23 17:56:06**.  
+The most recent CO₂ reading in **Room 5.34 — Telecommunications Room** is **968 ppm** at **[session date] 17:56:06**.  
 
 Across all 1,000 recorded values from **[session date] 21:21** to **[session date] 17:56**, the average level was **822 ppm**, with a low of **523 ppm** and a high of **1,171 ppm**. During nighttime hours (00‑06) the average was **583 ppm**, while daytime hours (08‑18) averaged **1,031 ppm**.
 
@@ -18381,7 +18381,7 @@ _The readings query reached its row limit of 1000 rows, so these readings are a 
 
 </details>
 
-The most recent CO₂ reading in **Room 5.34 — Telecommunications Room** is **968 ppm** at **2026‑10‑23 17:56:06**.  
+The most recent CO₂ reading in **Room 5.34 — Telecommunications Room** is **968 ppm** at **[session date] 17:56:06**.  
 
 Across all 1,000 recorded values from **[session date] 21:21** to **[session date] 17:56**, the average level was **822 ppm**, with a low of **523 ppm** and a high of **1,171 ppm**. During nighttime hours (00‑06) the average was **583 ppm**, while daytime hours (08‑18) averaged **1,031 ppm**.
 

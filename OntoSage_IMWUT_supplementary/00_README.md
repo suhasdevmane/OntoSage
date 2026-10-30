@@ -33,6 +33,7 @@ These files were prepared for double-blind review. Where a file named the buildi
 | the building's name, and participants' misspellings of it | `Building A` |
 | the building's namespace | `http://example.org/buildingA#` |
 | the institution's name; the city, street, district, postcode and region | `[university]`, `[city]`, `[street]`, `[district]`, `[postcode]`, `[region]` |
+| the names of the schools the building houses | `[school]` |
 | the institution's web domains | `[university domain]` |
 | the ethics approval reference | `[anonymised]` |
 | the authors' names in comments, notes and documents | `the first author`, `the second author`, `the third author` |

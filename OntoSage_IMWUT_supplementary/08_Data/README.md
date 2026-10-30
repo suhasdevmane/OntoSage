@@ -8,7 +8,7 @@ Contributors were recruited through Amazon Mechanical Turk. Each has an anonymou
 
 | File | What it holds |
 |---|---|
-| `questions_all.csv` | Every question submitted: contributor, chosen role profiles, question number, stage (S1–S4), text. |
+| `questions_all.csv` | Every question submitted: contributor, chosen role profiles, question number, stage (1–4), text. |
 | `questions_unique.csv` | The de-duplicated corpus, with the automated classifier's labels (domain, query type, intent, temporal, spatial, complexity). These labels are a language model's, not a person's. |
 | `topic_rankings.csv` | Stage 5 rankings of twenty topics, by contributor. |
 | `question_rankings.csv` | Stage 5 rankings of the four example questions in each topic, by contributor. |
