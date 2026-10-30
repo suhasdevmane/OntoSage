@@ -1,0 +1,49 @@
+
+====  warranted ~ situation + (1 | code) + (1 | form)  (S3 excluded) ====
+boundary (singular) fit: see help('isSingular')
+singular: TRUE 
+ Groups Name        Std.Dev.
+ code   (Intercept) 0.0000  
+ form   (Intercept) 2.2012  
+             Estimate Std. Error    z value  Pr(>|z|)
+(Intercept) -2.711923   1.579105 -1.7173803 0.0859097
+situationS2  1.752809   2.081919  0.8419199 0.3998328
+situationS4  2.857098   2.052194  1.3922162 0.1638569
+ situation   prob     SE  df asymp.LCL asymp.UCL
+ S1        0.0623 0.0922 Inf    0.0030     0.595
+ S2        0.2771 0.2720 Inf    0.0261     0.846
+ S4        0.5362 0.3260 Inf    0.0814     0.938
+
+Confidence level used: 0.95 
+Intervals are back-transformed from the logit scale 
+ contrast odds.ratio SE  df null z.ratio p.value
+ S2 / S1        5.77 12 Inf    1   0.842  0.3998
+
+Tests are performed on the log odds ratio scale 
+
+====  warranted ~ situation + (1 | code)  (S3 excluded) ====
+boundary (singular) fit: see help('isSingular')
+singular: TRUE 
+ Groups Name        Std.Dev.
+ code   (Intercept) 0       
+              Estimate Std. Error   z value    Pr(>|z|)
+(Intercept) -1.1895841  0.4316659 -2.755799 0.005854904
+situationS2  0.9213202  0.5041911  1.827323 0.067651192
+situationS4  1.3231155  0.5032889  2.628938 0.008565187
+ situation  prob     SE  df asymp.LCL asymp.UCL
+ S1        0.233 0.0772 Inf     0.116     0.415
+ S2        0.433 0.0640 Inf     0.315     0.560
+ S4        0.533 0.0644 Inf     0.408     0.655
+
+Confidence level used: 0.95 
+Intervals are back-transformed from the logit scale 
+ contrast odds.ratio   SE  df null z.ratio p.value
+ S2 / S1        2.51 1.27 Inf    1   1.827  0.0677
+
+Tests are performed on the log odds ratio scale 
+
+==== plain logistic regression (no random effect), S3 excluded ====
+              Estimate Std. Error   z value    Pr(>|z|)
+(Intercept) -1.1895841  0.4316655 -2.755801 0.005854869
+situationS2  0.9213201  0.5041909  1.827324 0.067651061
+situationS4  1.3231155  0.5032886  2.628940 0.008565149

@@ -1,0 +1,5 @@
+rule,pre_registered,applies,n_excluded,codes,note
+1 session not completed (fewer than six decisions),1,1,0,,
+2 system failed before the first task,1,1,0,,
+3 instruction check (IC1) failed,1,1,0,,
+4 total task time below pilot median x 0.3,1,0,0,,"NOT APPLICABLE: no pilot was run (the third author's decision, [session date]), so the threshold was never fixed. Deviation; a post-hoc sensitivity analysis is reported instead."

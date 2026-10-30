@@ -1,0 +1,7 @@
+key,value,description,script,label_source
+phrasing_complete_first_questions,158 of 171,"first questions (about their own task) that state every place, date and criterion their form needs",phrasing_analysis.py,
+phrasing_about_another_task,5 of 176,first questions linked to a task (by the page on screen) that are about another task's room,phrasing_analysis.py,
+linking_received_about_another_task,0 of 165,answers received before a decision (E2's input) whose question names another task's room or asset and not its own,phrasing_analysis.py,
+phrasing_pasted_decision_question,17 of 171 (4 of them missing a specific),first questions that are the bold decision question pasted as it stands,phrasing_analysis.py,
+phrasing_first_answer_good_complete,"42% [38, 47]",first answer W or WL when the first question stated everything needed (participant bootstrap),phrasing_analysis.py,HUMAN_AGREED
+phrasing_first_answer_good_incomplete,"46% [23, 73]",first answer W or WL when the first question left something out (participant bootstrap),phrasing_analysis.py,HUMAN_AGREED

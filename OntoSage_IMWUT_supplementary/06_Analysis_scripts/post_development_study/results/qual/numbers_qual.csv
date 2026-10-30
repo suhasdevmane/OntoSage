@@ -1,0 +1,28 @@
+key,value,description,script,label_source
+qual_units,270,units,qual_analysis.py,HUMAN_AGREED
+qual_task_reasons,180,task reasons,qual_analysis.py,HUMAN_AGREED
+qual_closing,90,closing,qual_analysis.py,HUMAN_AGREED
+qual_reasons_limit_named,105,reasons limit named,qual_analysis.py,HUMAN_AGREED
+qual_reasons_limit_matches_key,67,reasons limit matches key,qual_analysis.py,HUMAN_AGREED
+qual_people_limit_named,28,people limit named,qual_analysis.py,HUMAN_AGREED
+qual_after_FD_n,43,after FD n,qual_analysis.py,HUMAN_AGREED
+qual_after_FD_decline_accepted,31,after FD decline accepted,qual_analysis.py,HUMAN_AGREED
+qual_after_FD_limit_named_not_true,18,after FD limit named not true,qual_analysis.py,HUMAN_AGREED
+qual_after_WL_n,46,after WL n,qual_analysis.py,HUMAN_AGREED
+qual_after_WL_decline_accepted,30,after WL decline accepted,qual_analysis.py,HUMAN_AGREED
+qual_people_decline_accepted,23,people decline accepted,qual_analysis.py,HUMAN_AGREED
+qual_people_verify_intended,27,people verify intended,qual_analysis.py,HUMAN_AGREED
+qual_reasons_verify_intended,91,reasons verify intended,qual_analysis.py,HUMAN_AGREED
+qual_people_fluency_cue,10,people fluency cue,qual_analysis.py,HUMAN_AGREED
+qual_people_prior_knowledge,3,people prior knowledge,qual_analysis.py,HUMAN_AGREED
+qual_people_blamed_missing_data,14,people blamed missing data,qual_analysis.py,HUMAN_AGREED
+qual_people_useful_evidence,13,people useful evidence,qual_analysis.py,HUMAN_AGREED
+qual_people_frust_declines,10,people frust declines,qual_analysis.py,HUMAN_AGREED
+qual_people_frust_rephrasing,10,people frust rephrasing,qual_analysis.py,HUMAN_AGREED
+qual_CL2_decline_useful,2,CL2 decline useful,qual_analysis.py,HUMAN_AGREED
+qual_CL2_decline_frustrating,7,CL2 decline frustrating,qual_analysis.py,HUMAN_AGREED
+qual_CL3_no,20,CL3 no,qual_analysis.py,HUMAN_AGREED
+qual_CL3_yes,1,CL3 yes,qual_analysis.py,HUMAN_AGREED
+qual_CL3_unsure,1,CL3 unsure,qual_analysis.py,HUMAN_AGREED
+qual_S4_3_chose_b,15,S4 3 chose b,qual_analysis.py,HUMAN_AGREED
+qual_S4_3_chose_b_naming_people_limit,14,S4 3 chose b naming people limit,qual_analysis.py,HUMAN_AGREED

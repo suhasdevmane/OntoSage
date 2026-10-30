@@ -1,0 +1,92 @@
+{
+ "units_both_coded": 36,
+ "per_code": {
+  "EVIDENCE_CITED": {
+   "n": 36,
+   "kappa": 0.9444444444444444,
+   "agreement": 0.9722222222222222,
+   "coder1_yes": 18,
+   "coder2_yes": 19
+  },
+  "LIMIT_RECOGNISED": {
+   "n": 36,
+   "kappa": 0.830188679245283,
+   "agreement": 0.9166666666666666,
+   "coder1_yes": 20,
+   "coder2_yes": 21
+  },
+  "LIMIT_MATCH": {
+   "n": 36,
+   "kappa": 0.12195121951219529,
+   "agreement": 0.7222222222222222,
+   "coder1_yes": 11,
+   "coder2_yes": 1
+  },
+  "PROXY_ACCEPTED": {
+   "n": 36,
+   "kappa": 0.0,
+   "agreement": 0.9722222222222222,
+   "coder1_yes": 1,
+   "coder2_yes": 0
+  },
+  "VERIFY_INTENDED": {
+   "n": 36,
+   "kappa": 1.0,
+   "agreement": 1.0,
+   "coder1_yes": 15,
+   "coder2_yes": 15
+  },
+  "FLUENCY_CUE": {
+   "n": 36,
+   "kappa": 0.0,
+   "agreement": 0.9722222222222222,
+   "coder1_yes": 1,
+   "coder2_yes": 0
+  },
+  "DECLINE_FRUSTRATION": {
+   "n": 36,
+   "kappa": 0.0,
+   "agreement": 0.9722222222222222,
+   "coder1_yes": 1,
+   "coder2_yes": 0
+  },
+  "DECLINE_ACCEPTED": {
+   "n": 36,
+   "kappa": 0.2258064516129032,
+   "agreement": 0.6666666666666666,
+   "coder1_yes": 15,
+   "coder2_yes": 3
+  },
+  "REPHRASED": {
+   "n": 36,
+   "kappa": 1.0,
+   "agreement": 1.0,
+   "coder1_yes": 1,
+   "coder2_yes": 1
+  },
+  "PRIOR_KNOWLEDGE": {
+   "n": 36,
+   "kappa": null,
+   "agreement": 1.0,
+   "coder1_yes": 0,
+   "coder2_yes": 0,
+   "note": "kappa undefined: neither coder varied on this code"
+  },
+  "GUESS": {
+   "n": 36,
+   "kappa": null,
+   "agreement": 1.0,
+   "coder1_yes": 0,
+   "coder2_yes": 0,
+   "note": "kappa undefined: neither coder varied on this code"
+  },
+  "OTHER": {
+   "n": 36,
+   "kappa": 1.0,
+   "agreement": 1.0,
+   "coder1_yes": 2,
+   "coder2_yes": 2
+  }
+ },
+ "overall_raw_agreement": 0.9328703703703703
+}

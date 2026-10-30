@@ -1,0 +1,401 @@
+row_id,stage,question
+R02367,stage 2,How many people are in this area?
+R00604,stage 2,Can you tell if someone is attempting to sabotage the building?
+R05343,stage 3,"With a server room, can there be strict presets put in place that the Ai in the smart system cannot override?"
+R05923,stage 3,"during peak pricing hours, which non-critical loads could be delayed?"
+R01630,stage 1,Can I reserve a quiet room for the next two hours?
+R05114,stage 1,Are you can respond with an answer or only save my questions?
+R01783,stage 3,What is a safe CO2 level?
+R00992,stage 4,Can the system dented and respond to sudden noise disturbances?
+R00956,stage 2,Who can see the occupancy sensor readings?
+R05452,stage 4,How much energy have you used today?
+R03980,stage 2,Is this area currently occupied ?
+R01938,stage 4,Are there any free parking spots available right now?
+R02175,stage 1,in regular how many shifts were conducts
+R02377,stage 1,How much water is used daliy?
+R05639,stage 2,does the laundry room have sensors that can alert residents when their laundry is done?
+R01350,stage 4,what ere the benefits of smart lighting systems?
+R03740,stage 2,is thermostat set correctly ?
+R04630,stage 4,"Is it possible to monitor the level of pollution that exists indoors on days when a cleaning crew is utilizing heavy, industrial-grade chemicals?"
+R01209,stage 4,peak usage?
+R03783,stage 1,how often do you check for safety issues ?
+R03743,stage 2,is power usage stable ?
+R03680,stage 2,What is the current power factor of the building?
+R05155,stage 4,how quickly does it detect a leak?
+R04271,stage 1,Can you optimize energy usage?
+R07121,stage 3,"if air quality drops on a high-pollution day, should we limit ventilation intake?"
+R00997,stage 4,Are there programs to encourage occupants to adopt sustainable habits?
+R03650,stage 4,Can you optimize energy usage automatically?
+R03601,stage 3,Is the corridor crowded?
+R04727,stage 2,Do occupancy sensord use camers
+R02764,stage 1,What type of building ?
+R00186,stage 4,How could sensors track biodiversity indicators like bird or insect activity on green roofs?
+R02426,stage 3,Do you likeEV?
+R03244,stage 2,how often have you received messages about a noise event
+R00727,stage 1,can you help me find a space suitable for a short meeting?
+R07142,stage 4,can the buidling flag any life-safety system that is overdue a test?
+R04893,stage 2,Is it too late to really help people if we have already breathed in ozone before the ventilation kicks in?
+R03859,stage 1,Can you rent space in this building?
+R00944,stage 2,Is this a gun-free site?
+R02980,stage 4,"How is indoor air quality measured and maintained? I am interested in sensors to keep track of CO2 levels, VOCs, and other important pollutants."
+R07082,stage 1,how do we make sure walkways are not blocked?
+R06849,stage 1,how do we make sure walkways are not blocked?
+R03992,stage 1,Can you open the windows?
+R00848,stage 2,Can AI in the building turn off smart plugs even if you want it to stay on?
+R04662,stage 2,Are there any batteries in the wireless sensors in this room that have become low enough for replacement?
+R05684,stage 3,has there been any unusual vibration patterns on the roof lately?
+R04481,stage 2,Am I able to turn off sound-masking systems if I find them annoying? or can I tweak them to meet what I am looking for?
+R02445,stage 2,how much voltage requered to run a Laptop?
+R01216,stage 4,sound quality?
+R01292,stage 3,Can I resvice alerts if this room becomes overcrowded?
+R02271,stage 4,water carbon
+R01763,stage 1,Heating status?
+R02729,stage 1,what is the being done to lower carbon emission
+R05532,stage 3,What happens to the server room in the event of a spike?
+R02211,stage 3,When was the restroom cleaned?
+R02151,stage 2,sound of noise will be affected in the building
+R02845,stage 4,"If more targeted cooling/heating is possible, could you like track a person's movement and adjust the heating for them such that they're at that level their whole time in the building no matter where they are?"
+R00707,stage 2,is eergy consumption aligned with occupancy levels?
+R01859,stage 1,Can you alert me if the air quality becomes unhealthy?
+R04122,stage 1,WHO GIVERS US MILK ?
+R02355,stage 2,Is the chiler running?
+R02076,stage 1,how does it compares in size to other buildings on the street?
+R06482,stage 3,"during the evening cleaning shift, are lights and hvac left fully on"
+R04926,stage 4,Are there any particulate matter issues?
+R00772,stage 2,noise high?
+R06031,stage 1,how does occupancy affect our energy demand
+R00575,stage 4,Could the building play music for me that I simply request audibly?
+R05742,stage 1,Is there free wifi available?
+R00024,stage 4,can the building track daily water wastage during cleaning processes?
+R04651,stage 3,Is the revolving door locked or just moving slowly due to the high winds outside?
+R03429,stage 3,Can the doors be locked from a Central Location?
+R05138,stage 1,on one picture of you you are holding a microphone? why? are you explaining something?
+R01480,stage 2,has there been any unusual activitydetected after hours?
+R02817,stage 2,What happens if two neighboring sensors provide conflicting data? How do you know which is right?
+R01395,stage 2,How do we map relationships etween equipment in a semantic model?
+R04989,stage 1,Do you have solar power?
+R02855,stage 3,How naturally can you understand and talk to people who need to get somewhere? Can you guide them through the whole way?
+R00795,stage 1,how is the air quality in this area today?
+R06887,stage 3,"during a fire alarm, how do we assist wheelchair users to evacuate?"
+R01633,stage 1,How long will the current air condition settings remain active?
+R01428,stage 4,what long term sustainability goals is the building working towards?
+R02654,stage 4,waste
+R01946,stage 3,Emergency exit nearby?
+R07029,stage 2,does any zone's temperature breach the safe upper working limit?
+R06184,stage 4,how do we set science-based targets from the buildings emissions data
+R01140,stage 4,are there systems to reuse or recycle water within the building?
+R00042,stage 3,can i check how responsive the building systems are to user inputs?
+R05290,stage 2,How does this feature affect SAD -- seasonal affective disorder? Can it reduce symptoms?
+R04527,stage 4,How can the building use sensors to detect waste of water?
+R04369,stage 3,how is the air quality in this office?
+R01153,stage 3,can i track the availability of shared resources like printers?
+R03757,stage 2,is humidity uncomfortable now ?
+R00921,stage 3,Is the temperature constantly monitored?
+R04450,stage 3,at night is the car park monitored closely for safety? are alerts sent to employees to inform them of anything that may seem suspicious?
+R01883,stage 3,Can you detect if the room is occupied or free?
+R04182,stage 2,what are the supply and return air temperatures?
+R00191,stage 3,is electric cars better than petrol/disel/octane
+R03562,stage 1,What is your purpose?
+R04552,stage 4,Can the building increase ventilation if it detects too much CO2 in a meeting room?
+R01373,stage 3,Does the room offer enough flexibility of both small and large group meetings?
+R03952,stage 3,Can you detect any issues in the building systems?
+R03619,stage 2,How many people are here?
+R02432,stage 3,Which car is best for riding?
+R01144,stage 4,can i receive notifications about daily energy saving performance?
+R00290,stage 2,How does the Thermostat Setpoint change based on whether the Occupancy sensor detects people?
+R00400,stage 2,Can the building anticipate temperture chages based on outside temperature?
+R03874,stage 4,How do you improve lighting efficiency?
+R02979,stage 4,How are we able to improve efficiency of our building construction elements? I want to know the ways in which we can save on power by measuring many inputs and outputs.
+R00999,stage 4,Hoe does the building support eco-friendly cleaning practices?
+R04720,stage 3,Coold the room
+R02643,stage 1,Did I leave any lights on?
+R05052,stage 2,How does fan speed affect air quality?
+R06301,stage 2,which submeter shows the highest consumption right now
+R03530,stage 1,Is there cafeter crowded at the moment?
+R05750,stage 3,"If someone trips and falls in the stairwell, is there an easy way for the building to tell that someone needs help?"
+R03297,stage 1,what is the income requirement to live here
+R04774,stage 3,fire safety are they fire extinguishers or hose reels installed in the corridors
+R00012,stage 4,are there performance indicators for overall building sustainability?
+R06834,stage 1,how is the building protected against fire spread?
+R02621,stage 2,Which room needs to be dusted the most?
+R06272,stage 1,how much enery does the HVAC system use overall?
+R06829,stage 4,can the system identify the highest-risk areas to focus safety spend?
+R05588,stage 4,what do I do if it's too loud in a common area?
+R01083,stage 3,system safe?
+R05756,stage 3,"Can the temperature in the room drop automatically over time, since the room will heat up over the course of the meeting?"
+R00035,stage 3,are there any patterns of overcrowding at this time of day?
+R03118,stage 1,What happens when something in the building doesn't work? Who would I call?
+R01127,stage 1,temperature now?
+R05492,stage 2,Do any rooms have a high co2?
+R06864,stage 2,do the door sensors show any fire exits propped open?
+R04900,stage 1,Do I need a key fob to get between floors?
+R06366,stage 1,can the building tell me its current carbon intensity
+R02661,stage 4,lllumination
+R05142,stage 1,are you religious?
+R02031,stage 3,what kind of building space ?
+R00788,stage 1,energy waste?
+R03886,stage 3,Is access restricted in server room?
+R02408,stage 4,Do you like iron?
+R01426,stage 1,What is the difference between hardwood and softwood?
+R02123,stage 3,in the severe room how can be recover the data
+R03503,stage 2,how power generates heat
+R05178,stage 3,What to you do with collected rainwater
+R00372,stage 1,What will happen after finishing all the oil
+R05946,stage 4,can the building recommend a demand-response strategy for peak events?
+R05319,stage 4,Does the system have the ability to suggest plants and other things in and outside the building that could help with heating and cooling efficency?
+R05256,stage 3,How does it deal with people who bring smelly food from home for lunch?
+R03903,stage 2,How do you measure current flow?
+R03233,stage 4,have you ever had any major HVAC issues
+R01146,stage 4,are there automatic system to turn off lights in emptyrooms?
+R06253,stage 4,can the building produce a monthly carbon emissions report automatically
+R00688,stage 3,how quickly can emergency services access this location if needed?
+R01826,stage 4,How do you ensure efficient use of lighting systems?
+R06155,stage 3,"on a rainy week, how does reduced daylight change lightng energy here?"
+R05035,stage 3,Is the meeting room free for use later today?
+R03736,stage 3,is this room actually in use ?
+R01379,stage 3,Do the seating arrangements accommodate different user privacy needs?
+R02651,stage 4,transit
+R05305,stage 1,Are pets allowed and welcomed here?
+R06654,stage 4,how can we verify emergency lighting is tested on schedule everywhere?
+R03749,stage 2,was the window left open ?
+R04498,stage 1,Who do I contact if I have a problem with the smart feature that I cannot figure out on my own? is there a charge for this?
+R02774,stage 4,what am i supposed to accomplish herh?
+R00072,stage 2,is any equipment behaving inconsistently compared to normal operation?
+R05961,stage 1,how do we measure the building's environmental performaance?
+R04544,stage 4,Can the building show realtime sound levels for different floors so people can choose their environment?
+R04300,stage 2,WHICH ROOM HAS MOST STABLE TEMPERATURE?
+R07130,stage 3,"if co2 climbs sharply during a packed meeting, what should we do?"
+R06730,stage 3,"during a heatwave, how do we keep working temperatures safe in this zone?"
+R01527,stage 2,can smart plugs reduce power usage?
+R05520,stage 4,What is the best way to conserve water in the building?
+R04826,stage 4,WhT plants are there?
+R05073,stage 1,What is your main objective?
+R06397,stage 3,"when the car park EV chargers are all in use, what happens to peak demand"
+R04213,stage 4,Is the air quality healthy?
+R01555,stage 1,why is this room sometimes too cold?
+R05801,stage 2,Where there any noise events overnight?
+R06493,stage 4,what kpis best track our progress on sustainability?
+R06461,stage 2,are the AHU fans running at higher kW than the airflow needs?
+R03427,stage 3,Where would the number of people in this area be displayed so that someone could know about the crowd before walking there?
+R00854,stage 2,If you think the humidity is too low what will AI do to add moisture into the air?
+R03295,stage 1,is there an elevator or only stairs
+R03847,stage 1,Do you allow pets here
+R05970,stage 2,are the CO2 sensors forcing extra ventilaton and raising energy use
+R00986,stage 1,How long did this building take to build?
+R02633,stage 1,What allergens are in this room? Why am I sneezing?
+R02722,stage 2,current humidity level
+R00929,stage 2,Is there anything individuals can do to be more energy efficent?
+R01629,stage 1,Is there any ongoing repair work happening in the building?
+R05949,stage 4,how do we set science-based targts from the buildings emissions data
+R00158,stage 2,"Can a ""Water Meter"" detect a tiny leak behind a wall?"
+R07141,stage 4,can the building produce a live roll call for emergency responders
+R00252,stage 4,"How can we use heat maps to identify if ""cold spots"" are caused by poor window insulation versus HVAC imbalances?"
+R01548,stage 1,is the building safe during night time?
+R02304,stage 3,parking safe now
+R06544,stage 2,are there any sensors offline that are critical to life safety?
+R05673,stage 4,which floors should i avoid to avoid the highest indoor pollution?
+R00696,stage 3,can the system suggest a workspace with fewer distractions?
+R03062,stage 4,Could smart buildings analyze lift occupancy during peak times and then suggest alternative routes to reduce wait times?
+R00661,stage 4,are there dashboards showing real time environmental conditions?
+R05795,stage 2,Which room has the lowest air quality index?
+R03885,stage 3,Can you detect equipment failure?
+R07119,stage 3,"if a lone worker stops responding, how does the building raise the alarm?"
+R06611,stage 2,what is the water temperature on the hot system for legionella control?
+R05342,stage 3,Does the smart system know what to do encase their is a fire in the server room?
+R05335,stage 3,"With the waiting room, is there an overide for the lighting and the abiant lighting adjustments, since it seems like more light would enhance security systems."
+R04539,stage 4,Can the system utilize all this data to improve energy efficiency in building planning?
+R07035,stage 3,"during night cleaning, are lone staff covered by the safety alarm system?"
+R03056,stage 1,How do employees benefit from smart buildings on a practical level? Like what are the benefits that they would notice in every day workplace scenarios?
+R01551,stage 1,can you turn off lights in empty rooms?
+R01162,stage 3,are there any active alarms or warning in the building currently?
+R00996,stage 4,How is water reduction progress mointored over time?
+R00306,stage 2,How does the building’s Relative Humidity sensor help prevent mold growth when the Temperature fluctuates overnight?
+R06142,stage 2,is the frequency reading stable enough for the on-site inverters?
+R01996,stage 4,how  does buildings collect feedback?
+R03516,stage 1,how chatgpt works
+R03940,stage 1,Why is this building temperature changing often?
+R03629,stage 1,Any maintenance issues?
+R01749,stage 2,Energy levels?
+R03123,stage 1,Are all the doors and windows controlled with smart locks?
+R03235,stage 4,are there any cold or hot spots here
+R03372,stage 4,"We were given evaluations as employees. However, we never received evaluations for energy efficiency and water use. How will this change for the better?"
+R03225,stage 4,is the elevator ever in standby mode
+R00263,stage 3,Does the green roof moisture sensor override the watering schedule if the weather forecast predicts rain within 6 hours?
+R04066,stage 1,Does the rooftop have a garden or a seating area for peoplee?
+R04061,stage 1,Is the building designed to withstand extreme weather conditions.?
+R00044,stage 3,can i locate a workspacewith the most stable temperature conditions?
+R02081,stage 1,Are there any visible names on this buildings?
+R01451,stage 3,can the system notify me if this area becomes too noisy?
+R03895,stage 3,Can you detect people in stairwell?
+R05569,stage 1,Why is my wall leaking water?
+R06200,stage 1,what is the biggest source of emissions for this building?
+R05806,stage 2,Is any room using an abnormal amount of water?
+R02257,stage 1,Can you show mw the shortest path to the exit gate?
+R04078,stage 4,CAN YOU TURN OFF UNSUED EQUIPMENT AUTOMATICALLLY?
+R05059,stage 2,Do you alter the ozone levels?
+R02712,stage 2,window sensor active
+R02725,stage 1,in this space fully accessible for everyone
+R02231,stage 2,What is the noise level in the cafeteria?
+R01682,stage 2,is the voltage stable in this section of the building?
+R05047,stage 2,Do you automatically adjust light levels?
+R03833,stage 2,What is the general humidity level in the building?
+R06133,stage 2,how does todays metered demand profile compare with the typical cuurve?
+R04858,stage 2,What is the standard building temperature?
+R01252,stage 2,room temperature?
+R03136,stage 1,Is the air condition work?
+R03443,stage 2,Can the type of background noise be altered by the people in that location?
+R04176,stage 2,is the power factor normal or inefficient?
+R04384,stage 2,what is the current light level?
+R06459,stage 2,how does the gas meter trend compare with the heating degree days?
+R06076,stage 3,"if the room is unbooked but the av is still on, can it power down automatically?"
+R00489,stage 2,is humidity affecting the comfort of this workspae?
+R02225,stage 2,How much energy is being wasted in our building every week?
+R03160,stage 3,Is there a formal process to reserve the meeting room?
+R05086,stage 1,What capabilities do you have as a smart building?
+R04063,stage 1,Are there smart sensors inside to control lighting and temperature?
+R05159,stage 4,"when learning preferences, is privacy also considered"
+R01147,stage 4,can the building identify which devices consume the most energy?
+R02860,stage 3,How would some booking system be sure that people aren't just running late? Like how would it not then double book it if it 'seems empty' but 5 min later the people come in?
+R02326,stage 2,is the air unhealthy now
+R06207,stage 1,is the lightng energy efficient across the whole building
+R01072,stage 4,humidity balanced?
+R04402,stage 1,can you show available parking?
+R04455,stage 3,Can the power to the vending machines be automatically be turned off when the building is not in use?
+R00599,stage 3,Would you be able to detect someone having a heart attack?
+R06481,stage 3,"if outdoor air is cool enough, can free cooling cut the chiller energy here"
+R05221,stage 1,Are you able to play music throughout the house?
+R06714,stage 3,"during a fire alarm, how do we assist wheelchair users to evacuate"
+R06562,stage 3,"if someone is trapped in a room, how does the system help locate them?"
+R01727,stage 4,Water consumotion/
+R00240,stage 4,"How many degrees cooler is the air near the ""Green Roof"" compared to the asphalt parking lot?"
+R06526,stage 1,who do i contact about a health and safety concern?
+R03817,stage 3,What is the lighting set to?
+R06533,stage 1,how does the building warn people in an emergency?
+R02844,stage 4,"Instead of possibly wasting power with lighting changes or whatever, could glare issues possibly be fixed by just notifying people and slightly adjusting desks/screens?"
+R02396,stage 4,Is space thermal effect good?
+R00863,stage 1,Is audio being monitored all the time and where would it be monitored?
+R03012,stage 1,What do the wrench and light bulb icons mean?
+R00597,stage 3,Would you be able to detect if someone was doing drugs in the building?
+R04529,stage 4,Could the building alert a room if pollution levels have risen too high and ventilate until safe to return?
+R05039,stage 3,How can you manage noise levels?
+R04596,stage 3,How would a booking conflict be resolved?
+R06290,stage 2,do the occupancy sensors and the energy meter agree on usage patterns
+R06978,stage 4,how can we make sure 100% of fire dors stay compliant?
+R03010,stage 1,Why do you have four fingers when most buildings have more than that?
+R02648,stage 1,What's the current humidity in this room?
+R06233,stage 3,"if the weather forecast shows a cold snap, how should pre-heating be scheduled?"
+R01755,stage 2,Room occupied?
+R06103,stage 4,can the system set and track an energy budget per floor?
+R00436,stage 4,are there alerts if energy consumption exceeds expected thresholds?
+R03262,stage 3,"are there building codes, or is the automatic door locked at certain times"
+R04890,stage 2,"IF the system pauses the climate system due to a window open, will it resume after the window is closed?"
+R03706,stage 1,Are there any safety issues right now?
+R03946,stage 4,How has the temperature changed over time?
+R04155,stage 3,is it crowded now?
+R02834,stage 2,"How many redundancies are there with the sensors? Like if one particular gas sensor stops working, will gas leaks in that area just not get detected?"
+R03501,stage 2,what can sound pollution harms
+R05078,stage 1,What is the one most important thing I should understand about you?
+R04706,stage 4,Is baseload power optimized
+R03960,stage 3,Is the pump working correctly?
+R05259,stage 3,How is the lobby decorated and who has input on how it looks?
+R05560,stage 2,How do I maintain the best humidity for my house?
+R07132,stage 3,"if occupancy exceeds the safe limit in this hall, what should happen?"
+R01993,stage 4,how does the building track report?
+R06337,stage 4,can the system model the impact of raising cooling setpoints by 1 degree?
+R04331,stage 1,WHAT IS THE CURRENT CO2 LEVEL IN CONFERRENCE ROOM B?
+R02915,stage 2,What privacy measures does the Occupancy sensor have?
+R03422,stage 3,Would there be a signup system for the EV Chargers?
+R06084,stage 3,"during the morning warm-up, is the building overheating before staff arrive"
+R04924,stage 4,have there been any loud noise events?
+R00364,stage 1,Why Macos Is Smoother
+R06106,stage 4,can the building generate an ESG dashboard for management?
+R02876,stage 2,How do glare sensors work? Does that come from the monitor itself?
+R01101,stage 2,dooropen?
+R01901,stage 2,What happens if it's too dark?
+R02750,stage 1,What are the requirement of the buildings?
+R06874,stage 3,"if water is found leaking near electrics, how is the hazrd contained?"
+R05286,stage 2,Does sound-masking affect my ability to understand conversations?
+R01794,stage 2,How would you say that this building could sterilize itself against not only waste but against diseases.
+R04631,stage 4,Can a building's automatic controls or systems be set up in such a way as to be able to adjust its fresh air intake to accommodate for CO₂ levels exceeding 800 ppm in a meeting room?
+R05297,stage 1,How is my privacy protected here?
+R00172,stage 1,Can we dim the south-side lights by 20% without anyone noticing?
+R02276,stage 4,co2 reduced
+R00264,stage 3,Do the rooftop vents automatically seal themselves if the external wind speed exceeds a specific safety rating?
+R00834,stage 3,"Who fixes displays, microphones, and cameras in rooms when they aren't working?"
+R06935,stage 2,which fire doors do the contact sensors show as held open?
+R06676,stage 1,is this building safe to occupy right now?
+R06276,stage 1,how do weekends compare to weekdays for energy use
+R03377,stage 4,The only time we noticed lighting was when a bulb burned out in the office. How can lighting be made to adapt to our different uses throughout the day and evening?
+R00466,stage 3,can i see which areas areas related to fire safty or smoke detection?
+R04362,stage 3,can cooling system prevent overheating?
+R00793,stage 1,can you reduce the temperature a little?
+R06324,stage 3,"on a cloudy day, how far does solar output fall against peak demand?"
+R06519,stage 1,what should I do if the fire alarm goes off?
+R06800,stage 3,"if there is a gas leak in the kitchen, how is the building made safe"
+R02957,stage 3,"I want to avoid crowds, so could you tell me which area of the building contains the least amount of people?"
+R04855,stage 2,Do office doors open automatically?
+R04770,stage 3,is the lobby designed with a double height ceiling
+R02228,stage 2,What is the safest eit rote?
+R06026,stage 4,can the ssytem set and track an energy budget per floor?
+R03514,stage 1,how noise cancelation works
+R03513,stage 1,how to burn belly fat
+R06024,stage 4,can the building track diversion-from-landfill rate for waste?
+R02103,stage 4,can i efficiency  level of the building
+R05779,stage 1,Are there any financial benefits to living or working inside you?
+R02484,stage 4,Set smart alerts when standby loads exceed a threshold so action can be taken early.
+R05967,stage 1,how much standby power is the buliding drawing right now
+R00725,stage 1,can you tell m if the building is operatinf at full capacity?
+R05326,stage 4,"Does the system have the ability to guide me toward replacing older systems with more efficent ones, with a clear indication of the power usuage difference that I can actually rely on?"
+R06104,stage 4,can the system identify the top five energy-saving opportunities ranked by roi?
+R03615,stage 2,What is the light level?
+R00064,stage 2,are there any unusual access activities detected late at night?
+R01583,stage 3,Which floor has the last occupancy at the moment?
+R05887,stage 1,does the building track embodied carbon of its materials?
+R03257,stage 1,what this the income requirement for future tenants
+R04109,stage 2,WHST IS THE IDEAL CO2 LEVEL FOR COMFORT ?
+R02832,stage 2,"Would your motion sensors catch animals, like say a few rats get in and run around the building at night, would that get caught?"
+R04017,stage 4,How does daylight harvesting lower the energy bill?
+R01845,stage 3,Can you alert me if my EV is fully charged?
+R06194,stage 1,how much of our waste actually gets recycled?
+R02967,stage 2,I wonder about air pollution and contaminants entering our room. Could PM2.5 sensors be used to filter out dirty air so we don't breathe it in?
+R04174,stage 2,what is the current water flow rate?
+R06447,stage 1,are EV chargers powered by clean energy?
+R05645,stage 2,"with the motion sensor, if something happened to me and I didn't move for 18 hours, would you, the building contact first responders for a welfare check?"
+R04019,stage 4,How does humidity control stop mold from growing?
+R02857,stage 3,How would the system ensure only particular people can get in these areas?
+R03415,stage 1,What would I notice when I approach the front door or entryway?
+R05675,stage 4,how much oxygen through greenery has your building produced over the last quarter?
+R04145,stage 3,solar working well?
+R00021,stage 4,are there insights on how indoor plants contribute to air purification?
+R04068,stage 1,Are the windows double-glazed for better insulation?
+R07113,stage 3,"if someone is trapped in a room, how does the sytem help locate them?"
+R00196,stage 3,Is Cafe Break Essential
+R02699,stage 2,water flow
+R06428,stage 4,how should we prioritise retrofits to maximise carbon savings
+R06077,stage 3,"during peak pricing hours, which non-critical loads could be delayed?"
+R05277,stage 2,"Would this sensor also detect loud human noises, like coughing attacks?"
+R00845,stage 2,How is my privacy and information used when cameras and sensors detect  or record me in the building?
+R05143,stage 1,what do you say when someone insults you?
+R06179,stage 4,what wolud it take to run the building on 100% renewable energy?
+R05000,stage 4,What is the top source of indoor pollution?
+R06931,stage 2,what is the noise level reading in the plant room against exposure limits?
+R01558,stage 4,How does the building balance comfort with energy efficiency?
+R01693,stage 2,is the PM2.5 air quality acceptable for sensitive individuals?
+R04721,stage 3,Is it hot
+R06937,stage 2,do the door sensors show any fire exits propped open?
+R01366,stage 4,What are the water saving advantages of high efficiency washing machines?
+R01999,stage 4,what design elements encourages activity?
+R04808,stage 1,how much budget allocated to home
+R06261,stage 4,how do we benchmark this building against breeam or leed targets?
+R05230,stage 4,What kind of lighting best simulates natural daylight? Switch to that.
+R04164,stage 3,is air quality good?
+R03316,stage 4,What type of internal lights are used and could altering the light colors slightly help with glare and visibility?
+R03246,stage 2,how can we use the smart plug without having to connect and reconnect devices
+R03179,stage 3,How do you handle minimizing spread of illness in an open-plan office?
+R02810,stage 1,What exactly makes you a smart building and why is that useful for a building
+R02513,stage 3,can I customize lighting preferences for my workspace?
+R00889,stage 4,Is there cameras in the elevators?
+R01877,stage 3,Do lights turn on automatically when someone walks by?
+R03006,stage 1,"As a new building, what are your strengths and weaknesses?"
+R03957,stage 3,What is the frequency of the electrical system?
+R06593,stage 1,how do we handle a security thhreat safely?

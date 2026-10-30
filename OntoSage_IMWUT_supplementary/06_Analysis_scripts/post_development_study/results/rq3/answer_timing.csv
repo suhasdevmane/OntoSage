@@ -1,0 +1,5 @@
+answer_timing,n,warranted_rate
+answered,163,0.5276073619631901
+answered_earlier_question,2,0.5
+decided_before_answer,11,0.6363636363636364
+no_question,4,0.25

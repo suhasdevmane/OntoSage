@@ -1,0 +1,7 @@
+question_set,system,W,WL,FD,U,OT,PF
+T-FRESH,A,17,6,12,3,2,0
+T-FRESH,A-minus,17,5,12,2,4,0
+T-FRESH,B,11,7,13,7,1,1
+T-LIVE,A,2,13,18,18,9,0
+T-LIVE,A-minus,4,13,17,15,11,0
+T-LIVE,B,14,20,18,7,1,0

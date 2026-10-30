@@ -1,0 +1,392 @@
+turn_id,role,form,situation,route_final,gates_applied,gates_advisory,gates_not_evaluated,omitted_criteria,claims_total,claims_unbound,found_in_log,window_shared,attribution,referent_refused,referent_asked_which,referent_bound_only_one,referent_failed_closed,referent_failed_open,relevance_replaced,relevance_objected_kept,relevance_failed_open
+P01-c1-t1,task,S2-3,S2,spatial_query,,,,,8,0,1,0,,0,0,0,0,0,0,0,0
+P01-c1-t2,task,S2-3,S2,spatial_query,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P01-c1-t3,task,S2-3,S2,spatial_query,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P01-c1-t4,task,S2-3,S2,compare,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P01-c1-t5,task,S1-1,S1,analytics,,,,,14,1,1,0,,0,0,0,0,0,0,0,0
+P01-c1-t6,task,S4-2,S4,compare,,,,,35,4,1,0,,0,0,0,0,0,0,0,0
+P01-c1-t7,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P01-c1-t8,task,S4-3,S4,compare,,"spatial_adequacy: a served zone links these spaces, but the link is not validated",,,35,4,1,0,,0,0,0,0,0,0,0,0
+P01-c1-t9,task,S3-1,S3,sensor_data,,"completeness: only 64% of the requested window was observed, below the 90% needed for an aggregate",,,3,0,1,0,,0,0,0,0,0,0,0,0
+P01-c2-t1,own_question,,,capability,,,,,17,12,1,0,,0,0,0,0,0,0,0,0
+P02-c1-t1,task,S2-3,S2,analytics,,,,,3,0,0,,,,,,,,,,
+P02-c1-t2,task,S1-2,S1,,,,,,37,1,1,0,sole,0,0,0,0,0,2,0,0
+P02-c1-t3,task,S1-2,S1,,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P02-c1-t4,task,S2-1,S2,,,,,,0,0,1,1,sole,0,0,0,0,0,1,0,0
+P02-c1-t5,task,S2-1,S2,,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,18,1,1,1,,0,0,0,0,0,0,0,0
+P02-c2-t1,task,S4-1,S4,,,"spatial_adequacy: a served zone links these spaces, but the link is not validated",,,0,0,1,0,,0,0,0,0,0,0,0,0
+P02-c3-t1,task,S4-1,S4,,freshness: no temperature observation is available for this space,,,,18,17,1,0,,0,0,0,0,0,0,0,0
+P02-c3-t2,task,S4-1,S4,,,"spatial_adequacy: a served zone links these spaces, but the link is not validated",,,33,14,1,0,,0,0,0,0,0,0,0,0
+P02-c3-t3,task,S4-1,S4,maintenance,,"spatial_adequacy: a served zone links these spaces, but the link is not validated",,,22,3,0,,,,,,,,,,
+P02-c3-t4,task,S3-2,S3,,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P02-c4-t1,task,S3-2,S3,,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P02-c4-t2,task,S4-3,S4,,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P02-c5-t1,task,S4-3,S4,,,,,,11,1,1,0,,0,0,0,0,0,0,0,0
+P02-c5-t2,task,S4-3,S4,,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,19,4,1,0,,0,0,0,0,0,0,0,0
+P02-c5-t3,task,S1-2,S1,,,,,,25,9,1,0,,0,0,0,0,0,0,0,0
+P02-c6-t1,other,,,,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t1,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t2,task,S4-2,S4,compare,,,,,25,2,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t3,task,S1-3,S1,capability,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t4,task,S1-3,S1,capability,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t5,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t6,task,S4-1,S4,deliberate,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,66,38,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t7,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P03-c1-t8,own_question,,,planner,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P03-c1-t9,own_question,,,self_description,,,,,7,1,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t10,own_question,,,metadata,,,,,22,2,1,0,,0,0,0,0,0,0,0,0
+P03-c1-t11,own_question,,,capability,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P04-c1-t1,task,S3-1,S3,,grounding_guard,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P04-c1-t2,task,S2-2,S2,,,"completeness: only 3% of the requested window was observed, below the 90% needed for an aggregate",,,27,1,1,0,,0,0,0,0,0,0,0,0
+P04-c2-t1,task,S2-2,S2,,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P04-c3-t1,task,S4-2,S4,,,,,,26,2,1,0,,0,0,0,0,0,0,0,0
+P04-c4-t1,task,S1-1,S1,,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,5,0,1,0,,0,0,0,0,0,0,0,0
+P04-c5-t1,other,,,,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P05-c1-t1,task,S4-3,S4,,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,18,0,1,0,,0,0,0,0,0,0,0,0
+P05-c1-t2,task,S4-3,S4,compare,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P05-c2-t1,task,S3-2,S3,maintenance,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P05-c3-t1,task,S4-1,S4,metadata,,,,,12,0,1,0,,0,0,0,0,0,0,0,0
+P05-c4-t1,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P05-c5-t1,task,S1-2,S1,metadata,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P05-c6-t1,task,S2-3,S2,deliberate,,,,,8,0,1,0,,0,0,0,0,0,0,0,0
+P05-c7-t1,own_question,,,deliberate,,,,,81,54,1,0,,0,0,0,0,0,0,0,0
+P05-c7-t2,own_question,,,capability,passage_relevance,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P05-c8-t1,own_question,,,compare,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P05-c8-t2,own_question,,,capability,,,,,1,1,1,0,,0,0,0,0,0,0,0,0
+P05-c8-t3,own_question,,,compare,,,,,7,1,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t1,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P06-c1-t2,task,S4-1,S4,deliberate,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,65,43,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t3,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t4,task,S1-3,S1,maintenance,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t5,task,S1-3,S1,sensor_data,,,,,41,13,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t6,task,S1-3,S1,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t7,task,S1-3,S1,capability,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t8,task,S4-2,S4,compare,,,,,25,2,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t9,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t10,task,S2-2,S2,spatial_query,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P06-c1-t11,task,S2-2,S2,events,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P06-c2-t1,own_question,,,metadata,,,,,22,2,1,0,,0,0,0,0,0,0,0,0
+P06-c2-t2,own_question,,,spatial_query,,,,,17,1,1,0,,0,0,0,0,0,0,0,0
+P06-c2-t3,own_question,,,clarification,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P06-c2-t4,own_question,,,capability,,,,,20,6,1,0,,0,0,0,0,0,0,0,0
+P07-c1-t1,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P07-c1-t2,task,S4-1,S4,deliberate,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,70,38,1,0,,0,0,0,0,0,0,0,0
+P07-c1-t3,task,S2-1,S2,compare,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P07-c1-t4,task,S1-3,S1,maintenance,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P07-c1-t5,task,S4-2,S4,compare,,,,,33,2,1,0,,0,0,0,0,0,0,0,0
+P07-c1-t6,task,S2-2,S2,events,,"permission: this asks whether a space is free to use, which only the booking or room-reservation system can establish; the available evidence is occupancy or motion, and occupancy or motion is not ava",,,1,0,1,0,,0,0,0,0,0,0,0,0
+P07-c1-t7,own_question,,,capability,,,,,5,5,1,0,,0,0,0,0,0,0,0,0
+P07-c1-t8,own_question,,,sensor_data,,,,,22,0,1,0,,0,0,0,0,0,0,0,0
+P07-c1-t9,own_question,,,recommend,,,,,15,0,1,0,,0,0,0,0,0,0,0,0
+P08-c1-t1,task,S4-3,S4,compare,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P08-c1-t2,task,S4-3,S4,observability,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P08-c1-t3,task,S4-3,S4,compare,,,,,25,3,1,0,,0,0,0,0,0,0,0,0
+P08-c1-t4,task,S4-3,S4,spatial_query,,,,,18,11,1,0,,0,0,0,0,0,0,0,0
+P08-c1-t5,task,S4-3,S4,observability,,"permission: this asks whether a space is free to use, which only the booking or room-reservation system can establish; the available evidence is occupancy or motion, and occupancy or motion is not ava",,,1,0,1,0,,0,0,0,0,0,0,0,0
+P08-c1-t6,task,S4-3,S4,visualization,,"completeness: only 10% of the requested window was observed, below the 90% needed for an aggregate",,,18,0,1,0,,0,0,0,0,0,0,0,0
+P08-c1-t7,task,S4-3,S4,visualization,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,18,2,1,0,,0,0,0,0,0,0,0,0
+P08-c1-t8,task,S4-3,S4,deliberate,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P08-c2-t1,task,S3-2,S3,maintenance,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P08-c2-t2,task,S3-2,S3,sensor_data,,,,,98,42,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t1,task,S4-1,S4,deliberate,,,,,8,5,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t2,task,S4-1,S4,visualization,,,,,20,1,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t3,task,S4-1,S4,sensor_data,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t4,task,S4-1,S4,discovery,,,,,71,12,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t5,task,S4-1,S4,metadata,,,,,59,14,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t6,task,S4-1,S4,metadata,,,,,9,1,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t7,task,S4-1,S4,,,,,,11,0,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t8,task,S4-1,S4,metadata,,,,,5,0,1,0,,0,0,0,0,0,0,0,0
+P08-c3-t9,task,S2-1,S2,anomaly,,,,,16,2,1,0,,0,0,0,0,0,0,0,0
+P08-c4-t1,task,S1-2,S1,compare,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P08-c4-t2,task,S1-2,S1,analytics,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P08-c4-t3,task,S1-2,S1,sensor_data,,"completeness: the longest silence in CO2 Level Sensor installed-node 5.12's readings is 4 hours, from 2025-01-21 09:00 to 2025-01-21 13:29, longer than 3 intervals at its declared cadence;spatial_adequacy: the reading is from Zone_5.12, which is not the space asked about",,,23,2,1,0,,0,0,0,0,0,0,0,0
+P08-c4-t4,task,S1-2,S1,sensor_data,,"completeness: only 0% of the requested window was observed, below the 90% needed for an aggregate",,,24,6,1,0,,0,0,0,0,0,0,0,0
+P08-c5-t1,task,S2-3,S2,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P08-c5-t2,task,S2-3,S2,metadata,,,,,10,1,1,0,,0,0,0,0,0,0,0,0
+P08-c5-t3,task,S2-3,S2,,,,,,31,16,1,0,,0,0,0,0,0,0,0,0
+P08-c6-t1,own_question,,,floor_plan,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P08-c6-t2,own_question,,,deliberate,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P08-c6-t3,own_question,,,sensor_data,,,,,14,3,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t1,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t2,task,S4-2,S4,compare,,,,,23,3,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t3,task,S4-2,S4,clarification,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t4,task,S4-2,S4,metadata,,,,,9,1,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t5,task,S4-2,S4,discovery,,,,,8,1,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t6,task,S4-2,S4,report,,,,,60,10,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t7,task,S1-3,S1,maintenance,,,,,3,1,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t8,task,S1-3,S1,planner,freshness: no energy_submeter observation is available for this space,,,,1,0,1,0,sole,0,0,0,0,0,1,0,0
+P09-c1-t9,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,15,3,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t10,task,S2-1,S2,trend,,,,,53,2,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t11,task,S2-1,S2,analytics,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t12,task,S2-1,S2,compare,,,,,36,3,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t13,task,S2-1,S2,metadata,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t14,task,S4-1,S4,spatial_query,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t15,task,S4-1,S4,analytics,,,,,18,1,1,0,sole,0,0,0,0,0,0,1,0
+P09-c1-t16,task,S4-1,S4,clarification,,,,,64,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t17,task,S4-1,S4,clarification,,,,,6,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t18,task,S4-1,S4,deliberate,,,,,67,44,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t19,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P09-c1-t20,task,S3-3,S3,metadata,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P09-c1-t21,task,S3-3,S3,floor_plan,,,,,20,1,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t22,own_question,,,sensor_data,,,,,25,8,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t23,own_question,,,metadata,,,,,23,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t24,own_question,,,clarification,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t25,own_question,,,clarification,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P09-c1-t26,own_question,,,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P10-c1-t1,task,S2-3,S2,metadata,,,,,7,0,1,0,,0,0,0,0,0,0,0,0
+P10-c1-t2,task,S1-1,S1,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P10-c1-t3,task,S1-1,S1,analytics,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P10-c1-t4,task,S4-2,S4,compare,,"spatial_adequacy: the reading is from Floor0, which is not the space asked about",,,34,6,1,0,,0,0,0,0,0,0,0,0
+P10-c1-t5,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P10-c1-t6,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,15,1,1,0,,0,0,0,0,0,0,0,0
+P10-c1-t7,task,S3-1,S3,sensor_data,,"completeness: only 64% of the requested window was observed, below the 90% needed for an aggregate",,,42,18,1,0,,0,0,0,0,0,0,0,0
+P10-c2-t1,own_question,,,deliberate,,"permission: this asks whether a space is free to use, which only the booking or room-reservation system can establish; the available evidence is occupancy or motion, and occupancy or motion is not ava",,,134,120,1,0,,0,0,0,0,0,0,0,0
+P10-c2-t2,own_question,,,sensor_data,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P10-c2-t3,own_question,,,trend,,,,,19,6,1,0,sole,0,0,0,0,0,0,1,0
+P10-c2-t4,own_question,,,analytics,,,,,5,1,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t1,task,S3-1,S3,capability,grounding_guard,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t2,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,8,1,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t3,task,S2-2,S2,events,,"permission: this asks whether a space is free to use, which only the booking or room-reservation system can establish; the available evidence is occupancy or motion, and occupancy or motion is not ava",,,1,0,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t4,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t5,task,S4-2,S4,compare,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t6,task,S4-2,S4,compare,,,,,19,1,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t7,task,S1-1,S1,analytics,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t8,task,S1-1,S1,analytics,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P11-c1-t9,task,S2-3,S2,metadata,,,,,11,1,1,0,,0,0,0,0,0,0,0,0
+P11-c2-t1,own_question,,,deliberate,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P11-c2-t2,own_question,,,metadata,,,,,37,1,1,0,,0,0,0,0,0,0,0,0
+P11-c2-t3,own_question,,,report,,completeness: the share of the window actually observed could not be established — worst-covered of 0 assessable stream(s); 1000 more declare no cadence and could not be assessed,,,68,10,1,0,,0,0,0,0,0,0,0,0
+P11-c2-t4,own_question,,,analytics,,,,,3,1,1,0,,0,0,0,0,0,0,0,0
+P12-c1-t1,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P12-c2-t1,task,S4-1,S4,metadata,,,,,18,0,1,0,,0,0,0,0,0,0,0,0
+P12-c3-t1,task,S3-2,S3,sensor_data,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P12-c4-t1,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,9,0,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t1,task,S2-3,S2,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t2,task,S1-2,S1,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t3,task,S1-2,S1,compare,,,,,37,1,1,0,sole,0,0,0,0,0,0,1,0
+P13-c1-t4,task,S1-2,S1,metadata,,"spatial_adequacy: the reading is from Zone_5.12, which is not the space asked about",,,18,1,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t5,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t6,task,S4-1,S4,metadata,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t7,task,S4-1,S4,analytics,,,,,2,1,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t8,task,S4-1,S4,metadata,,,,,13,0,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t9,task,S3-2,S3,maintenance,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P13-c1-t10,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P13-c1-t11,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,10,1,1,0,,0,0,0,0,0,0,0,0
+P13-c2-t1,own_question,,,capability,,,,,10,10,1,0,,0,0,0,0,0,0,0,0
+P13-c2-t2,own_question,,,deliberate,referent_existence,,,,4,0,1,0,sole,1,0,0,0,0,0,0,0
+P13-c2-t3,own_question,,,deliberate,,,,,130,112,1,0,,0,0,0,0,0,0,0,0
+P13-c2-t4,own_question,,,deliberate,,,,,110,102,1,0,sole,0,0,0,0,0,0,1,0
+P14-c1-t1,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P14-c1-t2,task,S3-3,S3,sensor_data,,,,,0,0,1,1,,0,0,0,0,0,0,0,0
+P14-c1-t3,task,S4-1,S4,deliberate,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,66,38,1,1,,0,0,0,0,0,0,0,0
+P14-c1-t4,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P14-c1-t5,task,S1-3,S1,events,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P14-c1-t6,task,S4-2,S4,compare,,,,,24,3,1,0,,0,0,0,0,0,0,0,0
+P14-c1-t7,task,S2-2,S2,events,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P14-c1-t8,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P14-c2-t1,own_question,,,sensor_data,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P14-c2-t2,own_question,,,trend,,,,,19,4,1,0,,0,0,0,0,0,0,0,0
+P14-c2-t3,own_question,,,analytics,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P14-c2-t4,own_question,,,capability,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P14-c2-t5,own_question,,,sensor_data,,,,,29,2,1,0,,0,0,0,0,0,0,0,0
+P14-c2-t6,own_question,,,capability,,,,,6,6,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t1,task,S3-1,S3,trend,,"completeness: only 64% of the requested window was observed, below the 90% needed for an aggregate",,,3,0,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t2,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P15-c1-t3,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,10,1,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t4,task,S2-2,S2,events,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t5,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t6,task,S4-2,S4,compare,,,,,29,3,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t7,task,S1-1,S1,metadata,,,,,17,0,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t8,task,S1-1,S1,sensor_data,,,,,14,0,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t9,task,S2-3,S2,metadata,,,,,6,1,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t10,task,S2-3,S2,metadata,,,,,9,1,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t11,task,S2-3,S2,metadata,,,,,1,1,1,0,,0,0,0,0,0,0,0,0
+P15-c1-t12,task,S2-3,S2,capability,passage_relevance,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P15-c2-t1,own_question,,,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P15-c2-t2,own_question,,,metadata,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P15-c2-t3,own_question,,,,,,,,,,1,0,sole,1,0,0,0,0,0,0,0
+P15-c2-t4,own_question,,,sensor_data,referent_existence,,,,2,0,0,,,,,,,,,,
+P16-c1-t1,task,S2-3,S2,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P16-c1-t2,task,S1-1,S1,compare,,,,,34,24,1,0,,0,0,0,0,0,0,0,0
+P16-c1-t3,task,S1-1,S1,analytics,,,,,8,0,1,0,,0,0,0,0,0,0,0,0
+P16-c1-t4,task,S4-2,S4,compare,,"spatial_adequacy: the reading is from Floor0, which is not the space asked about",,,31,4,1,0,,0,0,0,0,0,0,0,0
+P16-c1-t5,task,S2-2,S2,events,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P16-c1-t6,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,12,2,1,0,,0,0,0,0,0,0,0,0
+P16-c1-t7,task,S3-1,S3,observability,,"completeness: only 64% of the requested window was observed, below the 90% needed for an aggregate",,,3,0,1,0,,0,0,0,0,0,0,0,0
+P16-c2-t1,own_question,,,observability,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P16-c2-t2,own_question,,,capability,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P16-c2-t3,own_question,,,capability,,,,,2,2,1,0,,0,0,0,0,0,0,0,0
+P16-c2-t4,own_question,,,metadata,,,,,33,0,1,0,,0,0,0,0,0,0,0,0
+P16-c2-t5,own_question,,,planner,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P16-c2-t6,own_question,,,planner,,,,,112,2,1,0,,0,0,0,0,0,0,0,0
+P17-c1-t1,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P17-c1-t2,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P17-c1-t3,task,S4-2,S4,compare,,,,,29,3,1,0,,0,0,0,0,0,0,0,0
+P17-c1-t4,task,S1-3,S1,maintenance,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P17-c1-t5,task,S1-3,S1,metadata,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P17-c1-t6,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P17-c1-t7,task,S4-1,S4,deliberate,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,66,38,1,0,,0,0,0,0,0,0,0,0
+P17-c1-t8,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P17-c2-t1,own_question,,,sensor_data,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P17-c2-t2,own_question,,,deliberate,,,,,135,74,1,0,,0,0,0,0,0,0,0,0
+P17-c2-t3,own_question,,,clarification,,,,,6,0,1,0,,0,0,0,0,0,0,0,0
+P17-c2-t4,own_question,,,clarification,,,,,6,0,1,0,,0,0,0,0,0,0,0,0
+P17-c2-t5,own_question,,,metadata,,,,,16,0,1,0,,0,0,0,0,0,0,0,0
+P18-c1-t1,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P18-c2-t1,task,S3-2,S3,sensor_data,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P18-c2-t2,task,S3-2,S3,capability,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P18-c3-t1,task,S4-1,S4,metadata,,,,,33,0,1,0,,0,0,0,0,0,0,0,0
+P18-c4-t1,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P18-c5-t1,task,S1-2,S1,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P18-c6-t1,task,S2-3,S2,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P18-c7-t1,own_question,,,metadata,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P18-c8-t1,own_question,,,capability,,,,,20,6,1,0,,0,0,0,0,0,0,0,0
+P18-c9-t1,own_question,,,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P19-c1-t1,task,S2-3,S2,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P19-c1-t2,task,S1-1,S1,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P19-c1-t3,task,S1-1,S1,deliberate,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P19-c1-t4,task,S1-1,S1,analytics,,,,,14,1,1,0,,0,0,0,0,0,0,0,0
+P19-c1-t5,task,S4-2,S4,compare,,,,,24,3,1,0,,0,0,0,0,0,0,0,0
+P19-c1-t6,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P19-c1-t7,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,17,0,1,0,,0,0,0,0,0,0,0,0
+P19-c1-t8,task,S3-1,S3,trend,,,,,212,2,1,0,sole,0,0,0,0,0,0,1,0
+P19-c2-t1,own_question,,,deliberate,,"permission: this asks whether a space is free to use, which only the booking or room-reservation system can establish; the available evidence is occupancy or motion, and occupancy or motion is not ava",,,2,0,1,0,,0,0,0,0,0,0,0,0
+P19-c2-t2,own_question,,,self_description,,,,,7,1,1,0,,0,0,0,0,0,0,0,0
+P19-c2-t3,own_question,,,compare,,,,,30,5,1,0,,0,0,0,0,0,0,0,0
+P19-c2-t4,own_question,,,deliberate,,,,,86,24,1,0,,0,0,0,0,0,0,0,0
+P20-c1-t1,task,S2-3,S2,metadata,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P20-c1-t2,task,S1-2,S1,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P20-c1-t3,task,S1-2,S1,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P20-c1-t4,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P20-c1-t5,task,S4-1,S4,metadata,,,,,14,0,1,0,,0,0,0,0,0,0,0,0
+P20-c1-t6,task,S4-1,S4,metadata,,,,,13,0,1,0,,0,0,0,0,0,0,0,0
+P20-c1-t7,task,S3-2,S3,maintenance,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P20-c1-t8,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,13,0,1,0,,0,0,0,0,0,0,0,0
+P20-c2-t1,own_question,,,capability,,,,,4,4,1,0,,0,0,0,0,0,0,0,0
+P20-c2-t2,own_question,,,capability,,,,,12,12,1,0,,0,0,0,0,0,0,0,0
+P20-c2-t3,own_question,,,deliberate,,,,,133,77,1,0,,0,0,0,0,0,0,0,0
+P21-c1-t1,practice,,,metadata,,,,,8,4,1,0,,0,0,0,0,0,0,0,0
+P21-c1-t2,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P21-c1-t3,task,S4-1,S4,deliberate,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,66,38,1,0,,0,0,0,0,0,0,0,0
+P21-c1-t4,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P21-c1-t5,task,S1-3,S1,maintenance,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P21-c1-t6,task,S4-2,S4,compare,,,,,23,2,1,0,,0,0,0,0,0,0,0,0
+P21-c1-t7,task,S2-2,S2,events,,"permission: this asks whether a space is free to use, which only the booking or room-reservation system can establish; the available evidence is occupancy or motion, and occupancy or motion is not ava",,,4,0,1,0,,0,0,0,0,0,0,0,0
+P21-c1-t8,own_question,,,capability,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P21-c1-t9,own_question,,,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P22-c1-t1,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P22-c1-t2,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,8,1,1,0,,0,0,0,0,0,0,0,0
+P22-c1-t3,task,S3-2,S3,sensor_data,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P22-c1-t4,task,S4-1,S4,recommend,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,71,20,1,0,,0,0,0,0,0,0,0,0
+P22-c1-t5,task,S2-1,S2,compare,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P22-c1-t6,task,S2-1,S2,compare,,,,,19,1,1,0,sole,0,0,0,0,0,0,1,0
+P22-c1-t7,task,S2-1,S2,analytics,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P22-c1-t8,task,S1-2,S1,compare,,"spatial_adequacy: the reading is from Zone_5.12, which is not the space asked about",,,18,1,1,0,,0,0,0,0,0,0,0,0
+P22-c1-t9,task,S2-3,S2,capability,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P22-c2-t1,own_question,,,floor_plan,,,,,5,3,1,0,,0,0,0,0,0,0,0,0
+P22-c2-t2,own_question,,,,,,,,5,1,1,0,,0,0,0,0,0,0,0,0
+P22-c2-t3,own_question,,,capability,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t1,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t2,task,S2-2,S2,events,,,,,3,2,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t3,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t4,task,S4-2,S4,compare,,,,,26,3,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t5,task,S1-3,S1,maintenance,,,,,6,1,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t6,task,S1-3,S1,maintenance,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t7,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t8,task,S4-1,S4,deliberate,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,66,38,1,0,,0,0,0,0,0,0,0,0
+P23-c1-t9,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P23-c2-t1,own_question,,,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P23-c2-t2,own_question,,,observability,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P23-c2-t3,own_question,,,floor_plan,,,,,28,0,1,0,,0,0,0,0,0,0,0,0
+P23-c2-t4,own_question,,,floor_plan,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P23-c2-t5,own_question,,,capability,,,,,10,10,1,0,,0,0,0,0,0,0,0,0
+P24-c1-t1,task,S3-1,S3,spatial_query,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P24-c1-t2,task,S3-1,S3,observability,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P24-c1-t3,task,S4-3,S4,compliance,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,11,1,1,0,,0,0,0,0,0,0,0,0
+P24-c1-t4,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P24-c1-t5,task,S4-2,S4,compare,,,,,24,3,1,0,,0,0,0,0,0,0,0,0
+P24-c1-t6,task,S1-1,S1,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,5,0,1,0,,0,0,0,0,0,0,0,0
+P24-c1-t7,task,S1-1,S1,metadata,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,13,1,1,0,,0,0,0,0,0,0,0,0
+P24-c1-t8,task,S2-3,S2,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P24-c1-t9,task,S2-3,S2,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P24-c2-t1,own_question,,,events,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P24-c2-t2,own_question,,,sensor_data,,,,,31,16,1,0,,0,0,0,0,0,0,0,0
+P24-c2-t3,own_question,,,analytics,,,,,18,11,1,0,,0,0,0,0,0,0,0,0
+P24-c2-t4,own_question,,,analytics,,,,,9,2,1,0,,0,0,0,0,0,0,0,0
+P25-c1-t1,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,13,1,1,0,,0,0,0,0,0,0,0,0
+P25-c1-t2,task,S3-2,S3,deliberate,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P25-c1-t3,task,S4-1,S4,metadata,,,,,17,0,1,0,,0,0,0,0,0,0,0,0
+P25-c1-t4,task,S4-1,S4,deliberate,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,53,34,1,0,,0,0,0,0,0,0,0,0
+P25-c1-t5,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P25-c1-t6,task,S1-2,S1,compare,,"spatial_adequacy: the reading is from Zone_5.12, which is not the space asked about",,,20,1,1,0,,0,0,0,0,0,0,0,0
+P25-c1-t7,task,S2-3,S2,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P25-c2-t1,own_question,,,metadata,,"permission: this asks whether a space is free to use, which only the booking or room-reservation system can establish; the available evidence is occupancy or motion, and occupancy or motion is not ava",,,1,0,1,0,,0,0,0,0,0,0,0,0
+P25-c2-t2,own_question,,,capability,,,,,26,26,1,0,,0,0,0,0,0,0,0,0
+P25-c2-t3,own_question,,,floor_plan,,,,,11,0,1,0,,0,0,0,0,0,0,0,0
+P26-c1-t1,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P26-c1-t2,task,S4-2,S4,compare,,,,,28,1,1,0,,0,0,0,0,0,0,0,0
+P26-c1-t3,task,S1-3,S1,capability,,,,,3,3,1,0,,0,0,0,0,0,0,0,0
+P26-c1-t4,task,S1-3,S1,capability,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P26-c1-t5,task,S2-1,S2,anomaly,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P26-c1-t6,task,S4-1,S4,compare,,"spatial_adequacy: the reading is from Zone_5.07, which is not the space asked about",,,31,7,1,0,,0,0,0,0,0,0,0,0
+P26-c1-t7,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P26-c2-t1,own_question,,,capability,,,,,6,6,1,0,,0,0,0,0,0,0,0,0
+P26-c2-t2,own_question,,,anomaly,,,,,19,7,1,0,,0,0,0,0,0,0,0,0
+P26-c2-t3,own_question,,,observability,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P26-c2-t4,own_question,,,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,16,1,1,0,,0,0,0,0,0,0,0,0
+P27-c1-t1,task,S3-1,S3,events,,"completeness: only 64% of the requested window was observed, below the 90% needed for an aggregate",,,3,0,1,0,,0,0,0,0,0,0,0,0
+P27-c1-t2,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P27-c1-t3,task,S2-2,S2,events,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P27-c1-t4,task,S4-2,S4,compare,,,,,24,2,1,0,,0,0,0,0,0,0,0,0
+P27-c1-t5,task,S1-1,S1,analytics,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P27-c1-t6,task,S1-1,S1,metadata,,,,,3,0,1,0,,0,0,0,0,0,0,0,0
+P27-c1-t7,task,S1-1,S1,deliberate,,,,,30,11,1,0,,0,0,0,0,0,0,0,0
+P27-c1-t8,task,S2-3,S2,metadata,,,,,0,0,1,0,,0,0,0,0,0,0,0,0
+P27-c2-t1,own_question,,,floor_plan,,,,,0,0,1,1,sole,0,0,0,0,0,1,0,0
+P27-c2-t2,own_question,,,spatial_query,freshness: no tvoc observation is available for this space,,,,1,0,1,1,,0,0,0,0,0,0,0,0
+P27-c2-t3,own_question,,,sensor_data,,,,,19,0,1,1,,0,0,0,0,0,0,0,0
+P27-c2-t4,own_question,,,sensor_data,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P27-c2-t5,own_question,,,sensor_data,,,,,26,10,1,0,,0,0,0,0,0,0,0,0
+P28-c1-t1,task,S3-3,S3,sensor_data,referent_existence,,,,2,0,1,0,sole,1,0,0,0,0,0,0,0
+P28-c1-t2,task,S4-1,S4,deliberate,,,,,54,39,1,0,,0,0,0,0,0,0,0,0
+P28-c1-t3,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is expired,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P28-c1-t4,task,S1-3,S1,maintenance,,,,,0,0,1,1,,0,0,0,0,0,0,0,0
+P28-c1-t5,task,S4-2,S4,compare,,,,,29,2,1,1,,0,0,0,0,0,0,0,0
+P28-c1-t6,task,S2-2,S2,metadata,,,,,4,0,1,1,,0,0,0,0,0,0,0,0
+P28-c1-t7,task,S2-2,S2,metadata,,,,,2,0,1,1,,0,0,0,0,0,0,0,0
+P28-c1-t8,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P28-c1-t9,task,S2-2,S2,metadata,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P28-c2-t1,own_question,,,deliberate,,,,,85,81,1,0,,0,0,0,0,0,0,0,0
+P28-c2-t2,own_question,,,deliberate,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P28-c2-t3,own_question,,,floor_plan,,,,,0,0,1,1,sole,0,0,0,0,0,1,0,0
+P28-c2-t4,own_question,,,sensor_data,,,,,2,0,1,1,,0,0,0,0,0,0,0,0
+P28-c2-t5,own_question,,,analytics,,"completeness: the longest silence in Air Temperature Sensor installed-node 5.19's readings is 8 hours, from [session date] to [session date], longer than 3 intervals at its declared cadence",,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P28-c2-t6,own_question,,,analytics,,,,,30,1,1,0,,0,0,0,0,0,0,0,0
+P29-c1-t1,task,S2-3,S2,spatial_query,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P29-c1-t2,task,S1-2,S1,metadata,,,,,2,0,1,1,,0,0,0,0,0,0,0,0
+P29-c1-t3,task,S1-2,S1,analytics,,,,,37,1,1,1,sole,0,0,0,0,0,0,1,0
+P29-c1-t4,task,S1-2,S1,maintenance,,"spatial_adequacy: the reading is from Zone_5.12, which is not the space asked about",,,18,1,1,0,,0,0,0,0,0,0,0,0
+P29-c1-t5,task,S2-1,S2,compliance,,calibration: a safety or compliance claim cannot rest on a sensor whose calibration is unknown,,,18,1,1,0,,0,0,0,0,0,0,0,0
+P29-c1-t6,task,S4-1,S4,metadata,,,,,65,43,1,0,,0,0,0,0,0,0,0,0
+P29-c1-t7,task,S3-2,S3,maintenance,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P29-c1-t8,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P29-c2-t1,own_question,,,capability,,,,,1,1,1,0,,0,0,0,0,0,0,0,0
+P29-c2-t2,own_question,,,observability,,,,,0,0,1,1,,0,0,0,0,0,0,0,0
+P29-c2-t3,own_question,,,metadata,,,,,1,0,1,1,,0,0,0,0,0,0,0,0
+P29-c2-t4,own_question,,,observability,,,,,0,0,1,1,,0,0,0,0,0,0,0,0
+P29-c2-t5,own_question,,,metadata,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P29-c2-t6,own_question,,,observability,,,,,0,0,1,1,,0,0,0,0,0,0,0,0
+P29-c2-t7,own_question,,,observability,,,,,0,0,1,1,,0,0,0,0,0,0,0,0
+P29-c2-t8,own_question,,,observability,,,,,5,0,1,0,,0,0,0,0,0,0,0,0
+P30-c1-t1,task,S2-3,S2,spatial_query,,,,,1,0,1,0,,0,0,0,0,0,0,0,0
+P30-c1-t2,task,S1-1,S1,deliberate,,,,,29,22,1,0,,0,0,0,0,0,0,0,0
+P30-c1-t3,task,S4-2,S4,compare,,"spatial_adequacy: the reading is from Floor0, which is not the space asked about",,,29,3,1,0,,0,0,0,0,0,0,0,0
+P30-c1-t4,task,S2-2,S2,events,,,,,4,0,1,0,,0,0,0,0,0,0,0,0
+P30-c1-t5,task,S4-3,S4,trend,,"completeness: only 8% of the requested window was observed, below the 90% needed for an aggregate",,,13,1,1,0,,0,0,0,0,0,0,0,0
+P30-c1-t6,task,S3-1,S3,sensor_data,,"completeness: only 64% of the requested window was observed, below the 90% needed for an aggregate",,,3,0,1,0,,0,0,0,0,0,0,0,0
+P30-c2-t1,own_question,,,floor_plan,,,,,0,0,1,0,sole,0,0,0,0,0,1,0,0
+P30-c2-t2,own_question,,,deliberate,,,,,0,0,1,1,,0,0,0,0,0,0,0,0
+P30-c2-t3,own_question,,,sensor_data,,"permission: this asks whether a space is free to use, which only the booking or room-reservation system can establish; the available evidence is occupancy or motion, and occupancy or motion is not ava",,,1,0,1,1,,0,0,0,0,0,0,0,0
+P30-c2-t4,own_question,,,capability,,,,,9,9,1,0,,0,0,0,0,0,0,0,0
+P30-c2-t5,own_question,,,capability,,,,,2,0,1,0,,0,0,0,0,0,0,0,0
+P30-c2-t6,own_question,,,capability,,,,,0,0,1,0,,0,0,0,0,0,0,0,0

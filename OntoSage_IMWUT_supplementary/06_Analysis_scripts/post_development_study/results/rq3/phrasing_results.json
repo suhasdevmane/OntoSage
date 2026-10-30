@@ -1,0 +1,82 @@
+{
+ "label_source": "HUMAN_AGREED",
+ "n_first_questions": 176,
+ "received_answers_about_another_task": [
+  0,
+  165
+ ],
+ "about_another_task": {
+  "n": 5,
+  "pairs": [
+   "S2-1 asked about S1-2",
+   "S4-1 asked about S1-2",
+   "S3-2 asked about S4-1",
+   "S4-3 asked about S3-2",
+   "S2-2 asked about S4-3"
+  ]
+ },
+ "n_compared": 171,
+ "by_dimension": {
+  "place": {
+   "specified": 163,
+   "missing": 8
+  },
+  "time": {
+   "specified": 136,
+   "n/a": 27,
+   "missing": 8
+  },
+  "criterion": {
+   "n/a": 96,
+   "specified": 73,
+   "missing": 2
+  }
+ },
+ "rates": {
+  "incomplete": {
+   "n": 13,
+   "first_answer_W_or_WL": 0.46153846153846156,
+   "lo": 0.23076923076923078,
+   "hi": 0.7272727272727273,
+   "decisions_correct": 0.38461538461538464
+  },
+  "complete": {
+   "n": 158,
+   "first_answer_W_or_WL": 0.4240506329113924,
+   "lo": 0.375,
+   "hi": 0.47058823529411764,
+   "decisions_correct": 0.5443037974683544
+  }
+ },
+ "pasted_decision_question": {
+  "n": 17,
+  "of_which_something_missing": 4,
+  "by_form": {
+   "S2-2": 4,
+   "S1-3": 3,
+   "S4-2": 2,
+   "S3-1": 2,
+   "S2-3": 2,
+   "S1-1": 1,
+   "S4-3": 1,
+   "S1-2": 1,
+   "S3-2": 1
+  }
+ },
+ "missing_by_form": {
+  "S4-2": 3,
+  "S1-3": 3,
+  "S4-3": 2,
+  "S1-2": 1,
+  "S3-1": 1,
+  "S2-3": 1,
+  "S2-1": 1,
+  "S4-1": 1
+ },
+ "note": "exploratory; specification checked deterministically against each form's goal card",
+ "inputs": {
+  "decisions.csv": "0e90cb8d69a367ed",
+  "turns.csv": "038a917dbe6f9d71",
+  "answer_labels_agreed.csv": "23e3f11f11bb9290"
+ }
+}

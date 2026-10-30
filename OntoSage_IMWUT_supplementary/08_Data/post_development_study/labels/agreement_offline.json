@@ -1,0 +1,56 @@
+{
+ "humans": {
+  "pair": "coder 1 vs coder 2",
+  "n": 130,
+  "percent_agreement": 0.9461538461538461,
+  "kappa": 0.9296047033341068,
+  "kappa_ci": [
+   0.8714456464898802,
+   0.9703280989507131
+  ],
+  "kappa_U_vs_not_U": 1.0,
+  "by_situation": {
+   "none": {
+    "n": 130,
+    "kappa": 0.9296047033341068,
+    "agreement": 0.9461538461538461
+   }
+  }
+ },
+ "ai_vs_coder1": {
+  "pair": "AI pre-label vs coder 1",
+  "n": 300,
+  "percent_agreement": 0.98,
+  "kappa": 0.974349839686498,
+  "kappa_ci": [
+   0.9528214711254364,
+   0.9914920227076245
+  ],
+  "kappa_U_vs_not_U": 0.954846478025286,
+  "by_situation": {
+   "none": {
+    "n": 300,
+    "kappa": 0.974349839686498,
+    "agreement": 0.98
+   }
+  }
+ },
+ "ai_vs_coder2": {
+  "pair": "AI pre-label vs coder 2",
+  "n": 130,
+  "percent_agreement": 0.9461538461538461,
+  "kappa": 0.9296047033341068,
+  "kappa_ci": [
+   0.8756127084905906,
+   0.9792360024193464
+  ],
+  "kappa_U_vs_not_U": 1.0,
+  "by_situation": {
+   "none": {
+    "n": 130,
+    "kappa": 0.9296047033341068,
+    "agreement": 0.9461538461538461
+   }
+  }
+ }
+}

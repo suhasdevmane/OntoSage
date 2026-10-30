@@ -1,0 +1,81 @@
+code,slot,answered,would_rely,n_turns_linked,label_last,label_worst
+P01,OQ1,Yes,Yes,1,W,W
+P02,OQ2,No,No,0,not linked,not linked
+P03,OQ1,Yes,Yes,1,FD,FD
+P03,OQ2,Yes,Yes,1,OT,OT
+P03,OQ3,Partly,Yes,1,FD,FD
+P04,OQ1,No,No,0,not linked,not linked
+P05,OQ1,Partly,No,2,OT,FD
+P05,OQ3,Partly,No,1,W,W
+P06,OQ1,Yes,Yes,2,W,W
+P06,OQ2,Partly,No,1,W,W
+P06,OQ3,Yes,Yes,1,OT,OT
+P07,OQ1,Partly,Yes,1,W,W
+P07,OQ2,Partly,No,1,W,W
+P07,OQ3,Partly,No,1,U,U
+P08,OQ1,Partly,Yes,0,not linked,not linked
+P08,OQ2,No,No,0,not linked,not linked
+P08,OQ3,Partly,Yes,0,not linked,not linked
+P09,OQ1,Yes,Yes,1,W,W
+P09,OQ2,Partly,No,1,FD,FD
+P09,OQ3,No,No,2,OT,OT
+P10,OQ1,Yes,Yes,1,W,W
+P10,OQ2,Yes,Yes,2,OT,OT
+P10,OQ3,Partly,Yes,1,U,U
+P11,OQ1,Yes,Yes,1,FD,FD
+P11,OQ2,Yes,Yes,1,WL,WL
+P11,OQ3,Yes,Yes,1,U,U
+P12,OQ1,No,No,0,not linked,not linked
+P13,OQ1,Yes,Yes,1,W,W
+P13,OQ2,Yes,Yes,2,FD,FD
+P13,OQ3,Yes,Yes,1,W,W
+P14,OQ1,Yes,Yes,2,OT,OT
+P14,OQ2,Partly,Yes,1,WL,WL
+P14,OQ3,Yes,Yes,1,FD,FD
+P15,OQ1,Yes,Yes,1,WL,WL
+P15,OQ2,Yes,Yes,2,WL,WL
+P15,OQ3,Yes,Yes,0,not linked,not linked
+P16,OQ1,Yes,Yes,3,U,U
+P16,OQ2,Yes,Yes,1,U,U
+P16,OQ3,Partly,No,2,WL,OT
+P17,OQ1,Partly,Yes,1,FD,FD
+P17,OQ2,Yes,Yes,1,W,W
+P17,OQ3,Partly,Yes,2,OT,OT
+P18,OQ1,Yes,No,1,FD,FD
+P18,OQ2,Yes,Yes,1,W,W
+P18,OQ3,Partly,No,1,FD,FD
+P19,OQ1,Yes,Yes,1,FD,FD
+P19,OQ2,Yes,Yes,1,OT,OT
+P19,OQ3,Yes,Yes,1,W,W
+P20,OQ1,Yes,Yes,1,W,W
+P20,OQ2,Yes,Yes,1,W,W
+P20,OQ3,Yes,Yes,1,OT,OT
+P21,OQ1,Partly,No,1,U,U
+P21,OQ2,Yes,No,1,FD,FD
+P22,OQ1,Yes,Yes,1,W,W
+P22,OQ2,Yes,Yes,1,W,W
+P22,OQ3,No,Yes,1,FD,FD
+P23,OQ1,Yes,Yes,1,W,W
+P23,OQ2,Partly,Yes,1,OT,OT
+P23,OQ3,Yes,Yes,3,W,FD
+P24,OQ1,Yes,Yes,1,FD,FD
+P24,OQ2,Partly,No,1,OT,OT
+P24,OQ3,Yes,Yes,1,U,U
+P25,OQ1,No,Yes,1,FD,FD
+P25,OQ2,Yes,Yes,1,W,W
+P25,OQ3,Yes,Yes,1,FD,FD
+P26,OQ1,Yes,Yes,1,W,W
+P26,OQ2,Yes,Yes,2,OT,U
+P26,OQ3,Partly,Yes,1,FD,FD
+P27,OQ1,Yes,Yes,2,W,FD
+P27,OQ2,No,No,2,WL,FD
+P27,OQ3,Yes,Yes,1,W,W
+P28,OQ1,Yes,Yes,1,WL,WL
+P28,OQ2,Partly,Yes,1,FD,FD
+P28,OQ3,Yes,Yes,1,FD,FD
+P29,OQ1,Yes,Yes,1,WL,WL
+P29,OQ2,Partly,No,3,FD,FD
+P29,OQ3,Yes,Yes,1,FD,FD
+P30,OQ1,Yes,Yes,2,WL,WL
+P30,OQ2,Yes,Yes,2,W,FD
+P30,OQ3,Partly,Yes,2,OT,FD

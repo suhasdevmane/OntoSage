@@ -1,0 +1,88 @@
+code,slot,added_with_button,question,use,asked_live_order,answered,would_rely
+P01,OQ1,0,How does the air-conditioning system work in Building A?,Understand why and how this building been managed since is a bit bad,1,Yes,Yes
+P01,OQ2,0,What are the types of room available and can I book a room as a student?,Reserve a quiet room for meeting.,,,
+P02,OQ1,0,Where is the HVAC system are?,In each room or where is it.,,,
+P02,OQ2,0,Why is the temperature different between the rooms?,,1,No,No
+P02,OQ3,0,How many students/members are on the Building A xxx floor?,,,,
+P03,OQ1,0,can you tell me how much energy is used in the Building A and how green it is compared to standards?,i am curious about energy usage. I will use this information to look into energysaving options.,1,Yes,Yes
+P03,OQ2,0,how many floors are there and when was it built? you have information who built this architecture?,I wanted to find out who built abacw.,2,Yes,Yes
+P03,OQ3,0,what i can do with this system and how it will support me to my daily life? does the building records personal information? is Building A safe?,i want to make sure i live in the safe and secure building.,3,Partly,Yes
+P04,OQ1,0,What is the address of the building?,,1,No,No
+P05,OQ1,0,How does the ventilation work?,,2,Partly,No
+P05,OQ2,0,How to control the room temperature?,,,,
+P05,OQ3,0,Where can I find a free space for meeting?,,1,Partly,No
+P06,OQ1,0,HOW MANY FLOORS ARE IN THE BUILDING?,DETERMINE HOW FEASIBLE IT IS TO USE THE STAIRS AND NOT THE LIFT,1,Yes,Yes
+P06,OQ2,0,WHAT IS THE LARGEST ROOM?,TO BOOK A MEETING SPACE,2,Partly,No
+P06,OQ3,0,IS THERE AN ONSITE CAFE?,INFORM MEETING DELEGATES,3,Yes,Yes
+P07,OQ1,0,How do you book rooms in Building A,Use it to book rooms for group projects,1,Partly,Yes
+P07,OQ2,0,How do you check the availability of rooms,To see how busy the building is,2,Partly,No
+P07,OQ3,0,How do you change the temperature of the rooms,To make the rooms more comfortable to work in,3,Partly,No
+P08,OQ1,0,"What is the temperature and humidity?
+I put this question because I am working with sensitive electronics device and a high humidity can damage my device. Besides, I prefer working in a good temperature and humidity.",I will contact the Facilities team if the temperature is too low or if the humidity is too high.,2,Partly,Yes
+P08,OQ2,0,"Where is ""Someone's name, e.g. [name]"" office?
+I put this question because I have a few collaborations in the same building and I will visit one of them occationally but I can not remember their office number.",I navigate myself to the room that I want to go to.,1,No,No
+P08,OQ3,0,Which rooms are available for me to have a meeting from 12:00PM tomorrow to 14:00PM tomorrow with a screen for presentation?,I will use that availability to book the room for meeting.,3,Partly,Yes
+P09,OQ1,0,Give me the temperature in my office room ?,"i feel nervous, i want to check the temperature so that i can go to different room.",1,Yes,Yes
+P09,OQ2,0,Can you check is the building cleaned regally?,i'd to work for long hours,2,Partly,No
+P09,OQ3,0,Have there been any fire alarms in Building A this month?,I want to know is the building safe,3,No,No
+P10,OQ1,0,Which nearby rooms are currently available and least noisy on floor 5?,finding a quiet place to work.,1,Yes,Yes
+P10,OQ2,0,Is the air quality in my room getting better or worse today?,understand changing indoor environmental conditions.,2,Yes,Yes
+P10,OQ3,0,Are any sensors or building services currently reporting faults?,identify problems that could affect my visit.,3,Partly,Yes
+P11,OQ1,0,Which rooms have the best conditions for a focused meeting?,I want to book a room for meeting. I wan this room best suitable for the meeting.,1,Yes,Yes
+P11,OQ2,0,Can you generate a report of the building's environmental performance this week?,I want to see the overall health of the building.,2,Yes,Yes
+P11,OQ3,0,Are any sensors or building services currently reporting faults?,"I want to know any faults in the building, so i will know how good is the building people reporting the faults.",3,Yes,Yes
+P12,OQ1,0,Why all rooms are with glass windows?,"I am curious about why glass is picked, as it provides no privacy.",3,No,No
+P13,OQ1,0,i want to use the washroom/toilet. I am in the 2nd floor. Is there any toilets nearby?,I want to find a place in Building A.,1,Yes,Yes
+P13,OQ2,0,Can you tell me how much is the temperature and humidity in the room 2.25 today or the last time you checked. can you show me the graph how much it varies?,i want to see changing environemnt to plan my travel or to plan schedule in the room.,2,Yes,Yes
+P13,OQ3,0,can you tell me about any low-noise or quiet place on the 2nd floor?,I just want to relax in quiet place.,3,Yes,Yes
+P14,OQ1,0,Is the air quality in my room getting better or worse today in my room?,i want to check if i am sittin gin the good temeperature range and ventilation is on.,1,Yes,Yes
+P14,OQ2,0,Which areas of the building are currently overcrowded?,just wants to know if this building is usually busy or due to just due to starting of new semester.,2,Partly,Yes
+P14,OQ3,0,Can you tell me how to reach Building A and what the abilities of the Building A are? Can you summarise everything about the Building A?,i wanted know more about the building so i can take benefits form the service.,3,Yes,Yes
+P15,OQ1,0,When will room 4.32 be available to book for next tuesday?,i want to make a room booking for my class.,1,Yes,Yes
+P15,OQ2,0,how many people can sit into the room 4.32? is it enough for 50 people?,want to check how many students can be comfortable to be in class.,2,Yes,Yes
+P15,OQ3,0,can i report a maintenance issue for the 4th-floor washroom that needs to be fixed before my next tuesday class session?,"i will check make sure the students are confortable in class and use nearby amenities, otherwise i will choose different classroom as session will take place for 3 hours.",3,Yes,Yes
+P16,OQ1,0,can you tell me about Building A facilities?,i am intrested to know about this building.,1,Yes,Yes
+P16,OQ2,0,how many floors are there? does Building A have a kitchen or common room for lunch for staff? Where is it located?,i am planning to visit Building A in lunch time.,2,Yes,Yes
+P16,OQ3,0,How many floors are there in the building?,just wondering.,3,Partly,No
+P16,OQ4,1,Where is the office?,i want to meet the office staff.,,,
+P17,OQ1,0,How comfortable and healthy is the indoor environment in the Building A if i plan to visit?,I want to know whether my working environment is comfortable and suitable for productive work,1,Partly,Yes
+P17,OQ2,0,where is the best place for me to work or hold a meeting right now?,"as a visiting staff member, I may not know which rooms are available, comfortable or equipped with the facilities i need",2,Yes,Yes
+P17,OQ3,0,"Analyse the energy consumption over the past week. Are there any unusual patterns, and what actions could improve comfort while reducing energy waste?",want to understand how efficiently the building operates and whether any issues are affecting staff comfort etc.,3,Partly,Yes
+P18,OQ1,0,How many lecture theatres are there in total in Building A?,How conveninet it is for students to attend lectures,1,Yes,No
+P18,OQ2,0,Is there a cafe in the building?,Where can students take breaks in between lectures,2,Yes,Yes
+P18,OQ3,0,How many computer suites are there in Building A?,Are they open to students on different courses,3,Partly,No
+P19,OQ1,0,"Which facilities and capabilities, functions are available to provide and support my questions?",to understand how i can use the system and ask different questions for my work and visits.,1,Yes,Yes
+P19,OQ2,0,How does today's temperature and air quality compare with yesterday's in floor 2?,"i am visiting floor 2, this will help me understand the how good it is.",2,Yes,Yes
+P19,OQ3,0,Which rooms have the best conditions for a focused meeting? sugguest me a room for meeting .,arrange a meeting with a member.,3,Yes,Yes
+P20,OQ1,0,where is the washroom toilet in floor 5? Does it have a baby or disabled toilet anywhere?,i want to know about this so that i can bring my kid with me to visit.,1,Yes,Yes
+P20,OQ2,0,Where i can find the water station to fill my bottle? does Building A have any kitchen?,i want to know where i can get water for drinking.,2,Yes,Yes
+P20,OQ3,0,Can you tell me where i can sit in the floor 5 where the temperature is warn and find this good place for me to sit.,I want to find out where to sit and i prefer warm places while i work.,3,Yes,Yes
+P21,OQ1,0,What are the main purposes of the building,figure out if I could use this building,1,Partly,No
+P21,OQ2,0,Are there any lab rooms in the building,can i use the building to take blood for a study,2,Yes,No
+P22,OQ1,0,where i can find room 5.62?,I want to meet a person who told me to come to the room 5.62.,1,Yes,Yes
+P22,OQ2,0,where I can find the reception of the department?,I want to meet to the office staff to enquire about the something.,2,Yes,Yes
+P22,OQ3,0,how many employees are working in the school and how big is the Building A school?,I want to find out about the Building A for my own knowledge and to compare with the other school buildings.,3,No,Yes
+P23,OQ1,0,I'm outside Building A. Which entrance should I use for my event today?,i want to find out how i chould enter in the building.,1,Yes,Yes
+P23,OQ2,0,can you tell me where is my conference is scheduled and which conference room?,I want to find out where is the conference room to attend the conference.,2,Partly,Yes
+P23,OQ3,0,Can you show me where the toilet washroom is on floors?,i want to find out where is the nearest washroom to use while i am attending conference.,3,Yes,Yes
+P24,OQ1,0,"Lecture scheduled in Room 2.24, is the room less stuffy and less noisy?",want to choose right and healthy space to attend class.,1,Yes,Yes
+P24,OQ2,0,How many students can fit in room 2.24?,want to know the students numbers in my class.,2,Partly,No
+P24,OQ3,0,What is the average temperature of room 2.24 for the last weekday?,I want to find out the temperature so that i can decide how long i can stay with a coat.,3,Yes,Yes
+P25,OQ1,0,Which student areas are officially open on saturday mornings?,wanted to know about the palce for my visit.,1,No,Yes
+P25,OQ2,0,what are the opening hours of the Building A building?,wanted to know about the opening hours for my visit.,2,Yes,Yes
+P25,OQ3,0,Can you compare temperature levels on all floors?,wanted to know so that i can choose which floor i should choose to go.,3,Yes,Yes
+P26,OQ1,0,where are the different water stations to fill the water?,i need to get the water to drink.,1,Yes,Yes
+P26,OQ2,0,Is there any abnormal temperature rise on floor 4?,i want to check if temeprature issues in Building A still there.,2,Yes,Yes
+P26,OQ3,0,can you tell me whether the building follows the sustainability standards?,i want to check this buildings standard.,3,Partly,Yes
+P27,OQ1,0,show me the floor 3 plan and the location of the kitchen.,i need to find where the kitchen is.,1,Yes,Yes
+P27,OQ2,0,Can you tell me how much VOC such as MQ5 are present last recorded time in a room 5.60 or any simialr room.,i want to see if no VOCs are present in Building A.,2,No,No
+P27,OQ3,0,can you calculate co2 level in my office 5.34?,want to check co2 level in my room.,3,Yes,Yes
+P28,OQ1,0,"where i can sit in the building where glare will be minimum in the afternoon, as i feel uncomfortable in glare area due to my laptop?",i want to choose a perfect spot for work.,1,Yes,Yes
+P28,OQ2,0,Where can I find the low-noise area or floor?,want to find a quite pllace to work.,2,Partly,Yes
+P28,OQ3,0,Where is the lowest and highest temperature readings for all floors yesterday?,i want to choose a floor based on the temeprature range of yesterday's data available.,3,Yes,Yes
+P29,OQ1,0,Is the air conditioning working?,to know if i am having good air.,1,Yes,Yes
+P29,OQ2,0,Do you monitor the VOC levels?,do know building monitors VOC for healthy environment.,3,Partly,No
+P29,OQ3,0,are you older or a new build? When was it constructed? by whom it is constructed?,just for my knowledge.,2,Yes,Yes
+P30,OQ1,0,"where are the printers located, do you have any information?",want to print some articles.,1,Yes,Yes
+P30,OQ2,0,where i can find the kitchen and common staff room?,want to get a coffee and spend some with people..,2,Yes,Yes
+P30,OQ3,0,How many people can occupy this Building at once? what is the capacity of the Building A?,Just for my own knowledge.,3,Partly,Yes

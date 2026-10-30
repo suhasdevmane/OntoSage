@@ -1,0 +1,158 @@
+[
+ {
+  "type": "function",
+  "function": {
+   "name": "resolve_terms",
+   "description": "Building concepts and sensor classes that lay words map to.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "text": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "text"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "find_spaces",
+   "description": "Rooms, zones and floors whose name or id contains the text, with the facts the building model records about each (type, floor, capacity and other properties).",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "name_or_kind": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "name_or_kind"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "find_points",
+   "description": "Sensor points measuring a quantity in a place, with timeseries ids (uuid) and stores (stored_at); lists the other points in the place when none match.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "place": {
+      "type": "string"
+     },
+     "quantity": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "place",
+     "quantity"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "get_readings",
+   "description": "Readings between start and end (building LOCAL time, YYYY-MM-DDTHH:MM): per point n, first/last time, min/mean/max, largest gap, and how many of the points asked had data.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "points": {
+      "type": "array",
+      "items": {
+       "type": "object",
+       "properties": {
+        "uuid": {
+         "type": "string"
+        },
+        "stored_at": {
+         "type": "string"
+        }
+       },
+       "required": [
+        "uuid",
+        "stored_at"
+       ]
+      }
+     },
+     "start": {
+      "type": "string"
+     },
+     "end": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "points",
+     "start",
+     "end"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "query_records",
+   "description": "Rows of a building register (bookings, maintenance, schedules, inspections, ...), optionally filtered by text; with no match, the list of registers the building holds.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "register": {
+      "type": "string"
+     },
+     "contains": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "register"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "search_documents",
+   "description": "Passages from the building's uploaded documents, with document names.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "query": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "query"
+    ]
+   }
+  }
+ },
+ {
+  "type": "function",
+  "function": {
+   "name": "find_amenities_or_topics",
+   "description": "Facilities and knowledge topics the building describes.",
+   "parameters": {
+    "type": "object",
+    "properties": {
+     "text": {
+      "type": "string"
+     }
+    },
+    "required": [
+     "text"
+    ]
+   }
+  }
+ }
+]

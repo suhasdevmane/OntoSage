@@ -1,0 +1,5 @@
+run_file,system,log_available,answers_route_referent_refused,answers,window_shared,answers_referent_refused,answers_referent_asked_which,answers_referent_bound_only_one,answers_referent_failed_closed,answers_referent_failed_open,answers_relevance_replaced,answers_relevance_objected_kept,answers_relevance_failed_open,answers_any_check_acted,events_assigned_by_time
+comparison,A,1,4,100,60.0,4.0,0.0,0.0,0.0,0.0,5.0,4.0,0.0,9.0,2
+comparison_aminus,A-minus,0,0,100,,,,,,,,,,,0
+stability,A,1,9,90,51.0,9.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,9.0,0
+ttask,A,1,3,36,24.0,3.0,0.0,0.0,0.0,0.0,0.0,1.0,0.0,3.0,0

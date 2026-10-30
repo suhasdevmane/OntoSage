@@ -8,3 +8,8 @@
 # Frozen evaluation sets: MANIFEST.json pins each file's SHA256, so the bytes must be identical
 # on every clone. An end-of-line rewrite on checkout would make every hash fail to verify.
 eval/compound/** -text
+
+# Supplementary material of the IMWUT submission: published byte for byte as uploaded with the article. Four
+# of its files are the comparison assistant's code with the Windows line endings with which it ran, and their
+# SHA-256 is recorded in every answer it gave; an end-of-line rewrite would break that check.
+OntoSage_IMWUT_supplementary/** -text

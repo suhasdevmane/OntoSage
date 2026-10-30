@@ -1,0 +1,391 @@
+{
+ "about": "Computed keys of the 12 study forms of the task bank frozen on 14 October 2026 (02_Task_bank_and_keys/README.md). Times are UTC.",
+ "seed": 20261009,
+ "excluded_rooms": [
+  "0.50",
+  "0.95",
+  "1.06",
+  "2.01",
+  "2.15",
+  "3.01",
+  "3.10",
+  "3.15",
+  "5.01",
+  "5.08"
+ ],
+ "excluded_rooms_note": "rooms used in the system's regression tests, left out of every draw",
+ "forms": [
+  {
+   "form": "S1-1",
+   "situation": "S1",
+   "key": {
+    "answer": "Yes",
+    "n": 945,
+    "min": 22.32,
+    "max": 22.64,
+    "mean": 22.5,
+    "first_utc": "2025-01-14T09:00:05",
+    "last_utc": "2025-01-14T11:59:55",
+    "max_gap_min": 0.3,
+    "uuid": "fb509c82-4caa-4284-bb84-3cbf60ee61db",
+    "store": "database1"
+   },
+   "provenance": [
+    "temperature: measured (real snapshot, wide table)"
+   ],
+   "params": {
+    "room": "5.02",
+    "date": "2025-01-14",
+    "window_local": "09:00-12:00",
+    "band_c": [
+     20,
+     24
+    ]
+   },
+   "eligible_n": 2,
+   "notes": []
+  },
+  {
+   "form": "S1-2",
+   "situation": "S1",
+   "key": {
+    "answer": "Room 5.04",
+    "mean_ppm": {
+     "5.04": 478.4,
+     "5.12": 582.4
+    },
+    "uuids": {
+     "5.04": "c881203d-a1fc-4574-9883-6e6a2cc71bef",
+     "5.12": "622bcc26-32fb-462b-b2c7-f9d4aee15335"
+    },
+    "store": "database1"
+   },
+   "provenance": [
+    "CO₂: measured (real snapshot, wide table)"
+   ],
+   "params": {
+    "rooms": [
+     "5.04",
+     "5.12"
+    ],
+    "date": "2025-01-21",
+    "window_local": "09:00-17:00"
+   },
+   "eligible_n": 536,
+   "notes": []
+  },
+  {
+   "form": "S1-3",
+   "situation": "S1",
+   "key": {
+    "answer": "No",
+    "last_completed": "2026-01-03",
+    "next_due": "2027-01-03",
+    "register_row": "SVC-12",
+    "source": "documents/service_schedules.md"
+   },
+   "provenance": [
+    "service record: constructed register (Planned Maintenance Schedule, version 2026.9)"
+   ],
+   "params": {
+    "register_row": "SVC-12",
+    "match_terms": [
+     "boiler"
+    ]
+   },
+   "eligible_n": 1,
+   "notes": []
+  },
+  {
+   "form": "S2-1",
+   "situation": "S2",
+   "key": {
+    "answer": "Only Floor 5 measured; whole building not established",
+    "floor5_rooms_reporting": 28,
+    "floor5_rooms_total": 34,
+    "floor5_rooms_reaching_1000ppm": [],
+    "co2_rows_other_floors": 0,
+    "floors_in_building": [
+     "0",
+     "1",
+     "2",
+     "3",
+     "4",
+     "5"
+    ]
+   },
+   "provenance": [
+    "CO₂ Floor 5: measured (real snapshot)",
+    "Floors 0–4: no CO₂ rows on that date (series begin July 2026)"
+   ],
+   "params": {
+    "date": "2025-02-26",
+    "window_local": "08:00-18:00",
+    "criterion_ppm": 1000
+   },
+   "eligible_n": 2,
+   "notes": []
+  },
+  {
+   "form": "S2-2",
+   "situation": "S2",
+   "key": {
+    "answer": "Unoccupied (count 0 throughout); booking status not held for that date",
+    "n": 6,
+    "min": 0.0,
+    "max": 0.0,
+    "mean": 0.0,
+    "first_utc": "2026-07-20T07:00:00",
+    "last_utc": "2026-07-20T07:50:00",
+    "max_gap_min": 10.0,
+    "uuid": "668931f1-77e2-5b84-9947-501417f61014",
+    "store": "occupancy_data",
+    "booking_sources": "events booking rows begin 2026-07-21; timetable 2026-07-27; bookings register 2026-08-24"
+   },
+   "provenance": [
+    "occupancy count: generated",
+    "bookings: none held for that date"
+   ],
+   "params": {
+    "room": "2.14",
+    "date": "2026-07-20",
+    "window_local": "08:00-09:00"
+   },
+   "eligible_n": 14,
+   "notes": []
+  },
+  {
+   "form": "S2-3",
+   "situation": "S2",
+   "key": {
+    "answer": "Capacity not recorded",
+    "room_label": "Room 3.68 — Academic Office",
+    "area_m2": 36.89,
+    "observed_max_count_excluding_spikes": 59.949,
+    "readings_at_or_above_12": 15498,
+    "spike_readings": 986,
+    "uuid": "4ec949ac-e7a0-5aa9-88a1-f9296f916f60",
+    "store": "occupancy_data"
+   },
+   "provenance": [
+    "capacity: none recorded",
+    "occupancy count: generated"
+   ],
+   "params": {
+    "room": "3.68"
+   },
+   "eligible_n": 28,
+   "notes": []
+  },
+  {
+   "form": "S3-1",
+   "situation": "S3",
+   "key": {
+    "answer": "Not measured in that room",
+    "room_point_classes": [
+     "Air_Quality_Sensor",
+     "Air_Temperature_Sensor",
+     "CO2_Level_Sensor",
+     "CO2_Sensor",
+     "Contact_Sensor",
+     "Humidity_Sensor",
+     "Illuminance_Sensor",
+     "Lighting_Correlated_Color_Temperature_Sensor",
+     "Occupancy_Count_Sensor",
+     "Occupancy_Status",
+     "PM2.5_Level_Sensor",
+     "Relative_Humidity_Sensor",
+     "Sound_Level_Sensor",
+     "Temperature_Sensor",
+     "Zone_Air_Humidity_Sensor"
+    ],
+    "building_pressure_points": [
+     "Air Handling Unit — Floor 0 filter differential pressure",
+     "Air Handling Unit — Floor 1 filter differential pressure",
+     "Air Handling Unit — Floor 2 filter differential pressure",
+     "Air Handling Unit — Floor 3 filter differential pressure",
+     "Air Handling Unit — Floor 4 filter differential pressure",
+     "Air Handling Unit — Floor 5 filter differential pressure"
+    ]
+   },
+   "provenance": [
+    "absent sensor type in the room"
+   ],
+   "params": {
+    "room": "3.52",
+    "date": "2026-09-03"
+   },
+   "eligible_n": 207,
+   "notes": []
+  },
+  {
+   "form": "S3-2",
+   "situation": "S3",
+   "key": {
+    "answer": "No redecoration record held",
+    "who_owns_the_fabric": [
+     "DEP-01 Estates Operations"
+    ],
+    "tempting_wrong_sources": "condition survey (2026-07-02), cleaning and service schedules"
+   },
+   "provenance": [
+    "absent record type"
+   ],
+   "params": {
+    "room": "0.01"
+   },
+   "eligible_n": 206,
+   "notes": []
+  },
+  {
+   "form": "S3-3",
+   "situation": "S3",
+   "key": {
+    "answer": "No Room 2.40 in the building"
+   },
+   "provenance": [
+    "absent referent"
+   ],
+   "params": {
+    "room": "2.40",
+    "date": "2026-08-10"
+   },
+   "eligible_n": 44,
+   "notes": []
+  },
+  {
+   "form": "S4-1",
+   "situation": "S4",
+   "key": {
+    "answer": "Room 5.07",
+    "roles": {
+     "5.07": "meets both",
+     "5.14": "temperature only (no capacity record)",
+     "5.18": "capacity only (too warm)",
+     "5.21": "neither"
+    },
+    "max_temp_c": {
+     "5.07": 23.49,
+     "5.14": 24.45,
+     "5.18": 26.54,
+     "5.21": 26.16
+    },
+    "capacity": {
+     "5.07": 8,
+     "5.14": null,
+     "5.18": 12,
+     "5.21": null
+    },
+    "capacity_basis": {
+     "5.07": "estimated; carried forward unchanged from hbco:roomCapacity on 2026-09-30. Not certified — Estates holds the authoritati",
+     "5.14": "",
+     "5.18": "estimated; carried forward unchanged from the building's own maxOccupancy on 2026-09-30. Not certified — Estates holds t",
+     "5.21": ""
+    }
+   },
+   "provenance": [
+    "temperature: measured (real snapshot)",
+    "capacity: building's own estimate, 'not certified'"
+   ],
+   "params": {
+    "rooms": [
+     "5.07",
+     "5.14",
+     "5.18",
+     "5.21"
+    ],
+    "date": "2025-02-21",
+    "window_local": "14:00-15:00",
+    "threshold_c": 25.0,
+    "min_people": 8
+   },
+   "eligible_n": 1,
+   "notes": [
+    "The key counts a recorded, plausible capacity estimate as meeting the criterion; the basis text says it is not certified."
+   ]
+  },
+  {
+   "form": "S4-2",
+   "situation": "S4",
+   "key": {
+    "answer": "Floor 3 recorded more; readings missing ≈21.1 h on both floors",
+    "sum_of_readings": {
+     "Floor1": 2032.3,
+     "Floor3": 2249.0
+    },
+    "missing_hours": {
+     "Floor1": 21.1,
+     "Floor3": 21.1
+    },
+    "gaps_ge_1h": [
+     "Mon 14 Sep 04:53–Mon 14 Sep 09:20 (local)",
+     "Mon 14 Sep 15:38–Mon 14 Sep 23:58 (local)",
+     "Tue 15 Sep 11:59–Tue 15 Sep 13:40 (local)",
+     "Wed 16 Sep 15:35–Wed 16 Sep 17:03 (local)",
+     "Thu 17 Sep 12:34–Thu 17 Sep 13:39 (local)",
+     "Sun 20 Sep 19:54–Mon 21 Sep 00:00 (local)"
+    ],
+    "floor_meter_uuids": {
+     "Floor1": "e095c596-9727-5a87-a19c-27385e6a6c03",
+     "Floor3": "8cb461ec-63df-5976-9831-7e29b2b57d8f"
+    }
+   },
+   "provenance": [
+    "electricity: generated (floor meters)"
+   ],
+   "params": {
+    "floors": [
+     "1",
+     "3"
+    ],
+    "week_start": "2026-09-14",
+    "week_end": "2026-09-20"
+   },
+   "eligible_n": 1,
+   "notes": [
+    "Key read from each floor's 'Electrical Energy Meter'. The HVAC, lighting and plug-load sub-meters read 0-99.99 and look like noise; an answer that reads them instead is scored against them separately."
+   ]
+  },
+  {
+   "form": "S4-3",
+   "situation": "S4",
+   "key": {
+    "answer": "Yes (descriptive; no cause established)",
+    "co2_series": {
+     "35aae300-9807-5bc3-b080-6a5860bb9d3f": {
+      "store": "co2_data",
+      "rise_ppm": 366.6,
+      "n": 24,
+      "min": 506.6,
+      "max": 965.2,
+      "mean": 776.95,
+      "first_utc": "2026-07-29T08:00:00",
+      "last_utc": "2026-07-29T11:50:00",
+      "max_gap_min": 10.0
+     }
+    },
+    "occupancy": {
+     "n": 24,
+     "min": 1.0,
+     "max": 3.0,
+     "mean": 1.83,
+     "first_utc": "2026-07-29T08:00:00",
+     "last_utc": "2026-07-29T11:50:00",
+     "max_gap_min": 10.0
+    },
+    "occ_uuid": "039f16ce-500d-54d5-8b50-de21db6fc97b"
+   },
+   "provenance": [
+    "CO₂: generated",
+    "occupancy count: generated"
+   ],
+   "params": {
+    "room": "5.58",
+    "date": "2026-07-29",
+    "window_local": "09:00-13:00"
+   },
+   "eligible_n": 5,
+   "notes": []
+  }
+ ]
+}

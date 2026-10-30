@@ -1,0 +1,6 @@
+role,answers,window_shared,answers_referent_refused,answers_referent_asked_which,answers_referent_bound_only_one,answers_referent_failed_closed,answers_referent_failed_open,answers_relevance_replaced,answers_relevance_objected_kept,answers_relevance_failed_open,answers_any_check_acted,evidence_record_gate_referent_existence,evidence_record_gate_freshness,evidence_record_gate_grounding_guard,evidence_record_gate_passage_relevance,evidence_record_advisory_completeness,evidence_record_advisory_calibration,evidence_record_advisory_spatial_adequacy,evidence_record_advisory_permission
+all,391,22,15,0,0,0,0,26,7,0,41,15.0,3.0,2.0,2.0,33.0,24.0,22.0,8.0
+other,2,0,0,0,0,0,0,0,0,0,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+own_question,114,12,4,0,0,0,0,13,2,0,17,4.0,1.0,0.0,1.0,2.0,1.0,0.0,4.0
+practice,1,0,0,0,0,0,0,0,0,0,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
+task,274,10,11,0,0,0,0,13,5,0,24,11.0,2.0,2.0,1.0,31.0,23.0,22.0,4.0

@@ -1,0 +1,405 @@
+{
+ "offline": [
+  {
+   "run_file": "comparison",
+   "system": "A",
+   "log_available": 1,
+   "answers_route_referent_refused": 4,
+   "answers": 100,
+   "window_shared": 60,
+   "answers_referent_refused": 4,
+   "answers_referent_asked_which": 0,
+   "answers_referent_bound_only_one": 0,
+   "answers_referent_failed_closed": 0,
+   "answers_referent_failed_open": 0,
+   "answers_relevance_replaced": 5,
+   "answers_relevance_objected_kept": 4,
+   "answers_relevance_failed_open": 0,
+   "answers_any_check_acted": 9,
+   "events_assigned_by_time": 2
+  },
+  {
+   "run_file": "comparison_aminus",
+   "system": "A-minus",
+   "log_available": 0,
+   "answers_route_referent_refused": 0,
+   "answers": 100,
+   "events_assigned_by_time": 0
+  },
+  {
+   "run_file": "stability",
+   "system": "A",
+   "log_available": 1,
+   "answers_route_referent_refused": 9,
+   "answers": 90,
+   "window_shared": 51,
+   "answers_referent_refused": 9,
+   "answers_referent_asked_which": 0,
+   "answers_referent_bound_only_one": 0,
+   "answers_referent_failed_closed": 0,
+   "answers_referent_failed_open": 0,
+   "answers_relevance_replaced": 0,
+   "answers_relevance_objected_kept": 1,
+   "answers_relevance_failed_open": 0,
+   "answers_any_check_acted": 9,
+   "events_assigned_by_time": 0
+  },
+  {
+   "run_file": "ttask",
+   "system": "A",
+   "log_available": 1,
+   "answers_route_referent_refused": 3,
+   "answers": 36,
+   "window_shared": 24,
+   "answers_referent_refused": 3,
+   "answers_referent_asked_which": 0,
+   "answers_referent_bound_only_one": 0,
+   "answers_referent_failed_closed": 0,
+   "answers_referent_failed_open": 0,
+   "answers_relevance_replaced": 0,
+   "answers_relevance_objected_kept": 1,
+   "answers_relevance_failed_open": 0,
+   "answers_any_check_acted": 3,
+   "events_assigned_by_time": 0
+  }
+ ],
+ "offline_A_all": {
+  "answers": 226,
+  "window_shared": 135,
+  "answers_referent_refused": 16,
+  "answers_referent_asked_which": 0,
+  "answers_referent_bound_only_one": 0,
+  "answers_referent_failed_closed": 0,
+  "answers_referent_failed_open": 0,
+  "answers_relevance_replaced": 5,
+  "answers_relevance_objected_kept": 6,
+  "answers_relevance_failed_open": 0,
+  "answers_any_check_acted": 21
+ },
+ "offline_Aminus_route_referent_refused": 0,
+ "comparison_A_tally": {
+  "answers": 100,
+  "window_shared": 60,
+  "answers_referent_refused": 4,
+  "answers_referent_asked_which": 0,
+  "answers_referent_bound_only_one": 0,
+  "answers_referent_failed_closed": 0,
+  "answers_referent_failed_open": 0,
+  "answers_relevance_replaced": 5,
+  "answers_relevance_objected_kept": 4,
+  "answers_relevance_failed_open": 0,
+  "answers_any_check_acted": 9
+ },
+ "acted_comparison": [
+  {
+   "qid": "TL-P14-1",
+   "set": "T-LIVE",
+   "checks": "referent_refused",
+   "attribution": "lane",
+   "form": "S3-3",
+   "label_OntoSage": "WL",
+   "label_A_minus": "WL",
+   "label_B": "WL"
+  },
+  {
+   "qid": "TF-P27-OQ1",
+   "set": "T-FRESH",
+   "checks": "relevance_replaced",
+   "attribution": "lane",
+   "form": "",
+   "label_OntoSage": "FD",
+   "label_A_minus": "OT",
+   "label_B": "FD"
+  },
+  {
+   "qid": "TF-P19-OQ2",
+   "set": "T-FRESH",
+   "checks": "relevance_objected_kept",
+   "attribution": "lane",
+   "form": "",
+   "label_OntoSage": "OT",
+   "label_A_minus": "OT",
+   "label_B": "W"
+  },
+  {
+   "qid": "TL-P03-6",
+   "set": "T-LIVE",
+   "checks": "referent_refused",
+   "attribution": "time",
+   "form": "S3-3",
+   "label_OntoSage": "WL",
+   "label_A_minus": "WL",
+   "label_B": "WL"
+  },
+  {
+   "qid": "TL-P01-6",
+   "set": "T-LIVE",
+   "checks": "relevance_objected_kept",
+   "attribution": "lane",
+   "form": "S3-1",
+   "label_OntoSage": "OT",
+   "label_A_minus": "WL",
+   "label_B": "WL"
+  },
+  {
+   "qid": "TL-P04-3",
+   "set": "T-LIVE",
+   "checks": "relevance_objected_kept",
+   "attribution": "sole",
+   "form": "S2-2",
+   "label_OntoSage": "OT",
+   "label_A_minus": "OT",
+   "label_B": "FD"
+  },
+  {
+   "qid": "TL-P29-6",
+   "set": "T-LIVE",
+   "checks": "relevance_replaced",
+   "attribution": "sole",
+   "form": "S4-3",
+   "label_OntoSage": "FD",
+   "label_A_minus": "OT",
+   "label_B": "W"
+  },
+  {
+   "qid": "TL-P05-1",
+   "set": "T-LIVE",
+   "checks": "relevance_replaced",
+   "attribution": "time",
+   "form": "S4-3",
+   "label_OntoSage": "FD",
+   "label_A_minus": "OT",
+   "label_B": "W"
+  },
+  {
+   "qid": "TL-P26-6",
+   "set": "T-LIVE",
+   "checks": "referent_refused",
+   "attribution": "lane",
+   "form": "S3-3",
+   "label_OntoSage": "WL",
+   "label_A_minus": "WL",
+   "label_B": "WL"
+  },
+  {
+   "qid": "TF-P01-OQ2",
+   "set": "T-FRESH",
+   "checks": "relevance_replaced",
+   "attribution": "sole",
+   "form": "",
+   "label_OntoSage": "FD",
+   "label_A_minus": "OT",
+   "label_B": "U"
+  },
+  {
+   "qid": "TF-P05-OQ2",
+   "set": "T-FRESH",
+   "checks": "relevance_objected_kept",
+   "attribution": "lane",
+   "form": "",
+   "label_OntoSage": "OT",
+   "label_A_minus": "OT",
+   "label_B": "W"
+  },
+  {
+   "qid": "TF-P26-OQ3",
+   "set": "T-FRESH",
+   "checks": "relevance_replaced",
+   "attribution": "lane",
+   "form": "",
+   "label_OntoSage": "FD",
+   "label_A_minus": "FD",
+   "label_B": "W"
+  },
+  {
+   "qid": "TF-P15-OQ2",
+   "set": "T-FRESH",
+   "checks": "referent_refused",
+   "attribution": "lane",
+   "form": "",
+   "label_OntoSage": "WL",
+   "label_A_minus": "WL",
+   "label_B": "WL"
+  }
+ ],
+ "acted_comparison_label_source": "HUMAN_AGREED (AI proposals reviewed by the first author; the second coder's sampled disagreements settled)",
+ "live": [
+  {
+   "role": "all",
+   "answers": 391,
+   "window_shared": 22,
+   "answers_referent_refused": 15,
+   "answers_referent_asked_which": 0,
+   "answers_referent_bound_only_one": 0,
+   "answers_referent_failed_closed": 0,
+   "answers_referent_failed_open": 0,
+   "answers_relevance_replaced": 26,
+   "answers_relevance_objected_kept": 7,
+   "answers_relevance_failed_open": 0,
+   "answers_any_check_acted": 41,
+   "evidence_record_gate_referent_existence": 15,
+   "evidence_record_gate_freshness": 3,
+   "evidence_record_gate_grounding_guard": 2,
+   "evidence_record_gate_passage_relevance": 2,
+   "evidence_record_advisory_completeness": 33,
+   "evidence_record_advisory_calibration": 24,
+   "evidence_record_advisory_spatial_adequacy": 22,
+   "evidence_record_advisory_permission": 8
+  },
+  {
+   "role": "other",
+   "answers": 2,
+   "window_shared": 0,
+   "answers_referent_refused": 0,
+   "answers_referent_asked_which": 0,
+   "answers_referent_bound_only_one": 0,
+   "answers_referent_failed_closed": 0,
+   "answers_referent_failed_open": 0,
+   "answers_relevance_replaced": 0,
+   "answers_relevance_objected_kept": 0,
+   "answers_relevance_failed_open": 0,
+   "answers_any_check_acted": 0
+  },
+  {
+   "role": "own_question",
+   "answers": 114,
+   "window_shared": 12,
+   "answers_referent_refused": 4,
+   "answers_referent_asked_which": 0,
+   "answers_referent_bound_only_one": 0,
+   "answers_referent_failed_closed": 0,
+   "answers_referent_failed_open": 0,
+   "answers_relevance_replaced": 13,
+   "answers_relevance_objected_kept": 2,
+   "answers_relevance_failed_open": 0,
+   "answers_any_check_acted": 17,
+   "evidence_record_gate_referent_existence": 4,
+   "evidence_record_gate_passage_relevance": 1,
+   "evidence_record_gate_freshness": 1,
+   "evidence_record_advisory_permission": 4,
+   "evidence_record_advisory_completeness": 2,
+   "evidence_record_advisory_calibration": 1
+  },
+  {
+   "role": "practice",
+   "answers": 1,
+   "window_shared": 0,
+   "answers_referent_refused": 0,
+   "answers_referent_asked_which": 0,
+   "answers_referent_bound_only_one": 0,
+   "answers_referent_failed_closed": 0,
+   "answers_referent_failed_open": 0,
+   "answers_relevance_replaced": 0,
+   "answers_relevance_objected_kept": 0,
+   "answers_relevance_failed_open": 0,
+   "answers_any_check_acted": 0
+  },
+  {
+   "role": "task",
+   "answers": 274,
+   "window_shared": 10,
+   "answers_referent_refused": 11,
+   "answers_referent_asked_which": 0,
+   "answers_referent_bound_only_one": 0,
+   "answers_referent_failed_closed": 0,
+   "answers_referent_failed_open": 0,
+   "answers_relevance_replaced": 13,
+   "answers_relevance_objected_kept": 5,
+   "answers_relevance_failed_open": 0,
+   "answers_any_check_acted": 24,
+   "evidence_record_gate_referent_existence": 11,
+   "evidence_record_gate_freshness": 2,
+   "evidence_record_gate_grounding_guard": 2,
+   "evidence_record_gate_passage_relevance": 1,
+   "evidence_record_advisory_completeness": 31,
+   "evidence_record_advisory_calibration": 23,
+   "evidence_record_advisory_spatial_adequacy": 22,
+   "evidence_record_advisory_permission": 4
+  }
+ ],
+ "acted_live_labels": {
+  "referent_refused": {
+   "FD": 0,
+   "OT": 0,
+   "U": 0,
+   "WL": 15
+  },
+  "relevance_objected_kept": {
+   "FD": 1,
+   "OT": 3,
+   "U": 1,
+   "WL": 2
+  },
+  "relevance_replaced": {
+   "FD": 19,
+   "OT": 0,
+   "U": 0,
+   "WL": 7
+  }
+ },
+ "acted_live_label_source": "answer_labels_agreed.csv",
+ "decisions_link": {
+  "decisions_with_a_received_answer": 165,
+  "received_FD": 42,
+  "received_FD_that_was_a_relevance_gate_replacement": 4,
+  "received_FD_that_was_a_referent_refusal": 0,
+  "decisions_after_a_gate_replacement": 5,
+  "of_which_correct": 1,
+  "forms_after_a_gate_replacement": {
+   "S4-3": 3,
+   "S1-3": 1,
+   "S3-1": 1
+  }
+ },
+ "claim_binding": [
+  {
+   "role": "all",
+   "answers_with_figures": 338,
+   "figures": 5822,
+   "figures_matched_to_retrieved_rows": 4108,
+   "share_matched": 0.7056,
+   "answers_with_an_unmatched_figure": 167
+  },
+  {
+   "role": "other",
+   "answers_with_figures": 1,
+   "figures": 3,
+   "figures_matched_to_retrieved_rows": 3,
+   "share_matched": 1.0,
+   "answers_with_an_unmatched_figure": 0
+  },
+  {
+   "role": "own_question",
+   "answers_with_figures": 88,
+   "figures": 1882,
+   "figures_matched_to_retrieved_rows": 1019,
+   "share_matched": 0.5414,
+   "answers_with_an_unmatched_figure": 49
+  },
+  {
+   "role": "practice",
+   "answers_with_figures": 1,
+   "figures": 8,
+   "figures_matched_to_retrieved_rows": 4,
+   "share_matched": 0.5,
+   "answers_with_an_unmatched_figure": 1
+  },
+  {
+   "role": "task",
+   "answers_with_figures": 248,
+   "figures": 3929,
+   "figures_matched_to_retrieved_rows": 3082,
+   "share_matched": 0.7844,
+   "answers_with_an_unmatched_figure": 117
+  }
+ ],
+ "notes": [
+  "Relevance-gate failures other than an exception (a timeout, a provider error, an unreadable verdict) leave the answer standing and are not logged, so its fail-open count covers exceptions only.",
+  "A-minus: its container's log was not kept, so only its route is read; both checks were off by setting (confirmed inside the container).",
+  "window_shared: another answer overlapped the window, so its events cannot be told apart from the other answer's."
+ ],
+ "inputs": {
+  "check_records_offline.csv": "49d6172da48acf98",
+  "turn_checks.csv": "65c7cec9acdb5dca"
+ }
+}

@@ -1,0 +1,28 @@
+characteristic,building_a
+floors,8
+locations_modelled,298
+points_total,3512
+distinct_point_classes,86
+timeseries_bindings,3572
+distinct_timeseries_ids,3545
+stored_at_keys,21
+equipment,147
+hbco_concepts,103
+hbco_lay_terms,728
+ocbv_amenities,75
+ocbv_knowledge_topics,50
+ocbv_classes,107
+ocbv_properties,340
+points: Door and access contact,481
+"points: Occupancy (count, status)",500
+"points: Lighting (colour temp., illuminance)",525
+"points: Indoor climate (CO2, RH, air temp.)",863
+"points: Air quality (PM, TVOC, NO2, CO, CH2O, gas)",765
+"points: Acoustics (sound, noise)",234
+"points: Water (flow, level, temp., metering)",21
+"points: HVAC plant (air flow, damper, filter, fan)",36
+points: Electrical power,22
+points: Waste,24
+points: Outdoor and weather,4
+points: uncategorised,37
+# source,"live GraphDB, not a regex over Turtle"

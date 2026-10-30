@@ -1,0 +1,44 @@
+key,value,description,script,label_source
+checks_offline_A_answers,226,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers",check_firing_analysis.py,
+checks_offline_A_window_shared,135,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): window shared",check_firing_analysis.py,
+checks_offline_A_answers_referent_refused,16,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers referent refused",check_firing_analysis.py,
+checks_offline_A_answers_referent_asked_which,0,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers referent asked which",check_firing_analysis.py,
+checks_offline_A_answers_referent_bound_only_one,0,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers referent bound only one",check_firing_analysis.py,
+checks_offline_A_answers_referent_failed_closed,0,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers referent failed closed",check_firing_analysis.py,
+checks_offline_A_answers_referent_failed_open,0,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers referent failed open",check_firing_analysis.py,
+checks_offline_A_answers_relevance_replaced,5,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers relevance replaced",check_firing_analysis.py,
+checks_offline_A_answers_relevance_objected_kept,6,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers relevance objected kept",check_firing_analysis.py,
+checks_offline_A_answers_relevance_failed_open,0,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers relevance failed open",check_firing_analysis.py,
+checks_offline_A_answers_any_check_acted,21,"OntoSage+'s 226 offline answers (comparison, T-TASK, stability): answers any check acted",check_firing_analysis.py,
+checks_offline_Aminus_referent_refused,0,A-minus (checks off): answers whose route records a referent refusal (expected 0),check_firing_analysis.py,
+checks_comparison_A_acted,13,comparison set (100): OntoSage+ answers where a switchable check acted or objected,check_firing_analysis.py,
+checks_comparison_referent_refused_labels,4: OntoSage+ {'WL': 4}; A-minus {'WL': 4},"comparison set: referent-gate refusals, labels of OntoSage+'s answer and of A-minus's answer to the same question",check_firing_analysis.py,HUMAN_AGREED
+checks_comparison_relevance_replaced_labels,"5: OntoSage+ {'FD': 5}; A-minus {'OT': 4, 'FD': 1}","comparison set: gate replacements, labels of OntoSage+'s answer and of A-minus's answer to the same question",check_firing_analysis.py,HUMAN_AGREED
+checks_comparison_relevance_objected_kept_labels,"4: OntoSage+ {'OT': 4}; A-minus {'OT': 3, 'WL': 1}","comparison set: objections the gate was not allowed to act on, labels of OntoSage+'s answer and of A-minus's answer to the same question",check_firing_analysis.py,HUMAN_AGREED
+checks_comparison_referent_refusals_correct,4 of 4,comparison set: referent-gate refusals labelled WL,check_firing_analysis.py,HUMAN_AGREED
+checks_comparison_gate_replacements_wrong_refusal,5 of 5,comparison set: relevance-gate replacements labelled FD,check_firing_analysis.py,HUMAN_AGREED
+checks_live_answers,391,live answers participants saw (391): answers,check_firing_analysis.py,
+checks_live_window_shared,22,live answers participants saw (391): window shared,check_firing_analysis.py,
+checks_live_answers_referent_refused,15,live answers participants saw (391): answers referent refused,check_firing_analysis.py,
+checks_live_answers_referent_asked_which,0,live answers participants saw (391): answers referent asked which,check_firing_analysis.py,
+checks_live_answers_referent_bound_only_one,0,live answers participants saw (391): answers referent bound only one,check_firing_analysis.py,
+checks_live_answers_referent_failed_closed,0,live answers participants saw (391): answers referent failed closed,check_firing_analysis.py,
+checks_live_answers_referent_failed_open,0,live answers participants saw (391): answers referent failed open,check_firing_analysis.py,
+checks_live_answers_relevance_replaced,26,live answers participants saw (391): answers relevance replaced,check_firing_analysis.py,
+checks_live_answers_relevance_objected_kept,7,live answers participants saw (391): answers relevance objected kept,check_firing_analysis.py,
+checks_live_answers_relevance_failed_open,0,live answers participants saw (391): answers relevance failed open,check_firing_analysis.py,
+checks_live_answers_any_check_acted,41,live answers participants saw (391): answers any check acted,check_firing_analysis.py,
+checks_live_evidence_record_gate_referent_existence,15,live answers participants saw (391): evidence record gate referent existence,check_firing_analysis.py,
+checks_live_evidence_record_gate_freshness,3,live answers participants saw (391): evidence record gate freshness,check_firing_analysis.py,
+checks_live_evidence_record_gate_grounding_guard,2,live answers participants saw (391): evidence record gate grounding guard,check_firing_analysis.py,
+checks_live_evidence_record_gate_passage_relevance,2,live answers participants saw (391): evidence record gate passage relevance,check_firing_analysis.py,
+checks_live_evidence_record_advisory_completeness,33,live answers participants saw (391): evidence record advisory completeness,check_firing_analysis.py,
+checks_live_evidence_record_advisory_calibration,24,live answers participants saw (391): evidence record advisory calibration,check_firing_analysis.py,
+checks_live_evidence_record_advisory_spatial_adequacy,22,live answers participants saw (391): evidence record advisory spatial adequacy,check_firing_analysis.py,
+checks_live_evidence_record_advisory_permission,8,live answers participants saw (391): evidence record advisory permission,check_firing_analysis.py,
+checks_live_referent_refusals_correct,15 of 15,live: referent-gate refusals labelled WL (a correct statement of the limit),check_firing_analysis.py,HUMAN_AGREED
+checks_live_gate_replacements_wrong_refusal,19 of 26,live: relevance-gate replacements labelled FD (the replacing refusal was itself wrong),check_firing_analysis.py,HUMAN_AGREED
+checks_received_FD_from_relevance_gate,4 of 42,wrong refusals participants received before a decision that were the relevance gate's replacement (the rest came from the lanes themselves),check_firing_analysis.py,HUMAN_AGREED
+checks_decisions_after_gate_replacement,1 of 5 correct,decisions made after receiving a relevance-gate replacement,check_firing_analysis.py,
+claims_live_share_matched,70.6% (4108 of 5822),"live answers: share of OntoSage+'s figures that match a retrieved row (claim binding, record-only; a figure can be right and unmatched, e.g. a computed mean)",check_firing_analysis.py,
+claims_live_answers_with_unmatched,167 of 338,live answers with figures that hold at least one figure not matched to a retrieved row,check_firing_analysis.py,

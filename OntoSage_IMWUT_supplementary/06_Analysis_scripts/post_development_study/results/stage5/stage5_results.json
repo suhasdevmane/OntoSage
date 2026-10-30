@@ -1,0 +1,415 @@
+{
+ "label_source": "AUTHOR_CHECKED_SINGLE_CODER",
+ "inputs": {
+  "stage5_codes_author.csv": "ad5d10a5def89fdf",
+  "Z_stage5_vision_themes.csv": "47b25f1c385c29a7"
+ },
+ "codes": [
+  {
+   "question": "Trust",
+   "code": "PROVENANCE",
+   "people": 9,
+   "of": 59,
+   "pct": 15.3,
+   "ci_lo": 8.2,
+   "ci_hi": 26.5,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "code": "ACCURACY",
+   "people": 27,
+   "of": 59,
+   "pct": 45.8,
+   "ci_lo": 33.7,
+   "ci_hi": 58.3,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "code": "PRIVACY",
+   "people": 46,
+   "of": 59,
+   "pct": 78.0,
+   "ci_lo": 65.9,
+   "ci_hi": 86.6,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "code": "TIMELINESS",
+   "people": 9,
+   "of": 59,
+   "pct": 15.3,
+   "ci_lo": 8.2,
+   "ci_hi": 26.5,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "code": "ACTIONABILITY",
+   "people": 1,
+   "of": 59,
+   "pct": 1.7,
+   "ci_lo": 0.3,
+   "ci_hi": 9.0,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "code": "HONESTY_LIMITS",
+   "people": 2,
+   "of": 59,
+   "pct": 3.4,
+   "ci_lo": 0.9,
+   "ci_hi": 11.5,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "code": "EASE",
+   "people": 2,
+   "of": 59,
+   "pct": 3.4,
+   "ci_lo": 0.9,
+   "ci_hi": 11.5,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "code": "OTHER",
+   "people": 9,
+   "of": 59,
+   "pct": 15.3,
+   "ci_lo": 8.2,
+   "ci_hi": 26.5,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "code": "NONE",
+   "people": 2,
+   "of": 59,
+   "pct": 3.4,
+   "ci_lo": 0.9,
+   "ci_hi": 11.5,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "PROVENANCE",
+   "people": 1,
+   "of": 59,
+   "pct": 1.7,
+   "ci_lo": 0.3,
+   "ci_hi": 9.0,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "ACCURACY",
+   "people": 18,
+   "of": 59,
+   "pct": 30.5,
+   "ci_lo": 20.3,
+   "ci_hi": 43.1,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "PRIVACY",
+   "people": 2,
+   "of": 59,
+   "pct": 3.4,
+   "ci_lo": 0.9,
+   "ci_hi": 11.5,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "TIMELINESS",
+   "people": 19,
+   "of": 59,
+   "pct": 32.2,
+   "ci_lo": 21.7,
+   "ci_hi": 44.9,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "ACTIONABILITY",
+   "people": 8,
+   "of": 59,
+   "pct": 13.6,
+   "ci_lo": 7.0,
+   "ci_hi": 24.5,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "HONESTY_LIMITS",
+   "people": 0,
+   "of": 59,
+   "pct": 0.0,
+   "ci_lo": 0.0,
+   "ci_hi": 6.1,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "EASE",
+   "people": 15,
+   "of": 59,
+   "pct": 25.4,
+   "ci_lo": 16.1,
+   "ci_hi": 37.8,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "OTHER",
+   "people": 50,
+   "of": 59,
+   "pct": 84.7,
+   "ci_lo": 73.5,
+   "ci_hi": 91.8,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "code": "NONE",
+   "people": 4,
+   "of": 59,
+   "pct": 6.8,
+   "ci_lo": 2.7,
+   "ci_hi": 16.2,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  }
+ ],
+ "themes": [
+  {
+   "question": "Trust",
+   "theme": "system_security",
+   "people": 2,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "theme": "familiarity",
+   "people": 2,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "theme": "human_oversight",
+   "people": 2,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "theme": "time_saving",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "theme": "regulation",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "theme": "candour",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Trust",
+   "theme": "vendor",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "comfort",
+   "people": 17,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "energy_saving",
+   "people": 13,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "time_saving",
+   "people": 10,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "proactive",
+   "people": 9,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "automation",
+   "people": 6,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "safety",
+   "people": 4,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "satisfaction",
+   "people": 3,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "new_insight",
+   "people": 2,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "personalisation",
+   "people": 2,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "cost_saving",
+   "people": 2,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "job_easier",
+   "people": 2,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "unobtrusive",
+   "people": 2,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "integration",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "reports",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "monitoring",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "comprehensive",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "personal_control",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "social_proof",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "wayfinding",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "human_fallback",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "customisable",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "engagement",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "shared_access",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "incentives",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  },
+  {
+   "question": "Success",
+   "theme": "efficiency",
+   "people": 1,
+   "of": 59,
+   "label_source": "AUTHOR_CHECKED_SINGLE_CODER"
+  }
+ ]
+}

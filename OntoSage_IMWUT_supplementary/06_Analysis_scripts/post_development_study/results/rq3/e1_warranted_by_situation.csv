@@ -1,0 +1,10 @@
+quantity,estimate,ci_lo,ci_hi,n,k_warranted,method
+S1,0.23333333333333334,0.1,0.4,30,7.0,"participant-cluster bootstrap (2,000)"
+S2,0.43333333333333335,0.31666666666666665,0.5333333333333333,60,26.0,"participant-cluster bootstrap (2,000)"
+S3,1.0,1.0,1.0,30,30.0,"participant-cluster bootstrap (2,000)"
+S4,0.5333333333333333,0.4166666666666667,0.65,60,32.0,"participant-cluster bootstrap (2,000)"
+all,0.5277777777777778,0.4777777777777778,0.5722222222222222,180,95.0,"participant-cluster bootstrap (2,000)"
+S1,0.2333333333333334,0.11551050816420717,0.4149549224531911,30,,"GEE logistic, exchangeable within participant (marginal, delta 95% CI)"
+S2,0.43333333333333335,0.3276700514595685,0.5454278982530506,60,,"GEE logistic, exchangeable within participant (marginal, delta 95% CI)"
+S3,0.9999999999999973,0.9999999999999962,0.9999999999999982,30,,"GEE logistic, exchangeable within participant (marginal, delta 95% CI)"
+S4,0.5333333333333332,0.4121178843057088,0.6507368744276071,60,,"GEE logistic, exchangeable within participant (marginal, delta 95% CI)"

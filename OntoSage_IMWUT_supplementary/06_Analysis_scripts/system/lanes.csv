@@ -1,0 +1,14 @@
+order,lane,answers,intents
+1,Building description and documents,"Amenities, policies, procedures and contacts, from capability triples, then documents",capability
+2,Registers and records,"Compliance records (overdue, due, last done); the state of assets without sensors; schedules and closures; whether a space is ready for a booked use",register asset_state readiness_check
+3,Events,"Bookings, work orders and entrance counts, from interval records",events
+4,Coverage,"What can be measured in a place, and whether its sensor is linked and reporting",observability
+5,Ranking spaces,"Choosing or ranking spaces under several constraints, with assumptions and coverage stated",deliberate
+6,Diagnosis,"Why a past condition occurred: candidate explanations ranked from readings, anomaly episodes and reports",diagnosis
+7,Floor plans and geometry,"Plans and locations; areas, adjacency and counts from the plan geometry",floor_plan spatial_query
+8,Reports from people,"Faults, complaints, safety concerns, feedback and suggestions, filed as tickets; a ticket's status",maintenance complaint feedback safety_report suggestion
+9,Commands and personal settings,"Commands to building systems (in the study build a simulator logged them and changed nothing); what the building can do automatically; personal alerts and preferences",control automation_capability alert preference_management
+10,Multi-step requests,Requests that need several lanes or produce several outputs,planner
+11,The assistant and the conversation,"What OntoSage+ can answer; what the person said earlier; which of two disagreeing records the building's sources support",self_description session_recall fact_conflict
+12,Outside the building's data,"Open-domain questions; general guidance, labelled as not from this building; requests it cannot ground or should not advise on",general general_guidance scope_boundary
+13,Refusals set by rule,"Identifying or tracking a person (refused, with an aggregate offered instead); when a space was last comfortable (declined: no record of past compliance is kept)",privacy_refusal comfort_history

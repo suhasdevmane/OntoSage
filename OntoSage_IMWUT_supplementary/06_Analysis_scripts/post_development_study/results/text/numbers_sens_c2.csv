@@ -1,0 +1,29 @@
+key,value,description,script,label_source
+SENS_C2_qual_n_swapped,36,reasons/closing units where the second coder's codes replaced the first author's for this check,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_qual_reasons_limit_named,106,on his codes: reasons naming a limit,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_qual_reasons_limit_matches_key,57,on his codes: of which the limit named is real,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_qual_after_FD_n,43,on his codes: reasons after a wrong refusal,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_qual_after_FD_decline_accepted,27,on his codes: of which took the refusal as the answer,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_qual_after_WL_n,46,on his codes: reasons after a stated limit,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_qual_after_WL_decline_accepted,25,on his codes: of which took the refusal as the answer,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_LIM_situation_S1_named,15,"on his codes: reasons naming a limit, situation S1",coder2_sensitivity.py,SECOND_CODER
+SENS_C2_LIM_situation_S1_match,0,"on his codes: ... of which real, situation S1",coder2_sensitivity.py,SECOND_CODER
+SENS_C2_LIM_situation_S2_named,36,"on his codes: reasons naming a limit, situation S2",coder2_sensitivity.py,SECOND_CODER
+SENS_C2_LIM_situation_S2_match,30,"on his codes: ... of which real, situation S2",coder2_sensitivity.py,SECOND_CODER
+SENS_C2_LIM_situation_S3_named,18,"on his codes: reasons naming a limit, situation S3",coder2_sensitivity.py,SECOND_CODER
+SENS_C2_LIM_situation_S3_match,14,"on his codes: ... of which real, situation S3",coder2_sensitivity.py,SECOND_CODER
+SENS_C2_LIM_situation_S4_named,37,"on his codes: reasons naming a limit, situation S4",coder2_sensitivity.py,SECOND_CODER
+SENS_C2_LIM_situation_S4_match,13,"on his codes: ... of which real, situation S4",coder2_sensitivity.py,SECOND_CODER
+SENS_C2_live_n_swapped,30,live answers where the second coder's label replaced the first author's for this check,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_W_n,41,on his labels: decisions after an answer labelled W,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_W_pct,78.0,on his labels: % of those decisions the data support,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_WL_n,40,on his labels: decisions after an answer labelled WL,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_WL_pct,75.0,on his labels: % of those decisions the data support,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_FD_n,43,on his labels: decisions after an answer labelled FD,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_FD_pct,11.6,on his labels: % of those decisions the data support,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_U_n,32,on his labels: decisions after an answer labelled U,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_U_pct,50.0,on his labels: % of those decisions the data support,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_OT_n,9,on his labels: decisions after an answer labelled OT,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_OT_pct,44.4,on his labels: % of those decisions the data support,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_none_n,15,on his labels: decisions after an answer labelled none,coder2_sensitivity.py,SECOND_CODER
+SENS_C2_E2_none_pct,53.3,on his labels: % of those decisions the data support,coder2_sensitivity.py,SECOND_CODER

@@ -28,6 +28,14 @@ Ask a follow-up — *"and what about humidity there?"* — and it remembers you 
 > significant gain from the version-2 work (see [Measured quality](#measured-quality)). It is
 > ready for **supervised trials**, not for unattended or open use.
 
+> **Study materials and data.** [`OntoSage_IMWUT_supplementary/`](./OntoSage_IMWUT_supplementary/) holds the
+> supplementary material of the article *OntoSage+: Designing and Evaluating Human–Smart Building Conversation with
+> Incomplete Data, from Stakeholders' Questions to Decisions*: the appendices, the study's task bank with its keys, the
+> answer-label rubric, the codebooks, the comparison assistant, the analysis scripts with their outputs, the study form
+> as participants saw it, and the survey's and the study's anonymised data with both coders' labels. Start with its
+> [`00_README.md`](./OntoSage_IMWUT_supplementary/00_README.md). The files are anonymised for double-blind review; the
+> code they describe is this repository at the tag `v3.0-study`.
+
 ---
 
 ## Prerequisites

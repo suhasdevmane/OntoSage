@@ -1,0 +1,691 @@
+contributor,Topic_ID,Topic_Label,Rank_1_QID,Rank_2_QID,Rank_3_QID,Rank_4_QID
+C096,1,Indoor Temperature Control,1-2,1-1,1-4,1-3
+C096,2,Air Quality & Ventilation,2-3,2-2,2-1,2-4
+C096,3,Lighting & Daylight,3-2,3-1,3-4,3-3
+C096,4,Noise & Acoustics,4-1,4-4,4-3,4-2
+C096,5,Energy Consumption,5-3,5-4,5-2,5-1
+C096,6,Security & Access Control,6-1,6-4,6-3,6-2
+C096,7,Occupancy & Space Utilisation,7-2,7-4,7-1,7-3
+C096,8,Fire Safety & Emergency,8-3,8-2,8-4,8-1
+C096,10,Waste & Recycling,10-2,10-1,10-3,10-4
+C096,12,Green Spaces & Biodiversity,12-3,12-2,12-1,12-4
+C078,3,Lighting & Daylight,3-1,3-3,3-4,3-2
+C078,5,Energy Consumption,5-1,5-3,5-4,5-2
+C078,7,Occupancy & Space Utilisation,7-2,7-3,7-1,7-4
+C078,8,Fire Safety & Emergency,8-3,8-1,8-4,8-2
+C078,10,Waste & Recycling,10-3,10-1,10-2,10-4
+C078,11,Renewable Energy & Solar,11-2,11-4,11-1,11-3
+C078,13,Health & Well-being,13-3,13-2,13-1,13-4
+C078,15,"Lifts, Stairs & Internal Transport",15-2,15-3,15-1,15-4
+C078,16,Parking & EV Charging,16-2,16-1,16-4,16-3
+C078,19,Building Maintenance & Faults,19-2,19-1,19-4,19-3
+C082,1,Indoor Temperature Control,1-1,1-3,1-2,1-4
+C082,2,Air Quality & Ventilation,2-3,2-2,2-1,2-4
+C082,3,Lighting & Daylight,3-2,3-1,3-4,3-3
+C082,4,Noise & Acoustics,4-1,4-4,4-3,4-2
+C082,5,Energy Consumption,5-1,5-3,5-2,5-4
+C082,6,Security & Access Control,6-2,6-1,6-4,6-3
+C082,8,Fire Safety & Emergency,8-3,8-2,8-1,8-4
+C082,10,Waste & Recycling,10-2,10-3,10-4,10-1
+C082,11,Renewable Energy & Solar,11-1,11-3,11-4,11-2
+C082,13,Health & Well-being,13-2,13-1,13-4,13-3
+C067,1,Indoor Temperature Control,1-1,1-4,1-3,1-2
+C067,3,Lighting & Daylight,3-1,3-3,3-2,3-4
+C067,4,Noise & Acoustics,4-2,4-1,4-4,4-3
+C067,6,Security & Access Control,6-1,6-3,6-2,6-4
+C067,7,Occupancy & Space Utilisation,7-1,7-3,7-2,7-4
+C067,9,Water Management,9-2,9-1,9-4,9-3
+C067,10,Waste & Recycling,10-1,10-4,10-3,10-2
+C067,11,Renewable Energy & Solar,11-2,11-4,11-3,11-1
+C067,12,Green Spaces & Biodiversity,12-1,12-3,12-2,12-4
+C067,14,IoT Sensors & Data Analytics,14-1,14-4,14-3,14-2
+C092,1,Indoor Temperature Control,1-2,1-1,1-3,1-4
+C092,2,Air Quality & Ventilation,2-1,2-4,2-3,2-2
+C092,3,Lighting & Daylight,3-1,3-3,3-4,3-2
+C092,5,Energy Consumption,5-1,5-3,5-4,5-2
+C092,6,Security & Access Control,6-4,6-3,6-1,6-2
+C092,8,Fire Safety & Emergency,8-2,8-1,8-4,8-3
+C092,12,Green Spaces & Biodiversity,12-1,12-3,12-2,12-4
+C092,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2
+C092,18,User Apps & Digital Interaction,18-4,18-3,18-2,18-1
+C092,20,Carbon Footprint & Net Zero,20-1,20-3,20-4,20-2
+C048,1,Indoor Temperature Control,1-3,1-1,1-4,1-2
+C048,2,Air Quality & Ventilation,2-2,2-1,2-4,2-3
+C048,3,Lighting & Daylight,3-1,3-4,3-3,3-2
+C048,4,Noise & Acoustics,4-1,4-4,4-3,4-2
+C048,5,Energy Consumption,5-2,5-1,5-4,5-3
+C048,6,Security & Access Control,6-1,6-3,6-4,6-2
+C048,7,Occupancy & Space Utilisation,7-1,7-4,7-3,7-2
+C048,8,Fire Safety & Emergency,8-1,8-4,8-3,8-2
+C048,9,Water Management,9-2,9-1,9-4,9-3
+C048,13,Health & Well-being,13-2,13-1,13-4,13-3
+C090,2,Air Quality & Ventilation,2-1,2-4,2-2,2-3
+C090,5,Energy Consumption,5-1,5-3,5-2,5-4
+C090,6,Security & Access Control,6-4,6-3,6-1,6-2
+C090,7,Occupancy & Space Utilisation,7-1,7-4,7-3,7-2
+C090,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C090,9,Water Management,9-1,9-3,9-2,9-4
+C090,10,Waste & Recycling,10-4,10-2,10-3,10-1
+C090,13,Health & Well-being,13-1,13-4,13-3,13-2
+C090,19,Building Maintenance & Faults,19-1,19-3,19-2,19-4
+C090,20,Carbon Footprint & Net Zero,20-3,20-1,20-4,20-2
+C056,1,Indoor Temperature Control,1-1,1-3,1-4,1-2
+C056,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C056,4,Noise & Acoustics,4-1,4-3,4-2,4-4
+C056,5,Energy Consumption,5-3,5-4,5-2,5-1
+C056,7,Occupancy & Space Utilisation,7-1,7-4,7-2,7-3
+C056,8,Fire Safety & Emergency,8-3,8-1,8-4,8-2
+C056,9,Water Management,9-3,9-1,9-2,9-4
+C056,12,Green Spaces & Biodiversity,12-4,12-1,12-3,12-2
+C056,14,IoT Sensors & Data Analytics,14-4,14-1,14-3,14-2
+C056,17,Building Automation & AI,17-4,17-3,17-2,17-1
+C051,1,Indoor Temperature Control,1-1,1-3,1-2,1-4
+C051,2,Air Quality & Ventilation,2-2,2-4,2-3,2-1
+C051,5,Energy Consumption,5-2,5-1,5-4,5-3
+C051,6,Security & Access Control,6-1,6-4,6-3,6-2
+C051,7,Occupancy & Space Utilisation,7-3,7-2,7-1,7-4
+C051,8,Fire Safety & Emergency,8-1,8-3,8-4,8-2
+C051,10,Waste & Recycling,10-2,10-1,10-4,10-3
+C051,12,Green Spaces & Biodiversity,12-3,12-2,12-1,12-4
+C051,13,Health & Well-being,13-2,13-1,13-3,13-4
+C051,16,Parking & EV Charging,16-2,16-4,16-1,16-3
+C089,1,Indoor Temperature Control,1-1,1-3,1-4,1-2
+C089,2,Air Quality & Ventilation,2-3,2-2,2-1,2-4
+C089,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C089,6,Security & Access Control,6-1,6-3,6-4,6-2
+C089,7,Occupancy & Space Utilisation,7-1,7-3,7-2,7-4
+C089,11,Renewable Energy & Solar,11-3,11-2,11-1,11-4
+C089,12,Green Spaces & Biodiversity,12-2,12-1,12-4,12-3
+C089,13,Health & Well-being,13-4,13-3,13-2,13-1
+C089,14,IoT Sensors & Data Analytics,14-1,14-3,14-4,14-2
+C089,15,"Lifts, Stairs & Internal Transport",15-2,15-4,15-1,15-3
+C088,1,Indoor Temperature Control,1-3,1-4,1-1,1-2
+C088,3,Lighting & Daylight,3-2,3-3,3-1,3-4
+C088,8,Fire Safety & Emergency,8-2,8-3,8-4,8-1
+C088,9,Water Management,9-3,9-1,9-4,9-2
+C088,10,Waste & Recycling,10-3,10-1,10-4,10-2
+C088,14,IoT Sensors & Data Analytics,14-2,14-1,14-3,14-4
+C088,15,"Lifts, Stairs & Internal Transport",15-2,15-4,15-1,15-3
+C088,16,Parking & EV Charging,16-2,16-4,16-3,16-1
+C088,18,User Apps & Digital Interaction,18-2,18-4,18-1,18-3
+C088,19,Building Maintenance & Faults,19-3,19-1,19-4,19-2
+C030,1,Indoor Temperature Control,1-2,1-1,1-4,1-3
+C030,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2
+C030,3,Lighting & Daylight,3-1,3-4,3-3,3-2
+C030,4,Noise & Acoustics,4-2,4-4,4-3,4-1
+C030,5,Energy Consumption,5-1,5-3,5-2,5-4
+C030,6,Security & Access Control,6-2,6-1,6-4,6-3
+C030,7,Occupancy & Space Utilisation,7-2,7-1,7-4,7-3
+C030,8,Fire Safety & Emergency,8-1,8-3,8-4,8-2
+C030,10,Waste & Recycling,10-3,10-2,10-1,10-4
+C030,13,Health & Well-being,13-1,13-2,13-4,13-3
+C087,1,Indoor Temperature Control,1-3,1-2,1-1,1-4
+C087,3,Lighting & Daylight,3-3,3-2,3-1,3-4
+C087,4,Noise & Acoustics,4-1,4-3,4-4,4-2
+C087,5,Energy Consumption,5-1,5-3,5-4,5-2
+C087,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1
+C087,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C087,9,Water Management,9-4,9-3,9-2,9-1
+C087,10,Waste & Recycling,10-3,10-1,10-4,10-2
+C087,13,Health & Well-being,13-4,13-3,13-2,13-1
+C087,14,IoT Sensors & Data Analytics,14-4,14-1,14-3,14-2
+C049,3,Lighting & Daylight,3-1,3-4,3-2,3-3
+C049,5,Energy Consumption,5-2,5-1,5-4,5-3
+C049,6,Security & Access Control,6-2,6-1,6-4,6-3
+C049,8,Fire Safety & Emergency,8-2,8-1,8-4,8-3
+C049,9,Water Management,9-2,9-1,9-4,9-3
+C049,10,Waste & Recycling,10-2,10-1,10-4,10-3
+C049,11,Renewable Energy & Solar,11-4,11-1,11-3,11-2
+C049,14,IoT Sensors & Data Analytics,14-2,14-1,14-3,14-4
+C049,15,"Lifts, Stairs & Internal Transport",15-1,15-3,15-2,15-4
+C049,16,Parking & EV Charging,16-2,16-1,16-4,16-3
+C050,1,Indoor Temperature Control,1-1,1-2,1-3,1-4
+C050,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4
+C050,3,Lighting & Daylight,3-1,3-2,3-3,3-4
+C050,5,Energy Consumption,5-1,5-2,5-3,5-4
+C050,6,Security & Access Control,6-1,6-2,6-3,6-4
+C050,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4
+C050,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C050,9,Water Management,9-1,9-2,9-3,9-4
+C050,13,Health & Well-being,13-1,13-2,13-3,13-4
+C050,17,Building Automation & AI,17-1,17-2,17-3,17-4
+C084,1,Indoor Temperature Control,1-1,1-3,1-4,1-2
+C084,2,Air Quality & Ventilation,2-2,2-4,2-3,2-1
+C084,3,Lighting & Daylight,3-3,3-4,3-2,3-1
+C084,4,Noise & Acoustics,4-2,4-1,4-3,4-4
+C084,5,Energy Consumption,5-1,5-2,5-4,5-3
+C084,8,Fire Safety & Emergency,8-1,8-3,8-2,8-4
+C084,9,Water Management,9-3,9-1,9-4,9-2
+C084,11,Renewable Energy & Solar,11-1,11-3,11-4,11-2
+C084,12,Green Spaces & Biodiversity,12-1,12-3,12-2,12-4
+C084,13,Health & Well-being,13-1,13-3,13-2,13-4
+C077,1,Indoor Temperature Control,1-4,1-3,1-1,1-2
+C077,2,Air Quality & Ventilation,2-4,2-2,2-1,2-3
+C077,4,Noise & Acoustics,4-1,4-4,4-2,4-3
+C077,5,Energy Consumption,5-3,5-1,5-4,5-2
+C077,6,Security & Access Control,6-2,6-1,6-4,6-3
+C077,8,Fire Safety & Emergency,8-1,8-3,8-2,8-4
+C077,9,Water Management,9-3,9-4,9-1,9-2
+C077,13,Health & Well-being,13-3,13-1,13-4,13-2
+C077,19,Building Maintenance & Faults,19-2,19-1,19-4,19-3
+C077,20,Carbon Footprint & Net Zero,20-1,20-3,20-2,20-4
+C076,1,Indoor Temperature Control,1-1,1-2,1-4,1-3
+C076,2,Air Quality & Ventilation,2-2,2-3,2-4,2-1
+C076,3,Lighting & Daylight,3-2,3-4,3-3,3-1
+C076,4,Noise & Acoustics,4-3,4-2,4-1,4-4
+C076,5,Energy Consumption,5-2,5-3,5-4,5-1
+C076,6,Security & Access Control,6-2,6-3,6-4,6-1
+C076,8,Fire Safety & Emergency,8-2,8-3,8-1,8-4
+C076,9,Water Management,9-2,9-3,9-4,9-1
+C076,18,User Apps & Digital Interaction,18-2,18-3,18-4,18-1
+C076,20,Carbon Footprint & Net Zero,20-2,20-3,20-4,20-1
+C074,1,Indoor Temperature Control,1-1,1-2,1-4,1-3
+C074,2,Air Quality & Ventilation,2-3,2-2,2-1,2-4
+C074,3,Lighting & Daylight,3-1,3-2,3-3,3-4
+C074,4,Noise & Acoustics,4-3,4-1,4-4,4-2
+C074,5,Energy Consumption,5-1,5-2,5-4,5-3
+C074,6,Security & Access Control,6-3,6-1,6-4,6-2
+C074,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C074,10,Waste & Recycling,10-2,10-1,10-3,10-4
+C074,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C074,20,Carbon Footprint & Net Zero,20-3,20-1,20-4,20-2
+C068,1,Indoor Temperature Control,1-1,1-3,1-2,1-4
+C068,2,Air Quality & Ventilation,2-3,2-1,2-2,2-4
+C068,5,Energy Consumption,5-2,5-4,5-1,5-3
+C068,6,Security & Access Control,6-2,6-3,6-4,6-1
+C068,8,Fire Safety & Emergency,8-2,8-4,8-1,8-3
+C068,10,Waste & Recycling,10-2,10-3,10-4,10-1
+C068,11,Renewable Energy & Solar,11-1,11-4,11-2,11-3
+C068,12,Green Spaces & Biodiversity,12-2,12-4,12-1,12-3
+C068,13,Health & Well-being,13-1,13-2,13-3,13-4
+C068,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4
+C037,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C037,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C037,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C037,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C037,6,Security & Access Control,6-4,6-3,6-2,6-1
+C037,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1
+C037,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C037,13,Health & Well-being,13-4,13-3,13-2,13-1
+C037,16,Parking & EV Charging,16-4,16-3,16-2,16-1
+C037,18,User Apps & Digital Interaction,18-4,18-3,18-2,18-1
+C029,1,Indoor Temperature Control,1-1,1-2,1-4,1-3
+C029,2,Air Quality & Ventilation,2-1,2-2,2-4,2-3
+C029,5,Energy Consumption,5-4,5-1,5-3,5-2
+C029,6,Security & Access Control,6-4,6-3,6-2,6-1
+C029,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3
+C029,9,Water Management,9-3,9-4,9-2,9-1
+C029,10,Waste & Recycling,10-1,10-4,10-3,10-2
+C029,12,Green Spaces & Biodiversity,12-3,12-2,12-1,12-4
+C029,13,Health & Well-being,13-4,13-1,13-3,13-2
+C029,20,Carbon Footprint & Net Zero,20-3,20-4,20-2,20-1
+C031,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C031,2,Air Quality & Ventilation,2-4,2-1,2-3,2-2
+C031,3,Lighting & Daylight,3-1,3-4,3-2,3-3
+C031,5,Energy Consumption,5-4,5-2,5-1,5-3
+C031,9,Water Management,9-4,9-2,9-1,9-3
+C031,10,Waste & Recycling,10-3,10-2,10-1,10-4
+C031,11,Renewable Energy & Solar,11-4,11-1,11-3,11-2
+C031,12,Green Spaces & Biodiversity,12-4,12-2,12-1,12-3
+C031,15,"Lifts, Stairs & Internal Transport",15-1,15-3,15-4,15-2
+C031,16,Parking & EV Charging,16-1,16-3,16-2,16-4
+C057,1,Indoor Temperature Control,1-2,1-3,1-4,1-1
+C057,2,Air Quality & Ventilation,2-2,2-3,2-4,2-1
+C057,3,Lighting & Daylight,3-3,3-4,3-1,3-2
+C057,7,Occupancy & Space Utilisation,7-3,7-4,7-2,7-1
+C057,8,Fire Safety & Emergency,8-4,8-2,8-1,8-3
+C057,12,Green Spaces & Biodiversity,12-3,12-2,12-4,12-1
+C057,13,Health & Well-being,13-2,13-4,13-1,13-3
+C057,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2
+C057,16,Parking & EV Charging,16-1,16-4,16-3,16-2
+C057,19,Building Maintenance & Faults,19-1,19-4,19-2,19-3
+C024,1,Indoor Temperature Control,1-2,1-3,1-1,1-4
+C024,2,Air Quality & Ventilation,2-2,2-1,2-3,2-4
+C024,4,Noise & Acoustics,4-1,4-2,4-3,4-4
+C024,5,Energy Consumption,5-1,5-3,5-2,5-4
+C024,6,Security & Access Control,6-1,6-2,6-3,6-4
+C024,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3
+C024,9,Water Management,9-1,9-2,9-3,9-4
+C024,10,Waste & Recycling,10-1,10-2,10-3,10-4
+C024,11,Renewable Energy & Solar,11-1,11-2,11-3,11-4
+C024,19,Building Maintenance & Faults,19-1,19-2,19-4,19-3
+C054,1,Indoor Temperature Control,1-4,1-3,1-1,1-2
+C054,2,Air Quality & Ventilation,2-2,2-4,2-1,2-3
+C054,3,Lighting & Daylight,3-3,3-4,3-2,3-1
+C054,4,Noise & Acoustics,4-2,4-3,4-1,4-4
+C054,5,Energy Consumption,5-1,5-2,5-4,5-3
+C054,6,Security & Access Control,6-2,6-3,6-4,6-1
+C054,8,Fire Safety & Emergency,8-2,8-1,8-3,8-4
+C054,9,Water Management,9-1,9-2,9-3,9-4
+C054,13,Health & Well-being,13-2,13-1,13-3,13-4
+C054,15,"Lifts, Stairs & Internal Transport",15-1,15-2,15-3,15-4
+C055,1,Indoor Temperature Control,1-2,1-3,1-4,1-1
+C055,2,Air Quality & Ventilation,2-2,2-1,2-4,2-3
+C055,3,Lighting & Daylight,3-3,3-2,3-4,3-1
+C055,5,Energy Consumption,5-1,5-2,5-3,5-4
+C055,6,Security & Access Control,6-2,6-1,6-3,6-4
+C055,7,Occupancy & Space Utilisation,7-2,7-3,7-4,7-1
+C055,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C055,12,Green Spaces & Biodiversity,12-2,12-3,12-1,12-4
+C055,13,Health & Well-being,13-2,13-1,13-3,13-4
+C055,17,Building Automation & AI,17-4,17-1,17-2,17-3
+C028,1,Indoor Temperature Control,1-1,1-3,1-4,1-2
+C028,3,Lighting & Daylight,3-3,3-2,3-1,3-4
+C028,4,Noise & Acoustics,4-2,4-4,4-3,4-1
+C028,6,Security & Access Control,6-2,6-1,6-4,6-3
+C028,7,Occupancy & Space Utilisation,7-2,7-1,7-4,7-3
+C028,8,Fire Safety & Emergency,8-2,8-1,8-4,8-3
+C028,11,Renewable Energy & Solar,11-4,11-1,11-3,11-2
+C028,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1
+C028,13,Health & Well-being,13-3,13-2,13-4,13-1
+C028,14,IoT Sensors & Data Analytics,14-2,14-1,14-4,14-3
+C047,1,Indoor Temperature Control,1-1,1-2,1-3,1-4
+C047,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4
+C047,4,Noise & Acoustics,4-1,4-2,4-3,4-4
+C047,5,Energy Consumption,5-1,5-2,5-3,5-4
+C047,6,Security & Access Control,6-1,6-2,6-3,6-4
+C047,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4
+C047,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C047,9,Water Management,9-1,9-2,9-3,9-4
+C047,13,Health & Well-being,13-1,13-2,13-3,13-4
+C047,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4
+C046,1,Indoor Temperature Control,1-1,1-2,1-4,1-3
+C046,2,Air Quality & Ventilation,2-1,2-2,2-4,2-3
+C046,3,Lighting & Daylight,3-1,3-4,3-2,3-3
+C046,5,Energy Consumption,5-1,5-2,5-3,5-4
+C046,6,Security & Access Control,6-2,6-3,6-4,6-1
+C046,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2
+C046,16,Parking & EV Charging,16-1,16-2,16-3,16-4
+C046,17,Building Automation & AI,17-1,17-2,17-4,17-3
+C046,18,User Apps & Digital Interaction,18-2,18-3,18-4,18-1
+C046,19,Building Maintenance & Faults,19-1,19-3,19-2,19-4
+C044,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C044,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2
+C044,3,Lighting & Daylight,3-1,3-3,3-4,3-2
+C044,6,Security & Access Control,6-1,6-3,6-4,6-2
+C044,7,Occupancy & Space Utilisation,7-3,7-2,7-1,7-4
+C044,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1
+C044,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C044,14,IoT Sensors & Data Analytics,14-4,14-3,14-2,14-1
+C044,15,"Lifts, Stairs & Internal Transport",15-4,15-3,15-2,15-1
+C044,18,User Apps & Digital Interaction,18-4,18-3,18-2,18-1
+C042,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C042,2,Air Quality & Ventilation,2-1,2-4,2-3,2-2
+C042,5,Energy Consumption,5-4,5-3,5-2,5-1
+C042,6,Security & Access Control,6-2,6-1,6-4,6-3
+C042,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1
+C042,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C042,9,Water Management,9-4,9-3,9-2,9-1
+C042,13,Health & Well-being,13-4,13-3,13-2,13-1
+C042,14,IoT Sensors & Data Analytics,14-4,14-3,14-2,14-1
+C042,17,Building Automation & AI,17-4,17-3,17-2,17-1
+C040,2,Air Quality & Ventilation,2-2,2-1,2-4,2-3
+C040,3,Lighting & Daylight,3-2,3-4,3-1,3-3
+C040,5,Energy Consumption,5-2,5-4,5-1,5-3
+C040,6,Security & Access Control,6-1,6-3,6-4,6-2
+C040,8,Fire Safety & Emergency,8-2,8-1,8-4,8-3
+C040,9,Water Management,9-2,9-4,9-1,9-3
+C040,10,Waste & Recycling,10-4,10-3,10-2,10-1
+C040,12,Green Spaces & Biodiversity,12-2,12-3,12-1,12-4
+C040,13,Health & Well-being,13-1,13-4,13-2,13-3
+C040,20,Carbon Footprint & Net Zero,20-3,20-4,20-2,20-1
+C043,1,Indoor Temperature Control,1-1,1-3,1-4,1-2
+C043,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2
+C043,3,Lighting & Daylight,3-2,3-1,3-4,3-3
+C043,6,Security & Access Control,6-1,6-3,6-2,6-4
+C043,7,Occupancy & Space Utilisation,7-2,7-1,7-4,7-3
+C043,8,Fire Safety & Emergency,8-3,8-2,8-1,8-4
+C043,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1
+C043,12,Green Spaces & Biodiversity,12-2,12-1,12-4,12-3
+C043,14,IoT Sensors & Data Analytics,14-3,14-2,14-1,14-4
+C043,15,"Lifts, Stairs & Internal Transport",15-3,15-2,15-1,15-4
+C038,1,Indoor Temperature Control,1-1,1-2,1-3,1-4
+C038,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4
+C038,3,Lighting & Daylight,3-1,3-2,3-3,3-4
+C038,4,Noise & Acoustics,4-1,4-2,4-3,4-4
+C038,5,Energy Consumption,5-1,5-2,5-3,5-4
+C038,6,Security & Access Control,6-1,6-2,6-3,6-4
+C038,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C038,9,Water Management,9-1,9-2,9-3,9-4
+C038,13,Health & Well-being,13-1,13-2,13-3,13-4
+C038,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4
+C041,1,Indoor Temperature Control,1-1,1-2,1-3,1-4
+C041,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4
+C041,3,Lighting & Daylight,3-1,3-2,3-3,3-4
+C041,5,Energy Consumption,5-1,5-3,5-2,5-4
+C041,6,Security & Access Control,6-1,6-2,6-3,6-4
+C041,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4
+C041,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C041,9,Water Management,9-1,9-2,9-3,9-4
+C041,13,Health & Well-being,13-1,13-2,13-3,13-4
+C041,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4
+C039,1,Indoor Temperature Control,1-1,1-3,1-4,1-2
+C039,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2
+C039,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C039,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C039,6,Security & Access Control,6-3,6-2,6-1,6-4
+C039,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1
+C039,8,Fire Safety & Emergency,8-3,8-2,8-1,8-4
+C039,9,Water Management,9-2,9-1,9-4,9-3
+C039,10,Waste & Recycling,10-3,10-1,10-4,10-2
+C039,12,Green Spaces & Biodiversity,12-2,12-1,12-4,12-3
+C032,1,Indoor Temperature Control,1-1,1-3,1-4,1-2
+C032,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2
+C032,4,Noise & Acoustics,4-1,4-4,4-3,4-2
+C032,5,Energy Consumption,5-1,5-4,5-3,5-2
+C032,6,Security & Access Control,6-2,6-1,6-3,6-4
+C032,7,Occupancy & Space Utilisation,7-1,7-4,7-3,7-2
+C032,8,Fire Safety & Emergency,8-1,8-4,8-3,8-2
+C032,11,Renewable Energy & Solar,11-1,11-4,11-3,11-2
+C032,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1
+C032,14,IoT Sensors & Data Analytics,14-1,14-4,14-3,14-2
+C034,1,Indoor Temperature Control,1-1,1-4,1-3,1-2
+C034,2,Air Quality & Ventilation,2-4,2-3,2-1,2-2
+C034,3,Lighting & Daylight,3-2,3-4,3-3,3-1
+C034,4,Noise & Acoustics,4-4,4-2,4-3,4-1
+C034,6,Security & Access Control,6-3,6-4,6-2,6-1
+C034,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C034,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1
+C034,13,Health & Well-being,13-1,13-4,13-3,13-2
+C034,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2
+C034,16,Parking & EV Charging,16-1,16-3,16-4,16-2
+C026,1,Indoor Temperature Control,1-2,1-1,1-3,1-4
+C026,2,Air Quality & Ventilation,2-4,2-1,2-3,2-2
+C026,3,Lighting & Daylight,3-1,3-2,3-4,3-3
+C026,5,Energy Consumption,5-3,5-2,5-1,5-4
+C026,6,Security & Access Control,6-2,6-4,6-1,6-3
+C026,7,Occupancy & Space Utilisation,7-4,7-2,7-1,7-3
+C026,8,Fire Safety & Emergency,8-1,8-2,8-4,8-3
+C026,9,Water Management,9-2,9-3,9-1,9-4
+C026,13,Health & Well-being,13-1,13-3,13-2,13-4
+C026,20,Carbon Footprint & Net Zero,20-3,20-4,20-1,20-2
+C023,1,Indoor Temperature Control,1-2,1-4,1-3,1-1
+C023,2,Air Quality & Ventilation,2-3,2-1,2-2,2-4
+C023,5,Energy Consumption,5-1,5-3,5-2,5-4
+C023,6,Security & Access Control,6-2,6-4,6-3,6-1
+C023,10,Waste & Recycling,10-3,10-2,10-1,10-4
+C023,11,Renewable Energy & Solar,11-2,11-4,11-3,11-1
+C023,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1
+C023,13,Health & Well-being,13-3,13-4,13-2,13-1
+C023,14,IoT Sensors & Data Analytics,14-3,14-2,14-1,14-4
+C023,17,Building Automation & AI,17-2,17-4,17-3,17-1
+C027,2,Air Quality & Ventilation,2-3,2-1,2-4,2-2
+C027,3,Lighting & Daylight,3-4,3-1,3-2,3-3
+C027,5,Energy Consumption,5-1,5-2,5-4,5-3
+C027,7,Occupancy & Space Utilisation,7-3,7-2,7-1,7-4
+C027,8,Fire Safety & Emergency,8-2,8-4,8-1,8-3
+C027,9,Water Management,9-1,9-2,9-3,9-4
+C027,10,Waste & Recycling,10-2,10-3,10-1,10-4
+C027,11,Renewable Energy & Solar,11-1,11-2,11-3,11-4
+C027,12,Green Spaces & Biodiversity,12-1,12-2,12-3,12-4
+C027,19,Building Maintenance & Faults,19-3,19-4,19-1,19-2
+C025,1,Indoor Temperature Control,1-1,1-2,1-4,1-3
+C025,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2
+C025,3,Lighting & Daylight,3-2,3-3,3-1,3-4
+C025,4,Noise & Acoustics,4-2,4-4,4-1,4-3
+C025,6,Security & Access Control,6-1,6-4,6-3,6-2
+C025,7,Occupancy & Space Utilisation,7-2,7-4,7-1,7-3
+C025,8,Fire Safety & Emergency,8-2,8-3,8-1,8-4
+C025,13,Health & Well-being,13-2,13-1,13-3,13-4
+C025,15,"Lifts, Stairs & Internal Transport",15-3,15-2,15-4,15-1
+C025,16,Parking & EV Charging,16-2,16-4,16-1,16-3
+C020,1,Indoor Temperature Control,1-1,1-2,1-4,1-3
+C020,2,Air Quality & Ventilation,2-2,2-1,2-3,2-4
+C020,3,Lighting & Daylight,3-1,3-3,3-2,3-4
+C020,4,Noise & Acoustics,4-1,4-2,4-4,4-3
+C020,5,Energy Consumption,5-2,5-1,5-4,5-3
+C020,6,Security & Access Control,6-1,6-2,6-4,6-3
+C020,7,Occupancy & Space Utilisation,7-1,7-2,7-4,7-3
+C020,8,Fire Safety & Emergency,8-1,8-3,8-2,8-4
+C020,11,Renewable Energy & Solar,11-1,11-3,11-4,11-2
+C020,17,Building Automation & AI,17-2,17-1,17-3,17-4
+C014,1,Indoor Temperature Control,1-1,1-2,1-3,1-4
+C014,2,Air Quality & Ventilation,2-1,2-3,2-4,2-2
+C014,3,Lighting & Daylight,3-4,3-2,3-3,3-1
+C014,6,Security & Access Control,6-2,6-4,6-3,6-1
+C014,7,Occupancy & Space Utilisation,7-1,7-2,7-3,7-4
+C014,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3
+C014,9,Water Management,9-1,9-2,9-4,9-3
+C014,10,Waste & Recycling,10-1,10-2,10-4,10-3
+C014,15,"Lifts, Stairs & Internal Transport",15-1,15-4,15-3,15-2
+C014,19,Building Maintenance & Faults,19-1,19-3,19-4,19-2
+C009,1,Indoor Temperature Control,1-4,1-1,1-3,1-2
+C009,2,Air Quality & Ventilation,2-3,2-4,2-1,2-2
+C009,5,Energy Consumption,5-3,5-4,5-2,5-1
+C009,6,Security & Access Control,6-3,6-4,6-2,6-1
+C009,7,Occupancy & Space Utilisation,7-3,7-4,7-2,7-1
+C009,8,Fire Safety & Emergency,8-1,8-4,8-3,8-2
+C009,13,Health & Well-being,13-1,13-4,13-3,13-2
+C009,14,IoT Sensors & Data Analytics,14-2,14-4,14-1,14-3
+C009,17,Building Automation & AI,17-3,17-4,17-2,17-1
+C009,19,Building Maintenance & Faults,19-1,19-4,19-2,19-3
+C011,2,Air Quality & Ventilation,2-4,2-2,2-3,2-1
+C011,5,Energy Consumption,5-4,5-2,5-3,5-1
+C011,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1
+C011,8,Fire Safety & Emergency,8-4,8-2,8-1,8-3
+C011,9,Water Management,9-3,9-4,9-2,9-1
+C011,10,Waste & Recycling,10-4,10-3,10-2,10-1
+C011,11,Renewable Energy & Solar,11-4,11-2,11-1,11-3
+C011,12,Green Spaces & Biodiversity,12-4,12-2,12-3,12-1
+C011,13,Health & Well-being,13-4,13-2,13-3,13-1
+C011,20,Carbon Footprint & Net Zero,20-4,20-2,20-3,20-1
+C012,1,Indoor Temperature Control,1-3,1-2,1-1,1-4
+C012,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C012,3,Lighting & Daylight,3-1,3-2,3-3,3-4
+C012,5,Energy Consumption,5-2,5-4,5-3,5-1
+C012,13,Health & Well-being,13-4,13-3,13-2,13-1
+C012,15,"Lifts, Stairs & Internal Transport",15-4,15-3,15-1,15-2
+C012,16,Parking & EV Charging,16-3,16-2,16-1,16-4
+C012,18,User Apps & Digital Interaction,18-4,18-2,18-1,18-3
+C012,19,Building Maintenance & Faults,19-4,19-2,19-1,19-3
+C012,20,Carbon Footprint & Net Zero,20-4,20-3,20-2,20-1
+C010,1,Indoor Temperature Control,1-1,1-4,1-3,1-2
+C010,2,Air Quality & Ventilation,2-1,2-4,2-2,2-3
+C010,3,Lighting & Daylight,3-1,3-4,3-2,3-3
+C010,5,Energy Consumption,5-1,5-2,5-3,5-4
+C010,6,Security & Access Control,6-1,6-2,6-4,6-3
+C010,7,Occupancy & Space Utilisation,7-1,7-4,7-2,7-3
+C010,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3
+C010,9,Water Management,9-1,9-4,9-3,9-2
+C010,13,Health & Well-being,13-1,13-4,13-2,13-3
+C010,19,Building Maintenance & Faults,19-1,19-2,19-3,19-4
+C007,1,Indoor Temperature Control,1-3,1-2,1-1,1-4
+C007,2,Air Quality & Ventilation,2-4,2-1,2-2,2-3
+C007,3,Lighting & Daylight,3-3,3-4,3-2,3-1
+C007,4,Noise & Acoustics,4-3,4-2,4-4,4-1
+C007,6,Security & Access Control,6-4,6-2,6-3,6-1
+C007,8,Fire Safety & Emergency,8-2,8-4,8-3,8-1
+C007,11,Renewable Energy & Solar,11-2,11-1,11-3,11-4
+C007,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C007,13,Health & Well-being,13-2,13-1,13-4,13-3
+C007,20,Carbon Footprint & Net Zero,20-4,20-3,20-1,20-2
+C008,1,Indoor Temperature Control,1-2,1-1,1-4,1-3
+C008,2,Air Quality & Ventilation,2-1,2-3,2-2,2-4
+C008,6,Security & Access Control,6-2,6-1,6-3,6-4
+C008,8,Fire Safety & Emergency,8-1,8-4,8-2,8-3
+C008,9,Water Management,9-1,9-3,9-4,9-2
+C008,10,Waste & Recycling,10-4,10-2,10-1,10-3
+C008,11,Renewable Energy & Solar,11-2,11-1,11-4,11-3
+C008,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C008,13,Health & Well-being,13-4,13-1,13-2,13-3
+C008,18,User Apps & Digital Interaction,18-2,18-1,18-4,18-3
+C006,1,Indoor Temperature Control,1-1,1-3,1-2,1-4
+C006,2,Air Quality & Ventilation,2-1,2-3,2-2,2-4
+C006,3,Lighting & Daylight,3-3,3-1,3-4,3-2
+C006,4,Noise & Acoustics,4-2,4-1,4-4,4-3
+C006,5,Energy Consumption,5-2,5-4,5-1,5-3
+C006,6,Security & Access Control,6-1,6-3,6-2,6-4
+C006,8,Fire Safety & Emergency,8-1,8-2,8-3,8-4
+C006,14,IoT Sensors & Data Analytics,14-1,14-3,14-2,14-4
+C006,19,Building Maintenance & Faults,19-1,19-2,19-4,19-3
+C006,20,Carbon Footprint & Net Zero,20-1,20-2,20-3,20-4
+C001,1,Indoor Temperature Control,1-4,1-1,1-3,1-2
+C001,2,Air Quality & Ventilation,2-3,2-4,2-1,2-2
+C001,3,Lighting & Daylight,3-2,3-1,3-4,3-3
+C001,4,Noise & Acoustics,4-3,4-1,4-4,4-2
+C001,5,Energy Consumption,5-4,5-2,5-3,5-1
+C001,6,Security & Access Control,6-3,6-4,6-1,6-2
+C001,7,Occupancy & Space Utilisation,7-3,7-1,7-4,7-2
+C001,14,IoT Sensors & Data Analytics,14-3,14-1,14-4,14-2
+C001,17,Building Automation & AI,17-3,17-2,17-4,17-1
+C001,18,User Apps & Digital Interaction,18-3,18-1,18-4,18-2
+C069,5,Energy Consumption,5-4,5-3,5-2,5-1
+C069,20,Carbon Footprint & Net Zero,20-4,20-3,20-2,20-1
+C069,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1
+C069,9,Water Management,9-1,9-2,9-4,9-3
+C069,10,Waste & Recycling,10-4,10-3,10-2,10-1
+C069,2,Air Quality & Ventilation,2-3,2-1,2-2,2-4
+C069,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C069,14,IoT Sensors & Data Analytics,14-3,14-4,14-1,14-2
+C069,1,Indoor Temperature Control,1-1,1-4,1-2,1-3
+C069,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C071,5,Energy Consumption,5-4,5-3,5-2,5-1
+C071,20,Carbon Footprint & Net Zero,20-3,20-4,20-2,20-1
+C071,11,Renewable Energy & Solar,11-2,11-4,11-3,11-1
+C071,9,Water Management,9-4,9-3,9-2,9-1
+C071,10,Waste & Recycling,10-2,10-1,10-3,10-4
+C071,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C071,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C071,14,IoT Sensors & Data Analytics,14-4,14-1,14-3,14-2
+C071,1,Indoor Temperature Control,1-4,1-1,1-3,1-2
+C071,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C064,5,Energy Consumption,5-4,5-3,5-2,5-1
+C064,20,Carbon Footprint & Net Zero,20-4,20-3,20-2,20-1
+C064,11,Renewable Energy & Solar,11-4,11-1,11-3,11-2
+C064,9,Water Management,9-4,9-3,9-2,9-1
+C064,10,Waste & Recycling,10-2,10-4,10-3,10-1
+C064,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C064,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C064,14,IoT Sensors & Data Analytics,14-4,14-3,14-2,14-1
+C064,1,Indoor Temperature Control,1-4,1-1,1-2,1-3
+C064,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C095,5,Energy Consumption,5-3,5-4,5-1,5-2
+C095,20,Carbon Footprint & Net Zero,20-2,20-1,20-3,20-4
+C095,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1
+C095,9,Water Management,9-4,9-3,9-2,9-1
+C095,10,Waste & Recycling,10-2,10-3,10-4,10-1
+C095,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C095,12,Green Spaces & Biodiversity,12-3,12-1,12-2,12-4
+C095,14,IoT Sensors & Data Analytics,14-3,14-4,14-1,14-2
+C095,1,Indoor Temperature Control,1-3,1-1,1-2,1-4
+C095,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C066,5,Energy Consumption,5-4,5-3,5-2,5-1
+C066,20,Carbon Footprint & Net Zero,20-4,20-3,20-2,20-1
+C066,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1
+C066,9,Water Management,9-4,9-3,9-2,9-1
+C066,10,Waste & Recycling,10-4,10-3,10-2,10-1
+C066,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C066,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C066,14,IoT Sensors & Data Analytics,14-3,14-1,14-4,14-2
+C066,1,Indoor Temperature Control,1-1,1-2,1-4,1-3
+C066,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C002,5,Energy Consumption,5-4,5-3,5-2,5-1
+C002,20,Carbon Footprint & Net Zero,20-1,20-2,20-4,20-3
+C002,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1
+C002,9,Water Management,9-2,9-1,9-3,9-4
+C002,10,Waste & Recycling,10-4,10-3,10-2,10-1
+C002,2,Air Quality & Ventilation,2-3,2-4,2-2,2-1
+C002,12,Green Spaces & Biodiversity,12-2,12-4,12-3,12-1
+C002,14,IoT Sensors & Data Analytics,14-3,14-2,14-1,14-4
+C002,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C002,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C061,5,Energy Consumption,5-4,5-3,5-2,5-1
+C061,20,Carbon Footprint & Net Zero,20-1,20-2,20-3,20-4
+C061,11,Renewable Energy & Solar,11-4,11-3,11-2,11-1
+C061,9,Water Management,9-4,9-3,9-2,9-1
+C061,10,Waste & Recycling,10-3,10-2,10-4,10-1
+C061,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C061,12,Green Spaces & Biodiversity,12-1,12-2,12-3,12-4
+C061,14,IoT Sensors & Data Analytics,14-4,14-3,14-2,14-1
+C061,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C061,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C060,5,Energy Consumption,5-4,5-3,5-2,5-1
+C060,20,Carbon Footprint & Net Zero,20-1,20-3,20-2,20-4
+C060,11,Renewable Energy & Solar,11-3,11-4,11-2,11-1
+C060,9,Water Management,9-4,9-3,9-2,9-1
+C060,10,Waste & Recycling,10-3,10-1,10-2,10-4
+C060,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C060,12,Green Spaces & Biodiversity,12-4,12-3,12-2,12-1
+C060,14,IoT Sensors & Data Analytics,14-4,14-2,14-3,14-1
+C060,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C060,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C070,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C070,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C070,6,Security & Access Control,6-4,6-3,6-2,6-1
+C070,13,Health & Well-being,13-1,13-2,13-4,13-3
+C070,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1
+C070,19,Building Maintenance & Faults,19-3,19-1,19-2,19-4
+C070,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C070,14,IoT Sensors & Data Analytics,14-3,14-4,14-1,14-2
+C070,3,Lighting & Daylight,3-1,3-4,3-2,3-3
+C070,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C072,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C072,2,Air Quality & Ventilation,2-3,2-4,2-2,2-1
+C072,6,Security & Access Control,6-2,6-4,6-3,6-1
+C072,13,Health & Well-being,13-4,13-3,13-2,13-1
+C072,7,Occupancy & Space Utilisation,7-2,7-1,7-3,7-4
+C072,19,Building Maintenance & Faults,19-4,19-3,19-2,19-1
+C072,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C072,14,IoT Sensors & Data Analytics,14-4,14-1,14-3,14-2
+C072,3,Lighting & Daylight,3-4,3-1,3-3,3-2
+C072,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C063,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C063,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C063,6,Security & Access Control,6-4,6-1,6-3,6-2
+C063,13,Health & Well-being,13-4,13-3,13-2,13-1
+C063,7,Occupancy & Space Utilisation,7-2,7-4,7-3,7-1
+C063,19,Building Maintenance & Faults,19-4,19-3,19-2,19-1
+C063,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C063,14,IoT Sensors & Data Analytics,14-4,14-3,14-2,14-1
+C063,3,Lighting & Daylight,3-4,3-1,3-2,3-3
+C063,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C094,8,Fire Safety & Emergency,8-3,8-4,8-1,8-2
+C094,2,Air Quality & Ventilation,2-2,2-1,2-3,2-4
+C094,6,Security & Access Control,6-4,6-3,6-2,6-1
+C094,13,Health & Well-being,13-4,13-3,13-2,13-1
+C094,7,Occupancy & Space Utilisation,7-2,7-3,7-4,7-1
+C094,19,Building Maintenance & Faults,19-4,19-3,19-2,19-1
+C094,1,Indoor Temperature Control,1-3,1-1,1-2,1-4
+C094,14,IoT Sensors & Data Analytics,14-3,14-4,14-1,14-2
+C094,3,Lighting & Daylight,3-3,3-1,3-2,3-4
+C094,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C065,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C065,2,Air Quality & Ventilation,2-4,2-3,2-2,2-1
+C065,6,Security & Access Control,6-4,6-3,6-2,6-1
+C065,13,Health & Well-being,13-4,13-3,13-2,13-1
+C065,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1
+C065,19,Building Maintenance & Faults,19-4,19-3,19-2,19-1
+C065,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C065,14,IoT Sensors & Data Analytics,14-3,14-1,14-4,14-2
+C065,3,Lighting & Daylight,3-1,3-2,3-4,3-3
+C065,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C003,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C003,2,Air Quality & Ventilation,2-1,2-2,2-4,2-3
+C003,6,Security & Access Control,6-4,6-3,6-2,6-1
+C003,13,Health & Well-being,13-2,13-1,13-3,13-4
+C003,7,Occupancy & Space Utilisation,7-4,7-3,7-2,7-1
+C003,19,Building Maintenance & Faults,19-3,19-4,19-2,19-1
+C003,1,Indoor Temperature Control,1-2,1-4,1-3,1-1
+C003,14,IoT Sensors & Data Analytics,14-3,14-2,14-1,14-4
+C003,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C003,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C062,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C062,2,Air Quality & Ventilation,2-1,2-2,2-3,2-4
+C062,6,Security & Access Control,6-4,6-3,6-2,6-1
+C062,13,Health & Well-being,13-4,13-3,13-2,13-1
+C062,7,Occupancy & Space Utilisation,7-3,7-2,7-4,7-1
+C062,19,Building Maintenance & Faults,19-4,19-3,19-2,19-1
+C062,1,Indoor Temperature Control,1-1,1-2,1-3,1-4
+C062,14,IoT Sensors & Data Analytics,14-4,14-3,14-2,14-1
+C062,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C062,4,Noise & Acoustics,4-4,4-3,4-2,4-1
+C059,8,Fire Safety & Emergency,8-4,8-3,8-2,8-1
+C059,2,Air Quality & Ventilation,2-1,2-3,2-2,2-4
+C059,6,Security & Access Control,6-3,6-4,6-2,6-1
+C059,13,Health & Well-being,13-4,13-3,13-2,13-1
+C059,7,Occupancy & Space Utilisation,7-3,7-1,7-2,7-4
+C059,19,Building Maintenance & Faults,19-4,19-3,19-2,19-1
+C059,1,Indoor Temperature Control,1-4,1-3,1-2,1-1
+C059,14,IoT Sensors & Data Analytics,14-4,14-2,14-3,14-1
+C059,3,Lighting & Daylight,3-4,3-3,3-2,3-1
+C059,4,Noise & Acoustics,4-4,4-3,4-2,4-1

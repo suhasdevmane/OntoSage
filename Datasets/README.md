@@ -73,11 +73,12 @@ These probes measure *depth* — whether a forecast shows its model, whether a r
 coverage, whether a decline is honest. They are not sampled from the corpus and are not a
 coverage measure; the corpus replay in folder 1 is.
 
-### 5. `Deployment study (pilot)/`
+### 5. The study of OntoSage+ (October 2026)
 
-The instrument, session structure and pilot responses. **The 30-participant study reported in
-the paper has not yet been run** — every outcome value in Sections 5 to 7 of the paper is shown
-as a red placeholder until it is.
+The materials, analysis scripts and de-identified data of the 30-participant study, with the
+survey data in the same anonymised form, are in
+[`../OntoSage_IMWUT_supplementary/`](../OntoSage_IMWUT_supplementary/). Start with its
+`00_README.md`. The folder `Deployment study (pilot)/` that stood here has been removed.
 
 ---
 

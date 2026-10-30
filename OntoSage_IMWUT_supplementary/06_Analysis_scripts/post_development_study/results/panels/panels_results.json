@@ -1,0 +1,30 @@
+{
+ "label_source": "HUMAN_AGREED",
+ "answers": 391,
+ "with_panel": 367,
+ "fd_with_evidence_claim": [
+  110,
+  127
+ ],
+ "w_or_u_with_not_assessable": [
+  5,
+  118
+ ],
+ "u_with_evidence_claim": [
+  49,
+  49
+ ],
+ "with_completeness_line": 38,
+ "with_checks_line": 22,
+ "kind_counts": {
+  "observed": 211,
+  "calculated": 101,
+  "not_assessable": 47,
+  "inferred": 7,
+  "predicted": 1
+ },
+ "inputs": {
+  "deidentified_v1/turns.csv": "038a917dbe6f9d71",
+  "answer_labels_agreed.csv": "23e3f11f11bb9290"
+ }
+}

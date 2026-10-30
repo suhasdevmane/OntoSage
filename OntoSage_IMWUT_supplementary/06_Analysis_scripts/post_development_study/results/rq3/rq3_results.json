@@ -1,0 +1,212 @@
+{
+ "input_sha256": {
+  "decisions.csv": "0e90cb8d69a367edda260c82618a1d68fcdfc0525b8f7a79fe6568cb37f6b6b9",
+  "participants.csv": "b5649c92f540b8c6df77e2c3c672d14ac7ac1f586bd9fb1218280e332a808792",
+  "turns.csv": "038a917dbe6f9d71da1710bd6eb2e4416c82ba2ca31836290a7c64848cb2283a",
+  "own_questions.csv": "bd452b9d1bc066f1a9374bd8130875eed9ca20bca71cb6b541f1735a5f40fdd2"
+ },
+ "n_participants": 30,
+ "n_decisions": 180,
+ "E1_gee_coefficients": {
+  "Intercept": {
+   "coef": -1.1895840668738362,
+   "se": 0.43166584730172247,
+   "p": 0.005854906514048667
+  },
+  "C(situation, Treatment('S1'))[T.S2]": {
+   "coef": 0.9213200802791569,
+   "se": 0.5398471687509345,
+   "p": 0.087890602000574
+  },
+  "C(situation, Treatment('S1'))[T.S3]": {
+   "coef": 34.765141631357416,
+   "se": 0.46958760893913143,
+   "p": 0.0
+  },
+  "C(situation, Treatment('S1'))[T.S4]": {
+   "coef": 1.3231154594983585,
+   "se": 0.5339645337813164,
+   "p": 0.01321548908408827
+  }
+ },
+ "C1_S2_minus_S1": {
+  "diff": 0.2,
+  "lo": 0.0,
+  "hi": 0.4,
+  "p_boot": 0.073
+ },
+ "C3": {
+  "overconfidence": 0.3111666666666667,
+  "lo": 0.22704583333333325,
+  "hi": 0.3876180555555555,
+  "p_boot": 0.0005,
+  "brier": 0.3586205555555556,
+  "brier_lo": 0.31693805555555554,
+  "brier_hi": 0.40171824999999994
+ },
+ "S3": {
+  "absence_understood": 23,
+  "no_conclusion": 7,
+  "accepted_value": 0
+ },
+ "E1_gee_with_position": {
+  "note": "exploratory; fitted without S3 (all 30 S3 decisions warranted)",
+  "Intercept": {
+   "coef": -0.9218074766520344,
+   "se": 0.6745716722982052,
+   "p": 0.17177962282499792
+  },
+  "C(situation, Treatment('S1'))[T.S2]": {
+   "coef": 0.9196756479671787,
+   "se": 0.5386887794417058,
+   "p": 0.08777586100507627
+  },
+  "C(situation, Treatment('S1'))[T.S4]": {
+   "coef": 1.3231507044293784,
+   "se": 0.5280419170455951,
+   "p": 0.012218565347192576
+  },
+  "position": {
+   "coef": -0.0768669414372114,
+   "se": 0.1261268378922167,
+   "p": 0.5422317734755249
+  }
+ },
+ "usability": {
+  "sus_mean": 79.16666666666667,
+  "sus_lo": 75.83333333333333,
+  "sus_hi": 82.5,
+  "sus_median": 80.0,
+  "sus_min": 62.5,
+  "sus_max": 97.5,
+  "sus_sd": 9.700989403267013,
+  "sus_alpha": 0.658693808312129,
+  "sus_bangor_nearest_adjective": "between the mean scores for 'Good' (71.4) and 'Excellent' (85.5)",
+  "sus_acceptability_range": "acceptable",
+  "trust_mean": 5.499933333333333,
+  "trust_lo": 5.000030833333334,
+  "trust_hi": 5.955466666666666,
+  "trust_alpha": 0.9220338983050846,
+  "effort_median": 3.0,
+  "effort_lo": 2.0,
+  "effort_hi": 3.0,
+  "effort_mean": 3.2,
+  "spearman_sus_vs_warranted_share": 0.0014422951076177011,
+  "spearman_lo": -0.410342330947309,
+  "spearman_hi": 0.4071997581057743,
+  "n": 30
+ },
+ "behaviour": {
+  "participants": 30,
+  "decisions": 180,
+  "questions_total": 391,
+  "task_questions": 274,
+  "own_question_turns": 114,
+  "practice_turns": 1,
+  "tasks_with_question": 176,
+  "median_questions_per_task": 1.0,
+  "mean_questions_per_task": 1.5222222222222221,
+  "median_chats_per_participant": 2.0,
+  "participants_one_or_two_chats": 24,
+  "session_minutes_median": 35.0,
+  "session_minutes_min": 17.3,
+  "session_minutes_max": 186.0,
+  "task_seconds_median": 183.15,
+  "task_seconds_q1": 108.95,
+  "task_seconds_q3": 289.05,
+  "timed_out_tasks": 12,
+  "own_questions_written": 85,
+  "own_questions_added_with_button": 1,
+  "own_questions_asked_live": 80,
+  "answer_seconds_median": 26.4,
+  "answer_seconds_p90": 59.33,
+  "provider_failures": 0,
+  "answers_with_evidence_panel": 367
+ },
+ "decision_kind_by_answer_received": {
+  "FD": {
+   "accepted an unsupported claim": 7,
+   "false absence or limit": 0,
+   "under-reliance (could not find out)": 30,
+   "warranted": 5
+  },
+  "OT": {
+   "accepted an unsupported claim": 2,
+   "false absence or limit": 1,
+   "under-reliance (could not find out)": 2,
+   "warranted": 4
+  },
+  "U": {
+   "accepted an unsupported claim": 11,
+   "false absence or limit": 2,
+   "under-reliance (could not find out)": 3,
+   "warranted": 16
+  },
+  "W": {
+   "accepted an unsupported claim": 4,
+   "false absence or limit": 1,
+   "under-reliance (could not find out)": 2,
+   "warranted": 28
+  },
+  "WL": {
+   "accepted an unsupported claim": 5,
+   "false absence or limit": 1,
+   "under-reliance (could not find out)": 7,
+   "warranted": 34
+  },
+  "none": {
+   "accepted an unsupported claim": 4,
+   "false absence or limit": 2,
+   "under-reliance (could not find out)": 1,
+   "warranted": 8
+  }
+ },
+ "C2_helpfulness_WL_minus_FD": {
+  "diff": 0.31813576494427576,
+  "lo": -0.09306047929665273,
+  "hi": 0.7266944444444442,
+  "p_boot": 0.147,
+  "n_WL": 47,
+  "n_FD": 42,
+  "label_source": "HUMAN_AGREED"
+ },
+ "over_reliance_after_U": {
+  "n_U_received": 32,
+  "would_act_yes": 19,
+  "exact_95ci": [
+   0.4064492465764764,
+   0.7630158994482569
+  ],
+  "warranted_anyway": 16,
+  "label_source": "HUMAN_AGREED"
+ },
+ "label_source": "HUMAN_AGREED",
+ "own_questions": {
+  "asked_live": 80,
+  "own_question_turns": 114,
+  "turns_not_linked": 20,
+  "linked": 73,
+  "labels_of_all_own_question_answers": {
+   "FD": 38,
+   "W": 34,
+   "WL": 17,
+   "OT": 16,
+   "U": 9
+  },
+  "said_answered_yes_when_last_answer_unwarranted": 22,
+  "would_rely_yes_when_last_answer_unwarranted": 30,
+  "last_answer_unwarranted": 40,
+  "label_source": "HUMAN_AGREED"
+ },
+ "raw_p": {
+  "C1": 0.073,
+  "C3": 0.0005,
+  "C2": 0.147
+ },
+ "holm_p": {
+  "C3": 0.0015,
+  "C1": 0.146,
+  "C2": 0.147
+ },
+ "holm_note": "Holm across C1, C2, C3, as in the study plan (written before the first session, not filed); C2 label source: HUMAN_AGREED"
+}

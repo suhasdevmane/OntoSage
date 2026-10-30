@@ -329,6 +329,9 @@ results/
 # evidence the thesis comparison rests on (tasks/V2_COMPOUND_PLAN.md section 5), and the generic
 # rule above would have dropped every one of them from the evidence commit without a word.
 !eval/compound/results/
+# ...and the supplementary material of the IMWUT submission: its analysis outputs are the results the
+# article's numbers come from, published beside the scripts that wrote them (30 Oct 2026).
+!OntoSage_IMWUT_supplementary/06_Analysis_scripts/post_development_study/results/
 # The BLINDED SHEETS and their _key.json files were ignored here until the blinded read was done
 # (2026-10-08): a key published before scoring would have unblinded the read. Once every row is
 # labelled they are the evidence -- the filled sheet, the key and the panel record are what lets

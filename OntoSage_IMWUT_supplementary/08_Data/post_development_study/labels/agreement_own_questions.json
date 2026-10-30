@@ -1,0 +1,50 @@
+{
+ "n_pairs": 60,
+ "F3a_place": {
+  "kappa": 0.2449862367282737,
+  "raw": 0.4666666666666667
+ },
+ "F3b_time": {
+  "kappa": 0.7591743119266054,
+  "raw": 0.8833333333333333
+ },
+ "F3c_criterion": {
+  "kappa": 0.45070422535211274,
+  "raw": 0.7833333333333333
+ },
+ "F4_evidence_relation": {
+  "kappa": 1.0,
+  "raw": 1.0
+ },
+ "F5_answerable": {
+  "kappa": 0.8038147138964579,
+  "raw": 0.9
+ },
+ "F6_purpose": {
+  "kappa": 1.0,
+  "raw": 1.0
+ },
+ "F2_evidence_source": {
+  "mean_jaccard": 0.7763888888888888,
+  "per_label_kappa": {
+   "description": 0.6443965517241379,
+   "document": 0.537953795379538,
+   "external": 0.9018003273322422,
+   "measurement": 0.8958333333333333,
+   "none": 0.8484848484848482,
+   "record": 0.7340425531914891
+  }
+ },
+ "F1_request_type": {
+  "mean_jaccard": 0.8583333333333333,
+  "per_label_kappa": {
+   "action": 0.8484848484848482,
+   "capability": 0.5945945945945947,
+   "explain": 1.0,
+   "fact": 0.7651006711409395,
+   "rank": 1.0,
+   "summarise": 1.0,
+   "unclear": 0.6590909090909087
+  }
+ }
+}

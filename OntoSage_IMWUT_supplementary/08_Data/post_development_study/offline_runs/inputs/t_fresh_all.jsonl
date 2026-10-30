@@ -1,0 +1,85 @@
+{"qid": "TF-P01-OQ1", "set": "T-FRESH", "participant": "P01", "form": "", "situation": "", "question": "How does the air-conditioning system work in Building A?"}
+{"qid": "TF-P01-OQ2", "set": "T-FRESH", "participant": "P01", "form": "", "situation": "", "question": "What are the types of room available and can I book a room as a student?"}
+{"qid": "TF-P02-OQ1", "set": "T-FRESH", "participant": "P02", "form": "", "situation": "", "question": "Where is the HVAC system are?"}
+{"qid": "TF-P02-OQ2", "set": "T-FRESH", "participant": "P02", "form": "", "situation": "", "question": "Why is the temperature different between the rooms?"}
+{"qid": "TF-P02-OQ3", "set": "T-FRESH", "participant": "P02", "form": "", "situation": "", "question": "How many students/members are on the Building A xxx floor?"}
+{"qid": "TF-P03-OQ1", "set": "T-FRESH", "participant": "P03", "form": "", "situation": "", "question": "can you tell me how much energy is used in the Building A and how green it is compared to standards?"}
+{"qid": "TF-P03-OQ2", "set": "T-FRESH", "participant": "P03", "form": "", "situation": "", "question": "how many floors are there and when was it built? you have information who built this architecture?"}
+{"qid": "TF-P03-OQ3", "set": "T-FRESH", "participant": "P03", "form": "", "situation": "", "question": "what i can do with this system and how it will support me to my daily life? does the building records personal information? is Building A safe?"}
+{"qid": "TF-P04-OQ1", "set": "T-FRESH", "participant": "P04", "form": "", "situation": "", "question": "What is the address of the building?"}
+{"qid": "TF-P05-OQ1", "set": "T-FRESH", "participant": "P05", "form": "", "situation": "", "question": "How does the ventilation work?"}
+{"qid": "TF-P05-OQ2", "set": "T-FRESH", "participant": "P05", "form": "", "situation": "", "question": "How to control the room temperature?"}
+{"qid": "TF-P05-OQ3", "set": "T-FRESH", "participant": "P05", "form": "", "situation": "", "question": "Where can I find a free space for meeting?"}
+{"qid": "TF-P06-OQ1", "set": "T-FRESH", "participant": "P06", "form": "", "situation": "", "question": "HOW MANY FLOORS ARE IN THE BUILDING?"}
+{"qid": "TF-P06-OQ2", "set": "T-FRESH", "participant": "P06", "form": "", "situation": "", "question": "WHAT IS THE LARGEST ROOM?"}
+{"qid": "TF-P06-OQ3", "set": "T-FRESH", "participant": "P06", "form": "", "situation": "", "question": "IS THERE AN ONSITE CAFE?"}
+{"qid": "TF-P07-OQ1", "set": "T-FRESH", "participant": "P07", "form": "", "situation": "", "question": "How do you book rooms in Building A"}
+{"qid": "TF-P07-OQ2", "set": "T-FRESH", "participant": "P07", "form": "", "situation": "", "question": "How do you check the availability of rooms"}
+{"qid": "TF-P07-OQ3", "set": "T-FRESH", "participant": "P07", "form": "", "situation": "", "question": "How do you change the temperature of the rooms"}
+{"qid": "TF-P08-OQ1", "set": "T-FRESH", "participant": "P08", "form": "", "situation": "", "question": "What is the temperature and humidity?\nI put this question because I am working with sensitive electronics device and a high humidity can damage my device. Besides, I prefer working in a good temperature and humidity."}
+{"qid": "TF-P08-OQ2", "set": "T-FRESH", "participant": "P08", "form": "", "situation": "", "question": "Where is \"Someone's name, e.g. [name]\" office?\nI put this question because I have a few collaborations in the same building and I will visit one of them occationally but I can not remember their office number."}
+{"qid": "TF-P08-OQ3", "set": "T-FRESH", "participant": "P08", "form": "", "situation": "", "question": "Which rooms are available for me to have a meeting from 12:00PM tomorrow to 14:00PM tomorrow with a screen for presentation?"}
+{"qid": "TF-P09-OQ1", "set": "T-FRESH", "participant": "P09", "form": "", "situation": "", "question": "Give me the temperature in my office room ?"}
+{"qid": "TF-P09-OQ2", "set": "T-FRESH", "participant": "P09", "form": "", "situation": "", "question": "Can you check is the building cleaned regally?"}
+{"qid": "TF-P09-OQ3", "set": "T-FRESH", "participant": "P09", "form": "", "situation": "", "question": "Have there been any fire alarms in Building A this month?"}
+{"qid": "TF-P10-OQ1", "set": "T-FRESH", "participant": "P10", "form": "", "situation": "", "question": "Which nearby rooms are currently available and least noisy on floor 5?"}
+{"qid": "TF-P10-OQ2", "set": "T-FRESH", "participant": "P10", "form": "", "situation": "", "question": "Is the air quality in my room getting better or worse today?"}
+{"qid": "TF-P10-OQ3", "set": "T-FRESH", "participant": "P10", "form": "", "situation": "", "question": "Are any sensors or building services currently reporting faults?"}
+{"qid": "TF-P11-OQ1", "set": "T-FRESH", "participant": "P11", "form": "", "situation": "", "question": "Which rooms have the best conditions for a focused meeting?"}
+{"qid": "TF-P11-OQ2", "set": "T-FRESH", "participant": "P11", "form": "", "situation": "", "question": "Can you generate a report of the building's environmental performance this week?"}
+{"qid": "TF-P11-OQ3", "set": "T-FRESH", "participant": "P11", "form": "", "situation": "", "question": "Are any sensors or building services currently reporting faults?"}
+{"qid": "TF-P12-OQ1", "set": "T-FRESH", "participant": "P12", "form": "", "situation": "", "question": "Why all rooms are with glass windows?"}
+{"qid": "TF-P13-OQ1", "set": "T-FRESH", "participant": "P13", "form": "", "situation": "", "question": "i want to use the washroom/toilet. I am in the 2nd floor. Is there any toilets nearby?"}
+{"qid": "TF-P13-OQ2", "set": "T-FRESH", "participant": "P13", "form": "", "situation": "", "question": "Can you tell me how much is the temperature and humidity in the room 2.25 today or the last time you checked. can you show me the graph how much it varies?"}
+{"qid": "TF-P13-OQ3", "set": "T-FRESH", "participant": "P13", "form": "", "situation": "", "question": "can you tell me about any low-noise or quiet place on the 2nd floor?"}
+{"qid": "TF-P14-OQ1", "set": "T-FRESH", "participant": "P14", "form": "", "situation": "", "question": "Is the air quality in my room getting better or worse today in my room?"}
+{"qid": "TF-P14-OQ2", "set": "T-FRESH", "participant": "P14", "form": "", "situation": "", "question": "Which areas of the building are currently overcrowded?"}
+{"qid": "TF-P14-OQ3", "set": "T-FRESH", "participant": "P14", "form": "", "situation": "", "question": "Can you tell me how to reach Building A and what the abilities of the Building A are? Can you summarise everything about the Building A?"}
+{"qid": "TF-P15-OQ1", "set": "T-FRESH", "participant": "P15", "form": "", "situation": "", "question": "When will room 4.32 be available to book for next tuesday?"}
+{"qid": "TF-P15-OQ2", "set": "T-FRESH", "participant": "P15", "form": "", "situation": "", "question": "how many people can sit into the room 4.32? is it enough for 50 people?"}
+{"qid": "TF-P15-OQ3", "set": "T-FRESH", "participant": "P15", "form": "", "situation": "", "question": "can i report a maintenance issue for the 4th-floor washroom that needs to be fixed before my next tuesday class session?"}
+{"qid": "TF-P16-OQ1", "set": "T-FRESH", "participant": "P16", "form": "", "situation": "", "question": "can you tell me about Building A facilities?"}
+{"qid": "TF-P16-OQ2", "set": "T-FRESH", "participant": "P16", "form": "", "situation": "", "question": "how many floors are there? does Building A have a kitchen or common room for lunch for staff? Where is it located?"}
+{"qid": "TF-P16-OQ3", "set": "T-FRESH", "participant": "P16", "form": "", "situation": "", "question": "How many floors are there in the building?"}
+{"qid": "TF-P16-OQ4", "set": "T-FRESH", "participant": "P16", "form": "", "situation": "", "question": "Where is the office?"}
+{"qid": "TF-P17-OQ1", "set": "T-FRESH", "participant": "P17", "form": "", "situation": "", "question": "How comfortable and healthy is the indoor environment in the Building A if i plan to visit?"}
+{"qid": "TF-P17-OQ2", "set": "T-FRESH", "participant": "P17", "form": "", "situation": "", "question": "where is the best place for me to work or hold a meeting right now?"}
+{"qid": "TF-P17-OQ3", "set": "T-FRESH", "participant": "P17", "form": "", "situation": "", "question": "Analyse the energy consumption over the past week. Are there any unusual patterns, and what actions could improve comfort while reducing energy waste?"}
+{"qid": "TF-P18-OQ1", "set": "T-FRESH", "participant": "P18", "form": "", "situation": "", "question": "How many lecture theatres are there in total in Building A?"}
+{"qid": "TF-P18-OQ2", "set": "T-FRESH", "participant": "P18", "form": "", "situation": "", "question": "Is there a cafe in the building?"}
+{"qid": "TF-P18-OQ3", "set": "T-FRESH", "participant": "P18", "form": "", "situation": "", "question": "How many computer suites are there in Building A?"}
+{"qid": "TF-P19-OQ1", "set": "T-FRESH", "participant": "P19", "form": "", "situation": "", "question": "Which facilities and capabilities, functions are available to provide and support my questions?"}
+{"qid": "TF-P19-OQ2", "set": "T-FRESH", "participant": "P19", "form": "", "situation": "", "question": "How does today's temperature and air quality compare with yesterday's in floor 2?"}
+{"qid": "TF-P19-OQ3", "set": "T-FRESH", "participant": "P19", "form": "", "situation": "", "question": "Which rooms have the best conditions for a focused meeting? sugguest me a room for meeting ."}
+{"qid": "TF-P20-OQ1", "set": "T-FRESH", "participant": "P20", "form": "", "situation": "", "question": "where is the washroom toilet in floor 5? Does it have a baby or disabled toilet anywhere?"}
+{"qid": "TF-P20-OQ2", "set": "T-FRESH", "participant": "P20", "form": "", "situation": "", "question": "Where i can find the water station to fill my bottle? does Building A have any kitchen?"}
+{"qid": "TF-P20-OQ3", "set": "T-FRESH", "participant": "P20", "form": "", "situation": "", "question": "Can you tell me where i can sit in the floor 5 where the temperature is warn and find this good place for me to sit."}
+{"qid": "TF-P21-OQ1", "set": "T-FRESH", "participant": "P21", "form": "", "situation": "", "question": "What are the main purposes of the building"}
+{"qid": "TF-P21-OQ2", "set": "T-FRESH", "participant": "P21", "form": "", "situation": "", "question": "Are there any lab rooms in the building"}
+{"qid": "TF-P22-OQ1", "set": "T-FRESH", "participant": "P22", "form": "", "situation": "", "question": "where i can find room 5.62?"}
+{"qid": "TF-P22-OQ2", "set": "T-FRESH", "participant": "P22", "form": "", "situation": "", "question": "where I can find the reception of the department?"}
+{"qid": "TF-P22-OQ3", "set": "T-FRESH", "participant": "P22", "form": "", "situation": "", "question": "how many employees are working in the school and how big is the Building A school?"}
+{"qid": "TF-P23-OQ1", "set": "T-FRESH", "participant": "P23", "form": "", "situation": "", "question": "I'm outside Building A. Which entrance should I use for my event today?"}
+{"qid": "TF-P23-OQ2", "set": "T-FRESH", "participant": "P23", "form": "", "situation": "", "question": "can you tell me where is my conference is scheduled and which conference room?"}
+{"qid": "TF-P23-OQ3", "set": "T-FRESH", "participant": "P23", "form": "", "situation": "", "question": "Can you show me where the toilet washroom is on floors?"}
+{"qid": "TF-P24-OQ1", "set": "T-FRESH", "participant": "P24", "form": "", "situation": "", "question": "Lecture scheduled in Room 2.24, is the room less stuffy and less noisy?"}
+{"qid": "TF-P24-OQ2", "set": "T-FRESH", "participant": "P24", "form": "", "situation": "", "question": "How many students can fit in room 2.24?"}
+{"qid": "TF-P24-OQ3", "set": "T-FRESH", "participant": "P24", "form": "", "situation": "", "question": "What is the average temperature of room 2.24 for the last weekday?"}
+{"qid": "TF-P25-OQ1", "set": "T-FRESH", "participant": "P25", "form": "", "situation": "", "question": "Which student areas are officially open on saturday mornings?"}
+{"qid": "TF-P25-OQ2", "set": "T-FRESH", "participant": "P25", "form": "", "situation": "", "question": "what are the opening hours of the Building A building?"}
+{"qid": "TF-P25-OQ3", "set": "T-FRESH", "participant": "P25", "form": "", "situation": "", "question": "Can you compare temperature levels on all floors?"}
+{"qid": "TF-P26-OQ1", "set": "T-FRESH", "participant": "P26", "form": "", "situation": "", "question": "where are the different water stations to fill the water?"}
+{"qid": "TF-P26-OQ2", "set": "T-FRESH", "participant": "P26", "form": "", "situation": "", "question": "Is there any abnormal temperature rise on floor 4?"}
+{"qid": "TF-P26-OQ3", "set": "T-FRESH", "participant": "P26", "form": "", "situation": "", "question": "can you tell me whether the building follows the sustainability standards?"}
+{"qid": "TF-P27-OQ1", "set": "T-FRESH", "participant": "P27", "form": "", "situation": "", "question": "show me the floor 3 plan and the location of the kitchen."}
+{"qid": "TF-P27-OQ2", "set": "T-FRESH", "participant": "P27", "form": "", "situation": "", "question": "Can you tell me how much VOC such as MQ5 are present last recorded time in a room 5.60 or any simialr room."}
+{"qid": "TF-P27-OQ3", "set": "T-FRESH", "participant": "P27", "form": "", "situation": "", "question": "can you calculate co2 level in my office 5.34?"}
+{"qid": "TF-P28-OQ1", "set": "T-FRESH", "participant": "P28", "form": "", "situation": "", "question": "where i can sit in the building where glare will be minimum in the afternoon, as i feel uncomfortable in glare area due to my laptop?"}
+{"qid": "TF-P28-OQ2", "set": "T-FRESH", "participant": "P28", "form": "", "situation": "", "question": "Where can I find the low-noise area or floor?"}
+{"qid": "TF-P28-OQ3", "set": "T-FRESH", "participant": "P28", "form": "", "situation": "", "question": "Where is the lowest and highest temperature readings for all floors yesterday?"}
+{"qid": "TF-P29-OQ1", "set": "T-FRESH", "participant": "P29", "form": "", "situation": "", "question": "Is the air conditioning working?"}
+{"qid": "TF-P29-OQ2", "set": "T-FRESH", "participant": "P29", "form": "", "situation": "", "question": "Do you monitor the VOC levels?"}
+{"qid": "TF-P29-OQ3", "set": "T-FRESH", "participant": "P29", "form": "", "situation": "", "question": "are you older or a new build? When was it constructed? by whom it is constructed?"}
+{"qid": "TF-P30-OQ1", "set": "T-FRESH", "participant": "P30", "form": "", "situation": "", "question": "where are the printers located, do you have any information?"}
+{"qid": "TF-P30-OQ2", "set": "T-FRESH", "participant": "P30", "form": "", "situation": "", "question": "where i can find the kitchen and common staff room?"}
+{"qid": "TF-P30-OQ3", "set": "T-FRESH", "participant": "P30", "form": "", "situation": "", "question": "How many people can occupy this Building at once? what is the capacity of the Building A?"}

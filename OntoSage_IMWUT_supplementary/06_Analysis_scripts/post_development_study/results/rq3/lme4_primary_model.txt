@@ -1,0 +1,51 @@
+boundary (singular) fit: see help('isSingular')
+boundary (singular) fit: see help('isSingular')
+fallback_used: TRUE 
+Generalized linear mixed model fit by maximum likelihood (Laplace
+  Approximation) [glmerMod]
+ Family: binomial  ( logit )
+Formula: warranted ~ situation + (1 | code)
+   Data: d
+Control: ctrl
+
+      AIC       BIC    logLik -2*log(L)  df.resid 
+    207.6     223.6     -98.8     197.6       175 
+
+Scaled residuals: 
+    Min      1Q  Median      3Q     Max 
+-1.0690 -0.8745  0.0001  0.9354  1.8127 
+
+Random effects:
+ Groups Name        Variance Std.Dev.
+ code   (Intercept) 0        0       
+Number of obs: 180, groups:  code, 30
+
+Fixed effects:
+             Estimate Std. Error z value Pr(>|z|)   
+(Intercept)   -1.1896     0.4317  -2.756  0.00585 **
+situationS2    0.9213     0.5042   1.827  0.06765 . 
+situationS3   19.6249  1839.1491   0.011  0.99149   
+situationS4    1.3231     0.5033   2.629  0.00857 **
+---
+Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+
+Correlation of Fixed Effects:
+            (Intr) sttnS2 sttnS3
+situationS2 -0.856              
+situationS3  0.000  0.000       
+situationS4 -0.858  0.734  0.000
+optimizer (bobyqa) convergence code: 0 (OK)
+boundary (singular) fit: see help('isSingular')
+
+ situation     prob       SE  df asymp.LCL asymp.UCL
+ S1        0.233333 7.72e-02 Inf  0.115512  0.414951
+ S2        0.433333 6.40e-02 Inf  0.314561  0.560294
+ S3        1.000000 1.81e-05 Inf  0.000000  1.000000
+ S4        0.533333 6.44e-02 Inf  0.407658  0.654916
+
+Confidence level used: 0.95 
+Intervals are back-transformed from the logit scale 
+ contrast odds.ratio   SE  df null z.ratio p.value
+ S2 / S1        2.51 1.27 Inf    1   1.827  0.0677
+
+Tests are performed on the log odds ratio scale 

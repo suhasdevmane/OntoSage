@@ -1,0 +1,4 @@
+first_answer,n_tasks,asked_follow_up,final_warranted,follow_up_and_warranted,label_source
+FD,60,34,10,9,HUMAN_AGREED
+U,30,3,17,2,HUMAN_AGREED
+WL,49,10,37,7,HUMAN_AGREED

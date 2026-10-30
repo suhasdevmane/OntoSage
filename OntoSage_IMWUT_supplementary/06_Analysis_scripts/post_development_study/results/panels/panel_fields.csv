@@ -1,0 +1,392 @@
+turn_id,role,form,situation,panel_present,label,kind,operation,source_kind,n_sources,completeness,compared_against,checks_fired,when
+P01-c1-t1,task,S2-3,S2,1,OT,observed,observation,,0.0,,,,retrieved [session date]
+P01-c1-t2,task,S2-3,S2,1,WL,observed,observation,,0.0,,,,retrieved [session date]
+P01-c1-t3,task,S2-3,S2,1,WL,observed,observation,,0.0,,,,retrieved [session date]
+P01-c1-t4,task,S2-3,S2,1,W,not_assessable,,,0.0,,,,retrieved [session date]
+P01-c1-t5,task,S1-1,S1,1,W,calculated,calculation,measurement,4.0,100% of expected samples,,,"newest evidence 2025-01-14 11:59:55, retrieved [session date]"
+P01-c1-t6,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,,,"newest evidence [session date], retrieved [session date]"
+P01-c1-t7,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P01-c1-t8,task,S4-3,S4,1,OT,calculated,comparison,measurement,4.0,,,,"newest evidence [session date], retrieved [session date]"
+P01-c1-t9,task,S3-1,S3,1,WL,observed,observation,measurement,9.0,64% of expected samples,,,"newest evidence 2026-09-03 22:58:54, retrieved [session date]"
+P01-c2-t1,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P02-c1-t1,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P02-c1-t2,task,S1-2,S1,1,WL,calculated,comparison,measurement,26.0,,,,retrieved [session date]
+P02-c1-t3,task,S1-2,S1,1,FD,calculated,calculation,measurement,11.0,,,,"newest evidence [session date], retrieved [session date]"
+P02-c1-t4,task,S2-1,S2,1,FD,observed,comparison,measurement,3.0,,Room_5.12,,retrieved [session date]
+P02-c1-t5,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P02-c2-t1,task,S4-1,S4,1,FD,calculated,comparison,measurement,4.0,,Room_5.12,,"newest evidence 2025-01-21 16:59:55, retrieved [session date]"
+P02-c3-t1,task,S4-1,S4,1,OT,not_assessable,observation,,0.0,,,freshness: no temperature observation is available for this space,retrieved [session date]
+P02-c3-t2,task,S4-1,S4,1,W,observed,observation,measurement,6.0,,,,"newest evidence [session date], retrieved [session date]"
+P02-c3-t3,task,S4-1,S4,1,WL,calculated,calculation,measurement,22.0,100% of expected samples,,,"newest evidence 2025-02-21 14:59:55, retrieved [session date]"
+P02-c3-t4,task,S3-2,S3,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P02-c4-t1,task,S3-2,S3,1,WL,observed,observation,measurement,7.0,,,,"newest evidence [session date], retrieved [session date]"
+P02-c4-t2,task,S4-3,S4,1,OT,inferred,authoritative lookup,inference,1.0,,,,retrieved [session date]
+P02-c5-t1,task,S4-3,S4,1,W,calculated,calculation,measurement,2.0,,,,retrieved [session date]
+P02-c5-t2,task,S4-3,S4,1,W,observed,observation,measurement,3.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P02-c5-t3,task,S1-2,S1,1,OT,observed,observation,measurement,3.0,,,,"newest evidence [session date], retrieved [session date]"
+P02-c6-t1,other,,,1,WL,inferred,diagnosis,,0.0,,,,retrieved [session date]
+P03-c1-t1,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P03-c1-t2,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P03-c1-t3,task,S1-3,S1,1,OT,inferred,authoritative lookup,inference,1.0,,,,retrieved [session date]
+P03-c1-t4,task,S1-3,S1,1,OT,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P03-c1-t5,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P03-c1-t6,task,S4-1,S4,0,W,,,,,,,,
+P03-c1-t7,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P03-c1-t8,own_question,,,1,FD,observed,authoritative lookup,authoritative,1.0,,,,retrieved [session date]
+P03-c1-t9,own_question,,,1,W,not_assessable,,,0.0,,,,retrieved [session date]
+P03-c1-t10,own_question,,,1,OT,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P03-c1-t11,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P04-c1-t1,task,S3-1,S3,1,WL,observed,authoritative lookup,measurement,1.0,,,grounding_guard,retrieved [session date]
+P04-c1-t2,task,S2-2,S2,1,WL,calculated,calculation,measurement,4.0,2% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P04-c2-t1,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P04-c3-t1,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P04-c4-t1,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P04-c5-t1,other,,,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P05-c1-t1,task,S4-3,S4,1,W,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P05-c1-t2,task,S4-3,S4,1,FD,calculated,comparison,measurement,4.0,,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P05-c2-t1,task,S3-2,S3,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P05-c3-t1,task,S4-1,S4,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P05-c4-t1,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P05-c5-t1,task,S1-2,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P05-c6-t1,task,S2-3,S2,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P05-c7-t1,own_question,,,0,W,,,,,,,,
+P05-c7-t2,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,passage_relevance,retrieved [session date]
+P05-c8-t1,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P05-c8-t2,own_question,,,1,OT,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P05-c8-t3,own_question,,,1,FD,calculated,comparison,measurement,4.0,,,,"newest evidence [session date], retrieved [session date]"
+P06-c1-t1,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P06-c1-t2,task,S4-1,S4,0,W,,,,,,,,
+P06-c1-t3,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P06-c1-t4,task,S1-3,S1,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P06-c1-t5,task,S1-3,S1,1,WL,observed,observation,measurement,6.0,,,,"newest evidence [session date], retrieved [session date]"
+P06-c1-t6,task,S1-3,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P06-c1-t7,task,S1-3,S1,1,U,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P06-c1-t8,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P06-c1-t9,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P06-c1-t10,task,S2-2,S2,1,U,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P06-c1-t11,task,S2-2,S2,1,U,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P06-c2-t1,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P06-c2-t2,own_question,,,1,W,observed,observation,,0.0,,,,retrieved [session date]
+P06-c2-t3,own_question,,,1,OT,not_assessable,,,0.0,,,,retrieved [session date]
+P06-c2-t4,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P07-c1-t1,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P07-c1-t2,task,S4-1,S4,0,W,,,,,,,,
+P07-c1-t3,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P07-c1-t4,task,S1-3,S1,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P07-c1-t5,task,S4-2,S4,1,U,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-19 23:51:47, retrieved [session date]"
+P07-c1-t6,task,S2-2,S2,1,U,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P07-c1-t7,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P07-c1-t8,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P07-c1-t9,own_question,,,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P08-c1-t1,task,S4-3,S4,1,FD,observed,comparison,measurement,9.0,,,,retrieved [session date]
+P08-c1-t2,task,S4-3,S4,1,W,not_assessable,,,0.0,,,,retrieved [session date]
+P08-c1-t3,task,S4-3,S4,1,FD,calculated,comparison,measurement,4.0,,CO2,,"newest evidence [session date], retrieved [session date]"
+P08-c1-t4,task,S4-3,S4,1,OT,observed,observation,,0.0,,,,retrieved [session date]
+P08-c1-t5,task,S4-3,S4,1,W,not_assessable,,,0.0,,,,retrieved [session date]
+P08-c1-t6,task,S4-3,S4,1,W,observed,observation,measurement,3.0,10% of expected samples,,,"newest evidence 2026-07-29 22:50:00, retrieved [session date]"
+P08-c1-t7,task,S4-3,S4,1,W,observed,observation,measurement,3.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P08-c1-t8,task,S4-3,S4,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P08-c2-t1,task,S3-2,S3,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P08-c2-t2,task,S3-2,S3,1,WL,observed,observation,measurement,14.0,,,,"newest evidence [session date], retrieved [session date]"
+P08-c3-t1,task,S4-1,S4,0,FD,,,,,,,,
+P08-c3-t2,task,S4-1,S4,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P08-c3-t3,task,S4-1,S4,1,FD,observed,authoritative lookup,measurement,5.0,,,,retrieved [session date]
+P08-c3-t4,task,S4-1,S4,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P08-c3-t5,task,S4-1,S4,1,W,observed,observation,measurement,6.0,100% of expected samples,,,"newest evidence 2025-02-21 14:59:55, retrieved [session date]"
+P08-c3-t6,task,S4-1,S4,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P08-c3-t7,task,S4-1,S4,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P08-c3-t8,task,S4-1,S4,1,W,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P08-c3-t9,task,S2-1,S2,1,WL,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P08-c4-t1,task,S1-2,S1,1,FD,observed,comparison,measurement,3.0,,"Room_5.12, CO2",,retrieved [session date]
+P08-c4-t2,task,S1-2,S1,1,FD,observed,authoritative lookup,measurement,3.0,,,,retrieved [session date]
+P08-c4-t3,task,S1-2,S1,1,FD,observed,observation,measurement,3.0,100% of expected samples,,,"newest evidence 2025-01-21 16:59:55, retrieved [session date]"
+P08-c4-t4,task,S1-2,S1,1,FD,observed,observation,measurement,3.0,0% of expected samples,,,"newest evidence [session date], retrieved [session date]"
+P08-c5-t1,task,S2-3,S2,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P08-c5-t2,task,S2-3,S2,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P08-c5-t3,task,S2-3,S2,1,WL,observed,observation,measurement,3.0,,,,"newest evidence [session date], retrieved [session date]"
+P08-c6-t1,own_question,,,1,WL,observed,observation,,0.0,,,,retrieved [session date]
+P08-c6-t2,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P08-c6-t3,own_question,,,1,FD,observed,observation,measurement,3.0,,,,"newest evidence [session date], retrieved [session date]"
+P09-c1-t1,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P09-c1-t2,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,,,"newest evidence [session date], retrieved [session date]"
+P09-c1-t3,task,S4-2,S4,1,WL,not_assessable,,,0.0,,,,retrieved [session date]
+P09-c1-t4,task,S4-2,S4,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P09-c1-t5,task,S4-2,S4,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P09-c1-t6,task,S4-2,S4,1,W,observed,observation,,0.0,,,,"newest evidence [session date], retrieved [session date]"
+P09-c1-t7,task,S1-3,S1,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P09-c1-t8,task,S1-3,S1,1,WL,not_assessable,observation,,0.0,,,freshness: no energy_submeter observation is available for this space,retrieved [session date]
+P09-c1-t9,task,S2-1,S2,1,U,calculated,calculation,measurement,9.0,,,,retrieved [session date]
+P09-c1-t10,task,S2-1,S2,1,W,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P09-c1-t11,task,S2-1,S2,1,WL,observed,authoritative lookup,measurement,26.0,,,,retrieved [session date]
+P09-c1-t12,task,S2-1,S2,1,W,calculated,comparison,measurement,26.0,,,,retrieved [session date]
+P09-c1-t13,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P09-c1-t14,task,S4-1,S4,1,FD,observed,observation,,0.0,,,,retrieved [session date]
+P09-c1-t15,task,S4-1,S4,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P09-c1-t16,task,S4-1,S4,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P09-c1-t17,task,S4-1,S4,1,OT,not_assessable,,,0.0,,,,retrieved [session date]
+P09-c1-t18,task,S4-1,S4,0,W,,,,,,,,
+P09-c1-t19,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P09-c1-t20,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P09-c1-t21,task,S3-3,S3,1,W,observed,observation,,0.0,,,,retrieved [session date]
+P09-c1-t22,own_question,,,1,W,observed,observation,measurement,3.0,,,,"newest evidence [session date], retrieved [session date]"
+P09-c1-t23,own_question,,,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P09-c1-t24,own_question,,,1,OT,not_assessable,,,0.0,,,,retrieved [session date]
+P09-c1-t25,own_question,,,1,OT,not_assessable,,,0.0,,,,retrieved [session date]
+P09-c1-t26,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P10-c1-t1,task,S2-3,S2,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P10-c1-t2,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P10-c1-t3,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P10-c1-t4,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,"Floor_3, Room_3.68, Room_5.02",,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P10-c1-t5,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P10-c1-t6,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P10-c1-t7,task,S3-1,S3,1,WL,observed,observation,measurement,9.0,64% of expected samples,,,"newest evidence 2026-09-03 22:58:54, retrieved [session date]"
+P10-c2-t1,own_question,,,0,W,,,,,,,,
+P10-c2-t2,own_question,,,1,WL,observed,authoritative lookup,measurement,26.0,,,,retrieved [session date]
+P10-c2-t3,own_question,,,1,OT,calculated,calculation,measurement,3.0,,,,retrieved [session date]
+P10-c2-t4,own_question,,,1,U,calculated,calculation,measurement,20.0,,,,"newest evidence [session date], retrieved [session date]"
+P11-c1-t1,task,S3-1,S3,1,WL,observed,authoritative lookup,measurement,1.0,,,grounding_guard,retrieved [session date]
+P11-c1-t2,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P11-c1-t3,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P11-c1-t4,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P11-c1-t5,task,S4-2,S4,1,FD,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence [session date], retrieved [session date]"
+P11-c1-t6,task,S4-2,S4,1,U,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P11-c1-t7,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P11-c1-t8,task,S1-1,S1,1,WL,observed,authoritative lookup,measurement,2.0,,,,retrieved [session date]
+P11-c1-t9,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P11-c2-t1,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P11-c2-t2,own_question,,,1,W,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P11-c2-t3,own_question,,,1,WL,calculated,calculation,,0.0,,,,"newest evidence [session date], retrieved [session date]"
+P11-c2-t4,own_question,,,1,U,calculated,calculation,measurement,20.0,,,,"newest evidence [session date], retrieved [session date]"
+P12-c1-t1,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P12-c2-t1,task,S4-1,S4,1,U,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P12-c3-t1,task,S3-2,S3,1,WL,observed,observation,measurement,7.0,,,,"newest evidence [session date], retrieved [session date]"
+P12-c4-t1,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P13-c1-t1,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P13-c1-t2,task,S1-2,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P13-c1-t3,task,S1-2,S1,1,OT,calculated,comparison,measurement,26.0,,,,retrieved [session date]
+P13-c1-t4,task,S1-2,S1,1,FD,calculated,comparison,measurement,4.0,,Room_5.12,,"newest evidence 2025-01-21 16:59:55, retrieved [session date]"
+P13-c1-t5,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P13-c1-t6,task,S4-1,S4,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P13-c1-t7,task,S4-1,S4,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P13-c1-t8,task,S4-1,S4,1,U,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P13-c1-t9,task,S3-2,S3,1,OT,inferred,authoritative lookup,inference,1.0,,,,retrieved [session date]
+P13-c1-t10,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P13-c1-t11,task,S4-3,S4,1,W,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P13-c2-t1,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P13-c2-t2,own_question,,,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P13-c2-t3,own_question,,,0,W,,,,,,,,
+P13-c2-t4,own_question,,,0,FD,,,,,,,,
+P14-c1-t1,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P14-c1-t2,task,S3-3,S3,1,WL,observed,authoritative lookup,measurement,2.0,,,,retrieved [session date]
+P14-c1-t3,task,S4-1,S4,0,W,,,,,,,,
+P14-c1-t4,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P14-c1-t5,task,S1-3,S1,1,WL,observed,authoritative lookup,measurement,26.0,,,,retrieved [session date]
+P14-c1-t6,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P14-c1-t7,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P14-c1-t8,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P14-c2-t1,own_question,,,1,WL,observed,authoritative lookup,measurement,26.0,,,,retrieved [session date]
+P14-c2-t2,own_question,,,1,OT,calculated,calculation,measurement,3.0,,,,retrieved [session date]
+P14-c2-t3,own_question,,,1,WL,calculated,calculation,measurement,29.0,,,,"newest evidence [session date], retrieved [session date]"
+P14-c2-t4,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P14-c2-t5,own_question,,,1,W,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P14-c2-t6,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P15-c1-t1,task,S3-1,S3,1,WL,observed,observation,measurement,9.0,64% of expected samples,,,"newest evidence 2026-09-03 22:58:54, retrieved [session date]"
+P15-c1-t2,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P15-c1-t3,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P15-c1-t4,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P15-c1-t5,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P15-c1-t6,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P15-c1-t7,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P15-c1-t8,task,S1-1,S1,1,W,calculated,calculation,measurement,3.0,,,,retrieved [session date]
+P15-c1-t9,task,S2-3,S2,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P15-c1-t10,task,S2-3,S2,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P15-c1-t11,task,S2-3,S2,1,OT,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P15-c1-t12,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,passage_relevance,retrieved [session date]
+P15-c2-t1,own_question,,,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P15-c2-t2,own_question,,,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P15-c2-t3,own_question,,,0,WL,,,,,,,,
+P15-c2-t4,own_question,,,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P16-c1-t1,task,S2-3,S2,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P16-c1-t2,task,S1-1,S1,0,OT,,,,,,,,
+P16-c1-t3,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P16-c1-t4,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,"Floor_3, Room_3.68, Room_5.02",,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P16-c1-t5,task,S2-2,S2,1,U,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P16-c1-t6,task,S4-3,S4,1,WL,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P16-c1-t7,task,S3-1,S3,1,WL,observed,observation,measurement,9.0,64% of expected samples,,,"newest evidence 2026-09-03 22:58:54, retrieved [session date]"
+P16-c2-t1,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P16-c2-t2,own_question,,,1,OT,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P16-c2-t3,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P16-c2-t4,own_question,,,1,U,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P16-c2-t5,own_question,,,1,WL,observed,observation,,0.0,,,,retrieved [session date]
+P16-c2-t6,own_question,,,1,U,observed,observation,,0.0,,,,retrieved [session date]
+P17-c1-t1,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P17-c1-t2,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P17-c1-t3,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P17-c1-t4,task,S1-3,S1,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P17-c1-t5,task,S1-3,S1,1,OT,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P17-c1-t6,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P17-c1-t7,task,S4-1,S4,0,W,,,,,,,,
+P17-c1-t8,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P17-c2-t1,own_question,,,1,FD,observed,observation,measurement,5.0,,,,"newest evidence [session date], retrieved [session date]"
+P17-c2-t2,own_question,,,0,W,,,,,,,,
+P17-c2-t3,own_question,,,1,OT,not_assessable,,,0.0,,,,retrieved [session date]
+P17-c2-t4,own_question,,,1,OT,not_assessable,,,0.0,,,,retrieved [session date]
+P17-c2-t5,own_question,,,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P18-c1-t1,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P18-c2-t1,task,S3-2,S3,1,WL,observed,observation,measurement,7.0,,,,"newest evidence [session date], retrieved [session date]"
+P18-c2-t2,task,S3-2,S3,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P18-c3-t1,task,S4-1,S4,1,U,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P18-c4-t1,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P18-c5-t1,task,S1-2,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P18-c6-t1,task,S2-3,S2,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P18-c7-t1,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P18-c8-t1,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P18-c9-t1,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P19-c1-t1,task,S2-3,S2,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P19-c1-t2,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P19-c1-t3,task,S1-1,S1,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P19-c1-t4,task,S1-1,S1,1,W,calculated,calculation,measurement,4.0,100% of expected samples,,,"newest evidence 2025-01-14 11:59:55, retrieved [session date]"
+P19-c1-t5,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,,,"newest evidence [session date], retrieved [session date]"
+P19-c1-t6,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P19-c1-t7,task,S4-3,S4,1,U,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P19-c1-t8,task,S3-1,S3,1,OT,predicted,forecast,measurement,9.0,,,,"newest evidence 2026-09-03 22:58:54, retrieved [session date]"
+P19-c2-t1,own_question,,,1,FD,observed,authoritative lookup,measurement,26.0,,,,retrieved [session date]
+P19-c2-t2,own_question,,,1,W,not_assessable,,,0.0,,,,retrieved [session date]
+P19-c2-t3,own_question,,,1,OT,calculated,comparison,measurement,26.0,,,,retrieved [session date]
+P19-c2-t4,own_question,,,0,W,,,,,,,,
+P20-c1-t1,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P20-c1-t2,task,S1-2,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P20-c1-t3,task,S1-2,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P20-c1-t4,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P20-c1-t5,task,S4-1,S4,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P20-c1-t6,task,S4-1,S4,1,U,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P20-c1-t7,task,S3-2,S3,1,OT,inferred,authoritative lookup,inference,1.0,,,,retrieved [session date]
+P20-c1-t8,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P20-c2-t1,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P20-c2-t2,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P20-c2-t3,own_question,,,0,OT,,,,,,,,
+P21-c1-t1,practice,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P21-c1-t2,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P21-c1-t3,task,S4-1,S4,0,W,,,,,,,,
+P21-c1-t4,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P21-c1-t5,task,S1-3,S1,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P21-c1-t6,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P21-c1-t7,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P21-c1-t8,own_question,,,1,U,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P21-c1-t9,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P22-c1-t1,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P22-c1-t2,task,S4-3,S4,1,W,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P22-c1-t3,task,S3-2,S3,1,WL,observed,observation,measurement,7.0,,,,"newest evidence [session date], retrieved [session date]"
+P22-c1-t4,task,S4-1,S4,1,U,calculated,calculation,measurement,27.0,100% of expected samples,,,"newest evidence 2025-02-21 14:59:55, retrieved [session date]"
+P22-c1-t5,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P22-c1-t6,task,S2-1,S2,1,WL,calculated,comparison,measurement,26.0,,"Floor_5, CO2",,retrieved [session date]
+P22-c1-t7,task,S2-1,S2,1,WL,observed,authoritative lookup,measurement,15.0,,,,retrieved [session date]
+P22-c1-t8,task,S1-2,S1,1,FD,calculated,comparison,measurement,4.0,,Room_5.12,,"newest evidence 2025-01-21 16:59:55, retrieved [session date]"
+P22-c1-t9,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P22-c2-t1,own_question,,,1,W,observed,observation,,0.0,,,,retrieved [session date]
+P22-c2-t2,own_question,,,1,W,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P22-c2-t3,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P23-c1-t1,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P23-c1-t2,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P23-c1-t3,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P23-c1-t4,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P23-c1-t5,task,S1-3,S1,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P23-c1-t6,task,S1-3,S1,1,OT,inferred,authoritative lookup,inference,1.0,,,,retrieved [session date]
+P23-c1-t7,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P23-c1-t8,task,S4-1,S4,0,W,,,,,,,,
+P23-c1-t9,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P23-c2-t1,own_question,,,1,W,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P23-c2-t2,own_question,,,1,OT,not_assessable,,,0.0,,,,retrieved [session date]
+P23-c2-t3,own_question,,,1,W,observed,observation,,0.0,,,,retrieved [session date]
+P23-c2-t4,own_question,,,1,FD,observed,observation,,0.0,,,,retrieved [session date]
+P23-c2-t5,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P24-c1-t1,task,S3-1,S3,1,WL,observed,observation,,0.0,,,,retrieved [session date]
+P24-c1-t2,task,S3-1,S3,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P24-c1-t3,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P24-c1-t4,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P24-c1-t5,task,S4-2,S4,1,U,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P24-c1-t6,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P24-c1-t7,task,S1-1,S1,1,W,calculated,calculation,measurement,4.0,100% of expected samples,,,"newest evidence 2025-01-14 11:59:55, retrieved [session date]"
+P24-c1-t8,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P24-c1-t9,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P24-c2-t1,own_question,,,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P24-c2-t2,own_question,,,1,W,observed,observation,measurement,3.0,,,,"newest evidence [session date], retrieved [session date]"
+P24-c2-t3,own_question,,,1,OT,observed,observation,,0.0,,,,retrieved [session date]
+P24-c2-t4,own_question,,,1,U,calculated,calculation,measurement,2.0,,,,retrieved [session date]
+P25-c1-t1,task,S4-3,S4,1,WL,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P25-c1-t2,task,S3-2,S3,1,WL,observed,observation,measurement,7.0,,,,"newest evidence [session date], retrieved [session date]"
+P25-c1-t3,task,S4-1,S4,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P25-c1-t4,task,S4-1,S4,0,FD,,,,,,,,
+P25-c1-t5,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P25-c1-t6,task,S1-2,S1,1,FD,calculated,comparison,measurement,4.0,,Room_5.12,,"newest evidence 2025-01-21 16:59:55, retrieved [session date]"
+P25-c1-t7,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P25-c2-t1,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P25-c2-t2,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P25-c2-t3,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P26-c1-t1,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P26-c1-t2,task,S4-2,S4,1,U,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-19 23:51:47, retrieved [session date]"
+P26-c1-t3,task,S1-3,S1,1,U,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P26-c1-t4,task,S1-3,S1,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P26-c1-t5,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P26-c1-t6,task,S4-1,S4,1,U,calculated,comparison,measurement,28.0,,"Room_5.14, Room_5.21, Room_5.07",,"newest evidence 2025-02-21 14:59:55, retrieved [session date]"
+P26-c1-t7,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P26-c2-t1,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P26-c2-t2,own_question,,,1,U,observed,observation,measurement,28.0,,,,"newest evidence [session date], retrieved [session date]"
+P26-c2-t3,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P26-c2-t4,own_question,,,1,OT,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P27-c1-t1,task,S3-1,S3,1,WL,observed,observation,measurement,9.0,64% of expected samples,,,"newest evidence 2026-09-03 22:58:54, retrieved [session date]"
+P27-c1-t2,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P27-c1-t3,task,S2-2,S2,1,U,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P27-c1-t4,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P27-c1-t5,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P27-c1-t6,task,S1-1,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P27-c1-t7,task,S1-1,S1,0,FD,,,,,,,,
+P27-c1-t8,task,S2-3,S2,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P27-c2-t1,own_question,,,1,FD,observed,observation,,0.0,,,,retrieved [session date]
+P27-c2-t2,own_question,,,1,FD,not_assessable,observation,,0.0,,,freshness: no tvoc observation is available for this space,retrieved [session date]
+P27-c2-t3,own_question,,,1,W,observed,observation,,0.0,,,,retrieved [session date]
+P27-c2-t4,own_question,,,1,WL,observed,observation,measurement,16.0,,,,"newest evidence [session date], retrieved [session date]"
+P27-c2-t5,own_question,,,1,W,observed,observation,measurement,3.0,,,,"newest evidence [session date], retrieved [session date]"
+P28-c1-t1,task,S3-3,S3,1,WL,not_assessable,,,0.0,,,referent_existence,retrieved [session date]
+P28-c1-t2,task,S4-1,S4,0,WL,,,,,,,,
+P28-c1-t3,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P28-c1-t4,task,S1-3,S1,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P28-c1-t5,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,Floor_3,,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P28-c1-t6,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P28-c1-t7,task,S2-2,S2,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P28-c1-t8,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P28-c1-t9,task,S2-2,S2,1,WL,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P28-c2-t1,own_question,,,0,WL,,,,,,,,
+P28-c2-t2,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P28-c2-t3,own_question,,,1,FD,observed,observation,,0.0,,,,retrieved [session date]
+P28-c2-t4,own_question,,,1,FD,observed,authoritative lookup,measurement,26.0,,,,retrieved [session date]
+P28-c2-t5,own_question,,,1,FD,calculated,calculation,measurement,30.0,91% of expected samples,,,"newest evidence [session date], retrieved [session date]"
+P28-c2-t6,own_question,,,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P29-c1-t1,task,S2-3,S2,1,WL,observed,observation,,0.0,,,,retrieved [session date]
+P29-c1-t2,task,S1-2,S1,1,FD,observed,authoritative lookup,authoritative,2.0,,,,retrieved [session date]
+P29-c1-t3,task,S1-2,S1,1,WL,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P29-c1-t4,task,S1-2,S1,1,FD,calculated,comparison,measurement,4.0,,Room_5.12,,"newest evidence 2025-01-21 16:59:55, retrieved [session date]"
+P29-c1-t5,task,S2-1,S2,1,U,calculated,calculation,measurement,26.0,,,,retrieved [session date]
+P29-c1-t6,task,S4-1,S4,0,W,,,,,,,,
+P29-c1-t7,task,S3-2,S3,1,OT,inferred,authoritative lookup,inference,1.0,,,,retrieved [session date]
+P29-c1-t8,task,S4-3,S4,1,FD,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P29-c2-t1,own_question,,,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P29-c2-t2,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P29-c2-t3,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P29-c2-t4,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P29-c2-t5,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P29-c2-t6,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P29-c2-t7,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P29-c2-t8,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P30-c1-t1,task,S2-3,S2,1,WL,observed,observation,,0.0,,,,retrieved [session date]
+P30-c1-t2,task,S1-1,S1,0,OT,,,,,,,,
+P30-c1-t3,task,S4-2,S4,1,W,calculated,comparison,measurement,9.0,,"Floor_3, Room_3.68, Room_5.02",,"newest evidence 2026-09-20 18:54:02, retrieved [session date]"
+P30-c1-t4,task,S2-2,S2,1,FD,observed,authoritative lookup,,0.0,,,,retrieved [session date]
+P30-c1-t5,task,S4-3,S4,1,OT,calculated,calculation,measurement,4.0,8% of expected samples,,,"newest evidence 2026-07-29 11:50:00, retrieved [session date]"
+P30-c1-t6,task,S3-1,S3,1,WL,observed,observation,measurement,9.0,64% of expected samples,,,"newest evidence 2026-09-03 22:58:54, retrieved [session date]"
+P30-c2-t1,own_question,,,1,WL,observed,observation,,0.0,,,,retrieved [session date]
+P30-c2-t2,own_question,,,1,FD,not_assessable,,,0.0,,,,retrieved [session date]
+P30-c2-t3,own_question,,,1,WL,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P30-c2-t4,own_question,,,1,W,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P30-c2-t5,own_question,,,1,FD,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]
+P30-c2-t6,own_question,,,1,OT,observed,authoritative lookup,measurement,1.0,,,,retrieved [session date]

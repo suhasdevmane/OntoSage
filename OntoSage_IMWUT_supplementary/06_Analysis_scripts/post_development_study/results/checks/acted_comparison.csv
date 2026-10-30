@@ -1,0 +1,14 @@
+qid,set,checks,attribution,form,label_OntoSage,label_A_minus,label_B
+TL-P14-1,T-LIVE,referent_refused,lane,S3-3,WL,WL,WL
+TF-P27-OQ1,T-FRESH,relevance_replaced,lane,,FD,OT,FD
+TF-P19-OQ2,T-FRESH,relevance_objected_kept,lane,,OT,OT,W
+TL-P03-6,T-LIVE,referent_refused,time,S3-3,WL,WL,WL
+TL-P01-6,T-LIVE,relevance_objected_kept,lane,S3-1,OT,WL,WL
+TL-P04-3,T-LIVE,relevance_objected_kept,sole,S2-2,OT,OT,FD
+TL-P29-6,T-LIVE,relevance_replaced,sole,S4-3,FD,OT,W
+TL-P05-1,T-LIVE,relevance_replaced,time,S4-3,FD,OT,W
+TL-P26-6,T-LIVE,referent_refused,lane,S3-3,WL,WL,WL
+TF-P01-OQ2,T-FRESH,relevance_replaced,sole,,FD,OT,U
+TF-P05-OQ2,T-FRESH,relevance_objected_kept,lane,,OT,OT,W
+TF-P26-OQ3,T-FRESH,relevance_replaced,lane,,FD,FD,W
+TF-P15-OQ2,T-FRESH,referent_refused,lane,,WL,WL,WL

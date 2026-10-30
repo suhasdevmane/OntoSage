@@ -1,0 +1,24 @@
+variant,label,n,k_warranted,rate,label_source
+as labelled,W,35,28,0.8,HUMAN_AGREED
+as labelled,WL,47,34,0.723404255319149,HUMAN_AGREED
+as labelled,FD,42,5,0.11904761904761904,HUMAN_AGREED
+as labelled,U,32,16,0.5,HUMAN_AGREED
+as labelled,OT,9,4,0.4444444444444444,HUMAN_AGREED
+as labelled,none,15,8,0.5333333333333333,HUMAN_AGREED
+"contested classes flipped (S2-1 headline -> WL, S2-2 generic decline -> WL)",W,35,28,0.8,HUMAN_AGREED
+"contested classes flipped (S2-1 headline -> WL, S2-2 generic decline -> WL)",WL,47,34,0.723404255319149,HUMAN_AGREED
+"contested classes flipped (S2-1 headline -> WL, S2-2 generic decline -> WL)",FD,42,5,0.11904761904761904,HUMAN_AGREED
+"contested classes flipped (S2-1 headline -> WL, S2-2 generic decline -> WL)",U,32,16,0.5,HUMAN_AGREED
+"contested classes flipped (S2-1 headline -> WL, S2-2 generic decline -> WL)",OT,9,4,0.4444444444444444,HUMAN_AGREED
+"contested classes flipped (S2-1 headline -> WL, S2-2 generic decline -> WL)",none,15,8,0.5333333333333333,HUMAN_AGREED
+every answer with a noted alternative flipped,W,35,28,0.8,HUMAN_AGREED
+every answer with a noted alternative flipped,WL,47,34,0.723404255319149,HUMAN_AGREED
+every answer with a noted alternative flipped,FD,42,5,0.11904761904761904,HUMAN_AGREED
+every answer with a noted alternative flipped,U,32,16,0.5,HUMAN_AGREED
+every answer with a noted alternative flipped,OT,9,4,0.4444444444444444,HUMAN_AGREED
+every answer with a noted alternative flipped,none,15,8,0.5333333333333333,HUMAN_AGREED
+received answer labelled with high confidence only,W,5,4,0.8,HUMAN_AGREED
+received answer labelled with high confidence only,WL,25,21,0.84,HUMAN_AGREED
+received answer labelled with high confidence only,FD,17,2,0.11764705882352941,HUMAN_AGREED
+received answer labelled with high confidence only,U,10,2,0.2,HUMAN_AGREED
+received answer labelled with high confidence only,OT,5,3,0.6,HUMAN_AGREED

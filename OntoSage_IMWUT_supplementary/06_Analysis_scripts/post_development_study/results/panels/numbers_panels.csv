@@ -1,0 +1,5 @@
+key,value,description,script,label_source
+panels_present,367 of 391,live answers that carried an evidence panel,panel_analysis.py,
+panels_fd_with_evidence_claim,110 of 127,wrong refusals (FD) whose panel says the answer was observed or calculated,panel_analysis.py,HUMAN_AGREED
+panels_w_or_u_not_assessable,5 of 118,answers labelled W or U whose panel says the evidence could not support an answer,panel_analysis.py,HUMAN_AGREED
+panels_u_with_evidence_claim,49 of 49,unsupported answers (U) whose panel claims observed or calculated evidence,panel_analysis.py,HUMAN_AGREED

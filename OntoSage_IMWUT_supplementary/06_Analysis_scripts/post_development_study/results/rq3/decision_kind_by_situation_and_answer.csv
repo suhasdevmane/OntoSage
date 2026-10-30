@@ -1,0 +1,23 @@
+situation,answer_received,accepted an unsupported claim,false absence or limit,under-reliance (could not find out),warranted
+S1,FD,0,0,12,2
+S1,OT,0,1,2,1
+S1,U,0,1,0,0
+S1,W,0,0,0,4
+S1,WL,0,1,2,0
+S1,none,1,2,1,0
+S2,FD,0,0,15,0
+S2,U,8,0,1,11
+S2,W,0,0,0,1
+S2,WL,3,0,5,10
+S2,none,2,0,0,4
+S3,FD,0,0,0,1
+S3,OT,0,0,0,3
+S3,W,0,0,0,1
+S3,WL,0,0,0,23
+S3,none,0,0,0,2
+S4,FD,7,0,3,2
+S4,OT,2,0,0,0
+S4,U,3,1,2,5
+S4,W,4,1,2,22
+S4,WL,2,0,0,1
+S4,none,1,0,0,2

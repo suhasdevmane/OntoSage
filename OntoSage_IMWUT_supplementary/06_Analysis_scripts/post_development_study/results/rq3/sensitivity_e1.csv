@@ -1,0 +1,31 @@
+set,situation,n,rate,lo,hi,exploratory
+primary (all 180),S1,30,0.23333333333333334,0.1,0.4,0
+primary (all 180),S2,60,0.43333333333333335,0.31666666666666665,0.5333333333333333,0
+primary (all 180),S3,30,1.0,1.0,1.0,0
+primary (all 180),S4,60,0.5333333333333333,0.4166666666666667,0.65,0
+primary (all 180),all,180,0.5277777777777778,0.4777777777777778,0.5722222222222222,0
+excl. decisions with no answer before deciding,S1,26,0.2692307692307692,0.1111111111111111,0.4401111111111105,1
+excl. decisions with no answer before deciding,S2,54,0.4074074074074074,0.29411764705882354,0.5094339622641509,1
+excl. decisions with no answer before deciding,S3,28,1.0,1.0,1.0,1
+excl. decisions with no answer before deciding,S4,57,0.5263157894736842,0.39285714285714285,0.6545454545454545,1
+excl. decisions with no answer before deciding,all,165,0.5272727272727272,0.47058823529411764,0.5808486152694611,1
+excl. P04 and P12 (>=2 tasks without an answer),S1,28,0.25,0.10714285714285714,0.42857142857142855,1
+excl. P04 and P12 (>=2 tasks without an answer),S2,56,0.4642857142857143,0.35714285714285715,0.5714285714285714,1
+excl. P04 and P12 (>=2 tasks without an answer),S3,28,1.0,1.0,1.0,1
+excl. P04 and P12 (>=2 tasks without an answer),S4,56,0.5357142857142857,0.4107142857142857,0.6607142857142857,1
+excl. P04 and P12 (>=2 tasks without an answer),all,168,0.5416666666666666,0.4880952380952381,0.5892857142857143,1
+excl. timed-out tasks (>9 min),S1,29,0.2413793103448276,0.1,0.4,1
+excl. timed-out tasks (>9 min),S2,55,0.41818181818181815,0.29310344827586204,0.5294417767106842,1
+excl. timed-out tasks (>9 min),S3,30,1.0,1.0,1.0,1
+excl. timed-out tasks (>9 min),S4,54,0.5555555555555556,0.4339622641509434,0.6727360139860139,1
+excl. timed-out tasks (>9 min),all,168,0.5357142857142857,0.4879518072289157,0.5812536337209303,1
+first question asked with options hidden (goal page),S1,21,0.2857142857142857,0.1,0.5,1
+first question asked with options hidden (goal page),S2,42,0.4523809523809524,0.32558139534883723,0.5870261984392416,1
+first question asked with options hidden (goal page),S3,14,1.0,1.0,1.0,1
+first question asked with options hidden (goal page),S4,44,0.6363636363636364,0.5,0.7647371714643302,1
+first question asked with options hidden (goal page),all,121,0.5537190082644629,0.4835926646290636,0.6201550387596899,1
+first question asked with options visible (decision page),S1,8,0.125,0.0,0.4,1
+first question asked with options visible (decision page),S2,16,0.4375,0.15384615384615385,0.7142857142857143,1
+first question asked with options visible (decision page),S3,16,1.0,1.0,1.0,1
+first question asked with options visible (decision page),S4,15,0.2,0.0,0.4166666666666667,1
+first question asked with options visible (decision page),all,55,0.4909090909090909,0.39530118185284024,0.5873249299719887,1

@@ -1,0 +1,69 @@
+key,value,source
+tag_name,v3.0-study,git tag
+tag_commit_short,e2b73fb,git rev-parse v3.0-study; the frozen commit ef7fbc3 after the 29 Oct 2026 history rewrite (freeze_commit_after_rewrite_2026-10-29.txt); checked: differs from ef7fbc3 only in 4 removed data files
+intents_shipped,42,"git show v3.0-study:orchestrator/intents/intent_definitions.yaml, entries under 'intents:' (YAML parse; equals the count of '- name:' lines)"
+intents_overlay,1,git show v3.0-study:bldg1/intents.yaml (the building's overlay)
+intents_total,43,intents_shipped + intents_overlay (no name in both)
+intents_data,12,orchestrator/intents/intent_definitions.yaml: entries with pipeline_group 'data'
+intents_standalone,25,orchestrator/intents/intent_definitions.yaml: entries with pipeline_group 'standalone'
+intents_meta,5,orchestrator/intents/intent_definitions.yaml: entries with pipeline_group 'meta'
+intents_internal,6,orchestrator/intents/intent_definitions.yaml: descriptions starting 'INTERNAL' (reached only by a routing rule): comfort_history fact_conflict privacy_refusal scope_boundary general_guidance session_recall
+rules_parse,68,"git show v3.0-study:orchestrator/services/routing_contract.py, len(PARSE_STAGE_RULES); counted by parsing the module (ast) and by importing it; the two agree"
+rules_post,4,"git show v3.0-study:orchestrator/services/routing_contract.py, len(POST_STAGE_RULES); counted by parsing the module (ast) and by importing it; the two agree"
+rules_concept,8,"git show v3.0-study:orchestrator/services/routing_contract.py, len(CONCEPT_STAGE_RULES); counted by parsing the module (ast) and by importing it; the two agree"
+rules_total,80,rules_parse + rules_post + rules_concept
+freeze_date,14 October 2026,Freeze_2026-10-14/README.md title line (the record's own date)
+model,gpt-oss:20b,Freeze_2026-10-14/README.md section 3 (hosted gateway); shared/config.py HOSTED_LLM_MODEL default at the tag
+model_provider,hosted,Freeze_2026-10-14/README.md section 3 (MODEL_PROVIDER=hosted); shared/config.py default at the tag
+referent_check,on,"Freeze_2026-10-14/README.md section 3 ('not in .env, so the code default applies'); shared/config.py REFERENT_VALIDATION_ENABLED default True"
+relevance_check,on,"Freeze_2026-10-14/README.md section 3 ('not in .env, so the code default applies'); shared/config.py ANSWER_RELEVANCE_GATE default True"
+claim_binding,record,Freeze_2026-10-14/README.md section 3 (.env CLAIM_BINDING_ENABLED=record); claim_binder.DEFAULT_MODE
+compound_routing,live,Freeze_2026-10-14/README.md section 3 (ARBITER_V2_ROUTING)
+compound_routing_code_default,shadow,shared/config.py default at the tag
+relevance_lanes,16,shared/config.py ANSWER_RELEVANCE_GATE_LANES default (code default; equals answer_relevance_gate.DEFAULT_LANES): sensor_data events automation_capability diagnosis compare analytics trend planner report deliberate observability discovery floor_plan register asset_state anomaly
+relevance_timeout_s,8,shared/config.py ANSWER_RELEVANCE_TIMEOUT_S default (code default)
+relevance_replacing_labels,3,answer_relevance_gate.REPLACING_LABELS: ACTION_MISFIRE GARBLED OFF_TOPIC
+publication_lanes,4,"publication_gate.GATED_INTENTS (a constant, no setting): analytics compare report trend"
+coref_rewrite,on,shared/config.py COREFERENCE_REWRITE_ENABLED default True (code default)
+freeze_graph_statements,315662,"Freeze_2026-10-14/README.md section 6 (explicit statements, snapshot1_graph.trig); equal at snapshot 2 (runbook decision log, 24 Oct)"
+freeze_graph_named_graphs,124,Freeze_2026-10-14/README.md section 6
+rbac_roles,6,orchestrator/middleware/rbac.py ROLE_PERMISSIONS keys: admin facility_manager analyst operator occupant readonly
+rbac_permissions,22,orchestrator/middleware/rbac.py ALL_PERMISSIONS
+datasource_roles_open,5,bldg1/role_datasource_access.yaml: every listed role maps to '*' (the QA setting of 2 Oct)
+tag_documents,41,git ls-tree v3.0-study bldg1/documents (*.md)
+tag_register_documents,38,bldg1/documents/*.md whose front matter names a record_type
+tag_prose_documents,3,tag_documents - tag_register_documents
+tag_stores_real,1,bldg1/database_registry.yaml entries with nature: real
+tag_stores_synthetic,21,bldg1/database_registry.yaml entries with nature: synthetic
+tag_stores_named_by_points,21,registry entries with a nature named as a ref:storedAt object in the tagged building TTLs: co2_data contact_data database1 database1_floors04 database1_synth energy_data equipment_data humidity_data iaq_data light_data noise_data occupancy_data parking_data plant_data pm25_data submeter_data temperature_data wastefill_data wasteweight_data water_data waterflow_data
+tag_stores_not_named,1,"registry entries with a nature that no point names (type mysql_events, interval records): events_data"
+brick_version,1.4,bldg1/Brick_v1.4.ttl owl:versionInfo (major.minor; equals the file name)
+actuation_driver,sim,bldg1/building.yaml actuation.driver (services/actuation/sim_driver.py: log only)
+tag_floor_storeys,6,tagged building TTLs (rdflib): individuals typed brick:Floor: Floor0 Floor1 Floor2 Floor3 Floor4 Floor5
+tag_floor_other,2,tagged building TTLs (rdflib): individuals typed with a subclass of brick:Floor in the vendored Brick: Parking_Level_Ground (Parking_Level) Rooftop (Rooftop)
+bldg_floors,8,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'floors'"
+bldg_locations,298,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'locations_modelled'"
+bldg_equipment,147,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'equipment'"
+bldg_points_total,3512,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points_total'"
+bldg_point_classes,86,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'distinct_point_classes'"
+bldg_ts_references,3572,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'timeseries_bindings'"
+bldg_ts_ids,3545,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'distinct_timeseries_ids'"
+bldg_stores,21,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'stored_at_keys'"
+bldg_hbco_concepts,103,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'hbco_concepts'"
+bldg_hbco_lay_terms,728,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'hbco_lay_terms'"
+bldg_amenities,75,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'ocbv_amenities'"
+bldg_topics,50,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'ocbv_knowledge_topics'"
+bldg_ocbv_classes,107,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'ocbv_classes'"
+bldg_ocbv_properties,340,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'ocbv_properties'"
+bldg_points_climate,863,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Indoor climate (CO2, RH, air temp.)'"
+bldg_points_air_quality,765,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Air quality (PM, TVOC, NO2, CO, CH2O, gas)'"
+bldg_points_lighting,525,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Lighting (colour temp., illuminance)'"
+bldg_points_occupancy,500,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Occupancy (count, status)'"
+bldg_points_contact,481,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Door and access contact'"
+bldg_points_acoustics,234,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Acoustics (sound, noise)'"
+bldg_points_hvac,36,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: HVAC plant (air flow, damper, filter, fan)'"
+bldg_points_waste,24,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Waste'"
+bldg_points_power,22,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Electrical power'"
+bldg_points_water,21,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Water (flow, level, temp., metering)'"
+bldg_points_outdoor,4,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: Outdoor and weather'"
+bldg_points_unassigned,37,"paper/generated/frozen_2026-10-14/building-characteristics.csv (the frozen study graph, re-counted 29 October 2026; draft1Nov_work/recount_frozen_graph.py), row 'points: uncategorised'"

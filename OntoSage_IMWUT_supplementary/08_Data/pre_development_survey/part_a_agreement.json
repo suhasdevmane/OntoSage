@@ -1,0 +1,51 @@
+{
+ "n_pairs": 100,
+ "F3a_place": {
+  "kappa": 0.3377483443708609,
+  "raw": 0.58
+ },
+ "F3b_time": {
+  "kappa": 0.7452229299363057,
+  "raw": 0.84
+ },
+ "F3c_criterion": {
+  "kappa": 0.5420624151967436,
+  "raw": 0.73
+ },
+ "F4_evidence_relation": {
+  "kappa": 1.0,
+  "raw": 1.0
+ },
+ "F5_answerable": {
+  "kappa": 0.665924276169265,
+  "raw": 0.85
+ },
+ "F6_purpose": {
+  "kappa": 1.0,
+  "raw": 1.0
+ },
+ "F1_request_type": {
+  "mean_jaccard": 0.88,
+  "per_label_kappa": {
+   "action": 0.6621621621621626,
+   "capability": 0.8511904761904762,
+   "compare": 1.0,
+   "explain": 0.923076923076923,
+   "fact": 0.7997597116539849,
+   "rank": 1.0,
+   "summarise": 0.7950819672131144,
+   "unclear": 0.2603550295857993
+  }
+ },
+ "F2_evidence_source": {
+  "mean_jaccard": 0.6975,
+  "per_label_kappa": {
+   "description": 0.6265723270440253,
+   "document": 0.5218056618209641,
+   "external": 0.879032258064516,
+   "measurement": 0.8582995951417005,
+   "none": -0.016260162601624183,
+   "record": 0.5398773006134968
+  }
+ }
+}

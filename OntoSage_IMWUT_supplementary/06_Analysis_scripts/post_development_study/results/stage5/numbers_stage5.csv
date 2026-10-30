@@ -1,0 +1,140 @@
+key,value,description,script,label_source
+S5_cluster_similarity,0.70,Stage 5: similarity at or above which the earlier analysis set an answer aside as near-identical (Z_stage5_vision_analysis.SIMILARITY),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_n,9,Stage 5 Trust: answers in the earlier analysis's near-identical cluster,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_without_cluster_n,50,Stage 5 Trust: contributors outside that cluster,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_PROVENANCE_k_n_without_cluster,9/50,"Stage 5 Trust: people coded PROVENANCE, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_PROVENANCE_k_n,0/9,Stage 5 Trust: answers in the near-identical cluster coded PROVENANCE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_ACCURACY_k_n_without_cluster,18/50,"Stage 5 Trust: people coded ACCURACY, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_ACCURACY_k_n,9/9,Stage 5 Trust: answers in the near-identical cluster coded ACCURACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_PRIVACY_k_n_without_cluster,37/50,"Stage 5 Trust: people coded PRIVACY, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_PRIVACY_k_n,9/9,Stage 5 Trust: answers in the near-identical cluster coded PRIVACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_TIMELINESS_k_n_without_cluster,7/50,"Stage 5 Trust: people coded TIMELINESS, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_TIMELINESS_k_n,2/9,Stage 5 Trust: answers in the near-identical cluster coded TIMELINESS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_ACTIONABILITY_k_n_without_cluster,1/50,"Stage 5 Trust: people coded ACTIONABILITY, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_ACTIONABILITY_k_n,0/9,Stage 5 Trust: answers in the near-identical cluster coded ACTIONABILITY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_HONESTY_LIMITS_k_n_without_cluster,2/50,"Stage 5 Trust: people coded HONESTY_LIMITS, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_HONESTY_LIMITS_k_n,0/9,Stage 5 Trust: answers in the near-identical cluster coded HONESTY_LIMITS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_EASE_k_n_without_cluster,2/50,"Stage 5 Trust: people coded EASE, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_EASE_k_n,0/9,Stage 5 Trust: answers in the near-identical cluster coded EASE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_OTHER_k_n_without_cluster,9/50,"Stage 5 Trust: people coded OTHER, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_OTHER_k_n,0/9,Stage 5 Trust: answers in the near-identical cluster coded OTHER,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_NONE_k_n_without_cluster,2/50,"Stage 5 Trust: people coded NONE, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_cluster_NONE_k_n,0/9,Stage 5 Trust: answers in the near-identical cluster coded NONE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_PROVENANCE_k_n,9/59,Stage 5 Trust: people coded PROVENANCE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_PROVENANCE_pct,15,Stage 5 Trust: % of people coded PROVENANCE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_PROVENANCE_ci,8-27,Stage 5 Trust: Wilson 95% CI for PROVENANCE (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_ACCURACY_k_n,27/59,Stage 5 Trust: people coded ACCURACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_ACCURACY_pct,46,Stage 5 Trust: % of people coded ACCURACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_ACCURACY_ci,34-58,Stage 5 Trust: Wilson 95% CI for ACCURACY (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_PRIVACY_k_n,46/59,Stage 5 Trust: people coded PRIVACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_PRIVACY_pct,78,Stage 5 Trust: % of people coded PRIVACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_PRIVACY_ci,66-87,Stage 5 Trust: Wilson 95% CI for PRIVACY (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_TIMELINESS_k_n,9/59,Stage 5 Trust: people coded TIMELINESS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_TIMELINESS_pct,15,Stage 5 Trust: % of people coded TIMELINESS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_TIMELINESS_ci,8-27,Stage 5 Trust: Wilson 95% CI for TIMELINESS (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_ACTIONABILITY_k_n,1/59,Stage 5 Trust: people coded ACTIONABILITY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_ACTIONABILITY_pct,2,Stage 5 Trust: % of people coded ACTIONABILITY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_ACTIONABILITY_ci,0-9,Stage 5 Trust: Wilson 95% CI for ACTIONABILITY (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_HONESTY_LIMITS_k_n,2/59,Stage 5 Trust: people coded HONESTY_LIMITS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_HONESTY_LIMITS_pct,3,Stage 5 Trust: % of people coded HONESTY_LIMITS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_HONESTY_LIMITS_ci,1-12,Stage 5 Trust: Wilson 95% CI for HONESTY_LIMITS (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_EASE_k_n,2/59,Stage 5 Trust: people coded EASE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_EASE_pct,3,Stage 5 Trust: % of people coded EASE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_EASE_ci,1-12,Stage 5 Trust: Wilson 95% CI for EASE (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_OTHER_k_n,9/59,Stage 5 Trust: people coded OTHER,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_OTHER_pct,15,Stage 5 Trust: % of people coded OTHER,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_OTHER_ci,8-27,Stage 5 Trust: Wilson 95% CI for OTHER (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_NONE_k_n,2/59,Stage 5 Trust: people coded NONE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_NONE_pct,3,Stage 5 Trust: % of people coded NONE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_NONE_ci,1-12,Stage 5 Trust: Wilson 95% CI for NONE (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_theme_system_security_k_n,2/59,Stage 5 Trust: people whose OTHER code names the theme 'system_security',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_theme_familiarity_k_n,2/59,Stage 5 Trust: people whose OTHER code names the theme 'familiarity',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_theme_human_oversight_k_n,2/59,Stage 5 Trust: people whose OTHER code names the theme 'human_oversight',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_theme_time_saving_k_n,1/59,Stage 5 Trust: people whose OTHER code names the theme 'time_saving',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_theme_regulation_k_n,1/59,Stage 5 Trust: people whose OTHER code names the theme 'regulation',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_theme_candour_k_n,1/59,Stage 5 Trust: people whose OTHER code names the theme 'candour',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_theme_vendor_k_n,1/59,Stage 5 Trust: people whose OTHER code names the theme 'vendor',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Trust_n,59,Stage 5 Trust: contributors,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_n,6,Stage 5 Success: answers in the earlier analysis's near-identical cluster,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_without_cluster_n,53,Stage 5 Success: contributors outside that cluster,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_PROVENANCE_k_n_without_cluster,1/53,"Stage 5 Success: people coded PROVENANCE, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_PROVENANCE_k_n,0/6,Stage 5 Success: answers in the near-identical cluster coded PROVENANCE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_ACCURACY_k_n_without_cluster,16/53,"Stage 5 Success: people coded ACCURACY, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_ACCURACY_k_n,2/6,Stage 5 Success: answers in the near-identical cluster coded ACCURACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_PRIVACY_k_n_without_cluster,2/53,"Stage 5 Success: people coded PRIVACY, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_PRIVACY_k_n,0/6,Stage 5 Success: answers in the near-identical cluster coded PRIVACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_TIMELINESS_k_n_without_cluster,15/53,"Stage 5 Success: people coded TIMELINESS, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_TIMELINESS_k_n,4/6,Stage 5 Success: answers in the near-identical cluster coded TIMELINESS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_ACTIONABILITY_k_n_without_cluster,7/53,"Stage 5 Success: people coded ACTIONABILITY, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_ACTIONABILITY_k_n,1/6,Stage 5 Success: answers in the near-identical cluster coded ACTIONABILITY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_HONESTY_LIMITS_k_n_without_cluster,0/53,"Stage 5 Success: people coded HONESTY_LIMITS, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_HONESTY_LIMITS_k_n,0/6,Stage 5 Success: answers in the near-identical cluster coded HONESTY_LIMITS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_EASE_k_n_without_cluster,13/53,"Stage 5 Success: people coded EASE, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_EASE_k_n,2/6,Stage 5 Success: answers in the near-identical cluster coded EASE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_OTHER_k_n_without_cluster,44/53,"Stage 5 Success: people coded OTHER, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_OTHER_k_n,6/6,Stage 5 Success: answers in the near-identical cluster coded OTHER,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_NONE_k_n_without_cluster,4/53,"Stage 5 Success: people coded NONE, near-identical cluster set aside",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_cluster_NONE_k_n,0/6,Stage 5 Success: answers in the near-identical cluster coded NONE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_PROVENANCE_k_n,1/59,Stage 5 Success: people coded PROVENANCE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_PROVENANCE_pct,2,Stage 5 Success: % of people coded PROVENANCE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_PROVENANCE_ci,0-9,Stage 5 Success: Wilson 95% CI for PROVENANCE (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_ACCURACY_k_n,18/59,Stage 5 Success: people coded ACCURACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_ACCURACY_pct,31,Stage 5 Success: % of people coded ACCURACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_ACCURACY_ci,20-43,Stage 5 Success: Wilson 95% CI for ACCURACY (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_PRIVACY_k_n,2/59,Stage 5 Success: people coded PRIVACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_PRIVACY_pct,3,Stage 5 Success: % of people coded PRIVACY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_PRIVACY_ci,1-12,Stage 5 Success: Wilson 95% CI for PRIVACY (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_TIMELINESS_k_n,19/59,Stage 5 Success: people coded TIMELINESS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_TIMELINESS_pct,32,Stage 5 Success: % of people coded TIMELINESS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_TIMELINESS_ci,22-45,Stage 5 Success: Wilson 95% CI for TIMELINESS (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_ACTIONABILITY_k_n,8/59,Stage 5 Success: people coded ACTIONABILITY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_ACTIONABILITY_pct,14,Stage 5 Success: % of people coded ACTIONABILITY,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_ACTIONABILITY_ci,7-25,Stage 5 Success: Wilson 95% CI for ACTIONABILITY (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_HONESTY_LIMITS_k_n,0/59,Stage 5 Success: people coded HONESTY_LIMITS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_HONESTY_LIMITS_pct,0,Stage 5 Success: % of people coded HONESTY_LIMITS,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_HONESTY_LIMITS_ci,0-6,Stage 5 Success: Wilson 95% CI for HONESTY_LIMITS (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_EASE_k_n,15/59,Stage 5 Success: people coded EASE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_EASE_pct,25,Stage 5 Success: % of people coded EASE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_EASE_ci,16-38,Stage 5 Success: Wilson 95% CI for EASE (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_OTHER_k_n,50/59,Stage 5 Success: people coded OTHER,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_OTHER_pct,85,Stage 5 Success: % of people coded OTHER,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_OTHER_ci,73-92,Stage 5 Success: Wilson 95% CI for OTHER (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_NONE_k_n,4/59,Stage 5 Success: people coded NONE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_NONE_pct,7,Stage 5 Success: % of people coded NONE,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_NONE_ci,3-16,Stage 5 Success: Wilson 95% CI for NONE (%),stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_comfort_k_n,17/59,Stage 5 Success: people whose OTHER code names the theme 'comfort',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_energy_saving_k_n,13/59,Stage 5 Success: people whose OTHER code names the theme 'energy_saving',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_time_saving_k_n,10/59,Stage 5 Success: people whose OTHER code names the theme 'time_saving',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_proactive_k_n,9/59,Stage 5 Success: people whose OTHER code names the theme 'proactive',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_automation_k_n,6/59,Stage 5 Success: people whose OTHER code names the theme 'automation',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_safety_k_n,4/59,Stage 5 Success: people whose OTHER code names the theme 'safety',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_satisfaction_k_n,3/59,Stage 5 Success: people whose OTHER code names the theme 'satisfaction',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_new_insight_k_n,2/59,Stage 5 Success: people whose OTHER code names the theme 'new_insight',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_personalisation_k_n,2/59,Stage 5 Success: people whose OTHER code names the theme 'personalisation',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_cost_saving_k_n,2/59,Stage 5 Success: people whose OTHER code names the theme 'cost_saving',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_job_easier_k_n,2/59,Stage 5 Success: people whose OTHER code names the theme 'job_easier',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_unobtrusive_k_n,2/59,Stage 5 Success: people whose OTHER code names the theme 'unobtrusive',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_integration_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'integration',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_reports_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'reports',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_monitoring_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'monitoring',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_comprehensive_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'comprehensive',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_personal_control_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'personal_control',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_social_proof_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'social_proof',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_wayfinding_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'wayfinding',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_human_fallback_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'human_fallback',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_customisable_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'customisable',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_engagement_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'engagement',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_shared_access_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'shared_access',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_incentives_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'incentives',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_theme_efficiency_k_n,1/59,Stage 5 Success: people whose OTHER code names the theme 'efficiency',stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_Success_n,59,Stage 5 Success: contributors,stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_privacy_pct_all,58,"Earlier keyword count, Trust 'Privacy and surveillance': % of all 59",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_privacy_pct_without_cluster,50,"Earlier keyword count, Trust 'Privacy and surveillance': % of the 50 outside the near-identical cluster",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_provenance_pct_all,41,"Earlier keyword count, Trust 'Explanation and provenance': % of all 59",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_provenance_pct_without_cluster,40,"Earlier keyword count, Trust 'Explanation and provenance': % of the 50 outside the near-identical cluster",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_security_pct_all,46,"Earlier keyword count, Trust 'Security and access control': % of all 59",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_security_pct_without_cluster,38,"Earlier keyword count, Trust 'Security and access control': % of the 50 outside the near-identical cluster",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_accuracy_pct_all,44,"Earlier keyword count, Trust 'Accuracy and error': % of all 59",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_accuracy_pct_without_cluster,36,"Earlier keyword count, Trust 'Accuracy and error': % of the 50 outside the near-identical cluster",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_consent_pct_all,10,"Earlier keyword count, Trust 'Consent and opt-out': % of all 59",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER
+S5_old_Trust_consent_pct_without_cluster,12,"Earlier keyword count, Trust 'Consent and opt-out': % of the 50 outside the near-identical cluster",stage5_analysis.py,AUTHOR_CHECKED_SINGLE_CODER

@@ -1,0 +1,70 @@
+material,code,plain,type,units,of_units,people,label_source
+task reasons,EVIDENCE_CITED,said what the answer or data showed,codebook,74,180,27,HUMAN_AGREED
+task reasons,LIMIT_RECOGNISED,named something the answer could not establish,codebook,105,180,28,HUMAN_AGREED
+task reasons,LIMIT_MATCH,the limit named is the true one (key),codebook,67,180,27,HUMAN_AGREED
+task reasons,PROXY_ACCEPTED,took a related reading as the answer,codebook,2,180,2,HUMAN_AGREED
+task reasons,VERIFY_INTENDED,would check elsewhere before acting,codebook,91,180,27,HUMAN_AGREED
+task reasons,FLUENCY_CUE,"trusted detail, confidence or an 'analysis report'",codebook,12,180,10,HUMAN_AGREED
+task reasons,DECLINE_FRUSTRATION,frustrated by a refusal,codebook,7,180,5,HUMAN_AGREED
+task reasons,DECLINE_ACCEPTED,took a refusal as the answer,codebook,70,180,23,HUMAN_AGREED
+task reasons,REPHRASED,asked again in other words,codebook,8,180,5,HUMAN_AGREED
+task reasons,PRIOR_KNOWLEDGE,used what they expected of the building,codebook,3,180,3,HUMAN_AGREED
+task reasons,GUESS,guessed,codebook,0,180,0,HUMAN_AGREED
+task reasons,OTHER,other,codebook,8,180,4,HUMAN_AGREED
+CL1,USEFUL_SPECIFIC_VALUES,useful: specific values,codebook,5,30,5,HUMAN_AGREED
+CL1,USEFUL_EVIDENCE,useful: the evidence and sources,codebook,12,30,12,HUMAN_AGREED
+CL1,USEFUL_HONEST_LIMITS,useful: honest limits,codebook,1,30,1,HUMAN_AGREED
+CL1,USEFUL_EASE,"useful: clear, well written",codebook,11,30,11,HUMAN_AGREED
+CL1,FRUST_DECLINES,frustrating: refusals and missing data,codebook,6,30,6,HUMAN_AGREED
+CL1,FRUST_JARGON,frustrating: jargon,codebook,1,30,1,HUMAN_AGREED
+CL1,FRUST_WRONG,frustrating: misunderstood or wrong,codebook,3,30,3,HUMAN_AGREED
+CL1,FRUST_TOO_LONG,frustrating: too long or complex,codebook,1,30,1,HUMAN_AGREED
+CL1,FRUST_NEEDED_REPHRASING,frustrating: had to rephrase,codebook,2,30,2,HUMAN_AGREED
+CL2,USEFUL_EVIDENCE,useful: the evidence and sources,codebook,1,30,1,HUMAN_AGREED
+CL2,FRUST_DECLINES,frustrating: refusals and missing data,codebook,8,30,8,HUMAN_AGREED
+CL2,FRUST_SLOW,frustrating: slow,codebook,1,30,1,HUMAN_AGREED
+CL2,FRUST_WRONG,frustrating: misunderstood or wrong,codebook,1,30,1,HUMAN_AGREED
+CL2,FRUST_NEEDED_REPHRASING,frustrating: had to rephrase,codebook,8,30,8,HUMAN_AGREED
+CL2,DECLINE_USEFUL,refusals were useful,codebook,2,30,2,HUMAN_AGREED
+CL2,DECLINE_FRUSTRATING,refusals were frustrating,codebook,7,30,7,HUMAN_AGREED
+CL3,YES_FALSE_IMPRESSION,"yes, an answer seemed checked when it was not",codebook,1,30,1,HUMAN_AGREED
+CL3,NO,no,codebook,20,30,20,HUMAN_AGREED
+CL3,UNSURE,unsure,codebook,1,30,1,HUMAN_AGREED
+all,accepted_scope_overreach,accepted scope overreach,inductive,2,270,2,HUMAN_AGREED
+all,accepted_wrong_record,accepted wrong record,inductive,1,270,1,HUMAN_AGREED
+all,asserted_correct,asserted correct,inductive,1,270,1,HUMAN_AGREED
+all,assumed_checked,assumed checked,inductive,1,270,1,HUMAN_AGREED
+all,believed_the_absence,believed the absence,inductive,36,270,21,HUMAN_AGREED
+all,blamed_missing_data,blamed missing data,inductive,21,270,14,HUMAN_AGREED
+all,blank,blank,inductive,18,270,8,HUMAN_AGREED
+all,chose_b_without_people_fact,chose b without people fact,inductive,14,270,14,HUMAN_AGREED
+all,confused_about_evidence_panel,confused about evidence panel,inductive,1,270,1,HUMAN_AGREED
+all,confused_by_caveat,confused by caveat,inductive,1,270,1,HUMAN_AGREED
+all,curiosity_about_evidence,curiosity about evidence,inductive,2,270,2,HUMAN_AGREED
+all,decline_useful,decline useful,inductive,2,270,2,HUMAN_AGREED
+all,doubted_the_absence,doubted the absence,inductive,4,270,3,HUMAN_AGREED
+all,doubted_the_checking,doubted the checking,inductive,1,270,1,HUMAN_AGREED
+all,follow_up_failed,follow up failed,inductive,1,270,1,HUMAN_AGREED
+all,future_use,future use,inductive,1,270,1,HUMAN_AGREED
+all,inconsistent_answers,inconsistent answers,inductive,2,270,2,HUMAN_AGREED
+all,no_reason,no reason,inductive,27,270,14,HUMAN_AGREED
+all,noticed_misread_time,noticed misread time,inductive,2,270,1,HUMAN_AGREED
+all,noticed_partial_answer,noticed partial answer,inductive,1,270,1,HUMAN_AGREED
+all,noticed_ticket_filed,noticed ticket filed,inductive,2,270,2,HUMAN_AGREED
+all,noticed_unlinked_facts,noticed unlinked facts,inductive,1,270,1,HUMAN_AGREED
+all,noticed_wrong_record,noticed wrong record,inductive,1,270,1,HUMAN_AGREED
+all,plans_report,plans report,inductive,12,270,8,HUMAN_AGREED
+all,praised_answer,praised answer,inductive,3,270,3,HUMAN_AGREED
+all,questioned_the_task,questioned the task,inductive,1,270,1,HUMAN_AGREED
+all,read_refusal_as_honesty,read refusal as honesty,inductive,3,270,3,HUMAN_AGREED
+all,rejected_the_cause,rejected the cause,inductive,1,270,1,HUMAN_AGREED
+all,room_confusion,room confusion,inductive,1,270,1,HUMAN_AGREED
+all,safety_concern,safety concern,inductive,1,270,1,HUMAN_AGREED
+all,said_no,said no,inductive,19,270,19,HUMAN_AGREED
+all,slow_answers,slow answers,inductive,1,270,1,HUMAN_AGREED
+all,too_technical,too technical,inductive,1,270,1,HUMAN_AGREED
+all,unclear,unclear,inductive,1,270,1,HUMAN_AGREED
+all,unsure_if_checked,unsure if checked,inductive,2,270,2,HUMAN_AGREED
+all,valued_evidence_panel,valued evidence panel,inductive,9,270,9,HUMAN_AGREED
+all,wanted_explanation,wanted explanation,inductive,2,270,2,HUMAN_AGREED
+all,wanted_more_detail,wanted more detail,inductive,2,270,2,HUMAN_AGREED

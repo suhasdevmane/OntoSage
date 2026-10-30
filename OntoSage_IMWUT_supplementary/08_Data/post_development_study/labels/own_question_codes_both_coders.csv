@@ -1,0 +1,176 @@
+item_id,F1_request_type,F2_evidence_source,F3a_place,F3b_time,F3c_criterion,F4_evidence_relation,F5_answerable,F6_purpose,F7_certainty,note,to_settle,disputed
+Qba1529,rank,description;measurement,n/a,missing,missing,proxy,partly,yes,uncertain,,F2_evidence_source F3a_place F5_answerable,yes
+Q05bb0c,fact,measurement,missing,missing,n/a,direct,yes,yes,clear,,,
+Qea40bf,fact,description,missing,n/a,n/a,direct,yes,no,clear,,,
+Qccd543,fact,measurement,specified,missing,missing,direct,yes,no,clear,,,
+Q8be1c0,explain,document;external,n/a,n/a,n/a,direct,partly,no,uncertain,,,
+Qb25f85,compare;summarise,measurement;document,specified,missing,missing,direct,partly,no,clear,,,
+Qdc76ae,fact;capability,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Qafcce9,capability,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Qf6abac,explain,external,n/a,n/a,missing,not_establishable,no,no,uncertain,,F2_evidence_source F3a_place F3c_criterion,yes
+Q21d6c4,fact,measurement;description,specified,n/a,n/a,direct,yes,no,clear,,,
+Q43eb80,fact,measurement,missing,missing,missing,direct,yes,no,uncertain,,,
+Q608743,fact,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Q6570f0,capability;action,document,specified,specified,n/a,direct,yes,no,clear,,,
+Q9a4a05,fact,document,n/a,n/a,n/a,direct,yes,no,clear,,F3a_place,yes
+Q619c0f,fact,document,specified,n/a,n/a,direct,yes,no,clear,,,
+Q138167,summarise,measurement;record;external,n/a,n/a,n/a,proxy,partly,no,uncertain,,F3a_place F3b_time,yes
+Q4ec651,explain,external,n/a,n/a,n/a,not_establishable,no,no,clear,,,
+Q968ef7,explain,none,n/a,n/a,n/a,not_establishable,no,no,uncertain,,,
+Qa5da4d,capability;fact,description,n/a,n/a,n/a,direct,yes,no,clear,,F1_request_type F3a_place,yes
+Q1590c7,fact,document,specified,n/a,n/a,direct,yes,no,clear,,,
+Qd05d7b,fact,description;document,specified,n/a,n/a,direct,yes,no,clear,,,
+Qf9e324,fact,description,n/a,n/a,n/a,direct,yes,yes,clear,,,
+Q5f1f13,capability,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Q2e56cf,fact,description;document,specified,n/a,n/a,direct,yes,no,clear,,F3a_place,yes
+Q125f87,fact,measurement;document,n/a,n/a,missing,proxy,partly,no,uncertain,,,
+Qb60360,fact,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Q69f55b,fact,document,specified,n/a,n/a,direct,yes,no,clear,,,
+Qf904fa,explain,external,n/a,n/a,n/a,not_establishable,no,no,uncertain,,F2_evidence_source F3a_place,yes
+Q8df435,capability,description;document,n/a,n/a,missing,proxy,partly,no,clear,,F2_evidence_source F3a_place F3c_criterion,yes
+Qa79e77,explain,external,n/a,n/a,n/a,not_establishable,no,no,clear,,F3c_criterion,yes
+Q6c4b06,fact,description,n/a,n/a,n/a,direct,yes,no,clear,,,
+Qd8a1b4,summarise,measurement,missing,specified,n/a,direct,yes,no,clear,,F3c_criterion,yes
+Q117278,fact,measurement,specified,missing,n/a,direct,yes,no,clear,,,
+Q995b75,fact,document,specified,n/a,n/a,direct,yes,no,clear,,F2_evidence_source,yes
+Q4f7a65,fact;capability,document,specified,n/a,missing,direct,partly,no,uncertain,,,
+Qe1d433,capability,description,n/a,n/a,n/a,direct,yes,no,clear,,F2_evidence_source F3a_place,yes
+Qf40da9,fact,document,n/a,n/a,n/a,direct,yes,no,clear,,,
+Q8eb1d5,capability,measurement;description,specified,missing,missing,direct,yes,no,clear,,,
+Qc80200,fact,record,missing,missing,n/a,direct,yes,no,uncertain,,,
+Q3968de,capability,description;document,n/a,n/a,n/a,direct,yes,no,clear,,F1_request_type F3a_place,yes
+Q61632f,fact,document,n/a,n/a,n/a,direct,partly,no,uncertain,,,
+Qc8ada9,explain,document;external,n/a,n/a,n/a,direct,partly,no,uncertain,,,
+Q1c78f1,fact,none,n/a,n/a,n/a,not_establishable,no,no,clear,,,
+Q5e75f7,capability;action,record,specified,specified,n/a,direct,yes,yes,clear,,F2_evidence_source,yes
+Qd85860,fact,description;external,specified,n/a,n/a,direct,partly,no,clear,,,
+Qb9c15c,summarise,record,specified,specified,missing,direct,yes,no,clear,,,
+Q4cb7ff,explain,measurement;external,n/a,n/a,missing,proxy,partly,no,uncertain,,,
+Q3e75f6,fact;capability,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Qb1be78,action,record,missing,missing,n/a,not_establishable,partly,yes,clear,,F2_evidence_source F3a_place F3b_time F5_answerable,yes
+Q8ca702,fact,measurement,missing,specified,n/a,direct,yes,no,clear,,,
+Q0e283d,fact,description,specified,n/a,missing,unclear,partly,no,uncertain,,,
+Q288554,fact;summarise,measurement,specified,specified,n/a,direct,yes,no,clear,,,
+Q9ec3e8,fact,description,missing,n/a,n/a,direct,yes,no,uncertain,,,
+Qca4145,capability,description;record,n/a,specified,specified,direct,yes,yes,clear,,F1_request_type F3a_place,yes
+Q7a3965,fact,record;document,specified,specified,n/a,direct,yes,yes,clear,,,
+Q029000,rank,measurement;description,specified,missing,missing,direct,yes,no,clear,,,
+Q2637fe,fact,record;document,specified,missing,n/a,direct,yes,no,clear,,,
+Q473324,capability,description;record,n/a,missing,n/a,direct,yes,yes,clear,,,
+Q75a92f,capability,description;document,n/a,n/a,n/a,direct,yes,no,clear,,,
+Qe4835d,explain,external,n/a,n/a,n/a,not_establishable,no,no,clear,,,
+Q8a23bb,compare;summarise,measurement,specified,missing,n/a,proxy,partly,no,uncertain,,,
+Q36df12,summarise;explain,measurement,n/a,specified,missing,direct,partly,no,clear,,F2_evidence_source F3a_place F5_answerable,yes
+Qf8837f,fact,document,n/a,n/a,n/a,direct,yes,no,clear,,,
+Qe17559,fact,description,specified,n/a,n/a,direct,yes,no,clear,,F2_evidence_source F3a_place,yes
+Q62fe71,fact,document,n/a,n/a,n/a,direct,partly,no,uncertain,,F1_request_type F2_evidence_source F3a_place F5_answerable,yes
+Q921f1b,explain,document;external,n/a,n/a,n/a,not_establishable,no,no,uncertain,,,
+Q3af38d,fact,record,n/a,missing,n/a,direct,partly,no,uncertain,,,
+Q8695be,summarise;action,measurement,specified,specified,n/a,direct,yes,no,clear,,,
+Q13bac7,fact,external,n/a,specified,n/a,not_establishable,no,no,uncertain,,,
+Q691faf,fact,measurement,missing,missing,missing,proxy,partly,no,clear,,,
+Qe1f7ab,fact,document,specified,n/a,n/a,direct,yes,no,clear,,F2_evidence_source F3c_criterion,yes
+Q469d86,fact,measurement,specified,specified,n/a,direct,yes,no,clear,,,
+Qecefdc,fact,measurement;record,n/a,specified,n/a,direct,yes,no,clear,,,
+Qd1d1ef,rank,measurement;description;record,n/a,specified,missing,proxy,partly,yes,clear,,F3a_place,yes
+Qeedf28,fact,measurement;record,n/a,specified,n/a,direct,yes,no,clear,,,
+Qdbcea9,rank,measurement;description,specified,specified,specified,proxy,partly,yes,clear,,,
+Q573143,fact,description,specified,n/a,specified,direct,yes,no,clear,,F2_evidence_source,yes
+Q78fa38,fact,measurement,missing,missing,n/a,direct,yes,no,uncertain,,,
+Q37da50,explain,document,n/a,n/a,n/a,direct,yes,no,clear,,,
+Q3dfb26,fact,measurement,missing,missing,n/a,proxy,partly,no,uncertain,,,
+Q168cd1,explain,external,n/a,n/a,n/a,not_establishable,no,yes,clear,,F2_evidence_source F3a_place,yes
+Qb35f11,explain,document;external,n/a,n/a,n/a,direct,partly,no,uncertain,,F2_evidence_source F3a_place,yes
+Q830290,capability,description;document,n/a,n/a,n/a,direct,yes,no,clear,,,
+Q3fb7f6,fact,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Qeaae57,fact,document,n/a,n/a,n/a,direct,yes,no,clear,,F3a_place,yes
+Q0fa1d4,fact,description,missing,n/a,n/a,direct,yes,no,clear,,,
+Q1acc12,fact,document,specified,n/a,n/a,direct,yes,no,clear,,,
+Q62cf30,capability,description;document,n/a,n/a,n/a,direct,yes,no,clear,,F3a_place F3b_time F3c_criterion,yes
+Qafb3ff,fact,measurement;document,specified,n/a,missing,proxy,partly,no,clear,,,
+Q6369c2,fact,measurement;record,specified,missing,n/a,direct,yes,no,clear,,,
+Qf6f4ae,capability,record,specified,specified,n/a,direct,yes,no,clear,,F1_request_type,yes
+Q6fdcd0,unclear,none,missing,n/a,n/a,unclear,no,no,uncertain,,,
+Qcba8ba,rank,description,n/a,n/a,specified,direct,yes,no,clear,,,
+Q06bcf7,fact,measurement;record,missing,missing,n/a,direct,yes,no,clear,,,
+Qabc68a,fact,document,n/a,specified,n/a,direct,yes,no,clear,,F2_evidence_source F3a_place,yes
+Qc13906,fact,description,specified,n/a,n/a,direct,yes,no,clear,,F3a_place,yes
+Q9d2b84,explain,measurement;external,n/a,n/a,missing,proxy,partly,no,uncertain,,,
+Qc3b669,explain,document,specified,n/a,n/a,direct,yes,no,clear,,F2_evidence_source,yes
+Q5d3a0d,fact,description,n/a,n/a,n/a,direct,yes,no,clear,,F3a_place,yes
+Qd8aaff,summarise,measurement,specified,missing,n/a,direct,yes,no,clear,,,
+Q0b614e,action,none,specified,n/a,missing,not_establishable,no,no,uncertain,,F3b_time F3c_criterion F5_answerable,yes
+Qd72743,capability,description;document,specified,n/a,n/a,direct,yes,no,clear,,F1_request_type F2_evidence_source,yes
+Qfc3814,fact,record,specified,n/a,missing,direct,yes,no,clear,,,
+Q51b5d3,summarise,measurement,missing,missing,missing,direct,yes,no,clear,,,
+Q1ccffa,fact,measurement,missing,specified,missing,direct,yes,no,clear,,,
+Qe96415,fact;summarise;capability,description;document;external,specified,n/a,n/a,direct,yes,no,clear,,,
+Q0e7365,fact,document,n/a,n/a,n/a,direct,yes,no,clear,,F3a_place,yes
+Qcec7a0,fact,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Qae2f5f,fact,document,specified,n/a,missing,direct,yes,no,clear,,,
+Q2d0905,fact,document,specified,n/a,n/a,direct,yes,no,clear,,,
+Q6dbe5d,fact,description,n/a,n/a,n/a,direct,yes,no,clear,,,
+Qf35488,fact,measurement,specified,missing,missing,proxy,partly,yes,clear,,,
+Qf9a174,fact,description;external,n/a,n/a,n/a,proxy,partly,no,clear,,F2_evidence_source F3a_place F3b_time,yes
+Qbca805,explain,measurement;description;document,n/a,n/a,n/a,proxy,partly,no,clear,,,
+Qb53e62,summarise,measurement,missing,specified,n/a,direct,yes,no,clear,,F3c_criterion,yes
+Q15889b,fact,measurement,missing,missing,n/a,direct,yes,no,uncertain,,,
+Q52c4d8,fact,measurement,missing,missing,missing,direct,yes,no,uncertain,,,
+Q238c5e,capability;action,measurement,missing,n/a,missing,direct,yes,no,clear,,,
+Qa72ecd,fact,measurement;record,specified,missing,missing,proxy,partly,yes,clear,,,
+Q24add4,unclear,none,missing,missing,n/a,unclear,no,no,uncertain,,F3a_place F3c_criterion,yes
+Qb5a5a5,fact,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Q666976,capability,description,specified,n/a,n/a,direct,yes,no,clear,,F1_request_type,yes
+Qc4bd2a,fact,document,n/a,specified,n/a,direct,yes,no,clear,,,
+Q1642b7,fact;capability,description;document,n/a,n/a,n/a,direct,yes,no,clear,,F2_evidence_source F3a_place F3c_criterion,yes
+Qb6f84e,summarise;rank,measurement,specified,specified,n/a,direct,yes,no,clear,,,
+Q0dc2e9,rank,measurement;description,n/a,missing,missing,proxy,partly,yes,uncertain,,,
+Q2ad812,fact,description,specified,n/a,n/a,direct,yes,no,clear,,F3a_place,yes
+Q5564e7,fact;capability,description,specified,n/a,n/a,direct,yes,yes,clear,,,
+Q3acff9,explain,external,n/a,n/a,missing,not_establishable,no,yes,clear,,,
+Qb1ef11,fact,measurement;description,missing,specified,missing,direct,yes,no,clear,,,
+Q0d20db,fact,description;document,specified,n/a,n/a,direct,yes,no,clear,,,
+Qf25d2d,unclear,none,n/a,n/a,n/a,unclear,no,no,uncertain,,,
+Q63a68f,action;capability,description;measurement,specified,n/a,missing,direct,yes,no,clear,,F1_request_type F2_evidence_source,yes
+Qbb64b0,fact,description;document,specified,n/a,n/a,direct,yes,no,clear,,,
+Q24285f,capability;fact,description,specified,n/a,n/a,direct,yes,yes,clear,,F1_request_type,yes
+Q788498,fact,record,specified,specified,n/a,direct,yes,no,clear,,,
+Qc50904,summarise,measurement;description,missing,missing,missing,direct,yes,no,clear,,,
+Q288013,explain,external,n/a,n/a,n/a,not_establishable,no,no,clear,,,
+Q4976f0,fact,measurement,specified,missing,n/a,direct,yes,no,clear,,,
+Q37373d,summarise,measurement,n/a,specified,n/a,direct,yes,no,clear,,,
+Q07ed62,fact,measurement,missing,missing,n/a,direct,yes,no,uncertain,,,
+Qa0a93b,summarise,measurement,specified,specified,n/a,direct,yes,no,clear,,,
+Q1cf1ee,fact,measurement,missing,specified,n/a,direct,yes,no,clear,,,
+Qaa22c6,explain,document;external,n/a,n/a,n/a,direct,partly,no,uncertain,,F2_evidence_source F3a_place F3c_criterion,yes
+Qb6818e,compare,measurement,specified,missing,n/a,direct,yes,no,clear,,,
+Q62f183,fact,measurement,missing,missing,n/a,direct,yes,no,clear,,,
+Q17487a,capability,description,specified,n/a,n/a,direct,yes,no,clear,,F1_request_type,yes
+Q4bcc83,unclear,document,n/a,n/a,n/a,unclear,partly,no,uncertain,,,
+Q56f9d0,fact,description,missing,n/a,n/a,direct,yes,no,clear,,,
+Qc99305,fact,document,specified,n/a,n/a,direct,yes,no,clear,,,
+Q63aec1,capability,record,missing,missing,n/a,direct,yes,no,uncertain,,,
+Qb74cca,capability,description;document,n/a,n/a,n/a,direct,yes,no,uncertain,,F3a_place F3b_time,yes
+Qcf04b2,fact,measurement,missing,specified,n/a,direct,yes,no,uncertain,,,
+Qb69149,fact,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Q6b4bd3,capability;action,description;document,specified,n/a,n/a,direct,yes,yes,clear,,,
+Q1fb2f1,capability,description;document,specified,n/a,n/a,direct,yes,no,clear,,,
+Qe4548a,capability,description,n/a,n/a,n/a,direct,yes,no,clear,,,
+Q9d0591,fact,record,specified,specified,n/a,direct,yes,no,clear,,,
+Q30a24f,rank,measurement;description,n/a,missing,missing,direct,yes,no,clear,,,
+Q3b52ef,explain,external;measurement,n/a,n/a,n/a,not_establishable,no,no,uncertain,,F2_evidence_source,yes
+Q749f3a,capability,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Qa623d3,summarise,measurement,specified,specified,n/a,direct,yes,no,clear,,,
+Q17e5c6,capability,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Qee0cf6,rank;capability,measurement;record,specified,specified,specified,direct,yes,no,clear,,,
+Q877ba5,fact,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Q8ba65c,fact,description;document,missing,n/a,n/a,direct,yes,no,clear,,,
+Qe62ed5,capability,description;document,n/a,n/a,n/a,direct,yes,no,clear,,,
+Q6d053a,summarise,external;measurement,specified,missing,n/a,direct,partly,no,clear,,F2_evidence_source F5_answerable,yes
+Q7d77d2,fact,description,specified,n/a,n/a,direct,yes,no,clear,,,
+Q396bd4,fact,measurement,missing,missing,n/a,direct,yes,no,clear,,,
+Q1a48a5,fact,external,n/a,n/a,specified,not_establishable,no,no,clear,,F2_evidence_source F3a_place F3c_criterion,yes
+Q4690af,fact,measurement;description,specified,specified,missing,direct,yes,no,clear,,,
+Q0fe392,explain,external;measurement,n/a,n/a,n/a,proxy,partly,no,uncertain,,F2_evidence_source F3a_place F3b_time,yes
+Q29048f,compare,measurement,specified,specified,n/a,direct,yes,no,clear,,,
+Q791d33,explain,record;document;external,specified,n/a,specified,proxy,partly,no,clear,,F3c_criterion,yes

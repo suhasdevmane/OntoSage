@@ -1,0 +1,2 @@
+key,value,description,script,label_source
+blinding_coder2_pass2_correct,81 of 130 (62%); can't tell 0,"blinding check, comparison set, coder coder2_pass2: identity guesses naming the right system family (OntoSage incl. two-checks-off, or Assistant B)",blinding_check.py,SECOND_CODER

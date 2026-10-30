@@ -1,0 +1,14 @@
+field,value,fresh_n,fresh_items,fresh_share,corpus_n,corpus_items,corpus_share,diff_fresh_minus_corpus,ci_lo,ci_hi
+F2_evidence_source,measurement,31,85,0.3647,31,90,0.3444,0.0203,-0.152,0.1956
+F2_evidence_source,description,46,85,0.5412,23,90,0.2556,0.2856,0.1228,0.4384
+F2_evidence_source,record,14,85,0.1647,9,90,0.1,0.0647,-0.0431,0.1794
+F2_evidence_source,document,19,85,0.2235,33,90,0.3667,-0.1431,-0.2954,0.0146
+F2_evidence_source,external,3,85,0.0353,22,90,0.2444,-0.2092,-0.3438,-0.0873
+F2_evidence_source,none,0,85,0.0,6,90,0.0667,-0.0667,-0.1222,-0.0222
+F4_evidence_relation,direct,77,85,0.9059,58,90,0.6444,0.2614,0.1266,0.3949
+F4_evidence_relation,proxy,8,85,0.0941,11,90,0.1222,-0.0281,-0.134,0.0756
+F4_evidence_relation,not_establishable,0,85,0.0,16,90,0.1778,-0.1778,-0.2778,-0.0833
+F4_evidence_relation,unclear,0,85,0.0,5,90,0.0556,-0.0556,-0.1034,-0.0115
+F5_answerable,yes,71,85,0.8353,52,90,0.5778,0.2575,0.0999,0.4173
+F5_answerable,partly,14,85,0.1647,20,90,0.2222,-0.0575,-0.1839,0.0756
+F5_answerable,no,0,85,0.0,18,90,0.2,-0.2,-0.3125,-0.1023

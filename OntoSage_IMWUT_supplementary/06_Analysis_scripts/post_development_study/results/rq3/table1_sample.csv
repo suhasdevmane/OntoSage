@@ -1,0 +1,31 @@
+item,value,n
+BG1 relationship (multi),Postgraduate student / researcher,14
+BG1 relationship (multi),Academic staff,14
+BG1 relationship (multi),Undergraduate student,2
+BG1 relationship (multi),Visitor,2
+BG1 relationship (multi),Other,1
+BG1 relationship (multi),"Facilities, estates or IT staff",1
+BG2 building data use,Weekly,17
+BG2 building data use,A few times a year,7
+BG2 building data use,Monthly,4
+BG2 building data use,Never,1
+BG2 building data use,Daily,1
+BG3 AI chat use,Daily,17
+BG3 AI chat use,Weekly,11
+BG3 AI chat use,Monthly,2
+BG4 Building A familiarity,Regular user (weekly or more),18
+BG4 Building A familiarity,Visited a few times,12
+BG5 charts comfort (1-5),5,20
+BG5 charts comfort (1-5),4,9
+BG5 charts comfort (1-5),3,1
+BG6 age band,25–34,13
+BG6 age band,35–44,13
+BG6 age band,45–54,3
+BG6 age band,18–24,1
+form version,V1,5
+form version,V2,5
+form version,V3,5
+form version,V4,5
+form version,V5,5
+form version,V6,5
+mode,online,30
