@@ -29,8 +29,8 @@ approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **LATEST (2026-11-05) — admin console end to end + BUG-1690..1702. NOTHING COMMITTED (push
-  approval owed). bldg1 PARKED: parked suite 15,789 pass / 0 fail / 186 skip / 5 xfail (exit 0;
+- **LATEST (2026-11-05) — admin console end to end + BUG-1690..1702. COMMITTED AND PUSHED
+  2026-11-06 to `development` only (`main` not promoted). bldg1 PARKED: parked suite 15,789 pass / 0 fail / 186 skip / 5 xfail (exit 0;
   reconciles with the active run, 15,980 tests both ways); CI file list 359 pass / 5 skip.** Every console tab walked live
   (Playwright, 0 page/console/API errors); fixes VERIFIED LIVE: Add capability dialog draws the
   schema's fields and saves (round trip answered by the pipeline); AI tab offers the hosted gateway;
