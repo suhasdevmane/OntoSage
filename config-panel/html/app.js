@@ -1158,9 +1158,7 @@ async function loadOverview() {
     try {
       const { body } = await api("/api/v1/admin/ai-config");
       const d = body.data || {};
-      const model = d.model_provider === "openai" ? d.openai_model : d.model_provider === "cloud" ? d.ollama_cloud_model : d.ollama_model;
-      const provLabel = d.model_provider === "local" ? "Local Ollama" : d.model_provider === "cloud" ? "Ollama Cloud" : "OpenAI";
-      tiles.push(ovTile("LLM provider", provLabel, model || "", "⚛", "", "ai"));
+      tiles.push(ovTile("LLM provider", providerLabel(d.model_provider), providerModel(d) || "", "⚛", "", "ai"));
       tiles.push(ovTile("Embeddings", embName(d), embDim(d) ? `${embDim(d)}-d` : "local", "▦", "", "ai"));
     } catch (_) {}
     try {
@@ -1217,6 +1215,13 @@ async function askQuestion(q) {
 
 // ── AI & Models tab ──────────────────────────────────────────────────────────
 let aiCfg = null;
+// One place that names a provider. The Overview used to call anything that was not local or
+// cloud "OpenAI", which mislabelled a building running on the hosted gateway (BUG-1699).
+const PROVIDER_LABELS = { local: "Local Ollama", hosted: "Hosted gateway (OpenAI-compatible)", cloud: "Ollama Cloud", openai: "OpenAI" };
+const providerLabel = (p) => PROVIDER_LABELS[p] || String(p || "unknown");
+function providerModel(d) {
+  return { local: d.ollama_model, hosted: d.hosted_llm_model, cloud: d.ollama_cloud_model, openai: d.openai_model }[d.model_provider] || "";
+}
 async function loadAiConfig() {
   if (!state.token) { $("ai-body").innerHTML = '<p class="hint">Sign in as admin to view.</p>'; return; }
   try {
@@ -1227,9 +1232,8 @@ async function loadAiConfig() {
 }
 function renderAiConfig() {
   const c = aiCfg;
-  const provLabel = (p) => (p === "local" ? "Local Ollama" : p === "cloud" ? "Ollama Cloud" : "OpenAI");
   const providerRadios = (c.providers || []).map((p) =>
-    `<label class="radio"><input type="radio" name="ai-provider" value="${p}" ${p === c.model_provider ? "checked" : ""}/> ${provLabel(p)}</label>`).join("");
+    `<label class="radio"><input type="radio" name="ai-provider" value="${p}" ${p === c.model_provider ? "checked" : ""}/> ${providerLabel(p)}</label>`).join("");
   const embLabel = (p) => {
     if (p === "openai") return `OpenAI${c.embedding_dimension_openai ? ` (${c.embedding_dimension_openai}-d)` : ""}`;
     const name = c.embedding_model_local ? ` — ${esc(embModelShort(c.embedding_model_local))}` : "";
@@ -1278,6 +1282,18 @@ function renderProviderFields(prov) {
         </span>
       </label>
       <datalist id="ai-model-list"></datalist>`;
+  } else if (prov === "hosted") {
+    html = `
+      <label>Gateway base URL <input id="ai-hosted-url" value="${esc(c.hosted_llm_base_url || "")}" placeholder="https://gateway.example.org/v1" /></label>
+      <label>Model
+        <span class="model-row">
+          <input id="ai-hosted-model" list="ai-model-list" value="${esc(c.hosted_llm_model || "")}" />
+          <button class="btn ghost small" id="ai-fetch-models" type="button">Fetch served</button>
+        </span>
+      </label>
+      <datalist id="ai-model-list"></datalist>
+      <label>Gateway API key ${keyChip(c.hosted_llm_api_key_set)}
+        <input id="ai-hosted-key" type="password" placeholder="${keyPh(c.hosted_llm_api_key_set)}" /></label>`;
   } else if (prov === "cloud") {
     html = `
       <label>Ollama Cloud base URL <input id="ai-cloud-url" value="${esc(c.ollama_cloud_base_url || "")}" /></label>
@@ -1304,6 +1320,7 @@ async function testAiProvider() {
   const payload = { provider: prov };
   if (prov === "local" && $("ai-ollama-url")) payload.base_url = $("ai-ollama-url").value.trim();
   if (prov === "cloud") { if ($("ai-cloud-url")) payload.base_url = $("ai-cloud-url").value.trim(); const k = $("ai-cloud-key")?.value; if (k) payload.api_key = k; }
+  if (prov === "hosted") { if ($("ai-hosted-url")) payload.base_url = $("ai-hosted-url").value.trim(); const k = $("ai-hosted-key")?.value; if (k) payload.api_key = k; }
   if (prov === "openai") { const k = $("ai-openai-key")?.value; if (k) payload.api_key = k; }
   try {
     const { body } = await api("/api/v1/admin/ai-config/test", { method: "POST", body: JSON.stringify(payload) });
@@ -1324,6 +1341,10 @@ async function saveAiConfig() {
   if (prov === "local") {
     if ($("ai-ollama-url")) changes.OLLAMA_BASE_URL = $("ai-ollama-url").value.trim();
     if ($("ai-ollama-model")) changes.OLLAMA_MODEL = $("ai-ollama-model").value.trim();
+  } else if (prov === "hosted") {
+    if ($("ai-hosted-url")) changes.HOSTED_LLM_BASE_URL = $("ai-hosted-url").value.trim();
+    if ($("ai-hosted-model")) changes.HOSTED_LLM_MODEL = $("ai-hosted-model").value.trim();
+    const k = $("ai-hosted-key")?.value; if (k) changes.HOSTED_LLM_API_KEY = k;
   } else if (prov === "cloud") {
     if ($("ai-cloud-url")) changes.OLLAMA_CLOUD_BASE_URL = $("ai-cloud-url").value.trim();
     if ($("ai-cloud-model")) changes.OLLAMA_CLOUD_MODEL = $("ai-cloud-model").value.trim();
@@ -1540,6 +1561,22 @@ async function ensureAdminSession() {
 function open(id) { $(id).hidden = false; }
 // ── Ontology tab (capabilities + named graphs + TTL upload + SPARQL) ─────────────
 let capTypes = ["Facility"];
+// Schema-driven form (BUG-1690): GET /api/v1/admin/capabilities returns `form_fields` — one
+// descriptor per supported ontosage: datatype property with its rdfs:domain — and
+// `types_by_kind` (amenity vs knowledge subclasses). The dialog draws only the fields whose
+// domain applies to the selected type. Until 2026-11-05 nothing drew them, so the dialog read
+// inputs that did not exist and threw before sending anything.
+let capFormFields = [];
+let capTypesByKind = { amenity: [], knowledge: [] };
+// Used only if the capabilities request failed, so the dialog can still save the core fields.
+const CAP_FIELD_FALLBACK = [
+  { field: "lay_terms", domain: "Capability", label: "lay-term keywords", help: "prayer room, quiet room, where can i pray" },
+  { field: "location", domain: "Amenity", label: "human-readable location", help: "Floor 1, room 1.04" },
+  { field: "floor", domain: "Amenity", label: "floor identifier", help: "1 or Ground" },
+  { field: "note", domain: "Capability", label: "additional detail", help: "" },
+];
+// Long free-text fields get a full-width textarea.
+const CAP_LONG_FIELDS = new Set(["note", "answer_text", "steps", "lay_terms"]);
 const localName = (uri) => { const s = String(uri || ""); const i = Math.max(s.lastIndexOf("#"), s.lastIndexOf("/")); return i >= 0 ? s.slice(i + 1) : s; };
 const localOk = (s) => /^[A-Za-z][A-Za-z0-9_.-]{0,63}$/.test(s || "");
 
@@ -1618,39 +1655,75 @@ async function loadCapabilities() {
   if (!state.token) { $("cap-list").innerHTML = '<p class="hint">Sign in as admin to view capabilities.</p>'; return; }
   try {
     const { body } = await api("/api/v1/admin/capabilities");
-    const rows = body.data?.amenities || [];
+    const raw = body.data?.amenities || [];
     if (body.data?.types?.length) capTypes = body.data.types;
+    if (Array.isArray(body.data?.form_fields)) capFormFields = body.data.form_fields;
+    if (body.data?.types_by_kind) capTypesByKind = body.data.types_by_kind;
+    // The SPARQL behind this list returns one row per value combination, so an entry with two
+    // lay-term or label values arrives twice. Show each subject once.
+    const seen = new Set();
+    const rows = raw.filter((a) => (seen.has(a.a) ? false : seen.add(a.a)));
     $("cap-count").textContent = `${rows.length} capabilit${rows.length === 1 ? "y" : "ies"}`;
     $("cap-list").innerHTML = rows.map((a) => {
-      const loc = a.loc ? ` · ${esc(a.loc)}` : "";
       return `<div class="db-card">
         <h4>${esc(a.label || "(no label)")}</h4>
         <div class="kv"><span>id</span><span>${esc(localName(a.a))}</span></div>
         ${a.loc ? `<div class="kv"><span>location</span><span>${esc(a.loc)}</span></div>` : ""}
+        ${a.cat ? `<div class="kv"><span>category</span><span>${esc(a.cat)}</span></div>` : ""}
+        ${a.lay ? `<div class="kv"><span>lay terms</span><span>${esc(a.lay)}</span></div>` : ""}
         <div class="db-actions"><button class="btn small danger" data-del-cap="${esc(localName(a.a))}">Delete</button></div>
       </div>`;
     }).join("") || '<p class="hint">No capabilities yet. Click “+ Add capability”.</p>';
   } catch (e) { $("cap-list").innerHTML = `<p class="err">${e.message}</p>`; }
 }
 
+// Does a property whose rdfs:domain is `domain` apply to capability type `type`?
+// Capability is the root of both kinds; Amenity / KnowledgeTopic cover their kind; any other
+// domain (Procedure, MaintenanceIssue, …) applies to that exact type.
+function capDomainApplies(domain, type) {
+  if (!domain || domain === "Capability") return true;
+  if (domain === "Amenity") return (capTypesByKind.amenity || []).includes(type) || type === "Amenity";
+  if (domain === "KnowledgeTopic") return (capTypesByKind.knowledge || []).includes(type);
+  return domain === type;
+}
+function renderCapFields() {
+  const type = $("cap-type").value;
+  const box = $("cap-dynamic");
+  // Keep what the admin already typed when they switch type.
+  const prev = {};
+  box.querySelectorAll("[data-cap-field]").forEach((el) => { prev[el.dataset.capField] = el.value; });
+  const fields = (capFormFields.length ? capFormFields : CAP_FIELD_FALLBACK).filter((f) => capDomainApplies(f.domain, type));
+  box.innerHTML = fields.map((f) => {
+    const long = CAP_LONG_FIELDS.has(f.field);
+    const val = esc(prev[f.field] || "");
+    // skos:example values arrive quoted ("\"Mon-Fri 09:00-16:30\""); a placeholder shows the value.
+    const ph = esc(String(f.help || "").replace(/^\s*["“]+|["”]+\s*$/g, ""));
+    const input = long
+      ? `<textarea data-cap-field="${esc(f.field)}" rows="2" placeholder="${ph}">${val}</textarea>`
+      : `<input data-cap-field="${esc(f.field)}" placeholder="${ph}" value="${val}" />`;
+    // One span for the caption: .form-grid labels are flex columns, so a bare text node and a
+    // hint span would land on separate lines.
+    return `<label class="${long ? "wide-field" : ""}"><span>${esc(f.label || f.field)} <span class="hint">· ${esc(f.domain || "Capability")}</span></span>${input}</label>`;
+  }).join("") || '<p class="hint">This type has no extra fields.</p>';
+}
 function openCapModal() {
   if (!state.token) return toast("Sign in as admin first", "err");
   $("cap-err").hidden = true;
   $("cap-type").innerHTML = capTypes.map((t) => `<option>${esc(t)}</option>`).join("");
-  ["id", "label", "location", "floor", "category", "lay", "note", "answer", "url", "email", "phone", "reportto", "steps"].forEach((f) => { if ($("cap-" + f)) $("cap-" + f).value = ""; });
+  $("cap-id").value = "";
+  $("cap-label").value = "";
+  $("cap-dynamic").innerHTML = "";
+  renderCapFields();
   open("cap-modal");
 }
 
 async function createCapability() {
-  const payload = {
-    id: $("cap-id").value.trim(), type: $("cap-type").value, label: $("cap-label").value.trim(),
-    location: $("cap-location").value.trim(), floor: $("cap-floor").value.trim(),
-    category: $("cap-category").value.trim(), lay_terms: $("cap-lay").value.trim(),
-    note: $("cap-note").value.trim(),
-    answer_text: $("cap-answer").value.trim(), info_url: $("cap-url").value.trim(),
-    contact_email: $("cap-email").value.trim(), contact_phone: $("cap-phone").value.trim(),
-    report_to: $("cap-reportto").value.trim(), steps: $("cap-steps").value.trim(),
-  };
+  const payload = { id: $("cap-id").value.trim(), type: $("cap-type").value, label: $("cap-label").value.trim() };
+  // Send only the fields drawn for this type; the server ignores empty ones.
+  document.querySelectorAll("#cap-dynamic [data-cap-field]").forEach((el) => {
+    const v = el.value.trim();
+    if (v) payload[el.dataset.capField] = v;
+  });
   if (!payload.id || !localOk(payload.id)) return err("cap-err", "ID must be a simple local name (letters, digits, _ . -), starting with a letter.");
   if (!payload.label) return err("cap-err", "Label is required.");
   try {
@@ -1750,8 +1823,15 @@ async function loadDocuments() {
   try {
     const { body } = await api("/api/v1/admin/documents");
     const items = body.data?.documents || [];
+    // indexed: true / false / null (index unreadable). A file that is not indexed answers
+    // nothing, so say so instead of listing it like one that does (BUG-1694).
+    const idx = (d) => d.indexed === true
+      ? '<span class="src-badge real" title="Has chunks in the document index — answerable">indexed</span>'
+      : d.indexed === false
+        ? '<span class="src-badge sim" title="No chunks in the document index yet — a PDF with no text layer (scanned) is never indexed">not indexed</span>'
+        : "";
     box.innerHTML = items.length
-      ? items.map((d) => `<div class="db-row"><span>📄 ${esc(d.filename)}</span><span class="hint">${(d.bytes / 1024).toFixed(1)} KB</span><button class="btn tiny ghost" data-del-doc="${esc(d.filename)}">Delete</button></div>`).join("")
+      ? items.map((d) => `<div class="db-row"><span>📄 ${esc(d.filename)}</span>${idx(d)}<span class="hint">${(d.bytes / 1024).toFixed(1)} KB</span><button class="btn tiny ghost" data-del-doc="${esc(d.filename)}">Delete</button></div>`).join("")
       : '<p class="hint">No documents yet — upload a .md / .txt / .pdf policy or manual.</p>';
   } catch (e) { box.innerHTML = `<p class="err">${esc(e.message)}</p>`; }
 }
@@ -1765,18 +1845,46 @@ async function uploadDocument() {
   try {
     const { body } = await apiUpload("/api/v1/admin/documents/upload", fd);
     if (body.success) {
-      setStatus("doc-upload-status", "ok", "uploaded ✓");
-      toast(`Uploaded ${body.data?.filename} · reindexing document KB`, "ok");
+      setStatus("doc-upload-status", "warn", "uploaded · indexing…");
       $("doc-file").value = ""; loadDocuments();
+      watchReindexJob(body.data?.reindex_job_id, body.data?.filename);
     } else { setStatus("doc-upload-status", "bad", "failed"); toast(body.error || "Upload failed", "err"); }
   } catch (e) { setStatus("doc-upload-status", "bad", "failed"); toast(e.message, "err"); }
+}
+
+// Follow the document reindex job an upload or delete started, and report what it did.
+// The console used to stop at "uploaded", which read as success while every job was failing
+// (BUG-1694). Gives up after ~2 minutes; the list still shows each file's index state.
+async function watchReindexJob(jobId, filename) {
+  if (!jobId) { loadDocuments(); return; }
+  for (let i = 0; i < 60; i++) {
+    await new Promise((r) => setTimeout(r, 2000));
+    let job;
+    try { job = (await api(`/api/v1/admin/reindex/${encodeURIComponent(jobId)}`)).body?.data || {}; }
+    catch (_) { continue; }
+    if (!job.finished_at) continue;
+    const r = (job.results || {}).documents || {};
+    if (job.status !== "done" || r.error) {
+      setStatus("doc-upload-status", "bad", `indexing failed: ${esc(String(r.error || job.error || "unknown")).slice(0, 80)}`);
+    } else if (filename && (r.indexed_files || []).includes(filename)) {
+      setStatus("doc-upload-status", "ok", `indexed ✓ · ${r.chunks ?? "?"} chunk(s)`);
+      toast(`${filename} is indexed and answerable`, "ok");
+    } else if (filename) {
+      setStatus("doc-upload-status", "warn", "uploaded, but no text was indexed (a scanned PDF has no text layer)");
+    } else {
+      setStatus("doc-upload-status", "ok", "index updated ✓");
+    }
+    loadDocuments();
+    return;
+  }
+  setStatus("doc-upload-status", "warn", "still indexing — refresh later");
 }
 
 async function deleteDocument(name) {
   if (!confirm(`Delete document "${name}"?`)) return;
   try {
     const { body } = await api(`/api/v1/admin/documents/${encodeURIComponent(name)}`, { method: "DELETE" });
-    if (body.success) { toast(`Deleted ${name}`, "ok"); loadDocuments(); }
+    if (body.success) { toast(`Deleted ${name}`, "ok"); loadDocuments(); watchReindexJob(body.data?.reindex_job_id, null); }
     else toast(body.error || "Delete failed", "err");
   } catch (e) { toast(e.message, "err"); }
 }
@@ -1888,6 +1996,7 @@ $("do-db").addEventListener("click", createDatabase);
 $("do-db-test").addEventListener("click", testNewConnection);
 $("db-active-only").addEventListener("change", (e) => { dbActiveOnly = e.target.checked; renderDbCards(); });
 $("add-cap").addEventListener("click", openCapModal);
+$("cap-type").addEventListener("change", renderCapFields);
 $("do-cap").addEventListener("click", createCapability);
 $("refresh-cap").addEventListener("click", loadCapabilities);
 $("refresh-graphs").addEventListener("click", loadGraphs);

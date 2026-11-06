@@ -2,7 +2,7 @@
 #  OntoSage Conversational Building Vocabulary (OCBV)
 #  A stakeholder-facing conversational extension layer over the Brick Schema.
 #  ------------------------------------------------------------------------------------------------
-#  Version : 2.0.0        Date: 2026-07-17        Licence: CC-BY-4.0
+#  Version : 2.1.0        Date: 2026-07-17        Licence: CC-BY-4.0
 #  Term namespaces : http://ontosage.org/capabilities#  (prefix: ontosage)   — capabilities, roles,
 #                                                          intents, reports, provenance
 #                    http://ontosage.org/hbco#           (prefix: hbco)       — human⇄building
@@ -327,10 +327,14 @@ ontosage:locatedIn a owl:ObjectProperty ;
     rdfs:range brick:Location ;
     skos:example "bldg:PrayerRoom_104 ontosage:locatedIn bldg:Room_1.04 ." .
 
+# One rdfs:domain, a union. It used to carry two (Capability here and IntervalRecord in
+# Module J), and two domains mean the intersection: an RDFS reasoner would type every access
+# event and alarm as a Capability too. Measured on the active building 2026-11-05: 949 of
+# 952 subjects are interval records and GraphDB's ruleset had inferred Capability for one.
 ontosage:aboutEquipment a owl:ObjectProperty ;
     rdfs:label "about equipment"@en ;
-    rdfs:comment "Links a maintenance issue (or capability) to the Brick equipment it concerns, so a fault report can be tied to the real asset."@en ;
-    rdfs:domain ontosage:Capability ;
+    rdfs:comment "Links a maintenance issue, capability, interval record or standing record to the Brick equipment it concerns, so a fault report or an alarm can be tied to the real asset."@en ;
+    rdfs:domain [ a owl:Class ; owl:unionOf ( ontosage:Capability ontosage:IntervalRecord ontosage:Record ) ] ;
     rdfs:range brick:Equipment ;
     skos:example "bldg:Issue_BrokenLift ontosage:aboutEquipment bldg:Lift_1 ." .
 
@@ -927,8 +931,9 @@ hbco:Concept
         SELECT ?sensor ?uuid WHERE {
           ?concept a hbco:Concept ; hbco:layTerm ?term ; hbco:mapsToBrickClass ?cls .
           FILTER(CONTAINS(LCASE(?term), \"stuffy\"))
-          ?sensor a ?cls ; brick:hasExternalReference ?ref .
-          ?ref brick:hasTimeseriesId ?uuid .
+          ?sensor a ?cls ; ?anyRefPred ?ref .
+          ?ref ref:hasTimeseriesId ?uuid .
+          FILTER(?anyRefPred IN (ref:hasExternalReference, ashrae:hasExternalReference, brick:hasExternalReference))
         } LIMIT 25""" .
 
 # ── QuestionIntent: classify the ask and pick the strategy ─────────────────────────────────────
@@ -1125,6 +1130,10 @@ ontosage:ReportShape a sh:NodeShape ;
 
 # ── J.1 Interval records (S2) ──────────────────────────────────────────────────────────────────
 
+ontosage:Record a owl:Class ;
+    rdfs:label "Record"@en ;
+    rdfs:comment "Abstract supertype for a standing record a building keeps about itself: a register row such as a fire-safety asset, a department, a workspace profile or a sustainability target. It has an owner, a status and a version rather than an interval lifecycle. Never instantiated directly."@en .
+
 ontosage:IntervalRecord a owl:Class ;
     rdfs:label "Interval record"@en ;
     rdfs:comment "Abstract supertype for anything that happens over a time interval with a lifecycle: bookings, work orders, access events, alarms, compliance checks, anomaly episodes. Never instantiated directly."@en .
@@ -1161,9 +1170,8 @@ ontosage:aboutSpace a owl:ObjectProperty ;
     rdfs:domain ontosage:IntervalRecord ; rdfs:range brick:Location ;
     rdfs:label "about space"@en ; rdfs:comment "The room/zone the record concerns."@en .
 
-ontosage:aboutEquipment a owl:ObjectProperty ;
-    rdfs:domain ontosage:IntervalRecord ; rdfs:range brick:Equipment ;
-    rdfs:label "about equipment"@en .
+# ontosage:aboutEquipment is declared once, in Module A.3, with a union domain that
+# includes IntervalRecord. A second declaration here added a second rdfs:domain.
 
 ontosage:aboutPoint a owl:ObjectProperty ;
     rdfs:domain ontosage:IntervalRecord ; rdfs:range brick:Point ;
@@ -1555,6 +1563,17 @@ ontosage:configurationChange a owl:DatatypeProperty ;
     rdfs:domain ontosage:ConfigurationPeriod ; rdfs:range xsd:string ;
     skos:example "\"recalibration\"" .
 
+ontosage:configurationOf a owl:ObjectProperty ;
+    rdfs:label "configuration of"@en ;
+    rdfs:comment "The point a configuration period describes. The direction building data uses (period to point); ontosage:hasConfigurationPeriod states the same link from the point."@en ;
+    rdfs:domain ontosage:ConfigurationPeriod ; rdfs:range brick:Point .
+
+ontosage:configLocation a owl:ObjectProperty ;
+    rdfs:subPropertyOf ontosage:periodLocation ;
+    rdfs:label "configuration location"@en ;
+    rdfs:comment "Where the point was during this configuration period. The name building data and the evidence history query use; a sub-property of ontosage:periodLocation."@en ;
+    rdfs:domain ontosage:ConfigurationPeriod ; rdfs:range brick:Location .
+
 ontosage:periodLocation a owl:ObjectProperty ;
     rdfs:label "location during period"@en ;
     rdfs:comment "Where the point was during this period. This is what an as-of query resolves, so a reading from March stays attributed to the room the sensor was in during March."@en ;
@@ -1700,6 +1719,11 @@ ontosage:AccessibilityFeature a owl:Class ;
     rdfs:subClassOf ontosage:Amenity ;
     rdfs:label "Accessibility feature"@en ;
     rdfs:comment "A feature provided for accessibility: hearing loop, tactile paving, Changing Places facility, accessible WC, power-assisted door, accessible parking bay. An Amenity subclass so the existing capability resolver locates it with no new code."@en .
+
+ontosage:AccessibleToilet a owl:Class ;
+    rdfs:subClassOf ontosage:ToiletFacility , ontosage:AccessibilityFeature ;
+    rdfs:label "Accessible toilet"@en ;
+    rdfs:comment "A toilet built for wheelchair users: both a toilet facility and an accessibility feature, so a question about either finds it."@en .
 
 ontosage:accessibilityKind a owl:DatatypeProperty ;
     rdfs:label "accessibility feature kind"@en ;
@@ -3959,6 +3983,16 @@ ontosage:routeToSpace a owl:ObjectProperty ;
     rdfs:range brick:Location ;
     rdfs:label "route to space"@en ;
     rdfs:comment "The space a route record ends at, where its ontosage:routeTo text names exactly one space of the building."@en .
+
+ontosage:appliesTo a owl:ObjectProperty ;
+    rdfs:range brick:Location ;
+    rdfs:label "applies to"@en ;
+    rdfs:comment "The floor, room or zone a closure period or service schedule covers. No domain is declared: it is used by several record kinds, and a domain would type each of them as one class."@en .
+
+ontosage:meterServes a owl:ObjectProperty ;
+    rdfs:label "meter serves"@en ;
+    rdfs:comment "What a meter's reading covers: the building, a floor or a system. An energy answer states this boundary, so a floor sub-meter is never read as the whole building's consumption."@en ;
+    skos:example "bldg:Building_Electrical_Meter ontosage:meterServes bldg:Building ." .
 
 ontosage:servesAreaSpace a owl:ObjectProperty ;
     rdfs:range brick:Location ;

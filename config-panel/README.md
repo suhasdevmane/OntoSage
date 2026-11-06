@@ -10,7 +10,7 @@ same-origin, so no CORS and no API-base config. No build step, no `node_modules`
 |---|---|---|
 | **Data Sources** | Toggle synthetic sources on/off, regenerate data, preview (sparkline), add a new source, view the provenance legend | `/api/v1/datasources*` |
 | **Settings (.env)** | View/edit the root `.env` (secrets masked; add custom keys) | `/api/v1/admin/env` |
-| **Databases** | Add DB connections (creds → `.env`, entry → overlay) **and register their sensors** (TTL upload or points form → Brick triples + UUIDs into `urn:ontosage:db:<key>`) so the DB becomes SPARQL-discoverable and used per-question | `/api/v1/admin/databases`, `/api/v1/admin/databases/{key}/sensors[/ttl]` |
+| **Databases** | Add DB connections (creds → `.env`, entry → overlay) **and register their sensors** (TTL upload, CSV or points form → Brick triples + UUIDs saved to `input/db_<key>_sensors.ttl` and its file graph `urn:ontosage:ttl:db_<key>_sensors.ttl`) so the DB becomes SPARQL-discoverable and used per-question | `/api/v1/admin/databases`, `/api/v1/admin/databases/{key}/sensors[/ttl]` |
 | **Users & Access** | Create/delete users, assign roles, and set which data sources each **role** may query (enforced in the pipeline) | `/api/v1/admin/users`, `/api/v1/admin/role-access` |
 | **Health** | Live orchestrator health + feature state | `/health` |
 
@@ -45,8 +45,11 @@ to that DB. So a connection has two steps:
    - **Upload TTL**: paste a Brick Turtle doc of the sensors (validated) — for many
      sensors. Each must carry `ref:hasTimeseriesId` + `ref:storedAt bldg:<key>`.
 
-   Both land in the named graph `urn:ontosage:db:<key>` (re-registering replaces
-   it). This applies **immediately** (no restart) — the response cache is flushed.
+   All three are saved to `input/db_<key>_sensors.ttl` and loaded into its file graph
+   `urn:ontosage:ttl:db_<key>_sensors.ttl`, so they survive a restart (re-registering
+   replaces the file). This applies **immediately** (no restart) — the answer, routing,
+   row and lay-term caches are cleared. `urn:ontosage:db:<key>` is the graph name used
+   before 2026-07; deleting a connection still drops it if it exists.
 
 ## Roles & data-source access
 

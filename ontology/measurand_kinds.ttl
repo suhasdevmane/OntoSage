@@ -294,6 +294,10 @@ brick:Relative_Humidity_Sensor    ontosage:measuresQuantityKind ontosage:Relativ
 brick:Zone_Air_Humidity_Sensor    ontosage:measuresQuantityKind ontosage:RelativeHumidity .
 brick:Illuminance_Sensor          ontosage:measuresQuantityKind ontosage:Illuminance .
 brick:Luminance_Sensor            ontosage:measuresQuantityKind ontosage:Illuminance .
+# brick:Sound_Sensor and brick:Noise_Sensor are NOT Brick 1.4 classes (checked against the
+# vendored Brick_v1.4.ttl, 2026-11-05) and no building here uses them; they are kept for a
+# graph written against another vocabulary. This project's acoustic class is
+# ontosage:Sound_Level_Sensor, which this file does not map -- see the tracker.
 brick:Sound_Sensor                ontosage:measuresQuantityKind ontosage:SoundPressureLevel .
 brick:Noise_Sensor                ontosage:measuresQuantityKind ontosage:SoundPressureLevel .
 brick:Occupancy_Count_Sensor      ontosage:measuresQuantityKind ontosage:OccupancyCount .
@@ -463,6 +467,7 @@ ontosage:EventCount a ontosage:Measurand ;
 
 # ── class -> measurand for the equipment-side classes ─────────────────────────
 brick:Electrical_Meter        ontosage:measuresQuantityKind ontosage:ElectricalEnergy .
+# brick:Electrical_Energy_Sensor is not a Brick 1.4 class either; brick:Energy_Sensor is.
 brick:Electrical_Energy_Sensor ontosage:measuresQuantityKind ontosage:ElectricalEnergy .
 brick:Energy_Sensor           ontosage:measuresQuantityKind ontosage:ElectricalEnergy .
 brick:Active_Power_Sensor     ontosage:measuresQuantityKind ontosage:ElectricalPower .
@@ -494,6 +499,8 @@ brick:Lighting_Correlated_Color_Temperature_Command ontosage:measuresQuantityKin
 #                                          equipment-side name. Declare it in the
 #                                          building's TTL as a brick:Vibration_Sensor
 #                                          and it inherits the band below.
+# brick:Vibration_Sensor is not a Brick 1.4 class; the mapping that matches data here is
+# brick:Vibration_Sensor_Equipment, at the end of this file.
 brick:Vibration_Sensor ontosage:measuresQuantityKind ontosage:VibrationVelocity .
 
 # ── PART 5 — the remainder ────────────────────────────────────────────────────

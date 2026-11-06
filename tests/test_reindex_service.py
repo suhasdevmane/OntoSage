@@ -160,8 +160,13 @@ async def test_run_exception_sets_error_status():
     'capability' became a no-op when capability facts moved to ontology triples
     (TODO-081), so it can no longer raise and cannot exercise this path.
     """
-    doc_indexer = MagicMock()
-    doc_indexer.ingest_all = AsyncMock(side_effect=RuntimeError("boom"))
+    from orchestrator.services.document_indexer import DocumentIndexer
+
+    # spec= makes a method the real class lacks an AttributeError here too. Without it this
+    # test mocked ingest_all, which DocumentIndexer never had, and passed for months while
+    # every real documents job failed (BUG-1694).
+    doc_indexer = MagicMock(spec=DocumentIndexer)
+    doc_indexer.index_building = AsyncMock(side_effect=RuntimeError("boom"))
 
     svc = make_service(document_indexer=doc_indexer)
     job_id = svc.start(["documents"], building_id="bldg1")
@@ -182,7 +187,7 @@ async def test_run_exception_sets_error_status():
 def test_elapsed_s_present():
     """status() includes elapsed_s as a float >= 0."""
     svc = make_service()
-    job_id = svc.start(["floor_plans"])
+    job_id = svc.start(["capability"])
     result = svc.status(job_id)
     assert isinstance(result["elapsed_s"], float)
     assert result["elapsed_s"] >= 0.0
@@ -197,12 +202,78 @@ def test_elapsed_s_present():
 async def test_list_jobs_newest_first():
     """list_jobs() returns jobs newest first (by started_at descending)."""
     svc = make_service()
-    first_id = svc.start(["floor_plans"])
+    first_id = svc.start(["capability"])
     # Sleep long enough for Windows timer resolution (>= 15 ms) to register a difference.
     await asyncio.sleep(0.05)
-    second_id = svc.start(["floor_plans"])
+    second_id = svc.start(["capability"])
 
     jobs = svc.list_jobs()
     assert len(jobs) >= 2
     assert jobs[0]["id"] == second_id
     assert jobs[1]["id"] == first_id
+
+
+# ---------------------------------------------------------------------------
+# 13. The documents target calls a method DocumentIndexer really has (BUG-1694)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.asyncio
+async def test_documents_target_indexes_the_building_with_the_real_api():
+    """A documents job runs DocumentIndexer.index_building and reports what it indexed."""
+    from orchestrator.services.document_indexer import DocIndexResult, DocumentIndexer
+
+    doc_indexer = MagicMock(spec=DocumentIndexer)
+    doc_indexer.index_building = AsyncMock(
+        return_value=DocIndexResult(
+            building_id="bldg1",
+            status="indexed",
+            documents=1,
+            chunks=3,
+            indexed_files=["policy.pdf"],
+        )
+    )
+    svc = make_service(document_indexer=doc_indexer)
+    job_id = svc.start(["documents"], building_id="bldg1")
+    for _ in range(5):
+        await asyncio.sleep(0)
+
+    status = svc.status(job_id)
+    assert status["status"] == "done", status
+    doc_indexer.index_building.assert_awaited_once_with("bldg1")
+    result = status["results"]["documents"]
+    assert result["status"] == "indexed"
+    assert result["chunks"] == 3
+    assert result["indexed_files"] == ["policy.pdf"]
+
+
+def test_document_indexer_has_no_ingest_all():
+    """The method the old target called does not exist; this pins why the fix was needed."""
+    from orchestrator.services.document_indexer import DocumentIndexer
+
+    assert not hasattr(DocumentIndexer, "ingest_all")
+    assert hasattr(DocumentIndexer, "index_building")
+
+
+@pytest.mark.asyncio
+async def test_floor_plans_target_runs_the_registry_merge(monkeypatch):
+    """The floor_plans target re-runs the registry merge instead of answering 'not implemented'."""
+    from orchestrator.services import floor_plan_registry
+
+    class _Manifest:
+        def __init__(self, floor):
+            self.floor = floor
+
+    class _FakeRegistry:
+        async def ingest_all(self):
+            return [_Manifest(2), _Manifest(1), _Manifest(2)]
+
+    monkeypatch.setattr(floor_plan_registry, "get_floor_plan_registry", lambda: _FakeRegistry())
+    svc = make_service()
+    job_id = svc.start(["floor_plans"], building_id="bldg1")
+    for _ in range(5):
+        await asyncio.sleep(0)
+
+    status = svc.status(job_id)
+    assert status["status"] == "done", status
+    assert status["results"]["floor_plans"] == {"ingested": 3, "floors": [1, 2]}

@@ -27,11 +27,17 @@ A point is *backed* when **both** halves exist:
    ```turtle
    bldg:RM101_temp a brick:Temperature_Sensor ;
        brick:isPointOf bldg:RM101 ;
-       ref:hasExternalReference [ ref:hasTimeseriesId "uuid-…" ;
-                                  ref:storedAt "temperature_data" ] .
+       ref:hasExternalReference [ a ref:TimeseriesReference ;
+                                  ref:hasTimeseriesId "uuid-…" ;
+                                  ref:storedAt bldg:database1 ] .
    ```
+   `ref:storedAt` is an **IRI** in the building namespace whose local name is a key
+   in `input/database_registry.yaml` (`bldg:database1` → `database1`). Brick 1.4
+   declares the property as a datatype property, so a string is valid Brick, but
+   OntoSage routes by the IRI and a string such as `"temperature_data"` routes
+   nowhere.
 2. **Rows in a registered database** — the `ref:storedAt` key must name a
-   source in `input/database_registry.yaml`, and that table must hold
+   source in `input/database_registry.yaml`, and that source's table must hold
    `(uuid, datetime, value)` rows.
 
 Miss either half and the point is invisible: the graph half without rows

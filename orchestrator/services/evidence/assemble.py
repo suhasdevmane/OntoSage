@@ -241,7 +241,7 @@ def _sources_from(results: Dict[str, Any]) -> List[EvidenceSource]:
                     EvidenceSource(
                         source_id=tag,
                         label=label_for_string_entry(tag),
-                        kind="sensor",
+                        kind=_kind_for_store_key(tag),
                         store=tag,
                     )
                 )
@@ -282,7 +282,42 @@ def _sources_from(results: Dict[str, Any]) -> List[EvidenceSource]:
             out.append(
                 EvidenceSource(source_id=uuid, label=readable_source_label(uuid), kind="sensor")
             )
+
+    # BUG-1693: a floor-plan or geometry answer recorded NO source, so its panel said only
+    # "observed -- read from an instrument" for a picture of a floor. The plan is the source.
+    if not out:
+        for _key in ("spatial_result", "floor_plan_result"):
+            _lane = results.get(_key)
+            # floor_plan_result is the rendered MARKDOWN (a string); spatial_result is a dict.
+            if (isinstance(_lane, dict) and _lane and not _lane.get("error")) or (
+                isinstance(_lane, str) and _lane.strip()
+            ):
+                out.append(
+                    EvidenceSource(source_id="floor_plan", label="Floor plan", kind="floor_plan")
+                )
+                break
     return out
+
+
+def _kind_for_store_key(key: str) -> str:
+    """What kind of source a STRING provenance key names (BUG-1693).
+
+    Every string key used to become kind "sensor", so the evidence panel listed "Building
+    model · sensor" and "Analytics Engine · sensor" under every answer, and a capability
+    answer read from the graph was said to be led by a measurement. The built-in system keys
+    say what they are; anything else is a time-series store (`store:<table>`, a database key),
+    which is what "sensor" was right about.
+    """
+    from orchestrator.services.provenance import _CAPABILITY_PROVENANCE_ALIASES
+
+    k = _CAPABILITY_PROVENANCE_ALIASES.get(key, key)
+    if k == "ontology":
+        return "building_model"
+    if k == "analytics":
+        return "computation"
+    if k in ("documents", "capability_kb"):
+        return "document"
+    return "sensor"
 
 
 def contributing_uuids(results: Dict[str, Any]) -> List[str]:

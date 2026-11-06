@@ -100,6 +100,10 @@ def test_every_removal_in_a_good_answer_is_a_named_kind_of_edit(changed):
         "fix_advice_direction",
         "fix_total_called_daily_average",
         "state_method_of_computed_total",
+        # BUG-1692 (2026-11-05). Hand-read over all 1,377 stored answers: it changes 5, each a
+        # closing sentence repeating the bold opening finding ("Floor 3 has the highest average
+        # CO2 at 724 ppm." twice), and every figure it removes is still in the opening.
+        "restated_headline",
     }
     for r in changed:
         for c in r["changes"]:

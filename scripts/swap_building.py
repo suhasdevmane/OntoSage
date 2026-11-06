@@ -10,9 +10,16 @@ Switching to a new building means:
   1. Stage the new building's files (TTLs, DWGs, PDFs, building.yaml,
      capability.yaml, intents.yaml, personas/) under `input/<new_building_id>/`.
   2. Run this script — it validates the staged files, archives the current
-     flat-layout building (if requested), copies the new files to `input/`,
-     and updates BUILDING_ID in `.env`.
-  3. Restart the orchestrator: `docker-compose restart orchestrator`.
+     building (if requested), updates BUILDING_ID in `.env` and flushes the
+     response cache. It does NOT copy anything into `input/`: the new building
+     is then served from the nested `input/<new_building_id>/` folder, which
+     every loader reads first (shared/building_paths.py).
+  3. Recreate the orchestrator so it re-reads `.env`:
+     `docker compose up -d orchestrator` (`restart` keeps the old environment).
+
+This repository's own buildings (bldg1/2/3) are swapped by RENAMING folders and
+files instead (`bldgN/` <-> `input/`, `.envN` <-> `.env`, compose file) — see
+"Run building N" in CLAUDE.md. Use this script for a building staged nested.
 
 Examples
 --------

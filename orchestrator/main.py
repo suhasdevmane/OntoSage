@@ -807,12 +807,20 @@ async def lifespan(app: FastAPI):
 
     asyncio.create_task(_legacy_index())
 
+    # CAVEAT-1697: a switch that does nothing must say so where an operator will look.
+    if settings.GOAL_PLANNER_ENABLED:
+        logger.warning(
+            "GOAL_PLANNER_ENABLED=true has no effect: services/goal_planner.py is not called by "
+            "any lane yet, so open-ended goals are answered as ordinary questions."
+        )
+
     # File watcher — auto-reingest when PDFs are dropped into /app/input/
     try:
         from orchestrator.services.floor_plan_watcher import watch_forever as _fp_watch
 
         asyncio.create_task(_fp_watch())
-        logger.info("Floor plan file watcher started")
+        if settings.FLOOR_PLAN_WATCHER:
+            logger.info("Floor plan file watcher started")
     except Exception as e:
         logger.warning(f"Floor plan file watcher failed to start (non-fatal): {e}")
 
@@ -5330,6 +5338,7 @@ async def upload_ontology_ttl(
         result["persisted"] = True
         if result.get("ok"):
             _enqueue_similarity_rebuild(result)  # new triples → refresh semantic RAG index
+            result["caches_cleared"] = await _after_graph_change(body.ttl)
         return APIResponse(
             success=bool(result.get("ok")),
             error=None if result.get("ok") else "graph sync failed",
@@ -5361,16 +5370,12 @@ async def upload_ontology_ttl(
     )
     if result.get("ok"):
         _enqueue_similarity_rebuild(result)  # new triples → refresh semantic RAG index
-        # V5-T39: uploaded TTL may carry AccessPolicy triples — refresh the PDP
-        if "AccessPolicy" in (body.ttl or ""):
-            try:
-                from orchestrator.services.privacy.enforcement import reload_policies
-
-                n_policies = await reload_policies()
-                result["policies_reloaded"] = n_policies
-                logger.info(f"[protect] policies reloaded after TTL upload: {n_policies}")
-            except Exception as _rp_err:
-                logger.warning(f"[protect] policy reload after upload failed: {_rp_err}")
+        # V5-T39: uploaded TTL may carry AccessPolicy triples — _after_graph_change refreshes
+        # the PDP then, along with every cache the new triples could leave stale.
+        cleared = await _after_graph_change(body.ttl)
+        result["caches_cleared"] = cleared
+        if "policies_reloaded" in cleared:
+            result["policies_reloaded"] = cleared["policies_reloaded"]
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
@@ -5388,6 +5393,8 @@ async def drop_ontology_graph(
     filename = filename_from_graph_uri(graph_id)
     if filename:
         result = await trash_ttl_file(filename)
+        if result.get("dropped"):
+            await _after_graph_change()
         return APIResponse(
             success=bool(result.get("dropped")),
             data={
@@ -5398,6 +5405,8 @@ async def drop_ontology_graph(
         )
 
     ok = await drop_named_graph(graph_id)
+    if ok:
+        await _after_graph_change()
     return APIResponse(success=ok, data={"graph": graph_id, "dropped": ok})
 
 
@@ -5471,7 +5480,7 @@ async def create_capability(
     fields = body.model_dump(exclude={"building_id"})
     result = await create_amenity(bid, fields)
     if result.get("ok"):
-        await _flush_datasource_cache()
+        await _after_graph_change()
     return APIResponse(
         success=bool(result.get("ok")),
         error=result.get("error"),
@@ -5496,7 +5505,7 @@ async def delete_capability(
     bid = building_id or settings.BUILDING_ID
     result = await delete_amenity(bid, local_name)
     if result.get("ok"):
-        await _flush_datasource_cache()
+        await _after_graph_change()
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
 
@@ -5780,12 +5789,27 @@ async def list_documents(
     from pathlib import Path
 
     docs_dir = Path(_INPUT_ROOT) / "documents"
+    # Whether each file has chunks in the document index: an uploaded file that is not
+    # indexed answers nothing, and the console used to show it exactly like one that does
+    # (BUG-1694). None = the index could not be read, reported as unknown.
+    indexed: Optional[set] = None
+    _di = getattr(app.state, "doc_indexer", None)
+    if _di is not None:
+        try:
+            indexed = await _di.indexed_filenames(settings.BUILDING_ID)
+        except Exception as e:  # never fail the listing on the index check
+            logger.warning(f"[documents] index state unavailable: {e}")
     items = []
     if docs_dir.is_dir():
         for p in sorted(docs_dir.iterdir()):
             if p.is_file() and p.suffix.lower() in _DOC_EXTS:
                 items.append(
-                    {"filename": p.name, "bytes": p.stat().st_size, "ext": p.suffix.lower()}
+                    {
+                        "filename": p.name,
+                        "bytes": p.stat().st_size,
+                        "ext": p.suffix.lower(),
+                        "indexed": None if indexed is None else p.name in indexed,
+                    }
                 )
     return APIResponse(
         success=True,
@@ -5938,7 +5962,7 @@ async def enable_datasource(
     if mgr is None:
         return APIResponse(success=False, error="datasource toggles disabled", data={})
     result = await mgr.enable(source_id)
-    await _flush_datasource_cache()
+    await _after_graph_change()
     return APIResponse(success=bool(result.get("ok")), data=result)
 
 
@@ -5952,7 +5976,7 @@ async def disable_datasource(
     if mgr is None:
         return APIResponse(success=False, error="datasource toggles disabled", data={})
     result = await mgr.disable(source_id)
-    await _flush_datasource_cache()
+    await _after_graph_change()
     return APIResponse(success=bool(result.get("ok")), data=result)
 
 
@@ -5996,6 +6020,55 @@ async def _flush_datasource_cache() -> None:
             await cache.invalidate(building_id=settings.BUILDING_ID, flush_all=True)
     except Exception as e:
         logger.debug(f"[datasources] cache flush skipped: {e}")
+
+
+# Redis families that hold a decision derived from the graph. A console edit to the graph
+# must retire them, or the edit is invisible: CLAUDE.md lists four of these as a manual
+# flush, and the HBCO concept map (24 h) was a fifth nobody listed (CAVEAT-1701).
+_GRAPH_DERIVED_CACHE_PATTERNS = ("cache:sparql*", "cache:intent:*", "cqir_compile:*")
+
+
+async def _after_graph_change(ttl_text: str = "") -> Dict[str, Any]:
+    """Retire every cache a graph edit can leave stale; return what was cleared.
+
+    Called after an admin upload, graph drop or capability edit. Each step is best-effort and
+    logged — a cache that could not be cleared must not fail the edit that already landed.
+    """
+    cleared: Dict[str, Any] = {}
+    await _flush_datasource_cache()
+    cleared["resp_cache"] = True
+    try:
+        from orchestrator.services.concept_resolver import concept_resolver
+
+        await concept_resolver.invalidate_cache()
+        cleared["concept_map"] = True
+    except Exception as e:
+        logger.warning(f"[graph-change] concept cache not cleared: {e}")
+    try:
+        from orchestrator.services.capability_admin import _reset_resolver_cache
+
+        _reset_resolver_cache()
+        cleared["capability_resolver"] = True
+    except Exception as e:
+        logger.warning(f"[graph-change] capability resolver cache not reset: {e}")
+    try:
+        n = 0
+        for pattern in _GRAPH_DERIVED_CACHE_PATTERNS:
+            async for key in redis_manager.client.scan_iter(match=pattern, count=500):
+                await redis_manager.client.delete(key)
+                n += 1
+        cleared["redis_keys"] = n
+    except Exception as e:
+        logger.warning(f"[graph-change] derived caches not cleared: {e}")
+    if "AccessPolicy" in (ttl_text or ""):
+        try:
+            from orchestrator.services.privacy.enforcement import reload_policies
+
+            cleared["policies_reloaded"] = await reload_policies()
+        except Exception as e:
+            logger.warning(f"[protect] policy reload after graph change failed: {e}")
+    logger.info(f"[graph-change] caches retired: {cleared}")
+    return cleared
 
 
 @app.post("/api/v1/datasources/reset-demo", response_model=APIResponse)
@@ -6142,7 +6215,13 @@ async def get_ai_config(user: UserContext = Depends(require_permission("system:a
             "openai_model_fast": settings.OPENAI_MODEL_FAST,
             "openai_api_key_set": bool(settings.OPENAI_API_KEY),
             "ollama_cloud_api_key_set": bool(settings.OLLAMA_CLOUD_API_KEY),
-            "providers": ["local", "cloud", "openai"],
+            # The hosted OpenAI-compatible gateway (BUG-1699): Settings accepts it and
+            # llm_manager serves it, but this list omitted it, so a building running on it
+            # showed no provider selected and the Overview called it "OpenAI".
+            "hosted_llm_base_url": settings.HOSTED_LLM_BASE_URL,
+            "hosted_llm_model": settings.HOSTED_LLM_MODEL,
+            "hosted_llm_api_key_set": bool(settings.HOSTED_LLM_API_KEY),
+            "providers": ["local", "hosted", "cloud", "openai"],
             "embedding_providers": ["local", "openai"],
             # Actual embedding model + dimension per provider, so the console shows the
             # live values (e.g. bge-large-en-v1.5 @ 1024-d) instead of hardcoded labels.
@@ -6186,6 +6265,25 @@ async def test_ai_config(
                     "ok": True,
                     "provider": provider,
                     "models": models,
+                    "latency_ms": round((time.time() - t0) * 1000, 1),
+                },
+            )
+        if provider == "hosted":
+            # OpenAI-compatible gateway: GET <base>/models lists what it serves.
+            base = (body.base_url or settings.HOSTED_LLM_BASE_URL).rstrip("/")
+            key = body.api_key or settings.HOSTED_LLM_API_KEY
+            headers = {"Authorization": f"Bearer {key}"} if key else {}
+            async with httpx.AsyncClient(timeout=8.0) as client:
+                r = await client.get(f"{base}/models", headers=headers)
+                r.raise_for_status()
+                payload = r.json() or {}
+            ids = sorted(m.get("id", "") for m in payload.get("data", []) if m.get("id"))
+            return APIResponse(
+                success=True,
+                data={
+                    "ok": True,
+                    "provider": "hosted",
+                    "models": ids,
                     "latency_ms": round((time.time() - t0) * 1000, 1),
                 },
             )
@@ -6586,7 +6684,7 @@ async def register_db_sensors(
 
     result = await db_ontology.register_points(db_key, body.points)
     if result.get("ok"):
-        await _flush_datasource_cache()
+        await _after_graph_change()
         _enqueue_similarity_rebuild(result)
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
@@ -6600,7 +6698,7 @@ async def register_db_sensors_ttl(
 
     result = await db_ontology.register_ttl(db_key, body.ttl)
     if result.get("ok"):
-        await _flush_datasource_cache()
+        await _after_graph_change()
         _enqueue_similarity_rebuild(result)
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 
@@ -6624,7 +6722,7 @@ async def register_db_sensors_csv(
     result = await db_ontology.register_points(db_key, points)
     result["parse_warnings"] = issues
     if result.get("ok"):
-        await _flush_datasource_cache()
+        await _after_graph_change()
         _enqueue_similarity_rebuild(result)
     return APIResponse(success=bool(result.get("ok")), error=result.get("error"), data=result)
 

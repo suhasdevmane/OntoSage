@@ -8,6 +8,14 @@
 #  2. Reference the recipe id you defined in recipes.yaml (hbco:requiresRecipe).
 #  3. Restart → concept resolver picks it up automatically.
 
+# REQUIRED before you restart: every building TTL in input/ must declare `@prefix bldg:`
+# EQUAL to `ontology_namespace` in input/building.yaml, or the boot-time validator stops
+# the orchestrator (ttl_validator.validate_building_ttls). Replace the IRI on the next
+# line with that value. Check offline first:
+#   python -c "from pathlib import Path; from orchestrator.services.ttl_validator import
+#   validate_building_ttls as v; r = v('<building_id>', '<namespace>', 'bldg', Path('input'));
+#   print([i.message for i in r.issues])"
+@prefix bldg: <http://example.org/your-building#> .
 @prefix hbco: <http://ontosage.org/hbco#> .
 @prefix brick: <https://brickschema.org/schema/Brick#> .
 @prefix skos: <http://www.w3.org/2004/02/skos/core#> .

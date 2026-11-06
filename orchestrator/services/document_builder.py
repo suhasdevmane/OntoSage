@@ -25,6 +25,8 @@ from __future__ import annotations
 import io
 import logging
 import os
+import re
+import secrets
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -154,7 +156,9 @@ class DocumentBuilder:
             html_content = template.render(**ctx)
 
             ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-            base_filename = f"report_{report_type}_{ts}"
+            # Random token: the saved file is served to whoever holds the URL (BUG-1700).
+            safe_type = re.sub(r"[^A-Za-z0-9_.-]+", "_", str(report_type or "report"))
+            base_filename = f"report_{safe_type}_{ts}_{secrets.token_hex(8)}"
 
             if output_format == "html":
                 return self._result(html_content, f"{base_filename}.html", "html")

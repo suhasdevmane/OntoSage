@@ -436,11 +436,12 @@
 
             <div class="guide-card">
               <h3>Switching the AI model</h3>
-              <p>On <b>AI &amp; Models</b>, pick a provider (OpenAI / local Ollama / Ollama Cloud) and a model.
-                For local Ollama, click <b>Fetch installed</b> to list models actually installed. Save writes
+              <p>On <b>AI &amp; Models</b>, pick a provider (local Ollama / a hosted OpenAI-compatible
+                gateway / Ollama Cloud / OpenAI) and a model. For local Ollama or the hosted gateway, click
+                <b>Fetch installed</b> / <b>Fetch served</b> to list the models it actually has. Save writes
                 <code>.env</code>; then <b>recreate</b> the orchestrator to apply it (clients are built at
-                boot). Switching the <b>embedding</b> provider changes vector dimensions (384 ↔ 1536) and
-                invalidates the existing Qdrant index — you must re-index.</p>
+                boot). Switching the <b>embedding</b> provider changes the vector dimension (shown beside
+                each option) and invalidates the existing Qdrant index — you must re-index.</p>
             </div>
 
             <div class="guide-card">

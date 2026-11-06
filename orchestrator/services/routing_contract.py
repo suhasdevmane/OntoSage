@@ -1222,11 +1222,27 @@ EXISTENTIAL_COMFORT_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: Superlatives that choose among places. A list, not an "-est" suffix: the suffix would
+#: catch "guest room" and "rest area", which name a room exactly as "prayer room" does.
+_PLACE_SUPERLATIVES = (
+    r"most|least|best|worst|nearest|closest|quietest|calmest|coolest|coldest|warmest|hottest|brightest|"
+    r"darkest|loudest|noisiest|busiest|emptiest|cleanest|nicest|safest|largest|biggest|"
+    r"smallest|freshest|driest|stuffiest"
+)
+
 DELIBERATE_RE = re.compile(
     r"(?:\bfind\s+(?:me\s+)?an?\s+[\w,\- ]{0,30}(?:room|space|spot|desk|place)\b"
     r"|\bwhere\s+(?:can|should|could)\s+i\s+(?:sit|work|study|go|be|stay)\b"
     # "where's a quiet place to sit" -- the same request without the pronoun.
-    r"|\bwhere(?:'s|\s+is)\s+(?:a|an|the)\s+(?:\w+\s+){0,2}(?:place|spot|room|space|desk|seat|area)\b"
+    r"|\bwhere(?:'s|\s+is)\s+(?:a|an)\s+(?:\w+\s+){0,2}(?:place|spot|room|space|desk|seat|area)\b"
+    # ...but with "the" only when a SUPERLATIVE picks the place ("where's the coolest place to
+    # work"). "Where is the prayer room?" names ONE room and asks where it is: it matched the
+    # old (a|an|the) branch, the superlative takeover sent it to deliberation, and every ask
+    # was declined "I couldn't map part of your request" (2026-11-05). Measured over the
+    # 4,060-question bank: all 3 "the" questions this branch alone matched are superlatives
+    # (coolest, warmest, nearest) and still match.
+    r"|\bwhere(?:'s|\s+is)\s+the\s+(?:\w+\s+)?(?:" + _PLACE_SUPERLATIVES + r")\s+(?:\w+\s+)?"
+    r"(?:place|spot|room|space|desk|seat|area)\b"
     r"|\b(?:quietest|noisiest|busiest|emptiest|calmest)\b"
     # Same intervening-adjective fix as WAYFIND_RE: "which STUDY spaces had the best air
     # quality" was measured landing in the document lane because "study" sat here.

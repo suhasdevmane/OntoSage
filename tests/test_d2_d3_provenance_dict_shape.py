@@ -69,7 +69,7 @@ class TestCapabilityProvenanceAliases:
         "value,expect_key",
         [
             ("building_profile", "ontology"),
-            ("live_metrics", "live_sensors"),
+            ("live_metrics", "ontology"),  # BUG-1693: counted from the model
             ("capability_graph", "ontology"),
             ("ontology_inventory", "ontology"),
             ("document_answered", "documents"),

@@ -182,6 +182,12 @@ class BuildingMetrics:
         """
         cached = self._cache.get(building_id)
         if cached and (time.monotonic() - cached.generated_at) < _CACHE_TTL_S:
+            if cached.reporting_sensors is None and self._reporting is _default_reporting_provider:
+                # The freshness scan outlived the answer that started it (BUG-1691) and has
+                # since finished in the background: take its figure, do not wait for one.
+                hit = _FRESH_CACHE.get(cached.reporting_window_h)
+                if hit and hit[1] is not None:
+                    cached.reporting_sensors = len(hit[1])
             # Recorded on the CACHED path too. A figure is evidence because a query produced
             # it, not because the query ran in this particular second -- and recording only
             # on a miss would have made the honesty check pass or fail depending on the cache
@@ -465,18 +471,22 @@ async def reporting_uuids_by_store(window_hours: int = 24) -> Optional[Dict[str,
     # which the callers must not render as zero: an unreachable datasource would otherwise be
     # indistinguishable from a building whose sensors have all gone quiet.
     by_store: Dict[str, set] = {}
-    for storage_key, uuids in declared.items():
+    # Created per call: a module-level semaphore binds to the first event loop that waits on it.
+    slots = asyncio.Semaphore(4)
+
+    async def _probe(storage_key: str, uuids: set) -> None:
         try:
             adapter = adapter_registry.get(storage_key)
             if adapter is None or not hasattr(adapter, "execute_query"):
-                continue
+                return
             table = getattr(adapter, "table", None)
             if table:  # narrow (uuid, datetime, value) table — direct DISTINCT
                 sql = (
                     f"SELECT DISTINCT `uuid` FROM `{table}` "
                     f"WHERE `datetime` >= NOW() - INTERVAL {int(window_hours)} HOUR"
                 )
-                res = await adapter.execute_query(sql)
+                async with slots:
+                    res = await adapter.execute_query(sql)
                 if res.success:
                     fresh = {str(r.get("uuid")) for r in res.data} & uuids
                     by_store.setdefault(storage_key, set()).update(fresh)
@@ -490,13 +500,14 @@ async def reporting_uuids_by_store(window_hours: int = 24) -> Optional[Dict[str,
                         f"[building_metrics] no wide table discovered for '{storage_key}'; "
                         "freshness for this store is UNKNOWN rather than zero"
                     )
-                    continue
+                    return
                 sql = (
                     f"SELECT * FROM `{wide}` "
                     f"WHERE `datetime` >= NOW() - INTERVAL {int(window_hours)} HOUR "
                     "ORDER BY `datetime` DESC LIMIT 25"
                 )
-                res = await adapter.execute_query(sql)
+                async with slots:
+                    res = await adapter.execute_query(sql)
                 if res.success:
                     seen: set = set()
                     for row in res.data:
@@ -504,6 +515,12 @@ async def reporting_uuids_by_store(window_hours: int = 24) -> Optional[Dict[str,
                     by_store.setdefault(storage_key, set()).update(seen & uuids)
         except Exception as e:
             logger.warning(f"[building_metrics] reporting check failed for '{storage_key}': {e}")
+
+    # CONCURRENTLY, a few at a time (BUG-1691). The stores were probed one after another:
+    # measured on bldg1 2026-11-05, 21 stores took 64.7 s cold (occupancy 22.5 s, noise 15.9 s,
+    # floors 0-4 11.8 s), and the inventory answer waited for all of it. Four at once keeps
+    # the total near the slowest store without opening twenty-one scans on the database.
+    await asyncio.gather(*(_probe(k, u) for k, u in declared.items()))
     return by_store
 
 
@@ -512,38 +529,71 @@ async def reporting_uuids_by_store(window_hours: int = 24) -> Optional[Dict[str,
 #: the coverage schema is rebuilt on every deliberate/diagnosis request.
 _FRESH_CACHE: Dict[int, Tuple[float, Optional[set]]] = {}
 _FRESH_TTL_S = 300.0
+#: One measurement in flight per window, shared by every caller. A caller that stops waiting
+#: does not cancel it: the scan finishes in the background and fills the cache, so the next
+#: question within the TTL gets the figure instead of starting another full scan.
+_FRESH_INFLIGHT: Dict[int, "asyncio.Future[Optional[set]]"] = {}
 
 
 async def fresh_uuids(window_hours: int = 24, timeout_s: float = 20.0) -> Optional[set]:
     """Every declared uuid with a reading inside the window, flattened and CACHED.
 
-    Returns ``None`` when the check cannot run (no sensor map, no adapters, timeout). Callers
-    must treat ``None`` as "no freshness information", NEVER as "nothing is fresh" -- reading
-    an unavailable measurement as an empty one would silently mark every sensor in the building
-    stale, which is the degrade-to-a-legal-value failure this codebase keeps paying for.
+    Returns ``None`` when the check cannot run (no sensor map, no adapters) or did not finish
+    within ``timeout_s``. Callers must treat ``None`` as "no freshness information", NEVER as
+    "nothing is fresh" -- reading an unavailable measurement as an empty one would silently mark
+    every sensor in the building stale, which is the degrade-to-a-legal-value failure this
+    codebase keeps paying for. A timed-out measurement keeps running and is cached when done.
     """
     import time
 
-    now = time.monotonic()
     hit = _FRESH_CACHE.get(window_hours)
-    if hit and (now - hit[0]) < _FRESH_TTL_S:
+    if hit and (time.monotonic() - hit[0]) < _FRESH_TTL_S:
         return hit[1]
+    task = _FRESH_INFLIGHT.get(window_hours)
+    if task is None or task.done():
+        task = asyncio.ensure_future(_measure_fresh(window_hours))
+        _FRESH_INFLIGHT[window_hours] = task
     try:
-        by_store = await asyncio.wait_for(reporting_uuids_by_store(window_hours), timeout_s)
+        return await asyncio.wait_for(asyncio.shield(task), timeout_s)
+    except asyncio.TimeoutError:
+        logger.info(
+            f"[building_metrics] freshness still measuring after {timeout_s:.0f}s — "
+            "answering without it; the result is cached when the scan completes"
+        )
+        return None
+    except Exception as exc:
+        logger.debug(f"[building_metrics] freshness unavailable: {exc}")
+        return None
+
+
+async def _measure_fresh(window_hours: int) -> Optional[set]:
+    """One full measurement, flattened and cached. None (unavailable) stays None, never empty."""
+    import time
+
+    try:
+        by_store = await reporting_uuids_by_store(window_hours)
     except Exception as exc:
         logger.debug(f"[building_metrics] freshness unavailable: {exc}")
         by_store = None
     flat = None if by_store is None else (set().union(*by_store.values()) if by_store else set())
-    _FRESH_CACHE[window_hours] = (now, flat)
+    _FRESH_CACHE[window_hours] = (time.monotonic(), flat)
     return flat
 
 
+#: How long an inventory answer waits for the freshness figure (BUG-1691).
+_REPORTING_WAIT_S = 15.0
+
+
 async def _default_reporting_provider(window_hours: int = 24) -> Optional[int]:
-    """Total DISTINCT declared sensors reporting inside the window (the snapshot's number)."""
-    by_store = await reporting_uuids_by_store(window_hours)
-    if by_store is None:
-        return None
-    return len(set().union(*by_store.values())) if by_store else 0
+    """Total DISTINCT declared sensors reporting inside the window (the snapshot's number).
+
+    Bounded and shared (BUG-1691): "How many floors does the building have?" waited 96 s
+    on a cold scan of every store before saying "8". The figure is a footnote to the
+    inventory, so the answer goes out without it when the scan is slow, and the scan's result
+    is cached for the next question.
+    """
+    flat = await fresh_uuids(window_hours, timeout_s=_REPORTING_WAIT_S)
+    return None if flat is None else len(flat)
 
 
 def _resolve_namespace(building_id: str) -> str:

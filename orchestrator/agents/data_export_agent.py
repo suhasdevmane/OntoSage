@@ -22,6 +22,8 @@ import html as html_lib
 import io
 import json
 import os
+import re
+import secrets
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -136,7 +138,11 @@ class DataExportAgent:
 
         ts = datetime.now(ZoneInfo(settings.BUILDING_TIMEZONE)).strftime("%Y%m%d_%H%M%S")
         ext = "md" if fmt == "markdown" else fmt
-        filename = f"{label}_{ts}.{ext}"
+        # The file is served by URL to whoever holds the link (BUG-1700): a name that is only
+        # a label and a timestamp can be enumerated one second at a time. The token makes the
+        # link the credential. The label is reduced to the characters the file server serves.
+        safe_label = re.sub(r"[^A-Za-z0-9_.-]+", "_", label or "export").strip("._") or "export"
+        filename = f"{safe_label}_{ts}_{secrets.token_hex(8)}.{ext}"
 
         try:
             # PDF/DOCX: delegate to DocumentBuilder

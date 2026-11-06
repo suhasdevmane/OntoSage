@@ -9,7 +9,10 @@ Guidance for Claude Code working in this repo. Keep it lean — deep detail live
 
 **Current branch:** `development`, promoted to `main` by fast-forward after each validated round
 (both fast-forwarded together on 2026-10-12; **QA testers pull `main`**). The v1 baseline is tag `v1.0-demo`
-(`8965cd1`). **`git log --oneline -3` settles it in one second, so read it rather than this
+(`e386b78`). **History was rewritten on 2026-10-29: every commit from 2026-04-17 (`2394db2`) on has a new hash**, so a
+hash quoted in this file or the tracker from that period is the old one (`ef7fbc3` is now `e2b73fb`, `8965cd1` is now
+`e386b78`); `.githooks/pre-push` refuses any push that carries the old history back. **`git log --oneline -3` settles
+it in one second, so read it rather than this
 sentence** — it went stale twice before. **Never commit or push without the user's explicit
 approval.**
 
@@ -26,7 +29,27 @@ approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **LATEST (2026-10-11) — stakeholder intent coverage, ~20 h autonomous. COMMITTED AND PUSHED
+- **LATEST (2026-11-05) — admin console end to end + BUG-1690..1702. NOTHING COMMITTED (push
+  approval owed). bldg1 PARKED: parked suite 15,789 pass / 0 fail / 186 skip / 5 xfail (exit 0;
+  reconciles with the active run, 15,980 tests both ways); CI file list 359 pass / 5 skip.** Every console tab walked live
+  (Playwright, 0 page/console/API errors); fixes VERIFIED LIVE: Add capability dialog draws the
+  schema's fields and saves (round trip answered by the pipeline); AI tab offers the hosted gateway;
+  **every console document upload had failed to index** (`reindex_service` called a nonexistent
+  `ingest_all`; its test mocked it — now `spec=`), PDFs indexed, per-file index state; **file server
+  listed all of `input/`** (autoindex) — locked down, export names tokenised; console graph edits clear
+  all FIVE caches (`main._after_graph_change`; the 5th is `cache:concept:hbco_all`); inventory answer
+  96 s → 29 s cold (freshness scan concurrent, bounded, shared); trend questions chart, repeated
+  headline dropped (`narration_validators._restated_headline`, 5 of 1,377 stored answers); evidence
+  panel source kinds (new tier `model`, NOT authoritative); report follow-up location attached;
+  **"Where is the prayer room?" was declined every ask** (DELIBERATE_RE `the` branch; 0 of 4,060 bank
+  moves); MCP server rewritten and verified with an MCP client (pin `mcp<2`); compose: fuzzy cache
+  off (it served "unoccupied" the "occupied" answer), `SECRET_KEY` from `.env`, bge-large default;
+  schema declarations (BUG-1698). Open: CAVEAT-1705..1708. **GATE alone 49/51 recorded, 51/51 in
+  substance** (#37, #70 the known misreads); memory ~3.4 GiB flat. **`docker compose up --build <svc>`
+  rebuilds its depends_on images too** — rag-service and code-executor now run on images rebuilt
+  2026-11-05. **SUITE (active, measured LAST) 15,864 pass / 1 fail / 30 error / 79 skip / 6 xfail** —
+  all 31 the state-dependent set (tests that read parked paths: `docker-compose.bldg1.yml`, `bldg1/`).
+- **(2026-10-11) — stakeholder intent coverage, ~20 h autonomous. COMMITTED AND PUSHED
   2026-10-12 with the 10 Oct rounds, all buildings PARKED: parked suite 15,738 pass / 0 fail /
   186 skip / 5 xfail (exit 0; reconciles with the active run, 15,929 tests both ways), CI file
   list 359 pass / 5 skip.** READ [`docs/phase0/qa_probe_rounds_2026-10-11.md`](./docs/phase0/qa_probe_rounds_2026-10-11.md)
@@ -1463,7 +1486,8 @@ python scripts/ontosage_qa_suite.py --ids RI05,VZ01 --convos CONV5   # targeted 
 
 ### Onboard / swap a building
 ```bash
-python scripts/onboard_building.py --building-id bldg2 --non-interactive   # generate config
+python scripts/onboard_building.py --non-interactive --id bldg2 --name "<name>" --namespace "<ns#>"   # generate config
+python scripts/onboard_building.py --scaffold --building-id bldg2   # copy input/_templates/ to input/bldg2/
 # Swap the ACTIVE building (v1 serves one at a time):
 python scripts/swap_building.py --to bldg2 --dry-run    # validate (TTL @prefix bldg: ↔ ontology_namespace)
 python scripts/swap_building.py --to bldg2 --archive    # apply: update .env, archive old, flush resp_cache
@@ -1799,7 +1823,7 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
 - **SPARQL empty** → test GraphDB directly (`.claude/rules/sparql-patterns.md`); empty = ontology not loaded; results-but-empty = `sparql_agent._retrieve_context`.
 - **Floor plan empty / `area_m2=null`** → DWG pipeline off (`dwg2dxf`/libredwg missing → PDF-only); manifest `schema_version` should be "2.0"; reingest `POST /api/v1/floor-plans/reingest`.
 - **Capability not answering** → capabilities are triples now. SPARQL GraphDB: `SELECT ?a ?lay WHERE { { ?a a ontosage:Amenity } UNION { ?a a ontosage:KnowledgeTopic } ; ontosage:layTerms ?lay }` — empty = `<id>_capabilities.ttl` not loaded (check `ttl_uploader`). Match miss = the query's lay-term isn't in any `ontosage:layTerms`; add it via the admin Capabilities GUI. Prose manual not surfacing = document score below the 0.50 (local) honesty floor in `capability_agent._search_documents`.
-- **Stale answers after a code fix** → flush ALL FOUR caches in Redis before re-testing: `resp_cache:*` (answers), `cache:sparql*` (rows), `cache:intent:*` (the ROUTING DECISION — it replays a stored classification and skips the parse-stage contract, CAVEAT-1413), and `cqir_compile:*` (the v2 deliberation lane's COMPILED PLAN, 24h TTL, found 2026-10-08 — BUG-1476: this line said THREE for weeks after a fourth cache was added and nobody added it here. A stale compile replays even across a restart, because its key depends on the question text + modality set + provider/model + prompt-template hash + facet-catalogue fingerprint, none of which a restart necessarily changes — unlike `cache:intent:*`, a restart does NOT retire it by itself): `for p in "resp_cache:*" "cache:sparql*" "cache:intent:*" "cqir_compile:*"; do redis-cli --scan --pattern "$p" | xargs -r redis-cli DEL; done`. Real container name: `redis-memory-store` (not `ontosage-redis`). A restart retires the intent cache by itself since the key now carries the contract's source hash; a change made without a restart does not, and the compile cache is never retired by a restart at all.
+- **Stale answers after a code fix** → flush ALL FOUR caches in Redis before re-testing: `resp_cache:*` (answers), `cache:sparql*` (rows), `cache:intent:*` (the ROUTING DECISION — it replays a stored classification and skips the parse-stage contract, CAVEAT-1413), and `cqir_compile:*` (the v2 deliberation lane's COMPILED PLAN, 24h TTL, found 2026-10-08 — BUG-1476: this line said THREE for weeks after a fourth cache was added and nobody added it here. A stale compile replays even across a restart, because its key depends on the question text + modality set + provider/model + prompt-template hash + facet-catalogue fingerprint, none of which a restart necessarily changes — unlike `cache:intent:*`, a restart does NOT retire it by itself): `for p in "resp_cache:*" "cache:sparql*" "cache:intent:*" "cqir_compile:*"; do redis-cli --scan --pattern "$p" | xargs -r redis-cli DEL; done`. A FIFTH, `cache:concept:hbco_all` (the HBCO lay-term map, 24 h), holds a lay-term edit back for up to a day; console uploads, drops and capability edits now clear all five themselves (`main._after_graph_change`, CAVEAT-1701), but a hand edit to a TTL followed by a restart relies on `ttl_uploader` clearing it. Real container name: `redis-memory-store` (not `ontosage-redis`). A restart retires the intent cache by itself since the key now carries the contract's source hash; a change made without a restart does not, and the compile cache is never retired by a restart at all.
 - **Feed not updating** → check `docker logs … | grep FeedRegistry` for `loaded=N`; missing feed = feeds.yaml absent or disabled flag.
 - **ECA rule not firing** → check Redis keys `rules:breach_start:*` and `rules:fired:*`; verify `sensor_uuid` matches a UUID in MySQL `sensor_data`.
 - **Concept not resolving** → SPARQL `SELECT ?c WHERE { ?c a hbco:Concept; hbco:layTerm "stuffy" }` against GraphDB; empty = hbco_mappings.ttl not uploaded.
@@ -1809,7 +1833,7 @@ This principle is grounded in the pre-design survey corpus (6,117 questions, 96 
 - **Admin portal upload TTL returns 500** → `services/ontology_manager.py` makes HTTP calls to GraphDB (port 7200). Verify GraphDB is healthy: `curl http://localhost:7200/rest/repositories`. Check `docker-compose logs --tail=30 orchestrator | grep ontology_manager`.
 - **Reindex job stuck in `pending`** → `_reindex_service_instance` singleton in `main.py` must be initialized. Check `docker logs … | grep ReindexService` for `started`. If `None`, the lifespan didn't call `reindex_service.start()`.
 - **Narrow table returns empty** → two-step check: (1) verify the sensor UUID exists in the TTL via SPARQL: `SELECT ?uuid WHERE { bldg:MySensor ref:hasTimeseriesId ?uuid }` — if empty, TTL not loaded; (2) verify rows exist in MySQL: `SELECT COUNT(*) FROM energy_data WHERE uuid='<uuid>'` in `sensordb`. If both exist but still empty, check `ref:storedAt` key in TTL matches the key in `database_registry.yaml`.
-- **TTL auto-upload not loading a new TTL** → `ttl_uploader.py` discovers files matching `bldg1_*.ttl` in `input/`. File must be named `bldg1_<anything>.ttl`. Check `docker logs … | grep ttl_uploader` for `Uploading` or `Already up to date (SHA match)`. If the SHA matches, delete the named graph via Admin portal first then restart.
+- **TTL auto-upload not loading a new TTL** → `ttl_uploader.discover_ttls` loads EVERY top-level `input/*.ttl` that is not a shared schema (names containing brick/rec/s223/schema), whatever its name, plus every `input/<id>/*.ttl`; subfolders are never loaded. (This line said files must be named `bldg1_*.ttl` until 2026-11-05, CAVEAT-1702.) Check `docker logs … | grep ttl_uploader` for `Uploading` or `Already up to date (SHA match)`. If the SHA matches, delete the named graph via Admin portal first then restart.
 - **STRICT_SECRETS startup failure** → orchestrator refuses to boot if any password equals its default. Set real passwords in `.env`: `POSTGRES_USER_PASSWORD`, `MYSQL_PASSWORD`, `SECRET_KEY`, `GRAPHDB_PASSWORD`. Or set `STRICT_SECRETS=false` for local dev.
 
 ---

@@ -189,12 +189,33 @@ class ReindexService:
         if target == "documents":
             if self._document_indexer is None:
                 return {"skipped": "indexer not available"}
-            result = await self._document_indexer.ingest_all()
-            n = result if isinstance(result, int) else (len(result) if result else 0)
-            return {"ingested": n}
+            # DocumentIndexer has index_building / index_all_buildings and NO ingest_all.
+            # This called ingest_all until 2026-11-05, so every job started by a console
+            # upload or delete failed with AttributeError and a new document stayed
+            # unanswerable until the next restart re-indexed it at boot (BUG-1694).
+            result = await self._document_indexer.index_building(building_id)
+            return {
+                "status": result.status,
+                "documents": result.documents,
+                "chunks": result.chunks,
+                "indexed_files": list(result.indexed_files),
+                "skipped_files": list(result.skipped_files),
+                "pruned_files": list(result.pruned_files),
+                "reason": result.reason,
+            }
 
         if target == "floor_plans":
-            return {"skipped": "not implemented"}
+            # The same merge the boot sequence runs (PDF + DWG pipelines via the registry).
+            # It answered "not implemented" until 2026-11-05 (CAVEAT-1697).
+            from orchestrator.services.floor_plan_registry import get_floor_plan_registry
+
+            manifests = await get_floor_plan_registry().ingest_all()
+            return {
+                "ingested": len(manifests or []),
+                "floors": sorted(
+                    {m.floor for m in (manifests or []) if getattr(m, "floor", None) is not None}
+                ),
+            }
 
         if target == "ontology_similarity":
             # Route through the debounced similarity gateway (the one similarity-rebuild path) so a

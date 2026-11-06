@@ -226,11 +226,17 @@ services:
       # 7.2 Redis Response Cache
       - RESPONSE_CACHE_ENABLED=true
       - RESPONSE_CACHE_TTL=3600
-      - RESPONSE_CACHE_FUZZY=true
+      # BUG-1699: was hard-coded true. Measured 2026-11-05: trigram 0.85 serves 'which
+      # rooms ... are UNoccupied' the 'occupied' answer (0.897), 'offline' the 'online'
+      # one (0.918), 'lowest' the 'highest' (0.853). Off unless .env asks for it.
+      - RESPONSE_CACHE_FUZZY=${RESPONSE_CACHE_FUZZY:-false}
       - RESPONSE_CACHE_MIN_SIMILARITY=0.85
       # 7.3 Password Security
       - ONTOSAGE_SECRET_KEY=${ONTOSAGE_SECRET_KEY:-change_me_in_production_use_32char}
-      - SECRET_KEY=${ONTOSAGE_SECRET_KEY:-change_me_in_production_use_32char}
+      # BUG-1699: this read ONTOSAGE_SECRET_KEY only, so a SECRET_KEY line in .env was
+      # overridden by a built-in default that STRICT_SECRETS did not recognise. Now .env's
+      # SECRET_KEY is honoured, and the fallback IS the default the strict check refuses.
+      - SECRET_KEY=${ONTOSAGE_SECRET_KEY:-${SECRET_KEY:-change-me-in-production-use-32-random-bytes}}
       # 7.4 Agent Memory (Qdrant)
       - AGENT_MEMORY_ENABLED=true
       - CROSS_SESSION_MEMORY_ENABLED=true
@@ -252,7 +258,9 @@ services:
       # NOTE: changing provider triggers automatic Qdrant collection rebuild on next boot.
       - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-openai}
       - EMBEDDING_MODEL_OPENAI=${EMBEDDING_MODEL_OPENAI:-text-embedding-3-small}
-      - EMBEDDING_MODEL_LOCAL=${EMBEDDING_MODEL_LOCAL:-sentence-transformers/all-MiniLM-L6-v2}
+      # BUG-1699: the default named MiniLM, which the image does NOT contain — it bakes
+      # bge-large-en-v1.5 and runs with HF_HUB_OFFLINE=1, so the old default could not load.
+      - EMBEDDING_MODEL_LOCAL=${EMBEDDING_MODEL_LOCAL:-BAAI/bge-large-en-v1.5}
       - EMBEDDING_CACHE_TTL_SECONDS=${EMBEDDING_CACHE_TTL_SECONDS:-86400}
       # Analytics & RBAC
       - RBAC_ENABLED=${RBAC_ENABLED:-true}
@@ -1102,7 +1110,16 @@ services:
       - "127.0.0.1:8003:8003" # localhost-only; MCP server
     environment:
       - ORCHESTRATOR_URL=http://orchestrator:8000
-      - MCP_AUTH_TOKEN=${MCP_AUTH_TOKEN:-}
+      # BUG-1695: the port was published while the transport stayed stdio, so nothing
+      # listened on it. Streamable HTTP at http://127.0.0.1:8003/mcp.
+      - MCP_TRANSPORT=${MCP_TRANSPORT:-streamable-http}
+      - MCP_HOST=0.0.0.0
+      - MCP_PORT=8003
+      # Orchestrator sign-in: an OntoSage account (use a non-admin role) ...
+      - MCP_USERNAME=${MCP_USERNAME:-}
+      - MCP_PASSWORD=${MCP_PASSWORD:-}
+      # ... or the pipeline key (/v1/chat/completions). MCP_AUTH_TOKEN is its old name.
+      - MCP_PIPELINE_KEY=${MCP_PIPELINE_KEY:-${MCP_AUTH_TOKEN:-}}
       - MCP_DEFAULT_PERSONA=${MCP_DEFAULT_PERSONA:-general}
     depends_on:
       orchestrator:

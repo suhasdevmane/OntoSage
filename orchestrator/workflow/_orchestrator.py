@@ -588,6 +588,9 @@ _PER_TURN_LANE_KEYS = (
     # exist" must not answer this turn's question about a room that does.
     "referent_refusal_result",
     "report_intake_result",
+    # BUG-1696: set by the dialogue node, consumed by the intake node. A stale one would
+    # route the NEXT question to the intake node to re-attach a place.
+    "report_add_location",
     "control_result",
     "visualization_path",
     # Read by the V12-03 publication gate, which withholds an export whose figures did
@@ -2346,6 +2349,22 @@ class WorkflowOrchestrator(WorkflowGraphMixin, WorkflowRoutingMixin):
                 logger.debug(f"Clarification answer extraction skipped: {_ctx_err}")
             # Clear the pending type regardless — don't keep re-asking
             state.intermediate_results.pop("pending_clarification_type", None)
+
+        # ── The place a filed report asked for (BUG-1696) ─────────────────────
+        # Session state, not query shape: "room 2.01" alone is a place, and only the previous
+        # reply makes it the answer to "which room is affected?". Decided before
+        # classification, which would otherwise read it as a new question about the room.
+        _loc_reply = self._pending_location_reply(state)
+        if _loc_reply:
+            _rid, _place = _loc_reply
+            logger.info(f"[report_intake] reply adds a location to {_rid}: {_place!r}")
+            state.current_intent = "maintenance"
+            state.intermediate_results["intent"] = "maintenance"
+            state.intermediate_results["report_add_location"] = {
+                "report_id": _rid,
+                "location": _place,
+            }
+            return state
 
         # ── Typography is not meaning (BUG-587) ───────────────────────────────
         # "CO₂" (subscript two) and "room 2.01" (narrow no-break space) are how a
@@ -5287,6 +5306,7 @@ Instructions:
             )
             result = await self._render_forecast_chart(state, _forecast_result)
             state.intermediate_results["viz_result"] = result
+            self._publish_chart_path(state, result)
             return state
 
         # ── Normal visualization path ─────────────────────────────────────────
@@ -5316,6 +5336,7 @@ Instructions:
             _bar = await self._render_aggregate_bar_chart(state, latest_message)
             if _bar is not None:
                 state.intermediate_results["viz_result"] = _bar
+                self._publish_chart_path(state, _bar)
                 return state
         if not _has_series(data):
             # Nothing to chart is a finding, not a chart. Handing the agent no data made it
@@ -5364,7 +5385,34 @@ Instructions:
 
         result = await self.viz_agent.create_visualization(state, latest_message, data)
         state.intermediate_results["viz_result"] = result
+        self._publish_chart_path(state, result)
         return state
+
+    @staticmethod
+    def _publish_chart_path(state: ConversationState, result: Optional[dict]) -> None:
+        """Put the drawn chart's location on the bus under `visualization_path`.
+
+        Three readers key on that name -- the plan trace's stage markers, the V12-03
+        publication gate (`has_chart`) and the disclosure gate -- and until 2026-11-05 the
+        node wrote only `viz_result`, so its sole writer was the gate CLEARING it. The trace
+        could never record a visualization stage, and a chart of figures whose text the gate
+        had just withheld for failing verification was still sent (CAVEAT-1702). A result
+        with no image publishes nothing, so a skipped chart is not counted as drawn.
+        """
+        if not isinstance(result, dict) or not result.get("success"):
+            return
+        path = result.get("image_url") or result.get("plot_path") or result.get("path")
+        media = result.get("media")
+        if not path and isinstance(media, dict) and (media.get("url") or media.get("data")):
+            # An inline (base64) chart whose PNG could not be saved still IS a chart.
+            path = media.get("url") or "inline:" + str(media.get("format") or "png")
+        if not path and isinstance(media, list):
+            for item in media:
+                if isinstance(item, dict) and item.get("url"):
+                    path = item["url"]
+                    break
+        if path:
+            state.intermediate_results["visualization_path"] = path
 
     async def _answer_without_a_chart(self, state: ConversationState) -> ConversationState:
         """Hand a turn that asked for no picture to the lane that owns its subject (2D-16 wave 2).
@@ -8609,6 +8657,16 @@ SELECT ?l WHERE {
             }
             return "response"
 
+        # ── The place a filed report asked for owns this turn (BUG-1696) ─────────
+        if state.intermediate_results.get("report_add_location"):
+            state.intermediate_results["route_decision"] = {
+                "intent_from_dialogue": state.current_intent,
+                "final_node": "maintenance",
+                "decision_source": "override",
+                "overrides_applied": ["report_location_reply"],
+            }
+            return "maintenance"
+
         # ── V4 deliberation resume: a parked clarify question owns the next turn.
         # Session state (not query shape), so it lives here rather than in the
         # routing contract; the deliberate node binds the reply and resumes.
@@ -8935,6 +8993,11 @@ SELECT ?l WHERE {
     #   1. If ANY negation phrase appears → False (no chart), full stop.
     #   2. If ANY positive keyword appears (and no negation) → True.
     #   3. Otherwise → False.
+
+    #: A request verb ahead of "trend" within one clause: "show me the temperature trend".
+    _SHOW_TREND_RE = re.compile(
+        r"\b(?:show|display|see|view|plot|draw)\b[^?.]{0,40}\btrends?\b", re.IGNORECASE
+    )
 
     _VIZ_KEYWORDS = frozenset(
         [
@@ -9283,6 +9346,19 @@ SELECT ?l WHERE {
         for neg in cls._VIZ_NEGATIONS:
             if neg in msg:
                 return False
+        # "SHOW ME THE <quantity> TREND" (BUG-1692). The keyword list holds "show the trend" as a
+        # literal phrase, so "Show me the temperature trend in room 2.01" matched nothing and was
+        # answered in prose with no chart, while "Plot the CO2 level…" drew one. A request verb
+        # before "trend", with a measured quantity named, is a request for the picture. Measured
+        # over the 4,060-question bank before landing: 0 questions newly charted, 15 unchanged.
+        if cls._SHOW_TREND_RE.search(msg):
+            try:
+                from orchestrator.services.chart_policy import asks_for_chart
+
+                if asks_for_chart(message):
+                    return True
+            except Exception:  # pragma: no cover - fall through to the keyword list
+                pass
         # WHOLE WORDS. `kw in msg` matched inside words, so "mapped opening" asked for a map,
         # "drawing more power" for a drawing, "reconfigure" for a figure and "solar panels"
         # for a panel: 70 of the 4,060 stakeholder questions were sent to a chart nobody
@@ -11171,6 +11247,52 @@ SELECT ?l WHERE {
             return None
         return None
 
+    #: The id the intake service mints, as `routing_contract._REPORT_ID_RE` spells it.
+    _REPORT_ID_IN_TEXT_RE = re.compile(r"\bREP[-_ ]?[0-9A-F]{6}\b", re.IGNORECASE)
+    #: A reply that opens like a NEW question is not an answer to "which room?", even when it
+    #: names a place: "what is the CO2 in room 2.01?" must still be answered as a question.
+    _NEW_QUESTION_OPENER_RE = re.compile(
+        r"^\s*(?:what|which|how|when|why|who|is|are|was|were|can|could|would|will|do|does|"
+        r"did|show|list|tell|give|plot|compare|find)\b",
+        re.IGNORECASE,
+    )
+
+    @classmethod
+    def _pending_location_reply(cls, state: ConversationState) -> Optional[Tuple[str, str]]:
+        """(report id, place) when this turn answers the "which room?" a filed report asked.
+
+        BUG-1696: the intake node files a placeless fault, then asks for the place and promises
+        to add it. Nothing kept the promise. Only a SHORT, non-question reply that names a place
+        counts, and only straight after that prompt, so an ordinary question is never captured.
+        """
+        msgs = list(getattr(state, "messages", []) or [])
+        if len(msgs) < 2:
+            return None
+        latest = (getattr(msgs[-1], "content", "") or "").strip()
+        prev_reply = next(
+            (m for m in reversed(msgs[:-1]) if getattr(m, "role", "") == "assistant"), None
+        )
+        prev_text = getattr(prev_reply, "content", "") or "" if prev_reply else ""
+        # Either prompt promises to attach the place: this node's, or the intake service's own
+        # "📍 I couldn't tell **where** this is … I'll attach it" (shown when this node did not
+        # ask, e.g. for a complaint already asked once). Both promises are kept.
+        if (
+            cls._WHERE_PROMPT_TEXT not in prev_text
+            and "I couldn't tell **where** this is" not in prev_text
+        ):
+            return None
+        rid = cls._REPORT_ID_IN_TEXT_RE.search(prev_text)
+        if not rid or not latest or "?" in latest or len(latest.split()) > 12:
+            return None
+        if cls._NEW_QUESTION_OPENER_RE.match(latest):
+            return None
+        place = cls._stated_place(latest)
+        if not place and cls._message_names_a_place(latest):
+            place = latest.rstrip(".! ")
+        if not place:
+            return None
+        return rid.group(0), place
+
     @staticmethod
     def _already_asked_where(state: ConversationState) -> bool:
         """True when the previous assistant turn was this same clarification.
@@ -11203,6 +11325,29 @@ SELECT ?l WHERE {
             from orchestrator.services.report_intake_service import get_report_intake_service
 
             service = get_report_intake_service(self.postgres_manager)
+
+            # BUG-1696: this turn answers the "which room?" the previous reply asked for a
+            # report it filed. Attach the place to that report; file nothing new.
+            _add = state.intermediate_results.pop("report_add_location", None)
+            if _add:
+                _reporter = (
+                    getattr(state, "user_id", None)
+                    or state.intermediate_results.get("user_id")
+                    or "anonymous"
+                )
+                _added = await service.add_location(
+                    _add["report_id"], _add["location"], reporter_id=_reporter
+                )
+                state.intermediate_results["report_intake_result"] = {
+                    "category": service.category_for_intent(intent),
+                    "action": "add_location",
+                    "report_id": _added.get("report_id") or _add["report_id"],
+                    "location": _added.get("location") or "",
+                    "device": "",
+                }
+                state.intermediate_results["dialogue_response"] = _added.get("message", "")
+                return state
+
             category = service.category_for_intent(intent)
             action = service.classify_action(user_message or "")
 
@@ -11344,6 +11489,11 @@ SELECT ?l WHERE {
                 )
                 msg = res.get("message", "Your report has been received.")
                 if _needs_where:
+                    # The service's acknowledgment already carries a "📍 I couldn't tell where
+                    # this is" paragraph making the same promise; asking twice in one reply
+                    # read as a form letter (2026-11-05). This prompt is the one kept: its text
+                    # is what `_pending_location_reply` recognises on the next turn.
+                    msg = re.sub(r"\n*📍 I couldn't tell \*\*where\*\* this is\.[^\n]*", "", msg)
                     # KNOWN-008 — file FIRST, then ask. An earlier version withheld
                     # the report until the user said where, and the follow-up
                     # ("in RM101") routed elsewhere, so the fault was lost

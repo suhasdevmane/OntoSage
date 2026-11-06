@@ -145,7 +145,9 @@ def _tag_from_database_key(key: str) -> Optional[ProvenanceTag]:
 #: should ever speak for it.
 _CAPABILITY_PROVENANCE_ALIASES = {
     "building_profile": "ontology",
-    "live_metrics": "live_sensors",
+    # The inventory block ("6 storeys, 234 rooms, 3,248 sensors") is counted from the
+    # building model, and says so; its chip read "Live Sensor Data" (BUG-1693).
+    "live_metrics": "ontology",
     "capability_graph": "ontology",
     "ontology_inventory": "ontology",
     "document_answered": "documents",
@@ -160,6 +162,10 @@ def readable_source_label(source_id: str) -> str:
     local = source_id.rsplit("#", 1)[-1].rsplit(":", 1)[-1].rsplit("/", 1)[-1]
     if re.fullmatch(r"[0-9a-fA-F-]{32,36}", local):
         return "Sensor reading"
+    # A record id such as a report number ("REP-701F38") is already readable; splitting it
+    # at capitals printed "R E P-701 F38" in the evidence panel (2026-11-05).
+    if re.fullmatch(r"[A-Z]{2,6}-[0-9A-Z]{3,12}", local):
+        return f"Report {local}" if local.startswith("REP-") else local
     spaced = re.sub(r"(?<!^)(?=[A-Z])", " ", local).replace("_", " ").strip()
     return spaced.title() if spaced else "Building record"
 

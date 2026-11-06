@@ -122,10 +122,16 @@ def test_the_count_wrapper_still_returns_distinct_sensors():
 
     old = bm.reporting_uuids_by_store
     bm.reporting_uuids_by_store = _fake
+    # The count goes through the shared, cached measurement since BUG-1691 (2026-11-05). A
+    # figure cached by an earlier test in the same process must not answer for this fake.
+    bm._FRESH_CACHE.clear()
+    bm._FRESH_INFLIGHT.clear()
     try:
         n = asyncio.run(bm._default_reporting_provider(24))
     finally:
         bm.reporting_uuids_by_store = old
+        bm._FRESH_CACHE.clear()
+        bm._FRESH_INFLIGHT.clear()
     assert n == 2
 
 

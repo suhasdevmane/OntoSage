@@ -282,7 +282,7 @@ bldg:HVAC_Meter_F0
     rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
     rdfs:label "HVAC Electrical Sub-Meter - Floor 0" ;
     brick:isPartOf bldg:Floor0 ;
-    brick:measures bldg:AHU_F0 ;
+    brick:meters bldg:AHU_F0 ;
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000001" ;
@@ -293,7 +293,7 @@ bldg:HVAC_Meter_F1
     rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
     rdfs:label "HVAC Electrical Sub-Meter - Floor 1" ;
     brick:isPartOf bldg:Floor1 ;
-    brick:measures bldg:AHU_F1 ;
+    brick:meters bldg:AHU_F1 ;
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000002" ;
@@ -304,7 +304,7 @@ bldg:HVAC_Meter_F2
     rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
     rdfs:label "HVAC Electrical Sub-Meter - Floor 2" ;
     brick:isPartOf bldg:Floor2 ;
-    brick:measures bldg:AHU_F2 ;
+    brick:meters bldg:AHU_F2 ;
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000003" ;
@@ -315,7 +315,7 @@ bldg:HVAC_Meter_F3
     rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
     rdfs:label "HVAC Electrical Sub-Meter - Floor 3" ;
     brick:isPartOf bldg:Floor3 ;
-    brick:measures bldg:AHU_F3 ;
+    brick:meters bldg:AHU_F3 ;
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000004" ;
@@ -326,7 +326,7 @@ bldg:HVAC_Meter_F4
     rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
     rdfs:label "HVAC Electrical Sub-Meter - Floor 4" ;
     brick:isPartOf bldg:Floor4 ;
-    brick:measures bldg:AHU_F4 ;
+    brick:meters bldg:AHU_F4 ;
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000005" ;
@@ -337,7 +337,7 @@ bldg:HVAC_Meter_F5
     rdf:type owl:NamedIndividual , brick:Electrical_Meter ;
     rdfs:label "HVAC Electrical Sub-Meter - Floor 5" ;
     brick:isPartOf bldg:Floor5 ;
-    brick:measures bldg:AHU_F5 ;
+    brick:meters bldg:AHU_F5 ;
     ashrae:hasExternalReference [
         rdf:type ref:TimeseriesReference ;
         ref:hasTimeseriesId "00000000-em01-0000-0000-000000000006" ;

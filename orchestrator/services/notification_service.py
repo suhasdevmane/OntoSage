@@ -7,7 +7,7 @@ The default 'log' channel is always present and cannot be removed.
 Supported channel types:
   log      — writes to the application logger (always enabled)
   webhook  — HTTP POST JSON payload to a URL (env-var auth header optional)
-  smtp     — email via SMTP (credentials via env vars; NOT yet implemented — placeholder)
+  smtp     — email via SMTP (standard library; credentials via env-var NAMES)
 
 STRICT_SECRETS compliance:
   - auth_header_env names an env var; never a literal token in YAML.
@@ -21,11 +21,14 @@ Channel YAML schema:
       # webhook:
       url: "https://..."
       auth_header_env: "MY_WEBHOOK_TOKEN"   # optional: env var name for Authorization header
-      # smtp (future):
-      smtp_host: ...
-      smtp_port: 587
-      from_addr_env: "SMTP_FROM"
-      to_addr: "recipient@example.com"
+      # smtp:
+      smtp_host: smtp.example.org
+      smtp_port: 587                 # 465 implies security: ssl
+      security: starttls             # starttls | ssl | none
+      from_addr_env: "SMTP_FROM"     # env var holding the sender address
+      username_env: "SMTP_USER"      # optional
+      password_env: "SMTP_PASSWORD"  # optional
+      to_addr: "recipient@example.com"   # or a list / comma-separated
 
 Usage:
   from orchestrator.services.notification_service import get_notification_service
@@ -208,14 +211,77 @@ class NotificationService:
             return False
 
     async def _send_smtp(self, channel: Dict[str, Any], payload: Dict[str, Any]) -> bool:
-        # SMTP dispatch is a placeholder — requires aiosmtplib or smtplib executor.
-        # Configured now so building operators can pre-configure smtp channels;
-        # actual sending is a Phase H extension.
-        logger.info(
-            f"[notifications] smtp channel {channel.get('id')}: "
-            f"SMTP dispatch not yet implemented — would send to {channel.get('to_addr')}"
+        """Send the notification as an e-mail through the channel's SMTP server.
+
+        Until 2026-11-05 this logged "SMTP dispatch not yet implemented" and returned False, so
+        an operator who configured an smtp channel got no mail and no error (CAVEAT-1697).
+        Uses the standard library in a worker thread, so no new dependency. Secrets follow
+        STRICT_SECRETS: the YAML names ENV VARS (``from_addr_env``, ``username_env``,
+        ``password_env``), never the values. ``security`` is ``starttls`` (default),
+        ``ssl`` (default on port 465) or ``none``.
+        """
+        cid = channel.get("id", "?")
+        host = channel.get("smtp_host")
+        to_raw = channel.get("to_addr")
+        from_env = channel.get("from_addr_env")
+        from_addr = (os.environ.get(from_env, "") if from_env else "") or channel.get("from_addr")
+        if not host or not to_raw or not from_addr:
+            logger.warning(
+                f"[notifications] smtp channel {cid}: needs smtp_host, to_addr and a sender "
+                f"(from_addr_env naming an env var, or from_addr) — not sent"
+            )
+            return False
+        recipients = (
+            to_raw if isinstance(to_raw, list) else [a.strip() for a in str(to_raw).split(",")]
         )
-        return False
+        recipients = [a for a in recipients if a]
+        port = int(channel.get("smtp_port") or 587)
+        security = str(channel.get("security") or ("ssl" if port == 465 else "starttls")).lower()
+        user_env = channel.get("username_env")
+        pass_env = channel.get("password_env")
+        user = os.environ.get(user_env, "") if user_env else ""
+        password = os.environ.get(pass_env, "") if pass_env else ""
+
+        from email.message import EmailMessage
+
+        msg = EmailMessage()
+        msg["Subject"] = (
+            f"[{str(payload.get('severity', 'info')).upper()}] {payload.get('title', '')}"
+        )
+        msg["From"] = from_addr
+        msg["To"] = ", ".join(recipients)
+        msg.set_content(
+            f"{payload.get('message', '')}\n\n"
+            f"Building: {payload.get('building_id', '')}\nSource: {payload.get('source', '')}\n"
+        )
+
+        def _deliver() -> None:
+            import smtplib
+            import ssl
+
+            ctx = ssl.create_default_context()
+            if security == "ssl":
+                with smtplib.SMTP_SSL(host, port, timeout=15, context=ctx) as s:
+                    if user:
+                        s.login(user, password)
+                    s.send_message(msg)
+                return
+            with smtplib.SMTP(host, port, timeout=15) as s:
+                if security == "starttls":
+                    s.starttls(context=ctx)
+                if user:
+                    s.login(user, password)
+                s.send_message(msg)
+
+        try:
+            import asyncio
+
+            await asyncio.get_running_loop().run_in_executor(None, _deliver)
+            logger.info(f"[notifications] smtp {cid} -> sent to {len(recipients)} recipient(s)")
+            return True
+        except Exception as e:
+            logger.warning(f"[notifications] smtp {cid} failed: {type(e).__name__}: {e}")
+            return False
 
     # ── Helpers ───────────────────────────────────────────────────────────────
 

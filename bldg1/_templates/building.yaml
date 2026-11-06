@@ -34,17 +34,10 @@ storage:
   databases:
     - database1
 
-# ── Capability semantic routing ──────────────────────────────────────────────
-# Thresholds are EMBEDDING-PROVIDER-SPECIFIC (see the re-calibration contract
-# in input/bldg1/building.yaml). These defaults were calibrated for the local
-# MiniLM model; re-tune after switching EMBEDDING_PROVIDER.
-capability_routing:
-  enabled: true
-  embedding_model: auto
-  threshold: 0.56
-  override_min: 0.60
-  top_k: 5
-  fallback_on_qdrant_failure: skip
+# (A `capability_routing:` block used to sit here. It configured the capability-KB
+#  semantic router, which was removed with capability.yaml; capabilities are now
+#  ontosage:Amenity / KnowledgeTopic triples. The orchestrator reports the key as
+#  having no effect if a building.yaml still carries it.)
 
 # ── Actuation gateway ────────────────────────────────────────────────────────
 # driver: none — control questions get an honest decline (safe default).

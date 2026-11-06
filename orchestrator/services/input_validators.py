@@ -234,9 +234,48 @@ def validate_benchmarks_csv(path: Path) -> Tuple[bool, List[str]]:
         missing = _BENCHMARKS_REQUIRED_COLS - cols
         if missing:
             return False, [f"benchmarks.csv: missing required columns: {sorted(missing)}"]
-        return True, []
+        # CAVEAT-1697: valid, and read by nothing -- the deliberation scorer skips benchmark
+        # criteria until a reader exists. Said at boot so an operator does not tune it in vain.
+        note = (
+            "benchmarks.csv is valid but has no effect yet: no answer reads it "
+            "(deliberation/scorer.py skips benchmark criteria)"
+        )
+        logger.info(f"[input_validator] {note}")
+        return True, [note]
     except Exception as exc:
         return False, [f"benchmarks.csv: read error — {exc}"]
+
+
+#: building.yaml keys that are parsed by nothing (CAVEAT-1697). `capability_routing` drove the
+#: capability-KB semantic router removed with capability.yaml (TODO-012); storage `routes`,
+#: `primary` and `fallback` were never read -- routing is by each sensor's ref:storedAt.
+_INERT_BUILDING_KEYS = ("capability_routing",)
+_INERT_STORAGE_KEYS = ("routes", "primary", "fallback")
+
+
+def validate_inert_building_keys(path: Path) -> Tuple[bool, List[str]]:
+    """Name building.yaml keys that do nothing, so an operator does not edit them in vain."""
+    if not path.exists():
+        return True, []
+    try:
+        doc = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    except Exception:
+        return True, []  # building.yaml's own validity is checked elsewhere
+    notes: List[str] = []
+    for key in _INERT_BUILDING_KEYS:
+        if key in doc:
+            notes.append(f"building.yaml: '{key}' has no effect (nothing reads it)")
+    storage = doc.get("storage") or {}
+    if isinstance(storage, dict):
+        for key in _INERT_STORAGE_KEYS:
+            if key in storage:
+                notes.append(
+                    f"building.yaml: 'storage.{key}' has no effect — a sensor's store is chosen "
+                    "by its ref:storedAt"
+                )
+    for n in notes:
+        logger.info(f"[input_validator] {n}")
+    return True, notes
 
 
 def validate_concepts_ttl(path: Path) -> Tuple[bool, List[str]]:
@@ -1030,6 +1069,7 @@ def validate_building_input(building_id: str, input_root: Path) -> Tuple[bool, D
         ("rules.yaml", bldg_dir / "rules.yaml", validate_rules_yaml),
         ("channels.yaml", bldg_dir / "channels.yaml", validate_channels_yaml),
         ("benchmarks.csv", bldg_dir / "benchmarks.csv", validate_benchmarks_csv),
+        ("building.yaml (inert keys)", bldg_dir / "building.yaml", validate_inert_building_keys),
         ("concepts.ttl", bldg_dir / "concepts.ttl", validate_concepts_ttl),
         ("documents/", bldg_dir / "documents", validate_documents_dir),
         (

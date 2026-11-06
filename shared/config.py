@@ -463,6 +463,14 @@ class Settings(BaseSettings):
         description="Base URL (including protocol) for serving static artifacts such as plots",
     )
 
+    # Floor-plan file watcher: re-ingests a PDF/DWG dropped into input/ while running.
+    # floor_plan_watcher read this with getattr() and Settings never declared it, so the
+    # documented opt-out FLOOR_PLAN_WATCHER=false was silently ignored (CAVEAT-1697).
+    FLOOR_PLAN_WATCHER: bool = Field(
+        default=True,
+        description="Watch input/ for new floor-plan PDF/DWG files and re-ingest them (false = off)",
+    )
+
     # ==================== Building Configuration ====================
     BUILDING_CONFIG_FILE: str = Field(
         default="config/building_config.yaml",
@@ -533,7 +541,11 @@ class Settings(BaseSettings):
     # ==================== Security & Limits ====================
     SECRET_KEY: str = Field(
         default="change-me-in-production-use-32-random-bytes",
-        description="JWT signing secret for RBAC tokens. Override via SECRET_KEY env var.",
+        description=(
+            "Signing secret, checked by STRICT_SECRETS. Nothing signs with it today: sessions "
+            "are random server-side tokens in Redis (the JWT stack it was for was removed). "
+            "Compose passes .env's SECRET_KEY unless ONTOSAGE_SECRET_KEY is set."
+        ),
         repr=False,
     )
     RBAC_ENABLED: bool = Field(
@@ -551,7 +563,7 @@ class Settings(BaseSettings):
     )
     ADMIN_PASSWORD: str = Field(
         default="",
-        description="Bootstrap admin password (>=6 chars). See ADMIN_USERNAME.",
+        description="Bootstrap admin password (>=12 chars, as every account). See ADMIN_USERNAME.",
         repr=False,
     )
     OPENWEBUI_URL: str = Field(
@@ -692,10 +704,9 @@ class Settings(BaseSettings):
     GOAL_PLANNER_ENABLED: bool = Field(
         default=False,
         description=(
-            "T26 — Enable goal-mandate decomposition: open-ended goals "
-            "('make the building eco-friendly') are decomposed into measurable "
-            "KPI sub-queries routed through existing pipeline nodes. "
-            "Requires MULTI_INTENT_ENABLED=true."
+            "T26 — goal-mandate decomposition ('make the building eco-friendly' -> KPI "
+            "sub-queries). NOT WIRED: no lane calls services/goal_planner.py, so this switch has "
+            "no effect; the orchestrator logs a warning at boot when it is set (CAVEAT-1697)."
         ),
     )
     DATASOURCE_TOGGLES_ENABLED: bool = Field(

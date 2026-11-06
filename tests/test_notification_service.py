@@ -182,7 +182,8 @@ async def test_unknown_channel_type_skipped_gracefully():
 
 @pytest.mark.unit
 @pytest.mark.asyncio
-async def test_smtp_placeholder_returns_false():
+async def test_smtp_without_host_or_sender_is_not_sent():
+    """An smtp channel missing its server or sender reports not-sent instead of pretending."""
     svc = _svc(
         [
             {
@@ -194,7 +195,98 @@ async def test_smtp_placeholder_returns_false():
         ]
     )
     ok = await svc.dispatch(title="T", message="M")
-    assert ok == 0  # smtp dispatch is a no-op placeholder
+    assert ok == 0
+
+
+class _FakeSMTP:
+    """Records what an smtplib.SMTP session was asked to do."""
+
+    sessions: list = []
+
+    def __init__(self, host, port, timeout=None, context=None):
+        self.calls = [("connect", host, port)]
+        _FakeSMTP.sessions.append(self)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def starttls(self, context=None):
+        self.calls.append(("starttls",))
+
+    def login(self, user, password):
+        self.calls.append(("login", user, bool(password)))
+
+    def send_message(self, msg):
+        self.calls.append(("send", msg["From"], msg["To"], msg["Subject"]))
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_smtp_channel_sends_with_starttls_and_env_credentials(monkeypatch):
+    """CAVEAT-1697: an smtp channel now sends; secrets come from the env vars it names."""
+    import smtplib
+
+    _FakeSMTP.sessions = []
+    monkeypatch.setattr(smtplib, "SMTP", _FakeSMTP)
+    monkeypatch.setenv("TEST_SMTP_FROM", "ontosage@example.org")
+    monkeypatch.setenv("TEST_SMTP_USER", "mailer")
+    monkeypatch.setenv("TEST_SMTP_PASSWORD", "not-a-real-password")
+    svc = _svc(
+        [
+            {
+                "id": "email1",
+                "type": "smtp",
+                "enabled": True,
+                "smtp_host": "smtp.example.org",
+                "smtp_port": 587,
+                "from_addr_env": "TEST_SMTP_FROM",
+                "username_env": "TEST_SMTP_USER",
+                "password_env": "TEST_SMTP_PASSWORD",
+                "to_addr": "fm@example.org, ops@example.org",
+            }
+        ]
+    )
+    ok = await svc.dispatch(
+        title="CO2 high", message="Room 2.01 above 1000 ppm", severity="warning"
+    )
+    assert ok == 1  # _channels_override holds only the smtp channel
+    (session,) = _FakeSMTP.sessions
+    assert session.calls[0] == ("connect", "smtp.example.org", 587)
+    assert ("starttls",) in session.calls
+    assert ("login", "mailer", True) in session.calls
+    send = [c for c in session.calls if c[0] == "send"][0]
+    assert send[1] == "ontosage@example.org"
+    assert send[2] == "fm@example.org, ops@example.org"
+    assert send[3] == "[WARNING] CO2 high"
+
+
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_smtp_failure_is_reported_not_raised(monkeypatch):
+    """A server that refuses the connection makes the dispatch count drop, never raise."""
+    import smtplib
+
+    def _refuse(*a, **k):
+        raise ConnectionRefusedError("no server")
+
+    monkeypatch.setattr(smtplib, "SMTP", _refuse)
+    svc = _svc(
+        [
+            {
+                "id": "email1",
+                "type": "smtp",
+                "enabled": True,
+                "smtp_host": "smtp.example.org",
+                "from_addr": "ontosage@example.org",
+                "to_addr": "fm@example.org",
+            }
+        ]
+    )
+    ok = await svc.dispatch(title="T", message="M")
+    assert ok == 0  # the only channel failed, and nothing raised
 
 
 @pytest.mark.unit

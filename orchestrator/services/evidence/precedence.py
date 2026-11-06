@@ -55,6 +55,12 @@ RANK: Dict[str, int] = {
     "authoritative": 30,
     "document_derived": 25,
     "measurement": 20,
+    # The building's own model (BUG-1693): what the building IS -- its rooms, floors and which
+    # sensor sits where. Below measurement, because locating a sensor in the graph is not the
+    # evidence for its reading; and deliberately NOT "authoritative", because the permission
+    # guard treats an authoritative source as settling "am I allowed / is it booked", which
+    # the graph does not record.
+    "model": 15,
     "inference": 10,
     "unknown": 0,
 }
@@ -77,6 +83,9 @@ _DEFAULT_KIND_TIER: Dict[str, str] = {
     # have moved on since.
     "document_derived": "document_derived",
     "human_report": "inference",  # a person's account is evidence, not a measurement
+    "building_model": "model",
+    "floor_plan": "model",
+    "computation": "inference",  # the analytics engine computes; its inputs are the evidence
 }
 
 

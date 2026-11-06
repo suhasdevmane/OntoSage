@@ -10,7 +10,10 @@ Behaviour mirrors capability_indexer:
   - Degraded status → orchestrator startup not blocked
   - Respects EMBEDDING_PROVIDER (dimension auto-detected from embedder)
 
-Supported formats: .md / .txt (plain text).  PDF support is planned via pdfminer.
+Supported formats: .md / .txt (plain text) and .pdf (text layer extracted with pdfplumber,
+PyMuPDF as a fallback). A scanned PDF with no text layer yields nothing and is reported, not
+indexed — there is no OCR. Until 2026-11-05 PDFs were accepted by the upload endpoint and then
+never indexed (BUG-1694).
 Point payload: {text, doc_name, chunk_idx, file_sha, building_id, source_path}
 
 Usage (FastAPI lifespan):
@@ -35,7 +38,7 @@ logger = get_logger(__name__)
 
 _CHUNK_WORDS = 400
 _COLLECTION_PREFIX = "documents_"
-_SUPPORTED_EXTENSIONS = {".md", ".txt"}
+_SUPPORTED_EXTENSIONS = {".md", ".txt", ".pdf"}
 _DOC_NAMESPACE = uuid.UUID("3a7c2e1b-4f5d-6e8a-9b0c-1d2e3f4a5b6c")
 
 
@@ -87,6 +90,11 @@ def _index_revision_sha(path: Path, file_sha: str) -> str:
     that now loses its front matter or authoring sections gets a tagged SHA once, which makes the
     boot-time SHA check see it as changed and re-embed it.
     """
+    if path.suffix.lower() == ".pdf":
+        # A PDF carries no front matter or authoring sections, so its indexed text never
+        # differs from the file in the way this tag tracks — and extracting it on every boot
+        # just to learn that would cost a full parse per file.
+        return file_sha
     text = _read_document(path)
     if text is None:
         return file_sha
@@ -108,6 +116,8 @@ def _read_document(path: Path) -> Optional[str]:
     the replacement pass is last-resort so a stray byte costs one character, not the
     entire file.
     """
+    if path.suffix.lower() == ".pdf":
+        return _read_pdf(path)
     # utf-8-sig first: plain utf-8 does NOT fail on a byte-order mark, it decodes it
     # into a leading ﻿ that then rides along into the first chunk. utf-8-sig
     # reads BOM and non-BOM files alike, so trying it first costs nothing.
@@ -128,6 +138,42 @@ def _read_document(path: Path) -> Optional[str]:
     except Exception as e:
         logger.warning(f"[document_indexer] could not read {path.name}: {e}")
         return None
+
+
+def _read_pdf(path: Path) -> Optional[str]:
+    """Extract a PDF's text layer, page by page; None when there is none to extract.
+
+    pdfplumber first (a declared dependency), PyMuPDF second. A scanned PDF has no text
+    layer and returns None with a warning naming the file, so the admin learns why the
+    document answers nothing instead of the upload looking successful.
+    """
+    pages: List[str] = []
+    try:
+        import pdfplumber
+
+        with pdfplumber.open(str(path)) as pdf:
+            for page in pdf.pages:
+                pages.append(page.extract_text() or "")
+    except Exception as e:  # missing library or a damaged file — try the other reader
+        logger.info(f"[document_indexer] {path.name}: pdfplumber could not read it ({e})")
+        pages = []
+        try:
+            import fitz  # PyMuPDF
+
+            with fitz.open(str(path)) as doc:
+                for page in doc:
+                    pages.append(page.get_text() or "")
+        except Exception as e2:
+            logger.warning(f"[document_indexer] could not read PDF {path.name}: {e2}")
+            return None
+    text = "\n\n".join(p.strip() for p in pages if p and p.strip())
+    if not text:
+        logger.warning(
+            f"[document_indexer] {path.name}: no text layer (scanned PDF?) — not indexed; "
+            "OntoSage does not run OCR"
+        )
+        return None
+    return text
 
 
 class DocumentIndexer:
@@ -215,6 +261,10 @@ class DocumentIndexer:
             )
         except ImportError as exc:  # pragma: no cover - import guard
             logger.debug(f"[document_indexer] record lifting unavailable: {exc}")
+            return 0, []
+
+        if doc_path.suffix.lower() == ".pdf":
+            # A record document declares its type in Markdown front matter; a PDF cannot.
             return 0, []
 
         namespace = active_namespace()
@@ -393,7 +443,7 @@ class DocumentIndexer:
             return DocIndexResult(
                 building_id=building_id,
                 status="no_documents",
-                reason="documents/ dir exists but contains no .md/.txt files",
+                reason="documents/ dir exists but contains no .md/.txt/.pdf files",
                 duration_ms=(time.monotonic() - t0) * 1000,
             )
 
@@ -566,6 +616,21 @@ class DocumentIndexer:
         )
 
     # ── internal helpers ─────────────────────────────────────────────────────
+
+    async def indexed_filenames(self, building_id: str) -> Optional[set]:
+        """Filenames that have at least one chunk in the building's collection.
+
+        None when the index could not be read, so a caller can say "unknown" rather than
+        reporting every document as missing from the index.
+        """
+        collection_name = f"{self._collection_prefix}{building_id}"
+        try:
+            if collection_name not in await self._list_collection_names():
+                return set()
+        except Exception as e:
+            logger.warning(f"[document_indexer] could not list collections: {e}")
+            return None
+        return set((await self._load_existing_shas(collection_name)).keys())
 
     async def _load_existing_shas(self, collection_name: str) -> Dict[str, str]:
         """Return {doc_filename: file_sha} for points already in the collection."""

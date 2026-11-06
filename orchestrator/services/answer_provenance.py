@@ -154,8 +154,29 @@ def render(
         # lookup describes the wrong kind of evidence entirely. The catalogues separate a
         # lookup from an observation for exactly this reason: both are OBSERVED, and only
         # one of them read a sensor.
+        _src_kinds = {str(s.get("kind") or "") for s in (record.get("sources") or [])}
+        _gates = list(record.get("gates_applied") or [])
         if status == "observed" and operation == "authoritative_lookup":
             kind = "read from a system of record, not from an instrument"
+        # BUG-1693: "Show me floor 2" was glossed "read from an instrument". An observation
+        # with no instrument among its sources was read from the building's surveyed plan or
+        # model, and the gloss must not claim a sensor the record does not hold.
+        elif (
+            status == "observed"
+            and operation == "observation"
+            and _src_kinds
+            and "sensor" not in _src_kinds
+        ):
+            kind = "read from the building's floor plan or model, not from an instrument"
+        # BUG-1693: a sensor reading downgraded by a check was glossed "reasoned from
+        # observations, not itself measured" -- false about a value an instrument did measure.
+        # Say what happened: a check below would not let the reading stand as observed.
+        # A filed report is INFERRED because a person's account is not a measurement, not
+        # because anything was reasoned out; "reasoned from observations" misdescribed it.
+        elif status == "inferred" and _src_kinds == {"human_report"}:
+            kind = "a person's account, recorded as given; the building did not measure it"
+        elif status in ("inferred", "not_assessable") and operation == "observation" and _gates:
+            kind = "a reading the checks listed below would not let stand as observed"
         # A comparison reports how things differ. Saying only "read from an instrument" or
         # "arithmetic over observations" describes the ingredients and hides the act, which
         # is the whole reason COMPARISON became an operation (CAVEAT-365).
@@ -170,7 +191,12 @@ def render(
         # thing answered you" (W4-02) -- now set on every turn with at least one source,
         # not only when two tiers disagreed.
         if record.get("source_tier"):
-            lines.append(f"- **Kind of source that led:** {record['source_tier']}")
+            _tier = str(record["source_tier"])
+            _tier = {
+                "model": "the building model",
+                "document_derived": "a transcribed document",
+            }.get(_tier, _tier.replace("_", " "))
+            lines.append(f"- **Kind of source that led:** {_tier}")
 
     sources = record.get("sources") or []
     if sources:

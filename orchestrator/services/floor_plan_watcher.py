@@ -39,7 +39,12 @@ async def watch_forever(
     """
     from shared.config import settings
 
-    if getattr(settings, "FLOOR_PLAN_WATCHER", "true").lower() == "false":
+    if str(getattr(settings, "FLOOR_PLAN_WATCHER", True)).strip().lower() in (
+        "false",
+        "0",
+        "no",
+        "off",
+    ):
         logger.info("[watcher] Floor plan file watcher disabled (FLOOR_PLAN_WATCHER=false)")
         return
 
@@ -73,9 +78,7 @@ async def watch_forever(
 
             # Imports available to both PDF and DWG branches
             from orchestrator.services.dwg_pipeline import get_dwg_pipeline
-            from orchestrator.services.floor_plan_pipeline import (
-                get_floor_plan_pipeline,
-            )
+            from orchestrator.services.floor_plan_pipeline import get_floor_plan_pipeline
 
             if suffix == ".pdf":
                 # Re-run PDF pipeline for this file only

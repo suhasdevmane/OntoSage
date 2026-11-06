@@ -1128,6 +1128,67 @@ def _direction(text: str) -> NarrationResult:
 # ── the pipeline ─────────────────────────────────────────────────────────────
 
 
+# ── (g) the headline said again as the closing line (BUG-1692) ─────────────────
+
+_FIGURE_RE = re.compile(r"\d+(?:\.\d+)?")
+
+
+def _content_words(s: str) -> set:
+    return {w for w in re.findall(r"[a-z]+", s.lower()) if len(w) > 3}
+
+
+def _restated_headline(text: str) -> NarrationResult:
+    """Drop a closing sentence that only repeats the opening finding.
+
+    Live 2026-11-05: a trend answer opened with "**The temperature increased by 0.264 C (+1.2 %)
+    over the last 24 hours.**" and closed with the same sentence; on re-ask it opened with the
+    day's maximum and closed "The highest temperature recorded was 23.7 C." The model is told to
+    open with the key finding and restates it as a conclusion. Only the LAST sentence of the
+    narrative may go, only when the answer has at least three sentences, only when every figure
+    in it is already in the opening sentence and most of its words are too -- so a closing
+    sentence that adds a figure or a different point is kept.
+    """
+    lines = _classify(text)
+    narrative: List[_Line] = []
+    for ln in lines:
+        if ln.kind in ("rule", "protected", "details", "table", "code"):
+            break
+        if ln.dropped or ln.kind == "blank":
+            continue
+        if ln.kind == "prose" and not ln.lead.strip():
+            narrative.append(ln)
+        elif ln.kind == "heading" and _is_a_headline(ln.raw):
+            narrative.append(ln)
+        elif ln.kind == "prose":  # a bullet list: the closing line is not a restatement shape
+            narrative = []
+            break
+    sentences = []
+    for ln in narrative:
+        body = ln.body if ln.kind == "prose" else _strip_marks(ln.raw).rstrip()
+        sentences.extend((ln, s) for s, _ws in _split_sentences(body) if s.strip())
+    if len(sentences) < 3:
+        return NarrationResult(text)
+    first = sentences[0][1]
+    last_ln, last = sentences[-1]
+    if last_ln.kind != "prose" or last_ln is sentences[0][0]:
+        return NarrationResult(text)
+    figs_last = set(_FIGURE_RE.findall(last))
+    if not figs_last or not figs_last <= set(_FIGURE_RE.findall(first)):
+        return NarrationResult(text)
+    words_last = _content_words(last)
+    if not words_last or len(words_last & _content_words(first)) / len(words_last) < 0.6:
+        return NarrationResult(text)
+    changes = [Change("restated_headline", "drop_sentence", last.strip())]
+    parts = _split_sentences(last_ln.body)
+    kept = [s + ws for s, ws in parts if s.strip() != last.strip()]
+    rebuilt = "".join(kept).rstrip()
+    if _alnum(rebuilt):
+        last_ln.override = last_ln.lead + _balance_emphasis(rebuilt) + _trailing_ws(last_ln.raw)
+    else:
+        last_ln.dropped = True
+    return _result(text, lines, changes)
+
+
 def validate_narration(
     question: Optional[str],
     text: str,
@@ -1150,6 +1211,7 @@ def validate_narration(
         _direction,
         lambda t: _advice(question, t, intent),
         lambda t: _norms(question, t, intent, evidence),
+        _restated_headline,
     )
     for _ in range(3):  # a cached answer is polished again, so one pass must be a fixed point
         before = current

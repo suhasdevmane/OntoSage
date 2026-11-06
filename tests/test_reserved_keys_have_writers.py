@@ -69,6 +69,15 @@ def _keys_written() -> Dict[str, Set[str]]:
             continue
         found: Set[str] = set()
         for node in ast.walk(tree):
+            # `x["k"] = None` CLEARS a key; it does not publish one. Counting it as a writer
+            # let `visualization_path` pass for months while its only writer was the
+            # publication gate wiping it -- the visualization node wrote `viz_result`.
+            if (
+                isinstance(node, ast.Assign)
+                and isinstance(node.value, ast.Constant)
+                and node.value.value is None
+            ):
+                continue
             if isinstance(node, ast.Assign):
                 for target in node.targets:
                     if (

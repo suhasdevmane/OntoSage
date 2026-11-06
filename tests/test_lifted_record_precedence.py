@@ -11,11 +11,7 @@ from __future__ import annotations
 
 import pytest
 
-from orchestrator.services.evidence.precedence import (
-    _DEFAULT_KIND_TIER,
-    RANK,
-    SourceClaim,
-)
+from orchestrator.services.evidence.precedence import _DEFAULT_KIND_TIER, RANK, SourceClaim
 
 pytestmark = pytest.mark.unit
 
@@ -31,7 +27,16 @@ def test_a_lifted_record_still_beats_a_sensor_reading():
 
 def test_the_tier_ordering_is_total_and_unknown_is_lowest():
     ordered = sorted(RANK, key=lambda t: RANK[t])
-    assert ordered == ["unknown", "inference", "measurement", "document_derived", "authoritative"]
+    # "model" (BUG-1693, 2026-11-05): the building model sits below measurement -- it locates
+    # a sensor, it does not vouch for the reading -- and is deliberately not authoritative.
+    assert ordered == [
+        "unknown",
+        "inference",
+        "model",
+        "measurement",
+        "document_derived",
+        "authoritative",
+    ]
 
 
 def test_the_kind_maps_to_its_own_tier():

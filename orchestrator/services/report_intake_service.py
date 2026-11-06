@@ -315,6 +315,62 @@ class ReportIntakeService:
             logger.error(f"[report_intake] admin list failed: {e}", exc_info=True)
             return []
 
+    async def add_location(
+        self, report_id: str, location: str, *, reporter_id: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Attach the place a reporter gave AFTER filing, to their own placeless report.
+
+        The intake node files a placeless fault first and then asks "Which room, floor or piece
+        of equipment is affected? Reply ... and I'll add it to this report". Until 2026-11-05
+        nothing added it: the node set `report_missing_location` and no code read that key, so
+        the reply was routed as a new question and the report stayed placeless (BUG-1696).
+
+        Scoped to the asker's report and to a row that still has no location, so a reply can
+        neither edit someone else's report nor overwrite a place already recorded.
+        """
+        if not self.postgres or getattr(self.postgres, "pool", None) is None:
+            return {"success": False, "message": "The reporting service is unavailable just now."}
+        rid = self._normalise_id(report_id)
+        from orchestrator.services.pii_redaction import redact_pii
+
+        location, _ = redact_pii((location or "").strip())
+        location = location[:256]  # user_reports.location is VARCHAR(256)
+        if not location:
+            return {"success": False, "message": "I couldn't tell which place you meant."}
+        space_iri = await self._resolve_space(location)
+        params: List[Any] = [location, space_iri, rid]
+        sql = (
+            "UPDATE user_reports SET location = $1, space_iri = COALESCE($2, space_iri), "
+            "updated_at = NOW() WHERE id = $3 AND (location IS NULL OR location = '')"
+        )
+        if reporter_id:
+            params.append(reporter_id)
+            sql += f" AND reporter_id = ${len(params)}"
+        try:
+            async with self.postgres.pool.acquire() as conn:
+                result = await conn.execute(sql, *params)
+        except Exception as e:
+            logger.error(f"[report_intake] add_location failed: {e}", exc_info=True)
+            return {"success": False, "message": "I couldn't update the report just now."}
+        if not str(result).endswith(" 1"):
+            return {
+                "success": False,
+                "report_id": rid,
+                "message": (
+                    f"I couldn't add that to **{rid}**: it already has a location, or it is "
+                    "not one of your reports."
+                ),
+            }
+        logger.info(f"[report_intake] {rid} location added space={space_iri or '(unbound)'}")
+        where = f"**{location}**" + (" (matched in the building model)" if space_iri else "")
+        return {
+            "success": True,
+            "report_id": rid,
+            "location": location,
+            "space_iri": space_iri,
+            "message": f"Thanks — I've added {where} to report **{rid}**.",
+        }
+
     async def update_status(
         self,
         report_id: str,
