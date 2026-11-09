@@ -224,6 +224,43 @@ def calendar_day_bounds(
     return to_store(start, tz_name).strftime(STAMP), to_store(end, tz_name).strftime(STAMP)
 
 
+#: "this morning", "yesterday afternoon", "this evening": a part of today or yesterday.
+_PART_OF_DAY_RE = re.compile(
+    r"\b(this|yesterday|yesterday's)\s+(morning|afternoon|evening)\b", re.IGNORECASE
+)
+
+
+def part_of_day_bounds(
+    text: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Optional[Tuple[str, str]]:
+    """Store bounds for "this morning" / "yesterday afternoon", or None (2026-11-07).
+
+    A part of a day has no boundary everyone agrees on, which is why this module long declined
+    to resolve one -- and the pipeline then used whatever the classifier guessed. For "compare the
+    temperature in rooms 2.01 and 3.01 this morning" that guess was the last twelve hours (21:50 to
+    09:50), half of it last night. The system already has ONE definition of the parts of a day,
+    which the events and comparison lanes print in every label (`event_query_service._PARTS`), so
+    this uses it. A part that has not begun yet ("this afternoon", asked at 10:00) returns None: it
+    is a question about the future and belongs to the forecast lane, not to a window of no data.
+    The end is clipped to now while the part is still running. `now` is building-local wall time.
+    """
+    m = _PART_OF_DAY_RE.search(text or "")
+    if not m:
+        return None
+    from orchestrator.services.event_query_service import _PARTS
+
+    start_h, end_h, _label = _PARTS[m.group(2).lower()]
+    if now is None:
+        now = local_now(tz_name)
+    day = now.date() - timedelta(days=0 if m.group(1).lower() == "this" else 1)
+    start = datetime(day.year, day.month, day.day, start_h, 0, 0)
+    end = datetime(day.year, day.month, day.day, end_h, 0, 0) - timedelta(seconds=1)
+    if start >= now:
+        return None
+    end = min(end, now.replace(microsecond=0))
+    return to_store(start, tz_name).strftime(STAMP), to_store(end, tz_name).strftime(STAMP)
+
+
 def named_day(text: str) -> Optional[str]:
     """Which calendar day the text names, or None. Used to LABEL a resolved interval."""
     return _named_day_word((text or "").lower())
@@ -322,6 +359,14 @@ _THIS_RE = {u: re.compile(rf"\bthis\s+{u}\b") for u in _PERIOD_UNITS}
 #: "last|previous|prior <unit>" — the whole period before the one in progress.
 _LAST_RE = {u: re.compile(rf"\b(?:last|previous|prior|preceding)\s+{u}\b") for u in _PERIOD_UNITS}
 
+#: "the <unit> before last (<unit>)" -- TWO periods back (2026-11-07). A follow-up "and the week
+#: before?" was rewritten "...the week before last week?", and the "last week" inside it made it
+#: last week: the answer repeated the previous turn's total for the same dates.
+_BEFORE_LAST_RE = {
+    u: re.compile(rf"\b(?:the\s+)?{u}\s+before\s+(?:the\s+)?last(?:\s+{u})?\b")
+    for u in _PERIOD_UNITS
+}
+
 #: A TRAILING DURATION WEARING A CALENDAR WORD, which this resolver must refuse.
 #:
 #: "over the last week" almost always means the trailing seven days, not ISO week 39; on a
@@ -381,6 +426,13 @@ def named_period(text: str) -> Optional[Tuple[str, List[int]]]:
         return None
     found: List[Tuple[str, List[int]]] = []
     for unit in _PERIOD_UNITS:
+        if _BEFORE_LAST_RE[unit].search(low):
+            # Two back, and the "last <unit>" inside the phrase is not a second period.
+            rest = _BEFORE_LAST_RE[unit].sub(" ", low)
+            offsets = [2] + ([0] if _THIS_RE[unit].search(rest) else [])
+            offsets += [1] if _LAST_RE[unit].search(rest) else []
+            found.append((unit, sorted(offsets)))
+            continue
         if _TRAILING_RE[unit].search(low):
             continue
         offsets = []

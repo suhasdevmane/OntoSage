@@ -82,7 +82,11 @@ def test_the_rule_does_not_fire_on_ordinary_or_vocabulary_only_questions(query):
 
 
 def test_the_rule_is_last_in_the_parse_stage():
-    assert rc.PARSE_STAGE_RULES[-1].name == "cross_source_precedence"
+    # 2026-11-07: `building_fault_status` (BUG-1682) was appended after it. Its matcher overlaps
+    # nothing this rule takes (a "which source is right" question names no fault word), so this
+    # rule still runs after every rule that could re-route the question it catches.
+    names = [r.name for r in rc.PARSE_STAGE_RULES]
+    assert names[-2:] == ["cross_source_precedence", "building_fault_status"]
 
 
 def test_measured_over_the_full_bank_zero_moves():

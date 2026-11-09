@@ -333,6 +333,22 @@ def lead_read_but_off_topic(name: str, about: str = "") -> str:
     )
 
 
+def lead_drafted_off_topic(name: str, about: str = "") -> str:
+    """The first sentence when an answer was drafted, judged off the point, and nothing was counted.
+
+    BUG-1689. The answer-relevance gate's verdict establishes one thing: the drafted answer did not
+    address the question. It does not establish that the records lack the answer -- over a
+    labelled set of live answers the gate replaced 26 and in 19 of them the records DID hold it --
+    so "I couldn't answer that from <building>'s records" stated an absence nobody measured. This
+    says only what the gate knows. Same load-bearing opening as `lead_read_but_off_topic`.
+    """
+    return (
+        f"I couldn't put an answer together{about} that addresses what you asked — the answer I "
+        "drafted was about something else, so I have not shown it. That is not a finding that "
+        f"{name or 'this building'}'s records lack the answer."
+    )
+
+
 def compose_abstract(
     building: str,
     question: str,
@@ -341,11 +357,14 @@ def compose_abstract(
     records: Sequence[Any],
     entities: Sequence[str] = (),
     read_but_off_topic: bool = False,
+    drafted_off_topic: bool = False,
 ) -> str:
     """No question back: what found nothing, and the nearest things the building can answer.
 
     ``read_but_off_topic`` says the caller KNOWS this turn read the building and had its answer
     taken away — see `lead_read_but_off_topic` for why that needs a different first sentence.
+    ``drafted_off_topic`` says an answer was taken away and no read was counted
+    (`lead_drafted_off_topic`, BUG-1689).
     """
     name = building or "this building"
     # No fragment of the question is quoted back as though it were a topic. `phrases_for` paired an
@@ -354,11 +373,12 @@ def compose_abstract(
     # tokens presented as the subject. The only thing named is an entity a lane actually resolved.
     named = readable_names(entities)
     about = f" about **{', '.join(named[:3])}**" if named else ""
-    lead = (
-        lead_read_but_off_topic(name, about)
-        if read_but_off_topic
-        else f"I couldn't answer that{about} from {name}'s records."
-    )
+    if read_but_off_topic:
+        lead = lead_read_but_off_topic(name, about)
+    elif drafted_off_topic:
+        lead = lead_drafted_off_topic(name, about)
+    else:
+        lead = f"I couldn't answer that{about} from {name}'s records."
     # `named` is what a lane already resolved, and it is printed in bold one line above.
     # Ranking the holdings against it too is what stops the list being alphabetical
     # (BUG-950): 'why is pl 2.5 increasing' offered air quality, carbon monoxide, co2 and
@@ -411,6 +431,7 @@ def compose(
     outdoor: Optional[Sequence[OutdoorReading]] = None,
     entities: Sequence[str] = (),
     read_but_off_topic: bool = False,
+    drafted_off_topic: bool = False,
 ) -> Tuple[str, str]:
     """``(kind, text)``. ``outdoor`` is None when nobody tried to read the outdoor sensors.
 
@@ -426,8 +447,15 @@ def compose(
         return kind, compose_referent(building, referent_noun(question), records)
     if kind == KIND_ABSTRACT:
         return kind, compose_abstract(
-            building, question, unmatched, measured, records, entities, read_but_off_topic
+            building,
+            question,
+            unmatched,
+            measured,
+            records,
+            entities,
+            read_but_off_topic,
+            drafted_off_topic,
         )
     return kind, compose_abstract(
-        building, question, (), measured, records, entities, read_but_off_topic
+        building, question, (), measured, records, entities, read_but_off_topic, drafted_off_topic
     )

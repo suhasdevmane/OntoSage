@@ -226,10 +226,25 @@ _PRESENCE_ANYWHERE_RE = re.compile(
 )
 
 
+#: In a governance question "in the building" is the SCOPE of the duty, not somebody's location:
+#: "Who is responsible for fire safety in the building?" was refused as person-tracking
+#: (2026-11-07) because the phrase is also a presence predicate. Removed before the presence
+#: check, which still refuses "...and is she in her office?" and "who is in the building now?".
+#: Measured over the 4,060 bank: 0 questions leave the refusal lane.
+_SCOPE_NOT_PRESENCE_RE = re.compile(
+    r"\bin the building\b|\bcurrently\s+(?=responsible|in charge)", re.IGNORECASE
+)
+
+
 def is_governance_question(question: str) -> bool:
     """True when the question asks WHO RUNS something rather than WHERE SOMEBODY IS."""
     q = question or ""
-    return bool(_GOVERNANCE_RE.search(q)) and not _PRESENCE_ANYWHERE_RE.search(q)
+    if not _GOVERNANCE_RE.search(q):
+        return False
+    rest = _SCOPE_NOT_PRESENCE_RE.sub(" ", q)
+    return not _PRESENCE_ANYWHERE_RE.search(rest) and not re.search(
+        r"\b(?:he|she|him|her)\b", rest, re.IGNORECASE
+    )
 
 
 def classify_inference(question: str) -> Optional[str]:

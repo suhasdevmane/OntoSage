@@ -1117,6 +1117,13 @@ async def lifespan(app: FastAPI):
         # landed. Nothing uploaded + already initialised → no-op (no restart needed).
         if (not _phase1_state["inited"]) or summary["uploaded"]:
             await _ontology_phase1(force_sensor_map=bool(summary["uploaded"]))
+        if summary["uploaded"]:
+            # Same reason as after the boot document lift: rows cached before a TTL changed
+            # describe the graph as it was (2026-11-07).
+            try:
+                await _after_graph_change()
+            except Exception as _cc_err:
+                logger.warning(f"[ttl_uploader] caches not retired after boot upload: {_cc_err}")
 
         # EVERY POINT THE GRAPH DECLARES MUST BE FED, and the map that decides which ones
         # are fed was a manual step (2026-09-16). 498 points were added, uploaded, and
@@ -1340,6 +1347,17 @@ async def lifespan(app: FastAPI):
                 f"docs={result.documents} chunks={result.chunks}"
                 + (f" reason={result.reason}" if result.reason else "")
             )
+        # A REGISTER RE-LIFTED AT BOOT LEAVES THE ROW CACHE STALE (2026-11-07). A fire-safety
+        # register edited to 31 records was answered from `cache:sparql*` rows holding 30 -- fewer
+        # rows than the class holds reads as a partial register, so the deterministic answer was
+        # skipped and the narration listed the wrong records. The console's own edits already
+        # retire these caches (`_after_graph_change`); a boot that changed the graph now does too.
+        if any(getattr(r, "status", "") == "indexed" for r in doc_index_results.values()):
+            try:
+                _cleared = await _after_graph_change()
+                logger.info(f"[document_indexer] registers changed at boot; cleared {_cleared}")
+            except Exception as _cc_err:  # a stale cache is worse than none, never fatal
+                logger.warning(f"[document_indexer] caches not retired after boot lift: {_cc_err}")
         # Wire into capability_agent so the document-search fallback is available
         init_document_search(_doc_qdrant_client_ref, _doc_embed_ref)
         app.state.doc_indexer = doc_indexer

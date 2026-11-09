@@ -149,6 +149,13 @@ _NAMED_PLACE = re.compile(
     # building question, so the lane summarised the building over one lab's sensor and the
     # relevance gate rightly deleted the answer. 1 of 4,060 bank questions moves.
     r"|\b(?:lab|laboratory|office|classroom|studio|suite|rm)\s*\d+(?:\.\d+)?\b"
+    # PLURAL NOUNS AND BARE ROOM IDS (2026-11-07, BUG-1678's shape). "Compare the temperature in
+    # rooms 2.01 and 3.01 this morning" named no place to this pattern, so the lane summarised
+    # the two rooms as "Across the building" with a per-floor table. A bare dotted id needs two
+    # or three digits after the dot, so "PM2.5" and "1.5 degrees" stay out. Measured over the
+    # 4,060 bank: 8 newly match, every one a room ("the fault in 4.09", "around 2.15").
+    r"|\b(?:rooms|zones|spaces|labs|laboratories|offices)\s+\d{1,2}\.\d{2,3}\b"
+    r"|(?<![\d.])\d{1,2}\.\d{2,3}(?![\d.])"
     r"|\b(?:in|at|on|inside|within|near|outside)\s+(?:the\s+|my\s+|a\s+)?"
     r"(?:atrium|lobby|foyer|reception|corridor|kitchen|toilet|washroom|canteen|cafe|"
     r"library|auditorium|theatre|gym|plant\s*room|server\s*room|lift|stairwell|"

@@ -815,9 +815,19 @@ def _render_facet_answer(dossier: EvidenceDossier, top_k: int) -> str:
         ) == round(best.total or 0.0, 6):
             lines.append("Others score the same — every one is in the evidence dossier.")
     else:
+        # A WORST-PLACE QUESTION'S TOP ROW IS THE WORST PLACE (2026-11-07). "Where is the worst
+        # place to work right now?" ranked the highest-CO2 room first and headed it "Best match",
+        # which reads as a recommendation of that room.
+        _worst = bool(
+            re.search(
+                r"\b(?:worst|least\s+comfortable|most\s+uncomfortable)\b",
+                getattr(dossier, "raw_query", "") or "",
+                re.IGNORECASE,
+            )
+        )
         lines.append(
-            f"**Best match: {best.space}** (floor {best.floor}, "
-            f"{_score_phrase(best.total, explain=True)})."
+            f"**{'Worst on what you asked for' if _worst else 'Best match'}: {best.space}** "
+            f"(floor {best.floor}, {_score_phrase(best.total, explain=True)})."
         )
     for note in dossier.guidance_notes[:2]:
         lines.append(str(note))
@@ -1213,8 +1223,10 @@ def _render_comparison(dossier: EvidenceDossier, cmp: CompareResult) -> str:
                 f"{share}{verdict}.**"
             )
         elif cmp.relation == "exceeds":
+            # "None of", not "0 of": a sentence-case pass downstream turned "0 of" into "0 Of".
+            _count = "None" if cmp.n_exceeding == 0 else str(cmp.n_exceeding)
             lines.append(
-                f"**{cmp.n_exceeding} of the {_spaces(cmp.n_comparable)} with both figures "
+                f"**{_count} of the {_spaces(cmp.n_comparable)} with both figures "
                 f"{'has' if cmp.n_exceeding == 1 else 'have'} {a} above {b}.**"
             )
         elif cmp.relation == "ratio":

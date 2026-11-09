@@ -4115,3 +4115,41 @@ what the reason was about.
 
 **The practice:** when a restriction exists for a stated reason, scope it to that reason, and
 measure before widening — a pinned example in a test records the boundary, not the reason.
+
+## #205 — A question back to the reader is not an answer, and a gate that judges answers must know the difference (2026-11-07)
+
+Gate case #14 regressed: the deliberation lane asked "which of the ten meeting rooms?" and the
+answer-relevance gate judged that QUESTION as an answer ("does not recommend a room, just lists
+options") and replaced it with a decline. Two defects stacked: a kind phrase ("Meeting Room") read
+as a space name, and a judge with no notion of a clarifying turn. Either alone was survivable.
+
+**The practice:** a component that grades answers must first ask whether the turn IS an answer
+(`needs_clarification_payload`); and a phrase several spaces' names carry, with no id, is a kind.
+
+## #206 — A date every record shares belongs to the document, not to the records (2026-11-07)
+
+"How many lectures are there this week?" found "none of the 1,682 records" because the period
+filter read `effectiveFrom`, which the lifter stamps from the document's front matter onto every
+row (2026-09-01 on all of them). Each session's own date is `effectiveDate`. The extension of the
+timetable is what exposed it: with 675 rows nobody had asked a "this week" question in-term.
+
+**The practice:** a column with one value across all rows cannot place any record in a period;
+prefer a per-record date, and test period filters on data that spans the period asked about.
+
+## #207 — Extending a register changes what tests that read the register file see (2026-11-07)
+
+`tests/register_fixture_rows.py` lifts the LIVE `input/documents/*.md`, so adding term-time
+sessions moved a yes/no answer past the 40-row listing cap and a test that had passed for weeks
+failed. The defect was real (a yes/no needs a count, not a list); the data change only revealed it.
+
+**The practice:** after a data change, run the tests that read that file before calling the change
+inert, and read a failure as information about the code first.
+
+## #208 — The heredoc backspace came back in a regex written through `python -` (2026-11-07)
+
+Lesson #186's shape, again: a compliance pattern written through a here-document arrived with
+eight `\x08` bytes in place of `\b`, matched nothing, and the terminal hid it by rendering each
+backspace as an erased character. `repr()` of the bytes is the only reliable view.
+
+**The practice:** write regexes with the file tools, and after any scripted edit count `b"\x08"`
+in the file (`HEAD` of this repo's tracker already holds 19, so compare against HEAD, not zero).

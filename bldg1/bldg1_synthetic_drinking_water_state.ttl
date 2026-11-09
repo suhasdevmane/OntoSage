@@ -1,0 +1,127 @@
+# Drinking-water point service status -- TODO-1642, 2026-11-07
+#
+# The 16 drinking-water points were added after bldg1_synthetic_amenity_state.ttl was generated,
+# so "is the water fountain on floor 2 working?" had no state to read. Re-running the generator
+# would reshuffle every OTHER amenity's state (its draw is by position in a sorted list), so these
+# records are separate, and each state is drawn from a hash of the point's own IRI: adding a point
+# never moves another one. About 12% out of service, the generator's own rate.
+#
+# SERVICE STATE ONLY. Potability is never simulated (see the generator): a dispenser being out of
+# order is a harmless demo; a simulated statement about whether water is safe to drink is not.
+
+@prefix bldg: <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+bldg:waterpoint_status_WaterPoint_Floor0_a a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor0_a ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T04:46:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor0_b a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor0_b ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T08:23:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor1_a a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor1_a ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T04:34:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor1_b a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor1_b ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-06T23:11:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor2_a a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor2_a ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T05:37:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor2_b a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor2_b ;
+    ontosage:statusValue "out_of_service" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T04:51:00"^^xsd:dateTime ;
+    ontosage:statusReason "supply isolated" ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor3_a a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor3_a ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T02:06:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor3_b a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor3_b ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T07:30:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor4_a a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor4_a ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-06T23:02:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor4_b a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor4_b ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T02:19:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor5_a a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor5_a ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T04:05:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Floor5_b a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Floor5_b ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T05:47:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Room2_66 a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Room2.66 ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T00:58:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Room3_17 a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Room3.17 ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T05:00:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Room3_18 a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Room3.18 ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-07T00:05:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .
+
+bldg:waterpoint_status_WaterPoint_Room5_26 a ontosage:AssetStatus ;
+    ontosage:statusOf bldg:WaterPoint_Room5.26 ;
+    ontosage:statusValue "operational" ;
+    ontosage:statusSource "estates_helpdesk" ;
+    ontosage:statusObservedAt "2026-11-06T23:20:00"^^xsd:dateTime ;
+    ontosage:assistanceContact "Estates helpdesk, ext 1234" .

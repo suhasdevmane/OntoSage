@@ -239,7 +239,9 @@ def _constraint_from_phrase(phrase: str, known: set, decision: DecisionKind, que
         return None
     for token in _WORD_RE.findall(text):
         base = _base_form(token)
-        modality = _modality_from_lay_term(token)
+        # A modality's own name is a word for it ("humidity", "noise"): the lay-term map holds
+        # only the OTHER words (humid, damp), so the name itself was never salvaged (BUG-1685).
+        modality = token.lower() if token.lower() in known else _modality_from_lay_term(token)
         if not modality or modality not in known:
             continue
         direction = (
@@ -247,6 +249,10 @@ def _constraint_from_phrase(phrase: str, known: set, decision: DecisionKind, que
             or _infer_direction(modality, decision, None)
             or _polarity_elsewhere(query, modality)
         )
+        if direction is None and decision == DecisionKind.SELECT_ONE:
+            from orchestrator.services.deliberation.scorer import COMFORT_BAND_SELECT
+
+            direction = COMFORT_BAND_SELECT.get(modality)  # the comfortable middle (BUG-1685)
         if direction is None:
             continue
         return Constraint(
@@ -1042,18 +1048,23 @@ def _parse_compiled(
             continue
         signals.append(AmbiguitySignal(kind="unmapped_term", phrase=phrase))
 
-    # NOTHING MAPPED IS THE ONLY CASE THIS RUNS IN.
+    # The all-unmapped case is a wrongful denial: the question is rejected whole although one of
+    # its words names a modality this building measures. Any phrase is salvaged there.
     #
-    # When something else mapped, the unmapped extras are already dropped and DECLARED by
-    # `clarify_policy.absorb_unmapped`, and a ranking that works today must not silently gain
-    # a criterion. It is the all-unmapped case that is a wrongful denial: the question is
-    # rejected whole although one of its words names a modality this building measures.
-    if not constraints:
+    # WHEN SOMETHING ELSE MAPPED, ONLY A NAMED CRITERION IS (BUG-1685). The unmapped extras are
+    # dropped and DECLARED by `clarify_policy.absorb_unmapped`, and the declaration reads "doesn't
+    # match anything this building senses or records". A "best place to work" ranking declared
+    # temperature, humidity and CO2 that way, with all three sensed in the rooms it ranked: the
+    # compile had left them in `unmapped` beside a criterion it did map. A short phrase (three
+    # words or fewer) that names a modality this building has IS the reader's criterion, not a
+    # silent gain; a longer clause keeps the old rule and stays dropped and declared.
+    if signals:
         _kept: List[AmbiguitySignal] = []
         for s in signals:
             salvaged = (
                 _constraint_from_phrase(s.phrase, known, decision, query)
                 if s.kind == "unmapped_term"
+                and (not constraints or len(_WORD_RE.findall(s.phrase or "")) <= 3)
                 else None
             )
             if salvaged is not None and not any(

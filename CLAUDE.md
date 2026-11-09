@@ -29,7 +29,41 @@ approval.**
 > discover it is wrong. **If you change the branch, the plan or the suite size, change this
 > block in the same commit.**
 
-- **LATEST (2026-11-05) — admin console end to end + BUG-1690..1702. COMMITTED AND PUSHED
+- **LATEST (2026-11-07) — 9-hour autonomous bldg1 round, hosted LLM. COMMITTED AND PUSHED
+  2026-11-09 to `development` only (`main` not promoted). bldg1 PARKED: parked suite 15,891 pass /
+  0 fail / 186 skip / 5 xfail (exit 0); CI file list 359 pass / 5 skip.** The 13 files this round
+  left black-unclean were formatted before that suite ran (isort was not: its black profile wraps
+  at 88 against black's 100). Asked by the user to bring bldg1 up, test
+  every question type, add missing data and fix what breaks. Fresh probe sets written for the
+  session (70 + 35 single questions, 10 three-to-four-turn conversations), every answer read by
+  hand; tracker rows **BUG-1709..1730, CAVEAT-1718/1720/1729, TODO-1728**.
+  **The P1 fixed: BUG-1682** — "are any services reporting faults?" was answered "no faults" by a
+  reading lane; `services/fault_overview.py` now reads alarms not cleared, outages in progress,
+  assets out of service/degraded and sensor instrument faults, each from its own source, "not
+  checked" (never zero) for one it cannot read. **Also live-verified:** a building average was
+  headed "the highest average ... at Building exterior" (BUG-1710); amenity status (water points,
+  hearing loops, study areas, AEDs) read from AssetStatus, not a flow meter (TODO-1642); carbon =
+  electricity x the building's declared `ontosage:gridCarbonIntensity` (BUG-1724, TTL-first);
+  "which hour", "this morning", "the week before last", "yesterday at the same time", "next three
+  days" all resolve to the right windows; compliance and "too warm?" get verdicts; a kind phrase
+  ("which meeting room is best") scopes a ranking; the relevance gate no longer judges a question
+  back to the reader (gate case #14 had regressed); events this week, lectures this week, visitor
+  counts, fire-door defects, the lift's next service. **Data added:** timetable to 2026-12-11
+  (1,682 sessions), drinking-water status, a fire-drill record, the carbon factor; an orphan
+  named graph with no source file was dropped (backup kept) and the uploader now reports such
+  graphs at boot (CAVEAT-1718). **A boot that re-lifts a register now retires the row cache**
+  (BUG-1722: a 31-record register was answered from 30 cached rows).
+  **GATE alone, twice (mid-round and on the final build, 13:29): 49/51 recorded, 51/51 in
+  substance** (#37, #70 the known misreads, both read in the saved JSON), memory 1.8 → 4.4 GiB
+  over 37 samples on the final run (~4.6 GiB mid-round). Routing rules **69 parse + 4 post + 9 concept** — print them.
+  **Owner decision logged: CAVEAT-1720** — the standards table cites the CO2 limit under ASHRAE 55
+  and comfort bands under ISO 50001; every CO2 verdict quotes that entry. Open and listed:
+  CAVEAT-1729 (weekly performance summary, solar today vs yesterday, base load, peak time,
+  stale September-dated registers) and the follow-up shapes the conversation battery found.
+  **Tracker CSV is CRLF in the working tree (core.autocrlf=true; HEAD is LF): the "CRLF must stay
+  222" line below is stale. Write regexes with the file tools: three heredoc-written edits this
+  session arrived with backspace bytes for `\b` (lesson #208).**
+- **(2026-11-05) — admin console end to end + BUG-1690..1702. COMMITTED AND PUSHED
   2026-11-06 to `development` only (`main` not promoted). bldg1 PARKED: parked suite 15,789 pass / 0 fail / 186 skip / 5 xfail (exit 0;
   reconciles with the active run, 15,980 tests both ways); CI file list 359 pass / 5 skip.** Every console tab walked live
   (Playwright, 0 page/console/API errors); fixes VERIFIED LIVE: Add capability dialog draws the
@@ -1360,7 +1394,7 @@ approval.**
   (`PARTIALLY_FIXED` — 62 failures logged an empty message → **N15**). BUG-147, TODO-143,
   KNOWN-153, CAVEAT-148 and CAVEAT-154 are closed.
 - **Routing overrides live in ONE contract**: `orchestrator/services/routing_contract.py`
-  (**68** parse-stage + **4** post-stage + **8** concept-stage ordered rules — printed FROM THE MODULE
+  (**69** parse-stage + **4** post-stage + **9** concept-stage ordered rules — printed FROM THE MODULE 2026-11-07, after `building_fault_status` (parse, LAST) and `metered_carbon_is_computed` (concept, after the cost rule) were added; before that
   2026-10-11 (post: `diagnosis_without_a_quantity`, `file_request_is_an_export`; concept:
   `record_comparison_is_not_a_series`, `metered_cost_is_computed`, both before the compound rule); before that
   2026-10-08 after v2 P6 appended `compound_facets_to_deliberate` LAST in the concept stage

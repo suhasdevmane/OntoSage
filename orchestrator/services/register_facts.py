@@ -1560,6 +1560,53 @@ def passed_due_not_marked(rows: List[Dict], question: str, today: Optional[date]
     return sorted(set(out))
 
 
+#: A column that says when a record ENDS (an expiry, a validity end, a contract's end).
+_END_COLUMN_RE = re.compile(r"effectiveTo|(?:^|[^a-z])end|expir|until", re.I)
+#: Words that already say an end is in the past.
+_SAYS_PASSED_RE = re.compile(
+    r"\b(?:expired|has\s+expired|ended|has\s+ended|lapsed|already\s+passed|has\s+passed|"
+    r"is\s+past|was\s+due|no\s+longer\s+in\s+force|out\s+of\s+date)\b",
+    re.I,
+)
+
+
+def passed_end_line(narration: str, rows: List[Dict], today: Optional[date]) -> str:
+    """A system line when the narration states a record's END date that is already past (2026-11-07).
+
+    "When does the cleaning contract expire?" was narrated "the contract expires on 4 November
+    2026" on 7 November, beside a locked fact line saying the date had passed: a prompt line binds
+    nothing. This runs AFTER the narration, like `completeness_line`, and adds only a true sentence;
+    it never edits what the model wrote. Silent when the narration already says the end is past.
+    """
+    if today is None or not rows or not narration or _SAYS_PASSED_RE.search(narration):
+        return ""
+    # The model writes ids with non-breaking hyphens ("CON‑2025‑003", U+2011) and spaces; the
+    # rows hold plain ones. Compared on a normalised copy, never edited.
+    narration = re.sub("[‐-―−]", "-", narration)
+    narration = narration.replace(" ", " ").replace(" ", " ")
+    found: List[str] = []
+    for r in rows:
+        for col in [c for c in r.keys() if _END_COLUMN_RE.search(c)]:
+            raw = _value(r, col)[:10]
+            try:
+                d = date.fromisoformat(raw)
+            except ValueError:
+                continue
+            if d >= today:
+                continue
+            shown = f"{d.day} {d.strftime('%B %Y')}"
+            if (shown in narration or raw in narration) and _ident(r) in narration:
+                found.append(f"{_ident(r)} ended on {shown}")
+    if not found:
+        return ""
+    return (
+        f"\n\n**That date has already passed** (stated by the system from the register; today is "
+        f"{today.day} {today.strftime('%B %Y')}): "
+        + "; ".join(sorted(set(found))[:MAX_IDS_LISTED])
+        + "."
+    )
+
+
 def completeness_line(narration: str, missing: List[str]) -> str:
     """A system-written line naming past-due records the narration did not mention, or ""."""
     unmentioned = [m for m in missing if m.split(" (")[0] not in (narration or "")]

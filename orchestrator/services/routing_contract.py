@@ -1493,9 +1493,35 @@ def register_owns_the_record(query: str) -> bool:
     return bool(
         _WORK_ORDER_RECORD_RE.search(q)
         or _TIMETABLE_RECORD_RE.search(q)
+        or _SESSION_ASK_RE.search(q)
+        or _PUBLIC_EVENT_ASK_RE.search(q)
         or booking_register_question(q)
         or _INCIDENT_LOG_RE.search(q)
     )
+
+
+#: "How many lectures are there this week?", "which classes are in 1.06 tomorrow?" -- a session
+#: noun as the THING ASKED ABOUT (BUG-1474). `_TIMETABLE_RECORD_RE` needs a compound ("teaching
+#: sessions"), so the bare noun reached the events lane, which has no timetable kind and answered
+#: "This building doesn't keep a record of that" over 1,682 timetabled sessions. A room KIND
+#: ("lecture theatre", "seminar rooms") and a taxonomy ("asset classes", "room classes") are not
+#: sessions, nor is "seminar or tutorial groups". Measured 2026-11-07 over the 4,060 bank: 0 move.
+_SESSION_ASK_RE = re.compile(
+    r"\b(?:how\s+many|what|which|any|list|show(?:\s+me)?|when(?:'s|\s+is)?\s+the\s+next)\s+"
+    r"(?:(?!asset|room|sensor|device|equipment|space|record|data|parallel)\w+\s+){0,2}?"
+    r"(?:lectures?|classes|seminars?|tutorials?)\b"
+    r"(?!\s+(?:rooms?|theatres?|theaters?|spaces?|halls?|or|and|groups?)\b)",
+    re.IGNORECASE,
+)
+#: "What events are on in the building this week?", "any public events?" -- the public-event
+#: register, not the events STORE (bookings, anomalies), whose lane declined it the same way.
+#: Measured 2026-11-07 over the 4,060 bank: 0 move.
+_PUBLIC_EVENT_ASK_RE = re.compile(
+    r"\b(?:what|which|any)\s+(?:\w+\s+){0,2}?events?\s+(?:are\s+|is\s+)?"
+    r"(?:on|happening|taking\s+place|scheduled|planned|coming\s+up|being\s+held)\b"
+    r"|\b(?:public|upcoming)\s+events?\b",
+    re.IGNORECASE,
+)
 
 
 #: "Which doors do you have records for?" asks for the building's door-EVENT register: the access
@@ -1539,6 +1565,22 @@ def _r_door_records_are_a_register_question(c: _Ctx) -> Optional[str]:
     if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
         return None
     return "metadata" if door_records_question(c.query) else None
+
+
+def _r_building_fault_status(c: _Ctx) -> Optional[str]:
+    """ "Is anything faulty / are any services reporting faults?" -> asset_state's overview (BUG-1682).
+
+    A building-wide fault question naming nothing was answered by a reading lane, which can only
+    ever say "no faults" -- a reading is not where a fault is recorded. The asset-state lane reads
+    the alarm log, the events log and the status records (`fault_overview`). The matcher takes a
+    question whose every other word is generic, so a named asset, room, floor or period keeps its
+    own lane, and a fault STATEMENT keeps filing.
+    """
+    from orchestrator.services.fault_overview import is_building_fault_question
+
+    if c.sr.is_control_command(c.query) or c.sr.report_intake_intent(c.query):
+        return None
+    return "asset_state" if is_building_fault_question(c.query) else None
 
 
 def _r_register_owns_work_orders_and_timetable(c: _Ctx) -> Optional[str]:
@@ -2645,6 +2687,44 @@ def _r_metered_cost_is_computed(c: _Ctx) -> Optional[str]:
         if any(w in cid for w in ("water_usage", "energy", "electric")):
             return "analytics"
     return None
+
+
+_DAY_WEEK_OR_MONTH_RE = re.compile(
+    _DAY_OR_WEEK_PERIOD_RE.pattern[:-3] + r"|this\s+month|last\s+month|past\s+month)\b",
+    re.IGNORECASE,
+)
+
+
+def _r_metered_carbon_is_computed(c: _Ctx) -> Optional[str]:
+    """'What was the carbon footprint of the electricity last month?' is the metered total x factor.
+
+    2026-11-07: the classifier filed it as a records question and the sustainability register
+    answered "the register does not record the building's carbon footprint", while the building
+    meters its electricity and declares the factor (ontosage:gridCarbonIntensity). The aggregate
+    lane now appends the emissions to an electricity total (`utility_cost.append_carbon`). Only
+    for electricity and a named day, week or month; a target or a policy question keeps its lane.
+    Measured over the 4,060 bank: 0 questions reach it.
+    """
+    if c.intent not in ("metadata", "register", "capability", "general", "general_knowledge"):
+        return None
+    from orchestrator.services.utility_cost import asks_for_carbon
+
+    q = c.query or ""
+    if not (asks_for_carbon(q) and _DAY_WEEK_OR_MONTH_RE.search(q)):
+        return None
+    if re.search(
+        r"\b(?:targets?|goals?|polic(?:y|ies)|plan|strateg\w*|reduce|reduction)\b", q, re.I
+    ):
+        return None
+    for concept in c.normalized.get("concepts") or []:
+        cid = str(
+            concept.get("concept_id", "")
+            if isinstance(concept, dict)
+            else getattr(concept, "concept_id", "")
+        ).lower()
+        if any(w in cid for w in ("energy", "electric")):
+            return "analytics"
+    return "analytics" if re.search(r"\belectric\w*\b", q, re.I) else None
 
 
 def _r_record_comparison_is_not_a_series(c: _Ctx) -> Optional[str]:
@@ -4199,6 +4279,13 @@ PARSE_STAGE_RULES: Tuple[Rule, ...] = (
         "lane that reads scripts/fact_conflicts.py's cross-source findings (E2)",
         _r_cross_source_precedence,
     ),
+    Rule(
+        "building_fault_status",
+        "'is anything faulty / are any services reporting faults?' naming nothing -> asset_state, "
+        "which reads the alarm log, events log and status records (BUG-1682); LAST, it corrects "
+        "the reading lane a classifier picks, and its matcher overlaps no earlier rule",
+        _r_building_fault_status,
+    ),
 )
 
 
@@ -4540,6 +4627,12 @@ CONCEPT_STAGE_RULES: Tuple[Rule, ...] = (
         "multiplies the metered total by the tariff in force; a monthly bill stays with the cost "
         "register (TODO-1646)",
         _r_metered_cost_is_computed,
+    ),
+    Rule(
+        "metered_carbon_is_computed",
+        "the emissions of the electricity used over a day, week or month -> analytics, which "
+        "multiplies the metered total by the building's declared grid carbon intensity",
+        _r_metered_carbon_is_computed,
     ),
     # v2 P6 -- LAST IN THE CONCEPT STAGE, and both halves of that are the decision.
     #

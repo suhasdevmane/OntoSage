@@ -371,6 +371,17 @@ ontosage:locationText a owl:DatatypeProperty ;
     rdfs:domain ontosage:Amenity ; rdfs:range xsd:string ;
     skos:example "\"Floor 1, room 1.04\" or \"Left of the main entrance, ~25 m\"" .
 
+ontosage:gridCarbonIntensity a owl:DatatypeProperty ;
+    rdfs:label "grid electricity carbon intensity (gCO2e per kWh)"@en ;
+    rdfs:comment "The emission factor the building's owner applies to the electricity it draws, in grams of CO2-equivalent per kWh. An electricity total times this factor is the emissions a carbon question asks for; a building that declares none is told so, never given a national average."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:decimal ;
+    skos:example "\"207.05\"^^xsd:decimal" .
+
+ontosage:gridCarbonIntensitySource a owl:DatatypeProperty ;
+    rdfs:label "source of the grid carbon intensity"@en ;
+    rdfs:comment "Where the declared emission factor comes from (the published factor set and year), quoted beside every figure computed from it."@en ;
+    rdfs:domain brick:Building ; rdfs:range xsd:string .
+
 ontosage:onFloor a owl:DatatypeProperty ;
     rdfs:label "floor identifier"@en ;
     rdfs:comment "A floor label for an amenity (free text; use ontosage:locatedIn/servesFloor to link the actual brick:Floor)."@en ;
@@ -2699,10 +2710,17 @@ ontosage:AccessPermission ontosage:layTerms "access control", "permission",
 # and 105 ("the event room has changed") had been answered well from this register and lost it.
 # Measured: 3 corpus questions move, all here; guard set unchanged. NOT bare "event room",
 # which took a temperature question and two toilet-location questions.
+# 2026-11-07: "What events are on in the building this week?" reached the register lane and
+# found no register for it -- no term named a period or "on". The "events this week" ... "events
+# coming up" phrases were measured over the 4,060-question bank first and match none of it;
+# "what's on" was NOT added ("Power cut: what's on the generator?").
 ontosage:PublicEvent ontosage:layTerms "seminar", "public lecture", "public lectures",
     "event room has changed", "event room changed", "event venue", "event has moved",
     "event moved", "events due", "events are due", "events today", "today's events",
     "upcoming events",
+    "events this week", "events on this week", "events next week", "events are on",
+    "events on in", "events happening", "events taking place", "events scheduled",
+    "events coming up",
     "public talk", "public talks", "open day", "open days",
     "showcase", "attending", "check in", "check-in", "doors open",
     "which entrance", "companion", "support person", "registration", "ticket",
@@ -3440,16 +3458,26 @@ ontosage:openDefect a owl:DatatypeProperty ;
 # the phrases were added rather than the term simply dropped.
 # One move is from wrong to differently wrong and is recorded rather than hidden: "how leak
 # detection sensors could prevent damage and reduce waste" now selects WasteCollectionPoint.
+# 2026-11-07: "When was the last fire drill?" had no record to read; FSA-031 (a whole-building
+# evacuation drill) was added to the register and these four phrases point at it. Measured over
+# the 4,060 bank: 1 question moves ("...not exercised by the latest relevant fire drill?").
 ontosage:FireSafetyAsset ontosage:layTerms "fire door", "fire doors", "fire alarm",
     "smoke detector", "smoke detectors", "extinguisher", "extinguishers",
     "fire detection", "smoke detection", "detection system", "detection systems",
     "detection asset", "detection assets",
     "sprinkler", "sprinklers", "suppression", "compartmentation", "fire compartment",
     "fire stopping", "escape route", "escape routes", "means of escape", "fire precaution",
-    "fire precautions", "emergency lighting", "fire safety asset" .
+    "fire precautions", "emergency lighting", "fire safety asset",
+    "fire drill", "fire drills", "evacuation drill", "evacuation drills" .
 
 # BUG-1406: a filter-maintenance question ranked only the cleaning tasks and denied filters;
 # the service frequency is recorded HERE.
+# 2026-11-07: a two-part lift question (when was it last serviced; does its next service fall
+# within the year) ranked only WorkOrder ("last serviced") and was answered with a door-interlock job,
+# while SVC-14 here holds both dates. The "next service" ... "due for its next service" phrases
+# move 1 of the 4,060 bank questions (from no register to this one). "next inspection" and "next
+# examination" were tried and NOT added: they took "when is the next inspection of the fire
+# alarm?" from the fire-safety register, which holds that test date.
 ontosage:ServiceSchedule ontosage:layTerms "service schedule", "service schedules",
     "filter change", "filter changes", "filters changed", "filter replacement",
     "filters cleaned", "filters maintained", "filter cleaning", "filter maintenance",
@@ -3470,7 +3498,9 @@ ontosage:ServiceSchedule ontosage:layTerms "service schedule", "service schedule
     # added for the same class of miss and only cover the past half of the question.
     "maintenance scheduled", "scheduled maintenance", "maintenance is scheduled",
     "maintenance task scheduled", "maintenance tasks scheduled",
-    "maintenance planned", "maintenance is planned", "maintenance due" .
+    "maintenance planned", "maintenance is planned", "maintenance due",
+    "next service", "next service due", "service due", "service is due",
+    "due for its next service" .
 
 
 ontosage:HazardControl rdfs:subClassOf ontosage:Record ; a owl:Class ;

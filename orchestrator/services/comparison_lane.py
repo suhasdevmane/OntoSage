@@ -166,7 +166,14 @@ _YES_NO_OPENING = re.compile(
 )
 
 
-def comparative_lead(question: str, key: str, current: float, baseline: float) -> str:
+def comparative_lead(
+    question: str,
+    key: str,
+    current: float,
+    baseline: float,
+    subject_is_baseline: bool = False,
+    subject_label: str = "",
+) -> str:
     """'**No — the Floor 2 average was lower …**' for a question that asks 'was it noisier?'.
 
     "Was floor 2 noisier yesterday than the day before?" was answered with three delta lines and
@@ -182,15 +189,20 @@ def comparative_lead(question: str, key: str, current: float, baseline: float) -
     down = bool(_LOWER_WORDS.search(q))
     if up == down:  # no comparative, or both: there is no single yes/no to give
         return ""
-    cur_s, base_s = f"{_round(current):g}", f"{_round(baseline):g}"
+    # THE PERIOD THE QUESTION ASKS ABOUT IS ITS SUBJECT (2026-11-07). "Was it warmer YESTERDAY than
+    # today on floor 4?" asks about the earlier period; the lead said "higher in the later period"
+    # of a figure that was yesterday's. ``subject_is_baseline``: the subject is the earlier period.
+    subj, other = (baseline, current) if subject_is_baseline else (current, baseline)
+    subj_s, other_s = f"{_round(subj):g}", f"{_round(other):g}"
     name = key.replace(" mean", " average")
-    if cur_s == base_s:
-        return f"**No — the {name} was the same in both periods ({cur_s}).**"
-    higher = current > baseline
+    if subj_s == other_s:
+        return f"**No — the {name} was the same in both periods ({subj_s}).**"
+    higher = subj > other
     yes = higher == up
+    where = subject_label or ("in the earlier period" if subject_is_baseline else "in the later period")
     return (
-        f"**{'Yes' if yes else 'No'} — the {name} was {'higher' if higher else 'lower'} in the "
-        f"later period: {cur_s} against {base_s}.**"
+        f"**{'Yes' if yes else 'No'} — the {name} was {'higher' if higher else 'lower'} "
+        f"{where}: {subj_s} against {other_s}.**"
     )
 
 
@@ -198,7 +210,25 @@ def render(
     pair, current: Dict[str, Any], baseline: Dict[str, Any], question: str = ""
 ) -> Optional[str]:
     """Both periods and their difference, or None when there is nothing comparable to say."""
+    import dataclasses
+
     from orchestrator.services import comparison_windows as cw
+
+    # THE LATER PERIOD IS "NOW" (2026-11-07). The pair is built with the period the question NAMES
+    # FIRST as current, so "was it warmer yesterday than today?" read yesterday as now and printed
+    # "23 now against 22.7 before" about Friday against Saturday. Swapped here so the lines' "now"
+    # and "before" are true; the yes/no is then judged for the earlier period, which is the
+    # question's subject, and the lead names it.
+    subject_is_baseline = False
+    subject_label = ""
+    try:
+        if str(pair.current.end) < str(pair.baseline.start):
+            subject_is_baseline = True
+            subject_label = f"in {pair.current.label}"
+            pair = dataclasses.replace(pair, current=pair.baseline, baseline=pair.current)
+            current, baseline = baseline, current
+    except (AttributeError, TypeError):  # a pair without windows is described as given
+        pass
 
     group = str((current.get("aggregate") or {}).get("group") or "")
     cur_f = _named(
@@ -237,7 +267,16 @@ def render(
     lines = [cw.describe(pair), ""]
     _avg = next((k for k in deduped if "mean" in k), deduped[0] if deduped else "")
     _lead = (
-        comparative_lead(question, _avg, float(cur_f[_avg]), float(base_f[_avg])) if _avg else ""
+        comparative_lead(
+            question,
+            _avg,
+            float(cur_f[_avg]),
+            float(base_f[_avg]),
+            subject_is_baseline=subject_is_baseline,
+            subject_label=subject_label,
+        )
+        if _avg
+        else ""
     )
     if _lead:
         lines = [_lead, ""] + lines

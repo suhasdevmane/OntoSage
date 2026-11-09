@@ -132,6 +132,15 @@ _ROOM_GROUP = re.compile(
     r"|\banywhere\b|\bsomewhere\b|\bwhere\b|\bany\s+(?:room|space|zone)s?\b",
     re.IGNORECASE,
 )
+#: "compliant with / meets / within the guideline": a verdict against a limit, read as an
+#: exceedance question whose answer is phrased as compliance (`render_exceedance(compliance=)`).
+_COMPLIANCE_WORDS = (
+    r"|\bcompl(?:y|ies|iant|iance)\s+with\b|\bnon[- ]?complian\w*\b"
+    r"|\b(?:meet|meets|meeting|within)\s+(?:the\s+)?(?:\w+\s+)?(?:guidelines?|standards?|limits?)\b"
+)
+#: "breach" was tried and NOT added (2026-11-07): over the 4,060 bank it took 14 questions about
+#: security breaches, procedures and "without breaching service, access or setup limits".
+_COMPLIANCE_RE = re.compile(_COMPLIANCE_WORDS.lstrip("|"), re.IGNORECASE)
 _EXCEED = re.compile(
     r"\b(?:been|was|were|is|are|got|gone|gets|get)\s+(?:too\s+|very\s+)?"
     r"(?:high|elevated|above|over|excessive)\b"
@@ -151,6 +160,9 @@ _EXCEED = re.compile(
     r"(?:ppm|ppb|°|degrees?|db\b|lux\b|%|percent|µg|ug)",
     re.IGNORECASE,
 )
+# COMPLIANCE IS AN EXCEEDANCE QUESTION (2026-11-07). "Is the building compliant with the CO2
+# guideline this month?" was answered with a mean and a range, and no verdict.
+_EXCEED = re.compile(_EXCEED.pattern + _COMPLIANCE_WORDS, re.IGNORECASE)
 _TOTAL = re.compile(
     r"\bhow\s+much\b|\btotal\b|\bin\s+total\b|\baltogether\b"
     r"|\b(?:did|do|does|have|has)\s+(?:we|you|it|the\s+building|(?:floor|level)\s*\d+)\s+us(?:e|ed)\b"
@@ -162,7 +174,10 @@ _TOTAL = re.compile(
     # yesterday?", "the water bill last week", "the cost of energy this week".
     r"|\b(?:electricity|energy|power|water|gas)\b[^.?!]{0,25}?\bcost\b"
     r"|\bcost\s+of\s+(?:the\s+)?(?:electricity|energy|power|water|gas)\b"
-    r"|\b(?:electricity|energy|power|water|gas)\s+(?:bill|spend)\b",
+    r"|\b(?:electricity|energy|power|water|gas)\s+(?:bill|spend)\b"
+    # What it EMITTED is its total times a factor (2026-11-07): "what was the carbon footprint of
+    # the electricity last month?" holds no total word and was summarised as a mean.
+    r"|\bcarbon\s+(?:footprint|emissions?)\b|\bco2e\b|\bemissions?\s+(?:from|of)\b",
     re.IGNORECASE,
 )
 _MAX = re.compile(
@@ -241,6 +256,13 @@ _NOT_AN_AGGREGATE = re.compile(
 )
 
 
+_WHICH_HOUR_RE = re.compile(
+    r"\b(?:which|what)\s+hour\b|\bwhat\s+time\s+of\s+(?:the\s+)?day\b|\bat\s+what\s+time\b"
+    r"|\bwhich\s+time\s+of\s+(?:the\s+)?day\b",
+    re.IGNORECASE,
+)
+
+
 def parse_intent(question: str) -> Optional[AggregateIntent]:
     """The aggregate shape of a question, or None when it is not one.
 
@@ -249,6 +271,13 @@ def parse_intent(question: str) -> Optional[AggregateIntent]:
     "which floor has the most people" holds "most" and no exceedance word.
     """
     q = question or ""
+    # "WHICH HOUR had the highest electricity use yesterday?" asks WHEN, not how high (2026-11-07):
+    # it parsed as a maximum and was answered with each floor's peak reading and "the data set does
+    # not contain hourly consumption values". A when-shape with an extreme word is the profile; on
+    # one named day that is the hourly breakdown (`_one_day`). Measured over the 4,060 bank: the
+    # when-words match 2 questions, neither with an extreme word, so 0 move.
+    if _WHICH_HOUR_RE.search(q) and (_MAX.search(q) or _MIN.search(q)):
+        return AggregateIntent("profile", "building", True, False, False, ())
     if _NOT_AN_AGGREGATE.search(q):
         return None
     floors = tuple(dict.fromkeys(_FLOOR_NUM.findall(q)))
@@ -404,8 +433,13 @@ def resolve_window(
     tz_name: Optional[str],
     latest: bool = False,
     now: Optional[datetime] = None,
+    parts_of_day: bool = False,
 ) -> Optional[Window]:
     """The period the answer covers, or None when neither the pipeline nor the words name one.
+
+    ``parts_of_day`` lets "this morning" / "yesterday afternoon" set the window. It is the lane's
+    own single-window path that asks for it: `comparison_windows` reads "yesterday morning" through
+    this function as a whole DAY and adds the part's hours itself, so the default stays a day.
 
     The pipeline's own bounds win: dialogue has already resolved the phrase once, and a second
     reading of "this week" here would be a second answer to a question requested_interval exists
@@ -465,6 +499,36 @@ def resolve_window(
                 start_dt, end_dt = end_now - timedelta(hours=hours), end_now
             elif re.search(r"\b(?:this|the)\s+past\s+week\b|\bpast\s+week\b", low):
                 start_dt, end_dt = end_now - timedelta(days=7), end_now
+    # A PART OF A DAY BEATS THE PIPELINE'S GUESS (2026-11-07). The pipeline's bounds win above
+    # because dialogue resolved the phrase once -- but for "this morning" dialogue has nothing to
+    # resolve it with, and its guess was the trailing twelve hours. The system's one definition of
+    # the parts of a day decides instead (`requested_interval.part_of_day_bounds`).
+    from orchestrator.services.requested_interval import part_of_day_bounds
+
+    _part = (
+        part_of_day_bounds(
+            question,
+            tz_name,
+            now=to_local(end_now, tz_name) if now is not None else local_now(tz_name),
+        )
+        if parts_of_day
+        else None
+    )
+    if _part:
+        start_dt, end_dt = _stamp(_part[0]), _stamp(_part[1])
+    # "THE WEEK BEFORE LAST" IS TWO WEEKS BACK, whichever window was guessed (2026-11-07): the
+    # rewrite of "and the week before?" holds the words "last week", which the branch above and
+    # the classifier both read as last week, so the follow-up repeated the previous total.
+    from orchestrator.services.requested_interval import _BEFORE_LAST_RE, calendar_period_bounds
+
+    if any(r.search((question or "").lower()) for r in _BEFORE_LAST_RE.values()):
+        _bl = calendar_period_bounds(
+            question,
+            tz_name,
+            now=to_local(end_now, tz_name) if now is not None else local_now(tz_name),
+        )
+        if _bl:
+            start_dt, end_dt = _stamp(_bl[0]), _stamp(_bl[1])
     if start_dt is None or end_dt is None or end_dt <= start_dt:
         return None
     return Window(
@@ -530,9 +594,12 @@ _UNIT_MEASURAND = (
 ASKED_LIMIT = "__asked__"
 
 #: A question about the inside of the building, and one that names the outside (BUG-1584).
+#: "building" is indoor too (2026-11-07): "the average humidity across the building last week" was
+#: answered from a set that held the outdoor sensor, and led with it. A question that mentions
+#: outdoors (below) keeps the outdoor sensor whatever else it says.
 _INDOOR_WORDS = re.compile(
     r"\b(?:rooms?|offices?|labs?|laborator(?:y|ies)|classrooms?|spaces?|indoors?|inside|"
-    r"floors?|zones?|meeting\s+rooms?)\b",
+    r"floors?|zones?|meeting\s+rooms?|building(?:'s)?)\b",
     re.IGNORECASE,
 )
 _OUTDOOR_WORDS = re.compile(
@@ -2240,8 +2307,15 @@ def render_extreme(
     no_limit_note: bool = False,
     band_text: str = "",
     quantity: str = "",
+    asks_extreme: bool = True,
 ) -> str:
-    """The answer to 'which floor/room ... highest/lowest/most/least', with its boundary."""
+    """The answer to 'which floor/room ... highest/lowest/most/least', with its boundary.
+
+    ``asks_extreme`` False: the question named no highest/most/busiest -- "what is the occupancy
+    of the building right now?" -- and a head count then leads with the building's TOTAL, the
+    floors following as the table. It was headed "Floor 5 has the most people in it right now:
+    50" and never stated the total it was asked for (2026-11-07).
+    """
     if not ranked:
         return ""
     # A fallback name arrives with its own article ("the reading"), and every lead below supplies
@@ -2270,6 +2344,12 @@ def render_extreme(
         if peak_at:
             lead += f" ({peak_at})"
         lead += "."
+    elif additive and measurand == "occupancy" and now and not asks_extreme and len(ranked) > 1:
+        _total = sum(g.value or 0 for g in ranked)
+        lead = (
+            f"**{_n(_total)} people are counted in the building right now**, across "
+            f"{len(ranked)} floors; {who} has the most at {_n(top.value)}."
+        )
     elif additive and measurand == "occupancy":
         lead = f"**{who} has the {word} people in it right now: {_n(top.value)}**."
     elif len(ranked) == 1 and not now:
@@ -2404,8 +2484,13 @@ def render_exceedance(
     bands_checked: bool,
     band_text: str = "",
     quantity: str = "",
+    compliance: bool = False,
 ) -> str:
-    """'Has X been high anywhere?' — yes/no against a CITED limit, and where."""
+    """'Has X been high anywhere?' — yes/no against a CITED limit, and where.
+
+    ``compliance``: the question asked whether the building COMPLIES, so the answer's yes and no
+    are the other way round -- readings above the limit are "not fully", none above is "yes".
+    """
     name = quantity or display_name(measurand)
     u = f" {unit}" if unit else ""
     total_readings = sum(g.readings for g in floors) or sum(g.readings for g in ranked_rooms)
@@ -2421,7 +2506,10 @@ def render_exceedance(
         )
     )
     if over_readings == 0:
-        lead = f"**No.** No {name} reading was above {limit} ({cite}) in the period."
+        lead = (
+            f"**{'Yes, within the limit' if compliance else 'No'}.** No {name} reading was above "
+            f"{limit} ({cite}) in the period."
+        )
         if peak and peak.peak_value is not None:
             lead += (
                 f" The highest was {_n(peak.peak_value, 1)}{u}"
@@ -2433,7 +2521,8 @@ def render_exceedance(
     else:
         share = over_readings / total_readings * 100 if total_readings else 0.0
         lead = (
-            f"**Yes.** {name[:1].upper() + name[1:]} was above {limit} ({cite}) on {over_sensors} "
+            f"**{'Not fully' if compliance else 'Yes'}.** {name[:1].upper() + name[1:]} was above "
+            f"{limit} ({cite}) on {over_sensors} "
             f"of {sensors_used} sensors, "
             f"in {over_readings:,} of {total_readings:,} readings "
             f"({'<0.1' if 0 < share < 0.05 else f'{share:.1f}'}%)."
@@ -2515,6 +2604,67 @@ def render_volume(
     return "\n".join(lines).strip()
 
 
+def present_comfort_verdict(
+    question: str,
+    measurand: Optional[str],
+    unit: str,
+    lowest: Optional[float],
+    highest: Optional[float],
+) -> str:
+    """'Is it too warm on floor 3 right now?' answered yes or no against the standards band.
+
+    2026-11-07: the summary gave the floor's average and range and no verdict, though the question
+    is a yes/no. The comfort words and the band are the forecast verdict's own
+    (`window_aggregate._COMFORT_ASKS`, the default standards-table entry), so the two lanes cannot
+    disagree about what "too warm" means. "" when the question names no comfort word, asks about
+    the future (the forecast lane's verdict), or no band is listed: no verdict is invented.
+    """
+    try:
+        from orchestrator.services.forecasting import window_aggregate as wa
+    except Exception:  # pragma: no cover
+        return ""
+    if wa._FUTURE_ASK.search(question or ""):
+        return ""
+    ask = next((a for a in wa._COMFORT_ASKS if a[0].search(question or "")), None)
+    if ask is None or ask[1] != (measurand or "").lower():
+        return ""
+    u_low = (unit or "").strip().lower()
+    if not any(u_low == x or u_low.endswith(x) for x in wa._UNIT_OF.get(ask[1], ())):
+        return ""
+    try:
+        table = json.loads(_STANDARDS_FILE.read_text(encoding="utf-8"))
+        entry = table.get(_DEFAULT_STANDARD) or {}
+        lo_lim, hi_lim = (float(x) for x in entry[ask[1]])
+        standard = str(entry.get("name") or _DEFAULT_STANDARD)
+    except Exception:  # no listed band, no verdict
+        return ""
+    u = f" {unit}" if unit else ""
+    cite = f"the {standard} entry of this system's standards table"
+    if ask[2] == "upper":
+        if highest is None:
+            return ""
+        if highest > hi_lim:
+            return (
+                f"**Yes, in places.** The highest reading, {_n(highest, 1)}{u}, is above the "
+                f"{_n(hi_lim, 1)}{u} upper limit in {cite}."
+            )
+        return (
+            f"**No.** Every reading is under the {_n(hi_lim, 1)}{u} upper limit in {cite}; the "
+            f"highest is {_n(highest, 1)}{u}."
+        )
+    if lowest is None:
+        return ""
+    if lowest < lo_lim:
+        return (
+            f"**Yes, in places.** The lowest reading, {_n(lowest, 1)}{u}, is below the "
+            f"{_n(lo_lim, 1)}{u} lower limit in {cite}."
+        )
+    return (
+        f"**No.** Every reading is above the {_n(lo_lim, 1)}{u} lower limit in {cite}; the "
+        f"lowest is {_n(lowest, 1)}{u}."
+    )
+
+
 def render_summary(
     ranked: Sequence[GroupStat],
     *,
@@ -2575,6 +2725,13 @@ def render_summary(
         where = f"In {only_room},"
     elif place_named and len(ranked) == 1:
         where = f"In {_place_name(group, ranked[0].key)},"
+    elif group == "floor" and len(ranked) == 1:
+        # ONE FLOOR REPORTING IS NOT THE BUILDING (BUG-1686). A whole-building question over a
+        # period in which only one floor had readings was headed "Across the building X averaged
+        # N", with the one-floor limit only in the body. The floor that reported leads, and the
+        # sentence stays true whether the other floors were silent or never carried the quantity.
+        when = "now" if now else "in this period"
+        where = f"On {_place_name(group, ranked[0].key)}, the only floor with readings {when},"
     else:
         where = "Across the building"
     lead = f"**{where} {name} {word} {_n(whole, 1)}{u}**"
@@ -2975,16 +3132,21 @@ def wants_lane(
     # What interval ENERGY over a named period COST (TODO-1646). Only when a cost is asked: an
     # energy total with no cost stays with the period summary, which treats a partial week by
     # day (BUG-936), and this case must not take those questions from it.
-    from orchestrator.services.utility_cost import asks_for_cost
+    from orchestrator.services.utility_cost import asks_for_carbon, asks_for_cost
 
     if (
         intent.stat == "total"
         and kinds
         and kinds <= {"energy"}
         and not intent.now
-        and asks_for_cost(question)
+        and (asks_for_cost(question) or asks_for_carbon(question))
         and _names_a_day_or_period(question)
     ):
+        return intent  # its cost, or its emissions (2026-11-07), is computed from the total
+    # WHEN, for a measured quantity, is the hourly profile -- on one named day the hourly breakdown
+    # (2026-11-07: "which hour had the highest electricity use yesterday?" now parses as a
+    # profile, and no case here claimed one, so it went to a narration that denied hourly data).
+    if intent.stat == "profile" and kinds:
         return intent
     # Interval ENERGY over a COMPLETED period is a sum the store does whole (2026-10-11): "How much
     # electricity did the building use last week?" went to the analytics template, whose narration
@@ -3367,7 +3529,9 @@ async def try_answer(
     )
     if _one_day:
         intent = AggregateIntent("mean", intent.group, True, False, False, intent.floors)
-    window = resolve_window(question, start_date, end_date, tz_name, latest=intent.now, now=now)
+    window = resolve_window(
+        question, start_date, end_date, tz_name, latest=intent.now, now=now, parts_of_day=True
+    )
     if intent.stat == "profile":
         # A pattern needs several days. A pipeline window of a class-length afternoon would give one
         # reading per hour, and "usually" over one day is that day's weather.
@@ -3472,11 +3636,13 @@ async def try_answer(
             intent, question, uuids, storage_map, facts, window, adapter_for, store_key, measurand
         )
         # What it COST, when that was asked: the total x the tariff in force (TODO-1646).
-        from orchestrator.services.utility_cost import append_cost
+        from orchestrator.services.utility_cost import append_carbon, append_cost
 
-        return await append_cost(
+        answer = await append_cost(
             answer, question, measurand, window.start, window.end, tz_name, sparql_exec
         )
+        # What it EMITTED, when that was asked: electricity x the declared grid factor.
+        return await append_carbon(answer, question, measurand, sparql_exec)
 
     if intent.stat == "profile":
         from orchestrator.services import aggregate_profile as _prof
@@ -3645,6 +3811,20 @@ async def try_answer(
     else:
         bands_checked = True
 
+    # A BUILDING AVERAGE IS NOT A RANKING (2026-11-07). "What was the average humidity across the
+    # building last week?" parsed as stat=mean over group=building and reached `render_extreme`,
+    # which headed it "The highest average humidity in the period was 49.9 %, at Building
+    # exterior" -- a superlative nobody asked for, attached to the one sensor outside. A mean with
+    # no extreme word is the building summary: the building figure, its range and each floor.
+    if (
+        intent.stat == "mean"
+        and intent.group == "building"
+        and not (_MAX.search(question or "") or _MIN.search(question or ""))
+        and not _WORST.search(question or "")
+    ):
+        logger.info("[aggregate] a building average with no extreme word -> the summary")
+        intent = AggregateIntent("summary", "floor", True, False, intent.now, intent.floors)
+
     ready, unsupported = await _stores_ready(use, storage_map, adapter_for, store_key)
     aggs: List[SensorAgg] = []
     lat: List[SensorLatest] = []
@@ -3712,7 +3892,13 @@ async def try_answer(
         if not resolution_clamp_s:
             at = await _peak_label(overall, ready, storage_map, store_key, window, tz_name)
         text = render_exceedance(
-            rooms, floors_only, threshold=limit_t, peak=overall, peak_at=at, **common
+            rooms,
+            floors_only,
+            threshold=limit_t,
+            peak=overall,
+            peak_at=at,
+            compliance=bool(_COMPLIANCE_RE.search(question or "")),
+            **common,
         )
         figures = {
             **group_figures(rooms),
@@ -3733,6 +3919,15 @@ async def try_answer(
         )
         if not text:
             return None  # the renderer withheld it; the lane must not ship an empty answer
+        _verdict = present_comfort_verdict(
+            question,
+            measurand,
+            unit,
+            min((g.low for g in ranked if g.low is not None), default=None),
+            max((g.high for g in ranked if g.high is not None), default=None),
+        )
+        if _verdict:
+            text = f"{_verdict}\n\n{text}"
         figures = group_figures(ranked)
     else:
         at = None
@@ -3745,6 +3940,11 @@ async def try_answer(
             floors_seen=len({facts[u].floor for u in answered if facts[u].floor}),
             additive=additive,
             no_limit_note=no_limit_note,
+            asks_extreme=bool(
+                _MAX.search(question or "")
+                or _MIN.search(question or "")
+                or _WORST.search(question or "")
+            ),
             **common,
         )
         figures = group_figures(ranked)

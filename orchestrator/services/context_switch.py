@@ -409,8 +409,18 @@ _IT_IS_THE_QUANTITY_RE = re.compile(
     re.IGNORECASE,
 )
 _PLACE_WORD_RE = re.compile(r"\bthere\b|\b(?:room|space|place|floor|area)\b", re.IGNORECASE)
+#: "the service" after a reply naming ONE record (2026-11-07): "Who carries out the service?"
+#: after "...next due 16 December 2026 - SVC-14 (Lift LOLER examination)" was asked "which
+#: service?", although the reply had just named the one. A definite "the <record noun>" is that
+#: record, exactly as "it" is; the resolver still runs only when the reply named a single record
+#: and no place, and the follow-up names neither.
 _RECORD_ANAPHOR_RE = re.compile(
-    r"\bit\b|\b(?:that|this)\s+(?:one|record|work\s+order|order|job|task|incident|entry|item)\b",
+    r"\bit\b|\b(?:that|this)\s+(?:one|record|work\s+order|order|job|task|incident|entry|item)\b"
+    r"|\bthe\s+(?:service|inspection|examination|test|contract|booking|permit|work\s+order|job|"
+    r"task|incident|session|event|record)\b"
+    # ...and only as a noun phrase of its own: "the service schedule" is a register, not SVC-14.
+    r"(?=\s*(?:[?.!,;]|$)|\s+(?:due|done|carried|booked|run|held|scheduled|by|for|on|at|in|last|"
+    r"next|to|was|is|be|happen|take|start|end|finish|expire|renew|cost|take|need|have|has)\b)",
     re.IGNORECASE,
 )
 
@@ -624,7 +634,10 @@ _ELLIPTICAL_SUPERLATIVE_RE = re.compile(
 #: Generic English quantity words -- what a superlative can be OF. No building's vocabulary.
 _QUANTITY_WORD_RE = re.compile(
     r"\b(?:electricity|energy|power|water|gas|heating|temperature|co2|carbon\s+dioxide|humidity|"
-    r"noise|occupancy|people|waste|lighting|illuminance)\b",
+    r"noise|occupancy|people|waste|lighting|illuminance"
+    # COUNTED THINGS (2026-11-07): "Which room has the most?" after "How many lectures are there
+    # this week?" lost the lectures and was declined.
+    r"|lectures|sessions|classes|bookings|events|work\s+orders|incidents|alarms|faults|visitors)\b",
     re.IGNORECASE,
 )
 _PERIOD_PHRASE_RE = re.compile(

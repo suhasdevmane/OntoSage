@@ -545,7 +545,12 @@ Your Answer:"""
             # the routing contract said so this turn, and the word "cost" must not send the fetch
             # to the cost register's monthly lines instead.
             _ir = getattr(state, "intermediate_results", None) or {}
-            _metered_cost = "metered_cost_is_computed" in (_ir.get("concept_rules_applied") or [])
+            # ...and so are its emissions (2026-11-07): "carbon footprint" matched the
+            # sustainability-target register and the meters were never read.
+            _metered_cost = bool(
+                {"metered_cost_is_computed", "metered_carbon_is_computed"}
+                & set(_ir.get("concept_rules_applied") or [])
+            )
             deterministic = None if _metered_cost else await self._whole_register(state, user_query)
             if deterministic is not None:
                 return deterministic
@@ -1922,12 +1927,28 @@ Your Answer:"""
         try:  # BUG-589: completeness of an overdue answer is not left to the narration
             from orchestrator.services.requested_interval import building_local_now as _bln
 
-            if not _rows_answer:
+            # ONLY ABOUT THE REGISTER THE ANSWER IS ABOUT (2026-11-07). "When does the cleaning
+            # contract expire?" was narrated from the contract register and then given a list of
+            # overdue CLEANING TASKS, because the primary register was the cleaning one. BUG-589's
+            # line completes an answer that names some of these records; one that names none of
+            # them is about another register, and the line would be noise appended to it.
+            from orchestrator.services.register_facts import _ident as _rid
+
+            _names_primary = any(
+                (i := _rid(r)) and i != "?" and i in _narration for r in _primary_rows
+            )
+            if not _rows_answer and _names_primary:
                 _narration += completeness_line(
                     _narration,
                     passed_due_not_marked(
                         _primary_rows, user_query, _bln(getattr(state, "building_id", None)).date()
                     ),
+                )
+            if not _rows_answer:
+                from orchestrator.services.register_facts import passed_end_line
+
+                _narration += passed_end_line(
+                    _narration, _primary_rows, _bln(getattr(state, "building_id", None)).date()
                 )
         except Exception as exc:  # pragma: no cover - the narration still answers
             logger.warning(f"[sparql] completeness line skipped: {type(exc).__name__}: {exc}")

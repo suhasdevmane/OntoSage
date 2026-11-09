@@ -66,7 +66,59 @@ _FAMILIES: List[Tuple[str, str, re.Pattern, str]] = [
         re.compile(r"\bwi[- ]?fi\b|\bwifi\b|\bnetwork\b|\binternet\b|\beduroam\b", re.IGNORECASE),
         "network service",
     ),
+    # AMENITIES WITH A STATUS RECORD (TODO-1642, 2026-11-07). "Is the water fountain on floor 2
+    # working?" was answered "Yes – the water fountain on floor 2 is operating" from the FLOOR'S
+    # water-flow meter while the fountain's own status record said out of service. Each class
+    # below carries ontosage:AssetStatus records in the building that has them; one that has
+    # none gets the lane's honest decline. Strict state words only (`_STRICT_STATE_KINDS`).
+    (
+        "water_point",
+        "DrinkingWater",
+        re.compile(
+            r"\bwater\s+(?:fountains?|points?|dispensers?|coolers?|stations?)\b"
+            r"|\bdrinking[- ]water\b|\bbottle[- ]?fill\w*|\brefill\s+stations?\b",
+            re.IGNORECASE,
+        ),
+        "drinking-water point",
+    ),
+    (
+        "accessibility",
+        "AccessibilityFeature",
+        re.compile(
+            r"\bhearing\s+loops?\b|\bpower[- ]assisted\s+doors?\b|\bautomatic\s+doors?\b"
+            r"|\bstep[- ]free\s+(?:entrances?|access)\b|\baccessibility\s+features?\b",
+            re.IGNORECASE,
+        ),
+        "accessibility feature",
+    ),
+    (
+        "study_area",
+        "StudyArea",
+        re.compile(r"\bstudy\s+(?:areas?|spaces?)\b", re.IGNORECASE),
+        "study area",
+    ),
+    (
+        "first_aid",
+        "FirstAidPoint",
+        re.compile(r"\bdefibrillators?\b|\baeds?\b|\bfirst[- ]aid\s+points?\b", re.IGNORECASE),
+        "first-aid point",
+    ),
 ]
+
+#: The amenity families answer only a question about whether the thing WORKS. "Is a study area
+#: available?" asks about seats, and "is drinking water available on floor 3?" asks where one is;
+#: neither is a service state, so "available", "up" and "running" do not claim them.
+_STRICT_STATE_KINDS = frozenset({"water_point", "accessibility", "study_area", "first_aid"})
+#: Bare "work" and "down" are left out on measurement (4,060 bank, 2026-11-07): "a study area
+#: likely to WORK best as a base", "one hour of quiet WORK" and "do the automatic doors slow
+#: DOWN entry" asked nothing about whether the thing works. With them out, the bank's matches
+#: are the four that ask it ("is the hearing loop ... currently in service?").
+_STRICT_STATE_RE = re.compile(
+    r"\b(?:working|operational|out\s+of\s+(?:service|order)|broken|faulty"
+    r"|in\s+service|functioning|status)\b",
+    re.IGNORECASE,
+)
+_FLOOR_IN_QUESTION_RE = re.compile(r"\b(?:floor|level)\s*(\d+)\b", re.IGNORECASE)
 
 #: Words that make a question about STATE rather than about existence or location.
 #: "where is the lift" is wayfinding; "is the lift working" is this lane.
@@ -136,16 +188,35 @@ def classify_asset_question(question: str) -> Optional[str]:
     if _SCHEDULE_RE.search(q):
         return "schedule"
     if not _STATE_RE.search(q):
+        # "Which rooms have AV PROBLEMS?" (2026-11-07) holds no state word and reached the
+        # maintenance lane, which found "no AV problems" beside a projector recorded failed. A
+        # family noun directly followed by problems/issues is a state question; anywhere else
+        # those words named something wider ("a network or power problem": 4 bank questions).
+        for kind, _cls, pattern, _noun in _FAMILIES:
+            if kind in _STRICT_STATE_KINDS:
+                continue
+            if re.search(rf"(?:{pattern.pattern})\s+(?:problems?|issues?)\b", q, re.IGNORECASE):
+                return kind
         return None
     for kind, _cls, pattern, _noun in _FAMILIES:
         if pattern.search(q):
+            if kind in _STRICT_STATE_KINDS and not _STRICT_STATE_RE.search(q):
+                continue
             return kind
     return None
 
 
 def is_asset_state_question(question: str) -> bool:
-    """True when this lane can speak to the question."""
-    return classify_asset_question(question) is not None
+    """True when this lane can speak to the question.
+
+    A building-wide fault question ("is anything faulty?") is this lane's too (BUG-1682): it is
+    answered from the same status records and outage episodes, plus the alarm log, by
+    `fault_overview`. One predicate, so the rule that routes it here and the rule that sends an
+    unservable asset question away cannot disagree.
+    """
+    from orchestrator.services.fault_overview import is_building_fault_question
+
+    return classify_asset_question(question) is not None or is_building_fault_question(question)
 
 
 def _age_hours(observed: str, now: datetime) -> Optional[float]:
@@ -377,6 +448,17 @@ class AssetStateService:
             return self._decline("assets of that kind", "", for_admin=for_admin)
         _k, class_local, _pat, noun = family
         rows = await self._select(self._status_query(class_local))
+        # A FLOOR THE QUESTION NAMES narrows the answer when the records' own labels name floors
+        # ("Bottle-filling station — Floor 2 (one end)"). Only then: a label that names no floor
+        # is never guessed to be on one, and a floor no label names leaves the whole family.
+        where = ""
+        _fm = _FLOOR_IN_QUESTION_RE.search(question or "")
+        if rows and _fm:
+            _on = re.compile(rf"\b(?:floor|level)\s*{re.escape(_fm.group(1))}\b", re.IGNORECASE)
+            _scoped = [r for r in rows if _on.search(r.get("label") or "")]
+            if _scoped:
+                rows = _scoped
+                where = f" on floor {_fm.group(1)}"
         if not rows:
             return self._decline(
                 f"{noun}s",
@@ -451,14 +533,17 @@ class AssetStateService:
         age_phrase = "out of service since" if live else "last checked"
         rendered_age = _human_age(oldest)
         if not broken:
-            text = f"**All {total} {noun}(s) are operational** " f"({age_phrase} {rendered_age})."
+            text = (
+                f"**All {total} {noun}(s){where} are operational** "
+                f"({age_phrase} {rendered_age})."
+            )
         else:
             names = ", ".join(
                 (e["label"] or e["asset"]) + (f" ({e['reason']})" if e.get("reason") else "")
                 for e in broken[:4]
             )
             text = (
-                f"**{len(broken)} of {total} {noun}(s) are not operational**: {names}"
+                f"**{len(broken)} of {total} {noun}(s){where} are not operational**: {names}"
                 f" ({age_phrase} {rendered_age})."
             )
             contact = next((e["contact"] for e in broken if e["contact"]), "")
@@ -611,6 +696,10 @@ class AssetStateService:
         ``for_admin`` adds how to record what is missing; every other reader gets the decline.
         """
         now = now or datetime.now(timezone.utc)
+        from orchestrator.services import fault_overview
+
+        if fault_overview.is_building_fault_question(question):
+            return await self._answer_faults(question)
         kind = classify_asset_question(question)
         if kind is None:
             return {
@@ -625,6 +714,29 @@ class AssetStateService:
         if kind == "closure":
             return await self._answer_closure(question, now)
         return await self._answer_status(kind, question, now, for_admin=for_admin)
+
+    async def _answer_faults(self, question: str) -> Dict[str, Any]:
+        """The building-wide fault overview (BUG-1682), dates shown in the building's own time."""
+        from orchestrator.services import fault_overview
+        from orchestrator.services.requested_interval import building_tz, to_local
+        from shared.config import settings
+
+        tz = building_tz()
+
+        def _fmt(d: datetime) -> str:
+            local = to_local(d, tz)
+            return f"{local.day} {local.strftime('%b %Y')}"
+
+        out = await fault_overview.answer(
+            question,
+            self._sparql,
+            self._ns,
+            self._events,
+            building=str(getattr(settings, "BUILDING_NAME", "") or ""),
+            fmt_local=_fmt,
+        )
+        out["kind"] = "fault_overview"
+        return out
 
 
 __all__ = [

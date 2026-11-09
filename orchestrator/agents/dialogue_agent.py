@@ -128,6 +128,13 @@ _MEASURED_CONDITION_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: A best/worst ranking asked for the present: a register records typical patterns, not now.
+_LIVE_RANKING_RE = re.compile(
+    r"\b(?:best|worst|most\s+comfortable|least\s+comfortable)\b[^?]{0,40}?"
+    r"\b(?:right\s+now|now|at\s+the\s+moment|currently|today|this\s+(?:morning|afternoon|evening))\b",
+    re.IGNORECASE,
+)
+
 
 # "now", "now-1d", "now-24h", "now-2w" — the relative forms the intent prompt
 # invites the LLM to produce for a time bound.
@@ -1348,9 +1355,18 @@ class DialogueAgent:
             or measured_reading_question(user_query)
             or comfort_reading_of_a_named_room(user_query)
         )
+        # ...or a best/worst ranking asked for NOW (2026-11-07, BUG-1446's shape). "Where is the
+        # worst place to work right now?" matched WorkspaceProfile ("place to work") and was
+        # answered with the 28-row register table, which records typical patterns, not the
+        # present. "Right now" is a ranking on live conditions, which only deliberation makes.
+        # Measured over the 4,060 bank: 1 question moves ("best room to record a podcast this
+        # afternoon - quietest ...", which had matched the generic Record class on "record").
         _ranks_by_measurement = bool(
             DELIBERATE_RE.search(user_query or "")
-            and _MEASURED_CONDITION_RE.search(user_query or "")
+            and (
+                _MEASURED_CONDITION_RE.search(user_query or "")
+                or _LIVE_RANKING_RE.search(user_query or "")
+            )
         )
         if (
             _held_record

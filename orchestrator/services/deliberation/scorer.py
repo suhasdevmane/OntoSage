@@ -82,6 +82,15 @@ DEFAULT_PREFERENCE: Dict[str, Direction] = {
     "illuminance": Direction.MAXIMIZE,
 }
 
+#: The comfort-BAND modalities above, for the one decision where the band itself is the
+#: preference: "the best place to work for temperature and humidity" (SELECT_ONE) asks for the
+#: comfortable MIDDLE, which is what NEAR_VALUE scores against the anchor band. It says nothing
+#: about which END is better, so "rank the rooms by temperature" still asks (BUG-1685).
+COMFORT_BAND_SELECT: Dict[str, Direction] = {
+    "temperature": Direction.NEAR_VALUE,
+    "humidity": Direction.NEAR_VALUE,
+}
+
 # DELIBERATELY UNANCHORED (V5-T10): energy_submeter (kWh), water_flow (L) and
 # parking_free (bays). Comfort modalities have standards bands that hold in any
 # building; consumption and count quantities do not — "good" kWh depends on floor

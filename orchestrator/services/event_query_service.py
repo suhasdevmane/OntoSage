@@ -62,7 +62,11 @@ _KIND_RES: List[Tuple[str, re.Pattern]] = [
         "access_summary",
         re.compile(
             r"\b(entrance|footfall|foot ?traffic|how busy (was|is) the building|people (came|come) in"
-            r"|visitors? (came|arrived|counted)|arrivals)\b",
+            r"|visitors? (came|arrived|counted)|arrivals"
+            # 2026-11-07: "How many people visited the building yesterday?" was told the building
+            # keeps no record of that, in a sentence listing entrance counts. 0 of 4,060 move.
+            r"|how many (people|visitors|occupants|staff|students) (visited|came in|came into|"
+            r"entered|arrived|walked in)|(visited|entered) the building|number of visitors)\b",
             re.IGNORECASE,
         ),
     ),

@@ -322,6 +322,62 @@ def since_morning_pair(
     )
 
 
+#: "yesterday at the same time", "this time yesterday", "the same time last week" (2026-11-07):
+#: a follow-up "how does that compare with yesterday at the same time?" fetched the whole of
+#: yesterday and then said "the data set does not include a reading from yesterday at the same
+#: time", over readings every five minutes.
+_SAME_TIME_RE = re.compile(
+    r"\b(?:(?:at\s+)?(?:the\s+)?same\s+time|this\s+time)\s+(yesterday|last\s+week)\b"
+    r"|\b(yesterday|last\s+week)\s+at\s+(?:the\s+)?same\s+time\b",
+    re.IGNORECASE,
+)
+_COMPARE_FRAME_RE = re.compile(
+    r"\bhow\s+(?:does|do|did|is|was)\b|\bcompare[sd]?(?:\s+(?:with|to|against))?\b|"
+    r"^\s*(?:is|was|are|were|has|have)\b|"
+    r"\b(?:higher|lower|warmer|colder|cooler|hotter|noisier|quieter|busier|more|less)\s+than\b|"
+    r"\b(?:with|to|against|than)\s*$",
+    re.IGNORECASE,
+)
+
+
+def same_time_pair(
+    question: str, tz_name: Optional[str] = None, now: Optional[datetime] = None
+) -> Optional[WindowPair]:
+    """The last hour against the same hour a day (or a week) earlier, or None."""
+    m = _SAME_TIME_RE.search(question or "")
+    if not m:
+        return None
+    from orchestrator.services.aggregate_lane import STAMP, Window
+    from orchestrator.services.requested_interval import store_now, to_local, to_store
+
+    back = (
+        timedelta(days=7)
+        if "week" in (m.group(1) or m.group(2) or "").lower()
+        else timedelta(days=1)
+    )
+    at = now or store_now()
+    local_now = to_local(at, tz_name)
+    cur_local = local_now - timedelta(hours=1)
+    base0, base1 = cur_local - back, local_now - back
+    core = _SAME_TIME_RE.sub(" ", question or "")
+    core = _COMPARE_FRAME_RE.sub(" ", core)
+    core = " ".join(core.replace("?", " ").split()).strip(" ,.")
+    when = "the same hour a week earlier" if back.days == 7 else "the same hour yesterday"
+    return WindowPair(
+        current=Window(
+            to_store(cur_local, tz_name).strftime(STAMP),
+            at.strftime(STAMP),
+            f"the last hour, {cur_local:%H:%M}–{local_now:%H:%M} (building time)",
+        ),
+        baseline=Window(
+            to_store(base0, tz_name).strftime(STAMP),
+            to_store(base1, tz_name).strftime(STAMP),
+            f"{when}, {base0:%a %d %b %H:%M}–{base1:%H:%M} (building time)",
+        ),
+        lane_question=f"What was the average of {core}?" if core else "",
+    )
+
+
 def resolve_pair(
     question: str,
     start_date: Optional[str] = None,
@@ -338,6 +394,9 @@ def resolve_pair(
     since = since_morning_pair(question, tz_name, now)
     if since is not None:
         return since
+    same = same_time_pair(question, tz_name, now)
+    if same is not None:
+        return same
 
     halves = split_question(question)
     if not halves:

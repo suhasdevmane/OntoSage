@@ -140,10 +140,12 @@ def test_a_phrase_asking_to_AVOID_something_is_left_unmapped():
     assert [s.phrase for s in ir.signals] == ["avoids the noisiest areas"]
 
 
-def test_a_working_ranking_does_not_silently_gain_a_criterion():
-    """The salvage runs ONLY when nothing mapped. When something did, the unmapped extras
-    are dropped and declared as before — a ranking that works today must not quietly start
-    scoring on a word the compiler had set aside."""
+def test_a_named_criterion_beside_a_mapped_one_is_kept_and_declared():
+    """BUG-1685 (2026-11-07). This test used to require that "somewhere cool" be DROPPED here
+    and declared "doesn't match anything this building senses" -- false for a building that
+    senses temperature, and the reader asked for a cool room. A short phrase naming a sensed
+    modality is the reader's criterion. It is not gained QUIETLY: it carries its source phrase,
+    which is what the dossier prints beside it."""
     ir = _compile(
         {
             "decision": "select_one",
@@ -157,8 +159,9 @@ def test_a_working_ranking_does_not_silently_gain_a_criterion():
         },
         "a quiet, cool room",
     )
-    assert [c.modality for c in ir.constraints] == ["noise"]
-    assert [s.phrase for s in ir.signals] == ["somewhere cool"]
+    assert [c.modality for c in ir.constraints] == ["noise", "temperature"]
+    assert ir.constraints[1].source_phrase == "somewhere cool"
+    assert ir.signals == []
 
 
 # ── row 61: a route is not a space ───────────────────────────────────────────────────────

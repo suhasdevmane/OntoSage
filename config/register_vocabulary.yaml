@@ -37,6 +37,19 @@ concepts:
     exclude: [for]
     stamps: [recordOwner]
 
+  # WHO DOES THE WORK (2026-11-07). "Who carries out the service?" (SVC-14) was told "this
+  # register does not record carries": the verb phrase is a request for the party that performs
+  # it, which the service schedule and the contracts record as the provider. Phrases only, plus
+  # the word itself -- "contractor" and "supplier" are left to the columns that already carry them.
+  provider:
+    plain: provider
+    shape: who
+    question: [provider, providers]
+    phrases: ["carries out", "carry out", "carried out by", "who does", "who performs", "performed by", "who services", "who inspects", "who tests"]
+    columns: [provider, contractor, supplier, vendor]
+    exclude: []
+    stamps: []
+
   due:
     plain: next due date
     shape: when

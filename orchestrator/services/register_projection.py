@@ -705,6 +705,16 @@ def _record_period(
     return start, end, f"{start:%B %Y}", m.span()
 
 
+def _one_value(rows: List[Dict], col: str) -> bool:
+    """True when every record that carries ``col`` carries the same date in it."""
+    return len({_value(r, col)[:10] for r in rows if _as_date(_value(r, col))}) == 1
+
+
+def _per_record(rows: List[Dict], dated: Sequence[str]) -> List[str]:
+    """The dated columns whose value differs between records."""
+    return [c for c in dated if c != "effectiveFrom" and not _one_value(rows, c)]
+
+
 def _period_filter(
     rows: List[Dict], columns: Sequence[str], text: str, today: Optional[date]
 ) -> Tuple[Optional[str], Optional[Set[int]], str]:
@@ -770,6 +780,17 @@ def _period_filter(
             spans.append(expiry_m.span())
     elif done and _DONE_WORDS_RE.search(text or ""):
         chosen, end_col = done[0], None
+    elif (
+        "effectiveFrom" in dated and _one_value(rows, "effectiveFrom") and _per_record(rows, dated)
+    ):
+        # A DATE EVERY RECORD SHARES IS THE DOCUMENT'S, NOT THE RECORD'S (2026-11-07). The
+        # timetable stamps its register version (effective_from 2026-09-01) on all 1,682
+        # sessions, and "how many lectures are there this week?" was filtered on it: "none of
+        # the records match", over a week holding eighty sessions. Each session's own date
+        # (effectiveDate) says when it happens.
+        varied = _per_record(rows, dated)
+        chosen = "effectiveDate" if "effectiveDate" in varied else varied[0]
+        end_col = None
     elif "effectiveFrom" in dated:
         chosen = "effectiveFrom"
         # Overlap ("in force during") unless the question names the start itself.
@@ -1510,6 +1531,10 @@ def _field_columns(res: Resolution, skip: Sequence[str] = ()) -> List[str]:
     return cols + [c for c in res.named if c not in cols and c not in skip]
 
 
+#: A column that says when a record ENDS or falls due.
+_ENDING_COL_RE = re.compile(r"effectiveTo|(?:^|[^a-z])end|expir|until|[Dd]ue$|deadline")
+
+
 def _row_line(
     row: Dict,
     cols: Sequence[str],
@@ -1517,6 +1542,7 @@ def _row_line(
     extra: Sequence[str] = (),
     shared: Optional[Dict[str, str]] = None,
     describe: Sequence[str] = (),
+    today: Optional[date] = None,
 ) -> str:
     ident, name = _ident(row), _value(row, "label")
     head = f"**{ident}**" + (f" — {name}" if name and name != ident else "")
@@ -1526,7 +1552,14 @@ def _row_line(
     for col in cols:
         cell = _cell(row, col, shared or {})
         if cell:
-            bits.append(f"{_label(col)}: {_show(cell)}")
+            # AN END THAT HAS PASSED IS SAID TO HAVE PASSED (2026-11-07). "When does the cleaning
+            # contract expire?" listed "effective to: 4 November 2026" three days after it, and the
+            # narration beside it said the contract was "still in force until that date".
+            passed = ""
+            d = _as_date(cell) if today is not None and _ENDING_COL_RE.search(col) else None
+            if d is not None and d < today:
+                passed = " (already passed)"
+            bits.append(f"{_label(col)}: {_show(cell)}{passed}")
     if show_status and _value(row, STATUS):
         bits.append(f"status: {normalise_value(_value(row, STATUS))}")
     bits += list(extra)
@@ -1888,7 +1921,7 @@ def _compose(
     lines = [lead]
     if not rows:
         return lines
-    if shape == "count" and len(rows) > MAX_ANSWER_ROWS:
+    if shape in ("count", "exists") and len(rows) > MAX_ANSWER_ROWS:
         return lines[:-1] + [lead.rstrip(":") + "."]  # a count of a big register, not a list
     lines.append("")
     who_cols = [c for k in res.concepts if k.shape == "who" for c in res.fields.get(k.name, [])]
@@ -1928,11 +1961,16 @@ def _compose(
                         show_status,
                         shared=res.shared,
                         describe=describe,
+                        today=today,
                     )
                 )
     else:
         for row in rows[:MAX_LISTED]:
-            lines.append(_row_line(row, shown, show_status, shared=res.shared, describe=describe))
+            lines.append(
+                _row_line(
+                    row, shown, show_status, shared=res.shared, describe=describe, today=today
+                )
+            )
         if len(rows) > MAX_LISTED:
             lines.append(f"- … and {len(rows) - MAX_LISTED} more.")
     if res.prep is not None and res.prep.dropped:
@@ -2160,7 +2198,13 @@ def _ineligible(res: Resolution, question: str, partial: bool) -> str:
         return "the conditions named select no record together"
     if not res.structured and shape != "count":
         return "nothing but free-text words to go on"
-    if shape != "count" and not res.group_col and len(res.selected) > MAX_ANSWER_ROWS:
+    # "Are any ... scheduled?" is answered by "Yes, N records", not by the list (2026-11-07: the
+    # timetable grew to 1,682 sessions and the yes/no went to the narration as "too many to list").
+    if (
+        shape not in ("count", "exists")
+        and not res.group_col
+        and len(res.selected) > MAX_ANSWER_ROWS
+    ):
         return "too many records to list"
     return _unfit(res, shape)
 
@@ -2722,18 +2766,39 @@ async def answer_before_narration(
         partial
     ):  # two registers merged, or a scoped part of one: a count of it is not the register's
         return ""
+    det = deterministic_answer(rows, question, register_label, today, register_terms=register_terms)
+    # A QUESTION THAT NAMES A KIND OF RECORD IS ABOUT THAT KIND (2026-11-07). "Are any fire doors
+    # faulty?" is shaped like a whole-subject state question ("any ... faulty"), and the
+    # cross-register overview answered it "No - not everything is up to date: 16 records are
+    # overdue", listing fire exits and the alarm panel. The register resolves it to the one fire
+    # door with an open defect (FSA-018). When the rows pin a kind or value, that answer leads.
+    if det and _names_a_kind(rows, question, register_label, today, register_terms):
+        return det
     cross = await cross_register_answer(
         question, rows, register_label, register_name, classes, fetch_rows, today
     )
     return (
         cross
-        or deterministic_answer(
-            rows, question, register_label, today, register_terms=register_terms
-        )
+        or det
         or out_of_scope_decline(
             rows, question, register_label, today, register_terms=register_terms
         )
     )
+
+
+def _names_a_kind(
+    rows: List[Dict],
+    question: str,
+    register_label: str,
+    today: Optional[date],
+    register_terms: Sequence[str],
+) -> bool:
+    """True when the question pins a recorded kind or value of the register's records."""
+    try:
+        res = resolve(rows, question, register_label, today, register_terms=register_terms)
+    except Exception:  # pragma: no cover - the overview path still answers
+        return False
+    return bool(res.other_filters)  # a kind, a value or a numbered place the records carry
 
 
 _CROSS_SOURCE_RE = re.compile(

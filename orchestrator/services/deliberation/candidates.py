@@ -266,11 +266,19 @@ def enumerate_candidates(
     if _host_kind:
         hosts = {a.space_iri for a in schema.amenities if a.kind == _host_kind}
         logger.info(f"[candidates] scoped to the {len(hosts)} space(s) hosting a {_host_kind}")
+    kind_scope = set(getattr(admission, "kind_spaces", None) or ())
+    if kind_scope:
+        logger.info(
+            f"[candidates] scoped to the {len(kind_scope)} space(s) whose names say "
+            f"'{getattr(admission, 'kind_phrase', '')}'"
+        )
     scoped = []
     for s in schema.spaces:
         if admission.floor_anchor and s.floor != admission.floor_anchor:
             continue
         if hosts is not None and s.space_iri not in hosts:
+            continue
+        if kind_scope and s.space_iri not in kind_scope:
             continue
         if admission.space_anchor and s.space_iri != admission.space_anchor:
             continue

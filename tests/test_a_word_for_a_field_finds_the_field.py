@@ -226,7 +226,10 @@ def test_the_lane_asks_the_rows_before_it_asks_the_model():
 def test_a_composed_answer_is_not_given_the_narration_guards():
     """Those guards repair a NARRATION; appending to a projected answer would only restate it."""
     src = _lane_source()
-    assert src.count("if not _rows_answer:") == 2
+    # 2026-11-07: the completeness line's condition gained "and _names_primary" (it appends only
+    # to an answer about the primary register), and a third narration guard was added
+    # (`passed_end_line`, BUG-1715); every one of them still skips a composed answer.
+    assert src.count("if not _rows_answer:") + src.count("if not _rows_answer and ") == 3
 
 
 def test_the_lane_hands_over_only_a_whole_register():

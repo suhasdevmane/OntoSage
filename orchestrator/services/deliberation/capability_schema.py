@@ -111,6 +111,11 @@ class AdmissionResult:
     #: an amenity KIND the question scopes to ("the quietest study area"): rank only the spaces
     #: that host one. Not a space name -- looked up as one, "StudyArea" was reported unknown.
     host_kind_anchor: Optional[str] = None
+    #: a KIND of space the question ranks within ("which meeting room is best"): the IRIs of the
+    #: spaces whose names carry the phrase, and the phrase itself. Not one space -- read as a
+    #: space name, "Meeting Room" matched ten labels and the reader was asked which one.
+    kind_spaces: List[str] = field(default_factory=list)
+    kind_phrase: str = ""
     coverage: Dict[str, Dict[str, int]] = field(default_factory=dict)
     #: v2 — facet key -> executable | partial | not_assessable. Empty for every v1 plan.
     facet_admission: Dict[str, str] = field(default_factory=dict)
@@ -357,6 +362,8 @@ def validate(
 
     # 2. spatial anchors must resolve against the building's own inventory
     floor_anchor = amenity_anchor = space_anchor = host_kind_anchor = None
+    kind_spaces: List[str] = []
+    kind_phrase = ""
     for q in cqir.spatial:
         if q.relation == SpatialRelation.ON_FLOOR:
             floor_anchor = _norm_floor(q.anchor, schema.floors)
@@ -437,6 +444,21 @@ def validate(
                     for s in schema.spaces
                     if _id_re.search(_local(s.space_iri)) or _id_re.search(s.label or "")
                 ]
+            # A PHRASE SEVERAL SPACES' NAMES CARRY, WITH NO ROOM ID IN IT, IS A KIND OF SPACE
+            # (gate case #14, 2026-11-07). "Which meeting room is best right now for a group of
+            # eight" compiled to IN_SPACE 'Meeting Room'; ten labels carry it, and admission asked
+            # "which one?" of a question that asks the building to choose among them. Every
+            # decision this lane makes ranks or selects over a set, so the set is the answer to
+            # the question admission was asking. Only IN_SPACE: "next to the meeting room" with
+            # ten matches still names one place, and asking which is right there.
+            if (
+                q.relation == SpatialRelation.IN_SPACE
+                and len(matches) > 1
+                and not re.search(r"\d", token)
+            ):
+                kind_spaces = sorted(set(matches))
+                kind_phrase = q.anchor.strip()
+                continue
             if len(matches) == 1:
                 space_anchor = matches[0]
             elif not matches:
@@ -469,6 +491,8 @@ def validate(
             cqir, schema, catalogue, coverage, missing, floor_anchor, amenity_anchor, space_anchor
         )
         result.host_kind_anchor = host_kind_anchor
+        result.kind_spaces = kind_spaces
+        result.kind_phrase = kind_phrase
         return result
     return AdmissionResult(
         verdict=ADMIT,
@@ -476,6 +500,8 @@ def validate(
         amenity_anchor=amenity_anchor,
         space_anchor=space_anchor,
         host_kind_anchor=host_kind_anchor,
+        kind_spaces=kind_spaces,
+        kind_phrase=kind_phrase,
         coverage=coverage,
     )
 

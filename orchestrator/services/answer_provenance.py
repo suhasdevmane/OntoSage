@@ -113,6 +113,7 @@ def render(
     question: str = "",
     for_admin: bool = False,
     inline: bool = False,
+    declined: bool = False,
 ) -> Optional[str]:
     """Read an evidence record back as prose, or None when there is nothing to read.
 
@@ -140,6 +141,14 @@ def render(
 
     status = str(record.get("status") or "")
     operation = str(record.get("operation") or "")
+    # A DECLINE CLAIMS NOTHING, so its panel says that, whatever the lane read (CAVEAT-1708,
+    # CAVEAT-1499). "There is no air-pressure sensor in Room 2.01" was shown with "Kind of claim:
+    # observed — read from an instrument" and nine sources -- the room's OTHER sensors, which the
+    # lane fetched while looking. The record describes what was READ; this describes what the
+    # answer CLAIMS, so the sources are listed as what was looked at, not as what backs a figure.
+    if declined:
+        status, operation = "not_assessable", ""
+        record = dict(record, source_tier="")
     if status or operation:
         kind = {
             "observed": "read from an instrument",
@@ -200,7 +209,8 @@ def render(
 
     sources = record.get("sources") or []
     if sources:
-        lines.append(f"- **Sources ({len(sources)}):**")
+        _head = "Looked at while answering" if declined else "Sources"
+        lines.append(f"- **{_head} ({len(sources)}):**")
         for src in sources[:8]:
             # D15 (QA-trial plan, 2026-10-02): this printed `source_id` verbatim -- a bare
             # timeseries UUID or a raw record IRI in front of every reader, BUG-1407's shape

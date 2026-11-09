@@ -430,6 +430,37 @@ async def audit_shadowed_graphs() -> Dict[str, Any]:
     return out
 
 
+async def audit_orphan_graphs(paths: Iterable[Path]) -> Dict[str, Any]:
+    """Report uploader-named graphs whose source file is gone (CAVEAT-1718).
+
+    The uploader PUTs every TTL into ``urn:ontosage:ttl:<file>`` and never removes one, so a
+    file deleted from ``input/`` leaves its graph behind, read by every query. Measured
+    2026-11-07: ``bldg1_room_schedules.ttl`` existed nowhere on disk and in no commit, and its
+    graph still added 11 sessions and a "lecture" kind to every timetable answer.
+
+    It REPORTS, like `audit_shadowed_graphs`: a graph with no file may be a deliberate
+    console upload, and unattended startup is the wrong place to decide. Read-only, non-fatal.
+    """
+    out: Dict[str, Any] = {"ok": True, "orphans": []}
+    try:
+        from orchestrator.services.ontology_manager import list_named_graphs
+
+        graphs = await list_named_graphs()
+    except Exception as exc:  # pragma: no cover — GraphDB down is not this audit's problem
+        logger.debug(f"[ttl_uploader] orphan audit skipped: {exc}")
+        return {"ok": False, "error": str(exc), "orphans": []}
+    expected = {_graph_uri_for_path(Path(p)) for p in paths}
+    for uri in sorted(graphs):
+        if uri.startswith(_TTL_GRAPH_PREFIX) and uri not in expected:
+            out["orphans"].append({"graph": uri, "triples": graphs.get(uri, 0)})
+            logger.warning(
+                f"[ttl_uploader] {uri} ({graphs.get(uri, 0)} triples) has no source file in "
+                "input/ or the shared schemas, and is still read by every query. Restore the "
+                "file, or drop the graph from the admin console if it is no longer wanted."
+            )
+    return out
+
+
 async def run_idempotent_uploads(
     building_ids: Iterable[str],
     *,
@@ -534,4 +565,6 @@ async def run_idempotent_uploads(
     # State the position on what this upload could NOT have fixed.
     summary["type_audit"] = await audit_undeclared_types()
     summary["shadow_audit"] = await audit_shadowed_graphs()
+    if include_schemas:  # only a full discovery can say which uploader graph has no file
+        summary["orphan_audit"] = await audit_orphan_graphs(paths)
     return summary

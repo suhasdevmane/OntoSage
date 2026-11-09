@@ -173,7 +173,35 @@ def test_a_range_of_one_value_is_not_printed():
 
 
 def test_a_building_read_keeps_its_building_lead():
-    assert _summary("").startswith("**Across the building")
+    from orchestrator.services import aggregate_lane as al
+
+    groups = [
+        al.GroupStat(f, sensors=1, readings=1, value=v, low=v, high=v, mean=v, total=v)
+        for f, v in (("4", 880.0), ("5", 909.0))
+    ]
+    out = al.render_summary(
+        groups,
+        measurand="co2",
+        unit="ppm",
+        window=al.Window("2026-10-10 18:00:00", "2026-10-10 19:00:00", "now", latest=True),
+        sensors_used=2,
+        sensors_requested=2,
+        floors_seen=2,
+        excluded=0,
+        excluded_sensors=0,
+        no_reading=0,
+        unplaced=0,
+        bands_checked=True,
+    )
+    assert out.startswith("**Across the building")
+
+
+def test_one_floor_reporting_is_headed_with_that_floor():
+    """BUG-1686. This test used to pin the building lead on a ONE-floor read; that headline is
+    the defect -- a whole-building question answered from one floor said 'Across the building'."""
+    out = _summary("")
+    assert out.startswith("**On Floor 5, the only floor with readings now,")
+    assert "Across the building" not in out
 
 
 def test_only_room_needs_every_sensor_in_the_same_room():

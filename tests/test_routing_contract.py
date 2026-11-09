@@ -453,6 +453,7 @@ def test_precedence_order_is_pinned():
         # immediately above: it catches a "which source is right?" shape no earlier rule
         # names. Measured over the 4,060-question bank: 0 moves.
         "cross_source_precedence",
+        "building_fault_status",
     ]
     assert [r.name for r in rc.POST_STAGE_RULES] == [
         "data_query_promotion",
@@ -981,6 +982,9 @@ def test_concept_stage_precedence_is_pinned():
         # 2026-10-11 (TODO-1646): a day/week cost of a metered utility -> analytics, which prices
         # the metered total at the tariff in force. 0 of 4,060 bank questions reach it.
         "metered_cost_is_computed",
+        # 2026-11-07: the emissions of the electricity used over a day/week/month -> analytics,
+        # which multiplies the metered total by the declared grid factor. 0 of 4,060 reach it.
+        "metered_carbon_is_computed",
         # v2 P6 (2026-10-08): LAST in the LAST stage. The concept stage is the only one every
         # question reaches — the held-record and amenity-triple short-circuits return before the
         # parse stage — and last because it only escalates from single-facet lanes, deferring to

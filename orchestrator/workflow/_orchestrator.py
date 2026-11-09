@@ -1477,6 +1477,7 @@ async def _unanswered_response(state, ctx) -> str:
         outdoor=outdoor,
         entities=entities,
         read_but_off_topic=bool(_rows_read),
+        drafted_off_topic=_gate_replaced and not _rows_read,
     )
     logger.info(f"[response] clarification shape={_kind}")
     if catalogue_unread:
@@ -1627,6 +1628,23 @@ _CHANGE_OR_COMPARISON_RE = re.compile(
 )
 
 
+#: The first sentence of a decline the model wrote in its own words: an apology, or "there is no
+#: <X> sensor / data / reading / record". The decline markers are a fixed list and the model's
+#: wording varies between asks (CAVEAT-891): "there is no air-pressure sensor data available for
+#: Room 2.01" matched none of them and kept an "observed - read from an instrument" panel.
+_DECLINE_FIRST_SENTENCE_RE = re.compile(
+    r"^\W*(?:i['’]m\s+sorry|sorry|unfortunately|i\s+apologi[sz]e)\b"
+    r"|\bthere\s+(?:is|are)\s+no\s+(?:[\w‑-]+\s+){0,4}?(?:sensors?|data|readings?|records?)\b",
+    re.IGNORECASE,
+)
+
+
+def _first_sentence_declines(text: str) -> bool:
+    """True when the answer's first sentence is a decline in the model's own words."""
+    first = re.split(r"(?<=[.!?])\s+|\n", (text or "").strip(), maxsplit=1)[0]
+    return bool(_DECLINE_FIRST_SENTENCE_RE.search(first))
+
+
 async def _relevance_gated(state, ctx, text: str) -> str:
     """``text``, or the honest decline when the model judges it does not respond (2D-16 wave 8).
 
@@ -1642,6 +1660,15 @@ async def _relevance_gated(state, ctx, text: str) -> str:
 
         lane = str(getattr(state, "current_intent", "") or "")
         if not gate.judges_lane(lane, getattr(settings, "ANSWER_RELEVANCE_GATE_LANES", None)):
+            return text
+        # A QUESTION BACK TO THE READER IS NOT AN ANSWER, AND CANNOT BE OFF-TOPIC (gate case #14,
+        # 2026-11-07). The deliberation lane asked which of ten meeting rooms was meant; the gate
+        # judged that question "does not recommend a room, just lists options" and replaced it
+        # with a decline, so the reader lost both the question and any way to answer it.
+        if (getattr(state, "intermediate_results", None) or {}).get("needs_clarification_payload"):
+            logger.info(
+                "[response] relevance gate not applied: this turn asks the reader a question"
+            )
             return text
         # The question the lanes ANSWERED (BUG-1608): after "and the day before?" was rewritten to
         # "...the day before yesterday?", the gate judged the bare follow-up and deleted an answer
@@ -7373,12 +7400,19 @@ SELECT ?l WHERE {
             # above" over an answer that holds no data (defect C19, services/viz_honesty).
             from orchestrator.services.viz_honesty import chart_note
 
-            final_response += chart_note(
-                wants_chart=self._user_wants_visualization(_latest_msg),
-                has_media=bool(media_payload),
-                viz_result=viz_result,
-                answer=final_response,
-            )
+            _wants_chart = self._user_wants_visualization(_latest_msg)
+            _not_here = ""
+            if _wants_chart and not media_payload:
+                _not_here = await self._quantity_not_in_place(state)
+                if _not_here:
+                    final_response = _not_here
+            if not _not_here:  # the reach answer already says why there is no chart
+                final_response += chart_note(
+                    wants_chart=_wants_chart,
+                    has_media=bool(media_payload),
+                    viz_result=viz_result,
+                    answer=final_response,
+                )
 
         # ── G6 / BUG-1428: a claim about the newest reading must agree with that reading's
         # own compliance verdict. Only the exact claim-about-this-timestamp shape changes;
@@ -8060,11 +8094,21 @@ SELECT ?l WHERE {
             if not results.get("evidence_dossier") and "arrived at**" not in final_response:
                 from orchestrator.services.answer_provenance import render as _render_evidence
                 from orchestrator.services.grounding_guard import reader_is_admin_in
+                from orchestrator.services.publication_gate import (
+                    has_quantitative_claim,
+                    is_decline,
+                )
 
                 _panel = _render_evidence(
                     results.get("evidence_record"),
                     for_admin=reader_is_admin_in(state),
                     inline=True,
+                    # CAVEAT-1708: a decline states no figure, and its panel must not say
+                    # "observed — read from an instrument" over the rows read while looking.
+                    declined=(
+                        is_decline(final_response) or _first_sentence_declines(final_response)
+                    )
+                    and not has_quantitative_claim(final_response),
                 )
                 if _panel:
                     final_response += _panel
@@ -9316,6 +9360,48 @@ SELECT ?l WHERE {
         "no need for visualization",
     )
 
+    async def _quantity_not_in_place(self, state: ConversationState) -> str:
+        """The reach answer when a chart was asked for a quantity the named place does not measure.
+
+        2026-11-07: "Show me a chart of noise in room 1.04 over the last 24 hours" bound the room's
+        three points by label (PM2.5, lighting colour temperature, occupancy status), printed
+        their statistics and "No chart was drawn: there was no data to plot". Room 1.04 has no
+        noise sensor, and the observability lane is the one that says so from the coverage
+        matrix. Asked only when no chart was drawn and the question names a place; its answer
+        replaces the text only when the named quantity is NOT observable there, so a chart that
+        failed for any other reason keeps its own note. Never raises; "" means "no finding".
+        """
+        try:
+            from orchestrator.services.aggregate_support import names_a_place
+            from orchestrator.services.observability import OBSERVABLE
+
+            question = state.messages[-1].content if state.messages else ""
+            if not names_a_place(question):
+                return ""
+            res = state.intermediate_results
+            saved = {k: res.get(k) for k in ("observability_result", "observability_reach")}
+            try:
+                res.pop("observability_reach", None)
+                await self._observability_node(state)
+                reach = res.get("observability_reach") or {}
+                out = res.get("observability_result") or {}
+                if reach and reach.get("status") != OBSERVABLE and out.get("success"):
+                    logger.info(
+                        f"[response] no chart: {reach.get('modality')} is {reach.get('status')} "
+                        f"in {reach.get('space')} -- the reach answer replaces the statistics"
+                    )
+                    return str(out.get("formatted_response") or "")
+                return ""
+            finally:
+                for k, v in saved.items():
+                    if v is None:
+                        res.pop(k, None)
+                    else:
+                        res[k] = v
+        except Exception as exc:  # a wording pass must never cost an answer
+            logger.warning(f"[response] reach check for a missing chart skipped: {exc}")
+            return ""
+
     @classmethod
     def _user_wants_visualization(cls, message: str) -> bool:
         """
@@ -9599,6 +9685,17 @@ SELECT ?l WHERE {
             else (_admit(cqir, schema))
         )
         decision = _cp.decide(cqir, admission)
+        if getattr(admission, "kind_spaces", None):
+            # Said in the answer, not only in the log: the reader may have meant one room.
+            decision.assumptions.append(
+                _cp.Assumption(
+                    text=(
+                        f"'{admission.kind_phrase}' read as a kind of space: ranked the "
+                        f"{len(admission.kind_spaces)} spaces whose names say so"
+                    ),
+                    source="space names",
+                )
+            )
         for _term in _dropped_terms:
             # dropped-but-declared: the unmappable extra shows up as an assumption
             decision.assumptions.append(

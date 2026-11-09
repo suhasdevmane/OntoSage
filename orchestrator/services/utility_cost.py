@@ -200,3 +200,80 @@ async def append_cost(
     out["formatted_response"] = f"{answer.get('formatted_response') or ''}\n\n{note}".strip()
     logger.info(f"[cost] {utility}: {note[:120]}")
     return out
+
+
+# ── emissions: electricity x the building's declared grid carbon intensity (2026-11-07) ──────
+
+#: "carbon footprint", "emissions", "CO2e", "greenhouse gas" -- a question about EMISSIONS, not
+#: about the CO2 concentration a room sensor reads ("is the CO2 high?" names no emission word).
+_CARBON_RE = re.compile(
+    r"\b(?:carbon\s+(?:footprint|emissions?|output|impact)|co2e|co2\s+emissions?|emissions?|"
+    r"greenhouse\s+gas(?:es)?|ghg|kg\s*co2|tonnes?\s+of\s+(?:co2|carbon))\b",
+    re.IGNORECASE,
+)
+
+CARBON_QUERY = """PREFIX ontosage: <http://ontosage.org/capabilities#>
+PREFIX brick: <https://brickschema.org/schema/Brick#>
+SELECT ?b ?f ?src WHERE {
+  ?b ontosage:gridCarbonIntensity ?f .
+  OPTIONAL { ?b ontosage:gridCarbonIntensitySource ?src }
+} LIMIT 5"""
+
+
+def asks_for_carbon(question: str) -> bool:
+    """The question asks for the EMISSIONS of what was used, not a CO2 concentration."""
+    return bool(_CARBON_RE.search(question or ""))
+
+
+def carbon_sentence(total_kwh: float, grams_per_kwh: float, source: str = "") -> str:
+    """'... that is about 3,226 kg CO2e (3.2 t)' -- the arithmetic and its factor, stated."""
+    kg = total_kwh * grams_per_kwh / 1000.0
+    tonnes = f" ({kg / 1000.0:,.1f} t)" if kg >= 1000 else ""
+    where = f", {source}" if source else ""
+    return (
+        f"**At the building's declared grid carbon intensity ({grams_per_kwh:g} gCO2e per kWh"
+        f"{where}), that is about {kg:,.0f} kg CO2e{tonnes}** from electricity. This counts "
+        "electricity only, at one factor for the whole period; other fuels are not included."
+    )
+
+
+async def append_carbon(
+    answer: Dict[str, Any], question: str, measurand: Optional[str], sparql_exec
+) -> Dict[str, Any]:
+    """``answer`` with the emissions of its electricity total added when the question asks."""
+    if not (answer and asks_for_carbon(question) and sparql_exec is not None):
+        return answer
+    agg = answer.get("aggregate") or {}
+    unit = str(agg.get("unit") or "")
+    total = (answer.get("figures") or {}).get("total")
+    if total is None or utility_for(measurand, unit) != "electricity":
+        return answer
+    factor = _TO_RATE_UNIT.get((unit.strip().lower(), "kwh"))
+    if factor is None:
+        return answer
+    try:
+        rows = ((await sparql_exec(CARBON_QUERY)) or {}).get("results", {}).get("bindings", [])
+    except Exception as exc:  # an emissions line is an addition; it never costs the answer
+        logger.info(f"[carbon] factor lookup skipped: {exc}")
+        return answer
+    values = sorted({float(_value(r, "f")) for r in rows if _value(r, "f")})
+    if len(values) != 1:
+        note = (
+            "The building declares no single grid carbon intensity, so no emissions figure is "
+            "stated."
+            if not values
+            else "The building declares more than one grid carbon intensity, so no emissions "
+            "figure is stated."
+        )
+    else:
+        source = next((_value(r, "src") for r in rows if _value(r, "src")), "")
+        note = carbon_sentence(float(total) * factor, values[0], source)
+    out = dict(answer)
+    out["formatted_response"] = f"{answer.get('formatted_response') or ''}\n\n{note}".strip()
+    figures = dict(out.get("figures") or {})
+    if len(values) == 1:
+        figures["kg CO2e"] = round(float(total) * factor * values[0] / 1000.0, 3)
+        figures["gCO2e per kWh"] = values[0]
+    out["figures"] = figures
+    logger.info(f"[carbon] {note[:120]}")
+    return out

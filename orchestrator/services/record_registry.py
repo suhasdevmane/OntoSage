@@ -774,7 +774,48 @@ def rank_record_classes(query: str, classes: List[RecordClass]) -> List[Tuple[fl
 
     if door_records_question(query or ""):
         scored = _door_records_to_the_event_register(scored, classes)
+    scored = _compound_head_breaks_a_tie(scored, low)
     return sorted(scored, key=lambda pair: (-pair[0], pair[1].local_name))
+
+
+def _term_spans(term: str, low: str) -> List[Tuple[int, int]]:
+    pat = re.compile(r"(?<![\w-])" + re.escape(term.lower()) + r"s?(?![\w-])")
+    return [m.span() for m in pat.finditer(low)]
+
+
+def _compound_head_breaks_a_tie(
+    scored: List[Tuple[float, "RecordClass"]], low: str
+) -> List[Tuple[float, "RecordClass"]]:
+    """In a noun compound the LAST noun is the head, so it wins a tie (2026-11-07).
+
+    "When does the cleaning contract expire?" scored the cleaning-task and contract registers
+    8.0 each, the tie broke on class name, and the cleaning-task register answered a question
+    about a contract. A "cleaning contract" is a contract. Only a TIE at the top is touched, and
+    only when one tied class's term DIRECTLY follows another's ("cleaning contract", not "the
+    contract for cleaning"), so every ranking that is not a tie between compound halves stands.
+    """
+    if len(scored) < 2:
+        return scored
+    top = max(s for s, _ in scored)
+    tied = [r for s, r in scored if s == top]
+    if len(tied) < 2:
+        return scored
+    spans = {r.local_name: [sp for t in r.terms for sp in _term_spans(t, low)] for r in tied}
+    heads = set()
+    for a in tied:
+        for b in tied:
+            if a is b:
+                continue
+            if any(
+                re.fullmatch(r"[\s-]", low[ea:sb]) is not None
+                for _sa, ea in spans[a.local_name]
+                for sb, _eb in spans[b.local_name]
+                if sb > ea
+            ):
+                heads.add(b.local_name)
+    if len(heads) != 1:
+        return scored
+    return [(s + 0.5 if r.local_name in heads and s == top else s, r) for s, r in scored]
 
 
 #: The TBox class that holds door-event records (ontosage_schema.ttl, AccessEvent).
@@ -1217,10 +1258,10 @@ async def schema_hint(record: "RecordClass") -> str:
         "PREFIX ontosage: <http://ontosage.org/capabilities#>\n\n"
         f"This building holds {record.instances} instances of ontosage:{record.local_name} "
         f'("{record.label}"). Query them directly — they are ordinary triples.\n\n'
-        "Predicates present on those instances:\n"
-        + "\n".join(sorted(lines))
-        + "\n"
-        + status_rule
+        "Predicates present on those instances:\n" + "\n".join(sorted(lines)) + "\n" + status_rule
+        # BUG-1454: built above and never returned, so the ontology's own notes on these terms
+        # -- the fix its comment describes -- had been inert since it was written.
+        + ontology_notes
         + f"\nToday is {today}. A window such as 'in the next six months' is BOUNDED AT "
         f'BOTH ENDS — ?end >= "{today}"^^xsd:date AND ?end <= (six months later) — or '
         "records that already lapsed are counted as though they were still to come.\n"

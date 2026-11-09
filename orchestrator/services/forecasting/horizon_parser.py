@@ -122,6 +122,83 @@ _DEFAULT_HORIZON = ForecastHorizon(
 )
 
 
+_NUMBER_WORDS = {
+    "one": 1,
+    "two": 2,
+    "three": 3,
+    "four": 4,
+    "five": 5,
+    "six": 6,
+    "seven": 7,
+    "eight": 8,
+    "nine": 9,
+    "ten": 10,
+    "eleven": 11,
+    "twelve": 12,
+    "fourteen": 14,
+    "twenty": 20,
+    "thirty": 30,
+    "forty-eight": 48,
+    "a couple of": 2,
+    "a few": 3,
+}
+_NUMBER_WORD_RE = re.compile(
+    r"\b(" + "|".join(sorted((re.escape(w) for w in _NUMBER_WORDS), key=len, reverse=True)) + r")\b"
+)
+#: "the next 48 hours", "over the coming 10 days", "the following two weeks" -- any count of any
+#: unit. The fixed table above was the only reading, so "the next three days" and "the next 48
+#: hours" both fell through to the 24-hour default and were forecast for a day without a word
+#: (2026-11-07).
+_ANY_SPAN_RE = re.compile(
+    r"\b(?:next|coming|following|upcoming)\s+(\d{1,3})\s*(min(?:ute)?s?|hours?|hrs?|days?|weeks?)\b"
+)
+_UNIT = {
+    "m": timedelta(minutes=1),
+    "h": timedelta(hours=1),
+    "d": timedelta(days=1),
+    "w": timedelta(days=7),
+}
+#: Steps the forecasters take, finest first, each with its pandas alias.
+_STEPS = [
+    (timedelta(minutes=5), "5min"),
+    (timedelta(minutes=10), "10min"),
+    (timedelta(minutes=15), "15min"),
+    (timedelta(minutes=30), "30min"),
+    (timedelta(hours=1), "1h"),
+    (timedelta(hours=2), "2h"),
+    (timedelta(hours=3), "3h"),
+    (timedelta(hours=6), "6h"),
+    (timedelta(hours=12), "12h"),
+]
+#: The longest horizon the table above offers; a longer ask is forecast to it and SAYS so.
+_LONGEST = timedelta(days=30)
+
+
+def _span_label(total: timedelta) -> str:
+    if total % timedelta(days=1) == timedelta(0) and total >= timedelta(days=2):
+        return f"next {total.days} days"
+    hours = total / timedelta(hours=1)
+    if hours >= 1:
+        n = int(round(hours))
+        return "next hour" if n == 1 else f"next {n} hours"
+    return f"next {int(total / timedelta(minutes=1))} minutes"
+
+
+def _any_span(q: str) -> "ForecastHorizon | None":
+    m = _ANY_SPAN_RE.search(q)
+    if not m or int(m.group(1)) <= 0:
+        return None
+    unit = m.group(2)[0]
+    total = min(int(m.group(1)) * _UNIT[unit], _LONGEST)
+    step, freq = next(((s, f) for s, f in _STEPS if total / s <= 60), _STEPS[-1])
+    label = _span_label(total)
+    if int(m.group(1)) * _UNIT[unit] > _LONGEST:
+        label += " (the longest horizon this forecasts)"
+    return ForecastHorizon(
+        total=total, step=step, n_steps=max(1, int(total / step)), label=label, freq=freq
+    )
+
+
 def match_horizon(query: str) -> "ForecastHorizon | None":
     """Return the ForecastHorizon for a recognized phrase, or None (no default).
 
@@ -129,8 +206,12 @@ def match_horizon(query: str) -> "ForecastHorizon | None":
     lane (via parse_horizon) and the deliberative CQ-IR compiler both resolve
     canonical phrases ("tomorrow", "next week") through THIS rule table, so
     identical phrases yield identical horizons in every lane.
+
+    A count written as a word ("the next three days") is read as its digits first, and a count of
+    any unit the table does not list ("the next 48 hours") is read by `_any_span`.
     """
     q = (query or "").lower()
+    q = _NUMBER_WORD_RE.sub(lambda m: str(_NUMBER_WORDS[m.group(1)]), q)
     for pattern, total, step, label, freq in _HORIZON_RULES:
         if re.search(pattern, q):
             n_steps = max(1, int(total / step))
@@ -141,7 +222,7 @@ def match_horizon(query: str) -> "ForecastHorizon | None":
                 label=label,
                 freq=freq,
             )
-    return None
+    return _any_span(q)
 
 
 def parse_horizon(query: str) -> ForecastHorizon:

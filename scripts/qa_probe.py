@@ -57,6 +57,7 @@ PROVIDER_MARKERS = ("language model", "not responding", "gateway unreachable")
 DECLINE_MARKERS = (
     "I couldn't answer",
     "couldn't answer that",
+    "couldn't put an answer together",
     "is not recorded",
     "isn't recorded",
     "not recorded",

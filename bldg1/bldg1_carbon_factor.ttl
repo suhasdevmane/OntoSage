@@ -1,0 +1,16 @@
+# Grid carbon intensity for bldg1, as the ontosage:gridCarbonIntensity property (2026-11-07).
+#
+# The building already declared its factor -- 233 gCO2/kWh, "UK 2024 average", in
+# bldg1_enhancements.ttl -- but under a property of its own namespace
+# (bldg:carbonIntensityGCO2perKWh), which no building-agnostic code may read. This file states
+# the SAME value under the schema's property so "what was the carbon footprint of the electricity
+# used last month?" can be computed (electricity total x factor) in any building that declares
+# one. The value is the building's, unchanged; it is not re-derived here.
+
+@prefix bldg:     <http://abacwsbuilding.cardiff.ac.uk/abacws#> .
+@prefix ontosage: <http://ontosage.org/capabilities#> .
+@prefix xsd:      <http://www.w3.org/2001/XMLSchema#> .
+
+bldg:Abacws
+    ontosage:gridCarbonIntensity "233.0"^^xsd:decimal ;
+    ontosage:gridCarbonIntensitySource "the building's EPC record (UK grid average, 2024, as stated there)" .
